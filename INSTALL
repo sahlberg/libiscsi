@@ -1,0 +1,13 @@
+This installs a new shared library under /usr/lib[64]
+and executables under /usr/bin
+
+
+From source:
+============
+$ make
+# make install
+
+Building RPM:
+=============
+./packaging/RPM/makerpms.sh
+

@@ -1,0 +1,56 @@
+LIBS="-lpopt"
+CC=gcc
+CFLAGS=-g -O0 -fPIC -Wall -W -I./include "-D_U_=__attribute__((unused))"
+LIBISCSI_OBJ = lib/connect.o lib/crc32c.o lib/discovery.o lib/init.o lib/login.o lib/nop.o lib/pdu.o lib/scsi-command.o lib/scsi-lowlevel.o lib/socket.o lib/sync.o
+INSTALLCMD = /usr/bin/install -c
+
+LIBISCSI_SO_NAME=libiscsi.so.1
+VERSION=1.0.0
+LIBISCSI_SO=libiscsi.so.$(VERSION)
+
+all: bin/iscsi-inq bin/iscsi-ls lib/$(LIBISCSI_SO)
+
+bin/iscsi-ls: src/iscsi-ls.c lib/libiscsi.a
+	mkdir -p bin
+	$(CC) $(CFLAGS) -o $@ src/iscsi-ls.c lib/libiscsi.a $(LIBS)
+
+bin/iscsi-inq: src/iscsi-inq.c lib/libiscsi.a
+	mkdir -p bin
+	$(CC) $(CFLAGS) -o $@ src/iscsi-inq.c lib/libiscsi.a $(LIBS)
+
+lib/$(LIBISCSI_SO): $(LIBISCSI_OBJ)
+	@echo Creating shared library $@
+	$(CC) -shared -Wl,-soname=$(LIBISCSI_SO_NAME) -o $@ $(LIBISCSI_OBJ)
+
+lib/libiscsi.a: $(LIBISCSI_OBJ)
+	@echo Creating library $@
+	ar r lib/libiscsi.a $(LIBISCSI_OBJ) 
+	ranlib lib/libiscsi.a
+
+examples: bin/iscsiclient
+
+bin/iscsiclient: examples/iscsiclient.c lib/libiscsi.a
+	mkdir -p bin
+	$(CC) $(CFLAGS) -o $@ examples/iscsiclient.c lib/libiscsi.a $(LIBS)
+
+install: lib/libiscsi.a lib/$(LIBISCSI_SO) bin/iscsi-ls bin/iscsi-inq
+ifeq ("$(LIBDIR)x","x")
+	$(INSTALLCMD) -m 755 lib/$(LIBISCSI_SO) /usr/lib
+	$(INSTALLCMD) -m 755 lib/libiscsi.a /usr/lib
+	ldconfig
+else
+	$(INSTALLCMD) -m 755 lib/$(LIBISCSI_SO) $(LIBDIR)
+	$(INSTALLCMD) -m 755 lib/libiscsi.a $(LIBDIR)
+endif
+	$(INSTALLCMD) -m 755 bin/iscsi-ls $(DESTDIR)/usr/bin
+	$(INSTALLCMD) -m 755 bin/iscsi-inq $(DESTDIR)/usr/bin
+	mkdir -p $(DESTDIR)/usr/include/iscsi
+	$(INSTALLCMD) -m 644 include/iscsi.h $(DESTDIR)/usr/include/iscsi
+	$(INSTALLCMD) -m 644 include/scsi-lowlevel.h $(DESTDIR)/usr/include/iscsi
+
+clean:
+	rm -f lib/*.o src/*.o examples/*.o
+	rm -f bin/*
+	rm -f lib/libiscsi.so*
+	rm -f lib/libiscsi.a
+	rm -f iscsi-inq iscsi-ls

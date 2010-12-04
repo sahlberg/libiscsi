@@ -1,0 +1,87 @@
+Name: libiscsi
+Summary: iSCSI client library
+Vendor: Ronnie Sahlberg
+Packager: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+Version: 1.0.0
+Release: 1GITHASH
+Epoch: 0
+License: GNU LGPL version 3
+Group: Libraries
+URL: http://github.something/
+
+Source: libiscsi-%{version}.tar.gz
+
+Prereq: fileutils
+
+Provides: libiscsi = %{version}
+
+Prefix: /usr
+BuildRoot: %{_tmppath}/%{name}-%{version}-root
+
+%description
+libiscsi is a client library for attaching to iscsi resources across
+a network and a set of assorted useful utilities
+
+
+#######################################################################
+
+
+
+%prep
+%setup -q
+# setup the init script and sysconfig file
+%setup -T -D -n libiscsi-%{version} -q
+
+%build
+
+CC="gcc"
+
+export CC
+
+%install
+# Clean up in case there is trash left from a previous build
+rm -rf $RPM_BUILD_ROOT
+
+# Create the target build directory hierarchy
+mkdir -p $RPM_BUILD_ROOT%{_bindir}
+mkdir -p $RPM_BUILD_ROOT%{_libdir}
+mkdir -p $RPM_BUILD_ROOT%{_includedir}
+mkdir -p $RPM_BUILD_ROOT%{_includedir}/iscsi
+
+#
+make DESTDIR=$RPM_BUILD_ROOT LIBDIR=$RPM_BUILD_ROOT%{_libdir} install
+
+# Remove "*.old" files
+find $RPM_BUILD_ROOT -name "*.old" -exec rm -f {} \;
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+
+#######################################################################
+## Files section                                                     ##
+#######################################################################
+
+%files
+%defattr(-,root,root)
+
+%{_bindir}/iscsi-ls
+%{_bindir}/iscsi-inq
+
+%package devel
+Summary: iSCSI client development libraries
+Group: Development
+
+%description devel
+development libraries for iSCSI
+
+%files devel
+%defattr(-,root,root)
+%{_includedir}/iscsi/iscsi.h
+%{_includedir}/iscsi/scsi-lowlevel.h
+%{_libdir}/libiscsi.a
+%{_libdir}/libiscsi.so.1.0.0
+
+%changelog
+* Sat Dec 4 2010 : Version 1.0.0
+ - Initial version
