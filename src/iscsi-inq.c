@@ -155,17 +155,17 @@ int main(int argc, const char *argv[])
 {
 	poptContext pc;
 	struct iscsi_context *iscsi;
+	const char **extra_argv;
+	int extra_argc = 0;
 	char *portal = NULL;
 	char *target = NULL;
-	int lun = -1, evpd = 0, pagecode = 0;
+	char *lun = NULL;
+	int evpd = 0, pagecode = 0;
 	int res;
 
 	struct poptOption popt_options[] = {
 		POPT_AUTOHELP
 		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
-		{ "portal", 'p', POPT_ARG_STRING, &portal, 0, "Target portal", "address[:port]" },
-		{ "target", 't', POPT_ARG_STRING, &target, 0, "Target name", "iqn-name" },
-		{ "lun", 'l', POPT_ARG_INT, &lun, 0, "LUN", "integer" },
 		{ "evpd", 'e', POPT_ARG_INT, &evpd, 0, "evpd", "integer" },
 		{ "pagecode", 'c', POPT_ARG_INT, &pagecode, 0, "page code", "integer" },
 		POPT_TABLEEND
@@ -177,22 +177,43 @@ int main(int argc, const char *argv[])
 			poptBadOption(pc, 0), poptStrerror(res));
 		exit(10);
 	}
+	extra_argv = poptGetArgs(pc);
+	if (extra_argv) {
+		portal = strdup(*extra_argv);
+		extra_argv++;
+		while (extra_argv[extra_argc]) {
+			extra_argc++;
+		}
+	}
 	poptFreeContext(pc);
 
 	if (portal == NULL) {
 		fprintf(stderr, "You must specify target portal\n");
+		fprintf(stderr, "%s [options] iscsi://<host>[:<port>]/<target-iqn>/<lun>\n", argv[0]);
 		exit(10);
 	}
+	if (strncmp(portal, "iscsi://", 8)) {
+		fprintf(stderr, "Incorrect portal specified\n");
+		fprintf(stderr, "Portal is specified as \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n");
+		exit(10);
+	}
+	portal += 8;
 
+	target = index(portal, '/');
 	if (target == NULL) {
-		fprintf(stderr, "You must specify target name\n");
+		fprintf(stderr, "You must specify target-iqn name\n");
+		fprintf(stderr, "Portal is specified as \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n");
 		exit(10);
 	}
+	*target++ = 0;
 
-	if (lun == -1) {
-		fprintf(stderr, "You must specify LUN\n");
+	lun = index(target, '/');
+	if (lun == NULL) {
+		fprintf(stderr, "You must specify target-iqn name\n");
+		fprintf(stderr, "Portal is specified as \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n");
 		exit(10);
 	}
+	*lun++ = 0;
 
 	iscsi = iscsi_create_context(initiator);
 	if (iscsi == NULL) {
@@ -204,12 +225,12 @@ int main(int argc, const char *argv[])
 	iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
 
-	if (iscsi_full_connect_sync(iscsi, portal, lun) != 0) {
+	if (iscsi_full_connect_sync(iscsi, portal, atoi(lun)) != 0) {
 		fprintf(stderr, "Failed to log in to target %s\n", iscsi_get_error(iscsi));
 		exit(10);
 	}
 
-	do_inquiry(iscsi, lun, evpd, pagecode);
+	do_inquiry(iscsi, atoi(lun), evpd, pagecode);
 
 	iscsi_logout_sync(iscsi);
 	iscsi_destroy_context(iscsi);

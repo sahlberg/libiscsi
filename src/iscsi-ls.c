@@ -267,6 +267,8 @@ int main(int argc, const char *argv[])
 {
 	struct iscsi_context *iscsi;
 	struct client_state state;
+	const char **extra_argv;
+	int extra_argc = 0;
 	char *portal = NULL;
 	poptContext pc;
 	int res;
@@ -274,7 +276,6 @@ int main(int argc, const char *argv[])
 	struct poptOption popt_options[] = {
 		POPT_AUTOHELP
 		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
-		{ "portal", 'p', POPT_ARG_STRING, &portal, 0, "Target portal", "address[:port]" },
 		{ "show-luns", 's', POPT_ARG_NONE, &showluns, 0, "Show the luns for each target", NULL },
 		POPT_TABLEEND
 	};
@@ -287,12 +288,27 @@ int main(int argc, const char *argv[])
 			poptBadOption(pc, 0), poptStrerror(res));
 		exit(10);
 	}
+	extra_argv = poptGetArgs(pc);
+	if (extra_argv) {
+		portal = strdup(*extra_argv);
+		extra_argv++;
+		while (extra_argv[extra_argc]) {
+			extra_argc++;
+		}
+	}
 	poptFreeContext(pc);
 
 	if (portal == NULL) {
-		fprintf(stderr, "You must specify target portal\n");
+		fprintf(stderr, "You must specify iscsi target portal.\n");
+		fprintf(stderr, "%s [options] iscsi://<host>[:<port>]\n", argv[0]);
 		exit(10);
 	}
+	if (strncmp(portal, "iscsi://", 8)) {
+		fprintf(stderr, "Incorrect portal specified\n");
+		fprintf(stderr, "Portal is specified as \"iscsi://<host>[:<port>]\"\n");
+		exit(10);
+	}
+	portal += 8;
 
 	iscsi = iscsi_create_context(initiator);
 	if (iscsi == NULL) {
