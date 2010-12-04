@@ -7,7 +7,7 @@ Release: 1GITHASH
 Epoch: 0
 License: GNU LGPL version 3
 Group: Libraries
-URL: http://github.something/
+URL: https://github.com/sahlberg/libiscsi
 
 Source: libiscsi-%{version}.tar.gz
 
