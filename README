@@ -10,3 +10,8 @@ Installation
 make
 make install
 
+Build RPM
+=========
+To build RPMs run the following script from the libiscsi root directory
+./packaging/RPM/makerpms.sh
+
