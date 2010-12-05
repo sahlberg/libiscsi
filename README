@@ -7,8 +7,10 @@ and parse/unmarshall data-in structures.
 
 Installation
 ============
+./autogen.sh
+./configure
 make
-make install
+sudo make install
 
 Build RPM
 =========

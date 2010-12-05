@@ -4,10 +4,10 @@ and executables under /usr/bin
 
 From source:
 ============
-$ ./autogen.sh
-$ ./configure
-$ make
-# make install
+./autogen.sh
+./configure
+make
+sudo make install
 
 Building RPM:
 =============
