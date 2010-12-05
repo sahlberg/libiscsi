@@ -14,6 +14,7 @@
    You should have received a copy of the GNU Lesser General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
+#include "config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -98,6 +99,9 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		return -1;
 
 	}
+#ifdef HAVE_SOCK_SIN_LEN
+	s.ss_len = socksize;
+#endif
 
 	if (iscsi->fd == -1) {
 		iscsi_set_error(iscsi, "Failed to open iscsi socket. "
