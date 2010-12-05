@@ -1,0 +1,31 @@
+Some features that should be added
+
+* Target driven iscsi-nop, to teach the library to respond to these.
+  These are unsolicited nops sent from the targetr which we need to respond
+  to. TGTD does not suppot these but IET should do so and could be used
+  to test with.
+
+* More efficient api for read/write commands where we read/write straight
+  from the socket into the buffer the application specified instead of as now
+  we pass the data to a callback and then copy it.
+
+* CHAP authentication.
+  Here is probably best to start by adding chap dissection and verification
+  to wireshark first to use as a verification tool until the handshakes
+  to the terget become successful.
+
+* More sophisticated handshaking during login
+
+* More scsi marshalling and unmarshalling functions in scsi-lowlevel
+
+* Autoconnect for session faiulures.
+  When the tcp session fail,   try several times to reconnect and relogin.
+  If successful re-issue any commands that were in flight.
+
+* Task management functions
+
+* Data Digest
+
+
+
+
