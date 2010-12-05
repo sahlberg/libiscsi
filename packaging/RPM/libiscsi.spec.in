@@ -38,6 +38,15 @@ CC="gcc"
 
 export CC
 
+## always run autogen.sh
+./autogen.sh
+
+CFLAGS="$RPM_OPT_FLAGS $EXTRA -O0" ./configure \
+	--prefix=%{_prefix} \
+	--sysconfdir=%{_sysconfdir} \
+	--mandir=%{_mandir} \
+	--localstatedir="/var"
+
 %install
 # Clean up in case there is trash left from a previous build
 rm -rf $RPM_BUILD_ROOT
