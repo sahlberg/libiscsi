@@ -1,3 +1,7 @@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+bindir = @bindir@
 LIBS="-lpopt"
 CC=gcc
 CFLAGS=-g -O0 -fPIC -Wall -W -I./include "-D_U_=__attribute__((unused))"
@@ -35,8 +39,8 @@ bin/iscsiclient: examples/iscsiclient.c lib/libiscsi.a
 
 install: lib/libiscsi.a lib/$(LIBISCSI_SO) bin/iscsi-ls bin/iscsi-inq
 ifeq ("$(LIBDIR)x","x")
-	$(INSTALLCMD) -m 755 lib/$(LIBISCSI_SO) /usr/lib
-	$(INSTALLCMD) -m 755 lib/libiscsi.a /usr/lib
+	$(INSTALLCMD) -m 755 lib/$(LIBISCSI_SO) $(libdir)
+	$(INSTALLCMD) -m 755 lib/libiscsi.a $(libdir)
 	ldconfig
 else
 	$(INSTALLCMD) -m 755 lib/$(LIBISCSI_SO) $(LIBDIR)

@@ -54,7 +54,7 @@ if test x"$libiscsi_cv_HAVE_SOCK_SIN_LEN" = x"yes"; then
     AC_DEFINE(HAVE_SOCK_SIN_LEN,1,[Whether the sockaddr_in struct has a sin_len property])
 fi
 
-AC_SUBST(EXTRA_OBJ)
+AC_SUBST(libdir)
 #AC_SUBST(LIBISCSI_LDFLAGS)
 
 AC_OUTPUT(Makefile)
