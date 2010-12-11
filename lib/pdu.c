@@ -158,11 +158,11 @@ iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 }
 
 int
-iscsi_get_pdu_size(struct iscsi_context *iscsi, const unsigned char *hdr)
+iscsi_get_pdu_data_size(const unsigned char *hdr)
 {
 	int size;
 
-	size = (ntohl(*(uint32_t *)&hdr[4])&0x00ffffff) + ISCSI_HEADER_SIZE;
+	size = (ntohl(*(uint32_t *)&hdr[4])&0x00ffffff);
 	size = (size+3)&0xfffffffc;
 
 	return size;
@@ -170,17 +170,16 @@ iscsi_get_pdu_size(struct iscsi_context *iscsi, const unsigned char *hdr)
 
 
 int
-iscsi_process_pdu(struct iscsi_context *iscsi, const unsigned char *hdr,
-		  int size)
+iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 {
 	uint32_t itt;
 	enum iscsi_opcode opcode;
 	struct iscsi_pdu *pdu;
 	uint8_t	ahslen;
 
-	opcode = hdr[0] & 0x3f;
-	ahslen = hdr[4];
-	itt = ntohl(*(uint32_t *)&hdr[16]);
+	opcode = in->hdr[0] & 0x3f;
+	ahslen = in->hdr[4];
+	itt = ntohl(*(uint32_t *)&in->hdr[16]);
 
 	if (ahslen != 0) {
 		iscsi_set_error(iscsi, "cant handle expanded headers yet");
@@ -212,8 +211,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, const unsigned char *hdr,
 		}
 		switch (opcode) {
 		case ISCSI_PDU_LOGIN_RESPONSE:
-			if (iscsi_process_login_reply(iscsi, pdu, hdr, size)
-			    != 0) {
+			if (iscsi_process_login_reply(iscsi, pdu, in) != 0) {
 				SLIST_REMOVE(&iscsi->waitpdu, pdu);
 				iscsi_free_pdu(iscsi, pdu);
 				iscsi_set_error(iscsi, "iscsi login reply "
@@ -222,8 +220,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, const unsigned char *hdr,
 			}
 			break;
 		case ISCSI_PDU_TEXT_RESPONSE:
-			if (iscsi_process_text_reply(iscsi, pdu, hdr, size)
-			    != 0) {
+			if (iscsi_process_text_reply(iscsi, pdu, in) != 0) {
 				SLIST_REMOVE(&iscsi->waitpdu, pdu);
 				iscsi_free_pdu(iscsi, pdu);
 				iscsi_set_error(iscsi, "iscsi text reply "
@@ -232,8 +229,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, const unsigned char *hdr,
 			}
 			break;
 		case ISCSI_PDU_LOGOUT_RESPONSE:
-			if (iscsi_process_logout_reply(iscsi, pdu, hdr, size)
-			    != 0) {
+			if (iscsi_process_logout_reply(iscsi, pdu, in) != 0) {
 				SLIST_REMOVE(&iscsi->waitpdu, pdu);
 				iscsi_free_pdu(iscsi, pdu);
 				iscsi_set_error(iscsi, "iscsi logout reply "
@@ -242,8 +238,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, const unsigned char *hdr,
 			}
 			break;
 		case ISCSI_PDU_SCSI_RESPONSE:
-			if (iscsi_process_scsi_reply(iscsi, pdu, hdr, size)
-			    != 0) {
+			if (iscsi_process_scsi_reply(iscsi, pdu, in) != 0) {
 				SLIST_REMOVE(&iscsi->waitpdu, pdu);
 				iscsi_free_pdu(iscsi, pdu);
 				iscsi_set_error(iscsi, "iscsi response reply "
@@ -252,7 +247,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, const unsigned char *hdr,
 			}
 			break;
 		case ISCSI_PDU_DATA_IN:
-			if (iscsi_process_scsi_data_in(iscsi, pdu, hdr, size,
+			if (iscsi_process_scsi_data_in(iscsi, pdu, in,
 						       &is_finished) != 0) {
 				SLIST_REMOVE(&iscsi->waitpdu, pdu);
 				iscsi_free_pdu(iscsi, pdu);
@@ -262,8 +257,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, const unsigned char *hdr,
 			}
 			break;
 		case ISCSI_PDU_NOP_IN:
-			if (iscsi_process_nop_out_reply(iscsi, pdu, hdr, size)
-			    != 0) {
+			if (iscsi_process_nop_out_reply(iscsi, pdu, in) != 0) {
 				SLIST_REMOVE(&iscsi->waitpdu, pdu);
 				iscsi_free_pdu(iscsi, pdu);
 				iscsi_set_error(iscsi, "iscsi nop-in failed");

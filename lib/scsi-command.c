@@ -196,18 +196,18 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 
 int
 iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
-			 const unsigned char *hdr, int size)
+			 struct iscsi_in_pdu *in)
 {
 	int statsn, flags, response, status;
 	struct iscsi_scsi_cbdata *scsi_cbdata = pdu->scsi_cbdata;
 	struct scsi_task *task = scsi_cbdata->task;
 
-	statsn = ntohl(*(uint32_t *)&hdr[24]);
+	statsn = ntohl(*(uint32_t *)&in->hdr[24]);
 	if (statsn > (int)iscsi->statsn) {
 		iscsi->statsn = statsn;
 	}
 
-	flags = hdr[1];
+	flags = in->hdr[1];
 	if ((flags&ISCSI_PDU_DATA_FINAL) == 0) {
 		iscsi_set_error(iscsi, "scsi response pdu but Final bit is "
 				"not set: 0x%02x.", flags);
@@ -223,9 +223,9 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		return -1;
 	}
 
-	response = hdr[2];
+	response = in->hdr[2];
 
-	status = hdr[3];
+	status = in->hdr[3];
 
 	switch (status) {
 	case SCSI_STATUS_GOOD:
@@ -239,14 +239,13 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			      pdu->private_data);
 		break;
 	case SCSI_STATUS_CHECK_CONDITION:
-		task->datain.size = size - ISCSI_HEADER_SIZE;
+		task->datain.size = in->data_pos;
 		task->datain.data = malloc(task->datain.size);
 		if (task->datain.data == NULL) {
 			iscsi_set_error(iscsi, "failed to allocate blob for "
 					"sense data");
 		}
-		memcpy(task->datain.data, hdr + ISCSI_HEADER_SIZE,
-		       task->datain.size);
+		memcpy(task->datain.data, in->data, task->datain.size);
 
 		task->sense.error_type = task->datain.data[2] & 0x7f;
 		task->sense.key        = task->datain.data[4] & 0x0f;
@@ -274,19 +273,19 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 int
 iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
-			   const unsigned char *hdr, int size _U_, int *is_finished)
+			   struct iscsi_in_pdu *in, int *is_finished)
 {
 	int statsn, flags, status;
 	struct iscsi_scsi_cbdata *scsi_cbdata = pdu->scsi_cbdata;
 	struct scsi_task *task = scsi_cbdata->task;
 	int dsl;
 
-	statsn = ntohl(*(uint32_t *)&hdr[24]);
+	statsn = ntohl(*(uint32_t *)&in->hdr[24]);
 	if (statsn > (int)iscsi->statsn) {
 		iscsi->statsn = statsn;
 	}
 
-	flags = hdr[1];
+	flags = in->hdr[1];
 	if ((flags&ISCSI_PDU_DATA_ACK_REQUESTED) != 0) {
 		iscsi_set_error(iscsi, "scsi response asked for ACK "
 				"0x%02x.", flags);
@@ -294,10 +293,10 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			      pdu->private_data);
 		return -1;
 	}
-	dsl = ntohl(*(uint32_t *)&hdr[4])&0x00ffffff;
+	dsl = ntohl(*(uint32_t *)&in->hdr[4])&0x00ffffff;
 
 	if (iscsi_add_data(iscsi, &pdu->indata,
-			   discard_const(hdr + ISCSI_HEADER_SIZE), dsl, 0)
+			   in->data, dsl, 0)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to add data "
 				"to pdu in buffer.");
@@ -320,7 +319,7 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	/* this was the final data-in packet in the sequence and it has
 	 * the s-bit set, so invoke the callback.
 	 */
-	status = hdr[3];
+	status = in->hdr[3];
 	task->datain.data = pdu->indata.data;
 	task->datain.size = pdu->indata.size;
 

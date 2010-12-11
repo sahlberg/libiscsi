@@ -21,6 +21,25 @@
 #define discard_const(ptr) ((void *)((intptr_t)(ptr)))
 #endif
 
+#define ISCSI_RAW_HEADER_SIZE			48
+#define ISCSI_DIGEST_SIZE			 4
+
+#define ISCSI_HEADER_SIZE (ISCSI_RAW_HEADER_SIZE	\
+  + (iscsi->header_digest == ISCSI_HEADER_DIGEST_NONE?0:ISCSI_DIGEST_SIZE))
+
+
+struct iscsi_in_pdu {
+	struct iscsi_in_pdu *next;
+
+	long long hdr_pos;
+	unsigned char hdr[ISCSI_RAW_HEADER_SIZE + ISCSI_DIGEST_SIZE];
+
+	long long data_pos;
+	unsigned char *data;
+};
+void iscsi_free_iscsi_in_pdu(struct iscsi_in_pdu *in);
+void iscsi_free_iscsi_inqueue(struct iscsi_in_pdu *inqueue);
+
 struct iscsi_context {
 	const char *initiator_name;
 	const char *target_name;
@@ -45,15 +64,9 @@ struct iscsi_context {
 	struct iscsi_pdu *outqueue;
 	struct iscsi_pdu *waitpdu;
 
-	int insize;
-	int inpos;
-	unsigned char *inbuf;
+	struct iscsi_in_pdu *incoming;
+	struct iscsi_in_pdu *inqueue;
 };
-
-#define ISCSI_RAW_HEADER_SIZE			48
-
-#define ISCSI_HEADER_SIZE (ISCSI_RAW_HEADER_SIZE	\
-  + (iscsi->header_digest == ISCSI_HEADER_DIGEST_NONE?0:4))
 
 #define ISCSI_PDU_IMMEDIATE		       0x40
 
@@ -139,29 +152,28 @@ int iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 struct scsi_task;
 void iscsi_pdu_set_cdb(struct iscsi_pdu *pdu, struct scsi_task *task);
 
-int iscsi_get_pdu_size(struct iscsi_context *iscsi, const unsigned char *hdr);
-int iscsi_process_pdu(struct iscsi_context *iscsi, const unsigned char *hdr,
-		      int size);
+int iscsi_get_pdu_data_size(const unsigned char *hdr);
+int iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 
 int iscsi_process_login_reply(struct iscsi_context *iscsi,
 			      struct iscsi_pdu *pdu,
-			      const unsigned char *hdr, int size);
+			      struct iscsi_in_pdu *in);
 int iscsi_process_text_reply(struct iscsi_context *iscsi,
 			     struct iscsi_pdu *pdu,
-			     const unsigned char *hdr, int size);
+			     struct iscsi_in_pdu *in);
 int iscsi_process_logout_reply(struct iscsi_context *iscsi,
 			       struct iscsi_pdu *pdu,
-			       const unsigned char *hdr, int size);
+			       struct iscsi_in_pdu *in);
 int iscsi_process_scsi_reply(struct iscsi_context *iscsi,
 			     struct iscsi_pdu *pdu,
-			     const unsigned char *hdr, int size);
+			     struct iscsi_in_pdu *in);
 int iscsi_process_scsi_data_in(struct iscsi_context *iscsi,
 			       struct iscsi_pdu *pdu,
-			       const unsigned char *hdr, int size,
+			       struct iscsi_in_pdu *in,
 			       int *is_finished);
 int iscsi_process_nop_out_reply(struct iscsi_context *iscsi,
 				struct iscsi_pdu *pdu,
-				const unsigned char *hdr, int size);
+				struct iscsi_in_pdu *in);
 
 void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
 		     ...);

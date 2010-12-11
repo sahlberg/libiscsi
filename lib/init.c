@@ -143,11 +143,11 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	free(discard_const(iscsi->alias));
 	iscsi->alias = NULL;
 
-	if (iscsi->inbuf != NULL) {
-		free(iscsi->inbuf);
-		iscsi->inbuf = NULL;
-		iscsi->insize = 0;
-		iscsi->inpos = 0;
+	if (iscsi->incoming != NULL) {
+		iscsi_free_iscsi_in_pdu(iscsi->incoming);
+	}
+	if (iscsi->inqueue != NULL) {
+		iscsi_free_iscsi_inqueue(iscsi->inqueue);
 	}
 
 	free(iscsi->error_string);
@@ -205,3 +205,5 @@ iscsi_is_logged_in(struct iscsi_context *iscsi)
 {
 	return iscsi->is_loggedin;
 }
+
+

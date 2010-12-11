@@ -73,16 +73,16 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 int
 iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
-			    const unsigned char *hdr, int size)
+			    struct iscsi_in_pdu *in)
 {
 	struct iscsi_data data;
 
 	data.data = NULL;
 	data.size = 0;
 
-	if (size > ISCSI_HEADER_SIZE) {
-		data.data = discard_const(&hdr[ISCSI_HEADER_SIZE]);
-		data.size = size - ISCSI_HEADER_SIZE;
+	if (in->data_pos > ISCSI_HEADER_SIZE) {
+		data.data = in->data;
+		data.size = in->data_pos;
 	}
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, &data, pdu->private_data);
 

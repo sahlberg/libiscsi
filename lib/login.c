@@ -245,9 +245,11 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 int
 iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
-			  const unsigned char *hdr, int size)
+			  struct iscsi_in_pdu *in)
 {
 	int status;
+	unsigned char *ptr = in->data;
+	int size = in->data_pos;
 
 	if (size < ISCSI_HEADER_SIZE) {
 		iscsi_set_error(iscsi, "dont have enough data to read status "
@@ -255,28 +257,25 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		return -1;
 	}
 
-	status = ntohs(*(uint16_t *)&hdr[36]);
+	status = ntohs(*(uint16_t *)&in->hdr[36]);
 	if (status != 0) {
 		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 			      pdu->private_data);
 		return 0;
 	}
 
-	iscsi->statsn = ntohs(*(uint16_t *)&hdr[24]);
+	iscsi->statsn = ntohs(*(uint16_t *)&in->hdr[24]);
 
 	/* XXX here we should parse the data returned in case the target
 	 * renegotiated some some parameters.
 	 *  we should also do proper handshaking if the target is not yet
 	 * prepared to transition to the next stage
 	 */
-	/* skip past the header */
-	hdr  += ISCSI_HEADER_SIZE;
-	size -= ISCSI_HEADER_SIZE;
 
 	while (size > 0) {
 		int len;
 
-		len = strlen((char *)hdr);
+		len = strlen((char *)ptr);
 
 		if (len == 0) {
 			break;
@@ -291,8 +290,8 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		}
 
 		/* parse the strings */
-		if (!strncmp((char *)hdr, "HeaderDigest=", 13)) {
-			if (!strcmp((char *)hdr + 13, "CRC32C")) {
+		if (!strncmp((char *)ptr, "HeaderDigest=", 13)) {
+			if (!strcmp((char *)ptr + 13, "CRC32C")) {
 				iscsi->header_digest
 				  = ISCSI_HEADER_DIGEST_CRC32C;
 			} else {
@@ -301,7 +300,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			}
 		}
 
-		hdr  += len + 1;
+		ptr  += len + 1;
 		size -= len + 1;
 	}
 
@@ -354,7 +353,7 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 int
 iscsi_process_logout_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
-const unsigned char *hdr _U_, int size _U_)
+struct iscsi_in_pdu *in _U_)
 {
 	iscsi->is_loggedin = 0;
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
