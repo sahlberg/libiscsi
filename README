@@ -1,3 +1,20 @@
+Libiscsi is a clientside library to implement the iSCSI protocol
+that can be used to access resource of an iSCSI Target.
+
+The library is fully async with regards to iscsi commands and scsi
+tasks, but a sync layer is also provided for ease of use for simpler
+applications.
+
+
+The src directory contain a handful of useful iscsi utilities
+such as logging in to and enumerating all targets on a portal
+and all devices of a target.
+
+The examples directory contain example implementation of how to
+access both the sync and acync api of libiscsi.
+
+
+
 Libiscsi is a work in progress.
 It aims to become a full async library for iscsi functionality,
 including all features required to establish and maintain a iscsi

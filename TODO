@@ -25,7 +25,9 @@ Some features that should be added
 * Task management functions
 
 * Integrate with other relevant utilities such as 
-  mtx, dverecord, ...
+  mtx,
+  dverecord,
+  ...
 
 * Data Digest
 
