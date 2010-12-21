@@ -76,6 +76,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %{_bindir}/iscsi-ls
 %{_bindir}/iscsi-inq
+%{_libdir}/libiscsi.so.1.0.0
 
 %package devel
 Summary: iSCSI client development libraries
@@ -89,7 +90,6 @@ development libraries for iSCSI
 %{_includedir}/iscsi/iscsi.h
 %{_includedir}/iscsi/scsi-lowlevel.h
 %{_libdir}/libiscsi.a
-%{_libdir}/libiscsi.so.1.0.0
 
 %changelog
 * Sat Dec 4 2010 : Version 1.0.0
