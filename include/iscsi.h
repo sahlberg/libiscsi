@@ -18,6 +18,15 @@
 struct iscsi_context;
 struct sockaddr;
 
+struct iscsi_url {
+       const char *portal;
+       const char *target;
+       int lun;
+};
+
+struct iscsi_url *iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url);
+void iscsi_destroy_url(struct iscsi_url *iscsi_url);
+
 
 const char *iscsi_get_error(struct iscsi_context *iscsi);
 

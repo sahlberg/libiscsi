@@ -157,9 +157,8 @@ int main(int argc, const char *argv[])
 	struct iscsi_context *iscsi;
 	const char **extra_argv;
 	int extra_argc = 0;
-	char *portal = NULL;
-	char *target = NULL;
-	char *lun = NULL;
+	const char *url = NULL;
+	struct iscsi_url *iscsi_url = NULL;
 	int evpd = 0, pagecode = 0;
 	int res;
 
@@ -179,7 +178,7 @@ int main(int argc, const char *argv[])
 	}
 	extra_argv = poptGetArgs(pc);
 	if (extra_argv) {
-		portal = strdup(*extra_argv);
+		url = *extra_argv;
 		extra_argv++;
 		while (extra_argv[extra_argc]) {
 			extra_argc++;
@@ -187,50 +186,31 @@ int main(int argc, const char *argv[])
 	}
 	poptFreeContext(pc);
 
-	if (portal == NULL) {
-		fprintf(stderr, "You must specify target portal\n");
-		fprintf(stderr, "%s [options] iscsi://<host>[:<port>]/<target-iqn>/<lun>\n", argv[0]);
-		exit(10);
-	}
-	if (strncmp(portal, "iscsi://", 8)) {
-		fprintf(stderr, "Incorrect portal specified\n");
-		fprintf(stderr, "Portal is specified as \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n");
-		exit(10);
-	}
-	portal += 8;
-
-	target = index(portal, '/');
-	if (target == NULL) {
-		fprintf(stderr, "You must specify target-iqn name\n");
-		fprintf(stderr, "Portal is specified as \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n");
-		exit(10);
-	}
-	*target++ = 0;
-
-	lun = index(target, '/');
-	if (lun == NULL) {
-		fprintf(stderr, "You must specify target-iqn name\n");
-		fprintf(stderr, "Portal is specified as \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n");
-		exit(10);
-	}
-	*lun++ = 0;
-
 	iscsi = iscsi_create_context(initiator);
 	if (iscsi == NULL) {
 		fprintf(stderr, "Failed to create context\n");
 		exit(10);
 	}
 
-	iscsi_set_targetname(iscsi, target);
-	iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
-	iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-
-	if (iscsi_full_connect_sync(iscsi, portal, atoi(lun)) != 0) {
-		fprintf(stderr, "Failed to log in to target %s\n", iscsi_get_error(iscsi));
+	iscsi_url = iscsi_parse_full_url(iscsi, url);
+	if (iscsi_url == NULL) {
+		fprintf(stderr, "Failed to parse URL : %s\n", url);
 		exit(10);
 	}
 
-	do_inquiry(iscsi, atoi(lun), evpd, pagecode);
+	iscsi_set_targetname(iscsi, iscsi_url->target);
+	iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
+	iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
+
+	if (iscsi_full_connect_sync(iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
+		fprintf(stderr, "Failed to log in to target %s\n", iscsi_get_error(iscsi));
+		iscsi_destroy_url(iscsi_url);
+		iscsi_destroy_context(iscsi);
+		exit(10);
+	}
+
+	do_inquiry(iscsi, iscsi_url->lun, evpd, pagecode);
+	iscsi_destroy_url(iscsi_url);
 
 	iscsi_logout_sync(iscsi);
 	iscsi_destroy_context(iscsi);

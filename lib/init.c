@@ -206,4 +206,79 @@ iscsi_is_logged_in(struct iscsi_context *iscsi)
 	return iscsi->is_loggedin;
 }
 
+struct iscsi_url *
+iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
+{
+	struct iscsi_url *iscsi_url;
+	char *portal;
+	char *target;
+	char *lun;
 
+	if (strncmp(url, "iscsi://", 8)) {
+		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI URL must be of the form \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n", url);
+		return NULL;
+	}
+
+	portal = strdup(url + 8);
+	if (portal == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup url %s\n", url);
+		return NULL;
+	}
+
+	target = index(portal, '/');
+	if (target == NULL) {
+		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI URL must be of the form \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n", url);
+		free(portal);
+		return NULL;
+	}
+	*target++ = 0;
+
+	lun = index(target, '/');
+	if (lun == NULL) {
+		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI URL must be of the form \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n", url);
+		free(portal);
+		return NULL;
+	}
+	*lun++ = 0;
+
+
+	iscsi_url = malloc(sizeof(struct iscsi_url));
+	if (iscsi_url == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate iscsi_url structure\n");
+		free(portal);
+		return NULL;
+	}
+	memset(iscsi_url, 0, sizeof(struct iscsi_url));
+
+	iscsi_url->portal = strdup(portal);
+	if (iscsi_url->portal == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup portal string\n");
+		iscsi_destroy_url(iscsi_url);
+		free(portal);
+		return NULL;
+	}
+
+	iscsi_url->target = strdup(target);
+	if (iscsi_url->target == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup target string\n");
+		iscsi_destroy_url(iscsi_url);
+		free(portal);
+		return NULL;
+	}
+	
+	iscsi_url->lun = atoi(lun);
+	free(portal);
+	return iscsi_url;
+}
+
+void
+iscsi_destroy_url(struct iscsi_url *iscsi_url)
+{
+	if (iscsi_url == NULL) {
+		return;
+	}
+
+	free(discard_const(iscsi_url->portal));
+	free(discard_const(iscsi_url->target));
+	free(iscsi_url);
+}
