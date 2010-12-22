@@ -9,13 +9,6 @@ Some features that should be added
   from the socket into the buffer the application specified instead of as now
   we pass the data to a callback and then copy it.
 
-* CHAP authentication.
-  Here is probably best to start by adding chap dissection and verification
-  to wireshark first to use as a verification tool until the handshakes
-  to the terget become successful.
-
-* More sophisticated handshaking during login
-
 * More scsi marshalling and unmarshalling functions in scsi-lowlevel
 
 * Autoconnect for session faiulures.
