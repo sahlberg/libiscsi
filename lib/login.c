@@ -243,6 +243,31 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	return 0;
 }
 
+static const char *login_error_str(int status)
+{
+	switch (status) {
+	case 0x0101: return "Target moved temporarily";
+	case 0x0102: return "Target moved permanently";
+	case 0x0200: return "Initiator error";
+	case 0x0201: return "Authentication failure";
+	case 0x0202: return "Authorization failure";
+	case 0x0203: return "Target not found";
+	case 0x0204: return "Target removed";
+	case 0x0205: return "Unsupported version";
+	case 0x0206: return "Too many connections";
+	case 0x0207: return "Missing parameter";
+	case 0x0208: return "Can't include in session";
+	case 0x0209: return "Session type not supported";
+	case 0x020a: return "Session does not exist";
+	case 0x020b: return "Invalid during login";
+	case 0x0300: return "Target error";
+	case 0x0301: return "Service unavailable";
+	case 0x0302: return "Out of resources";
+	}
+	return "Unknown login error";
+}
+
+
 int
 iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			  struct iscsi_in_pdu *in)
@@ -251,14 +276,10 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	unsigned char *ptr = in->data;
 	int size = in->data_pos;
 
-	if (size < ISCSI_HEADER_SIZE) {
-		iscsi_set_error(iscsi, "dont have enough data to read status "
-				"from login reply");
-		return -1;
-	}
-
 	status = ntohs(*(uint16_t *)&in->hdr[36]);
 	if (status != 0) {
+		iscsi_set_error(iscsi, "Failed to log in to target. Status: %s(%d)\n",
+				       login_error_str(status), status);
 		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 			      pdu->private_data);
 		return 0;
