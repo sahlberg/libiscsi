@@ -44,6 +44,10 @@ struct iscsi_context {
 	const char *initiator_name;
 	const char *target_name;
 	const char *alias;
+
+	const char *user;
+	const char *passwd;
+
 	enum iscsi_session_type session_type;
 	unsigned char isid[6];
 	uint32_t itt;
@@ -56,7 +60,19 @@ struct iscsi_context {
 
 	int fd;
 	int is_connected;
+
+	int current_phase;
+	int next_phase;
+#define ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP         0
+#define ISCSI_LOGIN_SECNEG_PHASE_SELECT_ALGORITHM   1
+#define ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE      2
+	int secneg_phase;
+	int login_attempts;
 	int is_loggedin;
+
+	int chap_a;
+	int chap_i;
+	char *chap_c;
 
 	iscsi_command_cb socket_status_cb;
 	void *connect_data;

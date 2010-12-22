@@ -25,14 +25,478 @@
 #include <arpa/inet.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
+#include "md5.h"
+
+static int
+iscsi_login_add_initiatorname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	/* We only send InitiatorName during opneg or the first leg of secneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
+	&& iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
+		return 0;
+	}
+
+	if (iscsi_pdu_add_data(iscsi, pdu,
+			(unsigned char *)"InitiatorName=",
+			 14) != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
+				"failed for InitiatorName.");
+		return -1;
+	}
+	if (iscsi_pdu_add_data(iscsi, pdu,
+			       (unsigned char *)iscsi->initiator_name,
+			       strlen(iscsi->initiator_name) +1) != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
+				"failed for InitiatorName.");
+		return -1;
+	}
+	return 0;
+}
+
+static int
+iscsi_login_add_alias(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	/* We only send InitiatorAlias during opneg or the first leg of secneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
+	&& iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
+		return 0;
+	}
+
+	if (iscsi_pdu_add_data(iscsi, pdu,
+			       (unsigned char *)"InitiatorAlias=",
+			       15) != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
+				"failed.");
+		return -1;
+	}
+	if (iscsi_pdu_add_data(iscsi, pdu,
+			       (unsigned char *)iscsi->alias,
+			       strlen(iscsi->alias) +1) != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
+				"failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_targetname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	/* We only send TargetName during opneg or the first leg of secneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
+	&& iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
+		return 0;
+	}
+
+	if (iscsi->target_name == NULL) {
+		iscsi_set_error(iscsi, "Trying normal connect but "
+				"target name not set.");
+		return -1;
+	}
+
+	if (iscsi_pdu_add_data(iscsi, pdu,
+			       (unsigned char *)"TargetName=",
+			       11) != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
+				"failed.");
+		return -1;
+	}
+	if (iscsi_pdu_add_data(iscsi, pdu,
+			       (unsigned char *)iscsi->target_name,
+			       strlen(iscsi->target_name) +1) != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
+				"failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_sessiontype(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send TargetName during opneg or the first leg of secneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
+	&& iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
+		return 0;
+	}
+
+	switch (iscsi->session_type) {
+	case ISCSI_SESSION_DISCOVERY:
+		str = (char *)"SessionType=Discovery";
+		break;
+	case ISCSI_SESSION_NORMAL:
+		str = (char *)"SessionType=Normal";
+		break;
+	default:
+		iscsi_set_error(iscsi, "Can not handle sessions %d yet.",
+				iscsi->session_type);
+		return -1;
+	}
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_headerdigest(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send HeaderDigest during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	switch (iscsi->want_header_digest) {
+	case ISCSI_HEADER_DIGEST_NONE:
+		str = (char *)"HeaderDigest=None";
+		break;
+	case ISCSI_HEADER_DIGEST_NONE_CRC32C:
+		str = (char *)"HeaderDigest=None,CRC32C";
+		break;
+	case ISCSI_HEADER_DIGEST_CRC32C_NONE:
+		str = (char *)"HeaderDigest=CRC32C,None";
+		break;
+	case ISCSI_HEADER_DIGEST_CRC32C:
+		str = (char *)"HeaderDigest=CRC32C";
+		break;
+	}
+
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_datadigest(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send DataDigest during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	str = (char *)"DataDigest=None";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_initialr2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send InitialR2T during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	str = (char *)"InitialR2T=Yes";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_immediatedata(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send ImmediateData during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	str = (char *)"ImmediateData=Yes";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_maxburstlength(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send MaxBurstLength during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	str = (char *)"MaxBurstLength=262144";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_firstburstlength(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send FirstBurstLength during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	str = (char *)"FirstBurstLength=262144";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_maxrecvdatasegmentlength(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send MaxRecvDataSegmentLength during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	str = (char *)"MaxRecvDataSegmentLength=262144";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_datapduinorder(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send DataPduInOrder during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	str = (char *)"DataPDUInOrder=Yes";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_datasequenceinorder(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send DataSequenceInOrder during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	str = (char *)"DataSequenceInOrder=Yes";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_authmethod(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_SECNEG
+	|| iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
+		return 0;
+	}
+
+	str = (char *)"AuthMethod=CHAP,None";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+	
+static int
+iscsi_login_add_authalgorithm(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_SECNEG
+	|| iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_SELECT_ALGORITHM) {
+		return 0;
+	}
+
+	str = (char *)"CHAP_A=5";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+	
+static int
+iscsi_login_add_chap_username(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_SECNEG
+	|| iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE) {
+		return 0;
+	}
+
+	str = (char *)"CHAP_N=";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str))
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+	if (iscsi_pdu_add_data(iscsi, pdu,
+			       (unsigned char *)iscsi->user,
+			       strlen(iscsi->user) +1) != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
+				"failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+h2i(int h)
+{
+	if (h >= 'a' && h <= 'f') {
+		return h - 'a' + 10;
+	}
+	if (h >= 'A' && h <= 'F') {
+		return h - 'A' + 10;
+	}
+	return h - '0';
+}
+static int
+i2h(int i)
+{
+	if (i >= 10) {
+		return i - 10 + 'A';
+	}
+
+	return i + '0';
+}
+
+static int
+iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+	unsigned char c, cc[2];
+	unsigned char digest[16];
+	struct MD5Context ctx;
+	int i;
+
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_SECNEG
+	|| iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE) {
+		return 0;
+	}
+
+	if (iscsi->chap_c == NULL) {
+		iscsi_set_error(iscsi, "No CHAP challenge found");
+		return -1;
+	}
+	MD5Init(&ctx);
+	c = iscsi->chap_i;
+	MD5Update(&ctx, &c, 1);
+	MD5Update(&ctx, (unsigned char *)iscsi->passwd, strlen(iscsi->passwd));
+	str = iscsi->chap_c;
+	while (*str != 0) {
+		c = (h2i(str[0]) << 4) | h2i(str[1]);
+		str += 2;
+		MD5Update(&ctx, &c, 1);
+	}
+	MD5Final(digest, &ctx);
+
+	str = (char *)"CHAP_R=0x";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str))
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	for (i=0; i<16; i++) {
+		c = digest[i];
+		cc[0] = i2h((c >> 4)&0x0f);
+		cc[1] = i2h((c     )&0x0f);
+		if (iscsi_pdu_add_data(iscsi, pdu, &cc, 2) != 0) {
+			iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
+				"failed.");
+			return -1;
+		}
+	}
+	c = 0;
+	if (iscsi_pdu_add_data(iscsi, pdu, &c, 1) != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
+			"failed.");
+		return -1;
+	}
+
+	return 0;
+}
 
 int
 iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		  void *private_data)
 {
 	struct iscsi_pdu *pdu;
-	char *str;
+	int transit;
 
+	if (iscsi->login_attempts++ > 10) {
+		iscsi_set_error(iscsi, "login took too many tries."
+				" giving up.");
+		return -1;
+	}
+ 
 	if (iscsi->is_loggedin != 0) {
 		iscsi_set_error(iscsi, "Trying to login while already logged "
 				"in.");
@@ -60,45 +524,45 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	/* login request */
 	iscsi_pdu_set_immediate(pdu);
 
+	if (iscsi->user == NULL) {
+		iscsi->current_phase = ISCSI_PDU_LOGIN_CSG_OPNEG;
+	}
+
+	if (iscsi->current_phase == ISCSI_PDU_LOGIN_CSG_SECNEG) {
+		iscsi->next_phase    = ISCSI_PDU_LOGIN_NSG_OPNEG;
+	}
+	if (iscsi->current_phase == ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		iscsi->next_phase    = ISCSI_PDU_LOGIN_NSG_FF;
+	}
+
+	transit = 0;
+	if (iscsi->current_phase == ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		transit = ISCSI_PDU_LOGIN_TRANSIT;
+	}
+	if (iscsi->current_phase == ISCSI_PDU_LOGIN_CSG_SECNEG) {
+		if (iscsi->secneg_phase == ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
+			transit = ISCSI_PDU_LOGIN_TRANSIT;
+		}
+		if (iscsi->secneg_phase == ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE) {
+			transit = ISCSI_PDU_LOGIN_TRANSIT;
+		}
+	}
+
 	/* flags */
-	iscsi_pdu_set_pduflags(pdu, ISCSI_PDU_LOGIN_TRANSIT
-					| ISCSI_PDU_LOGIN_CSG_OPNEG
-					| ISCSI_PDU_LOGIN_NSG_FF);
+	iscsi_pdu_set_pduflags(pdu, transit
+					| iscsi->current_phase
+					| iscsi->next_phase);
 
 
 	/* initiator name */
-	if (iscsi_pdu_add_data(iscsi, pdu,
-			       (unsigned char *)"InitiatorName=",
-			       14) != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
-				"failed.");
-		iscsi_free_pdu(iscsi, pdu);
-		return -1;
-	}
-	if (iscsi_pdu_add_data(iscsi, pdu,
-			       (unsigned char *)iscsi->initiator_name,
-			       strlen(iscsi->initiator_name) +1) != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
-				"failed.");
+	if (iscsi_login_add_initiatorname(iscsi, pdu) != 0) {
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
 
 	/* optional alias */
 	if (iscsi->alias) {
-		if (iscsi_pdu_add_data(iscsi, pdu,
-				       (unsigned char *)"InitiatorAlias=",
-				       15) != 0) {
-			iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
-					"failed.");
-			iscsi_free_pdu(iscsi, pdu);
-			return -1;
-		}
-		if (iscsi_pdu_add_data(iscsi, pdu,
-				       (unsigned char *)iscsi->alias,
-				       strlen(iscsi->alias) +1) != 0) {
-			iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
-					"failed.");
+		if (iscsi_login_add_alias(iscsi, pdu) != 0) {
 			iscsi_free_pdu(iscsi, pdu);
 			return -1;
 		}
@@ -106,125 +570,92 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 	/* target name */
 	if (iscsi->session_type == ISCSI_SESSION_NORMAL) {
-		if (iscsi->target_name == NULL) {
-			iscsi_set_error(iscsi, "Trying normal connect but "
-					"target name not set.");
-			iscsi_free_pdu(iscsi, pdu);
-			return -1;
-		}
-
-		if (iscsi_pdu_add_data(iscsi, pdu,
-				       (unsigned char *)"TargetName=",
-				       11) != 0) {
-			iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
-					"failed.");
-			iscsi_free_pdu(iscsi, pdu);
-			return -1;
-		}
-		if (iscsi_pdu_add_data(iscsi, pdu,
-				       (unsigned char *)iscsi->target_name,
-				       strlen(iscsi->target_name) +1) != 0) {
-			iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
-					"failed.");
+		if (iscsi_login_add_targetname(iscsi, pdu) != 0) {
 			iscsi_free_pdu(iscsi, pdu);
 			return -1;
 		}
 	}
 
 	/* session type */
-	switch (iscsi->session_type) {
-	case ISCSI_SESSION_DISCOVERY:
-		str = (char *)"SessionType=Discovery";
-		break;
-	case ISCSI_SESSION_NORMAL:
-		str = (char *)"SessionType=Normal";
-		break;
-	default:
-		iscsi_set_error(iscsi, "Can not handle sessions %d yet.",
-				iscsi->session_type);
-		return -1;
-	}
-	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
-	    != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+	if (iscsi_login_add_sessiontype(iscsi, pdu) != 0) {
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
 
-	switch (iscsi->want_header_digest) {
-	case ISCSI_HEADER_DIGEST_NONE:
-		str = (char *)"HeaderDigest=None";
-		break;
-	case ISCSI_HEADER_DIGEST_NONE_CRC32C:
-		str = (char *)"HeaderDigest=None,CRC32C";
-		break;
-	case ISCSI_HEADER_DIGEST_CRC32C_NONE:
-		str = (char *)"HeaderDigest=CRC32C,None";
-		break;
-	case ISCSI_HEADER_DIGEST_CRC32C:
-		str = (char *)"HeaderDigest=CRC32C";
-		break;
+	/* header digest */
+	if (iscsi_login_add_headerdigest(iscsi, pdu) != 0) {
+		iscsi_free_pdu(iscsi, pdu);
+		return -1;
 	}
 
-	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
-	    != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+	/* auth method */
+	if (iscsi_login_add_authmethod(iscsi, pdu) != 0) {
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
-	str = (char *)"DataDigest=None";
-	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
-	    != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+
+	/* auth algorithm */
+	if (iscsi_login_add_authalgorithm(iscsi, pdu) != 0) {
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
-	str = (char *)"InitialR2T=Yes";
-	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
-	    != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+
+	/* chap username */
+	if (iscsi_login_add_chap_username(iscsi, pdu) != 0) {
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
-	str = (char *)"ImmediateData=Yes";
-	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
-	    != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+
+	/* chap response */
+	if (iscsi_login_add_chap_response(iscsi, pdu) != 0) {
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
-	str = (char *)"MaxBurstLength=262144";
-	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
-	    != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+
+	/* data digest */
+	if (iscsi_login_add_datadigest(iscsi, pdu) != 0) {
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
-	str = (char *)"FirstBurstLength=262144";
-	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
-	    != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+
+	/* initial r2t */
+	if (iscsi_login_add_initialr2t(iscsi, pdu) != 0) {
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
-	str = (char *)"MaxRecvDataSegmentLength=262144";
-	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
-	    != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+
+	/* immediate data */
+	if (iscsi_login_add_immediatedata(iscsi, pdu) != 0) {
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
-	str = (char *)"DataPDUInOrder=Yes";
-	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
-	    != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+
+	/* max burst length */
+	if (iscsi_login_add_maxburstlength(iscsi, pdu) != 0) {
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
-	str = (char *)"DataSequenceInOrder=Yes";
-	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
-	    != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+
+	/* first burst length */
+	if (iscsi_login_add_firstburstlength(iscsi, pdu) != 0) {
+		iscsi_free_pdu(iscsi, pdu);
+		return -1;
+	}
+
+	/* max recv data segment length */
+	if (iscsi_login_add_maxrecvdatasegmentlength(iscsi, pdu) != 0) {
+		iscsi_free_pdu(iscsi, pdu);
+		return -1;
+	}
+
+	/* data pdu in order */
+	if (iscsi_login_add_datapduinorder(iscsi, pdu) != 0) {
+		iscsi_free_pdu(iscsi, pdu);
+		return -1;
+	}
+
+	/* data sequence in order */
+	if (iscsi_login_add_datasequenceinorder(iscsi, pdu) != 0) {
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
@@ -321,13 +752,51 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			}
 		}
 
+		if (!strncmp((char *)ptr, "AuthMethod=", 11)) {
+			if (!strcmp((char *)ptr + 11, "CHAP")) {
+				iscsi->secneg_phase = ISCSI_LOGIN_SECNEG_PHASE_SELECT_ALGORITHM;
+			}
+		}
+
+		if (!strncmp((char *)ptr, "CHAP_A=", 7)) {
+			iscsi->chap_a = atoi((char *)ptr+7);
+			iscsi->secneg_phase = ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE;
+		}
+
+		if (!strncmp((char *)ptr, "CHAP_I=", 7)) {
+			iscsi->chap_i = atoi((char *)ptr+7);
+			iscsi->secneg_phase = ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE;
+		}
+
+		if (!strncmp((char *)ptr, "CHAP_C=0x", 9)) {
+			free(iscsi->chap_c);
+			iscsi->chap_c = strdup((char *)ptr+9);
+			if (iscsi->chap_c == NULL) {
+				iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup CHAP challenge\n");
+				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL, pdu->private_data);
+				return -1;
+			}
+			iscsi->secneg_phase = ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE;
+		}
+
 		ptr  += len + 1;
 		size -= len + 1;
 	}
 
+	if (in->hdr[1] & ISCSI_PDU_LOGIN_TRANSIT) {
+		iscsi->current_phase = (in->hdr[1] & ISCSI_PDU_LOGIN_NSG_FF) << 2;
+	}
 
-	iscsi->is_loggedin = 1;
-	pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
+	if ((in->hdr[1] & ISCSI_PDU_LOGIN_TRANSIT)
+	&& (in->hdr[1] & ISCSI_PDU_LOGIN_NSG_FF) == ISCSI_PDU_LOGIN_NSG_FF) {
+		iscsi->is_loggedin = 1;
+		pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
+	} else {
+		if (iscsi_login_async(iscsi, pdu->callback, pdu->private_data) != 0) {
+			iscsi_set_error(iscsi, "Failed to send continuation login pdu");
+			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL, pdu->private_data);
+		}
+	}
 
 	return 0;
 }
@@ -338,6 +807,8 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		   void *private_data)
 {
 	struct iscsi_pdu *pdu;
+
+	iscsi->login_attempts = 0;
 
 	if (iscsi->is_loggedin == 0) {
 		iscsi_set_error(iscsi, "Trying to logout while not logged in.");

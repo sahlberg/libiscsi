@@ -21,6 +21,8 @@ struct sockaddr;
 struct iscsi_url {
        const char *portal;
        const char *target;
+       const char *user;
+       const char *passwd;
        int lun;
 };
 
@@ -134,6 +136,12 @@ enum iscsi_header_digest {
 int iscsi_set_header_digest(struct iscsi_context *iscsi,
 			    enum iscsi_header_digest header_digest);
 
+/*
+ * Specify the username and password to use for chap authentication
+ */
+int iscsi_set_initiator_username_pwd(struct iscsi_context *iscsi,
+    					    const char *user,
+					    const char *passwd);
 
 /*
  * check if the context is logged in or not
