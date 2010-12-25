@@ -234,7 +234,7 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 	char *tmp;
 
 	if (strncmp(url, "iscsi://", 8)) {
-		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI URL must be of the form \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n", url);
+		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI URL must be of the form \"iscsi://[<username>[%<password>]@]<host>[:<port>]/<target-iqn>/<lun>\"\n", url);
 		return NULL;
 	}
 
