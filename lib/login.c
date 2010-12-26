@@ -468,7 +468,7 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		c = digest[i];
 		cc[0] = i2h((c >> 4)&0x0f);
 		cc[1] = i2h((c     )&0x0f);
-		if (iscsi_pdu_add_data(iscsi, pdu, &cc, 2) != 0) {
+		if (iscsi_pdu_add_data(iscsi, pdu, &cc[0], 2) != 0) {
 			iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
 				"failed.");
 			return -1;
