@@ -27,6 +27,7 @@
 #include <poll.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "slist.h"
@@ -81,10 +82,22 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	sin->sin_family = AF_INET;
 	sin->sin_port   = htons(port);
 	if (inet_pton(AF_INET, addr, &sin->sin_addr) != 1) {
-		iscsi_set_error(iscsi, "Invalid target:%s  "
-				"Failed to convert to ip address.", addr);
-		free(addr);
-		return -1;
+		struct hostent *he;
+
+		he = gethostbyname2(addr, AF_INET);
+		if (he == NULL) {
+			iscsi_set_error(iscsi, "Invalid target:%s  "
+					"Failed to resolve hostname.", addr);
+			free(addr);
+			return -1;
+		}
+		if (he->h_addrtype != AF_INET) {
+			iscsi_set_error(iscsi, "Invalid target:%s  "
+					"Can not resolve into IPv4.", addr);
+			free(addr);
+			return -1;
+		}
+		sin->sin_addr.s_addr = *(uint32_t *)he->h_addr_list[0];
 	}
 	free(addr);
 
