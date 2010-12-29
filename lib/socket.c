@@ -165,11 +165,7 @@ iscsi_get_fd(struct iscsi_context *iscsi)
 int
 iscsi_which_events(struct iscsi_context *iscsi)
 {
-	int events = POLLIN;
-
-	if (iscsi->is_connected == 0) {
-		events |= POLLOUT;
-	}
+	int events = iscsi->is_connected ? POLLIN : POLLOUT;
 
 	if (iscsi->outqueue) {
 		events |= POLLOUT;
