@@ -232,9 +232,13 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 	char *target;
 	char *lun;
 	char *tmp;
+	int l;
 
 	if (strncmp(url, "iscsi://", 8)) {
-		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI URL must be of the form \"iscsi://[<username>[%%<password>]@]<host>[:<port>]/<target-iqn>/<lun>\"\n", url);
+		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI URL must be of "
+				"the form "
+				"\"iscsi://[<username>[%%<password>]@]"
+				"<host>[:<port>]/<target-iqn>/<lun>\"\n", url);
 		return NULL;
 	}
 
@@ -260,7 +264,10 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 
 	target = index(portal, '/');
 	if (target == NULL) {
-		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI URL must be of the form \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n", url);
+		iscsi_set_error(iscsi, "Invalid URL %s\nCould not parse "
+				"'<target-iqn>'\niSCSI URL must be of the form "
+				"\"iscsi://[<username>[%%<password>]@]"
+				"<host>[:<port>]/<target-iqn>/<lun>\"\n", url);
 		free(str);
 		return NULL;
 	}
@@ -268,12 +275,23 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 
 	lun = index(target, '/');
 	if (lun == NULL) {
-		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI URL must be of the form \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n", url);
+		iscsi_set_error(iscsi, "Invalid URL %s\nCould not parse <lun>\n"
+				"iSCSI URL must be of the form \"iscsi://"
+				"<host>[:<port>]/<target-iqn>/<lun>\"\n", url);
 		free(str);
 		return NULL;
 	}
 	*lun++ = 0;
 
+	l = strtol(lun, &tmp, 10);
+	if (*lun == 0 || *tmp != 0) {
+		iscsi_set_error(iscsi, "Invalid URL %s\nCould not parse <lun>\n"
+				"iSCSI URL must be of the form \"iscsi://"
+				"<host>[:<port>]/<target-iqn>/<lun>\"\n",
+				url);
+		free(str);
+		return NULL;
+	}
 
 	iscsi_url = malloc(sizeof(struct iscsi_url));
 	if (iscsi_url == NULL) {
@@ -319,7 +337,7 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 		}
 	}
 	
-	iscsi_url->lun = atoi(lun);
+	iscsi_url->lun = l;
 	free(str);
 	return iscsi_url;
 }

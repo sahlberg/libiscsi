@@ -194,12 +194,14 @@ int main(int argc, const char *argv[])
 
 	if (url == NULL) {
 		fprintf(stderr, "You must specify the URL\n");
-		fprintf(stderr, "   iscsi://[<username>[%%<password>]@]<host>[:<port>]/<target-iqn>/<lun>\n");
+		fprintf(stderr, "   iscsi://[<username>[%%<password>]@]<host>"
+			"[:<port>]/<target-iqn>/<lun>\n");
 		exit(10);
 	}
 	iscsi_url = iscsi_parse_full_url(iscsi, url);
 	if (iscsi_url == NULL) {
-		fprintf(stderr, "Failed to parse URL : %s %s\n", url, iscsi_get_error(iscsi));
+		fprintf(stderr, "Failed to parse URL: %s\n", 
+			iscsi_get_error(iscsi));
 		exit(10);
 	}
 
