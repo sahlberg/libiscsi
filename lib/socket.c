@@ -302,8 +302,21 @@ int
 iscsi_service(struct iscsi_context *iscsi, int revents)
 {
 	if (revents & POLLERR) {
-		iscsi_set_error(iscsi, "iscsi_service: POLLERR, "
-				"socket error.");
+		int err = 0;
+		socklen_t err_size = sizeof(err);
+
+		if (getsockopt(iscsi->fd, SOL_SOCKET, SO_ERROR,
+			       &err, &err_size) != 0 || err != 0) {
+			if (err == 0) {
+				err = errno;
+			}
+			iscsi_set_error(iscsi, "iscsi_service: socket error "
+					"%s(%d).",
+					strerror(err), err);
+		} else {
+			iscsi_set_error(iscsi, "iscsi_service: POLLERR, "
+					"Unknown socket error.");
+		}
 		iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR, NULL,
 					iscsi->connect_data);
 		return -1;
