@@ -18,6 +18,31 @@
 struct iscsi_context;
 struct sockaddr;
 
+
+
+
+/*
+ * The following three functions are used to integrate libiscsi in an event
+ * system.
+ */
+/*
+ * Returns the file descriptor that libiscsi uses.
+ */
+int iscsi_get_fd(struct iscsi_context *iscsi);
+/*
+ * Returns which events that we need to poll for for the iscsi file descriptor.
+ */
+int iscsi_which_events(struct iscsi_context *iscsi);
+/*
+ * Called to process the events when events become available for the iscsi
+ * file descriptor.
+ */
+int iscsi_service(struct iscsi_context *iscsi, int revents);
+
+
+
+
+
 struct iscsi_url {
        const char *portal;
        const char *target;
@@ -26,29 +51,25 @@ struct iscsi_url {
        int lun;
 };
 
+/*
+ * This function is used to parse an iSCSI URL into a iscsi_url structure.
+ * iSCSI URL format :
+ * iscsi://[<username>%<password>@]<host>[:<port>]/<target-iqn>/<lun>
+ *
+ * Function will return a pointer to an iscsi url structure if successful,
+ * or it will return NULL and set iscsi_get_error() accrodingly if there was a problem
+ * with the URL.
+ *
+ * The returnes structure is freed by calling iscsi_destroy_url()
+ */
 struct iscsi_url *iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url);
 void iscsi_destroy_url(struct iscsi_url *iscsi_url);
 
 
+/*
+ * This function returns a description of the last encountered error.
+ */
 const char *iscsi_get_error(struct iscsi_context *iscsi);
-
-/*
- * Returns the file descriptor that libiscsi uses.
- */
-int iscsi_get_fd(struct iscsi_context *iscsi);
-
-/*
- * Returns which events that we need to poll for for the iscsi file descriptor.
- */
-int iscsi_which_events(struct iscsi_context *iscsi);
-
-/*
- * Called to process the events when events become available for the iscsi
- * file descriptor.
- */
-int iscsi_service(struct iscsi_context *iscsi, int revents);
-
-
 
 /*
  * Create a context for an ISCSI session.
@@ -92,15 +113,14 @@ int iscsi_set_alias(struct iscsi_context *iscsi, const char *alias);
 int iscsi_set_targetname(struct iscsi_context *iscsi, const char *targetname);
 
 
-/* Types of icsi sessions. Discovery sessions are used to query for what
- * targets exist behin the portal connected to. Normal sessions are used to
+/* Type of iscsi sessions. Discovery sessions are used to query for what
+ * targets exist behind the portal connected to. Normal sessions are used to
  * log in and do I/O to the SCSI LUNs
  */
 enum iscsi_session_type {
 	ISCSI_SESSION_DISCOVERY = 1,
 	ISCSI_SESSION_NORMAL    = 2
 };
-
 /*
  * Set the session type for a scsi context.
  * Session type can only be set/changed while the iscsi context is not
@@ -357,6 +377,10 @@ int iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 			unsigned char *data, int len, void *private_data);
 
 
+
+
+
+
 /* These are the possible status values for the callbacks for scsi commands.
  * The content of command_data depends on the status type.
  *
@@ -376,13 +400,10 @@ int iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
  *   ISCSI_STATUS_ERROR the command failed. Command_data is NULL.
  */
 
-
-
 struct iscsi_data {
        int size;
        unsigned char *data;
 };
-
 
 /*
  * Async commands for SCSI
