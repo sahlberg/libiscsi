@@ -82,6 +82,10 @@ struct iscsi_context {
 
 	struct iscsi_in_pdu *incoming;
 	struct iscsi_in_pdu *inqueue;
+
+	uint32_t max_burst_length;
+	uint32_t first_burst_length;
+	uint32_t max_recv_data_segment_length;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40

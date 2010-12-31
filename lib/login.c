@@ -249,13 +249,14 @@ iscsi_login_add_maxburstlength(struct iscsi_context *iscsi, struct iscsi_pdu *pd
 		return 0;
 	}
 
-	str = (char *)"MaxBurstLength=262144";
+	asprintf(&str, "MaxBurstLength=%d", iscsi->max_burst_length);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		free(str);
 		return -1;
 	}
-
+	free(str);
 	return 0;
 }
 
@@ -269,13 +270,14 @@ iscsi_login_add_firstburstlength(struct iscsi_context *iscsi, struct iscsi_pdu *
 		return 0;
 	}
 
-	str = (char *)"FirstBurstLength=262144";
+	asprintf(&str, "FirstBurstLength=%d", iscsi->first_burst_length);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		free(str);
 		return -1;
 	}
-
+	free(str);
 	return 0;
 }
 
@@ -289,13 +291,14 @@ iscsi_login_add_maxrecvdatasegmentlength(struct iscsi_context *iscsi, struct isc
 		return 0;
 	}
 
-	str = (char *)"MaxRecvDataSegmentLength=262144";
+	asprintf(&str, "MaxRecvDataSegmentLength=%d", iscsi->max_recv_data_segment_length);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		free(str);
 		return -1;
 	}
-
+	free(str);
 	return 0;
 }
 
@@ -750,6 +753,18 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				iscsi->header_digest
 				  = ISCSI_HEADER_DIGEST_NONE;
 			}
+		}
+
+		if (!strncmp((char *)ptr, "FirstBurstLength=", 17)) {
+			iscsi->first_burst_length = strtol((char *)ptr + 17, NULL, 10);
+		}
+
+		if (!strncmp((char *)ptr, "MaxBurstLength=", 15)) {
+			iscsi->max_burst_length = strtol((char *)ptr + 15, NULL, 10);
+		}
+
+		if (!strncmp((char *)ptr, "MaxRecvDataSegmentLength=", 25)) {
+			iscsi->max_recv_data_segment_length = strtol((char *)ptr + 25, NULL, 10);
 		}
 
 		if (!strncmp((char *)ptr, "AuthMethod=", 11)) {

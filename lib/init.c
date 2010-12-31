@@ -58,6 +58,10 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->next_phase    = ISCSI_PDU_LOGIN_NSG_OPNEG;
 	iscsi->secneg_phase  = ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP;
 
+	iscsi->max_burst_length = 262144;
+	iscsi->first_burst_length = 262144;
+	iscsi->max_recv_data_segment_length = 262144;
+
 	return iscsi;
 }
 
