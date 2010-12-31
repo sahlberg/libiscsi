@@ -30,59 +30,52 @@
 static int
 iscsi_login_add_initiatorname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
+	char *str;
+
 	/* We only send InitiatorName during opneg or the first leg of secneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
 	&& iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
 		return 0;
 	}
 
-	if (iscsi_pdu_add_data(iscsi, pdu,
-			(unsigned char *)"InitiatorName=",
-			 14) != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
-				"failed for InitiatorName.");
+	asprintf(&str, "InitiatorName=%s", iscsi->initiator_name);
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		free(str);
 		return -1;
 	}
-	if (iscsi_pdu_add_data(iscsi, pdu,
-			       (unsigned char *)iscsi->initiator_name,
-			       strlen(iscsi->initiator_name) +1) != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
-				"failed for InitiatorName.");
-		return -1;
-	}
+	free(str);
 	return 0;
 }
 
 static int
 iscsi_login_add_alias(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
+	char *str;
+
 	/* We only send InitiatorAlias during opneg or the first leg of secneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
 	&& iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
 		return 0;
 	}
 
-	if (iscsi_pdu_add_data(iscsi, pdu,
-			       (unsigned char *)"InitiatorAlias=",
-			       15) != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
-				"failed.");
+	asprintf(&str, "InitiatorAlias=%s", iscsi->alias);
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		free(str);
 		return -1;
 	}
-	if (iscsi_pdu_add_data(iscsi, pdu,
-			       (unsigned char *)iscsi->alias,
-			       strlen(iscsi->alias) +1) != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
-				"failed.");
-		return -1;
-	}
-
+	free(str);
 	return 0;
 }
 
 static int
 iscsi_login_add_targetname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
+	char *str;
+
 	/* We only send TargetName during opneg or the first leg of secneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
 	&& iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
@@ -95,21 +88,14 @@ iscsi_login_add_targetname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return -1;
 	}
 
-	if (iscsi_pdu_add_data(iscsi, pdu,
-			       (unsigned char *)"TargetName=",
-			       11) != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
-				"failed.");
+	asprintf(&str, "TargetName=%s", iscsi->target_name);
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		free(str);
 		return -1;
 	}
-	if (iscsi_pdu_add_data(iscsi, pdu,
-			       (unsigned char *)iscsi->target_name,
-			       strlen(iscsi->target_name) +1) != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
-				"failed.");
-		return -1;
-	}
-
+	free(str);
 	return 0;
 }
 
