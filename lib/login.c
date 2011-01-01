@@ -338,7 +338,7 @@ iscsi_login_add_defaulttime2retain(struct iscsi_context *iscsi, struct iscsi_pdu
 		return 0;
 	}
 
-	str = (char *)"DefaultTime2Retain=20";
+	str = (char *)"DefaultTime2Retain=0";
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
