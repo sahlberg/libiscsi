@@ -880,7 +880,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 	status = ntohs(*(uint16_t *)&in->hdr[36]);
 	if (status != 0) {
-		iscsi_set_error(iscsi, "Failed to log in to target. Status: %s(%d)\n",
+		iscsi_set_error(iscsi, "Failed to log in to target. Status: %s(%d)",
 				       login_error_str(status), status);
 		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 			      pdu->private_data);
@@ -959,7 +959,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			free(iscsi->chap_c);
 			iscsi->chap_c = strdup((char *)ptr+9);
 			if (iscsi->chap_c == NULL) {
-				iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup CHAP challenge\n");
+				iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup CHAP challenge.");
 				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL, pdu->private_data);
 				return -1;
 			}
