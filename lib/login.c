@@ -309,6 +309,46 @@ iscsi_login_add_datapduinorder(struct iscsi_context *iscsi, struct iscsi_pdu *pd
 }
 
 static int
+iscsi_login_add_defaulttime2wait(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send DefaultTime2Wait during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	str = (char *)"DefaultTime2Wait=2";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_defaulttime2retain(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send DefaultTime2Retain during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	str = (char *)"DefaultTime2Retain=20";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
 iscsi_login_add_datasequenceinorder(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	char *str;
@@ -627,6 +667,18 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 	/* first burst length */
 	if (iscsi_login_add_firstburstlength(iscsi, pdu) != 0) {
+		iscsi_free_pdu(iscsi, pdu);
+		return -1;
+	}
+
+	/* default time 2 wait */
+	if (iscsi_login_add_defaulttime2wait(iscsi, pdu) != 0) {
+		iscsi_free_pdu(iscsi, pdu);
+		return -1;
+	}
+
+	/* default time 2 retain */
+	if (iscsi_login_add_defaulttime2retain(iscsi, pdu) != 0) {
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
