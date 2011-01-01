@@ -735,8 +735,12 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			if (!strcmp((char *)ptr + 13, "CRC32C")) {
 				iscsi->header_digest
 				  = ISCSI_HEADER_DIGEST_CRC32C;
+				iscsi->want_header_digest
+				  = ISCSI_HEADER_DIGEST_CRC32C;
 			} else {
 				iscsi->header_digest
+				  = ISCSI_HEADER_DIGEST_NONE;
+				iscsi->want_header_digest
 				  = ISCSI_HEADER_DIGEST_NONE;
 			}
 		}
