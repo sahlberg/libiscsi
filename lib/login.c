@@ -349,6 +349,66 @@ iscsi_login_add_defaulttime2retain(struct iscsi_context *iscsi, struct iscsi_pdu
 }
 
 static int
+iscsi_login_add_ifmarker(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send IFMarker during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	str = (char *)"IFMarker=No";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_ofmarker(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send OFMarker during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	str = (char *)"OFMarker=No";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_maxconnections(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char *str;
+
+	/* We only send MaxConnections during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+
+	str = (char *)"MaxConnections=1";
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
 iscsi_login_add_maxoutstandingr2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	char *str;
@@ -731,6 +791,24 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 	/* errorrecoverylevel */
 	if (iscsi_login_add_errorrecoverylevel(iscsi, pdu) != 0) {
+		iscsi_free_pdu(iscsi, pdu);
+		return -1;
+	}
+
+	/* ifmarker */
+	if (iscsi_login_add_ifmarker(iscsi, pdu) != 0) {
+		iscsi_free_pdu(iscsi, pdu);
+		return -1;
+	}
+
+	/* ofmarker */
+	if (iscsi_login_add_ofmarker(iscsi, pdu) != 0) {
+		iscsi_free_pdu(iscsi, pdu);
+		return -1;
+	}
+
+	/* maxconnections */
+	if (iscsi_login_add_maxconnections(iscsi, pdu) != 0) {
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
