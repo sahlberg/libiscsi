@@ -147,6 +147,7 @@ enum iscsi_opcode {
 	ISCSI_PDU_TEXT_RESPONSE   = 0x24,
 	ISCSI_PDU_DATA_IN         = 0x25,
 	ISCSI_PDU_LOGOUT_RESPONSE = 0x26,
+	ISCSI_PDU_R2T             = 0x31,
 	ISCSI_PDU_NO_PDU	  = 0xff
 };
 
@@ -228,11 +229,8 @@ int iscsi_process_scsi_data_in(struct iscsi_context *iscsi,
 int iscsi_process_nop_out_reply(struct iscsi_context *iscsi,
 				struct iscsi_pdu *pdu,
 				struct iscsi_in_pdu *in);
-
-int iscsi_send_data_out(struct iscsi_context *iscsi,
-    			       struct iscsi_pdu *pdu,
-			       uint32_t offset,
-			       uint32_t len);
+int iscsi_process_r2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
+		      struct iscsi_in_pdu *in);
 
 void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
 		     ...);

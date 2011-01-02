@@ -62,12 +62,15 @@ void write10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data,
 	struct scsi_task *task = command_data;
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
-
 		printf("Write10 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
 		exit(10);
 	}
+	if (status != SCSI_STATUS_GOOD) {
+		printf("Write10 failed with %s\n", iscsi_get_error(iscsi));
+		exit(10);
+	}
 
-	printf("Write successful\n");
+	printf("Write successful :%d\n", status);
 	exit(10);
 }
 

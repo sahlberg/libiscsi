@@ -213,6 +213,14 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 			expected_response = ISCSI_PDU_DATA_IN;
 		}
 
+		/* Another special case is if we get a R2T.
+		 * In this case we should find the original request and just send an additional
+		 * DATAOUT segment for this task.
+		 */
+		if (opcode == ISCSI_PDU_R2T) {
+			expected_response = ISCSI_PDU_R2T;
+	        }
+
 		if (opcode != expected_response) {
 			iscsi_set_error(iscsi, "Got wrong opcode back for "
 					"itt:%d  got:%d expected %d",
@@ -274,9 +282,19 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 				return -1;
 			}
 			break;
+		case ISCSI_PDU_R2T:
+			if (iscsi_process_r2t(iscsi, pdu, in) != 0) {
+				SLIST_REMOVE(&iscsi->waitpdu, pdu);
+				iscsi_free_pdu(iscsi, pdu);
+				iscsi_set_error(iscsi, "iscsi r2t "
+						"failed");
+				return -1;
+			}
+			is_finished = 0;
+			break;
 		default:
 			iscsi_set_error(iscsi, "Dont know how to handle "
-					"opcode %d", opcode);
+					"opcode 0x%02x", opcode);
 			return -1;
 		}
 

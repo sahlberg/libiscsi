@@ -80,9 +80,9 @@ iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 	}
 }
 
-int
+static int
 iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
-			   uint32_t offset, uint32_t tot_len)
+			   uint32_t ttt, uint32_t offset, uint32_t tot_len)
 {
 	while (tot_len > 0) {
 		uint32_t len = tot_len;
@@ -122,7 +122,7 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		iscsi_pdu_set_lun(pdu, cmd_pdu->lun);
 
 		/* ttt */
-		iscsi_pdu_set_ttt(pdu, 0xffffffff);
+		iscsi_pdu_set_ttt(pdu, ttt);
 
 		/* exp statsn */
 		iscsi_pdu_set_expstatsn(pdu, iscsi->statsn+1);
@@ -176,6 +176,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	struct iscsi_pdu *pdu;
 	struct iscsi_scsi_cbdata *scsi_cbdata;
 	struct iscsi_data data;
+	uint32_t offset = 0;
 
 	int flags;
 
@@ -300,7 +301,12 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 
 	/* Can we send some unsolicited data ? */
 	if (pdu->nidata.size != 0 && iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO) {
-		iscsi_send_data_out(iscsi, pdu, 0, pdu->nidata.size);
+		uint32_t len = pdu->nidata.size - offset;
+
+		if (len > iscsi->first_burst_length) {
+			len = iscsi->first_burst_length;
+		}
+		iscsi_send_data_out(iscsi, pdu, 0xffffffff, offset, len);
 	}
 
 	return 0;
@@ -444,8 +450,19 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	return 0;
 }
 
+int
+iscsi_process_r2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
+			 struct iscsi_in_pdu *in)
+{
+	uint32_t ttt, offset, len;
 
+	ttt    = ntohl(*(uint32_t *)&in->hdr[20]);
+	offset = ntohl(*(uint32_t *)&in->hdr[40]);
+	len    = ntohl(*(uint32_t *)&in->hdr[44]);
 
+	iscsi_send_data_out(iscsi, pdu, ttt, offset, len);
+	return 0;
+}
 
 /*
  * SCSI commands
