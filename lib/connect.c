@@ -67,8 +67,6 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 	struct connect_task *ct = private_data;
 
 	if (status != 0) {
-		iscsi_set_error(iscsi, "Failed to login to iSCSI target. "
-				"%s", iscsi_get_error(iscsi));
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
 		free(ct);
 		return;

@@ -239,7 +239,7 @@ void discovery_cb(struct iscsi_context *iscsi, int status, void *command_data, v
 void discoverylogin_cb(struct iscsi_context *iscsi, int status, void *command_data _U_, void *private_data)
 {
 	if (status != 0) {
-		fprintf(stderr, "Failed to log in to target. : %s\n", iscsi_get_error(iscsi));
+		fprintf(stderr, "Login failed. %s\n", iscsi_get_error(iscsi));
 		exit(10);
 	}
 
