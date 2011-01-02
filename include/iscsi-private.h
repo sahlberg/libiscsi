@@ -40,6 +40,11 @@ struct iscsi_in_pdu {
 void iscsi_free_iscsi_in_pdu(struct iscsi_in_pdu *in);
 void iscsi_free_iscsi_inqueue(struct iscsi_in_pdu *inqueue);
 
+enum iscsi_initial_r2t {
+	ISCSI_INITIAL_R2T_NO  = 0,
+	ISCSI_INITIAL_R2T_YES = 1
+};
+
 struct iscsi_context {
 	const char *initiator_name;
 	const char *target_name;
@@ -86,6 +91,8 @@ struct iscsi_context {
 	uint32_t max_burst_length;
 	uint32_t first_burst_length;
 	uint32_t max_recv_data_segment_length;
+	enum iscsi_initial_r2t want_initial_r2t;
+	enum iscsi_initial_r2t use_initial_r2t;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40

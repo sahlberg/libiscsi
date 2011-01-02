@@ -195,12 +195,15 @@ iscsi_login_add_initialr2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return 0;
 	}
 
-	str = (char *)"InitialR2T=Yes";
+	asprintf(&str, "InitialR2T=%s", iscsi->want_initial_r2t == ISCSI_INITIAL_R2T_NO ?
+		       "No" : "Yes");
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		free(str);
 		return -1;
 	}
+	free(str);
 
 	return 0;
 }
@@ -929,6 +932,14 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 		if (!strncmp((char *)ptr, "FirstBurstLength=", 17)) {
 			iscsi->first_burst_length = strtol((char *)ptr + 17, NULL, 10);
+		}
+
+		if (!strncmp((char *)ptr, "InitialR2T=", 11)) {
+			if (!strcmp((char *)ptr + 11, "No")) {
+				iscsi->use_initial_r2t = ISCSI_INITIAL_R2T_NO;
+			} else {
+				iscsi->use_initial_r2t = ISCSI_INITIAL_R2T_YES;
+			}
 		}
 
 		if (!strncmp((char *)ptr, "MaxBurstLength=", 15)) {
