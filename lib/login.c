@@ -218,12 +218,15 @@ iscsi_login_add_immediatedata(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return 0;
 	}
 
-	str = (char *)"ImmediateData=Yes";
+	asprintf(&str, "ImmediateData=%s", iscsi->want_immediate_data == ISCSI_IMMEDIATE_DATA_NO ?
+		       "No" : "Yes");
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		free(str);
 		return -1;
 	}
+	free(str);
 
 	return 0;
 }
@@ -939,6 +942,14 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				iscsi->use_initial_r2t = ISCSI_INITIAL_R2T_NO;
 			} else {
 				iscsi->use_initial_r2t = ISCSI_INITIAL_R2T_YES;
+			}
+		}
+
+		if (!strncmp((char *)ptr, "ImmediateData=", 14)) {
+			if (!strcmp((char *)ptr + 14, "No")) {
+				iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+			} else {
+				iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_YES;
 			}
 		}
 

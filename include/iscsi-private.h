@@ -45,6 +45,11 @@ enum iscsi_initial_r2t {
 	ISCSI_INITIAL_R2T_YES = 1
 };
 
+enum iscsi_immediate_data {
+	ISCSI_IMMEDIATE_DATA_NO  = 0,
+	ISCSI_IMMEDIATE_DATA_YES = 1
+};
+
 struct iscsi_context {
 	const char *initiator_name;
 	const char *target_name;
@@ -93,6 +98,8 @@ struct iscsi_context {
 	uint32_t max_recv_data_segment_length;
 	enum iscsi_initial_r2t want_initial_r2t;
 	enum iscsi_initial_r2t use_initial_r2t;
+	enum iscsi_initial_r2t want_immediate_data;
+	enum iscsi_initial_r2t use_immediate_data;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40

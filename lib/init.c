@@ -65,6 +65,8 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->max_recv_data_segment_length = 262144;
 	iscsi->want_initial_r2t             = ISCSI_INITIAL_R2T_NO;
 	iscsi->use_initial_r2t              = ISCSI_INITIAL_R2T_NO;
+	iscsi->want_immediate_data          = ISCSI_IMMEDIATE_DATA_YES;
+	iscsi->use_immediate_data           = ISCSI_IMMEDIATE_DATA_YES;
 
 	return iscsi;
 }
