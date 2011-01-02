@@ -2,7 +2,7 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 libdir = @libdir@
 bindir = @bindir@
-LIBS="-lpopt"
+LIBS=-lpopt @LIBS@
 CC=gcc
 CFLAGS=-g -O2 -fPIC -Wall -W -I. -I./include "-D_U_=__attribute__((unused))"
 LIBISCSI_OBJ = lib/connect.o lib/crc32c.o lib/discovery.o lib/init.o lib/login.o lib/md5.o lib/nop.o lib/pdu.o lib/scsi-command.o lib/scsi-lowlevel.o lib/socket.o lib/sync.o

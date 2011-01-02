@@ -15,8 +15,12 @@ fi
 
 case `uname` in
   Linux*)
+    AC_DEFINE(HAVE_GETHOSTBYNAME2,1,[Whether we have gethostbyname2 or not])
     ;;
   AIX*)
+    ;;
+  SunOS)
+    LIBS="$LIBS -lsocket -lnsl"
     ;;
   *)
     ;;
