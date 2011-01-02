@@ -319,9 +319,21 @@ iscsi_pdu_set_cmdsn(struct iscsi_pdu *pdu, uint32_t cmdsn)
 }
 
 void
+iscsi_pdu_set_datasn(struct iscsi_pdu *pdu, uint32_t datasn)
+{
+	*(uint32_t *)&pdu->outdata.data[36] = htonl(datasn);
+}
+
+void
 iscsi_pdu_set_expstatsn(struct iscsi_pdu *pdu, uint32_t expstatsnsn)
 {
 	*(uint32_t *)&pdu->outdata.data[28] = htonl(expstatsnsn);
+}
+
+void
+iscsi_pdu_set_bufferoffset(struct iscsi_pdu *pdu, uint32_t bufferoffset)
+{
+	*(uint32_t *)&pdu->outdata.data[40] = htonl(bufferoffset);
 }
 
 void
