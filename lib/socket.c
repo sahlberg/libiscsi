@@ -292,7 +292,11 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			struct iscsi_pdu *pdu = iscsi->outqueue;
 
 			SLIST_REMOVE(&iscsi->outqueue, pdu);
-			SLIST_ADD_END(&iscsi->waitpdu, pdu);
+			if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
+				iscsi_free_pdu(iscsi, pdu);
+			} else {
+				SLIST_ADD_END(&iscsi->waitpdu, pdu);
+			}
 		}
 	}
 	return 0;

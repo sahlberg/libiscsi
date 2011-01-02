@@ -150,6 +150,10 @@ enum iscsi_opcode {
 struct iscsi_pdu {
 	struct iscsi_pdu *next;
 
+/* There will not be a response to this pdu, so delete it once it is sent on the wire. Dont put it on the wait-queue */
+#define ISCSI_PDU_DELETE_WHEN_SENT	0x00000001
+	uint32_t flags;
+
 	uint32_t itt;
 	uint32_t cmdsn;
 	enum iscsi_opcode response_opcode;
