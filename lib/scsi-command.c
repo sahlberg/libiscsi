@@ -245,21 +245,33 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 			iscsi_free_pdu(iscsi, pdu);
 			return -1;
 		}
-		if (iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) {
-			pdu->nidata.data = data.data;
-			pdu->nidata.size = data.size;
-			data.data = NULL;
-			data.size = 0;
-		}
 
-		/* Only add data to the out-pdu if we actually have some immediate data to attach */
-		if (data.size > 0) {
-			if (iscsi_pdu_add_data(iscsi, pdu, data.data, data.size)
+		/* Assume all data is non-immediate data */
+		pdu->nidata.data = data.data;
+		pdu->nidata.size = data.size;
+
+		/* Are we allowed to send immediate data ? */
+		if (iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_YES) {
+			uint32_t len = data.size;
+
+			if (len > iscsi->target_max_recv_data_segment_length) {
+				len = iscsi->target_max_recv_data_segment_length;
+			}
+
+			if (iscsi_pdu_add_data(iscsi, pdu, data.data, len)
 			    != 0) {
 			    	iscsi_set_error(iscsi, "Out-of-memory: Failed to "
 						"add outdata to the pdu.");
 				iscsi_free_pdu(iscsi, pdu);
 				return -1;
+			}
+			offset = len;
+
+			if (len == data.size) {
+				/* We managed to send it all as immediate data, so there is no non-immediate data left */
+				pdu->nidata.data = NULL;
+				pdu->nidata.size = 0;
+
 			}
 		}
 
