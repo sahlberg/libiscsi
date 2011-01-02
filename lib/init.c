@@ -60,13 +60,14 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->next_phase    = ISCSI_PDU_LOGIN_NSG_OPNEG;
 	iscsi->secneg_phase  = ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP;
 
-	iscsi->max_burst_length             = 262144;
-	iscsi->first_burst_length           = 262144;
-	iscsi->max_recv_data_segment_length = 262144;
-	iscsi->want_initial_r2t             = ISCSI_INITIAL_R2T_NO;
-	iscsi->use_initial_r2t              = ISCSI_INITIAL_R2T_NO;
-	iscsi->want_immediate_data          = ISCSI_IMMEDIATE_DATA_YES;
-	iscsi->use_immediate_data           = ISCSI_IMMEDIATE_DATA_YES;
+	iscsi->max_burst_length                       = 262144;
+	iscsi->first_burst_length                     = 262144;
+	iscsi->initiator_max_recv_data_segment_length = 262144;
+	iscsi->target_max_recv_data_segment_length    = 8192;
+	iscsi->want_initial_r2t                       = ISCSI_INITIAL_R2T_NO;
+	iscsi->use_initial_r2t                        = ISCSI_INITIAL_R2T_NO;
+	iscsi->want_immediate_data                    = ISCSI_IMMEDIATE_DATA_YES;
+	iscsi->use_immediate_data                     = ISCSI_IMMEDIATE_DATA_YES;
 
 	return iscsi;
 }

@@ -283,7 +283,7 @@ iscsi_login_add_maxrecvdatasegmentlength(struct iscsi_context *iscsi, struct isc
 		return 0;
 	}
 
-	asprintf(&str, "MaxRecvDataSegmentLength=%d", iscsi->max_recv_data_segment_length);
+	asprintf(&str, "MaxRecvDataSegmentLength=%d", iscsi->initiator_max_recv_data_segment_length);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -958,7 +958,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		}
 
 		if (!strncmp((char *)ptr, "MaxRecvDataSegmentLength=", 25)) {
-			iscsi->max_recv_data_segment_length = strtol((char *)ptr + 25, NULL, 10);
+			iscsi->target_max_recv_data_segment_length = strtol((char *)ptr + 25, NULL, 10);
 		}
 
 		if (!strncmp((char *)ptr, "AuthMethod=", 11)) {

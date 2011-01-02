@@ -95,7 +95,8 @@ struct iscsi_context {
 
 	uint32_t max_burst_length;
 	uint32_t first_burst_length;
-	uint32_t max_recv_data_segment_length;
+	uint32_t initiator_max_recv_data_segment_length;
+	uint32_t target_max_recv_data_segment_length;
 	enum iscsi_initial_r2t want_initial_r2t;
 	enum iscsi_initial_r2t use_initial_r2t;
 	enum iscsi_initial_r2t want_immediate_data;
