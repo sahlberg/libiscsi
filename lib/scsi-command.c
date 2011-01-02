@@ -263,8 +263,10 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 			}
 		}
 
-		if (pdu->nidata.size > 0) {
-			/* We have more data to send, so dont flag this PDU as final */
+		if (pdu->nidata.size > 0 && iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO) {
+			/* We have more data to send, and we are allowed to send
+			 * unsolicited data, so dont flag this PDU as final.
+			 */
 			flags &= ~ISCSI_PDU_SCSI_FINAL;
 		}
 		break;
