@@ -26,8 +26,8 @@
 #include "slist.h"
 
 struct iscsi_pdu *
-iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
-		   enum iscsi_opcode response_opcode)
+iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
+				  enum iscsi_opcode response_opcode, uint32_t itt, uint32_t flags)
 {
 	struct iscsi_pdu *pdu;
 
@@ -58,13 +58,21 @@ iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 	}
 
 	/* itt */
-	*(uint32_t *)&pdu->outdata.data[16] = htonl(iscsi->itt);
-	pdu->itt = iscsi->itt;
+	iscsi_pdu_set_itt(pdu, itt);
+	pdu->itt = itt;
 
-	iscsi->itt++;
+	/* flags */
+	pdu->flags = flags;
 
 	return pdu;
 }
+
+struct iscsi_pdu *
+iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
+		   enum iscsi_opcode response_opcode)
+{
+	return iscsi_allocate_pdu_with_itt_flags(iscsi, opcode, response_opcode, iscsi->itt++, 0);
+}	
 
 void
 iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
