@@ -22,6 +22,7 @@
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
+#include "slist.h"
 
 struct iscsi_scsi_cbdata {
 	struct iscsi_scsi_cbdata *prev, *next;
@@ -79,15 +80,92 @@ iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 	}
 }
 
+int
+iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
+			   uint32_t offset, uint32_t len)
+{
+	struct iscsi_pdu *pdu;
+	int flags;
+
+	pdu = iscsi_allocate_pdu_with_itt_flags(iscsi, ISCSI_PDU_DATA_OUT,
+				 ISCSI_PDU_NO_PDU,
+				 cmd_pdu->itt,
+				 ISCSI_PDU_DELETE_WHEN_SENT|ISCSI_PDU_NO_CALLBACK);
+	if (pdu == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory, Failed to allocate "
+				"scsi data out pdu.");
+		SLIST_REMOVE(&iscsi->outqueue, cmd_pdu);
+		SLIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
+		cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+				     cmd_pdu->private_data);
+		iscsi_free_pdu(iscsi, cmd_pdu);
+		return -1;
+	}
+
+	flags = ISCSI_PDU_SCSI_FINAL;
+
+	/* flags */
+	iscsi_pdu_set_pduflags(pdu, flags);
+
+	/* lun */
+	iscsi_pdu_set_lun(pdu, cmd_pdu->lun);
+
+	/* ttt */
+	iscsi_pdu_set_ttt(pdu, 0xffffffff);
+
+	/* exp statsn */
+	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn+1);
+
+	/* data sn */
+	iscsi_pdu_set_datasn(pdu, 0);
+
+	/* buffer offset */
+	iscsi_pdu_set_bufferoffset(pdu, offset);
+
+	if (iscsi_pdu_add_data(iscsi, pdu, cmd_pdu->nidata.data + offset, len)
+		    != 0) {
+	    	iscsi_set_error(iscsi, "Out-of-memory: Failed to "
+				"add outdata to the pdu.");
+		SLIST_REMOVE(&iscsi->outqueue, cmd_pdu);
+		SLIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
+		cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+				     cmd_pdu->private_data);
+		iscsi_free_pdu(iscsi, cmd_pdu);
+		iscsi_free_pdu(iscsi, pdu);
+		return -1;
+	}
+
+	pdu->callback     = cmd_pdu->callback;
+	pdu->private_data = cmd_pdu->private_data;;
+
+	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
+				"scsi pdu.");
+		SLIST_REMOVE(&iscsi->outqueue, cmd_pdu);
+		SLIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
+		cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+				     cmd_pdu->private_data);
+		iscsi_free_pdu(iscsi, cmd_pdu);
+		iscsi_free_pdu(iscsi, pdu);
+		return -1;
+	}
+	return 0;
+}
+
 
 int
 iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 			    struct scsi_task *task, iscsi_command_cb cb,
-			    struct iscsi_data *data, void *private_data)
+			    struct iscsi_data *d, void *private_data)
 {
 	struct iscsi_pdu *pdu;
 	struct iscsi_scsi_cbdata *scsi_cbdata;
+	struct iscsi_data data;
+
 	int flags;
+
+	data.data = (d != NULL) ? d->data : NULL;
+	data.size = (d != NULL) ? d->size : 0;
 
 	if (iscsi->session_type != ISCSI_SESSION_NORMAL) {
 		iscsi_set_error(iscsi, "Trying to send command on "
@@ -137,34 +215,49 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		break;
 	case SCSI_XFER_WRITE:
 		flags |= ISCSI_PDU_SCSI_WRITE;
-		if (data == NULL) {
+		if (data.size == 0) {
 			iscsi_set_error(iscsi, "DATA-OUT command but data "
 					"== NULL.");
 			iscsi_free_pdu(iscsi, pdu);
 			return -1;
 		}
-		if (data->size != task->expxferlen) {
+		if (data.size != task->expxferlen) {
 			iscsi_set_error(iscsi, "Data size:%d is not same as "
 					"expected data transfer "
-					"length:%d.", data->size,
+					"length:%d.", data.size,
 					task->expxferlen);
 			iscsi_free_pdu(iscsi, pdu);
 			return -1;
 		}
-		if (iscsi_pdu_add_data(iscsi, pdu, data->data, data->size)
-		    != 0) {
-			iscsi_set_error(iscsi, "Out-of-memory: Failed to "
-					"add outdata to the pdu.");
-			iscsi_free_pdu(iscsi, pdu);
-			return -1;
+		if (iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) {
+			pdu->nidata.data = data.data;
+			pdu->nidata.size = data.size;
+			data.data = NULL;
+			data.size = 0;
 		}
 
+		/* Only add data to the out-pdu if we actually have some immediate data to attach */
+		if (data.size > 0) {
+			if (iscsi_pdu_add_data(iscsi, pdu, data.data, data.size)
+			    != 0) {
+			    	iscsi_set_error(iscsi, "Out-of-memory: Failed to "
+						"add outdata to the pdu.");
+				iscsi_free_pdu(iscsi, pdu);
+				return -1;
+			}
+		}
+
+		if (pdu->nidata.size > 0) {
+			/* We have more data to send, so dont flag this PDU as final */
+			flags &= ~ISCSI_PDU_SCSI_FINAL;
+		}
 		break;
 	}
 	iscsi_pdu_set_pduflags(pdu, flags);
 
 	/* lun */
 	iscsi_pdu_set_lun(pdu, lun);
+	pdu->lun = lun;
 
 	/* expxferlen */
 	iscsi_pdu_set_expxferlen(pdu, task->expxferlen);
@@ -176,7 +269,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 
 	/* exp statsn */
 	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn+1);
-
+	
 	/* cdb */
 	iscsi_pdu_set_cdb(pdu, task);
 
@@ -188,6 +281,11 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 				"scsi pdu.");
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
+	}
+
+	/* Can we send some unsolicited data ? */
+	if (pdu->nidata.size != 0 && iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO) {
+		iscsi_send_data_out(iscsi, pdu, 0, pdu->nidata.size);
 	}
 
 	return 0;

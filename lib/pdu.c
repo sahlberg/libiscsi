@@ -74,6 +74,8 @@ iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 	return iscsi_allocate_pdu_with_itt_flags(iscsi, opcode, response_opcode, iscsi->itt++, 0);
 }	
 
+
+
 void
 iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {

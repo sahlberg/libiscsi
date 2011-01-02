@@ -138,13 +138,15 @@ enum iscsi_opcode {
 	ISCSI_PDU_SCSI_REQUEST    = 0x01,
 	ISCSI_PDU_LOGIN_REQUEST   = 0x03,
 	ISCSI_PDU_TEXT_REQUEST    = 0x04,
+	ISCSI_PDU_DATA_OUT        = 0x05,
 	ISCSI_PDU_LOGOUT_REQUEST  = 0x06,
 	ISCSI_PDU_NOP_IN          = 0x20,
 	ISCSI_PDU_SCSI_RESPONSE   = 0x21,
 	ISCSI_PDU_LOGIN_RESPONSE  = 0x23,
 	ISCSI_PDU_TEXT_RESPONSE   = 0x24,
 	ISCSI_PDU_DATA_IN         = 0x25,
-	ISCSI_PDU_LOGOUT_RESPONSE = 0x26
+	ISCSI_PDU_LOGOUT_RESPONSE = 0x26,
+	ISCSI_PDU_NO_PDU	  = 0xff
 };
 
 struct iscsi_pdu {
@@ -156,6 +158,7 @@ struct iscsi_pdu {
 #define ISCSI_PDU_NO_CALLBACK	 	0x00000002
 	uint32_t flags;
 
+	uint32_t lun;
 	uint32_t itt;
 	uint32_t cmdsn;
 	enum iscsi_opcode response_opcode;
@@ -164,8 +167,10 @@ struct iscsi_pdu {
 	void *private_data;
 
 	int written;
-	struct iscsi_data outdata;
+	struct iscsi_data outdata; /* Header and Immediate Data */
 	struct iscsi_data indata;
+
+	struct iscsi_data nidata; /* Non-Immediate Data */
 
 	struct iscsi_scsi_cbdata *scsi_cbdata;
 };
@@ -223,9 +228,15 @@ int iscsi_process_nop_out_reply(struct iscsi_context *iscsi,
 				struct iscsi_pdu *pdu,
 				struct iscsi_in_pdu *in);
 
+int iscsi_send_data_out(struct iscsi_context *iscsi,
+    			       struct iscsi_pdu *pdu,
+			       uint32_t offset,
+			       uint32_t len);
+
 void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
 		     ...);
 
 unsigned long crc32c(char *buf, int len);
 
 void iscsi_cbdata_steal_scsi_task(struct scsi_task *task);
+
