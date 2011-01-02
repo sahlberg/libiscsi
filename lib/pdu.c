@@ -281,6 +281,12 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 }
 
 void
+iscsi_pdu_set_itt(struct iscsi_pdu *pdu, uint32_t itt)
+{
+	*(uint32_t *)&pdu->outdata.data[16] = htonl(itt);
+}
+
+void
 iscsi_pdu_set_pduflags(struct iscsi_pdu *pdu, unsigned char flags)
 {
 	pdu->outdata.data[1] = flags;
