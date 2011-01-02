@@ -82,72 +82,87 @@ iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 
 int
 iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
-			   uint32_t offset, uint32_t len)
+			   uint32_t offset, uint32_t tot_len)
 {
-	struct iscsi_pdu *pdu;
-	int flags;
+	while (tot_len > 0) {
+		uint32_t len = tot_len;
+		struct iscsi_pdu *pdu;
+		int flags;
 
-	pdu = iscsi_allocate_pdu_with_itt_flags(iscsi, ISCSI_PDU_DATA_OUT,
+		if (len > iscsi->target_max_recv_data_segment_length) {
+			len = iscsi->target_max_recv_data_segment_length;
+		}
+
+		pdu = iscsi_allocate_pdu_with_itt_flags(iscsi, ISCSI_PDU_DATA_OUT,
 				 ISCSI_PDU_NO_PDU,
 				 cmd_pdu->itt,
 				 ISCSI_PDU_DELETE_WHEN_SENT|ISCSI_PDU_NO_CALLBACK);
-	if (pdu == NULL) {
-		iscsi_set_error(iscsi, "Out-of-memory, Failed to allocate "
+		if (pdu == NULL) {
+			iscsi_set_error(iscsi, "Out-of-memory, Failed to allocate "
 				"scsi data out pdu.");
-		SLIST_REMOVE(&iscsi->outqueue, cmd_pdu);
-		SLIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
-		cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			SLIST_REMOVE(&iscsi->outqueue, cmd_pdu);
+			SLIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
+			cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 				     cmd_pdu->private_data);
-		iscsi_free_pdu(iscsi, cmd_pdu);
-		return -1;
-	}
+			iscsi_free_pdu(iscsi, cmd_pdu);
+			return -1;
 
-	flags = ISCSI_PDU_SCSI_FINAL;
+		}
 
-	/* flags */
-	iscsi_pdu_set_pduflags(pdu, flags);
+		if (tot_len == len) {
+			flags = ISCSI_PDU_SCSI_FINAL;
+		} else {
+			flags = 0;
+		}
 
-	/* lun */
-	iscsi_pdu_set_lun(pdu, cmd_pdu->lun);
+		/* flags */
+		iscsi_pdu_set_pduflags(pdu, flags);
 
-	/* ttt */
-	iscsi_pdu_set_ttt(pdu, 0xffffffff);
+		/* lun */
+		iscsi_pdu_set_lun(pdu, cmd_pdu->lun);
 
-	/* exp statsn */
-	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn+1);
+		/* ttt */
+		iscsi_pdu_set_ttt(pdu, 0xffffffff);
 
-	/* data sn */
-	iscsi_pdu_set_datasn(pdu, 0);
+		/* exp statsn */
+		iscsi_pdu_set_expstatsn(pdu, iscsi->statsn+1);
 
-	/* buffer offset */
-	iscsi_pdu_set_bufferoffset(pdu, offset);
+		/* data sn */
+		iscsi_pdu_set_datasn(pdu, 0);
 
-	if (iscsi_pdu_add_data(iscsi, pdu, cmd_pdu->nidata.data + offset, len)
+		/* buffer offset */
+		iscsi_pdu_set_bufferoffset(pdu, offset);
+
+		if (iscsi_pdu_add_data(iscsi, pdu, cmd_pdu->nidata.data + offset, len)
 		    != 0) {
-	    	iscsi_set_error(iscsi, "Out-of-memory: Failed to "
+		    	iscsi_set_error(iscsi, "Out-of-memory: Failed to "
 				"add outdata to the pdu.");
-		SLIST_REMOVE(&iscsi->outqueue, cmd_pdu);
-		SLIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
-		cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			SLIST_REMOVE(&iscsi->outqueue, cmd_pdu);
+			SLIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
+			cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 				     cmd_pdu->private_data);
-		iscsi_free_pdu(iscsi, cmd_pdu);
-		iscsi_free_pdu(iscsi, pdu);
-		return -1;
-	}
+			iscsi_free_pdu(iscsi, cmd_pdu);
+			iscsi_free_pdu(iscsi, pdu);
+			return -1;
+		}
 
-	pdu->callback     = cmd_pdu->callback;
-	pdu->private_data = cmd_pdu->private_data;;
+		pdu->callback     = cmd_pdu->callback;
+		pdu->private_data = cmd_pdu->private_data;;
 
-	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
+		if (iscsi_queue_pdu(iscsi, pdu) != 0) {
+			iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"scsi pdu.");
-		SLIST_REMOVE(&iscsi->outqueue, cmd_pdu);
-		SLIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
-		cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			SLIST_REMOVE(&iscsi->outqueue, cmd_pdu);
+			SLIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
+			cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 				     cmd_pdu->private_data);
-		iscsi_free_pdu(iscsi, cmd_pdu);
-		iscsi_free_pdu(iscsi, pdu);
-		return -1;
+			iscsi_free_pdu(iscsi, cmd_pdu);
+			iscsi_free_pdu(iscsi, pdu);
+			return -1;
+		}
+
+		tot_len -= len;
+		offset  += len;
 	}
 	return 0;
 }
