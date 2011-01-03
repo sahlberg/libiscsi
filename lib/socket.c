@@ -84,11 +84,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	if (inet_pton(AF_INET, addr, &sin->sin_addr) != 1) {
 		struct hostent *he;
 
-#ifdef HAVE_GETHOSTBYNAME2
-		he = gethostbyname2(addr, AF_INET);
-#else
 		he = gethostbyname(addr);
-#endif
 		if (he == NULL) {
 			iscsi_set_error(iscsi, "Invalid target:%s  "
 					"Failed to resolve hostname.", addr);
