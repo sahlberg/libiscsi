@@ -266,10 +266,11 @@ void discoveryconnect_cb(struct iscsi_context *iscsi, int status, void *command_
 int main(int argc, const char *argv[])
 {
 	struct iscsi_context *iscsi;
+	struct iscsi_url *iscsi_url = NULL;
 	struct client_state state;
 	const char **extra_argv;
 	int extra_argc = 0;
-	char *portal = NULL;
+	const char *url = NULL;
 	poptContext pc;
 	int res;
 
@@ -290,7 +291,7 @@ int main(int argc, const char *argv[])
 	}
 	extra_argv = poptGetArgs(pc);
 	if (extra_argv) {
-		portal = strdup(*extra_argv);
+		url = *extra_argv;
 		extra_argv++;
 		while (extra_argv[extra_argc]) {
 			extra_argc++;
@@ -298,17 +299,11 @@ int main(int argc, const char *argv[])
 	}
 	poptFreeContext(pc);
 
-	if (portal == NULL) {
+	if (url == NULL) {
 		fprintf(stderr, "You must specify iscsi target portal.\n");
-		fprintf(stderr, "%s [options] iscsi://<host>[:<port>]\n", argv[0]);
+		fprintf(stderr, "%s [options] iscsi://[<username>%%<password>@]<host>[:<port>]\n", argv[0]);
 		exit(10);
 	}
-	if (strncmp(portal, "iscsi://", 8)) {
-		fprintf(stderr, "Incorrect portal specified\n");
-		fprintf(stderr, "Portal is specified as \"iscsi://<host>[:<port>]\"\n");
-		exit(10);
-	}
-	portal += 8;
 
 	iscsi = iscsi_create_context(initiator);
 	if (iscsi == NULL) {
@@ -316,9 +311,22 @@ int main(int argc, const char *argv[])
 		exit(10);
 	}
 
+	iscsi_url = iscsi_parse_portal_url(iscsi, url);
+	if (iscsi_url == NULL) {
+		fprintf(stderr, "Failed to parse URL: %s\n", 
+			iscsi_get_error(iscsi));
+		exit(10);
+	}
+
 	iscsi_set_session_type(iscsi, ISCSI_SESSION_DISCOVERY);
 
-	if (iscsi_connect_async(iscsi, portal, discoveryconnect_cb, &state) != 0) {
+	if (iscsi_url->user != NULL) {
+		if (iscsi_set_initiator_username_pwd(iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
+			fprintf(stderr, "Failed to set initiator username and password\n");
+			exit(10);
+		}
+	}
+	if (iscsi_connect_async(iscsi, iscsi_url->portal, discoveryconnect_cb, &state) != 0) {
 		fprintf(stderr, "iscsi_connect failed. %s\n", iscsi_get_error(iscsi));
 		exit(10);
 	}
