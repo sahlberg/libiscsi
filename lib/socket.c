@@ -185,7 +185,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu");
 			return -1;
 		}
-		bzero(iscsi->incoming, sizeof(struct iscsi_in_pdu));
+		memset(iscsi->incoming, 0, sizeof(struct iscsi_in_pdu));
 	}
 	in = iscsi->incoming;
 

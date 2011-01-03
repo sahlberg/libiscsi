@@ -204,7 +204,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		scsi_free_scsi_task(task);
 		return -1;
 	}
-	bzero(scsi_cbdata, sizeof(struct iscsi_scsi_cbdata));
+	memset(scsi_cbdata, 0, sizeof(struct iscsi_scsi_cbdata));
 	scsi_cbdata->task         = task;
 	scsi_cbdata->callback     = cb;
 	scsi_cbdata->private_data = private_data;

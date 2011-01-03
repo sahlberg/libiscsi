@@ -412,7 +412,7 @@ int main(int argc _U_, char *argv[] _U_)
 
 	printf("iscsi client\n");
 
-	bzero(&clnt, sizeof(clnt));
+	memset(&clnt, 0, sizeof(clnt));
 
 	iscsi = iscsi_create_context("iqn.2002-10.com.ronnie:client");
 	if (iscsi == NULL) {

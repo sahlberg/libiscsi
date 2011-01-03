@@ -57,13 +57,13 @@ scsi_malloc(struct scsi_task *task, size_t size)
 	if (mem == NULL) {
 		return NULL;
 	}
-	bzero(mem, sizeof(struct scsi_allocated_memory));
+	memset(mem, 0, sizeof(struct scsi_allocated_memory));
 	mem->ptr = malloc(size);
 	if (mem->ptr == NULL) {
 		free(mem);
 		return NULL;
 	}
-	bzero(mem->ptr, size);
+	memset(mem->ptr, 0, size);
 	SLIST_ADD(&task->mem, mem);
 	return mem->ptr;
 }
@@ -127,7 +127,7 @@ scsi_cdb_testunitready(void)
 		return NULL;
 	}
 
-	bzero(task, sizeof(struct scsi_task));
+	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_TESTUNITREADY;
 
 	task->cdb_size   = 6;
@@ -151,7 +151,7 @@ scsi_reportluns_cdb(int report_type, int alloc_len)
 		return NULL;
 	}
 
-	bzero(task, sizeof(struct scsi_task));
+	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_REPORTLUNS;
 	task->cdb[2]   = report_type;
 	*(uint32_t *)&task->cdb[6] = htonl(alloc_len);
@@ -228,7 +228,7 @@ scsi_cdb_readcapacity10(int lba, int pmi)
 		return NULL;
 	}
 
-	bzero(task, sizeof(struct scsi_task));
+	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_READCAPACITY10;
 
 	*(uint32_t *)&task->cdb[2] = htonl(lba);
@@ -296,7 +296,7 @@ scsi_cdb_inquiry(int evpd, int page_code, int alloc_len)
 		return NULL;
 	}
 
-	bzero(task, sizeof(struct scsi_task));
+	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_INQUIRY;
 
 	if (evpd) {
@@ -516,7 +516,7 @@ scsi_cdb_read10(int lba, int xferlen, int blocksize)
 		return NULL;
 	}
 
-	bzero(task, sizeof(struct scsi_task));
+	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_READ10;
 
 	*(uint32_t *)&task->cdb[2] = htonl(lba);
@@ -542,7 +542,7 @@ scsi_cdb_write10(int lba, int xferlen, int fua, int fuanv, int blocksize)
 		return NULL;
 	}
 
-	bzero(task, sizeof(struct scsi_task));
+	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_WRITE10;
 
 	if (fua) {
@@ -579,7 +579,7 @@ scsi_cdb_modesense6(int dbd, enum scsi_modesense_page_control pc,
 		return NULL;
 	}
 
-	bzero(task, sizeof(struct scsi_task));
+	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_MODESENSE6;
 
 	if (dbd) {
@@ -629,7 +629,7 @@ scsi_cdb_synchronizecache10(int lba, int num_blocks, int syncnv, int immed)
 		return NULL;
 	}
 
-	bzero(task, sizeof(struct scsi_task));
+	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_SYNCHRONIZECACHE10;
 
 	if (syncnv) {

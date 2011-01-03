@@ -141,7 +141,7 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				iscsi_free_discovery_addresses(targets);
 				return -1;
 			}
-			bzero(target, sizeof(struct iscsi_discovery_address));
+			memset(target, 0, sizeof(struct iscsi_discovery_address));
 			target->target_name = strdup((char *)ptr+11);
 			if (target->target_name == NULL) {
 				iscsi_set_error(iscsi, "Failed to allocate "

@@ -73,7 +73,7 @@ iscsi_connect_sync(struct iscsi_context *iscsi, const char *portal)
 {
 	struct iscsi_sync_state state;
 
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 
 	if (iscsi_connect_async(iscsi, portal,
 				iscsi_sync_cb, &state) != 0) {
@@ -94,7 +94,7 @@ iscsi_full_connect_sync(struct iscsi_context *iscsi,
 {
 	struct iscsi_sync_state state;
 
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 
 	if (iscsi_full_connect_async(iscsi, portal, lun,
 				     iscsi_sync_cb, &state) != 0) {
@@ -113,7 +113,7 @@ int iscsi_login_sync(struct iscsi_context *iscsi)
 {
 	struct iscsi_sync_state state;
 
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 
 	if (iscsi_login_async(iscsi, iscsi_sync_cb, &state) != 0) {
 		iscsi_set_error(iscsi, "Failed to login. %s",
@@ -130,7 +130,7 @@ int iscsi_logout_sync(struct iscsi_context *iscsi)
 {
 	struct iscsi_sync_state state;
 
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 
 	if (iscsi_logout_async(iscsi, iscsi_sync_cb, &state) != 0) {
 		iscsi_set_error(iscsi, "Failed to start logout() %s",
@@ -167,7 +167,7 @@ iscsi_reportluns_sync(struct iscsi_context *iscsi, int report_type,
 {
 	struct scsi_sync_state state;
 
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 
 	if (iscsi_reportluns_async(iscsi, report_type, alloc_len,
 				   scsi_sync_cb, &state) != 0) {
@@ -186,7 +186,7 @@ iscsi_testunitready_sync(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_sync_state state;
 
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 
 	if (iscsi_testunitready_async(iscsi, lun,
 				      scsi_sync_cb, &state) != 0) {
@@ -206,7 +206,7 @@ iscsi_inquiry_sync(struct iscsi_context *iscsi, int lun, int evpd,
 {
 	struct scsi_sync_state state;
 
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 
 	if (iscsi_inquiry_async(iscsi, lun, evpd, page_code, maxsize,
 				scsi_sync_cb, &state) != 0) {
@@ -225,7 +225,7 @@ iscsi_readcapacity10_sync(struct iscsi_context *iscsi, int lun, int lba,
 {
 	struct scsi_sync_state state;
 
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 
 	if (iscsi_readcapacity10_async(iscsi, lun, lba, pmi,
 				       scsi_sync_cb, &state) != 0) {
@@ -245,7 +245,7 @@ iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
 {
 	struct scsi_sync_state state;
 
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 
 	if (iscsi_synchronizecache10_async(iscsi, lun, lba, num_blocks,
 					   syncnv, immed,
@@ -266,7 +266,7 @@ iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_sync_state state;
 
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 
 	if (iscsi_scsi_command_async(iscsi, lun, task,
 				     scsi_sync_cb, data, &state) != 0) {

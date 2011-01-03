@@ -44,7 +44,7 @@ iscsi_create_context(const char *initiator_name)
 		return NULL;
 	}
 
-	bzero(iscsi, sizeof(struct iscsi_context));
+	memset(iscsi, 0, sizeof(struct iscsi_context));
 
 	iscsi->initiator_name = strdup(initiator_name);
 	if (iscsi->initiator_name == NULL) {

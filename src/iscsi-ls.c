@@ -281,7 +281,7 @@ int main(int argc, const char *argv[])
 		POPT_TABLEEND
 	};
 
-	bzero(&state, sizeof(state));
+	memset(&state, 0, sizeof(state));
 
 	pc = poptGetContext(argv[0], argc, argv, popt_options, POPT_CONTEXT_POSIXMEHARDER);
 	if ((res = poptGetNextOpt(pc)) < -1) {
