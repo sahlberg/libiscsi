@@ -13,6 +13,10 @@ if test "${libdir}" = '${exec_prefix}/lib'; then
   esac
 fi
 
+is_solaris="no"
+install="/usr/bin/install"
+ldconfig="ldconfig"
+
 case `uname` in
   Linux*)
     AC_DEFINE(HAVE_GETHOSTBYNAME2,1,[Whether we have gethostbyname2 or not])
@@ -20,6 +24,9 @@ case `uname` in
   AIX*)
     ;;
   SunOS)
+    is_solaris="yes"
+    install="ginstall"
+    ldconfig="echo no ldconfig on solaris"
     LIBS="$LIBS -lsocket -lnsl"
     ;;
   *)
@@ -91,8 +98,9 @@ else
   exit
 fi
 
-
 AC_SUBST(libdir)
+AC_SUBST(install)
+AC_SUBST(ldconfig)
 #AC_SUBST(LIBISCSI_LDFLAGS)
 
 AC_OUTPUT(Makefile)
