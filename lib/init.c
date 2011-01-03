@@ -262,6 +262,9 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 	}
 	portal = str;
 
+	user   = getenv("LIBISCSI_CHAP_USERNAME");
+	passwd = getenv("LIBISCSI_CHAP_PASSWORD");
+
 	tmp = index(portal, '@');
 	if (tmp != NULL) {
 		user = portal;
