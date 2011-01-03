@@ -31,6 +31,8 @@
 
 #define ISCSI_URL_SYNTAX "\"iscsi://[<username>[%<password>]@]" \
   "<host>[:<port>]/<target-iqn>/<lun>\""
+#define ISCSI_PURL_SYNTAX "\"iscsi://[<username>[%<password>]@]" \
+  "<host>[:<port>]\""
 
 struct iscsi_context *
 iscsi_create_context(const char *initiator_name)
@@ -364,6 +366,86 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 	}
 	
 	iscsi_url->lun = l;
+	free(str);
+	return iscsi_url;
+}
+
+struct iscsi_url *
+iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url)
+{
+	struct iscsi_url *iscsi_url;
+	char *str;
+	char *portal;
+	char *user = NULL;
+	char *passwd = NULL;
+	char *tmp;
+
+	if (strncmp(url, "iscsi://", 8)) {
+		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI Portal URL must be of "
+				"the form: %s",
+				url,
+				ISCSI_PURL_SYNTAX);
+		return NULL;
+	}
+
+	str = strdup(url + 8);
+	if (str == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup url %s", url);
+		return NULL;
+	}
+	portal = str;
+
+	user   = getenv("LIBISCSI_CHAP_USERNAME");
+	passwd = getenv("LIBISCSI_CHAP_PASSWORD");
+
+	tmp = index(portal, '@');
+	if (tmp != NULL) {
+		user = portal;
+		*tmp++	= 0;
+		portal = tmp;
+
+		tmp = index(user, '%');
+		if (tmp != NULL) {
+			*tmp++ = 0;
+			passwd = tmp;
+		}
+	}
+
+
+	iscsi_url = malloc(sizeof(struct iscsi_url));
+	if (iscsi_url == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate iscsi_url structure");
+		free(str);
+		return NULL;
+	}
+	memset(iscsi_url, 0, sizeof(struct iscsi_url));
+
+	iscsi_url->portal = strdup(portal);
+	if (iscsi_url->portal == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup portal string");
+		iscsi_destroy_url(iscsi_url);
+		free(str);
+		return NULL;
+	}
+
+	if (user != NULL && passwd != NULL) {
+		iscsi_url->user = strdup(user);
+		if (iscsi_url->user == NULL) {
+			iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup username string");
+			iscsi_destroy_url(iscsi_url);
+			free(str);
+			return NULL;
+		}
+
+		iscsi_url->passwd = strdup(passwd);
+		if (iscsi_url->passwd == NULL) {
+			iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup password string");
+			iscsi_destroy_url(iscsi_url);
+			free(str);
+			return NULL;
+		}
+	}
+	
 	free(str);
 	return iscsi_url;
 }

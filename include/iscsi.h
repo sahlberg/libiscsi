@@ -54,17 +54,41 @@ struct iscsi_url {
 /*
  * This function is used to parse an iSCSI URL into a iscsi_url structure.
  * iSCSI URL format :
- * iscsi://[<username>%<password>@]<host>[:<port>]/<target-iqn>/<lun>
+ * iscsi://[<username>[%<password>]@]<host>[:<port>]/<target-iqn>/<lun>
  *
  * Function will return a pointer to an iscsi url structure if successful,
  * or it will return NULL and set iscsi_get_error() accrodingly if there was a problem
  * with the URL.
+ *
+ * CHAP username/password can also be provided via environment variables
+ * LIBISCSI_CHAP_USERNAME=ronnie
+ * LIBISCSI_CHAP_PASSWORD=password
  *
  * The returnes structure is freed by calling iscsi_destroy_url()
  */
 struct iscsi_url *iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url);
 void iscsi_destroy_url(struct iscsi_url *iscsi_url);
 
+/*
+ * This function is used to parse an iSCSI Portal URL into a iscsi_url structure.
+ * iSCSI Portal URL format :
+ * iscsi://[<username>[%<password>]@]<host>[:<port>]
+ *
+ * iSCSI Portal URL is used when describing a discovery session, where the target-iqn and the
+ * lun is not yet known.
+ *
+ * Function will return a pointer to an iscsi url structure if successful,
+ * or it will return NULL and set iscsi_get_error() accrodingly if there was a problem
+ * with the URL.
+ *
+ * CHAP username/password can also be provided via environment variables
+ * LIBISCSI_CHAP_USERNAME=ronnie
+ * LIBISCSI_CHAP_PASSWORD=password
+ *
+ * The returnes structure is freed by calling iscsi_destroy_url()
+ */
+struct iscsi_url *
+iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url);
 
 /*
  * This function returns a description of the last encountered error.
