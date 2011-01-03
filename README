@@ -34,3 +34,20 @@ Build RPM
 To build RPMs run the following script from the libiscsi root directory
 ./packaging/RPM/makerpms.sh
 
+iSCSI URL Format
+================
+iSCSI devices are specified by a URL format on the following form :
+    iscsi://[<username>[%<password>]@]<host>[:<port>]/<target-iqn>/<lun>
+Example:
+    iscsi://server/iqn.ronnie.test/1
+When using CHAP authentication, username and password can be specified as part of the URL
+    iscsi://ronnie%password@server/iqn.ronnie.test/1
+but this may make the user and password visible in log files as well as in ps aux output.
+So it is also possible to provide either just the password or both the password and username
+via environment variables.
+The username and/or password can be set via
+LIBISCSI_CHAP_USERNAME=ronnie
+LIBISCSI_CHAP_PASSWORD=password
+
+Example:
+   LIBISCSI_CHAP_PASSWORD=password iscsi-inq iscsi://ronnie@10.1.1.27/iqn.ronnie.test/1
