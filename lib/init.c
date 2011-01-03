@@ -345,7 +345,7 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 		return NULL;
 	}
 
-	if (user != NULL) {
+	if (user != NULL && passwd != NULL) {
 		iscsi_url->user = strdup(user);
 		if (iscsi_url->user == NULL) {
 			iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup username string");
@@ -353,9 +353,7 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 			free(str);
 			return NULL;
 		}
-	}
-	
-	if (passwd != NULL) {
+
 		iscsi_url->passwd = strdup(passwd);
 		if (iscsi_url->passwd == NULL) {
 			iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup password string");
