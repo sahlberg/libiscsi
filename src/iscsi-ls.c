@@ -32,6 +32,8 @@ struct client_state {
        int status;
        int lun;
        int type;
+       const char *username;
+       const char *password;
 };
 
 
@@ -132,7 +134,7 @@ tur_try_again:
 	printf("\n");
 }
 
-void list_luns(const char *target, const char *portal)
+void list_luns(struct client_state *clnt, const char *target, const char *portal)
 {
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -144,6 +146,12 @@ void list_luns(const char *target, const char *portal)
 	if (iscsi == NULL) {
 		printf("Failed to create context\n");
 		exit(10);
+	}
+	if (clnt->username != NULL) {
+		if (iscsi_set_initiator_username_pwd(iscsi, clnt->username, clnt->password) != 0) {
+			fprintf(stderr, "Failed to set initiator username and password\n");
+			exit(10);
+		}
 	}
 	if (iscsi_set_targetname(iscsi, target)) {
 		fprintf(stderr, "Failed to set target name\n");
@@ -225,7 +233,7 @@ void discovery_cb(struct iscsi_context *iscsi, int status, void *command_data, v
 	for(addr=command_data; addr; addr=addr->next) {	
 		printf("Target:%s Portal:%s\n", addr->target_name, addr->target_address);
 		if (showluns != 0) {
-			list_luns(addr->target_name, addr->target_address);
+			list_luns(private_data, addr->target_name, addr->target_address);
 		}
 	}
 
@@ -321,6 +329,8 @@ int main(int argc, const char *argv[])
 	iscsi_set_session_type(iscsi, ISCSI_SESSION_DISCOVERY);
 
 	if (iscsi_url->user != NULL) {
+		state.username = iscsi_url->user;
+		state.password = iscsi_url->passwd;
 		if (iscsi_set_initiator_username_pwd(iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
 			fprintf(stderr, "Failed to set initiator username and password\n");
 			exit(10);
