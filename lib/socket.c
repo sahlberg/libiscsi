@@ -65,13 +65,13 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	host = addr;
 
 	/* check if we have a target portal group tag */
-	str = rindex(host, ',');
+	str = strrchr(host, ',');
 	if (str != NULL) {
 		tpgt = atoi(str+1);
 		str[0] = 0;
 	}
 
-	str = rindex(host, ':');
+	str = strrchr(host, ':');
 	if (str != NULL) {
 		if (strchr(str, ']') == NULL) {
 			if (str != NULL) {
