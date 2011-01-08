@@ -46,9 +46,8 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	int tpgt = -1;
 	int port = 3260;
 	char *str;
-	char *addr;
-	struct sockaddr_storage s;
-	struct sockaddr_in *sin = (struct sockaddr_in *)&s;
+	char *addr, *host;
+	struct addrinfo *ai = NULL;
 	int socksize;
 
 	if (iscsi->fd != -1) {
@@ -63,60 +62,74 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 				"Failed to strdup portal address.");
 		return -1;
 	}
+	host = addr;
 
 	/* check if we have a target portal group tag */
-	str = rindex(addr, ',');
+	str = rindex(host, ',');
 	if (str != NULL) {
 		tpgt = atoi(str+1);
 		str[0] = 0;
 	}
 
-	/* XXX need handling for {ipv6 addresses} */
-	/* for now, assume all is ipv4 */
-	str = rindex(addr, ':');
+	str = rindex(host, ':');
 	if (str != NULL) {
-		port = atoi(str+1);
-		str[0] = 0;
+		if (index(str, ']') == NULL) {
+			if (str != NULL) {
+				port = atoi(str+1);
+				str[0] = 0;
+			}
+		}
 	}
 
-	sin->sin_family = AF_INET;
-	sin->sin_port   = htons(port);
-	if (inet_pton(AF_INET, addr, &sin->sin_addr) != 1) {
-		struct hostent *he;
-
-		he = gethostbyname(addr);
-		if (he == NULL) {
-			iscsi_set_error(iscsi, "Invalid target:%s  "
-					"Failed to resolve hostname.", addr);
+	/* ipv6 in [...] form ? */
+	if (host[0] == '[') {
+		host ++;
+		str = index(host, ']');
+		if (str == NULL) {
 			free(addr);
+			iscsi_set_error(iscsi, "Invalid target:%s  "
+				"Missing ']' in IPv6 address", portal);
 			return -1;
 		}
-		if (he->h_addrtype != AF_INET) {
-			iscsi_set_error(iscsi, "Invalid target:%s  "
-					"Can not resolve into IPv4.", addr);
-			free(addr);
-			return -1;
-		}
-		sin->sin_addr.s_addr = *(uint32_t *)he->h_addr_list[0];
+		*str = 0;		
 	}
+
+	/* is it a hostname ? */
+	if (getaddrinfo(host, NULL, NULL, &ai) != 0) {
+		free(addr);
+		iscsi_set_error(iscsi, "Invalid target:%s  "
+			"Can not resolv into IPv4/v6.", portal);
+		return -1;
+ 	}
 	free(addr);
 
-	switch (s.ss_family) {
+	switch (ai->ai_family) {
 	case AF_INET:
-		iscsi->fd = socket(AF_INET, SOCK_STREAM, 0);
 		socksize = sizeof(struct sockaddr_in);
+		((struct sockaddr_in *)(ai->ai_addr))->sin_port = htons(port);
+#ifdef HAVE_SOCK_SIN_LEN
+		((struct sockaddr_in *)(ai->ai_addr))->sin_len = socksize;
+#endif
+		break;
+	case AF_INET6:
+		socksize = sizeof(struct sockaddr_in6);
+		((struct sockaddr_in6 *)(ai->ai_addr))->sin6_port = htons(port);
+#ifdef HAVE_SOCK_SIN_LEN
+		((struct sockaddr_in6 *)(ai->ai_addr))->sin6_len = socksize;
+#endif
 		break;
 	default:
 		iscsi_set_error(iscsi, "Unknown address family :%d. "
-				"Only IPv4 supported so far.", s.ss_family);
+				"Only IPv4/IPv6 supported so far.",
+				ai->ai_family);
+		freeaddrinfo(ai);
 		return -1;
 
 	}
-#ifdef HAVE_SOCK_SIN_LEN
-	s.ss_len = socksize;
-#endif
 
+	iscsi->fd = socket(ai->ai_family, SOCK_STREAM, 0);
 	if (iscsi->fd == -1) {
+		freeaddrinfo(ai);
 		iscsi_set_error(iscsi, "Failed to open iscsi socket. "
 				"Errno:%s(%d).", strerror(errno), errno);
 		return -1;
@@ -128,15 +141,17 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	set_nonblocking(iscsi->fd);
 
-	if (connect(iscsi->fd, (struct sockaddr *)&s, socksize) != 0
+	if (connect(iscsi->fd, ai->ai_addr, socksize) != 0
 	    && errno != EINPROGRESS) {
 		iscsi_set_error(iscsi, "Connect failed with errno : "
 				"%s(%d)", strerror(errno), errno);
 		close(iscsi->fd);
 		iscsi->fd = -1;
+		freeaddrinfo(ai);
 		return -1;
 	}
 
+	freeaddrinfo(ai);
 	return 0;
 }
 
