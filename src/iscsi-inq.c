@@ -150,6 +150,30 @@ void do_inquiry(struct iscsi_context *iscsi, int lun, int evpd, int pc)
 }
 
 
+void print_usage(void)
+{
+	fprintf(stderr, "Usage: iscsi-inq [-?] [-?|--help] [--usage] [-i|--initiator-name=iqn-name]\n"
+			"\t\t[-e|--evpd=integer] [-c|--pagecode=integer] <iscsi-url>\n");
+}
+
+void print_help(void)
+{
+	fprintf(stderr, "Usage: iscsi-inq [OPTION...] <iscsi-url>\n");
+	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
+	fprintf(stderr, "  -e, --evpd=integer                evpd\n");
+	fprintf(stderr, "  -c, --pagecode=integer            page code\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Help options:\n");
+	fprintf(stderr, "  -?, --help                        Show this help message\n");
+	fprintf(stderr, "      --usage                       Display brief usage message\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "iSCSI URL format : %s\n", ISCSI_URL_SYNTAX);
+	fprintf(stderr, "\n");
+	fprintf(stderr, "<host> is either of:\n");
+	fprintf(stderr, "  \"hostname\"       iscsi.example\n");
+	fprintf(stderr, "  \"ipv4-address\"   10.1.1.27\n");
+	fprintf(stderr, "  \"ipv6-address\"   [fce0::1]\n");
+}
 
 int main(int argc, const char *argv[])
 {
@@ -160,10 +184,12 @@ int main(int argc, const char *argv[])
 	const char *url = NULL;
 	struct iscsi_url *iscsi_url = NULL;
 	int evpd = 0, pagecode = 0;
+	int show_help = 0, show_usage = 0;
 	int res;
 
 	struct poptOption popt_options[] = {
-		POPT_AUTOHELP
+		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
+		{ "usage", 0, POPT_ARG_NONE, &show_usage, 0, "Display brief usage message", NULL },
 		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
 		{ "evpd", 'e', POPT_ARG_INT, &evpd, 0, "evpd", "integer" },
 		{ "pagecode", 'c', POPT_ARG_INT, &pagecode, 0, "page code", "integer" },
@@ -184,6 +210,17 @@ int main(int argc, const char *argv[])
 			extra_argc++;
 		}
 	}
+
+	if (show_help != 0) {
+		print_help();
+		exit(0);
+	}
+
+	if (show_usage != 0) {
+		print_usage();
+		exit(0);
+	}
+
 	poptFreeContext(pc);
 
 	iscsi = iscsi_create_context(initiator);
@@ -194,8 +231,7 @@ int main(int argc, const char *argv[])
 
 	if (url == NULL) {
 		fprintf(stderr, "You must specify the URL\n");
-		fprintf(stderr, "   iscsi://[<username>[%%<password>]@]<host>"
-			"[:<port>]/<target-iqn>/<lun>\n");
+		print_usage();
 		exit(10);
 	}
 	iscsi_url = iscsi_parse_full_url(iscsi, url);

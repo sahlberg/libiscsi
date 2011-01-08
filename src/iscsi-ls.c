@@ -270,6 +270,29 @@ void discoveryconnect_cb(struct iscsi_context *iscsi, int status, void *command_
 	}
 }
 
+void print_usage(void)
+{
+	fprintf(stderr, "Usage: iscsi-ls [-?s] [-?|--help] [--usage] [-i|--initiator-name=iqn-name]\n"
+			"\t\t[-s|--show-luns] <iscsi-portal-url>\n");
+}
+
+void print_help(void)
+{
+	fprintf(stderr, "Usage: iscsi-ls [OPTION...] <iscsi-url>\n");
+	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
+	fprintf(stderr, "  -s, --show-luns                   Show the luns for each target\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Help options:\n");
+	fprintf(stderr, "  -?, --help                        Show this help message\n");
+	fprintf(stderr, "      --usage                       Display brief usage message\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "iSCSI Portal URL format : %s\n", ISCSI_PORTAL_URL_SYNTAX);
+	fprintf(stderr, "\n");
+	fprintf(stderr, "<host> is either of:\n");
+	fprintf(stderr, "  \"hostname\"       iscsi.example\n");
+	fprintf(stderr, "  \"ipv4-address\"   10.1.1.27\n");
+	fprintf(stderr, "  \"ipv6-address\"   [fce0::1]\n");
+}
 
 int main(int argc, const char *argv[])
 {
@@ -281,9 +304,11 @@ int main(int argc, const char *argv[])
 	const char *url = NULL;
 	poptContext pc;
 	int res;
+	int show_help = 0, show_usage = 0;
 
 	struct poptOption popt_options[] = {
-		POPT_AUTOHELP
+		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
+		{ "usage", 0, POPT_ARG_NONE, &show_usage, 0, "Display brief usage message", NULL },
 		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
 		{ "show-luns", 's', POPT_ARG_NONE, &showluns, 0, "Show the luns for each target", NULL },
 		POPT_TABLEEND
@@ -305,11 +330,23 @@ int main(int argc, const char *argv[])
 			extra_argc++;
 		}
 	}
+
+	if (show_help != 0) {
+		print_help();
+		exit(0);
+	}
+
+	if (show_usage != 0) {
+		print_usage();
+		exit(0);
+	}
+
 	poptFreeContext(pc);
+
 
 	if (url == NULL) {
 		fprintf(stderr, "You must specify iscsi target portal.\n");
-		fprintf(stderr, "%s [options] iscsi://[<username>%%<password>@]<host>[:<port>]\n", argv[0]);
+		print_usage();
 		exit(10);
 	}
 

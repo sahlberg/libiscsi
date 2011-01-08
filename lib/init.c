@@ -29,11 +29,6 @@
 #include "iscsi-private.h"
 #include "slist.h"
 
-#define ISCSI_URL_SYNTAX "\"iscsi://[<username>[%<password>]@]" \
-  "<host>[:<port>]/<target-iqn>/<lun>\""
-#define ISCSI_PURL_SYNTAX "\"iscsi://[<username>[%<password>]@]" \
-  "<host>[:<port>]\""
-
 struct iscsi_context *
 iscsi_create_context(const char *initiator_name)
 {
@@ -431,7 +426,7 @@ iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url)
 		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI Portal URL must be of "
 				"the form: %s",
 				url,
-				ISCSI_PURL_SYNTAX);
+				ISCSI_PORTAL_URL_SYNTAX);
 		return NULL;
 	}
 

@@ -21,6 +21,14 @@
 struct iscsi_context;
 struct sockaddr;
 
+/*
+ * Syntax for normal and portal/discovery URLs.
+ */
+#define ISCSI_URL_SYNTAX "\"iscsi://[<username>[%<password>]@]" \
+  "<host>[:<port>]/<target-iqn>/<lun>\""
+#define ISCSI_PORTAL_URL_SYNTAX "\"iscsi://[<username>[%<password>]@]" \
+  "<host>[:<port>]\""
+
 
 /*
  * The following three functions are used to integrate libiscsi in an event
