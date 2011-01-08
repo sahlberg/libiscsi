@@ -55,7 +55,7 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->fd = -1;
 
 	/* initialize to a "random" isid */
-	iscsi_set_isid_random(iscsi, getpid() ^ time(NULL));
+	iscsi_set_isid_random(iscsi, getpid() ^ time(NULL), 0);
 
 	/* assume we start in security negotiation phase */
 	iscsi->current_phase = ISCSI_PDU_LOGIN_CSG_SECNEG;
@@ -76,14 +76,60 @@ iscsi_create_context(const char *initiator_name)
 }
 
 int
-iscsi_set_isid_random(struct iscsi_context *iscsi, int rnd)
+iscsi_set_isid_oui(struct iscsi_context *iscsi, uint32_t oui, uint32_t qualifier)
+{
+	iscsi->isid[0] = (oui >> 16) & 0x3f;
+	iscsi->isid[1] = (oui >>  8) & 0xff;
+	iscsi->isid[2] = (oui      ) & 0xff;
+
+	iscsi->isid[3] = (qualifier >> 16) & 0xff;
+	iscsi->isid[4] = (qualifier >>  8) & 0xff;
+	iscsi->isid[5] = (qualifier      ) & 0xff;
+
+	return 0;
+}
+
+int
+iscsi_set_isid_en(struct iscsi_context *iscsi, uint32_t en, uint32_t qualifier)
+{
+	iscsi->isid[0] = 0x40;
+
+	iscsi->isid[1] = (en >>  16) & 0xff;
+	iscsi->isid[2] = (en >>   8) & 0xff;
+	iscsi->isid[3] = (en       ) & 0xff;
+
+	iscsi->isid[4] = (qualifier >>  8) & 0xff;
+	iscsi->isid[5] = (qualifier      ) & 0xff;
+
+	return 0;
+}
+
+int
+iscsi_set_isid_random(struct iscsi_context *iscsi, uint32_t rnd, uint32_t qualifier)
 {
 	iscsi->isid[0] = 0x80;
-	iscsi->isid[1] = rnd&0xff;
-	iscsi->isid[2] = rnd&0xff;
-	iscsi->isid[3] = rnd&0xff;
-	iscsi->isid[4] = 0;
-	iscsi->isid[5] = 0;
+
+	iscsi->isid[1] = (rnd >>  16) & 0xff;
+	iscsi->isid[2] = (rnd >>   8) & 0xff;
+	iscsi->isid[3] = (rnd       ) & 0xff;
+
+	iscsi->isid[4] = (qualifier >>  8) & 0xff;
+	iscsi->isid[5] = (qualifier      ) & 0xff;
+
+	return 0;
+}
+
+
+int
+iscsi_set_isid_reserved(struct iscsi_context *iscsi)
+{
+	iscsi->isid[0] = 0xc0;
+
+	iscsi->isid[1] = 0x00;
+	iscsi->isid[2] = 0x00;
+	iscsi->isid[3] = 0x00;
+	iscsi->isid[4] = 0x00;
+	iscsi->isid[5] = 0x00;
 
 	return 0;
 }

@@ -15,10 +15,11 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <stdint.h>
+
+
 struct iscsi_context;
 struct sockaddr;
-
-
 
 
 /*
@@ -147,8 +148,8 @@ enum iscsi_session_type {
 };
 /*
  * Set the session type for a scsi context.
- * Session type can only be set/changed while the iscsi context is not
- * logged in to a target.
+ * Session type can only be set/changed before the context
+ * is logged in to the target.
  *
  * Returns:
  *  0: success
@@ -170,8 +171,8 @@ enum iscsi_header_digest {
 
 /*
  * Set the desired header digest for a scsi context.
- * Header digest can only be set/changed while the iscsi context is not
- * logged in to a target.
+ * Header digest can only be set/changed before the context
+ * is logged in to the target.
  *
  * Returns:
  *  0: success
@@ -429,6 +430,24 @@ struct iscsi_data {
        unsigned char *data;
 };
 
+
+/*
+ * These functions will set the ISID type and value.
+ * By default, contexts will automatically be assigned a 'random'
+ * type and value on creation, but this can be overridden
+ * by an appplication using these functions.
+ *
+ * Setting the ISID can only be done before loggin in to the target.
+ */
+int
+iscsi_set_isid_oui(struct iscsi_context *iscsi, uint32_t oui, uint32_t qualifier);
+int
+iscsi_set_isid_en(struct iscsi_context *iscsi, uint32_t en, uint32_t qualifier);
+int
+iscsi_set_isid_random(struct iscsi_context *iscsi, uint32_t rnd, uint32_t qualifier);
+int
+iscsi_set_isid_reserved(struct iscsi_context *iscsi);
+
 /*
  * Async commands for SCSI
  */
@@ -494,5 +513,3 @@ struct scsi_task *
 iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
 			      int num_blocks, int syncnv, int immed);
 
-int
-iscsi_set_isid_random(struct iscsi_context *iscsi, int rnd);
