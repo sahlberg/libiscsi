@@ -64,3 +64,11 @@ Example:
   iscsi://[fec0:2727::3]:3260/iqn.ronnie.test/1
 
 
+Header Digest
+=============
+Libiscsi supports HeaderDigest.
+By default, libiscsi will offer None,CRC32C and let the target pick whether 
+Header digest is to be used or not.
+This can be overridden by an application by calling iscsi_set_header_digest()
+if the application wants to force a specific setting.
+
