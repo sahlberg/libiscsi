@@ -64,7 +64,7 @@ struct iscsi_url {
  * LIBISCSI_CHAP_USERNAME=ronnie
  * LIBISCSI_CHAP_PASSWORD=password
  *
- * The returnes structure is freed by calling iscsi_destroy_url()
+ * The returned structure is freed by calling iscsi_destroy_url()
  */
 struct iscsi_url *iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url);
 void iscsi_destroy_url(struct iscsi_url *iscsi_url);
@@ -85,7 +85,7 @@ void iscsi_destroy_url(struct iscsi_url *iscsi_url);
  * LIBISCSI_CHAP_USERNAME=ronnie
  * LIBISCSI_CHAP_PASSWORD=password
  *
- * The returnes structure is freed by calling iscsi_destroy_url()
+ * The returned structure is freed by calling iscsi_destroy_url()
  */
 struct iscsi_url *
 iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url);
