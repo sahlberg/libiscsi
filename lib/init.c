@@ -314,20 +314,20 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 	user   = getenv("LIBISCSI_CHAP_USERNAME");
 	passwd = getenv("LIBISCSI_CHAP_PASSWORD");
 
-	tmp = index(portal, '@');
+	tmp = strchr(portal, '@');
 	if (tmp != NULL) {
 		user = portal;
 		*tmp++	= 0;
 		portal = tmp;
 
-		tmp = index(user, '%');
+		tmp = strchr(user, '%');
 		if (tmp != NULL) {
 			*tmp++ = 0;
 			passwd = tmp;
 		}
 	}
 
-	target = index(portal, '/');
+	target = strchr(portal, '/');
 	if (target == NULL) {
 		iscsi_set_error(iscsi, "Invalid URL %s\nCould not parse "
 				"'<target-iqn>'\niSCSI URL must be of the "
@@ -349,7 +349,7 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 		return NULL;
 	}
 
-	lun = index(target, '/');
+	lun = strchr(target, '/');
 	if (lun == NULL) {
 		iscsi_set_error(iscsi, "Invalid URL %s\nCould not parse <lun>\n"
 				"iSCSI URL must be of the form: %s",
@@ -445,13 +445,13 @@ iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url)
 	user   = getenv("LIBISCSI_CHAP_USERNAME");
 	passwd = getenv("LIBISCSI_CHAP_PASSWORD");
 
-	tmp = index(portal, '@');
+	tmp = strchr(portal, '@');
 	if (tmp != NULL) {
 		user = portal;
 		*tmp++	= 0;
 		portal = tmp;
 
-		tmp = index(user, '%');
+		tmp = strchr(user, '%');
 		if (tmp != NULL) {
 			*tmp++ = 0;
 			passwd = tmp;

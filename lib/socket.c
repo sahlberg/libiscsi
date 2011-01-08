@@ -73,7 +73,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	str = rindex(host, ':');
 	if (str != NULL) {
-		if (index(str, ']') == NULL) {
+		if (strchr(str, ']') == NULL) {
 			if (str != NULL) {
 				port = atoi(str+1);
 				str[0] = 0;
@@ -84,7 +84,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	/* ipv6 in [...] form ? */
 	if (host[0] == '[') {
 		host ++;
-		str = index(host, ']');
+		str = strchr(host, ']');
 		if (str == NULL) {
 			free(addr);
 			iscsi_set_error(iscsi, "Invalid target:%s  "
