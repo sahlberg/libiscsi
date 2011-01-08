@@ -267,7 +267,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 			}
 			offset = len;
 
-			if (len == data.size) {
+			if (len == (uint32_t)data.size) {
 				/* We managed to send it all as immediate data, so there is no non-immediate data left */
 				pdu->nidata.data = NULL;
 				pdu->nidata.size = 0;
