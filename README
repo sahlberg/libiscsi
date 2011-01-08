@@ -51,3 +51,16 @@ LIBISCSI_CHAP_PASSWORD=password
 
 Example:
    LIBISCSI_CHAP_PASSWORD=password iscsi-inq iscsi://ronnie@10.1.1.27/iqn.ronnie.test/1
+
+
+IPv6 support
+============
+Libiscsi supports IPv6, either as names resolving into IPv6 addresses or when
+IPv6 addresses are explicitely set in the URL.
+When specifying IPv6 addresses in the URL, they have to be specified in 
+[...] bracket form.
+
+Example:
+  iscsi://[fec0:2727::3]:3260/iqn.ronnie.test/1
+
+
