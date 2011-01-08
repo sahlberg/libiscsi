@@ -343,6 +343,7 @@ int main(int argc, const char *argv[])
 
 	event_loop(iscsi, &state);
 
+	iscsi_destroy_url(iscsi_url);
 	iscsi_destroy_context(iscsi);
 	return 0;
 }
