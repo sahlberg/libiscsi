@@ -569,8 +569,8 @@ iscsi_readcapacity10_async(struct iscsi_context *iscsi, int lun, int lba,
 }
 
 int
-iscsi_read10_async(struct iscsi_context *iscsi, int lun, int lba,
-		   int datalen, int blocksize,
+iscsi_read10_async(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		   uint32_t datalen, int blocksize,
 		   iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
@@ -597,7 +597,7 @@ iscsi_read10_async(struct iscsi_context *iscsi, int lun, int lba,
 
 int
 iscsi_write10_async(struct iscsi_context *iscsi, int lun, unsigned char *data,
-		    int datalen, int lba, int fua, int fuanv, int blocksize,
+		    uint32_t datalen, uint32_t lba, int fua, int fuanv, int blocksize,
 		    iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;

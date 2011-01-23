@@ -66,6 +66,14 @@ enum scsi_xfer_dir {
 struct scsi_reportluns_params {
 	int report_type;
 };
+struct scsi_read10_params {
+	uint32_t lba;
+	uint32_t num_blocks;
+};
+struct scsi_write10_params {
+	uint32_t lba;
+	uint32_t num_blocks;
+};
 struct scsi_readcapacity10_params {
 	int lba;
 	int pmi;
@@ -105,6 +113,8 @@ struct scsi_task {
 	int expxferlen;
 	unsigned char cdb[SCSI_CDB_MAX_SIZE];
 	union {
+		struct scsi_read10_params         read10;
+		struct scsi_write10_params        write10;
 		struct scsi_readcapacity10_params readcapacity10;
 		struct scsi_reportluns_params     reportluns;
 		struct scsi_inquiry_params        inquiry;
@@ -361,8 +371,8 @@ struct scsi_task *scsi_cdb_modesense6(int dbd,
 int scsi_datain_getfullsize(struct scsi_task *task);
 void *scsi_datain_unmarshall(struct scsi_task *task);
 
-struct scsi_task *scsi_cdb_read10(int lba, int xferlen, int blocksize);
-struct scsi_task *scsi_cdb_write10(int lba, int xferlen, int fua, int fuanv,
+struct scsi_task *scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize);
+struct scsi_task *scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int fua, int fuanv,
 			int blocksize);
 
 struct scsi_task *scsi_cdb_synchronizecache10(int lba, int num_blocks,

@@ -507,7 +507,7 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
  * READ10
  */
 struct scsi_task *
-scsi_cdb_read10(int lba, int xferlen, int blocksize)
+scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize)
 {
 	struct scsi_task *task;
 
@@ -526,6 +526,9 @@ scsi_cdb_read10(int lba, int xferlen, int blocksize)
 	task->xfer_dir = SCSI_XFER_READ;
 	task->expxferlen = xferlen;
 
+	task->params.read10.lba        = lba;
+	task->params.read10.num_blocks = xferlen/blocksize;
+
 	return task;
 }
 
@@ -533,7 +536,7 @@ scsi_cdb_read10(int lba, int xferlen, int blocksize)
  * WRITE10
  */
 struct scsi_task *
-scsi_cdb_write10(int lba, int xferlen, int fua, int fuanv, int blocksize)
+scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int fua, int fuanv, int blocksize)
 {
 	struct scsi_task *task;
 
@@ -558,6 +561,9 @@ scsi_cdb_write10(int lba, int xferlen, int fua, int fuanv, int blocksize)
 	task->cdb_size = 10;
 	task->xfer_dir = SCSI_XFER_WRITE;
 	task->expxferlen = xferlen;
+
+	task->params.write10.lba        = lba;
+	task->params.write10.num_blocks = xferlen/blocksize;
 
 	return task;
 }

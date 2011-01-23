@@ -480,11 +480,11 @@ int iscsi_synchronizecache10_async(struct iscsi_context *iscsi, int lun,
 				   int immed, iscsi_command_cb cb,
 				   void *private_data);
 
-int iscsi_read10_async(struct iscsi_context *iscsi, int lun, int lba,
-		       int datalen, int blocksize, iscsi_command_cb cb,
+int iscsi_read10_async(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		       uint32_t datalen, int blocksize, iscsi_command_cb cb,
 		       void *private_data);
 int iscsi_write10_async(struct iscsi_context *iscsi, int lun,
-			unsigned char *data, int datalen, int lba, int fua,
+			unsigned char *data, uint32_t datalen, uint32_t lba, int fua,
 			int fuanv, int blocksize, iscsi_command_cb cb,
 			void *private_data);
 int iscsi_modesense6_async(struct iscsi_context *iscsi, int lun, int dbd,
