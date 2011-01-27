@@ -50,7 +50,7 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->fd = -1;
 
 	/* initialize to a "random" isid */
-	iscsi_set_isid_random(iscsi, getpid() ^ time(NULL), 0);
+	iscsi_set_isid_random(iscsi, random(), 0);
 
 	/* assume we start in security negotiation phase */
 	iscsi->current_phase = ISCSI_PDU_LOGIN_CSG_SECNEG;
