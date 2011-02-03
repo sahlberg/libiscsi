@@ -188,6 +188,25 @@ iscsi_which_events(struct iscsi_context *iscsi)
 	return events;
 }
 
+int
+iscsi_queue_length(struct iscsi_context *iscsi)
+{
+	int i = 0;
+	struct iscsi_pdu *pdu;
+
+	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
+		i++;
+	}
+	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
+		i++;
+	}
+	if (iscsi->is_connected == 0) {
+		i++;
+	}
+
+	return i;
+}
+
 static int
 iscsi_read_from_socket(struct iscsi_context *iscsi)
 {

@@ -47,6 +47,10 @@ int iscsi_which_events(struct iscsi_context *iscsi);
  * file descriptor.
  */
 int iscsi_service(struct iscsi_context *iscsi, int revents);
+/*
+ * How many commands are in flight.
+ */
+int iscsi_queue_length(struct iscsi_context *iscsi);
 
 
 
