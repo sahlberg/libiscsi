@@ -518,6 +518,10 @@ iscsi_inquiry_sync(struct iscsi_context *iscsi, int lun, int evpd,
 		   int page_code, int maxsize);
 
 struct scsi_task *
+iscsi_read10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		  uint32_t datalen, int blocksize);
+
+struct scsi_task *
 iscsi_readcapacity10_sync(struct iscsi_context *iscsi, int lun, int lba,
 			  int pmi);
 
