@@ -1,7 +1,7 @@
 #!/bin/sh
 
 rm -rf autom4te.cache
-rm -f configure config.h.in ctdb.pc
+rm -f configure config.h.in libiscsi.pc
 
 IPATHS="-I ./include -I ../include"
 
