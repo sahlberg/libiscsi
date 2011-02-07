@@ -56,6 +56,9 @@ endif
 	$(INSTALLCMD) -m 644 include/iscsi.h $(DESTDIR)/usr/include/iscsi
 	$(INSTALLCMD) -m 644 include/scsi-lowlevel.h $(DESTDIR)/usr/include/iscsi
 
+distclean: clean
+	rm -f config.h config.log config.status configure Makefile
+
 clean:
 	rm -f lib/*.o src/*.o examples/*.o
 	rm -f bin/*
