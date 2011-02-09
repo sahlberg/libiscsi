@@ -23,18 +23,14 @@
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
 
-struct scsi_sync_state {
-       int finished;
-       struct scsi_task *task;
-};
-
 struct iscsi_sync_state {
        int finished;
        int status;
+       struct scsi_task *task;
 };
 
 static void
-event_loop(struct iscsi_context *iscsi, struct scsi_sync_state *state)
+event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 {
 	struct pollfd pfd;
 
@@ -83,7 +79,7 @@ iscsi_connect_sync(struct iscsi_context *iscsi, const char *portal)
 		return -1;
 	}
 
-	event_loop(iscsi, (struct scsi_sync_state *)&state);
+	event_loop(iscsi, &state);
 
 	return state.status;
 }
@@ -104,7 +100,7 @@ iscsi_full_connect_sync(struct iscsi_context *iscsi,
 		return -1;
 	}
 
-	event_loop(iscsi, (struct scsi_sync_state *)&state);
+	event_loop(iscsi, &state);
 
 	return state.status;
 }
@@ -121,7 +117,7 @@ int iscsi_login_sync(struct iscsi_context *iscsi)
 		return -1;
 	}
 
-	event_loop(iscsi, (struct scsi_sync_state *)&state);
+	event_loop(iscsi, &state);
 
 	return state.status;
 }
@@ -138,7 +134,7 @@ int iscsi_logout_sync(struct iscsi_context *iscsi)
 		return -1;
 	}
 
-	event_loop(iscsi, (struct scsi_sync_state *)&state);
+	event_loop(iscsi, &state);
 
 	return state.status;
 }
@@ -153,9 +149,11 @@ scsi_sync_cb(struct iscsi_context *iscsi _U_, int status, void *command_data,
 	     void *private_data)
 {
 	struct scsi_task *task = command_data;
-	struct scsi_sync_state *state = private_data;
+	struct iscsi_sync_state *state = private_data;
 
 	task->status    = status;
+
+	state->status   = status;
 	state->finished = 1;
 	state->task     = task;
 	iscsi_cbdata_steal_scsi_task(task);
@@ -165,7 +163,7 @@ struct scsi_task *
 iscsi_reportluns_sync(struct iscsi_context *iscsi, int report_type,
 		      int alloc_len)
 {
-	struct scsi_sync_state state;
+	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
@@ -184,7 +182,7 @@ iscsi_reportluns_sync(struct iscsi_context *iscsi, int report_type,
 struct scsi_task *
 iscsi_testunitready_sync(struct iscsi_context *iscsi, int lun)
 {
-	struct scsi_sync_state state;
+	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
@@ -204,7 +202,7 @@ struct scsi_task *
 iscsi_inquiry_sync(struct iscsi_context *iscsi, int lun, int evpd,
 		   int page_code, int maxsize)
 {
-	struct scsi_sync_state state;
+	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
@@ -223,7 +221,7 @@ struct scsi_task *
 iscsi_read10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		  uint32_t datalen, int blocksize)
 {
-	struct scsi_sync_state state;
+	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
@@ -243,7 +241,7 @@ struct scsi_task *
 iscsi_readcapacity10_sync(struct iscsi_context *iscsi, int lun, int lba,
 			  int pmi)
 {
-	struct scsi_sync_state state;
+	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
@@ -263,7 +261,7 @@ struct scsi_task *
 iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
 			      int num_blocks, int syncnv, int immed)
 {
-	struct scsi_sync_state state;
+	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
@@ -284,7 +282,7 @@ struct scsi_task *
 iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
 			struct scsi_task *task, struct iscsi_data *data)
 {
-	struct scsi_sync_state state;
+	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
