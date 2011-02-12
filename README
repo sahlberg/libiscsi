@@ -94,6 +94,8 @@ Change: 1970-01-01 10:00:00.000000000 +1000
 The cat command, which allows you to read/dump a iSCSI LUN to a file :
 $ LD_PRELOAD=./bin/ld_iscsi.so cat iscsi://127.0.0.1:3262/iqn.ronnie.test/2 >copy_of_iscsi_lun
 
+Or using dd even :
+LD_PRELOAD=./bin/ld_iscsi.so strace -o x -f dd if=iscsi://127.0.0.1:3262/iqn.ronnie.test/2 of=copy_of_LUN bs=10M count=1 bs=1M count=10
 
 The LD_PRELOAD hack is incomplete and needs more functions to be intercepted before becomming fully functional. Patches welcome!
 
