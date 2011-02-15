@@ -282,6 +282,15 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 				return -1;
 			}
 			break;
+		case ISCSI_PDU_SCSI_TASK_MANAGEMENT_RESPONSE:
+			if (iscsi_process_task_mgmt_reply(iscsi, pdu,
+							  in) != 0) {
+				SLIST_REMOVE(&iscsi->waitpdu, pdu);
+				iscsi_free_pdu(iscsi, pdu);
+				iscsi_set_error(iscsi, "iscsi task-mgmt failed");
+				return -1;
+			}
+			break;
 		case ISCSI_PDU_R2T:
 			if (iscsi_process_r2t(iscsi, pdu, in) != 0) {
 				SLIST_REMOVE(&iscsi->waitpdu, pdu);
