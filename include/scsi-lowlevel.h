@@ -126,6 +126,9 @@ struct scsi_task {
 	struct scsi_allocated_memory *mem;
 
 	void *ptr;
+
+	uint32_t itt;
+	uint32_t cmdsn;
 };
 
 void scsi_free_scsi_task(struct scsi_task *task);
