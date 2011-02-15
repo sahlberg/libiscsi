@@ -194,6 +194,7 @@ void iscsi_pdu_set_pduflags(struct iscsi_pdu *pdu, unsigned char flags);
 void iscsi_pdu_set_immediate(struct iscsi_pdu *pdu);
 void iscsi_pdu_set_ttt(struct iscsi_pdu *pdu, uint32_t ttt);
 void iscsi_pdu_set_cmdsn(struct iscsi_pdu *pdu, uint32_t cmdsn);
+void iscsi_pdu_set_rcmdsn(struct iscsi_pdu *pdu, uint32_t rcmdsn);
 void iscsi_pdu_set_lun(struct iscsi_pdu *pdu, uint32_t lun);
 void iscsi_pdu_set_expstatsn(struct iscsi_pdu *pdu, uint32_t expstatsnsn);
 void iscsi_pdu_set_expxferlen(struct iscsi_pdu *pdu, uint32_t expxferlen);

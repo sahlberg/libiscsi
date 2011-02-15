@@ -345,6 +345,12 @@ iscsi_pdu_set_cmdsn(struct iscsi_pdu *pdu, uint32_t cmdsn)
 }
 
 void
+iscsi_pdu_set_rcmdsn(struct iscsi_pdu *pdu, uint32_t rcmdsn)
+{
+	*(uint32_t *)&pdu->outdata.data[32] = htonl(rcmdsn);
+}
+
+void
 iscsi_pdu_set_datasn(struct iscsi_pdu *pdu, uint32_t datasn)
 {
 	*(uint32_t *)&pdu->outdata.data[36] = htonl(datasn);
