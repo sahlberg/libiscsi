@@ -135,22 +135,22 @@ struct iscsi_context {
 #define ISCSI_PDU_DATA_CONTAINS_STATUS	       0x01
 
 enum iscsi_opcode {
-	ISCSI_PDU_NOP_OUT         = 0x00,
-	ISCSI_PDU_SCSI_REQUEST    = 0x01,
-	ISCSI_PDU_SCSI_TASK_MANAGEMENT_REQUEST  = 0x02,
-	ISCSI_PDU_LOGIN_REQUEST   = 0x03,
-	ISCSI_PDU_TEXT_REQUEST    = 0x04,
-	ISCSI_PDU_DATA_OUT        = 0x05,
-	ISCSI_PDU_LOGOUT_REQUEST  = 0x06,
-	ISCSI_PDU_NOP_IN          = 0x20,
-	ISCSI_PDU_SCSI_RESPONSE   = 0x21,
+	ISCSI_PDU_NOP_OUT                        = 0x00,
+	ISCSI_PDU_SCSI_REQUEST                   = 0x01,
+	ISCSI_PDU_SCSI_TASK_MANAGEMENT_REQUEST   = 0x02,
+	ISCSI_PDU_LOGIN_REQUEST                  = 0x03,
+	ISCSI_PDU_TEXT_REQUEST                   = 0x04,
+	ISCSI_PDU_DATA_OUT                       = 0x05,
+	ISCSI_PDU_LOGOUT_REQUEST                 = 0x06,
+	ISCSI_PDU_NOP_IN                         = 0x20,
+	ISCSI_PDU_SCSI_RESPONSE                  = 0x21,
 	ISCSI_PDU_SCSI_TASK_MANAGEMENT_RESPONSE  = 0x22,
-	ISCSI_PDU_LOGIN_RESPONSE  = 0x23,
-	ISCSI_PDU_TEXT_RESPONSE   = 0x24,
-	ISCSI_PDU_DATA_IN         = 0x25,
-	ISCSI_PDU_LOGOUT_RESPONSE = 0x26,
-	ISCSI_PDU_R2T             = 0x31,
-	ISCSI_PDU_NO_PDU	  = 0xff
+	ISCSI_PDU_LOGIN_RESPONSE                 = 0x23,
+	ISCSI_PDU_TEXT_RESPONSE                  = 0x24,
+	ISCSI_PDU_DATA_IN                        = 0x25,
+	ISCSI_PDU_LOGOUT_RESPONSE                = 0x26,
+	ISCSI_PDU_R2T                            = 0x31,
+	ISCSI_PDU_NO_PDU	                 = 0xff
 };
 
 struct iscsi_pdu {
