@@ -233,6 +233,8 @@ int iscsi_process_scsi_data_in(struct iscsi_context *iscsi,
 int iscsi_process_nop_out_reply(struct iscsi_context *iscsi,
 				struct iscsi_pdu *pdu,
 				struct iscsi_in_pdu *in);
+int iscsi_process_task_mgmt_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
+				  struct iscsi_in_pdu *in);
 int iscsi_process_r2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		      struct iscsi_in_pdu *in);
 

@@ -413,6 +413,29 @@ struct iscsi_discovery_address {
 int iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 			unsigned char *data, int len, void *private_data);
 
+/*
+ * Asynchronous call for task management
+ *
+ * Returns:
+ *  0 if the call was initiated and the task mgmt function will be invoked.
+ * the connection will be reported through the callback function.
+ * <0 if there was an error. The callback function will not be invoked.
+ *
+ * Callback parameters :
+ * status can be either of :
+ *    ISCSI_STATUS_GOOD     : Connection was successful. Command_data is NULL.
+ *
+ *    ISCSI_STATUS_ERROR    : Error.
+ *
+ * The callback will NOT be invoked if the session is explicitely torn down
+ * through a call to iscsi_disconnect() or iscsi_destroy_context().
+ */
+int
+iscsi_task_mgmt_async(struct iscsi_context *iscsi,
+		      int lun, uint8_t function, 
+		      uint32_t ritt, uint32_t rcmdscn,
+		      iscsi_command_cb cb, void *private_data);
+
 
 
 
