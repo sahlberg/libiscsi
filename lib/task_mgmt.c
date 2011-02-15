@@ -21,7 +21,7 @@
 
 int
 iscsi_task_mgmt_async(struct iscsi_context *iscsi,
-		      int lun, uint8_t function, 
+		      int lun, enum iscsi_task_mgmt_funcs function, 
 		      uint32_t ritt, uint32_t rcmdsn,
 		      iscsi_command_cb cb, void *private_data)
 {

@@ -413,6 +413,16 @@ struct iscsi_discovery_address {
 int iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 			unsigned char *data, int len, void *private_data);
 
+enum iscsi_task_mgmt_funcs {
+     ISCSI_TM_ABORT_TASK        = 0x01,
+     ISCSI_TM_ABORT_TASK_SET    = 0x02,
+     ISCSI_TM_CLEAR_ACA         = 0x03,
+     ISCSI_TM_CLEAR_TASK_SET    = 0x04,
+     ISCSI_TM_LUN_RESET         = 0x05,
+     ISCSI_TM_TARGET_WARM_RESET = 0x06,
+     ISCSI_TM_TARGET_COLD_RESET = 0x07,
+     ISCSI_TM_TASK_REASSIGN     = 0x08
+};
 /*
  * Asynchronous call for task management
  *
@@ -432,7 +442,7 @@ int iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
  */
 int
 iscsi_task_mgmt_async(struct iscsi_context *iscsi,
-		      int lun, uint8_t function, 
+		      int lun, enum iscsi_task_mgmt_funcs function, 
 		      uint32_t ritt, uint32_t rcmdscn,
 		      iscsi_command_cb cb, void *private_data);
 
