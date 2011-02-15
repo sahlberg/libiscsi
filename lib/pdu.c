@@ -315,6 +315,12 @@ iscsi_pdu_set_itt(struct iscsi_pdu *pdu, uint32_t itt)
 }
 
 void
+iscsi_pdu_set_ritt(struct iscsi_pdu *pdu, uint32_t ritt)
+{
+	*(uint32_t *)&pdu->outdata.data[20] = htonl(ritt);
+}
+
+void
 iscsi_pdu_set_pduflags(struct iscsi_pdu *pdu, unsigned char flags)
 {
 	pdu->outdata.data[1] = flags;
