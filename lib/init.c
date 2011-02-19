@@ -316,10 +316,14 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 		portal = tmp;
 
 		tmp = strchr(user, '%');
+		if (tmp == NULL) {
+			tmp = strchr(user, ':');
+		}
 		if (tmp != NULL) {
 			*tmp++ = 0;
 			passwd = tmp;
 		}
+
 	}
 
 	target = strchr(portal, '/');
