@@ -516,7 +516,6 @@ int iscsi_synchronizecache10_async(struct iscsi_context *iscsi, int lun,
 				   int lba, int num_blocks, int syncnv,
 				   int immed, iscsi_command_cb cb,
 				   void *private_data);
-
 int iscsi_read10_async(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       uint32_t datalen, int blocksize, iscsi_command_cb cb,
 		       void *private_data);
@@ -530,6 +529,32 @@ int iscsi_modesense6_async(struct iscsi_context *iscsi, int lun, int dbd,
 			   void *private_data);
 
 
+struct scsi_task *iscsi_reportluns_send(struct iscsi_context *iscsi, int report_type,
+			   int alloc_len, iscsi_command_cb cb,
+			   void *private_data);
+struct scsi_task *iscsi_testunitready_send(struct iscsi_context *iscsi, int lun,
+			      iscsi_command_cb cb, void *private_data);
+struct scsi_task *iscsi_inquiry_send(struct iscsi_context *iscsi, int lun, int evpd,
+			int page_code, int maxsize, iscsi_command_cb cb,
+			void *private_data);
+struct scsi_task *iscsi_readcapacity10_send(struct iscsi_context *iscsi, int lun, int lba,
+			       int pmi, iscsi_command_cb cb,
+			       void *private_data);
+struct scsi_task *iscsi_synchronizecache10_send(struct iscsi_context *iscsi, int lun,
+				   int lba, int num_blocks, int syncnv,
+				   int immed, iscsi_command_cb cb,
+				   void *private_data);
+struct scsi_task *iscsi_read10_send(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		       uint32_t datalen, int blocksize, iscsi_command_cb cb,
+		       void *private_data);
+struct scsi_task *iscsi_write10_send(struct iscsi_context *iscsi, int lun,
+			unsigned char *data, uint32_t datalen, uint32_t lba, int fua,
+			int fuanv, int blocksize, iscsi_command_cb cb,
+			void *private_data);
+struct scsi_task *iscsi_modesense6_send(struct iscsi_context *iscsi, int lun, int dbd,
+			   int pc, int page_code, int sub_page_code,
+			   unsigned char alloc_len, iscsi_command_cb cb,
+			   void *private_data);
 
 
 /*

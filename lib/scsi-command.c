@@ -486,51 +486,92 @@ iscsi_process_r2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
  * SCSI commands
  */
 
-int
-iscsi_testunitready_async(struct iscsi_context *iscsi, int lun,
+struct scsi_task *
+iscsi_testunitready_send(struct iscsi_context *iscsi, int lun,
 			  iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
-	int ret;
 
 	task = scsi_cdb_testunitready();
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"testunitready cdb.");
-		return -1;
+		return NULL;
 	}
-	ret = iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
-				       private_data);
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
 
-	return ret;
+	return task;
 }
 
-
 int
-iscsi_reportluns_async(struct iscsi_context *iscsi, int report_type,
+iscsi_testunitready_async(struct iscsi_context *iscsi, int lun,
+			  iscsi_command_cb cb, void *private_data)
+{
+	return iscsi_testunitready_send(iscsi, lun,
+			  cb, private_data) == NULL ? -1 : 0;
+}
+
+struct scsi_task *
+iscsi_reportluns_send(struct iscsi_context *iscsi, int report_type,
 		       int alloc_len, iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
-	int ret;
 
 	if (alloc_len < 16) {
 		iscsi_set_error(iscsi, "Minimum allowed alloc len for "
 				"reportluns is 16. You specified %d.",
 				alloc_len);
-		return -1;
+		return NULL;
 	}
 
 	task = scsi_reportluns_cdb(report_type, alloc_len);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"reportluns cdb.");
-		return -1;
+		return NULL;
 	}
 	/* report luns are always sent to lun 0 */
-	ret = iscsi_scsi_command_async(iscsi, 0, task, cb, NULL,
-				       private_data);
+	if (iscsi_scsi_command_async(iscsi, 0, task, cb, NULL,
+				     private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
 
-	return ret;
+	return task;
+}
+
+int
+iscsi_reportluns_async(struct iscsi_context *iscsi, int report_type,
+		       int alloc_len, iscsi_command_cb cb, void *private_data)
+{
+	return iscsi_reportluns_send(iscsi, report_type,
+		       alloc_len, cb, private_data) == NULL ? -1 : 0;
+}
+
+struct scsi_task *
+iscsi_inquiry_send(struct iscsi_context *iscsi, int lun, int evpd,
+		    int page_code, int maxsize,
+		    iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_inquiry(evpd, page_code, maxsize);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"inquiry cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
 }
 
 int
@@ -538,38 +579,66 @@ iscsi_inquiry_async(struct iscsi_context *iscsi, int lun, int evpd,
 		    int page_code, int maxsize,
 		    iscsi_command_cb cb, void *private_data)
 {
-	struct scsi_task *task;
-	int ret;
+	return iscsi_inquiry_send(iscsi, lun, evpd,
+		    page_code, maxsize,
+		    cb, private_data) == NULL ? -1 : 0;
+}
 
-	task = scsi_cdb_inquiry(evpd, page_code, maxsize);
+struct scsi_task *
+iscsi_readcapacity10_send(struct iscsi_context *iscsi, int lun, int lba,
+			   int pmi, iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_readcapacity10(lba, pmi);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
-				"inquiry cdb.");
-		return -1;
+				"readcapacity10 cdb.");
+		return NULL;
 	}
-	ret = iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
-				       private_data);
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
 
-	return ret;
+	return task;
 }
 
 int
 iscsi_readcapacity10_async(struct iscsi_context *iscsi, int lun, int lba,
 			   int pmi, iscsi_command_cb cb, void *private_data)
 {
-	struct scsi_task *task;
-	int ret;
+	return iscsi_readcapacity10_send(iscsi, lun, lba,
+			   pmi, cb, private_data) == NULL ? -1 : 0;
+}
 
-	task = scsi_cdb_readcapacity10(lba, pmi);
+struct scsi_task *
+iscsi_read10_send(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		   uint32_t datalen, int blocksize,
+		   iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	if (datalen % blocksize != 0) {
+		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of "
+				"the blocksize:%d.", datalen, blocksize);
+		return NULL;
+	}
+
+	task = scsi_cdb_read10(lba, datalen, blocksize);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
-				"readcapacity10 cdb.");
-		return -1;
+				"read10 cdb.");
+		return NULL;
 	}
-	ret = iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
-				       private_data);
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
 
-	return ret;
+	return task;
 }
 
 int
@@ -577,57 +646,76 @@ iscsi_read10_async(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   uint32_t datalen, int blocksize,
 		   iscsi_command_cb cb, void *private_data)
 {
-	struct scsi_task *task;
-	int ret;
-
-	if (datalen % blocksize != 0) {
-		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of "
-				"the blocksize:%d.", datalen, blocksize);
-		return -1;
-	}
-
-	task = scsi_cdb_read10(lba, datalen, blocksize);
-	if (task == NULL) {
-		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
-				"read10 cdb.");
-		return -1;
-	}
-	ret = iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
-				       private_data);
-
-	return ret;
+	return iscsi_read10_send(iscsi, lun, lba,
+		   datalen, blocksize,
+		   cb, private_data) == NULL ? -1 : 0;
 }
 
-
-int
-iscsi_write10_async(struct iscsi_context *iscsi, int lun, unsigned char *data,
+struct scsi_task *
+iscsi_write10_send(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		    uint32_t datalen, uint32_t lba, int fua, int fuanv, int blocksize,
 		    iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
 	struct iscsi_data outdata;
-	int ret;
 
 	if (datalen % blocksize != 0) {
 		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
 				"blocksize:%d.", datalen, blocksize);
-		return -1;
+		return NULL;
 	}
 
 	task = scsi_cdb_write10(lba, datalen, fua, fuanv, blocksize);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"read10 cdb.");
-		return -1;
+		return NULL;
 	}
 
 	outdata.data = data;
 	outdata.size = datalen;
 
-	ret = iscsi_scsi_command_async(iscsi, lun, task, cb, &outdata,
-				       private_data);
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, &outdata,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
 
-	return ret;
+	return task;
+}
+
+int
+iscsi_write10_async(struct iscsi_context *iscsi, int lun, unsigned char *data,
+		    uint32_t datalen, uint32_t lba, int fua, int fuanv, int blocksize,
+		    iscsi_command_cb cb, void *private_data)
+{
+	return iscsi_write10_send(iscsi, lun, data,
+		    datalen, lba, fua, fuanv, blocksize,
+		    cb, private_data) == NULL ? -1 : 0;
+}
+
+struct scsi_task *
+iscsi_modesense6_send(struct iscsi_context *iscsi, int lun, int dbd, int pc,
+		       int page_code, int sub_page_code,
+		       unsigned char alloc_len,
+		       iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_modesense6(dbd, pc, page_code, sub_page_code,
+				   alloc_len);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"modesense6 cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
 }
 
 int
@@ -636,20 +724,33 @@ iscsi_modesense6_async(struct iscsi_context *iscsi, int lun, int dbd, int pc,
 		       unsigned char alloc_len,
 		       iscsi_command_cb cb, void *private_data)
 {
-	struct scsi_task *task;
-	int ret;
+	return iscsi_modesense6_send(iscsi, lun, dbd, pc,
+		       page_code, sub_page_code,
+		       alloc_len,
+		       cb, private_data) == NULL ? -1 : 0;
+}
 
-	task = scsi_cdb_modesense6(dbd, pc, page_code, sub_page_code,
-				   alloc_len);
+struct scsi_task *
+iscsi_synchronizecache10_send(struct iscsi_context *iscsi, int lun, int lba,
+			       int num_blocks, int syncnv, int immed,
+			       iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_synchronizecache10(lba, num_blocks, syncnv,
+					   immed);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
-				"modesense6 cdb.");
-		return -1;
+				"synchronizecache10 cdb.");
+		return NULL;
 	}
-	ret = iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
-				       private_data);
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
 
-	return ret;
+	return task;
 }
 
 int
@@ -657,19 +758,7 @@ iscsi_synchronizecache10_async(struct iscsi_context *iscsi, int lun, int lba,
 			       int num_blocks, int syncnv, int immed,
 			       iscsi_command_cb cb, void *private_data)
 {
-	struct scsi_task *task;
-	int ret;
-
-	task = scsi_cdb_synchronizecache10(lba, num_blocks, syncnv,
-					   immed);
-	if (task == NULL) {
-		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
-				"synchronizecache10 cdb.");
-		return -1;
-	}
-	ret = iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
-				       private_data);
-
-	return ret;
+	return iscsi_synchronizecache10_send(iscsi, lun, lba,
+			       num_blocks, syncnv, immed,
+			       cb, private_data) == NULL ? -1 : 0;
 }
-
