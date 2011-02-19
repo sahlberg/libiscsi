@@ -458,6 +458,16 @@ int
 iscsi_task_mgmt_abort_task_set_async(struct iscsi_context *iscsi,
 		      uint32_t lun,
 		      iscsi_command_cb cb, void *private_data);
+int
+iscsi_task_mgmt_lun_reset_async(struct iscsi_context *iscsi,
+		      uint32_t lun,
+		      iscsi_command_cb cb, void *private_data);
+int
+iscsi_task_mgmt_target_warm_reset_async(struct iscsi_context *iscsi,
+		      iscsi_command_cb cb, void *private_data);
+int
+iscsi_task_mgmt_target_cold_reset_async(struct iscsi_context *iscsi,
+		      iscsi_command_cb cb, void *private_data);
 
 
 
