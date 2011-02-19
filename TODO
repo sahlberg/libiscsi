@@ -22,8 +22,6 @@ Some features that should be added
   When the tcp session fail,   try several times to reconnect and relogin.
   If successful re-issue any commands that were in flight.
 
-* Task management functions
-
 * Redirects
 
 * Integrate with other relevant utilities such as 
