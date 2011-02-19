@@ -98,4 +98,15 @@ iscsi_task_mgmt_abort_task_async(struct iscsi_context *iscsi,
 		      cb, private_data);
 }
 
+int
+iscsi_task_mgmt_abort_task_set_async(struct iscsi_context *iscsi,
+		      uint32_t lun,
+		      iscsi_command_cb cb, void *private_data)
+{
+	return iscsi_task_mgmt_async(iscsi,
+		      lun, ISCSI_TM_ABORT_TASK_SET,
+		      0xffffffff, 0,
+		      cb, private_data);
+}
+
 

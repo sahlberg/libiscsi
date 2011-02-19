@@ -454,6 +454,10 @@ int
 iscsi_task_mgmt_abort_task_async(struct iscsi_context *iscsi,
 		      struct scsi_task *task,
 		      iscsi_command_cb cb, void *private_data);
+int
+iscsi_task_mgmt_abort_task_set_async(struct iscsi_context *iscsi,
+		      uint32_t lun,
+		      iscsi_command_cb cb, void *private_data);
 
 
 
