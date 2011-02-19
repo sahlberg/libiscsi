@@ -1,6 +1,12 @@
-prefix = @prefix@
+prefix = $(DESTDIR)
+ifeq ($(prefix),)
+  prefix = @prefix@
+endif
 exec_prefix = @exec_prefix@
-libdir = @libdir@
+libdir = $(LIBDIR)
+ifeq ($(libdir),)
+  libdir = @libdir@
+endif
 bindir = @bindir@
 LIBS=-lpopt @LIBS@
 CC=gcc
@@ -43,19 +49,13 @@ bin/iscsiclient: examples/iscsiclient.c lib/libiscsi.a
 	$(CC) $(CFLAGS) -o $@ examples/iscsiclient.c lib/libiscsi.a $(LIBS)
 
 install: lib/libiscsi.a lib/$(LIBISCSI_SO) bin/iscsi-ls bin/iscsi-inq
-ifeq ("$(LIBDIR)x","x")
 	$(INSTALLCMD) -m 755 lib/$(LIBISCSI_SO) $(libdir)
 	$(INSTALLCMD) -m 755 lib/libiscsi.a $(libdir)
-	@ldconfig@
-else
-	$(INSTALLCMD) -m 755 lib/$(LIBISCSI_SO) $(LIBDIR)
-	$(INSTALLCMD) -m 755 lib/libiscsi.a $(LIBDIR)
-endif
-	$(INSTALLCMD) -m 755 bin/iscsi-ls $(DESTDIR)/usr/bin
-	$(INSTALLCMD) -m 755 bin/iscsi-inq $(DESTDIR)/usr/bin
-	mkdir -p $(DESTDIR)/usr/include/iscsi
-	$(INSTALLCMD) -m 644 include/iscsi.h $(DESTDIR)/usr/include/iscsi
-	$(INSTALLCMD) -m 644 include/scsi-lowlevel.h $(DESTDIR)/usr/include/iscsi
+	$(INSTALLCMD) -m 755 bin/iscsi-ls $(bindir)
+	$(INSTALLCMD) -m 755 bin/iscsi-inq $(bindir)
+	mkdir -p $(exec_prefix)/include/iscsi
+	$(INSTALLCMD) -m 644 include/iscsi.h $(exec_prefix)/include/iscsi
+	$(INSTALLCMD) -m 644 include/scsi-lowlevel.h $(exec_prefix)/include/iscsi
 
 distclean: clean
 	rm -f config.h config.log config.status configure Makefile
