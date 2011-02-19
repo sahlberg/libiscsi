@@ -13,7 +13,7 @@
  */
 
 /* This is the host/port we connect to.*/
-#define TARGET "127.0.0.1:3260"
+#define TARGET "127.0.0.1:3262"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,25 +33,42 @@ struct client_state {
        int block_size;
 };
 
+void tm_at_cb(struct iscsi_context *iscsi _U_, int status, void *command_data _U_, void *private_data)
+{
+	struct client_state *clnt = (struct client_state *)private_data;
+
+	printf("tm at cb !\n");
+	printf("response : %d\n", *((uint32_t *)command_data));
+
+	clnt->finished = 1;
+}
+
+
 void synccache10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data _U_, void *private_data)
 {
 	struct client_state *clnt = (struct client_state *)private_data;
 
 	printf("SYNCCACHE10 status:%d\n", status);
-	clnt->finished = 1;
 }
 
 void nop_out_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	struct iscsi_data *data = command_data;
+	struct scsi_task *task;
 
 	printf("NOP-IN status:%d\n", status);
 	if (data->size > 0) {
 		printf("NOP-IN data:%s\n", data->data);
 	}
 	printf("Send SYNCHRONIZECACHE10\n");
-	if (iscsi_synchronizecache10_async(iscsi, 2, 0, 0, 0, 0, synccache10_cb, private_data) != 0) {
+	task = iscsi_synchronizecache10_send(iscsi, 2, 0, 0, 0, 0, synccache10_cb, private_data);
+	if (task == NULL) {
 		printf("failed to send sync cache10\n");
+		exit(10);
+	}
+	printf("send task management to try to abort the sync10 task\n");
+	if (iscsi_task_mgmt_abort_task_async(iscsi, task, tm_at_cb, private_data) != 0) {
+		printf("failed to send task management to abort the sync10 task\n");
 		exit(10);
 	}
 }
