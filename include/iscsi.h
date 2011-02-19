@@ -413,6 +413,8 @@ struct iscsi_discovery_address {
 int iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 			unsigned char *data, int len, void *private_data);
 
+struct scsi_task;
+
 enum iscsi_task_mgmt_funcs {
      ISCSI_TM_ABORT_TASK        = 0x01,
      ISCSI_TM_ABORT_TASK_SET    = 0x02,
@@ -423,6 +425,7 @@ enum iscsi_task_mgmt_funcs {
      ISCSI_TM_TARGET_COLD_RESET = 0x07,
      ISCSI_TM_TASK_REASSIGN     = 0x08
 };
+
 /*
  * Asynchronous call for task management
  *
@@ -433,7 +436,8 @@ enum iscsi_task_mgmt_funcs {
  *
  * Callback parameters :
  * status can be either of :
- *    ISCSI_STATUS_GOOD     : Connection was successful. Command_data is NULL.
+ *    ISCSI_STATUS_GOOD     : Connection was successful. Command_data is a pointer to uint32_t
+ *                            containing the response code as per RFC3720/10.6.1
  *
  *    ISCSI_STATUS_ERROR    : Error.
  *
@@ -444,6 +448,11 @@ int
 iscsi_task_mgmt_async(struct iscsi_context *iscsi,
 		      int lun, enum iscsi_task_mgmt_funcs function, 
 		      uint32_t ritt, uint32_t rcmdscn,
+		      iscsi_command_cb cb, void *private_data);
+
+int
+iscsi_task_mgmt_abort_task_async(struct iscsi_context *iscsi,
+		      struct scsi_task *task,
 		      iscsi_command_cb cb, void *private_data);
 
 
@@ -496,7 +505,6 @@ iscsi_set_isid_reserved(struct iscsi_context *iscsi);
 /*
  * Async commands for SCSI
  */
-struct scsi_task;
 int iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 			     struct scsi_task *task, iscsi_command_cb cb,
 			     struct iscsi_data *data, void *private_data);

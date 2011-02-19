@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
+#include "scsi-lowlevel.h"
 
 int
 iscsi_task_mgmt_async(struct iscsi_context *iscsi,
@@ -76,16 +77,25 @@ int
 iscsi_process_task_mgmt_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			    struct iscsi_in_pdu *in)
 {
-	struct iscsi_data data;
+	uint32_t response;
 
-	data.data = NULL;
-	data.size = 0;
+	response = in->hdr[2];
 
-	if (in->data_pos > ISCSI_HEADER_SIZE) {
-		data.data = in->data;
-		data.size = in->data_pos;
-	}
-	pdu->callback(iscsi, SCSI_STATUS_GOOD, &data, pdu->private_data);
+	pdu->callback(iscsi, SCSI_STATUS_GOOD, &response, pdu->private_data);
 
 	return 0;
 }
+
+
+int
+iscsi_task_mgmt_abort_task_async(struct iscsi_context *iscsi,
+		      struct scsi_task *task,
+		      iscsi_command_cb cb, void *private_data)
+{
+	return iscsi_task_mgmt_async(iscsi,
+		      task->lun, ISCSI_TM_ABORT_TASK,
+		      task->itt, task->cmdsn,
+		      cb, private_data);
+}
+
+

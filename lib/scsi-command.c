@@ -326,6 +326,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	/* remember cmdsn and itt so we can use task management */
 	task->cmdsn = pdu->cmdsn;
 	task->itt   = pdu->itt;
+	task->lun   = lun;
 
 	return 0;
 }
