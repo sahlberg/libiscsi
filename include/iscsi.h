@@ -14,6 +14,8 @@
    You should have received a copy of the GNU Lesser General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef __iscsi_h__
+#define __iscsi_h__
 
 #include <stdint.h>
 
@@ -609,3 +611,4 @@ struct scsi_task *
 iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
 			      int num_blocks, int syncnv, int immed);
 
+#endif /* __iscsi_h__ */

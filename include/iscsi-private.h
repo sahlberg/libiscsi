@@ -14,6 +14,8 @@
    You should have received a copy of the GNU Lesser General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef __iscsi_private_h__
+#define __iscsi_private_h__
 
 #include <stdint.h>
 
@@ -244,4 +246,6 @@ void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
 unsigned long crc32c(char *buf, int len);
 
 void iscsi_cbdata_steal_scsi_task(struct scsi_task *task);
+
+#endif /* __iscsi_private_h__ */
 

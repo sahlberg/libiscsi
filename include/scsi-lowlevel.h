@@ -14,6 +14,8 @@
    You should have received a copy of the GNU Lesser General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef __scsi_lowlevel_h__
+#define __scsi_lowlevel_h__
 
 #define SCSI_CDB_MAX_SIZE			16
 
@@ -381,3 +383,6 @@ struct scsi_task *scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int fua, int 
 
 struct scsi_task *scsi_cdb_synchronizecache10(int lba, int num_blocks,
 			int syncnv, int immed);
+
+#endif /* __scsi_lowlevel_h__ */
+
