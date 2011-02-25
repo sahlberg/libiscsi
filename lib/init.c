@@ -202,6 +202,9 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	free(discard_const(iscsi->target_name));
 	iscsi->target_name = NULL;
 
+	free(discard_const(iscsi->target_address));
+	iscsi->target_address = NULL;
+
 	free(discard_const(iscsi->alias));
 	iscsi->alias = NULL;
 
@@ -256,6 +259,13 @@ iscsi_get_error(struct iscsi_context *iscsi)
 {
 	return iscsi->error_string;
 }
+
+const char *
+iscsi_get_target_address(struct iscsi_context *iscsi)
+{
+	return iscsi->target_address;
+}
+
 
 int
 iscsi_set_header_digest(struct iscsi_context *iscsi,

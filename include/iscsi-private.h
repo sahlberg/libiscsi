@@ -55,6 +55,7 @@ enum iscsi_immediate_data {
 struct iscsi_context {
 	const char *initiator_name;
 	const char *target_name;
+	const char *target_address;  /* If a redirect */
 	const char *alias;
 
 	const char *user;

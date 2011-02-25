@@ -151,6 +151,11 @@ int iscsi_set_alias(struct iscsi_context *iscsi, const char *alias);
  */
 int iscsi_set_targetname(struct iscsi_context *iscsi, const char *targetname);
 
+/*
+ * This function returns any target address supplied in a login response when
+ * the target has moved.
+ */
+const char *iscsi_get_target_address(struct iscsi_context *iscsi);
 
 /* Type of iscsi sessions. Discovery sessions are used to query for what
  * targets exist behind the portal connected to. Normal sessions are used to

@@ -886,6 +886,7 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 static const char *login_error_str(int status)
 {
 	switch (status) {
+	case 0x0100: return "Target moved (unknown)"; /* Some don't set the detail */
 	case 0x0101: return "Target moved temporarily";
 	case 0x0102: return "Target moved permanently";
 	case 0x0200: return "Initiator error";
@@ -913,17 +914,10 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			  struct iscsi_in_pdu *in)
 {
 	int status;
-	unsigned char *ptr = in->data;
+	char *ptr = (char *)in->data;
 	int size = in->data_pos;
 
 	status = ntohs(*(uint16_t *)&in->hdr[36]);
-	if (status != 0) {
-		iscsi_set_error(iscsi, "Failed to log in to target. Status: %s(%d)",
-				       login_error_str(status), status);
-		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-			      pdu->private_data);
-		return 0;
-	}
 
 	iscsi->statsn = ntohs(*(uint16_t *)&in->hdr[24]);
 
@@ -936,7 +930,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	while (size > 0) {
 		int len;
 
-		len = strlen((char *)ptr);
+		len = strlen(ptr);
 
 		if (len == 0) {
 			break;
@@ -951,8 +945,20 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		}
 
 		/* parse the strings */
-		if (!strncmp((char *)ptr, "HeaderDigest=", 13)) {
-			if (!strcmp((char *)ptr + 13, "CRC32C")) {
+		if (!strncmp(ptr, "TargetAddress=", 14)) {
+			free(discard_const(iscsi->target_address));
+			iscsi->target_address = strdup(ptr+14);
+			if (iscsi->target_address == NULL) {
+				iscsi_set_error(iscsi, "Failed to allocate"
+						" target address");
+				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					pdu->private_data);
+				return -1;
+			}
+		}
+
+		if (!strncmp(ptr, "HeaderDigest=", 13)) {
+			if (!strcmp(ptr + 13, "CRC32C")) {
 				iscsi->header_digest
 				  = ISCSI_HEADER_DIGEST_CRC32C;
 				iscsi->want_header_digest
@@ -965,53 +971,53 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			}
 		}
 
-		if (!strncmp((char *)ptr, "FirstBurstLength=", 17)) {
-			iscsi->first_burst_length = strtol((char *)ptr + 17, NULL, 10);
+		if (!strncmp(ptr, "FirstBurstLength=", 17)) {
+			iscsi->first_burst_length = strtol(ptr + 17, NULL, 10);
 		}
 
-		if (!strncmp((char *)ptr, "InitialR2T=", 11)) {
-			if (!strcmp((char *)ptr + 11, "No")) {
+		if (!strncmp(ptr, "InitialR2T=", 11)) {
+			if (!strcmp(ptr + 11, "No")) {
 				iscsi->use_initial_r2t = ISCSI_INITIAL_R2T_NO;
 			} else {
 				iscsi->use_initial_r2t = ISCSI_INITIAL_R2T_YES;
 			}
 		}
 
-		if (!strncmp((char *)ptr, "ImmediateData=", 14)) {
-			if (!strcmp((char *)ptr + 14, "No")) {
+		if (!strncmp(ptr, "ImmediateData=", 14)) {
+			if (!strcmp(ptr + 14, "No")) {
 				iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
 			} else {
 				iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_YES;
 			}
 		}
 
-		if (!strncmp((char *)ptr, "MaxBurstLength=", 15)) {
-			iscsi->max_burst_length = strtol((char *)ptr + 15, NULL, 10);
+		if (!strncmp(ptr, "MaxBurstLength=", 15)) {
+			iscsi->max_burst_length = strtol(ptr + 15, NULL, 10);
 		}
 
-		if (!strncmp((char *)ptr, "MaxRecvDataSegmentLength=", 25)) {
-			iscsi->target_max_recv_data_segment_length = strtol((char *)ptr + 25, NULL, 10);
+		if (!strncmp(ptr, "MaxRecvDataSegmentLength=", 25)) {
+			iscsi->target_max_recv_data_segment_length = strtol(ptr + 25, NULL, 10);
 		}
 
-		if (!strncmp((char *)ptr, "AuthMethod=", 11)) {
-			if (!strcmp((char *)ptr + 11, "CHAP")) {
+		if (!strncmp(ptr, "AuthMethod=", 11)) {
+			if (!strcmp(ptr + 11, "CHAP")) {
 				iscsi->secneg_phase = ISCSI_LOGIN_SECNEG_PHASE_SELECT_ALGORITHM;
 			}
 		}
 
-		if (!strncmp((char *)ptr, "CHAP_A=", 7)) {
-			iscsi->chap_a = atoi((char *)ptr+7);
+		if (!strncmp(ptr, "CHAP_A=", 7)) {
+			iscsi->chap_a = atoi(ptr+7);
 			iscsi->secneg_phase = ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE;
 		}
 
-		if (!strncmp((char *)ptr, "CHAP_I=", 7)) {
-			iscsi->chap_i = atoi((char *)ptr+7);
+		if (!strncmp(ptr, "CHAP_I=", 7)) {
+			iscsi->chap_i = atoi(ptr+7);
 			iscsi->secneg_phase = ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE;
 		}
 
-		if (!strncmp((char *)ptr, "CHAP_C=0x", 9)) {
+		if (!strncmp(ptr, "CHAP_C=0x", 9)) {
 			free(iscsi->chap_c);
-			iscsi->chap_c = strdup((char *)ptr+9);
+			iscsi->chap_c = strdup(ptr+9);
 			if (iscsi->chap_c == NULL) {
 				iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup CHAP challenge.");
 				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL, pdu->private_data);
@@ -1022,6 +1028,14 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 		ptr  += len + 1;
 		size -= len + 1;
+	}
+
+	if (status != 0) {
+		iscsi_set_error(iscsi, "Failed to log in to target. Status: %s(%d)",
+				       login_error_str(status), status);
+		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			      pdu->private_data);
+		return 0;
 	}
 
 	if (in->hdr[1] & ISCSI_PDU_LOGIN_TRANSIT) {
