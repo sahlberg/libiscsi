@@ -167,7 +167,6 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 	return 0;
 }
 
-
 int
 iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 			    struct scsi_task *task, iscsi_command_cb cb,
@@ -186,14 +185,12 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	if (iscsi->session_type != ISCSI_SESSION_NORMAL) {
 		iscsi_set_error(iscsi, "Trying to send command on "
 				"discovery session.");
-		scsi_free_scsi_task(task);
 		return -1;
 	}
 
 	if (iscsi->is_loggedin == 0) {
 		iscsi_set_error(iscsi, "Trying to send command while "
 				"not logged in.");
-		scsi_free_scsi_task(task);
 		return -1;
 	}
 
@@ -201,7 +198,6 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	if (scsi_cbdata == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to allocate "
 				"scsi cbdata.");
-		scsi_free_scsi_task(task);
 		return -1;
 	}
 	memset(scsi_cbdata, 0, sizeof(struct iscsi_scsi_cbdata));
