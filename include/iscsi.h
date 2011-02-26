@@ -557,7 +557,12 @@ int iscsi_modesense6_async(struct iscsi_context *iscsi, int lun, int dbd,
 			   unsigned char alloc_len, iscsi_command_cb cb,
 			   void *private_data);
 
-
+/*
+ * Async commands for SCSI
+ *
+ * These async functions return a scsi_task structure, or NULL if the command failed.
+ * This structure can be used by task management functions to abort the task or a whole task set.
+ */
 struct scsi_task *
 iscsi_reportluns_task(struct iscsi_context *iscsi, int report_type,
 			   int alloc_len, iscsi_command_cb cb,
