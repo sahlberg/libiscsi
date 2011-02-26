@@ -484,7 +484,7 @@ iscsi_process_r2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
  */
 
 struct scsi_task *
-iscsi_testunitready_send(struct iscsi_context *iscsi, int lun,
+iscsi_testunitready_task(struct iscsi_context *iscsi, int lun,
 			  iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
@@ -508,12 +508,12 @@ int
 iscsi_testunitready_async(struct iscsi_context *iscsi, int lun,
 			  iscsi_command_cb cb, void *private_data)
 {
-	return iscsi_testunitready_send(iscsi, lun,
+	return iscsi_testunitready_task(iscsi, lun,
 			  cb, private_data) == NULL ? -1 : 0;
 }
 
 struct scsi_task *
-iscsi_reportluns_send(struct iscsi_context *iscsi, int report_type,
+iscsi_reportluns_task(struct iscsi_context *iscsi, int report_type,
 		       int alloc_len, iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
@@ -545,12 +545,12 @@ int
 iscsi_reportluns_async(struct iscsi_context *iscsi, int report_type,
 		       int alloc_len, iscsi_command_cb cb, void *private_data)
 {
-	return iscsi_reportluns_send(iscsi, report_type,
+	return iscsi_reportluns_task(iscsi, report_type,
 		       alloc_len, cb, private_data) == NULL ? -1 : 0;
 }
 
 struct scsi_task *
-iscsi_inquiry_send(struct iscsi_context *iscsi, int lun, int evpd,
+iscsi_inquiry_task(struct iscsi_context *iscsi, int lun, int evpd,
 		    int page_code, int maxsize,
 		    iscsi_command_cb cb, void *private_data)
 {
@@ -576,13 +576,13 @@ iscsi_inquiry_async(struct iscsi_context *iscsi, int lun, int evpd,
 		    int page_code, int maxsize,
 		    iscsi_command_cb cb, void *private_data)
 {
-	return iscsi_inquiry_send(iscsi, lun, evpd,
+	return iscsi_inquiry_task(iscsi, lun, evpd,
 		    page_code, maxsize,
 		    cb, private_data) == NULL ? -1 : 0;
 }
 
 struct scsi_task *
-iscsi_readcapacity10_send(struct iscsi_context *iscsi, int lun, int lba,
+iscsi_readcapacity10_task(struct iscsi_context *iscsi, int lun, int lba,
 			   int pmi, iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
@@ -606,12 +606,12 @@ int
 iscsi_readcapacity10_async(struct iscsi_context *iscsi, int lun, int lba,
 			   int pmi, iscsi_command_cb cb, void *private_data)
 {
-	return iscsi_readcapacity10_send(iscsi, lun, lba,
+	return iscsi_readcapacity10_task(iscsi, lun, lba,
 			   pmi, cb, private_data) == NULL ? -1 : 0;
 }
 
 struct scsi_task *
-iscsi_read10_send(struct iscsi_context *iscsi, int lun, uint32_t lba,
+iscsi_read10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   uint32_t datalen, int blocksize,
 		   iscsi_command_cb cb, void *private_data)
 {
@@ -643,13 +643,13 @@ iscsi_read10_async(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   uint32_t datalen, int blocksize,
 		   iscsi_command_cb cb, void *private_data)
 {
-	return iscsi_read10_send(iscsi, lun, lba,
+	return iscsi_read10_task(iscsi, lun, lba,
 		   datalen, blocksize,
 		   cb, private_data) == NULL ? -1 : 0;
 }
 
 struct scsi_task *
-iscsi_write10_send(struct iscsi_context *iscsi, int lun, unsigned char *data,
+iscsi_write10_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		    uint32_t datalen, uint32_t lba, int fua, int fuanv, int blocksize,
 		    iscsi_command_cb cb, void *private_data)
 {
@@ -686,13 +686,13 @@ iscsi_write10_async(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		    uint32_t datalen, uint32_t lba, int fua, int fuanv, int blocksize,
 		    iscsi_command_cb cb, void *private_data)
 {
-	return iscsi_write10_send(iscsi, lun, data,
+	return iscsi_write10_task(iscsi, lun, data,
 		    datalen, lba, fua, fuanv, blocksize,
 		    cb, private_data) == NULL ? -1 : 0;
 }
 
 struct scsi_task *
-iscsi_modesense6_send(struct iscsi_context *iscsi, int lun, int dbd, int pc,
+iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd, int pc,
 		       int page_code, int sub_page_code,
 		       unsigned char alloc_len,
 		       iscsi_command_cb cb, void *private_data)
@@ -721,14 +721,14 @@ iscsi_modesense6_async(struct iscsi_context *iscsi, int lun, int dbd, int pc,
 		       unsigned char alloc_len,
 		       iscsi_command_cb cb, void *private_data)
 {
-	return iscsi_modesense6_send(iscsi, lun, dbd, pc,
+	return iscsi_modesense6_task(iscsi, lun, dbd, pc,
 		       page_code, sub_page_code,
 		       alloc_len,
 		       cb, private_data) == NULL ? -1 : 0;
 }
 
 struct scsi_task *
-iscsi_synchronizecache10_send(struct iscsi_context *iscsi, int lun, int lba,
+iscsi_synchronizecache10_task(struct iscsi_context *iscsi, int lun, int lba,
 			       int num_blocks, int syncnv, int immed,
 			       iscsi_command_cb cb, void *private_data)
 {
@@ -755,7 +755,7 @@ iscsi_synchronizecache10_async(struct iscsi_context *iscsi, int lun, int lba,
 			       int num_blocks, int syncnv, int immed,
 			       iscsi_command_cb cb, void *private_data)
 {
-	return iscsi_synchronizecache10_send(iscsi, lun, lba,
+	return iscsi_synchronizecache10_task(iscsi, lun, lba,
 			       num_blocks, syncnv, immed,
 			       cb, private_data) == NULL ? -1 : 0;
 }
