@@ -33,7 +33,7 @@ struct client_state {
        int block_size;
 };
 
-void tm_at_cb(struct iscsi_context *iscsi _U_, int status, void *command_data _U_, void *private_data)
+void tm_at_cb(struct iscsi_context *iscsi _U_, int status _U_, void *command_data _U_, void *private_data)
 {
 	struct client_state *clnt = (struct client_state *)private_data;
 
@@ -44,10 +44,8 @@ void tm_at_cb(struct iscsi_context *iscsi _U_, int status, void *command_data _U
 }
 
 
-void synccache10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data _U_, void *private_data)
+void synccache10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data _U_, void *private_data _U_)
 {
-	struct client_state *clnt = (struct client_state *)private_data;
-
 	printf("SYNCCACHE10 status:%d\n", status);
 }
 
@@ -61,7 +59,7 @@ void nop_out_cb(struct iscsi_context *iscsi, int status, void *command_data, voi
 		printf("NOP-IN data:%s\n", data->data);
 	}
 	printf("Send SYNCHRONIZECACHE10\n");
-	task = iscsi_synchronizecache10_send(iscsi, 2, 0, 0, 0, 0, synccache10_cb, private_data);
+	task = iscsi_synchronizecache10_task(iscsi, 2, 0, 0, 0, 0, synccache10_cb, private_data);
 	if (task == NULL) {
 		printf("failed to send sync cache10\n");
 		exit(10);
