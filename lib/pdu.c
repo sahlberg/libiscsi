@@ -178,6 +178,90 @@ iscsi_get_pdu_data_size(const unsigned char *hdr)
 	return size;
 }
 
+static enum iscsi_reject_reason {
+	ISCSI_REJECT_RESERVED                 = 0x01,
+	ISCSI_REJECT_DATA_DIGEST_ERROR        = 0x02,
+	ISCSI_REJECT_SNACK_REJECT             = 0x03,
+	ISCSI_REJECT_PROTOCOL_ERROR           = 0x04,
+	ISCSI_REJECT_COMMAND_NOT_SUPPORTED    = 0x05,
+	ISCSI_REJECT_IMMEDIATE_COMMAND_REJECT = 0x06,
+	ISCSI_REJECT_TASK_IN_PROCESS          = 0x07,
+	ISCSI_REJECT_INVALID_DATA_ACK         = 0x08,
+	ISCSI_REJECT_INVALID_PDU_FIELD        = 0x09,
+	ISCSI_REJECT_LONG_OPERATION_REJECT    = 0x0a,
+	ISCSI_REJECT_NEGOTIATION_RESET        = 0x0b,
+	ISCSI_REJECT_WAITING_FOR_LOGOUT       = 0x0c
+};
+
+static const char *iscsi_reject_reason_str(enum iscsi_reject_reason reason)
+{
+	switch (reason) {
+	case ISCSI_REJECT_RESERVED:
+	     return "Reserved";
+	case ISCSI_REJECT_DATA_DIGEST_ERROR:
+	     return "Data Digest Error";
+	case ISCSI_REJECT_SNACK_REJECT:
+	     return "SNACK Reject";
+	case ISCSI_REJECT_PROTOCOL_ERROR:
+	     return "Protocol Error";
+	case ISCSI_REJECT_COMMAND_NOT_SUPPORTED:
+	     return "Command Not Supported";
+	case ISCSI_REJECT_IMMEDIATE_COMMAND_REJECT:
+	     return "Immediate Command Reject";
+	case ISCSI_REJECT_TASK_IN_PROCESS:
+	     return "Task In Process";
+	case ISCSI_REJECT_INVALID_DATA_ACK:
+	     return "Invalid Data ACK";
+	case ISCSI_REJECT_INVALID_PDU_FIELD:
+	     return "Invalid PDU Field";
+	case ISCSI_REJECT_LONG_OPERATION_REJECT:
+	     return "Long Operation Reject";
+	case ISCSI_REJECT_NEGOTIATION_RESET:
+	     return "Negotiation Reset";
+	case ISCSI_REJECT_WAITING_FOR_LOGOUT:
+	     return "Waiting For Logout";
+	}
+
+	return "Unknown";
+}
+	
+int iscsi_process_reject(struct iscsi_context *iscsi,
+				struct iscsi_in_pdu *in)
+{
+	int size = in->data_pos;
+	uint32_t itt;
+	struct iscsi_pdu *pdu;
+
+	if (size < ISCSI_RAW_HEADER_SIZE) {
+		iscsi_set_error(iscsi, "size of REJECT payload is too small."
+				       "Need >= %d bytes but got %d.",
+				       ISCSI_RAW_HEADER_SIZE, (int)size);
+		return -1;
+	}
+
+	itt = ntohl(*(uint32_t *)&in->data[16]);
+
+	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
+		if (pdu->itt == itt) {
+			break;
+		}
+	}
+
+	if (pdu == NULL) {
+		iscsi_set_error(iscsi, "Can not match REJECT with"
+				       "any outstanding pdu with itt:0x%08x",
+				       itt);
+		return -1;
+	}
+
+	pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			      pdu->private_data);
+
+	SLIST_REMOVE(&iscsi->waitpdu, pdu);
+	iscsi_free_pdu(iscsi, pdu);
+	return 0;
+}
+
 
 int
 iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
@@ -194,6 +278,15 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 	if (ahslen != 0) {
 		iscsi_set_error(iscsi, "cant handle expanded headers yet");
 		return -1;
+	}
+
+	if (opcode == ISCSI_PDU_REJECT) {
+		iscsi_set_error(iscsi, "Request was rejected with reason: 0x%02x (%s)", in->hdr[2], iscsi_reject_reason_str(in->hdr[2]));
+
+		if (iscsi_process_reject(iscsi, in) != 0) {
+			return -1;
+		}
+		return 0;
 	}
 
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
