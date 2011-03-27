@@ -1,0 +1,25 @@
+This directory contains patches to other packages to make them iSCSI
+aware.
+
+sg3_utils-1.30.patch
+====================
+This patch adds iscsi support to the SG3 package.
+This is only added for the Linux platform, but adding to other platforms 
+supported by SG3 should be trivial.
+
+$ ./src/sg_inq iscsi://127.0.0.1/iqn.ronnie.test/1
+standard INQUIRY:
+  PQual=0  Device_type=0  RMB=0  version=0x05  [SPC-3]
+  [AERC=0]  [TrmTsk=1]  NormACA=0  HiSUP=0  Resp_data_format=2
+  SCCS=0  ACC=0  TPGS=0  3PC=0  Protect=0  BQue=0
+  EncServ=0  MultiP=0  [MChngr=0]  [ACKREQQ=0]  Addr16=0
+  [RelAdr=0]  WBus16=0  Sync=0  Linked=0  [TranDis=0]  CmdQue=1
+  [SPI: Clocking=0x0  QAS=0  IUS=0]
+    length=66 (0x42)   Peripheral device type: disk
+ Vendor identification: IET     
+ Product identification: VIRTUAL-DISK
+ Product revision level: 0001
+ Unit serial number:                           beaf11
+
+
+
