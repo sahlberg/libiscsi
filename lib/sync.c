@@ -156,7 +156,6 @@ scsi_sync_cb(struct iscsi_context *iscsi _U_, int status, void *command_data,
 	state->status   = status;
 	state->finished = 1;
 	state->task     = task;
-	iscsi_cbdata_steal_scsi_task(task);
 }
 
 struct scsi_task *

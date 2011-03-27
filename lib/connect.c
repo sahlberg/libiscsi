@@ -32,12 +32,11 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 		       void *command_data, void *private_data)
 {
 	struct connect_task *ct = private_data;
+	struct scsi_task *task = command_data;
 
 	if (status != 0) {
-		struct scsi_task *scsi = command_data;
-
-		if (scsi->sense.key == SCSI_SENSE_UNIT_ATTENTION
-		    && scsi->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET) {
+		if (task->sense.key == SCSI_SENSE_UNIT_ATTENTION
+		    && task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET) {
 			/* This is just the normal unitattention/busreset
 			 * you always get just after a fresh login. Try
 			 * again.
@@ -51,6 +50,7 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 				       ct->private_data);
 				free(ct);
 			}
+			scsi_free_scsi_task(task);
 			return;
 		}
 	}
@@ -58,6 +58,7 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 	ct->cb(iscsi, status?SCSI_STATUS_ERROR:SCSI_STATUS_GOOD, NULL,
 	       ct->private_data);
 	free(ct);
+	scsi_free_scsi_task(task);
 }
 
 static void

@@ -38,21 +38,9 @@ iscsi_free_scsi_cbdata(struct iscsi_scsi_cbdata *scsi_cbdata)
 		return;
 	}
 	if (scsi_cbdata->task != NULL) {
-		scsi_free_scsi_task(scsi_cbdata->task);
 		scsi_cbdata->task = NULL;
 	}
 	free(scsi_cbdata);
-}
-
-void
-iscsi_cbdata_steal_scsi_task(struct scsi_task *task)
-{
-	struct iscsi_scsi_cbdata *scsi_cbdata =
-	  scsi_get_task_private_ptr(task);
-
-	if (scsi_cbdata != NULL) {
-		scsi_cbdata->task = NULL;
-	}
 }
 
 static void

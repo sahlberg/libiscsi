@@ -60,10 +60,12 @@ void write10_cb(struct iscsi_context *iscsi, int status, void *command_data, voi
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
 		printf("Write10 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
+		scsi_free_scsi_task(task);
 		exit(10);
 	}
 	if (status != SCSI_STATUS_GOOD) {
 		printf("Write10 failed with %s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
 		exit(10);
 	}
 
@@ -74,6 +76,7 @@ void write10_cb(struct iscsi_context *iscsi, int status, void *command_data, voi
 		client->finished = 1;
 	}
 	scsi_free_scsi_task(wt->rt);
+	scsi_free_scsi_task(task);
 	free(wt);
 }
 
@@ -89,7 +92,6 @@ void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void
 	}
 
 	wt = malloc(sizeof(struct write_task));
-	iscsi_cbdata_steal_scsi_task(task);
 	wt->rt = task;
 	wt->client = client;
 
@@ -102,6 +104,7 @@ void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void
 			client->dst_blocksize, write10_cb,
 			wt) != 0) {
 		printf("failed to send read10 command\n");
+		scsi_free_scsi_task(task);
 		exit(10);
 	}
 }

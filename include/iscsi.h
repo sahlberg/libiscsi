@@ -523,6 +523,18 @@ iscsi_set_isid_random(struct iscsi_context *iscsi, uint32_t rnd, uint32_t qualif
 int
 iscsi_set_isid_reserved(struct iscsi_context *iscsi);
 
+
+
+
+/* 
+ * The scsi commands use/return a scsi_task structure either when invoked
+ * or through the callback.
+ * You must release this structure when you are finished with the task
+ * by calling scsi_free_scsi_task().
+ * Most of the time this means you should call this function before returning
+ * from the callback.
+ */
+
 /*
  * Async commands for SCSI
  */
