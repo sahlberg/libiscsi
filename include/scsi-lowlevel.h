@@ -107,6 +107,12 @@ struct scsi_allocated_memory {
 	void                         *ptr;
 };
 
+enum scsi_residual {
+	SCSI_RESIDUAL_NO_RESIDUAL = 0,
+	SCSI_RESIDUAL_UNDERFLOW,
+	SCSI_RESIDUAL_OVERFLOW
+};
+
 struct scsi_task {
 	int status;
 
@@ -123,6 +129,8 @@ struct scsi_task {
 		struct scsi_modesense6_params     modesense6;
 	} params;
 
+	enum scsi_residual residual_status;
+	int residual;
 	struct scsi_sense sense;
 	struct scsi_data datain;
 	struct scsi_allocated_memory *mem;
