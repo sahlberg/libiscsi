@@ -73,6 +73,14 @@ This can be overridden by an application by calling iscsi_set_header_digest()
 if the application wants to force a specific setting.
 
 
+Patches
+=======
+The patches subdirectory contains patches to make some external packages iscsi 
+aware and make them use libiscsi.
+Currently we have KVM/QEMU, SG3-UTILS and MTX.
+Patches for other packages would be welcome.
+
+
 LD_PRELOAD FUN
 ==============
 There is a small LD_PRELOAD hack in the src directory that intercepts a handful
