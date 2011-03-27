@@ -166,8 +166,8 @@ iscsi_reportluns_sync(struct iscsi_context *iscsi, int report_type,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_reportluns_async(iscsi, report_type, alloc_len,
-				   scsi_sync_cb, &state) != 0) {
+	if (iscsi_reportluns_task(iscsi, report_type, alloc_len,
+				   scsi_sync_cb, &state) == NULL) {
 		iscsi_set_error(iscsi, "Failed to send ReportLuns command");
 		return NULL;
 	}
@@ -185,8 +185,8 @@ iscsi_testunitready_sync(struct iscsi_context *iscsi, int lun)
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_testunitready_async(iscsi, lun,
-				      scsi_sync_cb, &state) != 0) {
+	if (iscsi_testunitready_task(iscsi, lun,
+				      scsi_sync_cb, &state) == NULL) {
 		iscsi_set_error(iscsi,
 				"Failed to send TestUnitReady command");
 		return NULL;
@@ -205,8 +205,8 @@ iscsi_inquiry_sync(struct iscsi_context *iscsi, int lun, int evpd,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_inquiry_async(iscsi, lun, evpd, page_code, maxsize,
-				scsi_sync_cb, &state) != 0) {
+	if (iscsi_inquiry_task(iscsi, lun, evpd, page_code, maxsize,
+				scsi_sync_cb, &state) == NULL) {
 		iscsi_set_error(iscsi, "Failed to send Inquiry command");
 		return NULL;
 	}
@@ -224,8 +224,8 @@ iscsi_read10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_read10_async(iscsi, lun, lba, datalen, blocksize,
-				       scsi_sync_cb, &state) != 0) {
+	if (iscsi_read10_task(iscsi, lun, lba, datalen, blocksize,
+				       scsi_sync_cb, &state) == NULL) {
 		iscsi_set_error(iscsi,
 				"Failed to send Read10 command");
 		return NULL;
@@ -244,8 +244,8 @@ iscsi_readcapacity10_sync(struct iscsi_context *iscsi, int lun, int lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_readcapacity10_async(iscsi, lun, lba, pmi,
-				       scsi_sync_cb, &state) != 0) {
+	if (iscsi_readcapacity10_task(iscsi, lun, lba, pmi,
+				       scsi_sync_cb, &state) == NULL) {
 		iscsi_set_error(iscsi,
 				"Failed to send ReadCapacity10 command");
 		return NULL;
@@ -264,9 +264,9 @@ iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_synchronizecache10_async(iscsi, lun, lba, num_blocks,
+	if (iscsi_synchronizecache10_task(iscsi, lun, lba, num_blocks,
 					   syncnv, immed,
-					   scsi_sync_cb, &state) != 0) {
+					   scsi_sync_cb, &state) == NULL) {
 		iscsi_set_error(iscsi,
 				"Failed to send SynchronizeCache10 command");
 		return NULL;

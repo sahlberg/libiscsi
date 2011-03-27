@@ -41,9 +41,9 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 			 * you always get just after a fresh login. Try
 			 * again.
 			 */
-			if (iscsi_testunitready_async(iscsi, ct->lun,
+			if (iscsi_testunitready_task(iscsi, ct->lun,
 						      iscsi_testunitready_cb,
-						      ct) != 0) {
+						      ct) == NULL) {
 				iscsi_set_error(iscsi, "iscsi_testunitready "
 						"failed.");
 				ct->cb(iscsi, SCSI_STATUS_ERROR, NULL,
@@ -73,8 +73,8 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 		return;
 	}
 
-	if (iscsi_testunitready_async(iscsi, ct->lun,
-				      iscsi_testunitready_cb, ct) != 0) {
+	if (iscsi_testunitready_task(iscsi, ct->lun,
+				      iscsi_testunitready_cb, ct) == NULL) {
 		iscsi_set_error(iscsi, "iscsi_testunitready_async failed.");
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
 		free(ct);
