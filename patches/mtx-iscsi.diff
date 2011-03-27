@@ -1,0 +1,291 @@
+diff --git a/Makefile.in b/Makefile.in
+index 6b967cf..fe81280 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -26,7 +26,7 @@ INSTALL	= @INSTALL@
+ CFLAGS		= @CFLAGS@
+ CPPFLAGS	= @CPPFLAGS@ -DVERSION="\"$(VERSION)\"" -I$(srcdir) -I.
+ LDFLAGS		= @LDFLAGS@
+-LIBS		= @LIBS@
++LIBS		= @LIBS@ @libiscsi@
+ USE_OBJCOPY	= @USE_OBJCOPY@
+ 
+ INSTALL_DOC = $(INSTALL) -m 644
+diff --git a/config.h.in b/config.h.in
+index 7282e46..81ce3d4 100644
+--- a/config.h.in
++++ b/config.h.in
+@@ -30,8 +30,8 @@
+ #define HAVE_SYS_IOCTL_H 0
+ #define HAVE_SYS_MTIO_H 0
+ #define HAVE_DDK_NTDDSCSI_H 0
++#define HAVE_LIBISCSI 0
+ 
+ #define WORDS_BIGENDIAN 0
+ 
+ #endif
+-
+diff --git a/configure.in b/configure.in
+index 10aa09d..b8b79e7 100755
+--- a/configure.in
++++ b/configure.in
+@@ -110,4 +110,50 @@ AC_FUNC_VPRINTF
+ 
+ dnl Check for files
+ 
++dnl Check for libiscsi
++use_libiscsi=""
++AC_ARG_ENABLE([libiscsi],
++  AC_HELP_STRING([--enable-libiscsi], [enable iscsi support]),
++  use_libiscsi="$enableval"
++)
++
++AC_MSG_CHECKING(if libiscsi is available)
++if test "$use_libiscsi" = "yes" ; then
++  AC_MSG_RESULT(enabled)
++  AC_SUBST([libiscsi], ['-liscsi'])
++  AC_DEFINE_UNQUOTED(HAVE_LIBISCSI, 1, [we have libiscsi support], )
++elif test "$use_libiscsi" = "no" ; then
++  AC_MSG_RESULT(disabled)
++  AC_SUBST([libiscsi], [''])
++else
++ac_save_CFLAGS="$CFLAGS"
++ac_save_LIBS="$LIBS"
++CFLAGS=""
++LIBS="-liscsi"
++AC_TRY_RUN([
++/*
++ * Just see if we can compile/link with libiscsi
++ */
++#include <iscsi/iscsi.h>
++int main(int argc, const char *argv[])
++{
++	iscsi_create_context("");
++	return 0;
++}
++], ac_cv_have_libiscsi=yes, ac_cv_have_libiscsi=no,
++   [echo $ac_n "compile with LIBISCSI. Assuming OK... $ac_c"
++    ac_cv_have_libiscsi=yes])
++CFLAGS="$ac_save_CFLAGS"
++LIBS="$ac_save_LIBS"
++if test "$ac_cv_have_libiscsi" = yes ; then
++  AC_MSG_RESULT(yes)
++  AC_SUBST([libiscsi], ['-liscsi'])
++  AC_DEFINE_UNQUOTED(HAVE_LIBISCSI, 1, [we have libiscsi support], )
++else
++  AC_MSG_RESULT(no)
++  AC_SUBST([libiscsi], [''])
++fi
++fi
++
++
+ AC_OUTPUT(Makefile)
+diff --git a/mtxl.h b/mtxl.h
+index 073f4fa..84510cc 100644
+--- a/mtxl.h
++++ b/mtxl.h
+@@ -26,6 +26,10 @@
+ #ifndef MTXL_H
+ #define MTXL_H 1
+ 
++#if HAVE_LIBISCSI
++#define ISCSI_FD 0x7fffffff
++#endif
++
+ #include "mtx.h"
+ 
+ #undef min
+diff --git a/scsi_linux.c b/scsi_linux.c
+index cc14ebf..099cdb4 100644
+--- a/scsi_linux.c
++++ b/scsi_linux.c
+@@ -58,14 +58,128 @@ $Revision: 193 $
+ static int pack_id;
+ static int sg_timeout;
+ 
++
++#if HAVE_LIBISCSI
++#include <stdint.h>
++#include <iscsi/iscsi.h>
++#include <iscsi/scsi-lowlevel.h>
++struct iscsi_lun {
++       struct iscsi_context *context;
++       int lun;
++};
++static struct iscsi_lun iscsi_lun;
++
++static int
++do_iscsi_io(Direction_T Direction,
++		CDB_T *CDB,
++		int CDB_Length,
++		void *DataBuffer,
++		int DataBufferLength,
++		RequestSense_T *RequestSense)
++{
++		struct scsi_task *task;
++		struct iscsi_data outdata, *data = NULL;
++
++		task = malloc(sizeof(struct scsi_task));
++		if (task == NULL) {
++			FatalError("Out-of-memory: Failed to allocate iscsi task structure\n");
++		}
++		memset(task, 0, sizeof(struct scsi_task));
++
++		task->cdb_size = CDB_Length;
++		memcpy(&task->cdb[0], CDB, task->cdb_size);
++
++		switch (Direction) {
++		case Input:
++			task->xfer_dir = SCSI_XFER_READ;
++			task->expxferlen = DataBufferLength;
++			break;
++		case Output:
++			task->xfer_dir = SCSI_XFER_WRITE;
++			task->expxferlen = DataBufferLength;
++			outdata.size = DataBufferLength;
++			outdata.data = DataBuffer;
++			data = &outdata;
++			break;
++		}
++
++		if (iscsi_scsi_command_sync(iscsi_lun.context, iscsi_lun.lun, task, data) == NULL) {
++			FatalError("Failed to do iscsi i/o : %s\n", iscsi_get_error(iscsi_lun.context));
++			scsi_free_scsi_task(task);
++			return -1;
++		}
++
++		if (task->status == SCSI_STATUS_GOOD) {
++			if (task->xfer_dir == SCSI_XFER_READ) {
++				memcpy(DataBuffer, task->datain.data, DataBufferLength);
++			}
++		}
++		if (task->status == SCSI_STATUS_CHECK_CONDITION) {
++			memcpy(RequestSense,  task->datain.data+2, task->datain.size-2);
++		}
++		scsi_free_scsi_task(task);
++
++		return 0;
++	}
++
++static DEVICE_TYPE OpenISCSI(char *DeviceName)
++{
++	char *portal = NULL;
++	char *target = NULL;
++	char *lun = NULL;
++
++	portal = strdup(DeviceName + 8);
++	if (portal == NULL) {
++		FatalError("Out-of-memory. Failed to strdup %s\n", DeviceName);
++	}
++	target = index(portal, '/');
++	if (target == NULL) {
++		FatalError("Invalid iSCSI URL : %s.\nURL must be specified as \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n", DeviceName);
++	}
++	*target++ = 0;
++
++	lun = index(target, '/');
++	if (lun == NULL) {
++		FatalError("Invalid iSCSI URL : %s.\nURL must be specified as \"iscsi://<host>[:<port>]/<target-iqn>/<lun>\"\n", DeviceName);
++	}
++	*lun++ = 0;
++
++	iscsi_lun.context = iscsi_create_context("iqn.1999-08.net.sourceforge.mtx");
++	if (iscsi_lun.context == NULL) {
++		FatalError("Failed to create iSCSI context for %s. (%s)\n", DeviceName,
++				   iscsi_get_error(iscsi_lun.context));
++	}
++	iscsi_set_targetname(iscsi_lun.context, target);
++	iscsi_set_session_type(iscsi_lun.context, ISCSI_SESSION_NORMAL);
++	iscsi_set_header_digest(iscsi_lun.context, ISCSI_HEADER_DIGEST_NONE_CRC32C);
++
++	iscsi_lun.lun = atoi(lun);
++	if (iscsi_full_connect_sync(iscsi_lun.context, portal, iscsi_lun.lun) != 0) {
++		FatalError("Failed to connect to %s. (%s)\n", DeviceName,
++				   iscsi_get_error(iscsi_lun.context));
++		iscsi_destroy_context(iscsi_lun.context);
++		iscsi_lun.context = NULL;
++	}
++
++	return ISCSI_FD;
++}
++#endif
++
+ DEVICE_TYPE SCSI_OpenDevice(char *DeviceName)
+ {
+ 	int timeout = SG_SCSI_DEFAULT_TIMEOUT;
+ #ifdef SG_IO
+ 	int k; /* version */
+ #endif
+-	int DeviceFD = open(DeviceName, O_RDWR);
++	int DeviceFD;
++
++#if HAVE_LIBISCSI
++	if (!strncmp(DeviceName, "iscsi://", 8)) {
++		return OpenISCSI(DeviceName);		
++	}
++#endif
+ 
++	DeviceFD = open(DeviceName, O_RDWR);
+ 	if (DeviceFD < 0)
+ 		FatalError("cannot open SCSI device '%s' - %m\n", DeviceName);
+ 
+@@ -98,6 +212,14 @@ void SCSI_Default_Timeout(void)
+ 
+ void SCSI_CloseDevice(char *DeviceName, DEVICE_TYPE DeviceFD)
+ {
++#if HAVE_LIBISCSI
++	if (iscsi_lun.context != NULL && DeviceFD == ISCSI_FD) {
++		iscsi_logout_sync(iscsi_lun.context);
++		iscsi_destroy_context(iscsi_lun.context);
++		iscsi_lun.context = NULL;
++		return;
++	}
++#endif
+ 	if (close(DeviceFD) < 0)
+ 		FatalError("cannot close SCSI device '%s' - %m\n", DeviceName);
+ }
+@@ -118,6 +240,16 @@ scsi_id_t *SCSI_GetIDLun(DEVICE_TYPE fd)
+ 		int word2;
+ 	} idlun;
+ 
++#if HAVE_LIBISCSI
++	if (fd == ISCSI_FD) {
++		/* we only need the lun */
++		retval = (scsi_id_t *)xmalloc(sizeof(scsi_id_t));
++		retval->id = 0;
++		retval->lun = iscsi_lun.lun;
++		return retval;
++	}
++#endif
++
+ 	status = ioctl(fd, SCSI_IOCTL_GET_IDLUN, &idlun);
+ 	if (status)
+ 	{
+@@ -157,6 +289,13 @@ int SCSI_ExecuteCommand(DEVICE_TYPE DeviceFD,
+ 	unsigned int status;
+ 	sg_io_hdr_t io_hdr;
+ 
++#if HAVE_LIBISCSI
++	if (DeviceFD == ISCSI_FD) {
++		return do_iscsi_io(Direction, CDB, CDB_Length,
++		       			      DataBuffer, DataBufferLength,
++					      RequestSense);
++	}
++#endif
+ 	memset(&io_hdr, 0, sizeof(sg_io_hdr_t));
+ 	memset(RequestSense, 0, sizeof(RequestSense_T));
+ 
+@@ -261,6 +400,13 @@ int SCSI_ExecuteCommand(DEVICE_TYPE DeviceFD,
+ 	struct sg_header *Header; /* we actually point this into Command... */
+ 	struct sg_header *ResultHeader; /* we point this into ResultBuf... */
+ 
++#if HAVE_LIBISCSI
++	if (DeviceFD == ISCSI_FD) {
++		return do_iscsi_io(Direction, CDB, CDB_Length,
++		       			      DataBuffer, DataBufferLength,
++					      RequestSense);
++	}
++#endif
+ 	/* First, see if we need to set our SCSI timeout to something different */
+ 	if (sg_timeout != SG_SCSI_DEFAULT_TIMEOUT)
+ 	{

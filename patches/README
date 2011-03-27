@@ -22,4 +22,9 @@ standard INQUIRY:
  Unit serial number:                           beaf11
 
 
+mtx-iscsi.diff
+==============
+Adds iscsi support to the MTX package to manage media changer devices.
+
+
 
