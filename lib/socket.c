@@ -212,6 +212,16 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 {
 	struct iscsi_in_pdu *in;
 	ssize_t data_size, count;
+	int socket_count = 0;
+
+	if (ioctl(iscsi->fd, FIONREAD, &socket_count) != 0) {
+		iscsi_set_error(iscsi, "Socket failure. Socket FIONREAD failed");
+		return -1;
+	}
+	if (socket_count == 0) {
+		iscsi_set_error(iscsi, "Socket failure. Socket is readable but no bytes available in FIONREAD");
+		return -1;
+	}
 
 	if (iscsi->incoming == NULL) {
 		iscsi->incoming = malloc(sizeof(struct iscsi_in_pdu));
@@ -225,7 +235,14 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 
 	/* first we must read the header, including any digests */
 	if (in->hdr_pos < ISCSI_HEADER_SIZE) {
-		count = read(iscsi->fd, &in->hdr[in->hdr_pos], ISCSI_HEADER_SIZE - in->hdr_pos);
+		/* try to only read the header, and make sure we don't
+		 * read more than is available in the socket;
+		 */
+		count = ISCSI_HEADER_SIZE - in->hdr_pos;
+		if (socket_count < count) {
+			count = socket_count;
+		}
+		count = read(iscsi->fd, &in->hdr[in->hdr_pos], count);
 		if (count < 0) {
 			if (errno == EINTR) {
 				return 0;
@@ -237,7 +254,8 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		if (count == 0) {
 			return 0;
 		}
-		in->hdr_pos += count;
+		in->hdr_pos  += count;
+		socket_count -= count;
 	}
 
 	if (in->hdr_pos < ISCSI_HEADER_SIZE) {
@@ -255,7 +273,15 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			}
 		}
 
-		count = read(iscsi->fd, &in->data[in->data_pos], data_size - in->data_pos);
+		/* No more data right now */
+		if (socket_count == 0) {
+			return 0;
+		}
+		count = data_size - in->data_pos;
+		if (count > socket_count) {
+			count = socket_count;
+		}
+		count = read(iscsi->fd, &in->data[in->data_pos], count);
 		if (count < 0) {
 			if (errno == EINTR) {
 				return 0;
@@ -268,6 +294,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			return 0;
 		}
 		in->data_pos += count;
+		socket_count -= count;
 	}
 
 	if (in->data_pos < data_size) {
