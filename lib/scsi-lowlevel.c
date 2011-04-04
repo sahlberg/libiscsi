@@ -525,7 +525,11 @@ scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize)
 	*(uint16_t *)&task->cdb[7] = htons(xferlen/blocksize);
 
 	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_READ;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
 	task->expxferlen = xferlen;
 
 	task->params.read10.lba        = lba;
