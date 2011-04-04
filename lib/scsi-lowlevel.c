@@ -102,6 +102,8 @@ const char *
 scsi_sense_ascq_str(int ascq)
 {
 	struct value_string ascqs[] = {
+		{SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE,
+		 "LBA_OUT_OF_RANGE"},
 		{SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB,
 		 "INVALID_FIELD_IN_CDB"},
 		{SCSI_SENSE_ASCQ_LOGICAL_UNIT_NOT_SUPPORTED,
