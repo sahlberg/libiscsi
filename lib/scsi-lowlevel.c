@@ -565,7 +565,11 @@ scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int fua, int fuanv, int blocksi
 	*(uint16_t *)&task->cdb[7] = htons(xferlen/blocksize);
 
 	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_WRITE;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_WRITE;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
 	task->expxferlen = xferlen;
 
 	task->params.write10.lba        = lba;
