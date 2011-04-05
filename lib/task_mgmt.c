@@ -29,7 +29,7 @@ iscsi_task_mgmt_async(struct iscsi_context *iscsi,
 	struct iscsi_pdu *pdu;
 
 	if (iscsi->is_loggedin == 0) {
-		iscsi_set_error(iscsi, "trying send nop-out while not logged "
+		iscsi_set_error(iscsi, "trying send task-mgmt while not logged "
 				"in");
 		return -1;
 	}
