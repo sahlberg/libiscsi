@@ -26,8 +26,8 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	struct iscsi_pdu *pdu;
 
 	if (iscsi->is_loggedin == 0) {
-		iscsi_set_error(iscsi, "trying send nop-out while not logged "
-				"in");
+		iscsi_set_error(iscsi, "trying to send nop-out while not "
+				"logged in");
 		return -1;
 	}
 
