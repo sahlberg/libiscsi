@@ -52,12 +52,10 @@ iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 	struct scsi_task *task = command_data;
 
 	switch (status) {
-	case SCSI_STATUS_GOOD:
-		scsi_cbdata->callback(iscsi, SCSI_STATUS_GOOD, task,
-				      scsi_cbdata->private_data);
-		return;
+	case SCSI_STATUS_RESERVATION_CONFLICT:
 	case SCSI_STATUS_CHECK_CONDITION:
-		scsi_cbdata->callback(iscsi, SCSI_STATUS_CHECK_CONDITION, task,
+	case SCSI_STATUS_GOOD:
+		scsi_cbdata->callback(iscsi, status, task,
 				      scsi_cbdata->private_data);
 		return;
 	default:
@@ -396,6 +394,11 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				task->sense.ascq);
 		pdu->callback(iscsi, SCSI_STATUS_CHECK_CONDITION, task,
 			      pdu->private_data);
+		break;
+	case SCSI_STATUS_RESERVATION_CONFLICT:
+		iscsi_set_error(iscsi, "RESERVATION CONFLICT");
+		pdu->callback(iscsi, SCSI_STATUS_RESERVATION_CONFLICT,
+			task, pdu->private_data);
 		break;
 	default:
 		iscsi_set_error(iscsi, "Unknown SCSI status :%d.", status);
