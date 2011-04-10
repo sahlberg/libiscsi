@@ -1,17 +1,5 @@
 Some features that should be added
 
-* Target driven iscsi-nop, to teach the library to respond to these.
-  These are unsolicited nops sent from the targetr which we need to respond
-  to. TGTD does not suppot these but IET should do so and could be used
-  to test with.
-  This is a simple addition, but needs a target that uses iscsi-nop
-  for testing.
-  Since libiscsi will be a responder to these commands, we will
-  not receive a reply to these, as we do for almost all normal commands.
-  This is somewhat similar to how we do data-out pdus. 
-  See ISCSI_PDU_DELETE_WHEN_SENT and iscsi_send_data_out() for how
-  create and send PDUs to which we will not expect a response.
-
 * More efficient api for read/write commands where we read/write straight
   from the socket into the buffer the application specified instead of as now
   we pass the data to a callback and then copy it.
