@@ -178,7 +178,7 @@ iscsi_get_pdu_data_size(const unsigned char *hdr)
 	return size;
 }
 
-static enum iscsi_reject_reason {
+enum iscsi_reject_reason {
 	ISCSI_REJECT_RESERVED                 = 0x01,
 	ISCSI_REJECT_DATA_DIGEST_ERROR        = 0x02,
 	ISCSI_REJECT_SNACK_REJECT             = 0x03,
@@ -225,6 +225,32 @@ static const char *iscsi_reject_reason_str(enum iscsi_reject_reason reason)
 	return "Unknown";
 }
 	
+int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
+				struct iscsi_in_pdu *in)
+{
+	uint32_t itt, ttt;
+	uint32_t statsn;
+
+	itt = ntohl(*(uint32_t *)&in->hdr[16]);
+
+	ttt = ntohl(*(uint32_t *)&in->hdr[20]);
+
+	statsn = ntohl(*(uint32_t *)&in->hdr[24]);
+	if (statsn > iscsi->statsn) {
+		iscsi->statsn = statsn;
+	}
+
+	/* if the server does not want a response */
+	if (ttt == 0xffffffff) {
+		return 0;
+	}
+
+	iscsi_send_target_nop_out(iscsi, ttt);
+
+	return 0;
+}
+
+
 int iscsi_process_reject(struct iscsi_context *iscsi,
 				struct iscsi_in_pdu *in)
 {
@@ -284,6 +310,13 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 		iscsi_set_error(iscsi, "Request was rejected with reason: 0x%02x (%s)", in->hdr[2], iscsi_reject_reason_str(in->hdr[2]));
 
 		if (iscsi_process_reject(iscsi, in) != 0) {
+			return -1;
+		}
+		return 0;
+	}
+
+	if (opcode == ISCSI_PDU_NOP_IN && itt == 0xffffffff) {
+		if (iscsi_process_target_nop_in(iscsi, in) != 0) {
 			return -1;
 		}
 		return 0;
