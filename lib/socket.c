@@ -23,7 +23,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <poll.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
@@ -411,6 +413,9 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 			return -1;
 		}
 
+#ifdef HAVE_TCP_KEEPALIVE
+		iscsi_set_tcp_keepalive(iscsi, 30, 3, 30);
+#endif
 		iscsi->is_connected = 1;
 		iscsi->socket_status_cb(iscsi, SCSI_STATUS_GOOD, NULL,
 					iscsi->connect_data);
@@ -476,3 +481,37 @@ iscsi_free_iscsi_inqueue(struct iscsi_in_pdu *inqueue)
 	      inqueue = next;
 	}
 }
+
+#ifdef HAVE_TCP_KEEPALIVE
+int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval)
+{
+	int value;
+
+	value =1;
+	if (setsockopt(iscsi->fd, SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value)) != 0) {
+		iscsi_set_error(iscsi, "TCP: Failed to set socket option SO_KEEPALIVE. Error %s(%d)", strerror(errno), errno);
+		return -1;
+	}
+
+	value = count;
+	if (setsockopt(iscsi->fd, SOL_TCP, TCP_KEEPCNT, &value, sizeof(value)) != 0) {
+		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive count. Error %s(%d)", strerror(errno), errno);
+		return -1;
+	}
+
+	value = interval;
+	if (setsockopt(iscsi->fd, SOL_TCP, TCP_KEEPINTVL, &value, sizeof(value)) != 0) {
+		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive interval. Error %s(%d)", strerror(errno), errno);
+		return -1;
+	}
+
+	value = idle;
+	if (setsockopt(iscsi->fd, SOL_TCP, TCP_KEEPIDLE, &value, sizeof(value)) != 0) {
+		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive idle. Error %s(%d)", strerror(errno), errno);
+		return -1;
+	}
+
+	return 0;
+}
+
+#endif

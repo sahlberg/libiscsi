@@ -54,7 +54,11 @@ int iscsi_service(struct iscsi_context *iscsi, int revents);
  */
 int iscsi_queue_length(struct iscsi_context *iscsi);
 
-
+/*
+ * To set tcp keepalive for the session
+ * ONLY available on platforms with tcp keepalive socket options
+ */
+int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval);
 
 
 

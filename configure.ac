@@ -64,6 +64,16 @@ if test x"$libiscsi_cv_HAVE_SOCK_SIN_LEN" = x"yes"; then
     AC_DEFINE(HAVE_SOCK_SIN_LEN,1,[Whether the sockaddr_in struct has a sin_len property])
 fi
 
+AC_CACHE_CHECK([for tcp keepalive],libiscsi_cv_HAVE_TCP_KEEPALIVE,[
+AC_TRY_COMPILE([#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>],
+[int foo = TCP_KEEPCNT + TCP_KEEPIDLE + TCP_KEEPINTVL],
+libiscsi_cv_HAVE_TCP_KEEPALIVE=yes,libiscsi_cv_HAVE_TCP_KEEPALIVE=no)])
+if test x"$libiscsi_cv_HAVE_TCP_KEEPALIVE" = x"yes"; then
+    AC_DEFINE(HAVE_TCP_KEEPALIVE,1,[Whether we have support for tcp keepalive socket options])
+fi
+
 AC_MSG_CHECKING(whether libpopt is available)
 ac_save_CFLAGS="$CFLAGS"
 ac_save_LIBS="$LIBS"
