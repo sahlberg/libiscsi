@@ -506,6 +506,50 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 }
 
 /*
+ * READ6
+ */
+struct scsi_task *
+scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize)
+{
+	struct scsi_task *task;
+	int num_blocks;
+
+	num_blocks = xferlen/blocksize;
+	if (num_blocks > 265) {
+		return NULL;
+	}
+
+	if (lba > 0x1fffff) {
+		return NULL;
+	}
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_READ6;
+	task->cdb_size = 6;
+
+	task->cdb[1] = (lba>>16)&0x1f;
+	task->cdb[2] = (lba>> 8)&0xff;
+	task->cdb[3] = (lba    )&0xff;
+
+	if (num_blocks < 256) {
+		task->cdb[4] = num_blocks;
+	}
+
+	task->xfer_dir = SCSI_XFER_READ;
+	task->expxferlen = xferlen;
+
+	task->params.read6.lba        = lba;
+	task->params.read6.num_blocks = num_blocks;
+
+	return task;
+}
+
+/*
  * READ10
  */
 struct scsi_task *

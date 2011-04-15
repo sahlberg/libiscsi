@@ -572,6 +572,11 @@ iscsi_synchronizecache10_task(struct iscsi_context *iscsi, int lun,
 				   int immed, iscsi_command_cb cb,
 				   void *private_data);
 struct scsi_task *
+iscsi_read6_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		       uint32_t datalen, int blocksize, iscsi_command_cb cb,
+		       void *private_data);
+
+struct scsi_task *
 iscsi_read10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       uint32_t datalen, int blocksize, iscsi_command_cb cb,
 		       void *private_data);
@@ -604,6 +609,10 @@ iscsi_testunitready_sync(struct iscsi_context *iscsi, int lun);
 struct scsi_task *
 iscsi_inquiry_sync(struct iscsi_context *iscsi, int lun, int evpd,
 		   int page_code, int maxsize);
+
+struct scsi_task *
+iscsi_read6_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		  uint32_t datalen, int blocksize);
 
 struct scsi_task *
 iscsi_read10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,

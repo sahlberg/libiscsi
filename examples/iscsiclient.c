@@ -130,6 +130,36 @@ void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void
 	scsi_free_scsi_task(task);
 }
 
+void read6_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
+{
+	struct client_state *clnt = (struct client_state *)private_data;
+	struct scsi_task *task = command_data;
+	int i;
+
+	if (status == SCSI_STATUS_CHECK_CONDITION) {
+		printf("Read6 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
+		scsi_free_scsi_task(task);
+		exit(10);
+	}
+
+	printf("READ6 successful. Block content:\n");
+	for (i=0;i<task->datain.size;i++) {
+		printf("%02x ", task->datain.data[i]);
+		if (i%16==15)
+			printf("\n");
+		if (i==69)
+			break;
+	}
+	printf("...\n");
+
+	if (iscsi_read10_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, read10_cb, private_data) == NULL) {
+		printf("failed to send read10 command\n");
+		scsi_free_scsi_task(task);
+		exit(10);
+	}
+	scsi_free_scsi_task(task);
+}
+
 void readcapacity10_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	struct client_state *clnt = (struct client_state *)private_data;
@@ -159,8 +189,8 @@ void readcapacity10_cb(struct iscsi_context *iscsi, int status, void *command_da
 	clnt->block_size = rc10->block_size;
 	printf("READCAPACITY10 successful. Size:%d blocks  blocksize:%d. Read first block\n", rc10->lba, rc10->block_size);
 
-	if (iscsi_read10_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, read10_cb, private_data) == NULL) {
-		printf("failed to send read10 command\n");
+	if (iscsi_read6_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, read6_cb, private_data) == NULL) {
+		printf("failed to send read6 command\n");
 		scsi_free_scsi_task(task);
 		exit(10);
 	}

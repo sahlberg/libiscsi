@@ -21,6 +21,7 @@
 
 enum scsi_opcode {
 	SCSI_OPCODE_TESTUNITREADY      = 0x00,
+	SCSI_OPCODE_READ6              = 0x08,
 	SCSI_OPCODE_INQUIRY            = 0x12,
 	SCSI_OPCODE_MODESENSE6         = 0x1a,
 	SCSI_OPCODE_READCAPACITY10     = 0x25,
@@ -68,6 +69,10 @@ enum scsi_xfer_dir {
 
 struct scsi_reportluns_params {
 	int report_type;
+};
+struct scsi_read6_params {
+	uint32_t lba;
+	uint32_t num_blocks;
 };
 struct scsi_read10_params {
 	uint32_t lba;
@@ -122,6 +127,7 @@ struct scsi_task {
 	int expxferlen;
 	unsigned char cdb[SCSI_CDB_MAX_SIZE];
 	union {
+		struct scsi_read6_params          read6;
 		struct scsi_read10_params         read10;
 		struct scsi_write10_params        write10;
 		struct scsi_readcapacity10_params readcapacity10;
