@@ -53,6 +53,7 @@ enum scsi_sense_key {
 const char *scsi_sense_key_str(int key);
 
 /* ascq */
+#define SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE		0x2000
 #define SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE		0x2100
 #define SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB		0x2400
 #define SCSI_SENSE_ASCQ_LOGICAL_UNIT_NOT_SUPPORTED	0x2500
