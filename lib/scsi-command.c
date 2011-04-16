@@ -49,19 +49,19 @@ iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 {
 	struct iscsi_scsi_cbdata *scsi_cbdata =
 	  (struct iscsi_scsi_cbdata *)private_data;
-	struct scsi_task *task = command_data;
 
 	switch (status) {
 	case SCSI_STATUS_RESERVATION_CONFLICT:
 	case SCSI_STATUS_CHECK_CONDITION:
 	case SCSI_STATUS_GOOD:
-		scsi_cbdata->callback(iscsi, status, task,
+	case SCSI_STATUS_ERROR:
+		scsi_cbdata->callback(iscsi, status, scsi_cbdata->task,
 				      scsi_cbdata->private_data);
 		return;
 	default:
 		iscsi_set_error(iscsi, "Cant handle  scsi status %d yet.",
 				status);
-		scsi_cbdata->callback(iscsi, SCSI_STATUS_ERROR, task,
+		scsi_cbdata->callback(iscsi, SCSI_STATUS_ERROR, scsi_cbdata->task,
 				      scsi_cbdata->private_data);
 	}
 }
