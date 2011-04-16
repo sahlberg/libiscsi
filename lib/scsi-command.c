@@ -359,7 +359,7 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		 * These flags should only be set if the S flag is also set
 		 */
 		if (flags & (ISCSI_PDU_DATA_RESIDUAL_OVERFLOW|ISCSI_PDU_DATA_RESIDUAL_UNDERFLOW)) {
-			task->residual = ntohl(&in->hdr[44]);
+			task->residual = ntohl(*((uint32_t *)&in->hdr[44]));
 			if (flags & ISCSI_PDU_DATA_RESIDUAL_UNDERFLOW) {
 				task->residual_status = SCSI_RESIDUAL_UNDERFLOW;
 			} else {
