@@ -13,4 +13,4 @@ iscsi-test: iscsi-test.c $(TESTS)
 
 clean:
 	rm -f *.o
-	rm iscsi-test
+	rm -f iscsi-test
