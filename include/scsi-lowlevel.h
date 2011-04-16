@@ -393,6 +393,7 @@ struct scsi_task *scsi_cdb_modesense6(int dbd,
 int scsi_datain_getfullsize(struct scsi_task *task);
 void *scsi_datain_unmarshall(struct scsi_task *task);
 
+struct scsi_task *scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize);
 struct scsi_task *scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize);
 struct scsi_task *scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int fua, int fuanv,
 			int blocksize);
