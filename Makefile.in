@@ -57,6 +57,9 @@ install: lib/libiscsi.a lib/$(LIBISCSI_SO) bin/iscsi-ls bin/iscsi-inq
 	$(INSTALLCMD) -m 644 include/iscsi.h $(exec_prefix)/include/iscsi
 	$(INSTALLCMD) -m 644 include/scsi-lowlevel.h $(exec_prefix)/include/iscsi
 
+iscsi-test: lib/libiscsi.a
+	make -C test-tool
+
 distclean: clean
 	rm -f config.h config.log config.status configure Makefile
 
@@ -66,3 +69,4 @@ clean:
 	rm -f lib/libiscsi.so*
 	rm -f lib/libiscsi.a
 	rm -f iscsi-inq iscsi-ls
+	make -C test-tool clean
