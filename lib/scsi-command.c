@@ -45,7 +45,7 @@ iscsi_free_scsi_cbdata(struct iscsi_scsi_cbdata *scsi_cbdata)
 
 static void
 iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
-		       void *command_data, void *private_data)
+		       void *command_data _U_, void *private_data)
 {
 	struct iscsi_scsi_cbdata *scsi_cbdata =
 	  (struct iscsi_scsi_cbdata *)private_data;
