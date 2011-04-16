@@ -74,6 +74,111 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 	printf("[OK]\n");
 
 
+	/* Try a read of 1 block but xferlength == 1024 */
+	printf("Read10 1 block but with iscsi ExpectedDataTransferLength==1024 ... ");
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		printf("Failed to allocate task structure\n");
+		ret = -1;
+		goto finished;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0] = SCSI_OPCODE_READ10;
+	task->cdb[8] = 1;
+	task->cdb_size = 10;
+	task->xfer_dir = SCSI_XFER_READ;
+	task->expxferlen = 1024;
+
+	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+
+		goto finished;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==1024 should fail.\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+
+	/* Try a read of 1 block but xferlength == 200 */
+	printf("Read10 1 block but with iscsi ExpectedDataTransferLength==200 ... ");
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		printf("Failed to allocate task structure\n");
+		ret = -1;
+		goto finished;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0] = SCSI_OPCODE_READ10;
+	task->cdb[8] = 1;
+	task->cdb_size = 10;
+	task->xfer_dir = SCSI_XFER_READ;
+	task->expxferlen = 200;
+
+	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+
+		goto finished;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==200 should fail.\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+
+	/* Try a read of 2 blocks but xferlength == 512 */
+	printf("Read10 2 blocks but with iscsi ExpectedDataTransferLength==512 ... ");
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		printf("Failed to allocate task structure\n");
+		ret = -1;
+		goto finished;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0] = SCSI_OPCODE_READ10;
+	task->cdb[8] = 2;
+	task->cdb_size = 10;
+	task->xfer_dir = SCSI_XFER_READ;
+	task->expxferlen = 512;
+
+	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+
+		goto finished;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("Read10 of 2 blocks with iscsi ExpectedDataTransferLength==512 should fail.\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+
 	/* Try a read of 1 block but make it a data-out write on the iscsi layer */
 	printf("Read10 of 1 block but sent as data-out write in iscsi layer ... ");
 
