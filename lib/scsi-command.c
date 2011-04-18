@@ -455,6 +455,21 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		return 0;
 	}
 
+	task->residual_status = SCSI_RESIDUAL_NO_RESIDUAL;
+	task->residual = 0;
+
+	/*
+	 * These flags should only be set if the S flag is also set
+	 */
+	if (flags & (ISCSI_PDU_DATA_RESIDUAL_OVERFLOW|ISCSI_PDU_DATA_RESIDUAL_UNDERFLOW)) {
+		task->residual = ntohl(*((uint32_t *)&in->hdr[44]));
+		if (flags & ISCSI_PDU_DATA_RESIDUAL_UNDERFLOW) {
+			task->residual_status = SCSI_RESIDUAL_UNDERFLOW;
+		} else {
+			task->residual_status = SCSI_RESIDUAL_OVERFLOW;
+		}
+	}
+
 
 	/* this was the final data-in packet in the sequence and it has
 	 * the s-bit set, so invoke the callback.
