@@ -63,12 +63,19 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
-		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==0 should fail.\n");
+		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==0 should not fail.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto test2;
+	}
+	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW || task->residual != 512) {
+	        printf("[FAILED]\n");
+		printf("Read10 returned incorrect residual overflow.\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test5;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
@@ -99,12 +106,19 @@ test2:
 
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
-		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==1024 should fail.\n");
+		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==1024 should not fail.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto test3;
+	}
+	if (task->residual_status != SCSI_RESIDUAL_UNDERFLOW || task->residual != 512) {
+	        printf("[FAILED]\n");
+		printf("Read10 returned incorrect residual underflow.\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test5;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
@@ -135,16 +149,22 @@ test3:
 
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
-		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==200 should fail.\n");
+		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==200 should not fail.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto test4;
 	}
+	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW || task->residual != 312) {
+	        printf("[FAILED]\n");
+		printf("Read10 returned incorrect residual overflow.\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test5;
+	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
-
 
 test4:
 	/* Try a read of 2 blocks but xferlength == 512 */
@@ -171,13 +191,21 @@ test4:
 
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
-		printf("Read10 of 2 blocks with iscsi ExpectedDataTransferLength==512 should fail.\n");
+		printf("Read10 of 2 blocks with iscsi ExpectedDataTransferLength==512 should succeed.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto test5;
 	}
+	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW || task->residual != 512) {
+	        printf("[FAILED]\n");
+		printf("Read10 returned incorrect residual overflow.\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test5;
+	}
+
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
@@ -219,7 +247,6 @@ test5:
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
-
 
 finished:
 	iscsi_logout_sync(iscsi);
