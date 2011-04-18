@@ -68,12 +68,13 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==0 should fail.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto finished;
+		goto test2;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
+test2:
 	/* Try a read of 1 block but xferlength == 1024 */
 	printf("Read10 1 block but with iscsi ExpectedDataTransferLength==1024 ... ");
 
@@ -103,12 +104,13 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==1024 should fail.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto finished;
+		goto test3;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
+test3:
 	/* Try a read of 1 block but xferlength == 200 */
 	printf("Read10 1 block but with iscsi ExpectedDataTransferLength==200 ... ");
 
@@ -138,12 +140,13 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==200 should fail.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto finished;
+		goto test4;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
+test4:
 	/* Try a read of 2 blocks but xferlength == 512 */
 	printf("Read10 2 blocks but with iscsi ExpectedDataTransferLength==512 ... ");
 
@@ -173,12 +176,13 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 		printf("Read10 of 2 blocks with iscsi ExpectedDataTransferLength==512 should fail.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto finished;
+		goto test5;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
+test5:
 	/* Try a read of 1 block but make it a data-out write on the iscsi layer */
 	printf("Read10 of 1 block but sent as data-out write in iscsi layer ... ");
 
