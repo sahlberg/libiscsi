@@ -626,4 +626,29 @@ struct scsi_task *
 iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
 			      int num_blocks, int syncnv, int immed);
 
+
+/*
+ * This function is used when  the application wants to specify its own buffers to read the data
+ * from the DATA-IN PDUs into.
+ * The main use is for SCSI read operations to have them write directly into the application buffers to
+ * avoid the two copies that would occur otherwise.
+ * First copy from the individual DATA-IN blobs to linearize the buffer and the second in the callback
+ * to copy the data from the linearized buffer into the application buffer.
+ *
+ * This also supports reading into a vector of buffers by calling this function multiple times.
+ * The individual buffers will be filled in the same order as they were created.
+ *
+ * Example:
+ *     task = iscsi_read10_task(    ( 2 512byte blocks into two buffers)
+ *     scsi_task_add_data_buffer(task, first_buffer, 512
+ *     scsi_task_add_data_buffer(task, second_buffer, 512
+ *
+ *
+ * If you use this function you can not use task->datain in the callback.
+ * task->datain.size will be 0 and
+ * task->datain.data will be NULL
+ */
+int scsi_task_add_data_in_buffer(struct scsi_task *task, int len, unsigned char *buf);
+
+
 #endif /* __iscsi_h__ */

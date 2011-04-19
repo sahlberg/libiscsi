@@ -16,6 +16,7 @@
 */
 
 #include <stdio.h>
+#include <unistd.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 

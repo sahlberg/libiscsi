@@ -248,6 +248,9 @@ int iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt);
 void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
 		     ...);
 
+unsigned char *iscsi_get_user_in_buffer(struct iscsi_context *iscsi, struct iscsi_in_pdu *in, uint32_t pos, ssize_t *count);
+unsigned char *scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *count);
+
 unsigned long crc32c(char *buf, int len);
 
 #endif /* __iscsi_private_h__ */

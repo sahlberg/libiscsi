@@ -13,7 +13,7 @@
  */
 
 /* This is the host/port we connect to.*/
-#define TARGET "127.0.0.1:3260"
+#define TARGET "10.1.1.27:3260"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +32,8 @@ struct client_state {
        int lun;
        int block_size;
 };
+
+unsigned char small_buffer[512];
 
 void tm_at_cb(struct iscsi_context *iscsi _U_, int status _U_, void *command_data _U_, void *private_data)
 {
@@ -105,8 +107,8 @@ void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void
 	}
 
 	printf("READ10 successful. Block content:\n");
-	for (i=0;i<task->datain.size;i++) {
-		printf("%02x ", task->datain.data[i]);
+	for (i=0;i<512;i++) {
+		printf("%02x ", small_buffer[i]);
 		if (i%16==15)
 			printf("\n");
 		if (i==69)
@@ -152,12 +154,19 @@ void read6_cb(struct iscsi_context *iscsi, int status, void *command_data, void 
 	}
 	printf("...\n");
 
-	if (iscsi_read10_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, read10_cb, private_data) == NULL) {
+	scsi_free_scsi_task(task);
+
+	if ((task = iscsi_read10_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, read10_cb, private_data)) == NULL) {
 		printf("failed to send read10 command\n");
-		scsi_free_scsi_task(task);
 		exit(10);
 	}
-	scsi_free_scsi_task(task);
+	/* provide a buffer from the application to read into instead
+	 * of copying and linearizing the data. This saves two copies
+	 * of the data. One in libiscsi and one in the application
+	 * callback.
+	 */
+	scsi_task_add_data_in_buffer(task, 128, &small_buffer[0]);
+	scsi_task_add_data_in_buffer(task, 512-128, &small_buffer[128]);
 }
 
 void readcapacity10_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)

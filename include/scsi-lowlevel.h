@@ -148,6 +148,8 @@ struct scsi_task {
 	uint32_t itt;
 	uint32_t cmdsn;
 	uint32_t lun;
+
+	struct scsi_data_buffer *in_buffers;
 };
 
 void scsi_free_scsi_task(struct scsi_task *task);

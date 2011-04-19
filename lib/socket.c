@@ -267,13 +267,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 
 	data_size = iscsi_get_pdu_data_size(&in->hdr[0]);
 	if (data_size != 0) {
-		if (in->data == NULL) {
-			in->data = malloc(data_size);
-			if (in->data == NULL) {
-				iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu->data(%d)", (int)data_size);
-				return -1;
-			}
-		}
+		unsigned char *buf = NULL;
 
 		/* No more data right now */
 		if (socket_count == 0) {
@@ -283,7 +277,22 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		if (count > socket_count) {
 			count = socket_count;
 		}
-		count = read(iscsi->fd, &in->data[in->data_pos], count);
+
+		/* first try to see if we already have a user buffer */
+		buf = iscsi_get_user_in_buffer(iscsi, in, in->data_pos, &count);
+		/* if not, allocate one */
+		if (buf == NULL) {
+			if (in->data == NULL) {
+				in->data = malloc(data_size);
+				if (in->data == NULL) {
+					iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu->data(%d)", (int)data_size);
+					return -1;
+				}
+			}
+			buf = &in->data[in->data_pos];
+		}
+
+		count = read(iscsi->fd, buf, count);
 		if (count < 0) {
 			if (errno == EINTR) {
 				return 0;

@@ -435,12 +435,15 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	}
 	dsl = ntohl(*(uint32_t *)&in->hdr[4])&0x00ffffff;
 
-	if (iscsi_add_data(iscsi, &pdu->indata,
-			   in->data, dsl, 0)
-	    != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: failed to add data "
+	/* Dont add to reassembly buffer if we already have a user buffer */
+	if (scsi_task_get_data_in_buffer(task, 0, NULL) == NULL) {
+		if (iscsi_add_data(iscsi, &pdu->indata,
+				   in->data, dsl, 0)
+		    != 0) {
+		    	iscsi_set_error(iscsi, "Out-of-memory: failed to add data "
 				"to pdu in buffer.");
-		return -1;
+			return -1;
+		}
 	}
 
 
@@ -733,3 +736,29 @@ iscsi_synchronizecache10_task(struct iscsi_context *iscsi, int lun, int lba,
 	return task;
 }
 
+unsigned char *
+iscsi_get_user_in_buffer(struct iscsi_context *iscsi, struct iscsi_in_pdu *in, uint32_t pos, ssize_t *count)
+{
+	struct iscsi_pdu *pdu;
+	uint32_t len, offset;
+	uint32_t itt;
+
+	if ((in->hdr[0] & 0x3f) != ISCSI_PDU_DATA_IN) {
+		return NULL;
+	}
+
+	len    = ntohl(*(uint32_t *)&in->hdr[4])&0x00ffffff;
+	offset = ntohl(*(uint32_t *)&in->hdr[40]);
+
+	itt = ntohl(*(uint32_t *)&in->hdr[16]);
+	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
+		if (pdu->itt == itt) {
+			break;
+		}
+	}
+	if (pdu == NULL) {
+		return NULL;
+	}
+
+	return scsi_task_get_data_in_buffer(pdu->scsi_cbdata->task, offset + pos, count);
+}

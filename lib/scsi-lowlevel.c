@@ -936,3 +936,50 @@ scsi_get_task_private_ptr(struct scsi_task *task)
 {
 	return task->ptr;
 }
+
+
+
+struct scsi_data_buffer {
+       struct scsi_data_buffer *next;
+       int len;
+       unsigned char *data;
+};
+
+int
+scsi_task_add_data_in_buffer(struct scsi_task *task, int len, unsigned char *buf)
+{
+	struct scsi_data_buffer *data_buf;
+
+	data_buf = scsi_malloc(task, sizeof(struct scsi_data_buffer));
+	if (data_buf == NULL) {
+		return -1;
+	}
+
+	data_buf->len  = len;
+	data_buf->data = buf;
+
+	SLIST_ADD_END(&task->in_buffers, data_buf);
+	return 0;
+}
+
+unsigned char *
+scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *count)
+{
+	struct scsi_data_buffer *sdb;
+
+	sdb = task->in_buffers;
+	if (sdb == NULL) {
+		return NULL;
+	}
+
+	while (pos >= sdb->len) {
+	      pos -= sdb->len;
+	      sdb  = sdb->next;
+	}
+
+	if (count && *count > sdb->len - pos) {
+		*count = sdb->len - pos;
+	}
+
+	return &sdb->data[pos];
+}
