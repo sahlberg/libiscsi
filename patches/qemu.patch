@@ -1,5 +1,46 @@
+From 2b15b4efb71e2e449c4527aa9a204956db5e3aef Mon Sep 17 00:00:00 2001
+From: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+Date: Fri, 22 Apr 2011 06:17:31 +1000
+Subject: [PATCH] iSCSI block driver support
+
+This patch adds a new block driver : block.iscsi.c
+This driver interfaces with the multiplatform posix library
+for iscsi initiator/client access to iscsi devices hosted at
+git://github.com/sahlberg/libiscsi.git
+
+The patch adds the driver to interface with the iscsi library.
+It also updated the configure script to
+* by default, probe is libiscsi is available and if so, build
+  qemu against libiscsi.
+* --enable-libiscsi
+  Force a build against libiscsi. If libiscsi is not available
+  the build will fail.
+* --disable-libiscsi
+  Do not link against libiscsi, even if it is available.
+
+When linked with libiscsi, qemu gains support to access iscsi resources
+such as disks and cdrom directly, without having to make the devices visible
+to the host.
+
+You can specify devices using a iscsi url of the form :
+iscsi://[<username>[:<password>@]]<host>[:<port]/<target-iqn-name>/<lun>
+When using authentication, the password can optionally be set with
+LIBISCSI_CHAP_PASSWORD="password" to avoid it showing up in the process list
+
+Example:
+-drive file=iscsi://10.1.1.1:3260/iqn.ronnie.test/1
+
+Signed-off-by: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+---
+ Makefile.objs |    1 +
+ block/iscsi.c |  596 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ configure     |   31 +++
+ trace-events  |    6 +
+ 4 files changed, 634 insertions(+), 0 deletions(-)
+ create mode 100644 block/iscsi.c
+
 diff --git a/Makefile.objs b/Makefile.objs
-index 9e98a66..b1f2d28 100644
+index 44ce368..8403c66 100644
 --- a/Makefile.objs
 +++ b/Makefile.objs
 @@ -25,6 +25,7 @@ block-nested-y += qed-check.o
@@ -12,10 +53,10 @@ index 9e98a66..b1f2d28 100644
  
 diff --git a/block/iscsi.c b/block/iscsi.c
 new file mode 100644
-index 0000000..e5fbbb2
+index 0000000..a21ff70
 --- /dev/null
 +++ b/block/iscsi.c
-@@ -0,0 +1,576 @@
+@@ -0,0 +1,596 @@
 +/*
 + * QEMU Block driver for iSCSI images
 + *
@@ -65,6 +106,7 @@ index 0000000..e5fbbb2
 +    QEMUIOVector *qiov;
 +    QEMUBH *bh;
 +    IscsiLun *iscsilun;
++    struct scsi_task *task;
 +    uint8_t *buf;
 +    int canceled;
 +    int status;
@@ -79,13 +121,23 @@ index 0000000..e5fbbb2
 +};
 +
 +static void
++iscsi_abort_task_cb(struct iscsi_context *iscsi, int status, void *command_data,
++		void *private_data)
++{
++}
++
++static void
 +iscsi_aio_cancel(BlockDriverAIOCB *blockacb)
 +{
 +    IscsiAIOCB *acb = (IscsiAIOCB *)blockacb;
++    IscsiLun *iscsilun = acb->iscsilun;
 +
 +    acb->status = -ECANCELED;
 +    acb->common.cb(acb->common.opaque, acb->status);
 +    acb->canceled = 1;
++
++    iscsi_task_mgmt_abort_task_async(iscsilun->iscsi, acb->task,
++    				iscsi_abort_task_cb, NULL);
 +}
 +
 +static AIOPool iscsi_aio_pool = {
@@ -169,7 +221,6 @@ index 0000000..e5fbbb2
 +                     void *command_data, void *opaque)
 +{
 +    IscsiAIOCB *acb = opaque;
-+    struct scsi_task *task = command_data;
 +
 +    trace_iscsi_aio_write10_cb(iscsi, status, acb, acb->canceled);
 +
@@ -179,7 +230,8 @@ index 0000000..e5fbbb2
 +
 +    if (acb->canceled != 0) {
 +        qemu_aio_release(acb);
-+	scsi_free_scsi_task(task);
++	scsi_free_scsi_task(acb->task);
++	acb->task = NULL;
 +        return;
 +    }
 +
@@ -191,7 +243,8 @@ index 0000000..e5fbbb2
 +    }
 +
 +    iscsi_schedule_bh(iscsi_readv_writev_bh_cb, acb);
-+    scsi_free_scsi_task(task);
++    scsi_free_scsi_task(acb->task);
++    acb->task = NULL;
 +}
 +
 +static int64_t sector_qemu2lun(int64_t sector, IscsiLun *iscsilun)
@@ -209,7 +262,12 @@ index 0000000..e5fbbb2
 +    struct iscsi_context *iscsi = iscsilun->iscsi;
 +    IscsiAIOCB *acb;
 +    size_t size;
-+    struct scsi_task *task;
++    int fua = 0;
++
++    /* set FUA on writes when cache mode is write through */
++    if ((bs->open_flags & BDRV_O_CACHE_WB) == 0) {
++        fua = 1;
++    }
 +
 +    acb = qemu_aio_get(&iscsi_aio_pool, bs, cb, opaque);
 +    trace_iscsi_aio_writev(iscsi, sector_num, nb_sectors, opaque, acb);
@@ -227,11 +285,11 @@ index 0000000..e5fbbb2
 +    size = nb_sectors * BDRV_SECTOR_SIZE;
 +    acb->buf = qemu_malloc(size);
 +    qemu_iovec_to_buffer(acb->qiov, acb->buf);
-+    task = iscsi_write10_task(iscsi, iscsilun->lun, acb->buf, size,
++    acb->task = iscsi_write10_task(iscsi, iscsilun->lun, acb->buf, size,
 +                              sector_qemu2lun(sector_num, iscsilun),
-+                              0, 0, iscsilun->block_size,
++                              fua, 0, iscsilun->block_size,
 +                              iscsi_aio_write10_cb, acb);
-+    if (task == NULL) {
++    if (acb->task == NULL) {
 +        error_report("iSCSI: Failed to send write10 command. %s",
 +                     iscsi_get_error(iscsi));
 +        qemu_free(acb->buf);
@@ -249,29 +307,26 @@ index 0000000..e5fbbb2
 +                    void *command_data, void *opaque)
 +{
 +    IscsiAIOCB *acb = opaque;
-+    struct scsi_task *task = command_data;
 +
 +    trace_iscsi_aio_read10_cb(iscsi, status, acb, acb->canceled);
 +
 +    if (acb->canceled != 0) {
 +        qemu_aio_release(acb);
-+	scsi_free_scsi_task(task);
++	scsi_free_scsi_task(acb->task);
++	acb->task = NULL;
 +        return;
 +    }
 +
 +    acb->status = 0;
-+    if (status < 0) {
++    if (status != 0) {
 +        error_report("Failed to read10 data from iSCSI lun. %s",
 +                     iscsi_get_error(iscsi));
 +        acb->status = -EIO;
-+    } else {
-+        qemu_iovec_from_buffer(acb->qiov,
-+                               task->datain.data + acb->read_offset,
-+                               acb->read_size);
 +    }
 +
 +    iscsi_schedule_bh(iscsi_readv_writev_bh_cb, acb);
-+    scsi_free_scsi_task(task);
++    scsi_free_scsi_task(acb->task);
++    acb->task = NULL;
 +}
 +
 +static BlockDriverAIOCB *
@@ -284,7 +339,7 @@ index 0000000..e5fbbb2
 +    struct iscsi_context *iscsi = iscsilun->iscsi;
 +    IscsiAIOCB *acb;
 +    size_t qemu_read_size, lun_read_size;
-+    struct scsi_task *task;
++    int i;
 +
 +    qemu_read_size = BDRV_SECTOR_SIZE * (size_t)nb_sectors;
 +
@@ -315,15 +370,21 @@ index 0000000..e5fbbb2
 +    lun_read_size  = (qemu_read_size + iscsilun->block_size
 +                     + acb->read_offset - 1)
 +                     / iscsilun->block_size * iscsilun->block_size;
-+    task = iscsi_read10_task(iscsi, iscsilun->lun,
++    acb->task = iscsi_read10_task(iscsi, iscsilun->lun,
 +                             sector_qemu2lun(sector_num, iscsilun),
 +                             lun_read_size, iscsilun->block_size,
 +                             iscsi_aio_read10_cb, acb);
-+    if (task != NULL) {
++    if (acb->task == NULL) {
 +        error_report("iSCSI: Failed to send read10 command. %s",
 +                     iscsi_get_error(iscsi));
 +        qemu_aio_release(acb);
 +        return NULL;
++    }
++
++    for (i = 0;i < acb->qiov->niov; i++) {
++        scsi_task_add_data_in_buffer(acb->task,
++                acb->qiov->iov[i].iov_len, 
++                acb->qiov->iov[i].iov_base);
 +    }
 +
 +    iscsi_set_events(iscsilun);
@@ -337,11 +398,11 @@ index 0000000..e5fbbb2
 +                     void *command_data, void *opaque)
 +{
 +    IscsiAIOCB *acb = opaque;
-+    struct scsi_task *task = command_data;
 +
 +    if (acb->canceled != 0) {
 +        qemu_aio_release(acb);
-+	scsi_free_scsi_task(task);
++	scsi_free_scsi_task(acb->task);
++	acb->task = NULL;
 +        return;
 +    }
 +
@@ -353,7 +414,8 @@ index 0000000..e5fbbb2
 +    }
 +
 +    iscsi_schedule_bh(iscsi_readv_writev_bh_cb, acb);
-+    scsi_free_scsi_task(task);
++    scsi_free_scsi_task(acb->task);
++    acb->task = NULL;
 +}
 +
 +static BlockDriverAIOCB *
@@ -363,8 +425,6 @@ index 0000000..e5fbbb2
 +    IscsiLun *iscsilun = bs->opaque;
 +    struct iscsi_context *iscsi = iscsilun->iscsi;
 +    IscsiAIOCB *acb;
-+    struct scsi_task *task;
-+
 +
 +    acb = qemu_aio_get(&iscsi_aio_pool, bs, cb, opaque);
 +    if (!acb) {
@@ -374,11 +434,11 @@ index 0000000..e5fbbb2
 +    acb->iscsilun = iscsilun;
 +    acb->canceled   = 0;
 +
-+    task = iscsi_synchronizecache10_task(iscsi, iscsilun->lun,
++    acb->task = iscsi_synchronizecache10_task(iscsi, iscsilun->lun,
 +                                         0, 0, 0, 0,
 +                                         iscsi_synccache10_cb,
 +                                         acb);
-+    if (task == NULL) {
++    if (acb->task == NULL) {
 +        error_report("iSCSI: Failed to send synchronizecache10 command. %s",
 +                     iscsi_get_error(iscsi));
 +        qemu_aio_release(acb);
@@ -442,6 +502,7 @@ index 0000000..e5fbbb2
 +                 void *opaque)
 +{
 +    struct IscsiTask *itask = opaque;
++    struct scsi_task *task;
 +
 +    if (status != 0) {
 +        itask->status   = 1;
@@ -449,9 +510,9 @@ index 0000000..e5fbbb2
 +        return;
 +    }
 +
-+    if (iscsi_readcapacity10_task(iscsi, itask->iscsilun->lun, 0, 0,
-+                                   iscsi_readcapacity10_cb, opaque)
-+        == NULL) {
++    task = iscsi_readcapacity10_task(iscsi, itask->iscsilun->lun, 0, 0,
++                                   iscsi_readcapacity10_cb, opaque);
++    if (task == NULL) {
 +        error_report("iSCSI: failed to send readcapacity command.");
 +        itask->status   = 1;
 +        itask->complete = 1;
@@ -593,18 +654,18 @@ index 0000000..e5fbbb2
 +block_init(iscsi_block_init);
 +
 diff --git a/configure b/configure
-index 3036faf..b744146 100755
+index da2da04..7a71153 100755
 --- a/configure
 +++ b/configure
-@@ -174,6 +174,7 @@ trace_backend="nop"
- trace_file="trace"
- spice=""
- rbd=""
+@@ -178,6 +178,7 @@ rbd=""
+ smartcard=""
+ smartcard_nss=""
+ opengl="no"
 +libiscsi=""
  
  # parse CC options first
  for opt do
-@@ -622,6 +623,10 @@ for opt do
+@@ -632,6 +633,10 @@ for opt do
    ;;
    --enable-spice) spice="yes"
    ;;
@@ -615,16 +676,16 @@ index 3036faf..b744146 100755
    --enable-profiler) profiler="yes"
    ;;
    --enable-cocoa)
-@@ -914,6 +919,8 @@ echo "                           Default:trace-<pid>"
+@@ -941,6 +946,8 @@ echo "                           Default:trace-<pid>"
  echo "  --disable-spice          disable spice"
  echo "  --enable-spice           enable spice"
  echo "  --enable-rbd             enable building the rados block device (rbd)"
 +echo "  --disable-libiscsi       disable iscsi support"
 +echo "  --enable-libiscsi        enable iscsi support"
- echo ""
- echo "NOTE: The object files are built at the place where configure is launched"
- exit 1
-@@ -2224,6 +2231,25 @@ if compile_prog "" "" ; then
+ echo "  --disable-smartcard      disable smartcard support"
+ echo "  --enable-smartcard       enable smartcard support"
+ echo "  --disable-smartcard-nss  disable smartcard nss support"
+@@ -2282,6 +2289,25 @@ if compile_prog "" "" ; then
  fi
  
  ##########################################
@@ -650,16 +711,16 @@ index 3036faf..b744146 100755
  # Do we need librt
  cat > $TMPC <<EOF
  #include <signal.h>
-@@ -2525,6 +2551,7 @@ echo "Trace output file $trace_file-<pid>"
- echo "spice support     $spice"
- echo "rbd support       $rbd"
+@@ -2615,6 +2641,7 @@ echo "rbd support       $rbd"
  echo "xfsctl support    $xfs"
+ echo "nss used          $smartcard_nss"
+ echo "OpenGL support    $opengl"
 +echo "libiscsi support  $libiscsi"
  
  if test $sdl_too_old = "yes"; then
  echo "-> Your SDL version is too old - please upgrade to have SDL support"
-@@ -2806,6 +2833,10 @@ if test "$spice" = "yes" ; then
-   echo "CONFIG_SPICE=y" >> $config_host_mak
+@@ -2909,6 +2936,10 @@ if test "$opengl" = "yes" ; then
+   echo "CONFIG_OPENGL=y" >> $config_host_mak
  fi
  
 +if test "$libiscsi" = "yes" ; then
@@ -670,17 +731,19 @@ index 3036faf..b744146 100755
  if [ "$bsd" = "yes" ] ; then
    echo "CONFIG_BSD=y" >> $config_host_mak
 diff --git a/trace-events b/trace-events
-index e6138ea..ef3cd35 100644
+index 703b745..05059a0 100644
 --- a/trace-events
 +++ b/trace-events
-@@ -254,3 +254,10 @@ disable spice_vmc_write(ssize_t out, int len) "spice wrottn %lu of requested %zd
- disable spice_vmc_read(int bytes, int len) "spice read %lu of requested %zd"
- disable spice_vmc_register_interface(void *scd) "spice vmc registered interface %p"
- disable spice_vmc_unregister_interface(void *scd) "spice vmc unregistered interface %p"
-+
+@@ -360,3 +360,9 @@ disable milkymist_uart_pulse_irq_tx(void) "Pulse IRQ TX"
+ # hw/milkymist-vgafb.c
+ disable milkymist_vgafb_memory_read(uint32_t addr, uint32_t value) "addr %08x value %08x"
+ disable milkymist_vgafb_memory_write(uint32_t addr, uint32_t value) "addr %08x value %08x"
 +
 +# block/iscsi.c
 +disable iscsi_aio_write10_cb(void *iscsi, int status, void *acb, int canceled) "iscsi %p status %d acb %p canceled %d"
 +disable iscsi_aio_writev(void *iscsi, int64_t sector_num, int nb_sectors, void *opaque, void *acb) "iscsi %p sector_num %"PRId64" nb_sectors %d opaque %p acb %p"
 +disable iscsi_aio_read10_cb(void *iscsi, int status, void *acb, int canceled) "iscsi %p status %d acb %p canceled %d"
 +disable iscsi_aio_readv(void *iscsi, int64_t sector_num, int nb_sectors, void *opaque, void *acb) "iscsi %p sector_num %"PRId64" nb_sectors %d opaque %p acb %p"
+-- 
+1.7.3.1
+
