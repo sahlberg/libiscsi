@@ -640,8 +640,8 @@ iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
  *
  * Example:
  *     task = iscsi_read10_task(    ( 2 512byte blocks into two buffers)
- *     scsi_task_add_data_buffer(task, first_buffer, 512
- *     scsi_task_add_data_buffer(task, second_buffer, 512
+ *     scsi_task_add_data_in_buffer(task, first_buffer, 512
+ *     scsi_task_add_data_in_buffer(task, second_buffer, 512
  *
  *
  * If you use this function you can not use task->datain in the callback.
