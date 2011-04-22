@@ -83,7 +83,7 @@ int T0122_read6_invalid(const char *initiator, const char *url)
 
 test2:
 	/* Try a read of 1 block but xferlength == 1024 */
-	printf("Read10 1 block but with iscsi ExpectedDataTransferLength==1024 ... ");
+	printf("Read6 1 block but with iscsi ExpectedDataTransferLength==1024 ... ");
 
 	task = malloc(sizeof(struct scsi_task));
 	if (task == NULL) {
