@@ -51,6 +51,7 @@ struct scsi_test tests[] = {
 /* read6*/
 { "T0120_read6_simple",			T0120_read6_simple },
 { "T0121_read6_beyond_eol",		T0121_read6_beyond_eol },
+{ "T0122_read6_invalid",      		T0122_read6_invalid },
 
 { NULL, NULL }
 };
