@@ -31,3 +31,4 @@ int T0110_readcapacity10_simple(const char *initiator, const char *url);
 int T0111_readcapacity10_pmi(const char *initiator, const char *url);
 
 int T0120_read6_simple(const char *initiator, const char *url);
+int T0121_read6_beyond_eol(const char *initiator, const char *url);
