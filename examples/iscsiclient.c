@@ -13,7 +13,7 @@
  */
 
 /* This is the host/port we connect to.*/
-#define TARGET "10.1.1.27:3260"
+#define TARGET "127.0.0.1:3260"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -210,10 +210,12 @@ void modesense6_cb(struct iscsi_context *iscsi, int status, void *command_data, 
 {
 	struct client_state *clnt = (struct client_state *)private_data;
 	struct scsi_task *task = command_data;
+	struct scsi_mode_sense *ms;
 	int full_size;
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
 		printf("Modesense6 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
+		exit(10);
 	} else {
 		full_size = scsi_datain_getfullsize(task);
 		if (full_size > task->datain.size) {
@@ -227,7 +229,13 @@ void modesense6_cb(struct iscsi_context *iscsi, int status, void *command_data, 
 			return;
 		}
 	
-		printf("MODESENSE6 successful.\n");
+	}
+	printf("MODESENSE6 successful.\n");
+	ms = scsi_datain_unmarshall(task);
+	if (ms == NULL) {
+		printf("failed to unmarshall mode sense datain blob\n");
+		scsi_free_scsi_task(task);
+		exit(10);
 	}
 
 	printf("Send READCAPACITY10\n");

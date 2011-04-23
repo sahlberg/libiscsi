@@ -677,6 +677,138 @@ scsi_modesense6_datain_getfullsize(struct scsi_task *task)
 	return len;
 }
 
+static void
+scsi_parse_mode_caching(struct scsi_task *task, int pos, struct scsi_mode_page *mp)
+{
+	mp->caching.ic   = task->datain.data[pos] & 0x80;
+	mp->caching.abpf = task->datain.data[pos] & 0x40;
+	mp->caching.cap  = task->datain.data[pos] & 0x20;
+	mp->caching.disc = task->datain.data[pos] & 0x10;
+	mp->caching.size = task->datain.data[pos] & 0x08;
+	mp->caching.wce  = task->datain.data[pos] & 0x04;
+	mp->caching.mf   = task->datain.data[pos] & 0x02;
+	mp->caching.rcd  = task->datain.data[pos] & 0x01;
+
+	mp->caching.demand_read_retention_priority = (task->datain.data[pos+1] >> 4) & 0x0f;
+	mp->caching.write_retention_priority       = task->datain.data[pos+1] & 0x0f;
+
+	mp->caching.disable_prefetch_transfer_length = htons(*(uint16_t *)&(task->datain.data[pos+2]));
+	mp->caching.minimum_prefetch = htons(*(uint16_t *)&(task->datain.data[pos+4]));
+	mp->caching.maximum_prefetch = htons(*(uint16_t *)&(task->datain.data[pos+6]));
+	mp->caching.maximum_prefetch_ceiling = htons(*(uint16_t *)&(task->datain.data[pos+8]));
+
+	mp->caching.fsw    = task->datain.data[pos+10] & 0x80;
+	mp->caching.lbcss  = task->datain.data[pos+10] & 0x40;
+	mp->caching.dra    = task->datain.data[pos+10] & 0x20;
+	mp->caching.nv_dis = task->datain.data[pos+10] & 0x01;
+
+	mp->caching.number_of_cache_segments = task->datain.data[pos+11];
+	mp->caching.cache_segment_size = htons(*(uint16_t *)&(task->datain.data[pos+12]));
+}
+
+static void
+scsi_parse_mode_disconnect_reconnect(struct scsi_task *task, int pos, struct scsi_mode_page *mp)
+{
+	mp->disconnect_reconnect.buffer_full_ratio = task->datain.data[pos];
+	mp->disconnect_reconnect.buffer_empty_ratio = task->datain.data[pos+1];
+	mp->disconnect_reconnect.bus_inactivity_limit = htons(*(uint16_t *)&(task->datain.data[pos+2]));
+	mp->disconnect_reconnect.disconnect_time_limit = htons(*(uint16_t *)&(task->datain.data[pos+4]));
+	mp->disconnect_reconnect.connect_time_limit = htons(*(uint16_t *)&(task->datain.data[pos+6]));
+	mp->disconnect_reconnect.maximum_burst_size = htons(*(uint16_t *)&(task->datain.data[pos+8]));
+	mp->disconnect_reconnect.emdp = task->datain.data[pos+10] & 0x80;
+	mp->disconnect_reconnect.fair_arbitration = (task->datain.data[pos+10]>>4) & 0x0f;
+	mp->disconnect_reconnect.dimm = task->datain.data[pos+10] & 0x08;
+	mp->disconnect_reconnect.dtdc = task->datain.data[pos+10] & 0x07;
+	mp->disconnect_reconnect.first_burst_size = htons(*(uint16_t *)&(task->datain.data[pos+12]));
+}
+
+static void
+scsi_parse_mode_informational_exceptions_control(struct scsi_task *task, int pos, struct scsi_mode_page *mp)
+{
+	mp->iec.perf           = task->datain.data[pos] & 0x80;
+	mp->iec.ebf            = task->datain.data[pos] & 0x20;
+	mp->iec.ewasc          = task->datain.data[pos] & 0x10;
+	mp->iec.dexcpt         = task->datain.data[pos] & 0x08;
+	mp->iec.test           = task->datain.data[pos] & 0x04;
+	mp->iec.ebackerr       = task->datain.data[pos] & 0x02;
+	mp->iec.logerr         = task->datain.data[pos] & 0x01;
+	mp->iec.mrie           = task->datain.data[pos+1] & 0x0f;
+	mp->iec.interval_timer = htonl(*(uint32_t *)&(task->datain.data[pos+2]));
+	mp->iec.report_count   = htonl(*(uint32_t *)&(task->datain.data[pos+6]));
+}
+
+
+/*
+ * parse and unmarshall the mode sense data in buffer
+ */
+static struct scsi_mode_sense *
+scsi_modesense_datain_unmarshall(struct scsi_task *task)
+{
+	struct scsi_mode_sense *ms;
+	int pos;
+
+	if (task->datain.size < 4) {
+		return NULL;
+	}
+
+	ms = scsi_malloc(task, sizeof(struct scsi_mode_sense));
+	if (ms == NULL) {
+		return NULL;
+	}
+
+	ms->mode_data_length          = task->datain.data[0];
+	ms->medium_type               = task->datain.data[1];
+	ms->device_specific_parameter = task->datain.data[2];
+	ms->block_descriptor_length   = task->datain.data[3];
+	ms->pages                     = NULL;
+
+	if (ms->mode_data_length + 1 > task->datain.size) {
+		return NULL;
+	}
+
+	pos = 4 + ms->block_descriptor_length;
+	while (pos < task->datain.size) {
+		struct scsi_mode_page *mp;
+	
+		mp = scsi_malloc(task, sizeof(struct scsi_mode_page));
+		if (mp == NULL) {
+			return ms;
+		}
+		mp->ps           = task->datain.data[pos] & 0x80;
+		mp->spf          = task->datain.data[pos] & 0x40;
+		mp->page_code    = task->datain.data[pos] & 0x3f;
+		pos++;
+
+		if (mp->spf) {
+			mp->subpage_code = task->datain.data[pos++];
+			mp->len = ntohs(*(uint16_t *)&task->datain.data[pos]);
+			pos += 2;
+		} else {
+			mp->subpage_code = 0;
+			mp->len          = task->datain.data[pos++];
+		}
+
+		switch (mp->page_code) {
+		case SCSI_MODESENSE_PAGECODE_CACHING:
+			scsi_parse_mode_caching(task, pos, mp);
+			break;
+		case SCSI_MODESENSE_PAGECODE_DISCONNECT_RECONNECT:
+			scsi_parse_mode_disconnect_reconnect(task, pos, mp);
+			break;
+		case SCSI_MODESENSE_PAGECODE_INFORMATIONAL_EXCEPTIONS_CONTROL:
+			scsi_parse_mode_informational_exceptions_control(task, pos, mp);
+			break;
+		}
+
+		mp->next  = ms->pages;
+		ms->pages = mp;
+
+		pos += mp->len;
+	}
+
+	return ms;
+}
+
 
 /*
  * SYNCHRONIZECACHE10
@@ -740,6 +872,8 @@ scsi_datain_unmarshall(struct scsi_task *task)
 		return NULL;
 	case SCSI_OPCODE_INQUIRY:
 		return scsi_inquiry_datain_unmarshall(task);
+	case SCSI_OPCODE_MODESENSE6:
+		return scsi_modesense_datain_unmarshall(task);
 	case SCSI_OPCODE_READCAPACITY10:
 		return scsi_readcapacity10_datain_unmarshall(task);
 	case SCSI_OPCODE_SYNCHRONIZECACHE10:

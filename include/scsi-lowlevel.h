@@ -379,8 +379,90 @@ enum scsi_modesense_page_control {
 	SCSI_MODESENSE_PC_SAVED      = 0x03
 };
 
+struct scsi_mode_page_caching {
+	int ic;
+	int abpf;
+	int cap;
+	int disc;
+	int size;
+	int wce;
+	int mf;
+	int rcd;
+
+	int demand_read_retention_priority;
+	int write_retention_priority;
+
+	int disable_prefetch_transfer_length;
+	int minimum_prefetch;
+	int maximum_prefetch;
+	int maximum_prefetch_ceiling;
+       
+	int fsw;
+	int lbcss;
+	int dra;
+	int nv_dis;
+
+	int number_of_cache_segments;
+	int cache_segment_size;
+};
+
+struct scsi_mode_page_disconnect_reconnect {
+	int buffer_full_ratio;
+	int buffer_empty_ratio;
+	int bus_inactivity_limit;
+	int disconnect_time_limit;
+	int connect_time_limit;
+	int maximum_burst_size;
+	int emdp;
+	int fair_arbitration;
+	int dimm;
+	int dtdc;
+	int first_burst_size;
+};
+
+struct scsi_mode_page_informational_exceptions_control {
+	int perf;
+	int ebf;
+	int ewasc;
+	int dexcpt;
+	int test;
+	int ebackerr;
+	int logerr;
+	int mrie;
+	int interval_timer;
+	int report_count;
+};
+
 enum scsi_modesense_page_code {
-	SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES = 0x3f
+	SCSI_MODESENSE_PAGECODE_READ_WRITE_ERROR_RECOVERY = 0x01,
+	SCSI_MODESENSE_PAGECODE_DISCONNECT_RECONNECT      = 0x02,
+	SCSI_MODESENSE_PAGECODE_VERIFY_ERROR_RECOVERY     = 0x07,
+	SCSI_MODESENSE_PAGECODE_CACHING                   = 0x08,
+	SCSI_MODESENSE_PAGECODE_XOR_CONTROL               = 0x10,
+	SCSI_MODESENSE_PAGECODE_INFORMATIONAL_EXCEPTIONS_CONTROL        = 0x1c,
+	SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES          = 0x3f
+};
+
+struct scsi_mode_page {
+       struct scsi_mode_page *next;
+       int ps;
+       int spf;
+       enum scsi_modesense_page_code page_code;
+       int subpage_code;
+       int len;
+       union {
+              struct scsi_mode_page_caching caching;
+              struct scsi_mode_page_disconnect_reconnect disconnect_reconnect;
+	      struct scsi_mode_page_informational_exceptions_control iec;
+       };
+};
+
+struct scsi_mode_sense {
+       uint8_t mode_data_length;
+       uint8_t medium_type;
+       uint8_t device_specific_parameter;
+       uint8_t block_descriptor_length;
+       struct scsi_mode_page *pages;       
 };
 
 struct scsi_task *scsi_cdb_modesense6(int dbd,
