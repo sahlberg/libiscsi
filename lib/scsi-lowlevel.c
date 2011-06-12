@@ -1107,8 +1107,14 @@ scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *coun
 	}
 
 	while (pos >= sdb->len) {
-	      pos -= sdb->len;
-	      sdb  = sdb->next;
+		pos -= sdb->len;
+		sdb  = sdb->next;
+		if (sdb == NULL) {
+			/* someone issued a read but did not provide enough user buffers for all the data.
+			 * maybe someone tried to read just 512 bytes off a MMC device?
+			 */
+			return NULL;			
+		}
 	}
 
 	if (count && *count > sdb->len - pos) {
