@@ -1,6 +1,6 @@
-From 2b15b4efb71e2e449c4527aa9a204956db5e3aef Mon Sep 17 00:00:00 2001
+From 863e2e88a429b7dc7eaea493c9988ae8aaaf89c6 Mon Sep 17 00:00:00 2001
 From: Ronnie Sahlberg <ronniesahlberg@gmail.com>
-Date: Fri, 22 Apr 2011 06:17:31 +1000
+Date: Sun, 12 Jun 2011 12:25:01 +1000
 Subject: [PATCH] iSCSI block driver support
 
 This patch adds a new block driver : block.iscsi.c
@@ -28,7 +28,7 @@ When using authentication, the password can optionally be set with
 LIBISCSI_CHAP_PASSWORD="password" to avoid it showing up in the process list
 
 Example:
--drive file=iscsi://10.1.1.1:3260/iqn.ronnie.test/1
+./x86_64-softmmu/qemu-system-x86_64 -m 1024 -cdrom iscsi://127.0.0.1/iqn.ronnie.test/2 --drive file=iscsi://127.0.0.1/iqn.ronnie.test/1 -boot d -enable-kvm
 
 Signed-off-by: Ronnie Sahlberg <ronniesahlberg@gmail.com>
 ---
@@ -40,7 +40,7 @@ Signed-off-by: Ronnie Sahlberg <ronniesahlberg@gmail.com>
  create mode 100644 block/iscsi.c
 
 diff --git a/Makefile.objs b/Makefile.objs
-index 44ce368..8403c66 100644
+index 52d8b23..1b21c14 100644
 --- a/Makefile.objs
 +++ b/Makefile.objs
 @@ -25,6 +25,7 @@ block-nested-y += qed-check.o
@@ -53,7 +53,7 @@ index 44ce368..8403c66 100644
  
 diff --git a/block/iscsi.c b/block/iscsi.c
 new file mode 100644
-index 0000000..a21ff70
+index 0000000..07fb3bc
 --- /dev/null
 +++ b/block/iscsi.c
 @@ -0,0 +1,596 @@
@@ -122,7 +122,7 @@ index 0000000..a21ff70
 +
 +static void
 +iscsi_abort_task_cb(struct iscsi_context *iscsi, int status, void *command_data,
-+		void *private_data)
++                    void *private_data)
 +{
 +}
 +
@@ -137,7 +137,7 @@ index 0000000..a21ff70
 +    acb->canceled = 1;
 +
 +    iscsi_task_mgmt_abort_task_async(iscsilun->iscsi, acb->task,
-+    				iscsi_abort_task_cb, NULL);
++                                     iscsi_abort_task_cb, NULL);
 +}
 +
 +static AIOPool iscsi_aio_pool = {
@@ -230,8 +230,8 @@ index 0000000..a21ff70
 +
 +    if (acb->canceled != 0) {
 +        qemu_aio_release(acb);
-+	scsi_free_scsi_task(acb->task);
-+	acb->task = NULL;
++        scsi_free_scsi_task(acb->task);
++        acb->task = NULL;
 +        return;
 +    }
 +
@@ -265,7 +265,7 @@ index 0000000..a21ff70
 +    int fua = 0;
 +
 +    /* set FUA on writes when cache mode is write through */
-+    if ((bs->open_flags & BDRV_O_CACHE_WB) == 0) {
++    if (!(bs->open_flags & (BDRV_O_CACHE_WB|BDRV_O_NOCACHE))) {
 +        fua = 1;
 +    }
 +
@@ -312,8 +312,8 @@ index 0000000..a21ff70
 +
 +    if (acb->canceled != 0) {
 +        qemu_aio_release(acb);
-+	scsi_free_scsi_task(acb->task);
-+	acb->task = NULL;
++        scsi_free_scsi_task(acb->task);
++        acb->task = NULL;
 +        return;
 +    }
 +
@@ -381,9 +381,9 @@ index 0000000..a21ff70
 +        return NULL;
 +    }
 +
-+    for (i = 0;i < acb->qiov->niov; i++) {
++    for (i = 0; i < acb->qiov->niov; i++) {
 +        scsi_task_add_data_in_buffer(acb->task,
-+                acb->qiov->iov[i].iov_len, 
++                acb->qiov->iov[i].iov_len,
 +                acb->qiov->iov[i].iov_base);
 +    }
 +
@@ -401,8 +401,8 @@ index 0000000..a21ff70
 +
 +    if (acb->canceled != 0) {
 +        qemu_aio_release(acb);
-+	scsi_free_scsi_task(acb->task);
-+	acb->task = NULL;
++        scsi_free_scsi_task(acb->task);
++        acb->task = NULL;
 +        return;
 +    }
 +
@@ -475,7 +475,7 @@ index 0000000..a21ff70
 +                     iscsi_get_error(iscsi));
 +        itask->status   = 1;
 +        itask->complete = 1;
-+	scsi_free_scsi_task(task);
++        scsi_free_scsi_task(task);
 +        return;
 +    }
 +
@@ -484,7 +484,7 @@ index 0000000..a21ff70
 +        error_report("iSCSI: Failed to unmarshall readcapacity10 data.");
 +        itask->status   = 1;
 +        itask->complete = 1;
-+	scsi_free_scsi_task(task);
++        scsi_free_scsi_task(task);
 +        return;
 +    }
 +
@@ -654,18 +654,18 @@ index 0000000..a21ff70
 +block_init(iscsi_block_init);
 +
 diff --git a/configure b/configure
-index da2da04..7a71153 100755
+index 663b557..b37010e 100755
 --- a/configure
 +++ b/configure
-@@ -178,6 +178,7 @@ rbd=""
+@@ -179,6 +179,7 @@ rbd=""
  smartcard=""
  smartcard_nss=""
- opengl="no"
+ opengl=""
 +libiscsi=""
  
  # parse CC options first
  for opt do
-@@ -632,6 +633,10 @@ for opt do
+@@ -633,6 +634,10 @@ for opt do
    ;;
    --enable-spice) spice="yes"
    ;;
@@ -676,7 +676,7 @@ index da2da04..7a71153 100755
    --enable-profiler) profiler="yes"
    ;;
    --enable-cocoa)
-@@ -941,6 +946,8 @@ echo "                           Default:trace-<pid>"
+@@ -1014,6 +1019,8 @@ echo "                           Default:trace-<pid>"
  echo "  --disable-spice          disable spice"
  echo "  --enable-spice           enable spice"
  echo "  --enable-rbd             enable building the rados block device (rbd)"
@@ -685,7 +685,7 @@ index da2da04..7a71153 100755
  echo "  --disable-smartcard      disable smartcard support"
  echo "  --enable-smartcard       enable smartcard support"
  echo "  --disable-smartcard-nss  disable smartcard nss support"
-@@ -2282,6 +2289,25 @@ if compile_prog "" "" ; then
+@@ -2360,6 +2367,25 @@ if compile_prog "" "" ; then
  fi
  
  ##########################################
@@ -711,7 +711,7 @@ index da2da04..7a71153 100755
  # Do we need librt
  cat > $TMPC <<EOF
  #include <signal.h>
-@@ -2615,6 +2641,7 @@ echo "rbd support       $rbd"
+@@ -2693,6 +2719,7 @@ echo "rbd support       $rbd"
  echo "xfsctl support    $xfs"
  echo "nss used          $smartcard_nss"
  echo "OpenGL support    $opengl"
@@ -719,7 +719,7 @@ index da2da04..7a71153 100755
  
  if test $sdl_too_old = "yes"; then
  echo "-> Your SDL version is too old - please upgrade to have SDL support"
-@@ -2909,6 +2936,10 @@ if test "$opengl" = "yes" ; then
+@@ -2988,6 +3015,10 @@ if test "$opengl" = "yes" ; then
    echo "CONFIG_OPENGL=y" >> $config_host_mak
  fi
  
@@ -731,13 +731,13 @@ index da2da04..7a71153 100755
  if [ "$bsd" = "yes" ] ; then
    echo "CONFIG_BSD=y" >> $config_host_mak
 diff --git a/trace-events b/trace-events
-index 703b745..05059a0 100644
+index e0e9574..ac00a71 100644
 --- a/trace-events
 +++ b/trace-events
-@@ -360,3 +360,9 @@ disable milkymist_uart_pulse_irq_tx(void) "Pulse IRQ TX"
- # hw/milkymist-vgafb.c
- disable milkymist_vgafb_memory_read(uint32_t addr, uint32_t value) "addr %08x value %08x"
- disable milkymist_vgafb_memory_write(uint32_t addr, uint32_t value) "addr %08x value %08x"
+@@ -386,3 +386,9 @@ disable xen_unmap_block(void* addr, unsigned long size) "%p, size %#lx"
+ 
+ # exec.c
+ disable qemu_put_ram_ptr(void* addr) "%p"
 +
 +# block/iscsi.c
 +disable iscsi_aio_write10_cb(void *iscsi, int status, void *acb, int canceled) "iscsi %p status %d acb %p canceled %d"
