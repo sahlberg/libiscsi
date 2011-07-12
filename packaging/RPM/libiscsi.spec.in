@@ -58,7 +58,7 @@ mkdir -p $RPM_BUILD_ROOT%{_includedir}
 mkdir -p $RPM_BUILD_ROOT%{_includedir}/iscsi
 
 #
-make DESTDIR=$RPM_BUILD_ROOT LIBDIR=$RPM_BUILD_ROOT%{_libdir} install
+make DESTDIR=$RPM_BUILD_ROOT%{_prefix} LIBDIR=$RPM_BUILD_ROOT%{_libdir} install
 
 # Remove "*.old" files
 find $RPM_BUILD_ROOT -name "*.old" -exec rm -f {} \;
