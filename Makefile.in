@@ -19,7 +19,7 @@ LIBISCSI_SO_NAME=libiscsi.so.1
 VERSION=1.0.0
 LIBISCSI_SO=libiscsi.so.$(VERSION)
 
-all: bin/iscsi-inq bin/iscsi-ls lib/$(LIBISCSI_SO) bin/ld_iscsi.so
+all: bin/iscsi-inq bin/iscsi-ls lib/$(LIBISCSI_SO) @ld_iscsi@
 
 bin/ld_iscsi.so: src/ld_iscsi.o lib/libiscsi.a
 	mkdir -p bin

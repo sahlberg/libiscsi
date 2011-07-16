@@ -16,9 +16,11 @@ fi
 is_solaris="no"
 install="/usr/bin/install"
 ldconfig="ldconfig"
+ld_iscsi=""
 
 case `uname` in
   Linux*)
+    ld_iscsi="bin/ld_iscsi.so"
     ;;
   AIX*)
     ;;
@@ -27,6 +29,9 @@ case `uname` in
     install="ginstall"
     ldconfig="echo no ldconfig on solaris"
     LIBS="$LIBS -lsocket -lnsl"
+    ;;
+  CYGWIN*)
+    ldconfig="echo no ldconfig on cygwin"
     ;;
   *)
     ;;
@@ -110,6 +115,7 @@ fi
 AC_SUBST(libdir)
 AC_SUBST(install)
 AC_SUBST(ldconfig)
+AC_SUBST(ld_iscsi)
 #AC_SUBST(LIBISCSI_LDFLAGS)
 
 AC_OUTPUT(Makefile)
