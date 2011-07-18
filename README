@@ -131,3 +131,13 @@ The LD_PRELOAD hack is incomplete and needs more functions to be intercepted bef
 For now, it is sufficiently complete for trivial commands like stat and cat.
 You probably need to implement at least lseek, pread, pwrite before it becomes really useful.
 
+
+SUPPORTED PLATFORMS
+===================
+libiscsi is pure posix and should with some tweaks run on any host that
+provides a posix-like environment.
+
+Libiscsi has been tested on:
+* Linux (32 and 64 bit)
+* Cygwin
+* FreeBSD
