@@ -19,6 +19,11 @@
 
 #include <stdint.h>
 
+#if defined(WIN32)
+#include <basetsd.h>
+#define ssize_t SSIZE_T
+#endif
+
 #ifndef discard_const
 #define discard_const(ptr) ((void *)((intptr_t)(ptr)))
 #endif

@@ -23,9 +23,13 @@
 #ifndef MD5_H
 #define MD5_H
 
+#if defined(WIN32)
+#else
+#include <netinet/in.h>
+#endif
+
 #include <string.h>
 #include <sys/types.h>
-#include <netinet/in.h>
 #include <stdint.h>
 #if (__BYTE_ORDER == __BIG_ENDIAN)
 #  define WORDS_BIGENDIAN 1

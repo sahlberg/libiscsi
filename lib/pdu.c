@@ -15,11 +15,16 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
+#if defined(WIN32)
+#include <winsock2.h>
+#else
+#include <strings.h>
+#include <arpa/inet.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
 #include <string.h>
-#include <arpa/inet.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"

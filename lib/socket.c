@@ -14,31 +14,42 @@
    You should have received a copy of the GNU Lesser General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
-#include "config.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#if defined(WIN32)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#define ioctl ioctlsocket
+#define close closesocket
+#else
+#include "config.h"
 #include <strings.h>
-#include <errno.h>
-#include <fcntl.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <poll.h>
 #include <sys/ioctl.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#endif
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "slist.h"
 
 static void set_nonblocking(int fd)
 {
+#if defined(WIN32)
+#else
 	unsigned v;
 	v = fcntl(fd, F_GETFL, 0);
 	fcntl(fd, F_SETFL, v | O_NONBLOCK);
+#endif
 }
 
 int
@@ -167,6 +178,7 @@ iscsi_disconnect(struct iscsi_context *iscsi)
 	}
 
 	close(iscsi->fd);
+
 	iscsi->fd  = -1;
 	iscsi->is_connected = 0;
 
@@ -244,7 +256,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		if (socket_count < count) {
 			count = socket_count;
 		}
-		count = read(iscsi->fd, &in->hdr[in->hdr_pos], count);
+		count = recv(iscsi->fd, &in->hdr[in->hdr_pos], count, 0);
 		if (count < 0) {
 			if (errno == EINTR) {
 				return 0;
@@ -292,7 +304,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			buf = &in->data[in->data_pos];
 		}
 
-		count = read(iscsi->fd, buf, count);
+		count = recv(iscsi->fd, buf, count, 0);
 		if (count < 0) {
 			if (errno == EINTR) {
 				return 0;
@@ -346,10 +358,11 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		total = iscsi->outqueue->outdata.size;
 		total = (total + 3) & 0xfffffffc;
 
-		count = write(iscsi->fd,
+		count = send(iscsi->fd,
 			      iscsi->outqueue->outdata.data
 			      + iscsi->outqueue->written,
-			      total - iscsi->outqueue->written);
+			      total - iscsi->outqueue->written,
+			      0);
 		if (count == -1) {
 			if (errno == EAGAIN || errno == EWOULDBLOCK) {
 				return 0;
@@ -524,3 +537,34 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, in
 }
 
 #endif
+#if defined(WIN32)
+int poll(struct pollfd *fds, int nfsd, int timeout)
+{
+	fd_set rfds, wfds, efds;
+	int ret;
+
+	FD_ZERO(&rfds);
+	FD_ZERO(&wfds);
+	FD_ZERO(&efds);
+	if (fds->events & POLLIN) {
+		FD_SET(fds->fd, &rfds);
+	}
+	if (fds->events & POLLOUT) {
+		FD_SET(fds->fd, &wfds);
+	}
+	FD_SET(fds->fd, &efds);
+	select(fds->fd + 1, &rfds, &wfds, &efds, NULL);
+	fds->revents = 0;
+	if (FD_ISSET(fds->fd, &rfds)) {
+		fds->revents |= POLLIN;
+	}
+	if (FD_ISSET(fds->fd, &wfds)) {
+		fds->revents |= POLLOUT;
+	}
+	if (FD_ISSET(fds->fd, &efds)) {
+		fds->revents |= POLLHUP;
+	}
+	return 1;
+}
+#endif
+

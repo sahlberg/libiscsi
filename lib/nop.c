@@ -15,8 +15,12 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
+#if defined(WIN32)
+#else
 #include <unistd.h>
+#endif
+
+#include <stdio.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 

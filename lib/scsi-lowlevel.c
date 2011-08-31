@@ -22,15 +22,22 @@
  * 4, marshall a real structure into a data-out blob
  */
 
+#if defined(WIN32)
+#include <winsock2.h>
+#else
+#include <strings.h>
+#include <arpa/inet.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <strings.h>
 #include <stdint.h>
-#include <arpa/inet.h>
-#include "scsi-lowlevel.h"
 #include "slist.h"
+#include "iscsi.h"
+#include "scsi-lowlevel.h"
+#include "iscsi-private.h"
 
 
 void

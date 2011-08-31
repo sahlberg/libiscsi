@@ -13,13 +13,20 @@
  */
 
 /* This is the host/port we connect to.*/
-#define TARGET "127.0.0.1:3260"
+#define TARGET "10.1.1.116:3260"
+
+#if defined(WIN32)
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
+WSADATA wsaData;
+#else
+#include <poll.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <poll.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -502,6 +509,13 @@ int main(int argc _U_, char *argv[] _U_)
 	struct client_state clnt;
 
 	printf("iscsi client\n");
+#if defined(WIN32)
+	if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
+		printf("Failed to start Winsock2\n");
+		exit(10);
+	}
+#endif
+
 
 	memset(&clnt, 0, sizeof(clnt));
 

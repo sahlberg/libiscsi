@@ -50,7 +50,7 @@ enum scsi_sense_key {
 	SCSI_SENSE_MISCOMPARE          = 0x0e
 };
 
-const char *scsi_sense_key_str(int key);
+EXTERN const char *scsi_sense_key_str(int key);
 
 /* ascq */
 #define SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE		0x2000
@@ -59,7 +59,7 @@ const char *scsi_sense_key_str(int key);
 #define SCSI_SENSE_ASCQ_LOGICAL_UNIT_NOT_SUPPORTED	0x2500
 #define SCSI_SENSE_ASCQ_BUS_RESET			0x2900
 
-const char *scsi_sense_ascq_str(int ascq);
+EXTERN const char *scsi_sense_ascq_str(int ascq);
 
 
 enum scsi_xfer_dir {
@@ -152,14 +152,14 @@ struct scsi_task {
 	struct scsi_data_buffer *in_buffers;
 };
 
-void scsi_free_scsi_task(struct scsi_task *task);
-void scsi_set_task_private_ptr(struct scsi_task *task, void *ptr);
-void *scsi_get_task_private_ptr(struct scsi_task *task);
+EXTERN void scsi_free_scsi_task(struct scsi_task *task);
+EXTERN void scsi_set_task_private_ptr(struct scsi_task *task, void *ptr);
+EXTERN void *scsi_get_task_private_ptr(struct scsi_task *task);
 
 /*
  * TESTUNITREADY
  */
-struct scsi_task *scsi_cdb_testunitready(void);
+EXTERN struct scsi_task *scsi_cdb_testunitready(void);
 
 
 /*
@@ -174,7 +174,7 @@ struct scsi_reportluns_list {
 	uint16_t luns[0];
 };
 
-struct scsi_task *scsi_reportluns_cdb(int report_type, int alloc_len);
+EXTERN struct scsi_task *scsi_reportluns_cdb(int report_type, int alloc_len);
 
 /*
  * READCAPACITY10
@@ -183,7 +183,7 @@ struct scsi_readcapacity10 {
 	uint32_t lba;
 	uint32_t block_size;
 };
-struct scsi_task *scsi_cdb_readcapacity10(int lba, int pmi);
+EXTERN struct scsi_task *scsi_cdb_readcapacity10(int lba, int pmi);
 
 
 /*
@@ -221,7 +221,7 @@ enum scsi_inquiry_peripheral_device_type {
 	SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_UNKNOWN                  = 0x1f
 };
 
-const char *scsi_devtype_to_str(enum scsi_inquiry_peripheral_device_type type);
+EXTERN const char *scsi_devtype_to_str(enum scsi_inquiry_peripheral_device_type type);
 
 enum scsi_version {
 	SCSI_VERSION_SPC  = 0x03,
@@ -229,7 +229,7 @@ enum scsi_version {
 	SCSI_VERSION_SPC3 = 0x05
 };
 
-const char *scsi_version_to_str(enum scsi_version version);
+EXTERN const char *scsi_version_to_str(enum scsi_version version);
 
 enum scsi_inquiry_tpgs {
 	SCSI_INQUIRY_TPGS_NO_SUPPORT            = 0x00,
@@ -276,7 +276,7 @@ enum scsi_inquiry_pagecode {
 	SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS = 0xB1
 };
 
-const char *scsi_inquiry_pagecode_to_str(int pagecode);
+EXTERN const char *scsi_inquiry_pagecode_to_str(int pagecode);
 
 struct scsi_inquiry_supported_pages {
 	enum scsi_inquiry_peripheral_qualifier periperal_qualifier;
@@ -295,7 +295,7 @@ struct scsi_inquiry_block_device_characteristics {
 	int medium_rotation_rate;
 };
 
-struct scsi_task *scsi_cdb_inquiry(int evpd, int page_code, int alloc_len);
+EXTERN struct scsi_task *scsi_cdb_inquiry(int evpd, int page_code, int alloc_len);
 
 struct scsi_inquiry_unit_serial_number {
 	enum scsi_inquiry_peripheral_qualifier periperal_qualifier;
@@ -317,7 +317,7 @@ enum scsi_protocol_identifier {
 	SCSI_PROTOCOL_IDENTIFIER_ATA           = 0x08
 };
 
-const char *scsi_protocol_identifier_to_str(int identifier);
+EXTERN const char *scsi_protocol_identifier_to_str(int identifier);
 
 enum scsi_codeset {
 	SCSI_CODESET_BINARY = 0x01,
@@ -325,7 +325,7 @@ enum scsi_codeset {
 	SCSI_CODESET_UTF8   = 0x03
 };
 
-const char *scsi_codeset_to_str(int codeset);
+EXTERN const char *scsi_codeset_to_str(int codeset);
 
 enum scsi_association {
 	SCSI_ASSOCIATION_LOGICAL_UNIT  = 0x00,
@@ -333,7 +333,7 @@ enum scsi_association {
 	SCSI_ASSOCIATION_TARGET_DEVICE = 0x02
 };
 
-const char *scsi_association_to_str(int association);
+EXTERN const char *scsi_association_to_str(int association);
 
 enum scsi_designator_type {
 	SCSI_DESIGNATOR_TYPE_VENDOR_SPECIFIC             = 0x00,
@@ -347,7 +347,7 @@ enum scsi_designator_type {
 	SCSI_DESIGNATOR_TYPE_SCSI_NAME_STRING            = 0x08
 };
 
-const char *scsi_designator_type_to_str(int association);
+EXTERN const char *scsi_designator_type_to_str(int association);
 
 struct scsi_inquiry_device_designator {
 	struct scsi_inquiry_device_designator *next;
@@ -465,7 +465,7 @@ struct scsi_mode_sense {
        struct scsi_mode_page *pages;       
 };
 
-struct scsi_task *scsi_cdb_modesense6(int dbd,
+EXTERN struct scsi_task *scsi_cdb_modesense6(int dbd,
 			enum scsi_modesense_page_control pc,
 			enum scsi_modesense_page_code page_code,
 			int sub_page_code,
@@ -474,15 +474,15 @@ struct scsi_task *scsi_cdb_modesense6(int dbd,
 
 
 
-int scsi_datain_getfullsize(struct scsi_task *task);
-void *scsi_datain_unmarshall(struct scsi_task *task);
+EXTERN int scsi_datain_getfullsize(struct scsi_task *task);
+EXTERN void *scsi_datain_unmarshall(struct scsi_task *task);
 
-struct scsi_task *scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize);
-struct scsi_task *scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize);
-struct scsi_task *scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int fua, int fuanv,
+EXTERN struct scsi_task *scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize);
+EXTERN struct scsi_task *scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize);
+EXTERN struct scsi_task *scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int fua, int fuanv,
 			int blocksize);
 
-struct scsi_task *scsi_cdb_synchronizecache10(int lba, int num_blocks,
+EXTERN struct scsi_task *scsi_cdb_synchronizecache10(int lba, int num_blocks,
 			int syncnv, int immed);
 
 #endif /* __scsi_lowlevel_h__ */

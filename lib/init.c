@@ -16,14 +16,18 @@
 */
 #define _GNU_SOURCE
 
+#if defined(WIN32)
+#else
+#include <strings.h>
+#include <unistd.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <time.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
@@ -50,7 +54,7 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->fd = -1;
 
 	/* initialize to a "random" isid */
-	iscsi_set_isid_random(iscsi, random(), 0);
+	iscsi_set_isid_random(iscsi, rand(), 0);
 
 	/* assume we start in security negotiation phase */
 	iscsi->current_phase = ISCSI_PDU_LOGIN_CSG_SECNEG;
@@ -242,8 +246,10 @@ iscsi_set_error(struct iscsi_context *iscsi, const char *error_string, ...)
 	char *str;
 
 	va_start(ap, error_string);
-	if (vasprintf(&str, error_string, ap) < 0) {
+	str = malloc(1024);
+	if (vsnprintf(str, 1024, error_string, ap) < 0) {
 		/* not much we can do here */
+		free(str);
 		str = NULL;
 	}
 

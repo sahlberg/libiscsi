@@ -19,6 +19,12 @@
 
 #include <stdint.h>
 
+#if defined(WIN32)
+#define EXTERN __declspec( dllexport )
+EXTERN int poll(struct pollfd *fds, int nfsd, int timeout);
+#else
+#define EXTERN
+#endif
 
 struct iscsi_context;
 struct sockaddr;
@@ -39,20 +45,20 @@ struct sockaddr;
 /*
  * Returns the file descriptor that libiscsi uses.
  */
-int iscsi_get_fd(struct iscsi_context *iscsi);
+EXTERN int iscsi_get_fd(struct iscsi_context *iscsi);
 /*
  * Returns which events that we need to poll for for the iscsi file descriptor.
  */
-int iscsi_which_events(struct iscsi_context *iscsi);
+EXTERN int iscsi_which_events(struct iscsi_context *iscsi);
 /*
  * Called to process the events when events become available for the iscsi
  * file descriptor.
  */
-int iscsi_service(struct iscsi_context *iscsi, int revents);
+EXTERN int iscsi_service(struct iscsi_context *iscsi, int revents);
 /*
  * How many commands are in flight.
  */
-int iscsi_queue_length(struct iscsi_context *iscsi);
+EXTERN int iscsi_queue_length(struct iscsi_context *iscsi);
 
 /*
  * To set tcp keepalive for the session
@@ -85,8 +91,8 @@ struct iscsi_url {
  *
  * The returned structure is freed by calling iscsi_destroy_url()
  */
-struct iscsi_url *iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url);
-void iscsi_destroy_url(struct iscsi_url *iscsi_url);
+EXTERN struct iscsi_url *iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url);
+EXTERN void iscsi_destroy_url(struct iscsi_url *iscsi_url);
 
 /*
  * This function is used to parse an iSCSI Portal URL into a iscsi_url structure.
@@ -106,13 +112,13 @@ void iscsi_destroy_url(struct iscsi_url *iscsi_url);
  *
  * The returned structure is freed by calling iscsi_destroy_url()
  */
-struct iscsi_url *
+EXTERN struct iscsi_url *
 iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url);
 
 /*
  * This function returns a description of the last encountered error.
  */
-const char *iscsi_get_error(struct iscsi_context *iscsi);
+EXTERN const char *iscsi_get_error(struct iscsi_context *iscsi);
 
 /*
  * Create a context for an ISCSI session.
@@ -122,7 +128,7 @@ const char *iscsi_get_error(struct iscsi_context *iscsi);
  *  0: success
  * <0: error
  */
-struct iscsi_context *iscsi_create_context(const char *initiator_name);
+EXTERN struct iscsi_context *iscsi_create_context(const char *initiator_name);
 
 /*
  * Destroy an existing ISCSI context and tear down any existing connection.
@@ -133,7 +139,7 @@ struct iscsi_context *iscsi_create_context(const char *initiator_name);
  *  0: success
  * <0: error
  */
-int iscsi_destroy_context(struct iscsi_context *iscsi);
+EXTERN int iscsi_destroy_context(struct iscsi_context *iscsi);
 
 /*
  * Set an optional alias name to identify with when connecting to the target
@@ -142,7 +148,7 @@ int iscsi_destroy_context(struct iscsi_context *iscsi);
  *  0: success
  * <0: error
  */
-int iscsi_set_alias(struct iscsi_context *iscsi, const char *alias);
+EXTERN int iscsi_set_alias(struct iscsi_context *iscsi, const char *alias);
 
 /*
  * Set the iqn name of the taqget to login to.
@@ -153,13 +159,13 @@ int iscsi_set_alias(struct iscsi_context *iscsi, const char *alias);
  *  0: success
  * <0: error
  */
-int iscsi_set_targetname(struct iscsi_context *iscsi, const char *targetname);
+EXTERN int iscsi_set_targetname(struct iscsi_context *iscsi, const char *targetname);
 
 /*
  * This function returns any target address supplied in a login response when
  * the target has moved.
  */
-const char *iscsi_get_target_address(struct iscsi_context *iscsi);
+EXTERN const char *iscsi_get_target_address(struct iscsi_context *iscsi);
 
 /* Type of iscsi sessions. Discovery sessions are used to query for what
  * targets exist behind the portal connected to. Normal sessions are used to
@@ -178,7 +184,7 @@ enum iscsi_session_type {
  *  0: success
  * <0: error
  */
-int iscsi_set_session_type(struct iscsi_context *iscsi,
+EXTERN int iscsi_set_session_type(struct iscsi_context *iscsi,
 			   enum iscsi_session_type session_type);
 
 
@@ -201,20 +207,20 @@ enum iscsi_header_digest {
  *  0: success
  * <0: error
  */
-int iscsi_set_header_digest(struct iscsi_context *iscsi,
+EXTERN int iscsi_set_header_digest(struct iscsi_context *iscsi,
 			    enum iscsi_header_digest header_digest);
 
 /*
  * Specify the username and password to use for chap authentication
  */
-int iscsi_set_initiator_username_pwd(struct iscsi_context *iscsi,
+EXTERN int iscsi_set_initiator_username_pwd(struct iscsi_context *iscsi,
     					    const char *user,
 					    const char *passwd);
 
 /*
  * check if the context is logged in or not
  */
-int iscsi_is_logged_in(struct iscsi_context *iscsi);
+EXTERN int iscsi_is_logged_in(struct iscsi_context *iscsi);
 
 
 enum scsi_status {
@@ -258,7 +264,7 @@ typedef void (*iscsi_command_cb)(struct iscsi_context *iscsi, int status,
  * The callback will NOT be invoked if the session is explicitely torn down
  * through a call to iscsi_disconnect() or iscsi_destroy_context().
  */
-int iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
+EXTERN int iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 			iscsi_command_cb cb, void *private_data);
 
 /*
@@ -269,7 +275,7 @@ int iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
  * <0 if there was an error.
  *
  */
-int iscsi_connect_sync(struct iscsi_context *iscsi, const char *portal);
+EXTERN int iscsi_connect_sync(struct iscsi_context *iscsi, const char *portal);
 
 
 /*
@@ -297,7 +303,7 @@ int iscsi_connect_sync(struct iscsi_context *iscsi, const char *portal);
  * The callback will NOT be invoked if the session is explicitely torn down
  * through a call to iscsi_disconnect() or iscsi_destroy_context().
  */
-int iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
+EXTERN int iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
 			     int lun, iscsi_command_cb cb, void *private_data);
 
 /*
@@ -309,7 +315,7 @@ int iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
  *  0 if the cconnect was successful.
  * <0 if there was an error.
  */
-int iscsi_full_connect_sync(struct iscsi_context *iscsi, const char *portal,
+EXTERN int iscsi_full_connect_sync(struct iscsi_context *iscsi, const char *portal,
 			    int lun);
 
 /*
@@ -320,7 +326,7 @@ int iscsi_full_connect_sync(struct iscsi_context *iscsi, const char *portal,
  *  0 disconnect was successful
  * <0 error
  */
-int iscsi_disconnect(struct iscsi_context *iscsi);
+EXTERN int iscsi_disconnect(struct iscsi_context *iscsi);
 
 /*
  * Asynchronous call to perform an ISCSI login.
@@ -337,7 +343,7 @@ int iscsi_disconnect(struct iscsi_context *iscsi);
  *    ISCSI_STATUS_CANCELLED: login was aborted. Command_data is NULL.
  *    ISCSI_STATUS_ERROR    : login failed. Command_data is NULL.
  */
-int iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
+EXTERN int iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		      void *private_data);
 
 /*
@@ -347,7 +353,7 @@ int iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
  *  0 if the login was successful
  * <0 if there was an error.
  */
-int iscsi_login_sync(struct iscsi_context *iscsi);
+EXTERN int iscsi_login_sync(struct iscsi_context *iscsi);
 
 
 /*
@@ -364,7 +370,7 @@ int iscsi_login_sync(struct iscsi_context *iscsi);
  *                            NULL.
  *    ISCSI_STATUS_CANCELLED: logout was aborted. Command_data is NULL.
  */
-int iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
+EXTERN int iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		       void *private_data);
 
 /*
@@ -374,7 +380,7 @@ int iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
  *  0 if the logout was successful
  * <0 if there was an error.
  */
-int iscsi_logout_sync(struct iscsi_context *iscsi);
+EXTERN int iscsi_logout_sync(struct iscsi_context *iscsi);
 
 
 /*
@@ -397,7 +403,7 @@ int iscsi_logout_sync(struct iscsi_context *iscsi);
  *                            freed once the callback returns.
  *    ISCSI_STATUS_CANCELLED: Discovery was aborted. Command_data is NULL.
  */
-int iscsi_discovery_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
+EXTERN int iscsi_discovery_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 			  void *private_data);
 
 struct iscsi_discovery_address {
@@ -422,7 +428,7 @@ struct iscsi_discovery_address {
  *                            the server.
  *    ISCSI_STATUS_CANCELLED: Discovery was aborted. Command_data is NULL.
  */
-int iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
+EXTERN int iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 			unsigned char *data, int len, void *private_data);
 
 struct scsi_task;
@@ -456,28 +462,28 @@ enum iscsi_task_mgmt_funcs {
  * The callback will NOT be invoked if the session is explicitely torn down
  * through a call to iscsi_disconnect() or iscsi_destroy_context().
  */
-int
+EXTERN int
 iscsi_task_mgmt_async(struct iscsi_context *iscsi,
 		      int lun, enum iscsi_task_mgmt_funcs function, 
 		      uint32_t ritt, uint32_t rcmdscn,
 		      iscsi_command_cb cb, void *private_data);
 
-int
+EXTERN int
 iscsi_task_mgmt_abort_task_async(struct iscsi_context *iscsi,
 		      struct scsi_task *task,
 		      iscsi_command_cb cb, void *private_data);
-int
+EXTERN int
 iscsi_task_mgmt_abort_task_set_async(struct iscsi_context *iscsi,
 		      uint32_t lun,
 		      iscsi_command_cb cb, void *private_data);
-int
+EXTERN int
 iscsi_task_mgmt_lun_reset_async(struct iscsi_context *iscsi,
 		      uint32_t lun,
 		      iscsi_command_cb cb, void *private_data);
-int
+EXTERN int
 iscsi_task_mgmt_target_warm_reset_async(struct iscsi_context *iscsi,
 		      iscsi_command_cb cb, void *private_data);
-int
+EXTERN int
 iscsi_task_mgmt_target_cold_reset_async(struct iscsi_context *iscsi,
 		      iscsi_command_cb cb, void *private_data);
 
@@ -519,13 +525,13 @@ struct iscsi_data {
  *
  * Setting the ISID can only be done before loggin in to the target.
  */
-int
+EXTERN int
 iscsi_set_isid_oui(struct iscsi_context *iscsi, uint32_t oui, uint32_t qualifier);
-int
+EXTERN int
 iscsi_set_isid_en(struct iscsi_context *iscsi, uint32_t en, uint32_t qualifier);
-int
+EXTERN int
 iscsi_set_isid_random(struct iscsi_context *iscsi, uint32_t rnd, uint32_t qualifier);
-int
+EXTERN int
 iscsi_set_isid_reserved(struct iscsi_context *iscsi);
 
 
@@ -541,7 +547,7 @@ iscsi_set_isid_reserved(struct iscsi_context *iscsi);
  * from the callback.
  */
 
-int iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
+EXTERN int iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 			     struct scsi_task *task, iscsi_command_cb cb,
 			     struct iscsi_data *data, void *private_data);
 
@@ -551,41 +557,41 @@ int iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
  * These async functions return a scsi_task structure, or NULL if the command failed.
  * This structure can be used by task management functions to abort the task or a whole task set.
  */
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_reportluns_task(struct iscsi_context *iscsi, int report_type,
 			   int alloc_len, iscsi_command_cb cb,
 			   void *private_data);
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_testunitready_task(struct iscsi_context *iscsi, int lun,
 			      iscsi_command_cb cb, void *private_data);
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_inquiry_task(struct iscsi_context *iscsi, int lun, int evpd,
 			int page_code, int maxsize, iscsi_command_cb cb,
 			void *private_data);
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_readcapacity10_task(struct iscsi_context *iscsi, int lun, int lba,
 			       int pmi, iscsi_command_cb cb,
 			       void *private_data);
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_synchronizecache10_task(struct iscsi_context *iscsi, int lun,
 				   int lba, int num_blocks, int syncnv,
 				   int immed, iscsi_command_cb cb,
 				   void *private_data);
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_read6_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       uint32_t datalen, int blocksize, iscsi_command_cb cb,
 		       void *private_data);
 
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_read10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       uint32_t datalen, int blocksize, iscsi_command_cb cb,
 		       void *private_data);
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_write10_task(struct iscsi_context *iscsi, int lun,
 			unsigned char *data, uint32_t datalen, uint32_t lba, int fua,
 			int fuanv, int blocksize, iscsi_command_cb cb,
 			void *private_data);
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd,
 			   int pc, int page_code, int sub_page_code,
 			   unsigned char alloc_len, iscsi_command_cb cb,
@@ -595,34 +601,34 @@ iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd,
 /*
  * Sync commands for SCSI
  */
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
 			struct scsi_task *task, struct iscsi_data *data);
 
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_reportluns_sync(struct iscsi_context *iscsi, int report_type,
 		      int alloc_len);
 
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_testunitready_sync(struct iscsi_context *iscsi, int lun);
 
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_inquiry_sync(struct iscsi_context *iscsi, int lun, int evpd,
 		   int page_code, int maxsize);
 
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_read6_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		  uint32_t datalen, int blocksize);
 
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_read10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		  uint32_t datalen, int blocksize);
 
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_readcapacity10_sync(struct iscsi_context *iscsi, int lun, int lba,
 			  int pmi);
 
-struct scsi_task *
+EXTERN struct scsi_task *
 iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
 			      int num_blocks, int syncnv, int immed);
 
@@ -648,7 +654,7 @@ iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
  * task->datain.size will be 0 and
  * task->datain.data will be NULL
  */
-int scsi_task_add_data_in_buffer(struct scsi_task *task, int len, unsigned char *buf);
+EXTERN int scsi_task_add_data_in_buffer(struct scsi_task *task, int len, unsigned char *buf);
 
 
 #endif /* __iscsi_h__ */
