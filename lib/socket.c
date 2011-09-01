@@ -33,6 +33,10 @@
 #include <sys/ioctl.h>
 #endif
 
+#ifdef NEED_SYS_FILIO_H
+#include <sys/filio.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

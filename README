@@ -141,5 +141,7 @@ Libiscsi has been tested on:
 * Linux (32 and 64 bit)
 * Cygwin
 * FreeBSD
-* Windows (Win7-VisualStudio)
+* Windows (Win7-VisualStudio10)
+* OpenSolaris
+
 

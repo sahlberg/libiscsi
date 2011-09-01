@@ -79,6 +79,15 @@ if test x"$libiscsi_cv_HAVE_TCP_KEEPALIVE" = x"yes"; then
     AC_DEFINE(HAVE_TCP_KEEPALIVE,1,[Whether we have support for tcp keepalive socket options])
 fi
 
+AC_CACHE_CHECK([for sys filio.h],libiscsi_cv_NEED_SYS_FILIO_H,[
+AC_TRY_COMPILE([#include <stdint.h>
+#include <sys/filio.h>],
+[int foo = FIONREAD],
+libiscsi_cv_NEED_SYS_FILIO_H=yes,libiscsi_cv_NEED_SYS_FILIO_H=no)])
+if test x"$libiscsi_cv_NEED_SYS_FILIO_H" = x"yes"; then
+    AC_DEFINE(NEED_SYS_FILIO_H,1,[Whether we need sys/filio.h])
+fi
+
 AC_MSG_CHECKING(whether libpopt is available)
 ac_save_CFLAGS="$CFLAGS"
 ac_save_LIBS="$LIBS"
