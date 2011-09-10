@@ -53,7 +53,6 @@ iscsi_login_add_initiatorname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		free(str);
 		return -1;
 	}
-printf("initiatorname:%s\n", str);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -711,8 +710,6 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	struct iscsi_pdu *pdu;
 	int transit;
 
-printf("login async\n");
-fprintf(stderr, "login async\n");
 	if (iscsi->login_attempts++ > 10) {
 		iscsi_set_error(iscsi, "login took too many tries."
 				" giving up.");
