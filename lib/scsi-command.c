@@ -60,6 +60,7 @@ iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 	case SCSI_STATUS_CHECK_CONDITION:
 	case SCSI_STATUS_GOOD:
 	case SCSI_STATUS_ERROR:
+	case SCSI_STATUS_CANCELLED:
 		scsi_cbdata->callback(iscsi, status, scsi_cbdata->task,
 				      scsi_cbdata->private_data);
 		return;
