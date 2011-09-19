@@ -656,5 +656,16 @@ iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
  */
 EXTERN int scsi_task_add_data_in_buffer(struct scsi_task *task, int len, unsigned char *buf);
 
+/*
+ * This function is used when you want to cancel a iscsi task.
+ * The task will be immeidately cancelled and the callback for the task will
+ * never be invoked.
+ * The cancellation is only local in libiscsi. If the tast is already in-flight
+ * this call will not cancel the task at the target.
+ * To cancel the task also a the target you need to call the task management functions.
+ */
+EXTERN int
+iscsi_scsi_task_cancel(struct iscsi_context *iscsi,
+		  struct scsi_task *task);
 
 #endif /* __iscsi_h__ */

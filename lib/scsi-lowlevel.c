@@ -1130,3 +1130,34 @@ scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *coun
 
 	return &sdb->data[pos];
 }
+
+int
+iscsi_scsi_task_cancel(struct iscsi_context *iscsi,
+		  struct scsi_task *task)
+{
+	struct iscsi_pdu *pdu;
+
+	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
+		if (pdu->itt == task->itt) {
+			while(task->in_buffers != NULL) {
+				struct scsi_data_buffer *ptr = task->in_buffers;
+				SLIST_REMOVE(&task->in_buffers, ptr);
+			}
+			SLIST_REMOVE(&iscsi->waitpdu, pdu);
+			iscsi_free_pdu(iscsi, pdu);
+			return 0;
+		}
+	}
+	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
+		if (pdu->itt == task->itt) {
+			while(task->in_buffers != NULL) {
+				struct scsi_data_buffer *ptr = task->in_buffers;
+				SLIST_REMOVE(&task->in_buffers, ptr);
+			}
+			SLIST_REMOVE(&iscsi->outqueue, pdu);
+			iscsi_free_pdu(iscsi, pdu);
+			return 0;
+		}
+	}
+	return -1;
+}
