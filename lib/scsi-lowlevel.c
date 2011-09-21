@@ -805,6 +805,10 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
 		case SCSI_MODESENSE_PAGECODE_INFORMATIONAL_EXCEPTIONS_CONTROL:
 			scsi_parse_mode_informational_exceptions_control(task, pos, mp);
 			break;
+		default:
+			/* TODO: process other pages, or add raw data to struct
+			 * scsi_mode_page.  */
+			break;
 		}
 
 		mp->next  = ms->pages;
