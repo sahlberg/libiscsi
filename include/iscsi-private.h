@@ -107,8 +107,8 @@ struct iscsi_context {
 	uint32_t target_max_recv_data_segment_length;
 	enum iscsi_initial_r2t want_initial_r2t;
 	enum iscsi_initial_r2t use_initial_r2t;
-	enum iscsi_initial_r2t want_immediate_data;
-	enum iscsi_initial_r2t use_immediate_data;
+	enum iscsi_immediate_data want_immediate_data;
+	enum iscsi_immediate_data use_immediate_data;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40

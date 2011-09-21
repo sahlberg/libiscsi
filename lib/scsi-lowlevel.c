@@ -805,6 +805,10 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
 		case SCSI_MODESENSE_PAGECODE_INFORMATIONAL_EXCEPTIONS_CONTROL:
 			scsi_parse_mode_informational_exceptions_control(task, pos, mp);
 			break;
+		default:
+			/* TODO: process other pages, or add raw data to struct
+			 * scsi_mode_page.  */
+			break;
 		}
 
 		mp->next  = ms->pages;
@@ -1082,7 +1086,7 @@ scsi_get_task_private_ptr(struct scsi_task *task)
 
 struct scsi_data_buffer {
        struct scsi_data_buffer *next;
-       int len;
+       uint32_t len;
        unsigned char *data;
 };
 
@@ -1091,6 +1095,9 @@ scsi_task_add_data_in_buffer(struct scsi_task *task, int len, unsigned char *buf
 {
 	struct scsi_data_buffer *data_buf;
 
+	if (len < 0) {
+		return -1;
+	}
 	data_buf = scsi_malloc(task, sizeof(struct scsi_data_buffer));
 	if (data_buf == NULL) {
 		return -1;
