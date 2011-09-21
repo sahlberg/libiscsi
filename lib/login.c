@@ -188,6 +188,9 @@ iscsi_login_add_headerdigest(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	case ISCSI_HEADER_DIGEST_CRC32C:
 		str = (char *)"HeaderDigest=CRC32C";
 		break;
+	default:
+		iscsi_set_error(iscsi, "invalid header digest value");
+		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)

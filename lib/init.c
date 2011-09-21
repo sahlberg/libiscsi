@@ -282,6 +282,10 @@ iscsi_set_header_digest(struct iscsi_context *iscsi,
 				"logged in");
 		return -1;
 	}
+	if ((unsigned)header_digest > ISCSI_HEADER_DIGEST_LAST) {
+		iscsi_set_error(iscsi, "invalid header digest value");
+		return -1;
+	}
 
 	iscsi->want_header_digest = header_digest;
 
