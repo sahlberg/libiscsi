@@ -56,6 +56,7 @@ iscsi_readcapacity10_sync
 iscsi_synchronizecache10_sync
 iscsi_read6_sync
 iscsi_read10_sync
+iscsi_write10_sync
 iscsi_task_cancel
 poll
 scsi_task_add_data_in_buffer

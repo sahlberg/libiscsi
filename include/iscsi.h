@@ -633,6 +633,11 @@ EXTERN struct scsi_task *
 iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
 			      int num_blocks, int syncnv, int immed);
 
+EXTERN struct scsi_task *
+iscsi_write10_sync(struct iscsi_context *iscsi, int lun,
+			unsigned char *data, uint32_t datalen, uint32_t lba, int fua,
+			int fuanv, int blocksize);
+
 
 /*
  * This function is used when  the application wants to specify its own buffers to read the data
