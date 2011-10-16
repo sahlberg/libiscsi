@@ -1139,6 +1139,12 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	/* flags : close the session */
 	iscsi_pdu_set_pduflags(pdu, 0x80);
 
+	/* cmdsn is not increased if Immediate delivery*/
+	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
+	pdu->cmdsn = iscsi->cmdsn;
+
+	/* exp statsn */
+	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn+1);
 
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
