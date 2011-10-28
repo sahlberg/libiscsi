@@ -1,26 +1,22 @@
 Name: libiscsi
 Summary: iSCSI client library
-Vendor: Ronnie Sahlberg
-Packager: Ronnie Sahlberg <ronniesahlberg@gmail.com>
 Version: 1.0.0
-Release: 1GITHASH
-Epoch: 0
-License: GNU LGPL version 3
-Group: Libraries
+Release: 2GITHASH%{?dist}
+License: LGPLv2+
+Group: System Environment/Libraries
 URL: https://github.com/sahlberg/libiscsi
 
 Source: libiscsi-%{version}.tar.gz
 
-Prereq: fileutils
-
-Provides: libiscsi = %{version}
-
-Prefix: /usr
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
+BuildRequires: autoconf
+BuildRequires: automake
+BuildRequires: libtool
+BuildRequires: popt-devel
 
 %description
-libiscsi is a client library for attaching to iscsi resources across
-a network and a set of assorted useful utilities
+libiscsi is a library for attaching to iSCSI resources across
+a network.
 
 
 #######################################################################
@@ -40,25 +36,15 @@ export CC
 
 ## always run autogen.sh
 ./autogen.sh
-
-CFLAGS="$RPM_OPT_FLAGS $EXTRA -O0" ./configure \
-	--prefix=%{_prefix} \
-	--sysconfdir=%{_sysconfdir} \
-	--mandir=%{_mandir} \
-	--localstatedir="/var"
+%configure
+make %{?_smp_mflags}
 
 %install
 # Clean up in case there is trash left from a previous build
 rm -rf $RPM_BUILD_ROOT
-
-# Create the target build directory hierarchy
-mkdir -p $RPM_BUILD_ROOT%{_bindir}
-mkdir -p $RPM_BUILD_ROOT%{_libdir}
-mkdir -p $RPM_BUILD_ROOT%{_includedir}
-mkdir -p $RPM_BUILD_ROOT%{_includedir}/iscsi
-
-#
-make DESTDIR=$RPM_BUILD_ROOT%{_prefix} LIBDIR=$RPM_BUILD_ROOT%{_libdir} install
+make DESTDIR=$RPM_BUILD_ROOT install %{?_smp_mflags}
+rm $RPM_BUILD_ROOT/%{_libdir}/libiscsi.a
+rm $RPM_BUILD_ROOT/%{_libdir}/libiscsi.la
 
 # Remove "*.old" files
 find $RPM_BUILD_ROOT -name "*.old" -exec rm -f {} \;
@@ -66,31 +52,47 @@ find $RPM_BUILD_ROOT -name "*.old" -exec rm -f {} \;
 %clean
 rm -rf $RPM_BUILD_ROOT
 
+%post -p /sbin/ldconfig
 
-#######################################################################
-## Files section                                                     ##
-#######################################################################
+%postun -p /sbin/ldconfig
 
 %files
 %defattr(-,root,root)
+%doc COPYING.LESSER README TODO
+%{_libdir}/libiscsi.so.*
 
+%package utils
+Summary: iSCSI Client Utilities
+Group: Applications/System
+
+%description utils
+The libiscsi-utils package provides a set of assorted utilities to connect
+to iSCSI servers without having to set up the Linux iSCSI initiator.
+
+%files utils
+%doc COPYING README TODO
+%{_bindir}/ld_iscsi.so
 %{_bindir}/iscsi-ls
 %{_bindir}/iscsi-inq
-%{_libdir}/libiscsi.so.1.0.0
 
 %package devel
 Summary: iSCSI client development libraries
-Group: Development
+Group: Development/Libraries
+Requires: libiscsi = %{version}-%{release}
 
 %description devel
-development libraries for iSCSI
+The libiscsi-devel package includes the header files for libiscsi.
 
 %files devel
 %defattr(-,root,root)
+%doc COPYING.LESSER README TODO
 %{_includedir}/iscsi/iscsi.h
 %{_includedir}/iscsi/scsi-lowlevel.h
-%{_libdir}/libiscsi.a
+%{_libdir}/libiscsi.so
 
 %changelog
-* Sat Dec 4 2010 : Version 1.0.0
- - Initial version
+* Fri Oct 28 2011 Paolo Bonzini <pbonzini@redhat.com> - 1.0.0-2
+- Fixed rpmlint problems
+
+* Sat Dec 4 2010 Ronnie Sahlberg <ronniesahlberg@gmail.com> - 1.0.0-1
+- Initial version
