@@ -27,15 +27,3 @@ mtx-iscsi.diff
 Adds iscsi support to the MTX package to manage media changer devices.
 
 
-qemu.patch
-==========
-Patch to qemu to make it iscsi aware.
-Note that qemu is evolving VERY rapidly so patches to it will not be indefintely 
-cleanly appliable.
-Patches to keep this patch in sync with upstream qemu welcome.
-
-this patch makes qemu/kvm understand iscsi devices of the form :
-    -drive file=iscsi://10.1.1.1:3260/iqn.ronnie.test/1
-    
-    -cdrom iscsi://10.1.1.1:3260/iqn.ronnie.test/2
-
