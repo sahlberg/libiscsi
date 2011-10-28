@@ -1,0 +1,13 @@
+/autom4te.cache 
+/configure
+/config.h.in
+/Makefile
+/stamp-h1
+*.o
+*.a
+*.so*
+bin
+/config.h
+/config.log
+/config.status
+libiscsi-*.tar.gz
