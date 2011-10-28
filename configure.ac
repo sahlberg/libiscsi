@@ -1,7 +1,11 @@
 AC_PREREQ(2.50)
 AC_INIT(libiscsi, m4_esyscmd([grep 'Version:' ./packaging/RPM/libiscsi.spec.in 2>/dev/null | head -1 | sed -e 's/[ \t]*Version:[ \t]*\([^ \t]*\)[ \t]*.*/\1/' | tr -d '\n']))
 AC_CONFIG_SRCDIR([lib/init.c])
+AC_CONFIG_MACRO_DIR([m4])
 
+AM_INIT_AUTOMAKE
+AM_SILENT_RULES
+LT_INIT
 if test "${libdir}" = '${exec_prefix}/lib'; then
   case `uname -m` in
     x86_64|ppc64|powerpc64)
@@ -13,51 +17,16 @@ if test "${libdir}" = '${exec_prefix}/lib'; then
   esac
 fi
 
-is_solaris="no"
-install="/usr/bin/install"
-ldconfig="ldconfig"
-ld_iscsi=""
-
-case `uname` in
-  Linux*)
-    ld_iscsi="bin/ld_iscsi.so"
-    ;;
-  AIX*)
-    ;;
-  SunOS)
-    is_solaris="yes"
-    install="ginstall"
-    ldconfig="echo no ldconfig on solaris"
-    LIBS="$LIBS -lsocket -lnsl"
-    ;;
-  CYGWIN*)
-    ldconfig="echo no ldconfig on cygwin"
-    ;;
-  *)
-    ;;
-esac
+AC_CANONICAL_HOST
+AM_CONDITIONAL(LD_ISCSI,
+               [case $host_os in linux*) ;; *) AS_SET_STATUS(1);; esac ])
 
 if test "$ac_cv_prog_gcc" = yes; then
-   CFLAGS="$CFLAGS -Wall -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings"
+   WARN_CFLAGS="-Wall -W -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-align -Wwrite-strings"
 fi
-
-LOGDIR='${localstatedir}/log'
-AC_ARG_WITH([logdir],
-	[  --with-logdir=DIR       path to log directory [[LOCALSTATEDIR/log]]],
-	LOGDIR=$withval)
-if test ! -z "$LOGDIR"; then
-  if test "$LOGDIR" = "yes" -o "$LOGDIR" = "no"; then
-    AC_MSG_ERROR([--with-logdir must specify a path])
-  fi
-fi
-AC_SUBST(LOGDIR)
+AC_SUBST(WARN_CFLAGS)
 
 AC_CONFIG_HEADER(config.h)
-
-EXTRA_OBJ=""
-
-#AC_CHECK_HEADERS(sched.h)
-#AC_CHECK_FUNCS(mlockall)
 
 AC_CACHE_CHECK([for sin_len in sock],libiscsi_cv_HAVE_SOCK_SIN_LEN,[
 AC_TRY_COMPILE([#include <sys/types.h>
@@ -117,14 +86,10 @@ if test "$ac_cv_have_popt" = yes ; then
   AC_MSG_RESULT(yes)
 else
   AC_MSG_RESULT(no)
-  AC_MSG_NOTICE(You need libpopt to compile libiscsi. Install the libpopt-dev package.)
-  exit
+  AC_MSG_NOTICE(You need libpopt to compile the sample libiscsi clients.)
+  AC_MSG_NOTICE(Only the library will be compiled and installed.)
 fi
+AM_CONDITIONAL(PROGRAMS, [test "$ac_cv_have_popt" = yes])
 
-AC_SUBST(libdir)
-AC_SUBST(install)
-AC_SUBST(ldconfig)
-AC_SUBST(ld_iscsi)
-#AC_SUBST(LIBISCSI_LDFLAGS)
-
-AC_OUTPUT(Makefile)
+AC_CONFIG_FILES(Makefile)
+AC_OUTPUT

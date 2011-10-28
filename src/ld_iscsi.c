@@ -291,7 +291,7 @@ int dup2(int oldfd, int newfd)
 }
 
 
-void _init(void)
+static void __attribute__((constructor)) _init(void)
 {
 	int i;
 
