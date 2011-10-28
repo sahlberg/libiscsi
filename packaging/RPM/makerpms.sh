@@ -58,14 +58,15 @@ VERSION=$(grep ^Version ${DIRNAME}/${SPECFILE} | sed -e 's/^Version:\ \+//')
 RELEASE=$(grep ^Release ${DIRNAME}/${SPECFILE} | sed -e 's/^Release:\ \+//')
 
 if echo | gzip -c --rsyncable - > /dev/null 2>&1 ; then
-	GZIP="gzip -9 --rsyncable"
+	GZIP_ENV="-9 --rsyncable"
 else
-	GZIP="gzip -9"
+	GZIP_ENV="-9"
 fi
 
 pushd ${TOPDIR}
 echo -n "Creating libiscsi-${VERSION}.tar.gz ... "
-git archive --prefix=libiscsi-${VERSION}/ HEAD | ${GZIP} > ${SRCDIR}/libiscsi-${VERSION}.tar.gz
+sh autogen.sh
+make dist GZIP_ENV="\"$GZIP_ENV\""
 RC=$?
 popd
 echo "Done."
@@ -79,6 +80,7 @@ fi
 ##
 ## copy additional source files
 ##
+cp -p ${TOPDIR}/libiscsi-${VERSION}.tar.gz ${SRCDIR}
 cp -p ${DIRNAME}/${SPECFILE} ${SPECDIR}
 
 ##
