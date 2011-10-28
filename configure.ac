@@ -26,17 +26,6 @@ if test "$ac_cv_prog_gcc" = yes; then
 fi
 AC_SUBST(WARN_CFLAGS)
 
-LOGDIR='${localstatedir}/log'
-AC_ARG_WITH([logdir],
-	[  --with-logdir=DIR       path to log directory [[LOCALSTATEDIR/log]]],
-	LOGDIR=$withval)
-if test ! -z "$LOGDIR"; then
-  if test "$LOGDIR" = "yes" -o "$LOGDIR" = "no"; then
-    AC_MSG_ERROR([--with-logdir must specify a path])
-  fi
-fi
-AC_SUBST(LOGDIR)
-
 AC_CONFIG_HEADER(config.h)
 
 AC_CACHE_CHECK([for sin_len in sock],libiscsi_cv_HAVE_SOCK_SIN_LEN,[
