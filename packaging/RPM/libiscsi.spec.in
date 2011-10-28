@@ -40,25 +40,13 @@ export CC
 
 ## always run autogen.sh
 ./autogen.sh
-
-CFLAGS="$RPM_OPT_FLAGS $EXTRA -O0" ./configure \
-	--prefix=%{_prefix} \
-	--sysconfdir=%{_sysconfdir} \
-	--mandir=%{_mandir} \
-	--localstatedir="/var"
+%configure
+make
 
 %install
 # Clean up in case there is trash left from a previous build
 rm -rf $RPM_BUILD_ROOT
-
-# Create the target build directory hierarchy
-mkdir -p $RPM_BUILD_ROOT%{_bindir}
-mkdir -p $RPM_BUILD_ROOT%{_libdir}
-mkdir -p $RPM_BUILD_ROOT%{_includedir}
-mkdir -p $RPM_BUILD_ROOT%{_includedir}/iscsi
-
-#
-make DESTDIR=$RPM_BUILD_ROOT%{_prefix} LIBDIR=$RPM_BUILD_ROOT%{_libdir} install
+make DESTDIR=$RPM_BUILD_ROOT install
 
 # Remove "*.old" files
 find $RPM_BUILD_ROOT -name "*.old" -exec rm -f {} \;
@@ -73,10 +61,10 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-
+%{_bindir}/ld_iscsi.so
 %{_bindir}/iscsi-ls
 %{_bindir}/iscsi-inq
-%{_libdir}/libiscsi.so.1.0.0
+%{_libdir}/libiscsi.so.*
 
 %package devel
 Summary: iSCSI client development libraries
@@ -90,6 +78,8 @@ development libraries for iSCSI
 %{_includedir}/iscsi/iscsi.h
 %{_includedir}/iscsi/scsi-lowlevel.h
 %{_libdir}/libiscsi.a
+%{_libdir}/libiscsi.la
+%{_libdir}/libiscsi.so
 
 %changelog
 * Sat Dec 4 2010 : Version 1.0.0
