@@ -1,7 +1,7 @@
 Name: libiscsi
 Summary: iSCSI client library
 Version: 1.0.0
-Release: 2GITHASH%{?dist}
+Release: 3GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
 URL: https://github.com/sahlberg/libiscsi
@@ -91,6 +91,9 @@ The libiscsi-devel package includes the header files for libiscsi.
 %{_libdir}/libiscsi.so
 
 %changelog
+* Sat Oct 29 2011 Ronnie Sahlberg <ronniesahlberg.gmail.com> - 1.0.0-3
+- Remove the QEMU patch from the libiscsi patches directory
+
 * Fri Oct 28 2011 Paolo Bonzini <pbonzini@redhat.com> - 1.0.0-2
 - Fixed rpmlint problems
 
