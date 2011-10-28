@@ -86,9 +86,10 @@ if test "$ac_cv_have_popt" = yes ; then
   AC_MSG_RESULT(yes)
 else
   AC_MSG_RESULT(no)
-  AC_MSG_NOTICE(You need libpopt to compile libiscsi. Install the libpopt-dev package.)
-  exit
+  AC_MSG_NOTICE(You need libpopt to compile the sample libiscsi clients.)
+  AC_MSG_NOTICE(Only the library will be compiled and installed.)
 fi
+AM_CONDITIONAL(PROGRAMS, [test "$ac_cv_have_popt" = yes])
 
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT

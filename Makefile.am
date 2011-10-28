@@ -9,6 +9,12 @@ LDADD = lib/libiscsi.la -lpopt
 EXTRA_DIST = autogen.sh COPYING.LESSER \
 	     packaging/RPM/libiscsi.spec.in packaging/RPM/makerpms.sh
 
+# Simplify conditions below by declaring variables as empty
+
+bin_PROGRAMS =
+noinst_PROGRAMS =
+EXTRA_PROGRAMS =
+
 # libiscsi shared library
 
 iscsi_includedir = $(includedir)/iscsi
@@ -28,16 +34,17 @@ lib_libiscsi_la_LDFLAGS = \
 
 # libiscsi utilities
 
-bin_PROGRAMS = bin/iscsi-inq bin/iscsi-ls
+if PROGRAMS
+bin_PROGRAMS += bin/iscsi-inq bin/iscsi-ls
 bin_iscsi_inq_SOURCES = src/iscsi-inq.c
 bin_iscsi_ls_SOURCES = src/iscsi-ls.c
 
 # Other examples
 
-noinst_PROGRAMS = bin/iscsiclient
+noinst_PROGRAMS += bin/iscsiclient
 bin_iscsiclient_SOURCES = examples/iscsiclient.c
 
-EXTRA_PROGRAMS = bin/iscsi-dd
+EXTRA_PROGRAMS += bin/iscsi-dd
 bin_iscsi_dd_SOURCES = examples/iscsi-dd.c
 
 # libiscsi test tool
@@ -52,6 +59,7 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0110_readcapacity10_simple.c \
 	test-tool/0111_readcapacity10_pmi.c test-tool/0120_read6_simple.c \
 	test-tool/0121_read6_beyond_eol.c test-tool/0122_read6_invalid.c
+endif
 
 # LD_PRELOAD library.
 
