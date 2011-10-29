@@ -77,7 +77,7 @@ Patches
 =======
 The patches subdirectory contains patches to make some external packages iscsi 
 aware and make them use libiscsi.
-Currently we have KVM/QEMU, SG3-UTILS and MTX.
+Currently we have SG3-UTILS and MTX.
 Patches for other packages would be welcome.
 
 
