@@ -1,7 +1,7 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.0.0
-Release: 3GITHASH%{?dist}
+Version: 1.0.1
+Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
 URL: https://github.com/sahlberg/libiscsi
