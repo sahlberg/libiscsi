@@ -53,7 +53,7 @@ iscsi_task_mgmt_async(struct iscsi_context *iscsi,
 	iscsi_pdu_set_pduflags(pdu, 0x80 | function);
 
 	/* lun */
-	iscsi_pdu_set_lun(pdu, 2);
+	iscsi_pdu_set_lun(pdu, lun);
 
 	/* ritt */
 	iscsi_pdu_set_ritt(pdu, ritt);
