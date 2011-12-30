@@ -744,14 +744,13 @@ unsigned char *
 iscsi_get_user_in_buffer(struct iscsi_context *iscsi, struct iscsi_in_pdu *in, uint32_t pos, ssize_t *count)
 {
 	struct iscsi_pdu *pdu;
-	uint32_t len, offset;
+	uint32_t offset;
 	uint32_t itt;
 
 	if ((in->hdr[0] & 0x3f) != ISCSI_PDU_DATA_IN) {
 		return NULL;
 	}
 
-	len    = ntohl(*(uint32_t *)&in->hdr[4])&0x00ffffff;
 	offset = ntohl(*(uint32_t *)&in->hdr[40]);
 
 	itt = ntohl(*(uint32_t *)&in->hdr[16]);
