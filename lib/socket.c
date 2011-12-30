@@ -60,7 +60,6 @@ int
 iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		    iscsi_command_cb cb, void *private_data)
 {
-	int tpgt = -1;
 	int port = 3260;
 	char *str;
 	char *addr, *host;
@@ -84,7 +83,6 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	/* check if we have a target portal group tag */
 	str = strrchr(host, ',');
 	if (str != NULL) {
-		tpgt = atoi(str+1);
 		str[0] = 0;
 	}
 
