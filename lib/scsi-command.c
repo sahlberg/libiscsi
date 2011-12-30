@@ -324,7 +324,7 @@ int
 iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			 struct iscsi_in_pdu *in)
 {
-	int statsn, flags, response, status;
+	int statsn, flags, status;
 	struct iscsi_scsi_cbdata *scsi_cbdata = pdu->scsi_cbdata;
 	struct scsi_task *task = scsi_cbdata->task;
 
@@ -348,8 +348,6 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			      pdu->private_data);
 		return -1;
 	}
-
-	response = in->hdr[2];
 
 	status = in->hdr[3];
 
