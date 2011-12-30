@@ -1131,7 +1131,7 @@ scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *coun
 		}
 	}
 
-	if (count && *count > sdb->len - pos) {
+	if (count && *count > (ssize_t)(sdb->len - pos)) {
 		*count = sdb->len - pos;
 	}
 
