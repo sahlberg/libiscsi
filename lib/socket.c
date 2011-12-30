@@ -331,13 +331,13 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 
 
 	while (iscsi->inqueue != NULL) {
-		struct iscsi_in_pdu *in = iscsi->inqueue;
+		struct iscsi_in_pdu *current = iscsi->inqueue;
 
-		if (iscsi_process_pdu(iscsi, in) != 0) {
+		if (iscsi_process_pdu(iscsi, current) != 0) {
 			return -1;
 		}
-		SLIST_REMOVE(&iscsi->inqueue, in);
-		iscsi_free_iscsi_in_pdu(in);
+		SLIST_REMOVE(&iscsi->inqueue, current);
+		iscsi_free_iscsi_in_pdu(current);
 	}
 
 
