@@ -233,10 +233,8 @@ static const char *iscsi_reject_reason_str(enum iscsi_reject_reason reason)
 int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
 				struct iscsi_in_pdu *in)
 {
-	uint32_t itt, ttt;
+	uint32_t ttt;
 	uint32_t statsn;
-
-	itt = ntohl(*(uint32_t *)&in->hdr[16]);
 
 	ttt = ntohl(*(uint32_t *)&in->hdr[20]);
 
