@@ -1,7 +1,7 @@
 This directory contains patches to other packages to make them iSCSI
 aware.
 
-sg3_utils-1.30.patch
+sg3_utils-1.32.patch
 ====================
 This patch adds iscsi support to the SG3 package.
 This is only added for the Linux platform, but adding to other platforms 

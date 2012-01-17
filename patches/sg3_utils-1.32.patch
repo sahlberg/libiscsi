@@ -1,0 +1,784 @@
+commit 0fbfdc4cb083c0a077f719e78658bc80b2123f83
+Author: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+Date:   Tue Jan 17 20:29:11 2012 +1100
+
+    iscsi support
+
+diff --git a/README b/README
+index 46d8f94..7b8736a 100644
+--- a/README
++++ b/README
+@@ -7,6 +7,8 @@ command set. Apart from SCSI parallel interface (SPI) devices, the SCSI
+ command set is used by ATAPI devices (CD/DVDs and tapes), USB mass storage
+ devices, Fibre Channel disks, IEEE 1394 storage devices (that use the
+ "SBP" protocol), SAS, iSCSI and FCoE devices (amongst others).
++On some platforms the package can also access iSCSI devices directly
++using a built-in iscsi client. See the iSCSI section below for more info.
+ 
+ This package originally targeted the Linux SCSI subsystem. Since most
+ operating systems contain a SCSI command pass-through mechanism, many
+@@ -335,6 +337,44 @@ The more recent utilities that use "getopt_long" only are:
+     sg_wr_mode
+ 
+ 
++iSCSI support
++=============
++On some platforms (Linux) sg3_utils can be built with iSCSI support.
++When built with iSCSI support, the utilities will be able to access iSCSI
++devices directly using a built-in iSCSI client, without having to first make
++the devices visible to the host.
++This is very useful for cases where you have very many iSCSI targets you want
++to manage and very many LUNs, in which case it may be impractical to make all
++those devices visible to the local host.
++
++In order to get access to the iSCSI functionality, the sg3_utils package must
++be built and linked against the iscsi client library from :
++    https://github.com/sahlberg/libiscsi
++When configuring and building sg3_utils, the build process will detect if
++this library is available and if it is build a version of sg3_utils with 
++iSCSI support.
++
++With iSCSI support, you can specify a iSCSI URL instead of the /dev/sg*
++device that most of the utilities take.
++
++Example:
++  sudo sg_inq iscsi://karelin/iqn.ronnie.test/1
++Which means : Use LUN 1 on the target with the name "iqn.ronnie.test"
++that is available on network host "karelin".
++
++The full form of the iSCSI URL is :
++   iscsi://[<username>[%<password>]@]<host>[:<port>]/<target-iqn>/<lun>
++
++iSCSI Authentication:
++The package supports normal iSCSI CHAP authentication to those targets that
++require it.
++This is done by specifying hte CHAP username and password as part of the iSCSI
++URL.
++
++Example:
++  sudo sg_inq iscsi://ronnie%secret@karelin/iqn.ronnie.test/1
++
++
+ Dangerous code
+ ==============
+ This code:
+diff --git a/configure.ac b/configure.ac
+index 355ca84..1916603 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -76,4 +76,34 @@ AC_ARG_ENABLE([win32-spt-direct],
+   AC_DEFINE_UNQUOTED(WIN32_SPT_DIRECT, 1, [enable Win32 SPT Direct], )
+ )
+ 
++
++AC_MSG_CHECKING(if libiscsi is available)
++ac_save_CFLAGS="$CFLAGS"
++ac_save_LIBS="$LIBS"
++CFLAGS=""
++LIBS="-liscsi"
++AC_TRY_RUN([
++/*
++ * Just see if we can compile/link with libiscsi
++ */
++#include <iscsi/iscsi.h>
++int main(int argc, const char *argv[])
++{
++	iscsi_create_context("");
++	return 0;
++}
++], ac_cv_have_libiscsi=yes, ac_cv_have_libiscsi=no,
++   [echo $ac_n "compile with LIBISCSI. Assuming OK... $ac_c"
++    ac_cv_have_libiscsi=yes])
++CFLAGS="$ac_save_CFLAGS"
++LIBS="$ac_save_LIBS"
++if test "$ac_cv_have_libiscsi" = yes ; then
++  AC_MSG_RESULT(yes)
++  AC_SUBST([libiscsi], ['-liscsi'])
++  AC_DEFINE_UNQUOTED(CONFIG_LIBISCSI, 1, [we have libiscsi support], )
++else
++  AC_MSG_RESULT(no)
++  AC_SUBST([libiscsi], [''])
++fi
++
+ AC_OUTPUT(Makefile include/Makefile lib/Makefile src/Makefile doc/Makefile)
+diff --git a/lib/Makefile.am b/lib/Makefile.am
+index 3d5213e..6990f12 100644
+--- a/lib/Makefile.am
++++ b/lib/Makefile.am
+@@ -8,6 +8,7 @@ libsgutils2_la_SOURCES = \
+ 	sg_cmds_extra.c \
+ 	sg_cmds_mmc.c \
+ 	sg_pt_common.c \
++	sg_pt_iscsi.c \
+ 	sg_pt_linux.c \
+ 	sg_io_linux.c
+ 
+@@ -33,6 +34,7 @@ libsgutils2_la_SOURCES = \
+ 	sg_pt_win32.c
+ 
+ EXTRA_libsgutils2_la_SOURCES = \
++	sg_pt_iscsi.c \
+ 	sg_pt_linux.c \
+ 	sg_io_linux.c \
+ 	sg_pt_freebsd.c \
+@@ -55,6 +57,7 @@ libsgutils2_la_SOURCES = \
+ 	sg_pt_win32.c
+ 
+ EXTRA_libsgutils2_la_SOURCES = \
++	sg_pt_iscsi.c \
+ 	sg_pt_linux.c \
+ 	sg_io_linux.c \
+ 	sg_pt_freebsd.c \
+@@ -77,6 +80,7 @@ libsgutils2_la_SOURCES = \
+ 	sg_pt_freebsd.c
+ 
+ EXTRA_libsgutils2_la_SOURCES = \
++	sg_pt_iscsi.c \
+ 	sg_pt_linux.c \
+ 	sg_io_linux.c \
+ 	sg_linux_inc.h \
+@@ -100,6 +104,7 @@ libsgutils2_la_SOURCES = \
+ 	sg_pt_solaris.c
+ 
+ EXTRA_libsgutils2_la_SOURCES = \
++	sg_pt_iscsi.c \
+ 	sg_pt_linux.c \
+ 	sg_io_linux.c \
+ 	sg_linux_inc.h \
+@@ -123,6 +128,7 @@ libsgutils2_la_SOURCES = \
+ 	sg_pt_osf1.c
+ 
+ EXTRA_libsgutils2_la_SOURCES = \
++	sg_pt_iscsi.c \
+ 	sg_pt_linux.c \
+ 	sg_io_linux.c \
+ 	sg_pt_freebsd.c \
+@@ -140,7 +146,7 @@ lib_LTLIBRARIES = libsgutils2.la
+ 
+ libsgutils2_la_LDFLAGS = -version-info 2:0:0
+ 
+-libsgutils2_la_LIBADD = @GETOPT_O_FILES@ @os_libs@
++libsgutils2_la_LIBADD = @GETOPT_O_FILES@ @os_libs@ @libiscsi@
+ libsgutils2_la_DEPENDENCIES = @GETOPT_O_FILES@
+ 
+ 
+diff --git a/lib/sg_pt_linux.c b/lib/sg_pt_linux.c
+index 0a5216e..6be755e 100644
+--- a/lib/sg_pt_linux.c
++++ b/lib/sg_pt_linux.c
+@@ -27,6 +27,10 @@
+ #include "sg_lib.h"
+ #include "sg_linux_inc.h"
+ 
++#ifdef CONFIG_LIBISCSI
++#include "sg_pt_iscsi.h"
++#endif
++
+ #define DEF_TIMEOUT 60000       /* 60,000 millisecs (60 seconds) */
+ 
+ static const char * linux_host_bytes[] = {
+@@ -117,6 +121,12 @@ scsi_pt_open_flags(const char * device_name, int flags, int verbose)
+ {
+     int fd;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (!strncmp(device_name, "iscsi://", 8)) {
++        return iscsi_pt_open_device(device_name, flags, verbose);
++    }
++#endif
++
+     if (verbose > 1) {
+         if (NULL == sg_warnings_strm)
+             sg_warnings_strm = stderr;
+@@ -135,6 +145,12 @@ scsi_pt_close_device(int device_fd)
+ {
+     int res;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return iscsi_pt_close_device(device_fd);
++    }
++#endif
++
+     res = close(device_fd);
+     if (res < 0)
+         res = -errno;
+@@ -147,6 +163,12 @@ construct_scsi_pt_obj()
+ {
+     struct sg_pt_linux_scsi * ptp;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return construct_iscsi_pt_obj();
++    }
++#endif
++
+     ptp = (struct sg_pt_linux_scsi *)
+           calloc(1, sizeof(struct sg_pt_linux_scsi));
+     if (ptp) {
+@@ -161,6 +183,12 @@ destruct_scsi_pt_obj(struct sg_pt_base * vp)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return destruct_iscsi_pt_obj(vp);
++    }
++#endif
++
+     if (ptp)
+         free(ptp);
+ }
+@@ -170,6 +198,12 @@ clear_scsi_pt_obj(struct sg_pt_base * vp)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return clear_iscsi_pt_obj(vp);
++    }
++#endif
++
+     if (ptp) {
+         memset(ptp, 0, sizeof(struct sg_pt_linux_scsi));
+         ptp->io_hdr.interface_id = 'S';
+@@ -183,6 +217,12 @@ set_scsi_pt_cdb(struct sg_pt_base * vp, const unsigned char * cdb,
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return set_iscsi_pt_cdb(vp, cdb, cdb_len);
++    }
++#endif
++
+     if (ptp->io_hdr.cmdp)
+         ++ptp->in_err;
+     ptp->io_hdr.cmdp = (unsigned char *)cdb;
+@@ -195,6 +235,12 @@ set_scsi_pt_sense(struct sg_pt_base * vp, unsigned char * sense,
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return set_iscsi_pt_sense(vp, sense, max_sense_len);
++    }
++#endif
++
+     if (ptp->io_hdr.sbp)
+         ++ptp->in_err;
+     memset(sense, 0, max_sense_len);
+@@ -209,6 +255,12 @@ set_scsi_pt_data_in(struct sg_pt_base * vp, unsigned char * dxferp,
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return set_iscsi_pt_data_in(vp, dxferp, dxfer_len);
++    }
++#endif
++
+     if (ptp->io_hdr.dxferp)
+         ++ptp->in_err;
+     if (dxfer_len > 0) {
+@@ -225,6 +277,12 @@ set_scsi_pt_data_out(struct sg_pt_base * vp, const unsigned char * dxferp,
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return set_iscsi_pt_data_out(vp, dxferp, dxfer_len);
++    }
++#endif
++
+     if (ptp->io_hdr.dxferp)
+         ++ptp->in_err;
+     if (dxfer_len > 0) {
+@@ -239,6 +297,13 @@ set_scsi_pt_packet_id(struct sg_pt_base * vp, int pack_id)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      set_iscsi_pt_packet_id(vp, pack_id);
++        return;
++    }
++#endif
++
+     ptp->io_hdr.pack_id = pack_id;
+ }
+ 
+@@ -247,6 +312,13 @@ set_scsi_pt_tag(struct sg_pt_base * vp, uint64_t tag)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        set_iscsi_pt_tag(vp, tag);
++        return;
++    }
++#endif
++
+     ++ptp->in_err;
+     tag = tag;                  /* dummy to silence compiler */
+ }
+@@ -257,6 +329,13 @@ set_scsi_pt_task_management(struct sg_pt_base * vp, int tmf_code)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        set_iscsi_pt_task_management(vp, tmf_code);
++        return;
++    }
++#endif
++
+     ++ptp->in_err;
+     tmf_code = tmf_code;        /* dummy to silence compiler */
+ }
+@@ -266,6 +345,13 @@ set_scsi_pt_task_attr(struct sg_pt_base * vp, int attribute, int priority)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        set_iscsi_pt_task_attr(vp, attribute, priority);
++        return;
++    }
++#endif
++
+     ++ptp->in_err;
+     attribute = attribute;      /* dummy to silence compiler */
+     priority = priority;        /* dummy to silence compiler */
+@@ -303,6 +389,12 @@ do_scsi_pt(struct sg_pt_base * vp, int fd, int time_secs, int verbose)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return do_iscsi_pt(vp, fd, time_secs, verbose);
++    }
++#endif
++
+     if (NULL == sg_warnings_strm)
+         sg_warnings_strm = stderr;
+     ptp->os_err = 0;
+@@ -339,6 +431,12 @@ get_scsi_pt_result_category(const struct sg_pt_base * vp)
+     int dr_st = ptp->io_hdr.driver_status & SG_LIB_DRIVER_MASK;
+     int scsi_st = ptp->io_hdr.status & 0x7e;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return get_iscsi_pt_result_category(vp);
++    }
++#endif
++
+     if (ptp->os_err)
+         return SCSI_PT_RESULT_OS_ERR;
+     else if (ptp->io_hdr.host_status)
+@@ -360,6 +458,12 @@ get_scsi_pt_resid(const struct sg_pt_base * vp)
+ {
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return get_iscsi_pt_resid(vp);
++    }
++#endif
++
+     return ptp->io_hdr.resid;
+ }
+ 
+@@ -368,6 +472,12 @@ get_scsi_pt_status_response(const struct sg_pt_base * vp)
+ {
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return get_iscsi_pt_status_response(vp);
++    }
++#endif
++
+     return ptp->io_hdr.status;
+ }
+ 
+@@ -376,6 +486,12 @@ get_scsi_pt_sense_len(const struct sg_pt_base * vp)
+ {
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return get_iscsi_pt_sense_len(vp);
++    }
++#endif
++
+     return ptp->io_hdr.sb_len_wr;
+ }
+ 
+@@ -384,6 +500,12 @@ get_scsi_pt_duration_ms(const struct sg_pt_base * vp)
+ {
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return get_iscsi_pt_duration_ms(vp);
++    }
++#endif
++
+     return ptp->io_hdr.duration;
+ }
+ 
+@@ -392,6 +514,12 @@ get_scsi_pt_transport_err(const struct sg_pt_base * vp)
+ {
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return get_iscsi_pt_transport_err(vp);
++    }
++#endif
++
+     return (ptp->io_hdr.host_status << 8) + ptp->io_hdr.driver_status;
+ }
+ 
+@@ -400,6 +528,12 @@ get_scsi_pt_os_err(const struct sg_pt_base * vp)
+ {
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return get_iscsi_pt_os_err(vp);
++    }
++#endif
++
+     return ptp->os_err;
+ }
+ 
+@@ -416,6 +550,12 @@ get_scsi_pt_transport_err_str(const struct sg_pt_base * vp, int max_b_len,
+     const char * driv_cp = "invalid";
+     const char * sugg_cp = "invalid";
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return get_iscsi_pt_transport_err_str(vp, max_b_len, b);
++    }
++#endif
++
+     m = max_b_len;
+     n = 0;
+     if (hs) {
+@@ -451,6 +591,12 @@ get_scsi_pt_os_err_str(const struct sg_pt_base * vp, int max_b_len, char * b)
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+     const char * cp;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return get_iscsi_pt_os_err_str(vp, max_b_len, b);
++    }
++#endif
++
+     cp = safe_strerror(ptp->os_err);
+     strncpy(b, cp, max_b_len);
+     if ((int)strlen(cp) >= max_b_len)
+@@ -567,6 +713,12 @@ scsi_pt_open_flags(const char * device_name, int flags, int verbose)
+ {
+     int fd;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (!strncmp(device_name, "iscsi://", 8)) {
++        return iscsi_pt_open_device(device_name, flags, verbose);
++    }
++#endif
++
+     if (! bsg_major_checked) {
+         bsg_major_checked = 1;
+         find_bsg_major(verbose);
+@@ -589,6 +741,12 @@ scsi_pt_close_device(int device_fd)
+ {
+     int res;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return iscsi_pt_close_device(device_fd);
++    }
++#endif
++
+     res = close(device_fd);
+     if (res < 0)
+         res = -errno;
+@@ -601,6 +759,12 @@ construct_scsi_pt_obj()
+ {
+     struct sg_pt_linux_scsi * ptp;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return construct_iscsi_pt_obj();
++    }
++#endif
++
+     ptp = (struct sg_pt_linux_scsi *)
+           calloc(1, sizeof(struct sg_pt_linux_scsi));
+     if (ptp) {
+@@ -620,6 +784,12 @@ destruct_scsi_pt_obj(struct sg_pt_base * vp)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return destruct_iscsi_pt_obj(vp);
++    }
++#endif
++
+     if (ptp)
+         free(ptp);
+ }
+@@ -629,6 +799,12 @@ clear_scsi_pt_obj(struct sg_pt_base * vp)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return clear_iscsi_pt_obj(vp);
++    }
++#endif
++
+     if (ptp) {
+         memset(ptp, 0, sizeof(struct sg_pt_linux_scsi));
+         ptp->io_hdr.guard = 'Q';
+@@ -647,6 +823,12 @@ set_scsi_pt_cdb(struct sg_pt_base * vp, const unsigned char * cdb,
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return set_iscsi_pt_cdb(vp, cdb, cdb_len);
++    }
++#endif
++
+     if (ptp->io_hdr.request)
+         ++ptp->in_err;
+     /* C99 has intptr_t instead of long */
+@@ -660,6 +842,12 @@ set_scsi_pt_sense(struct sg_pt_base * vp, unsigned char * sense,
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return set_iscsi_pt_sense(vp, sense, max_sense_len);
++    }
++#endif
++
+     if (ptp->io_hdr.response)
+         ++ptp->in_err;
+     memset(sense, 0, max_sense_len);
+@@ -674,6 +862,12 @@ set_scsi_pt_data_in(struct sg_pt_base * vp, unsigned char * dxferp,
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return set_iscsi_pt_data_in(vp, dxferp, dxfer_len);
++    }
++#endif
++
+     if (ptp->io_hdr.din_xferp)
+         ++ptp->in_err;
+     if (dxfer_len > 0) {
+@@ -689,6 +883,12 @@ set_scsi_pt_data_out(struct sg_pt_base * vp, const unsigned char * dxferp,
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return set_iscsi_pt_data_out(vp, dxferp, dxfer_len);
++    }
++#endif
++
+     if (ptp->io_hdr.dout_xferp)
+         ++ptp->in_err;
+     if (dxfer_len > 0) {
+@@ -702,6 +902,13 @@ set_scsi_pt_packet_id(struct sg_pt_base * vp, int pack_id)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      set_iscsi_pt_packet_id(vp, pack_id);
++        return;
++    }
++#endif
++
+     ptp->io_hdr.spare_in = pack_id;
+ }
+ 
+@@ -710,6 +917,13 @@ set_scsi_pt_tag(struct sg_pt_base * vp, uint64_t tag)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        set_iscsi_pt_tag(vp, tag);
++        return;
++    }
++#endif
++
+     ptp->io_hdr.request_tag = tag;
+ }
+ 
+@@ -719,6 +933,13 @@ set_scsi_pt_task_management(struct sg_pt_base * vp, int tmf_code)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        set_iscsi_pt_task_management(vp, tmf_code);
++        return;
++    }
++#endif
++
+     ptp->io_hdr.subprotocol = 1;        /* SCSI task management function */
+     ptp->tmf_request[0] = (unsigned char)tmf_code;      /* assume it fits */
+     ptp->io_hdr.request = (__u64)(long)(&(ptp->tmf_request[0]));
+@@ -730,6 +951,12 @@ set_scsi_pt_task_attr(struct sg_pt_base * vp, int attribute, int priority)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        set_iscsi_pt_task_attr(vp, attribute, priority);
++        return;
++    }
++#endif
+     ptp->io_hdr.request_attr = attribute;
+     ptp->io_hdr.request_priority = priority;
+ }
+@@ -756,6 +983,12 @@ get_scsi_pt_resid(const struct sg_pt_base * vp)
+ {
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return get_iscsi_pt_resid(vp);
++    }
++#endif
++
+     return ptp->io_hdr.din_resid;
+ }
+ 
+@@ -764,6 +997,12 @@ get_scsi_pt_status_response(const struct sg_pt_base * vp)
+ {
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return get_iscsi_pt_status_response(vp);
++    }
++#endif
++
+     return ptp->io_hdr.device_status;
+ }
+ 
+@@ -772,6 +1011,12 @@ get_scsi_pt_sense_len(const struct sg_pt_base * vp)
+ {
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return get_iscsi_pt_sense_len(vp);
++    }
++#endif
++
+     return ptp->io_hdr.response_len;
+ }
+ 
+@@ -780,6 +1025,12 @@ get_scsi_pt_duration_ms(const struct sg_pt_base * vp)
+ {
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return get_iscsi_pt_duration_ms(vp);
++    }
++#endif
++
+     return ptp->io_hdr.duration;
+ }
+ 
+@@ -788,6 +1039,12 @@ get_scsi_pt_transport_err(const struct sg_pt_base * vp)
+ {
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return get_iscsi_pt_transport_err(vp);
++    }
++#endif
++
+     return ptp->io_hdr.transport_status;
+ }
+ 
+@@ -805,6 +1062,12 @@ get_scsi_pt_transport_err_str(const struct sg_pt_base * vp, int max_b_len,
+     const char * driv_cp = "invalid";
+     const char * sugg_cp = "invalid";
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return get_iscsi_pt_transport_err_str(vp, max_b_len, b);
++    }
++#endif
++
+     m = max_b_len;
+     n = 0;
+     if (hs) {
+@@ -841,6 +1104,12 @@ get_scsi_pt_result_category(const struct sg_pt_base * vp)
+     int dr_st = ptp->io_hdr.driver_status & SG_LIB_DRIVER_MASK;
+     int scsi_st = ptp->io_hdr.device_status & 0x7e;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return get_iscsi_pt_result_category(vp);
++    }
++#endif
++
+     if (ptp->os_err)
+         return SCSI_PT_RESULT_OS_ERR;
+     else if (ptp->io_hdr.transport_status)
+@@ -862,6 +1131,12 @@ get_scsi_pt_os_err(const struct sg_pt_base * vp)
+ {
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++      return get_iscsi_pt_os_err(vp);
++    }
++#endif
++
+     return ptp->os_err;
+ }
+ 
+@@ -871,6 +1146,12 @@ get_scsi_pt_os_err_str(const struct sg_pt_base * vp, int max_b_len, char * b)
+     const struct sg_pt_linux_scsi * ptp = &vp->impl;
+     const char * cp;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return get_iscsi_pt_os_err_str(vp, max_b_len, b);
++    }
++#endif
++
+     cp = safe_strerror(ptp->os_err);
+     strncpy(b, cp, max_b_len);
+     if ((int)strlen(cp) >= max_b_len)
+@@ -944,6 +1225,12 @@ do_scsi_pt(struct sg_pt_base * vp, int fd, int time_secs, int verbose)
+ {
+     struct sg_pt_linux_scsi * ptp = &vp->impl;
+ 
++#ifdef CONFIG_LIBISCSI
++    if (iscsi) {
++        return do_iscsi_pt(vp, fd, time_secs, verbose);
++    }
++#endif
++
+     if (! bsg_major_checked) {
+         bsg_major_checked = 1;
+         find_bsg_major(verbose);
