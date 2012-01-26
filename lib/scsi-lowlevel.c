@@ -632,6 +632,52 @@ scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int fua, int fuanv, int blocksi
 }
 
 
+/*
+ * VERIFY10
+ */
+struct scsi_task *
+scsi_cdb_verify10(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_VERIFY10;
+
+	if (vprotect) {
+		task->cdb[1] |= ((vprotect << 5) & 0xe0);
+	}
+	if (dpo) {
+		task->cdb[1] |= 0x10;
+	}
+	if (bytchk) {
+		task->cdb[1] |= 0x02;
+	}
+
+	*(uint32_t *)&task->cdb[2] = htonl(lba);
+	*(uint16_t *)&task->cdb[7] = htons(xferlen/blocksize);
+
+	task->cdb_size = 10;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_WRITE;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = xferlen;
+
+	task->params.verify10.lba        = lba;
+	task->params.verify10.num_blocks = xferlen/blocksize;
+	task->params.verify10.vprotect   = vprotect;
+	task->params.verify10.dpo        = dpo;
+	task->params.verify10.bytchk     = bytchk;
+
+	return task;
+}
+
 
 /*
  * MODESENSE6

@@ -593,6 +593,12 @@ iscsi_write10_task(struct iscsi_context *iscsi, int lun,
 			int fuanv, int blocksize, iscsi_command_cb cb,
 			void *private_data);
 EXTERN struct scsi_task *
+iscsi_verify10_task(struct iscsi_context *iscsi, int lun,
+		    unsigned char *data, uint32_t datalen, uint32_t lba,
+		    int vprotect, int dpo, int bytchk, 
+		    int blocksize, iscsi_command_cb cb,
+		    void *private_data);
+EXTERN struct scsi_task *
 iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd,
 			   int pc, int page_code, int sub_page_code,
 			   unsigned char alloc_len, iscsi_command_cb cb,
@@ -638,6 +644,11 @@ iscsi_write10_sync(struct iscsi_context *iscsi, int lun,
 			unsigned char *data, uint32_t datalen, uint32_t lba, int fua,
 			int fuanv, int blocksize);
 
+EXTERN struct scsi_task *
+iscsi_verify10_sync(struct iscsi_context *iscsi, int lun,
+		    unsigned char *data, uint32_t datalen, uint32_t lba,
+		    int vprotect, int dpo, int bytchk, 
+		    int blocksize);
 
 /*
  * This function is used when  the application wants to specify its own buffers to read the data

@@ -28,10 +28,10 @@
 #include "iscsi.h"
 #include "iscsi-test.h"
 
-char *initiator = "iqn.2010-11.iscsi-test";
+const char *initiator = "iqn.2010-11.iscsi-test";
 
 struct scsi_test {
-       char *name;
+       const char *name;
        int (*test)(const char *initiator, const char *url);
 };
 
@@ -52,6 +52,9 @@ struct scsi_test tests[] = {
 { "T0120_read6_simple",			T0120_read6_simple },
 { "T0121_read6_beyond_eol",		T0121_read6_beyond_eol },
 { "T0122_read6_invalid",      		T0122_read6_invalid },
+
+/* verify10*/
+{ "T0130_verify10_simple",		T0130_verify10_simple },
 
 { NULL, NULL }
 };

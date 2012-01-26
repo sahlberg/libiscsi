@@ -58,7 +58,8 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0104_read10_flags.c test-tool/0105_read10_invalid.c \
 	test-tool/0110_readcapacity10_simple.c \
 	test-tool/0111_readcapacity10_pmi.c test-tool/0120_read6_simple.c \
-	test-tool/0121_read6_beyond_eol.c test-tool/0122_read6_invalid.c
+	test-tool/0121_read6_beyond_eol.c test-tool/0122_read6_invalid.c \
+	test-tool/0130_verify10_simple.c
 endif
 
 # LD_PRELOAD library.
