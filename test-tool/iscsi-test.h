@@ -35,3 +35,4 @@ int T0121_read6_beyond_eol(const char *initiator, const char *url);
 int T0122_read6_invalid(const char *initiator, const char *url);
 
 int T0130_verify10_simple(const char *initiator, const char *url);
+int T0131_verify10_mismatch(const char *initiator, const char *url);
