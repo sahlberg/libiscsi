@@ -56,6 +56,7 @@ struct scsi_test tests[] = {
 /* verify10*/
 { "T0130_verify10_simple",		T0130_verify10_simple },
 { "T0131_verify10_mismatch",		T0131_verify10_mismatch },
+{ "T0132_verify10_mismatch_no_cmp",	T0132_verify10_mismatch_no_cmp },
 
 { NULL, NULL }
 };
