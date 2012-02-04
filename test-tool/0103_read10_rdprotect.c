@@ -60,6 +60,12 @@ int T0103_read10_rdprotect(const char *initiator, const char *url)
 		return -1;
 	}
 
+	if (inq->periperal_device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+		printf("LUN is not SBC device. Skipping test\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
 	if (inq->protect) {
 		printf("LUN is formatted with protection information. Skipping test\n");
 		scsi_free_scsi_task(task);
@@ -76,6 +82,7 @@ int T0103_read10_rdprotect(const char *initiator, const char *url)
 	for (i = 1; i < 8; i++) {
 
 		task = malloc(sizeof(struct scsi_task));
+
 		if (task == NULL) {
 			printf("Failed to allocate task structure\n");
 			ret = -1;
