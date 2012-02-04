@@ -29,7 +29,8 @@ enum scsi_opcode {
 	SCSI_OPCODE_WRITE10            = 0x2A,
 	SCSI_OPCODE_VERIFY10           = 0x2F,
 	SCSI_OPCODE_SYNCHRONIZECACHE10 = 0x35,
-	SCSI_OPCODE_REPORTLUNS         = 0xA0
+	SCSI_OPCODE_REPORTLUNS         = 0xA0,
+	SCSI_OPCODE_READ12             = 0xA8
 };
 
 /* sense keys */
