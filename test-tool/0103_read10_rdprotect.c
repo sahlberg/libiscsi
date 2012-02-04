@@ -99,7 +99,7 @@ int T0103_read10_rdprotect(const char *initiator, const char *url)
 		}
 		if (task->status        != SCSI_STATUS_CHECK_CONDITION
 		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 		        printf("[FAILED]\n");
 			printf("Read10 with rdprotect should fail with ILLEGAL REQUEST/INVALID OPCODE\n");
 			ret = -1;
