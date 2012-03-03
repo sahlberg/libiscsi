@@ -1,12 +1,12 @@
-Name: libiscsi
+Name: libiscsiclient
 Summary: iSCSI client library
-Version: 1.1.0
+Version: 2.0.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
 URL: https://github.com/sahlberg/libiscsi
 
-Source: libiscsi-%{version}.tar.gz
+Source: libiscsiclient-%{version}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: autoconf
@@ -15,7 +15,7 @@ BuildRequires: libtool
 BuildRequires: popt-devel
 
 %description
-libiscsi is a library for attaching to iSCSI resources across
+libiscsiclient is a library for attaching to iSCSI resources across
 a network.
 
 
@@ -26,7 +26,7 @@ a network.
 %prep
 %setup -q
 # setup the init script and sysconfig file
-%setup -T -D -n libiscsi-%{version} -q
+%setup -T -D -n libiscsiclient-%{version} -q
 
 %build
 
@@ -43,8 +43,8 @@ make %{?_smp_mflags}
 # Clean up in case there is trash left from a previous build
 rm -rf $RPM_BUILD_ROOT
 make DESTDIR=$RPM_BUILD_ROOT install %{?_smp_mflags}
-rm $RPM_BUILD_ROOT/%{_libdir}/libiscsi.a
-rm $RPM_BUILD_ROOT/%{_libdir}/libiscsi.la
+rm $RPM_BUILD_ROOT/%{_libdir}/libiscsiclient.a
+rm $RPM_BUILD_ROOT/%{_libdir}/libiscsiclient.la
 
 # Remove "*.old" files
 find $RPM_BUILD_ROOT -name "*.old" -exec rm -f {} \;
@@ -59,14 +59,14 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 %doc COPYING.LESSER README TODO
-%{_libdir}/libiscsi.so.*
+%{_libdir}/libiscsiclient.so.*
 
 %package utils
 Summary: iSCSI Client Utilities
 Group: Applications/System
 
 %description utils
-The libiscsi-utils package provides a set of assorted utilities to connect
+The libiscsiclient-utils package provides a set of assorted utilities to connect
 to iSCSI servers without having to set up the Linux iSCSI initiator.
 
 %files utils
@@ -78,19 +78,21 @@ to iSCSI servers without having to set up the Linux iSCSI initiator.
 %package devel
 Summary: iSCSI client development libraries
 Group: Development/Libraries
-Requires: libiscsi = %{version}-%{release}
+Requires: libiscsiclient = %{version}-%{release}
 
 %description devel
-The libiscsi-devel package includes the header files for libiscsi.
+The libiscsiclient-devel package includes the header files for libiscsiclient.
 
 %files devel
 %defattr(-,root,root)
 %doc COPYING.LESSER README TODO
 %{_includedir}/iscsi/iscsi.h
 %{_includedir}/iscsi/scsi-lowlevel.h
-%{_libdir}/libiscsi.so
+%{_libdir}/libiscsiclient.so
 
 %changelog
+* Sat Mar 3 2012 : 2.0.0
+ - Rename to libiscsiclient to avoid collission with obscure linux library
 * Sun Dec 25 2011 : 1.1.0
 - Fix TaskManagement AbortTask/AbortTaskSet to send to correct LUN
 

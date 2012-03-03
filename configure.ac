@@ -1,5 +1,5 @@
 AC_PREREQ(2.50)
-AC_INIT(libiscsi, m4_esyscmd([grep 'Version:' ./packaging/RPM/libiscsi.spec.in 2>/dev/null | head -1 | sed -e 's/[ \t]*Version:[ \t]*\([^ \t]*\)[ \t]*.*/\1/' | tr -d '\n']))
+AC_INIT(libiscsiclient, m4_esyscmd([grep 'Version:' ./packaging/RPM/libiscsiclient.spec.in 2>/dev/null | head -1 | sed -e 's/[ \t]*Version:[ \t]*\([^ \t]*\)[ \t]*.*/\1/' | tr -d '\n']))
 AC_CONFIG_SRCDIR([lib/init.c])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -28,32 +28,32 @@ AC_SUBST(WARN_CFLAGS)
 
 AC_CONFIG_HEADER(config.h)
 
-AC_CACHE_CHECK([for sin_len in sock],libiscsi_cv_HAVE_SOCK_SIN_LEN,[
+AC_CACHE_CHECK([for sin_len in sock],libiscsiclient_cv_HAVE_SOCK_SIN_LEN,[
 AC_TRY_COMPILE([#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>],
 [struct sockaddr_in sock; sock.sin_len = sizeof(sock);],
-libiscsi_cv_HAVE_SOCK_SIN_LEN=yes,libiscsi_cv_HAVE_SOCK_SIN_LEN=no)])
-if test x"$libiscsi_cv_HAVE_SOCK_SIN_LEN" = x"yes"; then
+libiscsiclient_cv_HAVE_SOCK_SIN_LEN=yes,libiscsiclient_cv_HAVE_SOCK_SIN_LEN=no)])
+if test x"$libiscsiclient_cv_HAVE_SOCK_SIN_LEN" = x"yes"; then
     AC_DEFINE(HAVE_SOCK_SIN_LEN,1,[Whether the sockaddr_in struct has a sin_len property])
 fi
 
-AC_CACHE_CHECK([for tcp keepalive],libiscsi_cv_HAVE_TCP_KEEPALIVE,[
+AC_CACHE_CHECK([for tcp keepalive],libiscsiclient_cv_HAVE_TCP_KEEPALIVE,[
 AC_TRY_COMPILE([#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>],
 [int foo = TCP_KEEPCNT + TCP_KEEPIDLE + TCP_KEEPINTVL],
-libiscsi_cv_HAVE_TCP_KEEPALIVE=yes,libiscsi_cv_HAVE_TCP_KEEPALIVE=no)])
-if test x"$libiscsi_cv_HAVE_TCP_KEEPALIVE" = x"yes"; then
+libiscsiclient_cv_HAVE_TCP_KEEPALIVE=yes,libiscsiclient_cv_HAVE_TCP_KEEPALIVE=no)])
+if test x"$libiscsiclient_cv_HAVE_TCP_KEEPALIVE" = x"yes"; then
     AC_DEFINE(HAVE_TCP_KEEPALIVE,1,[Whether we have support for tcp keepalive socket options])
 fi
 
-AC_CACHE_CHECK([for sys filio.h],libiscsi_cv_NEED_SYS_FILIO_H,[
+AC_CACHE_CHECK([for sys filio.h],libiscsiclient_cv_NEED_SYS_FILIO_H,[
 AC_TRY_COMPILE([#include <stdint.h>
 #include <sys/filio.h>],
 [int foo = FIONREAD],
-libiscsi_cv_NEED_SYS_FILIO_H=yes,libiscsi_cv_NEED_SYS_FILIO_H=no)])
-if test x"$libiscsi_cv_NEED_SYS_FILIO_H" = x"yes"; then
+libiscsiclient_cv_NEED_SYS_FILIO_H=yes,libiscsiclient_cv_NEED_SYS_FILIO_H=no)])
+if test x"$libiscsiclient_cv_NEED_SYS_FILIO_H" = x"yes"; then
     AC_DEFINE(NEED_SYS_FILIO_H,1,[Whether we need sys/filio.h])
 fi
 
@@ -86,7 +86,7 @@ if test "$ac_cv_have_popt" = yes ; then
   AC_MSG_RESULT(yes)
 else
   AC_MSG_RESULT(no)
-  AC_MSG_NOTICE(You need libpopt to compile the sample libiscsi clients.)
+  AC_MSG_NOTICE(You need libpopt to compile the sample libiscsiclient clients.)
   AC_MSG_NOTICE(Only the library will be compiled and installed.)
 fi
 AM_CONDITIONAL(PROGRAMS, [test "$ac_cv_have_popt" = yes])
