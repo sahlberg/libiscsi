@@ -15,9 +15,16 @@ A copy of LGPL 2.1 is included in the file LICENCE-LGPL-2.1.txt but can also be 
 This is the licence that applies to the libiscsi library and its use.
 
 
+src/ld_iscsi.c
+==============
+This LD_PRELOAD utility is licenced under GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1 of the
+License, or (at your option) any later version.
 
-The src and examples directories
-================================
+
+
+The src, examples and test-tool directories EXCEPT src/ld_iscsi.c
+=============================================================
 The utility and example applications using this library, i.e. the src and the
 examples directories, are licenced under the GNU General Public License
 as published by the Free Software Foundation; either version 2 of the
