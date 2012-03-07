@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.1.0
+Version: 1.2.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -91,6 +91,8 @@ The libiscsi-devel package includes the header files for libiscsi.
 %{_libdir}/libiscsi.so
 
 %changelog
+* Wed Mar 7 2012 : 1.2.0
+ - rename library back to libiscsi and release it as 1.2.0
 * Sun Dec 25 2011 : 1.1.0
 - Fix TaskManagement AbortTask/AbortTaskSet to send to correct LUN
 
