@@ -40,8 +40,8 @@ TOPDIR=${DIRNAME}/../..
 SPECDIR=`rpm --eval %_specdir`
 SRCDIR=`rpm --eval %_sourcedir`
 
-SPECFILE="libiscsiclient.spec"
-SPECFILE_IN="libiscsiclient.spec.in"
+SPECFILE="libiscsi.spec"
+SPECFILE_IN="libiscsi.spec.in"
 RPMBUILD="rpmbuild"
 
 GITHASH=".$(git log --pretty=format:%h -1)"
@@ -64,7 +64,7 @@ else
 fi
 
 pushd ${TOPDIR}
-echo -n "Creating libiscsiclient-${VERSION}.tar.gz ... "
+echo -n "Creating libiscsi-${VERSION}.tar.gz ... "
 sh autogen.sh
 make dist GZIP_ENV="\"$GZIP_ENV\""
 RC=$?
@@ -80,7 +80,7 @@ fi
 ##
 ## copy additional source files
 ##
-cp -p ${TOPDIR}/libiscsiclient-${VERSION}.tar.gz ${SRCDIR}
+cp -p ${TOPDIR}/libiscsi-${VERSION}.tar.gz ${SRCDIR}
 cp -p ${DIRNAME}/${SPECFILE} ${SPECDIR}
 
 ##
