@@ -19,7 +19,7 @@ fi
 
 AC_CANONICAL_HOST
 AM_CONDITIONAL(LD_ISCSI,
-               [case $host_os in linux*) ;; *) AS_SET_STATUS(1);; esac ])
+               [expr "$host_os" : linux > /dev/null 2>&1])
 
 if test "$ac_cv_prog_gcc" = yes; then
    WARN_CFLAGS="-Wall -W -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-align -Wwrite-strings"
