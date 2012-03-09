@@ -6,7 +6,7 @@ AM_CPPFLAGS=-I. -I$(srcdir)/include "-D_U_=__attribute__((unused))"
 AM_CFLAGS=$(WARN_CFLAGS)
 LDADD = lib/libiscsi.la -lpopt
 
-EXTRA_DIST = autogen.sh COPYING.LESSER \
+EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt \
 	     packaging/RPM/libiscsi.spec.in packaging/RPM/makerpms.sh
 
 # Simplify conditions below by declaring variables as empty
