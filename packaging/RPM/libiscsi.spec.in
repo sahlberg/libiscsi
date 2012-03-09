@@ -58,7 +58,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%doc COPYING.LESSER README TODO
+%doc COPYING LICENCE-LGPL-2.1.txt README TODO
 %{_libdir}/libiscsi.so.*
 
 %package utils
@@ -70,7 +70,7 @@ The libiscsi-utils package provides a set of assorted utilities to connect
 to iSCSI servers without having to set up the Linux iSCSI initiator.
 
 %files utils
-%doc COPYING README TODO
+%doc COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt README TODO
 %{_bindir}/ld_iscsi.so
 %{_bindir}/iscsi-ls
 %{_bindir}/iscsi-inq
@@ -85,7 +85,7 @@ The libiscsi-devel package includes the header files for libiscsi.
 
 %files devel
 %defattr(-,root,root)
-%doc COPYING.LESSER README TODO
+%doc COPYING LICENCE-LGPL-2.1.txt README TODO
 %{_includedir}/iscsi/iscsi.h
 %{_includedir}/iscsi/scsi-lowlevel.h
 %{_libdir}/libiscsi.so
