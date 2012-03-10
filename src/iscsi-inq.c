@@ -24,7 +24,7 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
-char *initiator = "iqn.2010-11.ronnie:iscsi-inq";
+const char *initiator = "iqn.2010-11.ronnie:iscsi-inq";
 
 
 void inquiry_block_device_characteristics(struct scsi_inquiry_block_device_characteristics *inq)
