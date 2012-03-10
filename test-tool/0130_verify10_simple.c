@@ -66,7 +66,7 @@ int T0130_verify10_simple(const char *initiator, const char *url)
 	/* read and verify the first 1 - 256 blocks at the start of the LUN */
 	printf("Read+verify first 1-256 blocks ... ");
 	for (i = 1; i <= 256; i++) {
-		char *buf;
+		unsigned char *buf;
 
 		task = iscsi_read10_sync(iscsi, lun, 0, i * block_size, block_size);
 		if (task == NULL) {

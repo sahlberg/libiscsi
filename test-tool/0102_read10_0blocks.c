@@ -25,7 +25,7 @@ int T0102_read10_0blocks(const char *initiator, const char *url)
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity10 *rc10;
-	int ret, i, lun;
+	int ret, lun;
 	uint32_t block_size, num_blocks;
 
 	iscsi = iscsi_context_login(initiator, url, &lun);

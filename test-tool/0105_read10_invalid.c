@@ -229,7 +229,7 @@ test5:
 	task->expxferlen = sizeof(buf);
 
 	data.size = sizeof(buf);
-	data.data = &buf[0];
+	data.data = (unsigned char *)&buf[0];
 
 	if (iscsi_scsi_command_sync(iscsi, lun, task, &data) == NULL) {
 	        printf("[FAILED]\n");

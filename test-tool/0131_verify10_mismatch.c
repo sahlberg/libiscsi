@@ -16,6 +16,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
@@ -66,7 +67,7 @@ int T0131_verify10_mismatch(const char *initiator, const char *url)
 	/* read and verify the first 1 - 256 blocks at the start of the LUN */
 	printf("Read+verify first 1-256 blocks ... ");
 	for (i = 1; i <= 256; i++) {
-		char *buf;
+		unsigned char *buf;
 
 		task = iscsi_read10_sync(iscsi, lun, 0, i * block_size, block_size);
 		if (task == NULL) {

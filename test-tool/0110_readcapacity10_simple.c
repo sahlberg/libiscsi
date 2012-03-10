@@ -25,7 +25,7 @@ int T0110_readcapacity10_simple(const char *initiator, const char *url)
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity10 *rc10;
-	int ret, i, lun;
+	int ret, lun;
 
 	ret = 0;
 
