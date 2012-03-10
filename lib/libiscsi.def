@@ -59,7 +59,8 @@ iscsi_read6_sync
 iscsi_read10_sync
 iscsi_verify10_sync
 iscsi_write10_sync
-iscsi_task_cancel
+iscsi_scsi_task_cancel
+iscsi_scsi_cancel_all_tasks
 poll
 scsi_task_add_data_in_buffer
 scsi_sense_key_str

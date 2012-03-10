@@ -97,6 +97,8 @@ iscsi_task_mgmt_abort_task_async(struct iscsi_context *iscsi,
 		      struct scsi_task *task,
 		      iscsi_command_cb cb, void *private_data)
 {
+	iscsi_scsi_task_cancel(iscsi, task);
+
 	return iscsi_task_mgmt_async(iscsi,
 		      task->lun, ISCSI_TM_ABORT_TASK,
 		      task->itt, task->cmdsn,
@@ -108,6 +110,8 @@ iscsi_task_mgmt_abort_task_set_async(struct iscsi_context *iscsi,
 		      uint32_t lun,
 		      iscsi_command_cb cb, void *private_data)
 {
+	iscsi_scsi_cancel_all_tasks(iscsi);
+
 	return iscsi_task_mgmt_async(iscsi,
 		      lun, ISCSI_TM_ABORT_TASK_SET,
 		      0xffffffff, 0,
@@ -119,6 +123,8 @@ iscsi_task_mgmt_lun_reset_async(struct iscsi_context *iscsi,
 		      uint32_t lun,
 		      iscsi_command_cb cb, void *private_data)
 {
+	iscsi_scsi_cancel_all_tasks(iscsi);
+
 	return iscsi_task_mgmt_async(iscsi,
 		      lun, ISCSI_TM_LUN_RESET,
 		      0xffffffff, 0,
@@ -129,16 +135,21 @@ int
 iscsi_task_mgmt_target_warm_reset_async(struct iscsi_context *iscsi,
 		      iscsi_command_cb cb, void *private_data)
 {
+	iscsi_scsi_cancel_all_tasks(iscsi);
+
 	return iscsi_task_mgmt_async(iscsi,
 		      0, ISCSI_TM_TARGET_WARM_RESET,
 		      0xffffffff, 0,
 		      cb, private_data);
 }
 
+
 int
 iscsi_task_mgmt_target_cold_reset_async(struct iscsi_context *iscsi,
 		      iscsi_command_cb cb, void *private_data)
 {
+	iscsi_scsi_cancel_all_tasks(iscsi);
+
 	return iscsi_task_mgmt_async(iscsi,
 		      0, ISCSI_TM_TARGET_COLD_RESET,
 		      0xffffffff, 0,

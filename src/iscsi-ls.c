@@ -25,7 +25,7 @@
 #include "scsi-lowlevel.h"
 
 int showluns;
-char *initiator = "iqn.2010-11.ronnie:iscsi-ls";
+const char *initiator = "iqn.2010-11.ronnie:iscsi-ls";
 
 struct client_state {
        int finished;

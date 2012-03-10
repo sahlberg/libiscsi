@@ -259,5 +259,7 @@ unsigned char *scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos
 
 unsigned long crc32c(char *buf, int len);
 
+struct scsi_task *iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu);
+
 #endif /* __iscsi_private_h__ */
 

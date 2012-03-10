@@ -798,3 +798,9 @@ iscsi_get_user_in_buffer(struct iscsi_context *iscsi, struct iscsi_in_pdu *in, u
 
 	return scsi_task_get_data_in_buffer(pdu->scsi_cbdata->task, offset + pos, count);
 }
+
+struct scsi_task *
+iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu)
+{
+	return pdu->scsi_cbdata->task;
+}
