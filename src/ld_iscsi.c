@@ -32,7 +32,7 @@
 #include <sys/syscall.h>
 #include <dlfcn.h>
 
-static char *initiator = "iqn.2011-02.ronnie:ld_iscsi";
+static const char *initiator = "iqn.2011-02.ronnie:ld_iscsi";
 
 #define ISCSI_MAX_FD  255
 
