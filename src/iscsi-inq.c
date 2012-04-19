@@ -27,6 +27,18 @@
 const char *initiator = "iqn.2010-11.ronnie:iscsi-inq";
 
 
+void inquiry_logical_block_provisioning(struct scsi_inquiry_logical_block_provisioning *inq)
+{
+	printf("Threshold Exponent:%d\n", inq->threshold_exponent);	
+	printf("lbpu:%d\n", inq->lbpu);	
+	printf("lbpws:%d\n", inq->lbpws);	
+	printf("lbpws10:%d\n", inq->lbpws10);	
+	printf("lbprz:%d\n", inq->lbprz);	
+	printf("anc_sup:%d\n", inq->anc_sup);	
+	printf("dp:%d\n", inq->dp);	
+	printf("provisioning type:%d\n", inq->provisioning_type);	
+}
+
 void inquiry_block_device_characteristics(struct scsi_inquiry_block_device_characteristics *inq)
 {
 	printf("Medium Rotation Rate:%dRPM\n", inq->medium_rotation_rate);	
@@ -141,6 +153,9 @@ void do_inquiry(struct iscsi_context *iscsi, int lun, int evpd, int pc)
 			break;
 		case SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS:
 			inquiry_block_device_characteristics(inq);
+			break;
+		case SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING:
+			inquiry_logical_block_provisioning(inq);
 			break;
 		default:
 			fprintf(stderr, "Usupported pagecode:0x%02x\n", pc);

@@ -509,6 +509,29 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 		inq->medium_rotation_rate  = ntohs(*(uint16_t *)
 						   &task->datain.data[4]);
 		return inq;
+	} else if (task->params.inquiry.page_code
+		   == SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING) {
+		struct scsi_inquiry_logical_block_provisioning *inq;
+
+		inq = scsi_malloc(task,
+			   sizeof(struct scsi_inquiry_logical_block_provisioning));
+		if (inq == NULL) {
+			return NULL;
+		}
+		inq->periperal_qualifier   = (task->datain.data[0]>>5)&0x07;
+		inq->periperal_device_type = task->datain.data[0]&0x1f;
+		inq->pagecode              = task->datain.data[1];
+
+		inq->threshold_exponent = task->datain.data[4];
+		inq->lbpu               = !!(task->datain.data[5] & 0x80);
+		inq->lbpws              = !!(task->datain.data[5] & 0x40);
+		inq->lbpws10            = !!(task->datain.data[5] & 0x20);
+		inq->lbprz              = !!(task->datain.data[5] & 0x04);
+		inq->anc_sup            = !!(task->datain.data[5] & 0x02);
+		inq->dp	                = !!(task->datain.data[5] & 0x01);
+		inq->provisioning_type  = task->datain.data[6] & 0x07;
+
+		return inq;
 	}
 
 	return NULL;

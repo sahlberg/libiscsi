@@ -284,7 +284,8 @@ enum scsi_inquiry_pagecode {
 	SCSI_INQUIRY_PAGECODE_SUPPORTED_VPD_PAGES          = 0x00,
 	SCSI_INQUIRY_PAGECODE_UNIT_SERIAL_NUMBER           = 0x80,
 	SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION        = 0x83,
-	SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS = 0xB1
+	SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS = 0xB1,
+	SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING   = 0xB2
 };
 
 EXTERN const char *scsi_inquiry_pagecode_to_str(int pagecode);
@@ -304,6 +305,27 @@ struct scsi_inquiry_block_device_characteristics {
 	enum scsi_inquiry_pagecode pagecode;
 
 	int medium_rotation_rate;
+};
+
+enum scsi_inquiry_provisioning_type {
+	PROVISIONING_TYPE_NONE     = 0,
+	PROVISIONING_TYPE_RESOURCE = 1,
+	PROVISIONING_TYPE_THIN     = 2
+};
+
+struct scsi_inquiry_logical_block_provisioning {
+	enum scsi_inquiry_peripheral_qualifier periperal_qualifier;
+	enum scsi_inquiry_peripheral_device_type periperal_device_type;
+	enum scsi_inquiry_pagecode pagecode;
+
+       int threshold_exponent;
+       int lbpu;
+       int lbpws;
+       int lbpws10;
+       int lbprz;
+       int anc_sup;
+       int dp;
+       enum scsi_inquiry_provisioning_type provisioning_type;
 };
 
 EXTERN struct scsi_task *scsi_cdb_inquiry(int evpd, int page_code, int alloc_len);
