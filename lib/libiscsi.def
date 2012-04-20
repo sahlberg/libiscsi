@@ -43,6 +43,7 @@ iscsi_reportluns_task
 iscsi_testunitready_task
 iscsi_inquiry_task
 iscsi_readcapacity10_task
+iscsi_readcapacity16_task
 iscsi_synchronizecache10_task
 iscsi_read6_task
 iscsi_read10_task
@@ -54,6 +55,7 @@ iscsi_reportluns_sync
 iscsi_testunitready_sync
 iscsi_inquiry_sync
 iscsi_readcapacity10_sync
+iscsi_readcapacity16_sync
 iscsi_synchronizecache10_sync
 iscsi_read6_sync
 iscsi_read10_sync
@@ -87,4 +89,6 @@ scsi_cdb_read10
 scsi_cdb_verify10
 scsi_cdb_write10
 scsi_cdb_synchronizecache10
+scsi_cdb_readcapacity16
+scsi_cdb_serviceactionin16
 

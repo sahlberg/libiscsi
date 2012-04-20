@@ -259,6 +259,36 @@ scsi_cdb_readcapacity10(int lba, int pmi)
 }
 
 /*
+ * service_action_in unmarshall
+ */
+static void *
+scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
+{
+	struct scsi_readcapacity16 *rc16;
+
+	switch (task->params.serviceactionin.sa) {
+	case SCSI_READCAPACITY16:
+		rc16 = scsi_malloc(task, sizeof(struct scsi_readcapacity16));
+		if (rc16 == NULL) {
+			return NULL;
+		}
+		rc16->returned_lba = htonl(*(uint32_t *)&(task->datain.data[0]));
+		rc16->returned_lba = (rc16->returned_lba << 32) | htonl(*(uint32_t *)&(task->datain.data[4]));
+		rc16->block_length = htonl(*(uint32_t *)&(task->datain.data[8]));
+		rc16->p_type       = (task->datain.data[12] >> 1) & 0x07;
+		rc16->prot_en      = task->datain.data[12] & 0x01;
+		rc16->p_i_exp      = (task->datain.data[13] >> 4) & 0x0f;
+		rc16->lbppbe       = task->datain.data[13] & 0x0f;
+		rc16->lbpme        = !!(task->datain.data[14] & 0x80);
+		rc16->lbprz        = !!(task->datain.data[14] & 0x40);
+		rc16->lalba        = htons(*(uint16_t *)&(task->datain.data[14])) & 0x3fff;
+		return rc16;
+	}
+
+	return NULL;
+}
+
+/*
  * parse the data in blob and calcualte the size of a full
  * readcapacity10 datain structure
  */
@@ -923,6 +953,43 @@ scsi_cdb_synchronizecache10(int lba, int num_blocks, int syncnv, int immed)
 }
 
 
+/*
+ * SERVICEACTIONIN16
+ */
+struct scsi_task *
+scsi_cdb_serviceactionin16(enum scsi_service_action_in sa, uint32_t xferlen)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_SERVICE_ACTION_IN;
+
+	task->cdb[1] = sa;
+
+	*(uint32_t *)&task->cdb[10] = htonl(xferlen);
+
+	task->cdb_size   = 16;
+	task->xfer_dir   = SCSI_XFER_READ;
+	task->expxferlen = xferlen;
+
+	task->params.serviceactionin.sa = sa;
+
+	return task;
+}
+
+/*
+ * READCAPACITY16
+ */
+struct scsi_task *
+scsi_cdb_readcapacity16(void)
+{
+	return scsi_cdb_serviceactionin16(SCSI_READCAPACITY16, 32);
+}
 
 int
 scsi_datain_getfullsize(struct scsi_task *task)
@@ -960,6 +1027,8 @@ scsi_datain_unmarshall(struct scsi_task *task)
 		return NULL;
 	case SCSI_OPCODE_REPORTLUNS:
 		return scsi_reportluns_datain_unmarshall(task);
+	case SCSI_OPCODE_SERVICE_ACTION_IN:
+		return scsi_serviceactionin_datain_unmarshall(task);
 	}
 	return NULL;
 }

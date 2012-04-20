@@ -64,18 +64,22 @@ struct scsi_test tests[] = {
 /* read16 */
 { "T0153_read16_rdprotect",		T0153_read16_rdprotect },
 
+/* readcapacity16*/
+{ "T0160_readcapacity16_simple",	T0160_readcapacity16_simple },
+
 { NULL, NULL }
 };
 
 void print_usage(void)
 {
-	fprintf(stderr, "Usage: iscsi-inq [-?] [-?|--help] [--usage] [-i|--initiator-name=iqn-name]\n"
+	fprintf(stderr, "Usage: iscsi-test [-?] [-?|--help] [--usage] [-t|--test=<test>]\n"
+			"\t\t[-l|--list] [-i|--initiator-name=<iqn-name>]\n"
 			"\t\t<iscsi-url>\n");
 }
 
 void print_help(void)
 {
-	fprintf(stderr, "Usage: iscsi-inq [OPTION...] <iscsi-url>\n");
+	fprintf(stderr, "Usage: iscsi-test [OPTION...] <iscsi-url>\n");
 	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
 	fprintf(stderr, "  -t, --test=test-name              Which test to run. Default is to run all tests.\n");
 	fprintf(stderr, "  -l, --list                        List all tests.\n");

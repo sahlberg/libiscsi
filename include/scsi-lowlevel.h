@@ -30,8 +30,13 @@ enum scsi_opcode {
 	SCSI_OPCODE_VERIFY10           = 0x2F,
 	SCSI_OPCODE_SYNCHRONIZECACHE10 = 0x35,
 	SCSI_OPCODE_READ16             = 0x88,
+	SCSI_OPCODE_SERVICE_ACTION_IN  = 0x9E,
 	SCSI_OPCODE_REPORTLUNS         = 0xA0,
 	SCSI_OPCODE_READ12             = 0xA8
+};
+
+enum scsi_service_action_in {
+	SCSI_READCAPACITY16            = 0x10
 };
 
 /* sense keys */
@@ -107,6 +112,9 @@ struct scsi_modesense6_params {
 	int page_code;
 	int sub_page_code;
 };
+struct scsi_serviceactionin_params {
+	enum scsi_service_action_in sa;
+};
 
 struct scsi_sense {
 	unsigned char       error_type;
@@ -138,14 +146,15 @@ struct scsi_task {
 	int expxferlen;
 	unsigned char cdb[SCSI_CDB_MAX_SIZE];
 	union {
-		struct scsi_read6_params          read6;
-		struct scsi_read10_params         read10;
-		struct scsi_write10_params        write10;
-		struct scsi_verify10_params       verify10;
-		struct scsi_readcapacity10_params readcapacity10;
-		struct scsi_reportluns_params     reportluns;
-		struct scsi_inquiry_params        inquiry;
-		struct scsi_modesense6_params     modesense6;
+		struct scsi_read6_params           read6;
+		struct scsi_read10_params          read10;
+		struct scsi_write10_params         write10;
+		struct scsi_verify10_params        verify10;
+		struct scsi_readcapacity10_params  readcapacity10;
+		struct scsi_reportluns_params      reportluns;
+		struct scsi_inquiry_params         inquiry;
+		struct scsi_modesense6_params      modesense6;
+		struct scsi_serviceactionin_params serviceactionin;
 	} params;
 
 	enum scsi_residual residual_status;
@@ -507,6 +516,18 @@ EXTERN struct scsi_task *scsi_cdb_modesense6(int dbd,
 
 
 
+struct scsi_readcapacity16 {
+       uint64_t returned_lba;
+       uint32_t block_length;
+       uint8_t  p_type;
+       uint8_t  prot_en;
+       uint8_t  p_i_exp;
+       uint8_t  lbppbe;
+       uint8_t  lbpme;
+       uint8_t  lbprz;
+       uint16_t lalba;
+};
+
 EXTERN int scsi_datain_getfullsize(struct scsi_task *task);
 EXTERN void *scsi_datain_unmarshall(struct scsi_task *task);
 
@@ -518,6 +539,8 @@ EXTERN struct scsi_task *scsi_cdb_verify10(uint32_t lba, uint32_t xferlen, int v
 
 EXTERN struct scsi_task *scsi_cdb_synchronizecache10(int lba, int num_blocks,
 			int syncnv, int immed);
+EXTERN struct scsi_task *scsi_cdb_serviceactionin16(enum scsi_service_action_in sa, uint32_t xferlen);
+EXTERN struct scsi_task *scsi_cdb_readcapacity16(void);
 
 
 #endif /* __scsi_lowlevel_h__ */

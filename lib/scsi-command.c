@@ -605,6 +605,27 @@ iscsi_readcapacity10_task(struct iscsi_context *iscsi, int lun, int lba,
 }
 
 struct scsi_task *
+iscsi_readcapacity16_task(struct iscsi_context *iscsi, int lun,
+			   iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_readcapacity16();
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"readcapacity16 cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
 iscsi_read6_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   uint32_t datalen, int blocksize,
 		   iscsi_command_cb cb, void *private_data)
