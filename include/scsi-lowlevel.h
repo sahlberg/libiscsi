@@ -293,6 +293,7 @@ enum scsi_inquiry_pagecode {
 	SCSI_INQUIRY_PAGECODE_SUPPORTED_VPD_PAGES          = 0x00,
 	SCSI_INQUIRY_PAGECODE_UNIT_SERIAL_NUMBER           = 0x80,
 	SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION        = 0x83,
+	SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS                 = 0xB0,
 	SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS = 0xB1,
 	SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING   = 0xB2
 };
@@ -306,6 +307,25 @@ struct scsi_inquiry_supported_pages {
 
 	int num_pages;
 	unsigned char *pages;
+};
+
+struct scsi_inquiry_block_limits {
+	enum scsi_inquiry_peripheral_qualifier periperal_qualifier;
+	enum scsi_inquiry_peripheral_device_type periperal_device_type;
+	enum scsi_inquiry_pagecode pagecode;
+
+	int wsnz;		   		/* write same no zero */
+	uint8_t max_cmp;			/* maximum_compare_and_write_length */
+	uint16_t opt_gran;			/* optimal_transfer_length_granularity */
+	uint32_t max_xfer_len;			/* maximum_transfer_length */
+	uint32_t opt_xfer_len;			/* optimal_transfer_length */
+	uint32_t max_prefetch;			/* maximum_prefetched_xdread_xdwrite_transfer_length */
+	uint32_t max_unmap;			/* maximum_unmap_lba_count */
+	uint32_t max_unmap_bdc;			/* maximum_unmap_block_descriptor_count */
+	uint32_t opt_unmap_gran;		/* optimal_unmap_granularity */
+	int ugavalid;
+	uint32_t unmap_gran_align;		/* unmap_granularity_alignment */
+	uint64_t max_ws_len;			/* maximum_write_same_length */
 };
 
 struct scsi_inquiry_block_device_characteristics {

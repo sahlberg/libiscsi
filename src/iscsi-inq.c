@@ -27,6 +27,22 @@
 const char *initiator = "iqn.2010-11.ronnie:iscsi-inq";
 
 
+void inquiry_block_limits(struct scsi_inquiry_block_limits *inq)
+{
+	printf("wsnz:%d\n", inq->wsnz);
+	printf("maximum compare and write length:%d\n", inq->max_cmp);
+	printf("optimal transfer length granularity:%d\n", inq->opt_gran);
+	printf("maximum transfer length:%d\n", inq->max_xfer_len);
+	printf("optimal transfer length:%d\n",inq->opt_xfer_len);
+	printf("maximum prefetch xdread xdwrite transfer length:%d\n", inq->max_prefetch);
+	printf("maximum unmap lba count:%d\n", inq->max_unmap);
+	printf("maximum unmap block descriptor count:%d\n", inq->max_unmap_bdc);
+	printf("optimal unmap granularity:%d\n", inq->opt_unmap_gran);
+	printf("ugavalid:%d\n", inq->ugavalid);
+	printf("unmap granularity alignment:%d\n", inq->unmap_gran_align);
+	printf("maximum write same length:%d\n", (int)inq->max_ws_len);
+}
+
 void inquiry_logical_block_provisioning(struct scsi_inquiry_logical_block_provisioning *inq)
 {
 	printf("Threshold Exponent:%d\n", inq->threshold_exponent);	
@@ -150,6 +166,9 @@ void do_inquiry(struct iscsi_context *iscsi, int lun, int evpd, int pc)
 			break;
 		case SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION:
 			inquiry_device_identification(inq);
+			break;
+		case SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS:
+			inquiry_block_limits(inq);
 			break;
 		case SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS:
 			inquiry_block_device_characteristics(inq);

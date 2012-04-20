@@ -371,13 +371,13 @@ scsi_inquiry_datain_getfullsize(struct scsi_task *task)
 
 	switch (task->params.inquiry.page_code) {
 	case SCSI_INQUIRY_PAGECODE_SUPPORTED_VPD_PAGES:
-		return task->datain.data[3] + 4;
+	case SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS:
 	case SCSI_INQUIRY_PAGECODE_UNIT_SERIAL_NUMBER:
 		return task->datain.data[3] + 4;
 	case SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION:
-	     return ntohs(*(uint16_t *)&task->datain.data[2]) + 4;
-	case SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS:
-		return task->datain.data[3] + 4;
+	case SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS:
+	case SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING:
+		return ntohs(*(uint16_t *)&task->datain.data[2]) + 4;
 	default:
 		return -1;
 	}
@@ -524,6 +524,34 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 		}
 		return inq;
 	} else if (task->params.inquiry.page_code
+		   == SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS) {
+		struct scsi_inquiry_block_limits *inq;
+
+		inq = scsi_malloc(task,
+		      sizeof(struct scsi_inquiry_block_limits));
+		if (inq == NULL) {
+			return NULL;
+		}
+		inq->periperal_qualifier   = (task->datain.data[0]>>5)&0x07;
+		inq->periperal_device_type = task->datain.data[0]&0x1f;
+		inq->pagecode              = task->datain.data[1];
+
+		inq->wsnz                  = task->datain.data[4] & 0x01;
+		inq->max_cmp               = task->datain.data[5];
+		inq->opt_gran              = ntohs(*(uint16_t *)&task->datain.data[6]);
+		inq->max_xfer_len          = ntohl(*(uint32_t *)&task->datain.data[8]);
+		inq->opt_xfer_len          = ntohl(*(uint32_t *)&task->datain.data[12]);
+		inq->max_prefetch          = ntohl(*(uint32_t *)&task->datain.data[16]);
+		inq->max_unmap             = ntohl(*(uint32_t *)&task->datain.data[20]);
+		inq->max_unmap_bdc         = ntohl(*(uint32_t *)&task->datain.data[24]);
+		inq->opt_unmap_gran        = ntohl(*(uint32_t *)&task->datain.data[28]);
+		inq->ugavalid              = !!(task->datain.data[32]&0x80);
+		inq->unmap_gran_align      = ntohl(*(uint32_t *)&task->datain.data[32]) & 0x7fffffff;
+		inq->max_ws_len            = ntohl(*(uint32_t *)&task->datain.data[36]);
+		inq->max_ws_len            = (inq->max_ws_len << 32) | ntohl(*(uint32_t *)&task->datain.data[40]);
+
+		return inq;
+	} else if (task->params.inquiry.page_code
 		   == SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS) {
 		struct scsi_inquiry_block_device_characteristics *inq;
 
@@ -536,8 +564,7 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 		inq->periperal_device_type = task->datain.data[0]&0x1f;
 		inq->pagecode              = task->datain.data[1];
 
-		inq->medium_rotation_rate  = ntohs(*(uint16_t *)
-						   &task->datain.data[4]);
+		inq->medium_rotation_rate  = ntohs(*(uint16_t *)&task->datain.data[4]);
 		return inq;
 	} else if (task->params.inquiry.page_code
 		   == SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING) {
