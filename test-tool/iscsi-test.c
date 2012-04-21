@@ -70,6 +70,7 @@ struct scsi_test tests[] = {
 
 /* unmap*/
 { "T0170_unmap_simple",			T0170_unmap_simple },
+{ "T0171_unmap_zero",			T0171_unmap_zero },
 
 { NULL, NULL }
 };
