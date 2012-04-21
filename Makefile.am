@@ -63,7 +63,8 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0132_verify10_mismatch_no_cmp.c \
 	test-tool/0143_read12_rdprotect.c \
 	test-tool/0153_read16_rdprotect.c \
-	test-tool/0160_readcapacity16_simple.c
+	test-tool/0160_readcapacity16_simple.c \
+	test-tool/0170_unmap_simple.c
 endif
 
 # LD_PRELOAD library.

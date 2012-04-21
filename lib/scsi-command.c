@@ -794,6 +794,53 @@ iscsi_synchronizecache10_task(struct iscsi_context *iscsi, int lun, int lba,
 	return task;
 }
 
+struct scsi_task *
+iscsi_unmap_task(struct iscsi_context *iscsi, int lun, int anchor, int group,
+		 struct unmap_list *list, int list_len,
+		 iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+	struct iscsi_data outdata;
+	unsigned char *data;
+	int xferlen;
+	int i;
+
+	xferlen = 8 + list_len * 16;
+
+	task = scsi_cdb_unmap(anchor, group, xferlen);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"unmap cdb.");
+		return NULL;
+	}
+
+	data = scsi_malloc(task, xferlen);
+	if (data == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"unmap parameters.");
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+	*((uint16_t *)&data[0]) = htons(xferlen - 2);
+	*((uint16_t *)&data[2]) = htons(xferlen - 8);
+	for (i = 0; i < list_len; i++) {
+		*((uint32_t *)&data[8 + 16 * i])     = htonl(list[0].lba >> 32);
+		*((uint32_t *)&data[8 + 16 * i + 4]) = htonl(list[0].lba & 0xffffffff);
+		*((uint32_t *)&data[8 + 16 * i + 8]) = htonl(list[0].num);
+	}
+
+	outdata.data = data;
+	outdata.size = xferlen;
+
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, &outdata,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
 unsigned char *
 iscsi_get_user_in_buffer(struct iscsi_context *iscsi, struct iscsi_in_pdu *in, uint32_t pos, ssize_t *count)
 {

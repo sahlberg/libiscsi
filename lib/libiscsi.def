@@ -91,4 +91,5 @@ scsi_cdb_write10
 scsi_cdb_synchronizecache10
 scsi_cdb_readcapacity16
 scsi_cdb_serviceactionin16
+scsi_cdb_unmap
 

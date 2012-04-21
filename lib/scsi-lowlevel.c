@@ -55,7 +55,7 @@ scsi_free_scsi_task(struct scsi_task *task)
 	free(task);
 }
 
-static void *
+void *
 scsi_malloc(struct scsi_task *task, size_t size)
 {
 	struct scsi_allocated_memory *mem;
@@ -758,6 +758,36 @@ scsi_cdb_verify10(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
 	return task;
 }
 
+
+/*
+ * UNMAP
+ */
+struct scsi_task *
+scsi_cdb_unmap(int anchor, int group, uint16_t xferlen)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_UNMAP;
+
+	if (anchor) {
+		task->cdb[1] |= 0x01;
+	}
+	task->cdb[6] |= group & 0x1f;
+
+	*(uint16_t *)&task->cdb[7] = htons(xferlen);
+
+	task->cdb_size = 10;
+	task->xfer_dir = SCSI_XFER_WRITE;
+	task->expxferlen = xferlen;
+
+	return task;
+}
 
 /*
  * MODESENSE6

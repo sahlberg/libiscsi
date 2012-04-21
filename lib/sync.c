@@ -362,6 +362,26 @@ iscsi_verify10_sync(struct iscsi_context *iscsi, int lun, unsigned char *data, u
 }
 
 struct scsi_task *
+iscsi_unmap_sync(struct iscsi_context *iscsi, int lun, int anchor, int group,
+		 struct unmap_list *list, int list_len)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_unmap_task(iscsi, lun, anchor, group, list, list_len,
+				       scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi,
+				"Failed to send UNMAP command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
 iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
 			struct scsi_task *task, struct iscsi_data *data)
 {

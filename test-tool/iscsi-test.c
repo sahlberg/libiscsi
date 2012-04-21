@@ -29,6 +29,7 @@
 #include "iscsi-test.h"
 
 const char *initiator = "iqn.2010-11.iscsi-test";
+int data_loss = 0;
 
 struct scsi_test {
        const char *name;
@@ -66,6 +67,9 @@ struct scsi_test tests[] = {
 
 /* readcapacity16*/
 { "T0160_readcapacity16_simple",	T0160_readcapacity16_simple },
+
+/* unmap*/
+{ "T0170_unmap_simple",			T0170_unmap_simple },
 
 { NULL, NULL }
 };
@@ -161,6 +165,7 @@ int main(int argc, const char *argv[])
 		{ "list", 'l', POPT_ARG_NONE, &list_tests, 0, "List all tests", NULL },
 		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
 		{ "test", 't', POPT_ARG_STRING, &testname, 0, "Which test to run", "testname" },
+		{ "dataloss", 0, POPT_ARG_NONE, &data_loss, 0, "Allow destructuve tests", NULL },
 		POPT_TABLEEND
 	};
 

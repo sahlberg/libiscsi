@@ -18,6 +18,7 @@
 */
 
 struct iscsi_context *iscsi_context_login(const char *initiatorname, const char *url, int *lun);
+extern int data_loss;
 
 
 int T0100_read10_simple(const char *initiator, const char *url);
@@ -43,3 +44,5 @@ int T0143_read12_rdprotect(const char *initiator, const char *url);
 int T0153_read16_rdprotect(const char *initiator, const char *url);
 
 int T0160_readcapacity16_simple(const char *initiator, const char *url);
+
+int T0170_unmap_simple(const char *initiator, const char *url);

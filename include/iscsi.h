@@ -613,6 +613,16 @@ iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd,
 			   unsigned char alloc_len, iscsi_command_cb cb,
 			   void *private_data);
 
+struct unmap_list {
+       uint64_t	  lba;
+       uint32_t	  num;
+};
+
+EXTERN struct scsi_task *
+iscsi_unmap_task(struct iscsi_context *iscsi, int lun, int anchor, int group,
+		 struct unmap_list *list, int list_len,
+		 iscsi_command_cb cb, void *private_data);
+
 
 /*
  * Sync commands for SCSI
@@ -661,6 +671,10 @@ iscsi_verify10_sync(struct iscsi_context *iscsi, int lun,
 		    unsigned char *data, uint32_t datalen, uint32_t lba,
 		    int vprotect, int dpo, int bytchk, 
 		    int blocksize);
+
+EXTERN struct scsi_task *
+iscsi_unmap_sync(struct iscsi_context *iscsi, int lun, int anchor, int group,
+		 struct unmap_list *list, int list_len);
 
 /*
  * This function is used when  the application wants to specify its own buffers to read the data
