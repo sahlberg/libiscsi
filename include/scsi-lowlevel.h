@@ -69,6 +69,7 @@ EXTERN const char *scsi_sense_key_str(int key);
 #define SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB		0x2400
 #define SCSI_SENSE_ASCQ_LOGICAL_UNIT_NOT_SUPPORTED	0x2500
 #define SCSI_SENSE_ASCQ_BUS_RESET			0x2900
+#define SCSI_SENSE_ASCQ_INTERNAL_TARGET_FAILURE	        0x4400
 
 EXTERN const char *scsi_sense_ascq_str(int ascq);
 

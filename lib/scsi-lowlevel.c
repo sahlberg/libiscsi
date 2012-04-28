@@ -95,6 +95,8 @@ const char *
 scsi_sense_key_str(int key)
 {
 	struct value_string keys[] = {
+		{SCSI_SENSE_HARDWARE_ERROR,
+		 "HARDWARE_ERROR"},
 		{SCSI_SENSE_ILLEGAL_REQUEST,
 		 "ILLEGAL_REQUEST"},
 		{SCSI_SENSE_UNIT_ATTENTION,
@@ -119,6 +121,8 @@ scsi_sense_ascq_str(int ascq)
 		 "LOGICAL_UNIT_NOT_SUPPORTED"},
 		{SCSI_SENSE_ASCQ_BUS_RESET,
 		 "BUS_RESET"},
+		{SCSI_SENSE_ASCQ_INTERNAL_TARGET_FAILURE,
+		 "INTERNAL_TARGET_FAILURE"},
 	       {0, NULL}
 	};
 
