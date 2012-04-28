@@ -790,6 +790,50 @@ scsi_cdb_unmap(int anchor, int group, uint16_t xferlen)
 }
 
 /*
+ * WRITE_SAME10
+ */
+struct scsi_task *
+scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint32_t lba, int group, uint16_t num_blocks)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_WRITE_SAME10;
+
+	if (wrprotect) {
+		task->cdb[1] |= ((wrprotect & 0x7) << 5);
+	}
+	if (anchor) {
+		task->cdb[1] |= 0x10;
+	}
+	if (unmap) {
+		task->cdb[1] |= 0x08;
+	}
+	if (pbdata) {
+		task->cdb[1] |= 0x04;
+	}
+	if (lbdata) {
+		task->cdb[1] |= 0x02;
+	}
+	*(uint32_t *)&task->cdb[2] = htonl(lba);
+	if (group) {
+		task->cdb[6] |= (group & 0x1f);
+	}
+	*(uint16_t *)&task->cdb[7] = htons(num_blocks);
+
+	task->cdb_size = 10;
+	task->xfer_dir = SCSI_XFER_WRITE;
+	task->expxferlen = 512;
+
+	return task;
+}
+
+/*
  * MODESENSE6
  */
 struct scsi_task *
