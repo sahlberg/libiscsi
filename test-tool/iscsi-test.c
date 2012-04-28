@@ -76,6 +76,10 @@ struct scsi_test tests[] = {
 { "T0180_writesame10_unmap",		T0180_writesame10_unmap },
 { "T0181_writesame10_unmap_unaligned",	T0181_writesame10_unmap_unaligned },
 
+/* writesame16*/
+{ "T0190_writesame16_unmap",		T0190_writesame16_unmap },
+{ "T0191_writesame16_unmap_unaligned",	T0191_writesame16_unmap_unaligned },
+
 { NULL, NULL }
 };
 

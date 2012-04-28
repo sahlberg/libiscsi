@@ -49,6 +49,8 @@ iscsi_read6_task
 iscsi_read10_task
 iscsi_verify10_task
 iscsi_write10_task
+iscsi_writesame10_task
+iscsi_writesame16_task
 iscsi_modesense6_task
 iscsi_scsi_command_sync
 iscsi_reportluns_sync
@@ -61,6 +63,8 @@ iscsi_read6_sync
 iscsi_read10_sync
 iscsi_verify10_sync
 iscsi_write10_sync
+iscsi_writesame10_sync
+iscsi_writesame16_sync
 iscsi_scsi_task_cancel
 iscsi_scsi_cancel_all_tasks
 poll
@@ -88,6 +92,8 @@ scsi_cdb_read6
 scsi_cdb_read10
 scsi_cdb_verify10
 scsi_cdb_write10
+scsi_cdb_writesame10
+scsi_cdb_writesame16
 scsi_cdb_synchronizecache10
 scsi_cdb_readcapacity16
 scsi_cdb_serviceactionin16

@@ -50,3 +50,6 @@ int T0171_unmap_zero(const char *initiator, const char *url);
 
 int T0180_writesame10_unmap(const char *initiator, const char *url);
 int T0181_writesame10_unmap_unaligned(const char *initiator, const char *url);
+
+int T0190_writesame16_unmap(const char *initiator, const char *url);
+int T0191_writesame16_unmap_unaligned(const char *initiator, const char *url);

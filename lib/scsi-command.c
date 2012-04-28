@@ -837,6 +837,47 @@ iscsi_writesame10_task(struct iscsi_context *iscsi, int lun,
 	return task;
 }
 
+struct scsi_task *
+iscsi_writesame16_task(struct iscsi_context *iscsi, int lun,
+		       unsigned char *data, uint32_t datalen,
+		       uint64_t lba, uint32_t num_blocks,
+		       int anchor, int unmap, int pbdata, int lbdata,
+		       int wrprotect, int group,
+		       iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+	struct iscsi_data outdata;
+
+	task = scsi_cdb_writesame16(wrprotect, anchor, unmap, pbdata, lbdata, lba, group, num_blocks);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"writesame16 cdb.");
+		return NULL;
+	}
+
+	if (datalen) {
+		outdata.data = data;
+		outdata.size = datalen;
+		task->expxferlen = datalen;
+
+		if (iscsi_scsi_command_async(iscsi, lun, task, cb, &outdata,
+				       private_data) != 0) {
+			scsi_free_scsi_task(task);
+			return NULL;
+		}
+	} else {
+		task->expxferlen = 0;
+		task->xfer_dir = SCSI_XFER_NONE;
+
+		if (iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
+				       private_data) != 0) {
+			scsi_free_scsi_task(task);
+			return NULL;
+		}
+	}
+
+	return task;
+}
 
 struct scsi_task *
 iscsi_unmap_task(struct iscsi_context *iscsi, int lun, int anchor, int group,

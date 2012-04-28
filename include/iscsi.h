@@ -615,6 +615,13 @@ iscsi_writesame10_task(struct iscsi_context *iscsi, int lun,
 		       int wrprotect, int group,
 		       iscsi_command_cb cb, void *private_data);
 EXTERN struct scsi_task *
+iscsi_writesame16_task(struct iscsi_context *iscsi, int lun,
+		       unsigned char *data, uint32_t datalen,
+		       uint64_t lba, uint32_t num_blocks,
+		       int anchor, int unmap, int pbdata, int lbdata,
+		       int wrprotect, int group,
+		       iscsi_command_cb cb, void *private_data);
+EXTERN struct scsi_task *
 iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd,
 			   int pc, int page_code, int sub_page_code,
 			   unsigned char alloc_len, iscsi_command_cb cb,
@@ -683,6 +690,13 @@ EXTERN struct scsi_task *
 iscsi_writesame10_sync(struct iscsi_context *iscsi, int lun,
 		       unsigned char *data, uint32_t datalen,
 		       uint32_t lba, uint16_t num_blocks,
+		       int anchor, int unmap, int pbdata, int lbdata,
+		       int wrprotect, int group);
+
+EXTERN struct scsi_task *
+iscsi_writesame16_sync(struct iscsi_context *iscsi, int lun,
+		       unsigned char *data, uint32_t datalen,
+		       uint64_t lba, uint32_t num_blocks,
 		       int anchor, int unmap, int pbdata, int lbdata,
 		       int wrprotect, int group);
 
