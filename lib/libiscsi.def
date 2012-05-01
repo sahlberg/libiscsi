@@ -47,8 +47,10 @@ iscsi_readcapacity16_task
 iscsi_synchronizecache10_task
 iscsi_read6_task
 iscsi_read10_task
+iscsi_read12_task
 iscsi_verify10_task
 iscsi_write10_task
+iscsi_write12_task
 iscsi_writesame10_task
 iscsi_writesame16_task
 iscsi_modesense6_task
@@ -61,8 +63,10 @@ iscsi_readcapacity16_sync
 iscsi_synchronizecache10_sync
 iscsi_read6_sync
 iscsi_read10_sync
+iscsi_read12_sync
 iscsi_verify10_sync
 iscsi_write10_sync
+iscsi_write12_sync
 iscsi_writesame10_sync
 iscsi_writesame16_sync
 iscsi_scsi_task_cancel
