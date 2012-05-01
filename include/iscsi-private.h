@@ -87,6 +87,7 @@ struct iscsi_context {
 	int secneg_phase;
 	int login_attempts;
 	int is_loggedin;
+	int is_reconnecting;
 
 	int chap_a;
 	int chap_i;
@@ -109,6 +110,9 @@ struct iscsi_context {
 	enum iscsi_initial_r2t use_initial_r2t;
 	enum iscsi_immediate_data want_immediate_data;
 	enum iscsi_immediate_data use_immediate_data;
+
+	int lun;
+	const char *portal;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40
@@ -260,6 +264,8 @@ unsigned char *scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos
 unsigned long crc32c(char *buf, int len);
 
 struct scsi_task *iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu);
+
+int iscsi_reconnect(struct iscsi_context *iscsi);
 
 #endif /* __iscsi_private_h__ */
 

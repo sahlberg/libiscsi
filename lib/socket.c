@@ -410,6 +410,11 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 		}
 		iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR, NULL,
 					iscsi->connect_data);
+		if (iscsi->is_loggedin) {
+			if (iscsi_reconnect(iscsi) == 0) {
+				return 0;
+			}
+		}
 		return -1;
 	}
 	if (revents & POLLHUP) {
@@ -417,6 +422,11 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 				"socket error.");
 		iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR, NULL,
 					iscsi->connect_data);
+		if (iscsi->is_loggedin) {
+			if (iscsi_reconnect(iscsi) == 0) {
+				return 0;
+			}
+		}
 		return -1;
 	}
 
@@ -434,6 +444,11 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 					strerror(err), err);
 			iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR,
 						NULL, iscsi->connect_data);
+			if (iscsi->is_loggedin) {
+				if (iscsi_reconnect(iscsi) == 0) {
+					return 0;
+				}
+			}
 			return -1;
 		}
 
@@ -448,12 +463,23 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 
 	if (revents & POLLOUT && iscsi->outqueue != NULL) {
 		if (iscsi_write_to_socket(iscsi) != 0) {
+			if (iscsi->is_loggedin) {
+				if (iscsi_reconnect(iscsi) == 0) {
+					return 0;
+				}
+			}
 			return -1;
 		}
 	}
 	if (revents & POLLIN) {
-		if (iscsi_read_from_socket(iscsi) != 0)
+		if (iscsi_read_from_socket(iscsi) != 0) {
+			if (iscsi->is_loggedin) {
+				if (iscsi_reconnect(iscsi) == 0) {
+					return 0;
+				}
+			}
 			return -1;
+		}
 	}
 
 	return 0;

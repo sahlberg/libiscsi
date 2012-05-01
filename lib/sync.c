@@ -38,19 +38,29 @@ static void
 event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 {
 	struct pollfd pfd;
+	int ret;
 
 	while (state->finished == 0) {
 		pfd.fd = iscsi_get_fd(iscsi);
 		pfd.events = iscsi_which_events(iscsi);
 
-		if (poll(&pfd, 1, -1) < 0) {
+		if ((ret = poll(&pfd, 1, 1000)) < 0) {
 			iscsi_set_error(iscsi, "Poll failed");
 			return;
 		}
+		if (ret == 0) {
+			/* poll timedout, try again */
+			continue;
+		}
 		if (iscsi_service(iscsi, pfd.revents) < 0) {
+			/* if we are reconnecting we just try and try again */
+			if (iscsi->is_reconnecting) {
+				continue;
+			}
+
 			iscsi_set_error(iscsi,
-					"iscsi_service failed with : %s",
-					iscsi_get_error(iscsi));
+				"iscsi_service failed with : %s",
+				iscsi_get_error(iscsi));
 			return;
 		}
 	}

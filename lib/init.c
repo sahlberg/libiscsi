@@ -188,15 +188,25 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	while ((pdu = iscsi->outqueue)) {
 		SLIST_REMOVE(&iscsi->outqueue, pdu);
 		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
-			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-				      pdu->private_data);
+			/* If an error happened during connect/login, we dont want to
+			   call any of the callbacks.
+			 */
+			if (iscsi->is_loggedin) {
+				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
+						pdu->private_data);
+			}		      
 		}
 		iscsi_free_pdu(iscsi, pdu);
 	}
 	while ((pdu = iscsi->waitpdu)) {
 		SLIST_REMOVE(&iscsi->waitpdu, pdu);
-		pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-				     pdu->private_data);
+		/* If an error happened during connect/login, we dont want to
+		   call any of the callbacks.
+		 */
+		if (iscsi->is_loggedin) {
+			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
+					pdu->private_data);
+		}
 		iscsi_free_pdu(iscsi, pdu);
 	}
 
@@ -211,6 +221,9 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 
 	free(discard_const(iscsi->alias));
 	iscsi->alias = NULL;
+
+	free(discard_const(iscsi->portal));
+	iscsi->portal = NULL;
 
 	if (iscsi->incoming != NULL) {
 		iscsi_free_iscsi_in_pdu(iscsi->incoming);
@@ -227,7 +240,6 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 
 	free(discard_const(iscsi->passwd));
 	iscsi->passwd = NULL;
-
 
 	free(discard_const(iscsi->chap_c));
 	iscsi->chap_c = NULL;
