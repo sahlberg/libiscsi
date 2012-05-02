@@ -28,11 +28,13 @@ enum scsi_opcode {
 	SCSI_OPCODE_READ10             = 0x28,
 	SCSI_OPCODE_WRITE10            = 0x2A,
 	SCSI_OPCODE_VERIFY10           = 0x2F,
+	SCSI_OPCODE_PREFETCH10         = 0x34,
 	SCSI_OPCODE_SYNCHRONIZECACHE10 = 0x35,
 	SCSI_OPCODE_WRITE_SAME10       = 0x41,
 	SCSI_OPCODE_UNMAP              = 0x42,
 	SCSI_OPCODE_READ16             = 0x88,
 	SCSI_OPCODE_WRITE16            = 0x8A,
+	SCSI_OPCODE_PREFETCH16         = 0x90,
 	SCSI_OPCODE_WRITE_SAME16       = 0x93,
 	SCSI_OPCODE_SERVICE_ACTION_IN  = 0x9E,
 	SCSI_OPCODE_REPORTLUNS         = 0xA0,
@@ -593,6 +595,8 @@ EXTERN struct scsi_task *scsi_cdb_readcapacity16(void);
 EXTERN struct scsi_task *scsi_cdb_unmap(int anchor, int group, uint16_t xferlen);
 EXTERN struct scsi_task *scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint32_t lba, int group, uint16_t num_blocks);
 EXTERN struct scsi_task *scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint64_t lba, int group, uint32_t num_blocks);
+EXTERN struct scsi_task *scsi_cdb_prefetch10(uint32_t lba, int num_blocks, int immed, int group);
+EXTERN struct scsi_task *scsi_cdb_prefetch16(uint64_t lba, int num_blocks, int immed, int group);
 
 void *scsi_malloc(struct scsi_task *task, size_t size);
 

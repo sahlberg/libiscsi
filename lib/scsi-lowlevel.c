@@ -1289,6 +1289,68 @@ scsi_cdb_synchronizecache10(int lba, int num_blocks, int syncnv, int immed)
 
 
 /*
+ * PREFETCH10
+ */
+struct scsi_task *
+scsi_cdb_prefetch10(uint32_t lba, int num_blocks, int immed, int group)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_PREFETCH10;
+
+	if (immed) {
+		task->cdb[1] |= 0x02;
+	}
+	*(uint32_t *)&task->cdb[2] = htonl(lba);
+	task->cdb[6] |= group & 0x1f;
+	*(uint16_t *)&task->cdb[7] = htons(num_blocks);
+
+	task->cdb_size   = 10;
+	task->xfer_dir   = SCSI_XFER_NONE;
+	task->expxferlen = 0;
+
+	return task;
+}
+
+/*
+ * PREFETCH16
+ */
+struct scsi_task *
+scsi_cdb_prefetch16(uint64_t lba, int num_blocks, int immed, int group)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_PREFETCH16;
+
+	if (immed) {
+		task->cdb[1] |= 0x02;
+	}
+	*(uint32_t *)&task->cdb[2]  = htonl(lba >> 32);
+	*(uint32_t *)&task->cdb[6]  = htonl(lba & 0xffffffff);
+	*(uint32_t *)&task->cdb[10] = htonl(num_blocks);
+
+	task->cdb[14] |= group & 0x1f;
+
+	task->cdb_size   = 16;
+	task->xfer_dir   = SCSI_XFER_NONE;
+	task->expxferlen = 0;
+
+	return task;
+}
+
+/*
  * SERVICEACTIONIN16
  */
 struct scsi_task *
