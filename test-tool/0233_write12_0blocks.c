@@ -111,7 +111,7 @@ int T0233_write12_0blocks(const char *initiator, const char *url)
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
-		printf("Write12 command: Should fail when reading 0blocks beyond end\n");
+		printf("Write12 command: Should fail when writing 0blocks beyond end\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;

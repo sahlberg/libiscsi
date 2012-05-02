@@ -70,7 +70,7 @@ int T0224_write16_beyondeol(const char *initiator, const char *url)
 	ret = 0;
 
 	/* read 1 - 256 blocks beyond the end of the device */
-	printf("Reading 1-256 blocks beyond end-of-device ... ");
+	printf("Writing 1-256 blocks beyond end-of-device ... ");
 	for (i = 2; i <= 257; i++) {
 		task = iscsi_write16_sync(iscsi, lun, num_blocks, data, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
@@ -81,7 +81,7 @@ int T0224_write16_beyondeol(const char *initiator, const char *url)
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("Write16 command should fail when reading beyond end of device\n");
+			printf("Write16 command should fail when writing beyond end of device\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;
