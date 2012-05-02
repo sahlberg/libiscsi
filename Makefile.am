@@ -68,9 +68,11 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0180_writesame10_unmap.c test-tool/0181_writesame10_unmap_unaligned.c \
 	test-tool/0190_writesame16_unmap.c test-tool/0191_writesame16_unmap_unaligned.c \
 	test-tool/0200_read16_simple.c test-tool/0201_read16_rdprotect.c \
-	test-tool/0202_read16_flags.c  test-tool/0203_read16_0blocks.c \
+	test-tool/0202_read16_flags.c  test-tool/0203_read16_0blocks.c   \
+	test-tool/0204_read16_beyondeol.c  \
 	test-tool/0210_read12_simple.c test-tool/0211_read12_rdprotect.c \
-	test-tool/0212_read12_flags.c  test-tool/0213_read12_0blocks.c
+	test-tool/0212_read12_flags.c  test-tool/0213_read12_0blocks.c   \
+	test-tool/0214_read12_beyondeol.c
 endif
 
 # LD_PRELOAD library.

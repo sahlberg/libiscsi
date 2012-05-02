@@ -58,8 +58,10 @@ int T0200_read16_simple(const char *initiator, const char *url);
 int T0201_read16_rdprotect(const char *initiator, const char *url);
 int T0202_read16_flags(const char *initiator, const char *url);
 int T0203_read16_0blocks(const char *initiator, const char *url);
+int T0204_read16_beyondeol(const char *initiator, const char *url);
 
 int T0210_read12_simple(const char *initiator, const char *url);
 int T0211_read12_rdprotect(const char *initiator, const char *url);
 int T0212_read12_flags(const char *initiator, const char *url);
 int T0213_read12_0blocks(const char *initiator, const char *url);
+int T0214_read12_beyondeol(const char *initiator, const char *url);
