@@ -70,7 +70,13 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0204_read16_beyondeol.c  \
 	test-tool/0210_read12_simple.c test-tool/0211_read12_rdprotect.c \
 	test-tool/0212_read12_flags.c  test-tool/0213_read12_0blocks.c   \
-	test-tool/0214_read12_beyondeol.c
+	test-tool/0214_read12_beyondeol.c \
+	test-tool/0220_write16_simple.c test-tool/0221_write16_wrprotect.c \
+	test-tool/0222_write16_flags.c  test-tool/0223_write16_0blocks.c   \
+	test-tool/0224_write16_beyondeol.c \
+	test-tool/0230_write12_simple.c test-tool/0231_write12_wrprotect.c \
+	test-tool/0232_write12_flags.c  test-tool/0233_write12_0blocks.c   \
+	test-tool/0234_write12_beyondeol.c
 endif
 
 # LD_PRELOAD library.

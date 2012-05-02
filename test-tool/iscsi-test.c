@@ -88,6 +88,20 @@ struct scsi_test tests[] = {
 { "T0213_read12_0blocks",		T0213_read12_0blocks },
 { "T0214_read12_beyondeol",		T0214_read12_beyondeol },
 
+/* write16*/
+{ "T0220_write16_simple",		T0220_write16_simple },
+{ "T0221_write16_wrprotect",		T0221_write16_wrprotect },
+{ "T0222_write16_flags",	       	T0222_write16_flags },
+{ "T0223_write16_0blocks",		T0223_write16_0blocks },
+{ "T0224_write16_beyondeol",		T0224_write16_beyondeol },
+
+/* write12*/
+{ "T0230_write12_simple",		T0230_write12_simple },
+{ "T0231_write12_wrprotect",		T0231_write12_wrprotect },
+{ "T0232_write12_flags",	       	T0232_write12_flags },
+{ "T0233_write12_0blocks",		T0233_write12_0blocks },
+{ "T0234_write12_beyondeol",		T0234_write12_beyondeol },
+
 { NULL, NULL }
 };
 
