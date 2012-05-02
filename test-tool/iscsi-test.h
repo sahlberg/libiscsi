@@ -56,6 +56,8 @@ int T0191_writesame16_unmap_unaligned(const char *initiator, const char *url);
 
 int T0200_read16_simple(const char *initiator, const char *url);
 int T0201_read16_rdprotect(const char *initiator, const char *url);
+int T0202_read16_flags(const char *initiator, const char *url);
 
 int T0210_read12_simple(const char *initiator, const char *url);
 int T0211_read12_rdprotect(const char *initiator, const char *url);
+int T0212_read12_flags(const char *initiator, const char *url);
