@@ -79,7 +79,7 @@ int T0203_read16_0blocks(const char *initiator, const char *url)
 	printf("[OK]\n");
 
 	printf("Read16 0blocks at LBA:<end-of-disk> ");
-	task = iscsi_read16_sync(iscsi, lun, num_blocks - 1, 0, block_size, 0, 0, 0, 0, 0);
+	task = iscsi_read16_sync(iscsi, lun, num_blocks, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send read16 command: %s\n", iscsi_get_error(iscsi));
@@ -96,7 +96,7 @@ int T0203_read16_0blocks(const char *initiator, const char *url)
 	printf("[OK]\n");
 
 	printf("Read16 0blocks at LBA:<beyond end-of-disk> ");
-	task = iscsi_read16_sync(iscsi, lun, num_blocks , 0, block_size, 0, 0, 0, 0, 0);
+	task = iscsi_read16_sync(iscsi, lun, num_blocks + 1, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send read16 command: %s\n", iscsi_get_error(iscsi));
