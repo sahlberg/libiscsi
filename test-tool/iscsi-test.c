@@ -84,11 +84,13 @@ struct scsi_test tests[] = {
 { "T0200_read16_simple",		T0200_read16_simple },
 { "T0201_read16_rdprotect",		T0201_read16_rdprotect },
 { "T0202_read16_flags",			T0202_read16_flags },
+{ "T0203_read16_0blocks",		T0203_read16_0blocks },
 
 /* read12*/
 { "T0210_read12_simple",		T0210_read12_simple },
 { "T0211_read12_rdprotect",		T0211_read12_rdprotect },
 { "T0212_read12_flags",			T0212_read12_flags },
+{ "T0213_read12_0blocks",		T0213_read12_0blocks },
 
 { NULL, NULL }
 };
