@@ -702,7 +702,7 @@ iscsi_write12_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 EXTERN struct scsi_task *
 iscsi_read16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		  uint32_t datalen, int blocksize,
-int rdprotect, int dpo, int fua, int fua_nv, int group_number);
+		  int rdprotect, int dpo, int fua, int fua_nv, int group_number);
 
 EXTERN struct scsi_task *
 iscsi_write16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
