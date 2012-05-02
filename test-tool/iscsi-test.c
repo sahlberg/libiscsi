@@ -59,12 +59,6 @@ struct scsi_test tests[] = {
 { "T0131_verify10_mismatch",		T0131_verify10_mismatch },
 { "T0132_verify10_mismatch_no_cmp",	T0132_verify10_mismatch_no_cmp },
 
-/* read12 */
-{ "T0143_read12_rdprotect",		T0143_read12_rdprotect },
-
-/* read16 */
-{ "T0153_read16_rdprotect",		T0153_read16_rdprotect },
-
 /* readcapacity16*/
 { "T0160_readcapacity16_simple",	T0160_readcapacity16_simple },
 

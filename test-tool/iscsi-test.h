@@ -39,10 +39,6 @@ int T0130_verify10_simple(const char *initiator, const char *url);
 int T0131_verify10_mismatch(const char *initiator, const char *url);
 int T0132_verify10_mismatch_no_cmp(const char *initiator, const char *url);
 
-int T0143_read12_rdprotect(const char *initiator, const char *url);
-
-int T0153_read16_rdprotect(const char *initiator, const char *url);
-
 int T0160_readcapacity16_simple(const char *initiator, const char *url);
 
 int T0170_unmap_simple(const char *initiator, const char *url);
