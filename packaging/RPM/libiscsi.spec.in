@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.3.0
+Version: 1.4.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -91,6 +91,13 @@ The libiscsi-devel package includes the header files for libiscsi.
 %{_libdir}/libiscsi.so
 
 %changelog
+* Thu May 3 2012 : 1.4.0
+ - Add WRITESAME10/16 and tests for them
+ - Add READ/WRITE12/16 and tests for them
+ - Add PREFETCH10/16 and tests for them
+ - Add automatic reconnect. If being logged in to a target
+   and the tcp session is torn down, then try to reconnect
+   and re-drive the i/o in flight.
 * Mon Apr 23 2012 : 1.3.0
  - Add READCAPACITY16 support
  - Add VPD pages for thin-provisioning
