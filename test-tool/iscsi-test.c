@@ -102,6 +102,12 @@ struct scsi_test tests[] = {
 { "T0233_write12_0blocks",		T0233_write12_0blocks },
 { "T0234_write12_beyondeol",		T0234_write12_beyondeol },
 
+/* prefetch10*/
+{ "T0240_prefetch10_simple",		T0240_prefetch10_simple },
+
+/* prefetch16*/
+{ "T0250_prefetch16_simple",		T0250_prefetch16_simple },
+
 { NULL, NULL }
 };
 

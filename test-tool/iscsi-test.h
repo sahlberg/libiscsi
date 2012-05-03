@@ -74,3 +74,6 @@ int T0232_write12_flags(const char *initiator, const char *url);
 int T0233_write12_0blocks(const char *initiator, const char *url);
 int T0234_write12_beyondeol(const char *initiator, const char *url);
 
+int T0240_prefetch10_simple(const char *initiator, const char *url);
+
+int T0250_prefetch16_simple(const char *initiator, const char *url);
