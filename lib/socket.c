@@ -235,6 +235,14 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		return -1;
 	}
 	if (socket_count == 0) {
+		int ret, err = 0;
+		socklen_t err_size = sizeof(err);
+
+		ret = getsockopt(iscsi->fd, SOL_SOCKET, SO_ERROR, &err, &err_size);
+		/* someone just called us without the socket being readable */
+		if (ret == 0 && err == 0) {
+			return 0;
+		}
 		iscsi_set_error(iscsi, "Socket failure. Socket is readable but no bytes available in FIONREAD");
 		return -1;
 	}
