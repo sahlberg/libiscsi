@@ -61,8 +61,8 @@ EXTERN int iscsi_service(struct iscsi_context *iscsi, int revents);
 EXTERN int iscsi_queue_length(struct iscsi_context *iscsi);
 
 /*
- * To set tcp keepalive for the session
- * ONLY available on platforms with tcp keepalive socket options
+ * To set tcp keepalive for the session.
+ * Only options supported by given platform (if any) are set.
  */
 int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval);
 
