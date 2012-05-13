@@ -2,6 +2,7 @@
 /depcomp
 /aclocal.m4
 /missing
+/m4/
 /config.guess
 /config.sub
 /install-sh
