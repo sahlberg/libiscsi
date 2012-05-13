@@ -16,6 +16,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
