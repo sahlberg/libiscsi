@@ -1,6 +1,5 @@
 LIBRARY libiscsi
 EXPORTS
-win32_poll
 iscsi_connect_async
 iscsi_connect_sync
 iscsi_create_context
