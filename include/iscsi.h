@@ -21,7 +21,6 @@
 
 #if defined(WIN32)
 #define EXTERN __declspec( dllexport )
-EXTERN int poll(struct pollfd *fds, int nfsd, int timeout);
 #else
 #define EXTERN
 #endif

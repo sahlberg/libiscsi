@@ -71,7 +71,6 @@ iscsi_writesame10_sync
 iscsi_writesame16_sync
 iscsi_scsi_task_cancel
 iscsi_scsi_cancel_all_tasks
-poll
 scsi_task_add_data_in_buffer
 scsi_sense_key_str
 scsi_sense_ascq_str
