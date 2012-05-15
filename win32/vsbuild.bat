@@ -19,6 +19,7 @@ cl /I. /Iinclude -Zi -Od -c -D_U_="" -DWIN32 -D_WIN32_WINNT=0x0600 -MDd lib\scsi
 cl /I. /Iinclude -Zi -Od -c -D_U_="" -DWIN32 -D_WIN32_WINNT=0x0600 -MDd lib\socket.c -Folib\socket.obj
 cl /I. /Iinclude -Zi -Od -c -D_U_="" -DWIN32 -D_WIN32_WINNT=0x0600 -MDd lib\sync.c -Folib\sync.obj
 cl /I. /Iinclude -Zi -Od -c -D_U_="" -DWIN32 -D_WIN32_WINNT=0x0600 -MDd lib\task_mgmt.c -Folib\task_mgmt.obj
+cl /I. /Iinclude -Zi -Od -c -D_U_="" -DWIN32 -D_WIN32_WINNT=0x0600 -MDd win32\win32_compat.c -Folib\win32_compat.obj
 
 
 
@@ -26,9 +27,9 @@ cl /I. /Iinclude -Zi -Od -c -D_U_="" -DWIN32 -D_WIN32_WINNT=0x0600 -MDd lib\task
 rem
 rem create a linklibrary/dll
 rem
-lib /out:lib\libiscsi.lib /def:lib\libiscsi.def lib\connect.obj lib\crc32c.obj lib\discovery.obj lib\init.obj lib\login.obj lib\md5.obj lib\nop.obj lib\pdu.obj lib\scsi-command.obj lib\scsi-lowlevel.obj lib\socket.obj lib\sync.obj lib\task_mgmt.obj
+lib /out:lib\libiscsi.lib /def:lib\libiscsi.def lib\connect.obj lib\crc32c.obj lib\discovery.obj lib\init.obj lib\login.obj lib\md5.obj lib\nop.obj lib\pdu.obj lib\scsi-command.obj lib\scsi-lowlevel.obj lib\socket.obj lib\sync.obj lib\task_mgmt.obj lib\win32_compat.obj
 
-link /DLL /out:lib\libiscsi.dll /DEBUG /DEBUGTYPE:cv lib\libiscsi.exp lib\connect.obj lib\crc32c.obj lib\discovery.obj lib\init.obj lib\login.obj lib\md5.obj lib\nop.obj lib\pdu.obj lib\scsi-command.obj lib\scsi-lowlevel.obj lib\socket.obj lib\sync.obj lib\task_mgmt.obj ws2_32.lib
+link /DLL /out:lib\libiscsi.dll /DEBUG /DEBUGTYPE:cv lib\libiscsi.exp lib\connect.obj lib\crc32c.obj lib\discovery.obj lib\init.obj lib\login.obj lib\md5.obj lib\nop.obj lib\pdu.obj lib\scsi-command.obj lib\scsi-lowlevel.obj lib\socket.obj lib\sync.obj lib\task_mgmt.obj lib\win32_compat.obj ws2_32.lib kernel32.lib
 
 
 
