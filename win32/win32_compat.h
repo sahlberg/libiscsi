@@ -38,60 +38,6 @@ typedef int uid_t;
 typedef int gid_t;
 typedef int socklen_t;
 
-#define S_IRUSR 0000400
-#define S_IWUSR 0000200
-#define S_IXUSR 0000100
-#define	S_IRWXG	0000070			/* RWX mask for group */
-#define S_IRGRP 0000040
-#define S_IWGRP 0000020
-#define S_IXGRP 0000010
-#define	S_IRWXO	0000007			/* RWX mask for other */
-#define S_IROTH 0000004
-#define S_IWOTH 0000002
-#define S_IXOTH 0000001
-
-#define F_GETFL  3
-#define F_SETFL  4
-
-#ifndef S_IFIFO
-#define S_IFIFO        0x1000  /* FIFO */
-#endif
-
-#ifndef S_IFBLK
-#define S_IFBLK        0x3000  /* Block: Is this ever set under w32? */
-#endif
-
-#ifndef S_IFSOCK
-#define S_IFSOCK 0x0           /* not defined in mingw either */
-#endif
-
-#ifndef major
-#define major(a) 0
-#endif
-
-#ifndef minor
-#define minor(a) 0
-#endif
-
-#define O_NONBLOCK 0x40000000
-#define O_SYNC 0
-
-#define MSG_DONTWAIT 0
-#define ssize_t SSIZE_T
-
-#define POLLIN      0x0001    /* There is data to read */
-#define POLLPRI     0x0002    /* There is urgent data to read */
-#define POLLOUT     0x0004    /* Writing now will not block */
-#define POLLERR     0x0008    /* Error condition */
-#define POLLHUP     0x0010    /* Hung up */
-#define POLLNVAL    0x0020    /* Invalid request: fd not open */
-
-struct pollfd {
-    SOCKET fd;        /* file descriptor */
-    short events;     /* requested events */
-    short revents;    /* returned events */
-};
-
 /* Wrapper macros to call misc. functions win32 is missing */
 #define poll(x, y, z)        win32_poll(x, y, z)
 #define inet_pton(x,y,z)     win32_inet_pton(x,y,z)
