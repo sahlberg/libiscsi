@@ -37,7 +37,7 @@ link /DLL /out:lib\libiscsi.dll /DEBUG /DEBUGTYPE:cv lib\libiscsi.exp lib\connec
 rem
 rem build a test application
 rem
-cl /I. /Iinclude -Zi -Od -DWIN32 -D_WIN32_WINNT=0x0600 -MDd -D_U_="" examples\iscsiclient.c lib\libiscsi.lib WS2_32.lib kernel32.lib mswsock.lib advapi32.lib wsock32.lib advapi32.lib
+cl /I. /Iinclude -Zi -Od -DWIN32 -D_WIN32_WINNT=0x0600 -MDd -D_U_="" examples\iscsiclient.c lib\win32_compat.obj lib\libiscsi.lib WS2_32.lib kernel32.lib mswsock.lib advapi32.lib wsock32.lib advapi32.lib
 
 
 
