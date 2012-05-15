@@ -228,24 +228,8 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 {
 	struct iscsi_in_pdu *in;
 	ssize_t data_size, count;
-	int socket_count = 0;
-
-	if (ioctl(iscsi->fd, FIONREAD, &socket_count) != 0) {
-		iscsi_set_error(iscsi, "Socket failure. Socket FIONREAD failed");
-		return -1;
-	}
-	if (socket_count == 0) {
-		int ret, err = 0;
-		socklen_t err_size = sizeof(err);
-
-		ret = getsockopt(iscsi->fd, SOL_SOCKET, SO_ERROR, &err, &err_size);
-		/* someone just called us without the socket being readable */
-		if (ret == 0 && err == 0) {
-			return 0;
-		}
-		iscsi_set_error(iscsi, "Socket failure. Socket is readable but no bytes available in FIONREAD");
-		return -1;
-	}
+	int ret, err = 0;
+	socklen_t err_size = sizeof(err);
 
 	if (iscsi->incoming == NULL) {
 		iscsi->incoming = malloc(sizeof(struct iscsi_in_pdu));
@@ -259,27 +243,23 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 
 	/* first we must read the header, including any digests */
 	if (in->hdr_pos < ISCSI_HEADER_SIZE) {
-		/* try to only read the header, and make sure we don't
-		 * read more than is available in the socket;
+		/* try to only read the header, the socket is nonblocking, so
+		 * no need to limit the read to what is available in the socket
 		 */
 		count = ISCSI_HEADER_SIZE - in->hdr_pos;
-		if (socket_count < count) {
-			count = socket_count;
-		}
 		count = recv(iscsi->fd, &in->hdr[in->hdr_pos], count, 0);
+		if (count == 0) {
+			return -1;
+		}
 		if (count < 0) {
-			if (errno == EINTR) {
+			if (errno == EINTR || errno == EAGAIN) {
 				return 0;
 			}
 			iscsi_set_error(iscsi, "read from socket failed, "
 				"errno:%d", errno);
 			return -1;
 		}
-		if (count == 0) {
-			return 0;
-		}
 		in->hdr_pos  += count;
-		socket_count -= count;
 	}
 
 	if (in->hdr_pos < ISCSI_HEADER_SIZE) {
@@ -291,14 +271,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 	if (data_size != 0) {
 		unsigned char *buf = NULL;
 
-		/* No more data right now */
-		if (socket_count == 0) {
-			return 0;
-		}
 		count = data_size - in->data_pos;
-		if (count > socket_count) {
-			count = socket_count;
-		}
 
 		/* first try to see if we already have a user buffer */
 		buf = iscsi_get_user_in_buffer(iscsi, in, in->data_pos, &count);
@@ -315,19 +288,18 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		}
 
 		count = recv(iscsi->fd, buf, count, 0);
+		if (count == 0) {
+			return -1;
+		}
 		if (count < 0) {
-			if (errno == EINTR) {
+			if (errno == EINTR || errno == EAGAIN) {
 				return 0;
 			}
 			iscsi_set_error(iscsi, "read from socket failed, "
 				"errno:%d", errno);
 			return -1;
 		}
-		if (count == 0) {
-			return 0;
-		}
 		in->data_pos += count;
-		socket_count -= count;
 	}
 
 	if (in->data_pos < data_size) {
