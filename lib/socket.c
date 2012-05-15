@@ -49,6 +49,8 @@
 static void set_nonblocking(int fd)
 {
 #if defined(WIN32)
+	unsigned long opt = 1;
+	ioctlsocket(fd, FIONBIO, &opt);
 #else
 	unsigned v;
 	v = fcntl(fd, F_GETFL, 0);
