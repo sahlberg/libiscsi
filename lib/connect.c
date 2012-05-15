@@ -14,10 +14,15 @@
    You should have received a copy of the GNU Lesser General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
+
+#if defined(WIN32)
+#else
+#include <unistd.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
 #include "slist.h"
 #include "iscsi.h"
