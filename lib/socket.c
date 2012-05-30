@@ -230,8 +230,6 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 {
 	struct iscsi_in_pdu *in;
 	ssize_t data_size, count;
-	int ret, err = 0;
-	socklen_t err_size = sizeof(err);
 
 	if (iscsi->incoming == NULL) {
 		iscsi->incoming = malloc(sizeof(struct iscsi_in_pdu));
