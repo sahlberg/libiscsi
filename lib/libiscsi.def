@@ -11,6 +11,8 @@ iscsi_full_connect_async
 iscsi_full_connect_sync
 iscsi_get_error
 iscsi_get_fd
+iscsi_get_lba_status_sync
+iscsi_get_lba_status_task
 iscsi_get_target_address
 iscsi_inquiry_sync
 iscsi_inquiry_task
@@ -85,6 +87,7 @@ iscsi_writesame16_sync
 iscsi_writesame16_task
 scsi_association_to_str
 scsi_cdb_inquiry
+scsi_cdb_get_lba_status
 scsi_cdb_modesense6
 scsi_cdb_prefetch10
 scsi_cdb_prefetch16

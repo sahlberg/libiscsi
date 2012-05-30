@@ -108,6 +108,9 @@ struct scsi_test tests[] = {
 /* prefetch16*/
 { "T0250_prefetch16_simple",		T0250_prefetch16_simple },
 
+/* get_lba_status */
+{ "T0260_get_lba_status_simple",	T0260_get_lba_status_simple },
+
 { NULL, NULL }
 };
 

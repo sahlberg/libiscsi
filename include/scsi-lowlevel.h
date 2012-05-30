@@ -43,7 +43,8 @@ enum scsi_opcode {
 };
 
 enum scsi_service_action_in {
-	SCSI_READCAPACITY16            = 0x10
+	SCSI_READCAPACITY16            = 0x10,
+	SCSI_GET_LBA_STATUS            = 0x12
 };
 
 /* sense keys */
@@ -576,6 +577,23 @@ struct scsi_readcapacity16 {
        uint16_t lalba;
 };
 
+enum scsi_provisioning_type {
+     SCSI_PROVISIONING_TYPE_MAPPED	= 0x00,
+     SCSI_PROVISIONING_TYPE_DEALLOCATED	= 0x01,
+     SCSI_PROVISIONING_TYPE_ANCHORED	= 0x02
+};
+
+struct scsi_lba_status_descriptor {
+       uint64_t	lba;
+       uint32_t num_blocks;
+       enum scsi_provisioning_type provisioning;
+};
+
+struct scsi_get_lba_status {
+       uint32_t num_descriptors;
+       struct scsi_lba_status_descriptor *descriptors;
+};
+
 EXTERN int scsi_datain_getfullsize(struct scsi_task *task);
 EXTERN void *scsi_datain_unmarshall(struct scsi_task *task);
 
@@ -592,6 +610,7 @@ EXTERN struct scsi_task *scsi_cdb_synchronizecache10(int lba, int num_blocks,
 			int syncnv, int immed);
 EXTERN struct scsi_task *scsi_cdb_serviceactionin16(enum scsi_service_action_in sa, uint32_t xferlen);
 EXTERN struct scsi_task *scsi_cdb_readcapacity16(void);
+EXTERN struct scsi_task *scsi_cdb_get_lba_status(uint64_t starting_lba, uint32_t alloc_len);
 EXTERN struct scsi_task *scsi_cdb_unmap(int anchor, int group, uint16_t xferlen);
 EXTERN struct scsi_task *scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint32_t lba, int group, uint16_t num_blocks);
 EXTERN struct scsi_task *scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint64_t lba, int group, uint32_t num_blocks);

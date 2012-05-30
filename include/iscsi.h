@@ -579,8 +579,13 @@ iscsi_readcapacity10_task(struct iscsi_context *iscsi, int lun, int lba,
 			       void *private_data);
 EXTERN struct scsi_task *
 iscsi_readcapacity16_task(struct iscsi_context *iscsi, int lun,
-			       iscsi_command_cb cb,
-			       void *private_data);
+			  iscsi_command_cb cb,
+			  void *private_data);
+EXTERN struct scsi_task *
+iscsi_get_lba_status_task(struct iscsi_context *iscsi, int lun,
+			  uint64_t starting_lba, uint32_t alloc_len,
+			  iscsi_command_cb cb,
+			  void *private_data);
 EXTERN struct scsi_task *
 iscsi_synchronizecache10_task(struct iscsi_context *iscsi, int lun,
 				   int lba, int num_blocks, int syncnv,
@@ -724,6 +729,9 @@ iscsi_readcapacity10_sync(struct iscsi_context *iscsi, int lun, int lba,
 
 EXTERN struct scsi_task *
 iscsi_readcapacity16_sync(struct iscsi_context *iscsi, int lun);
+
+EXTERN struct scsi_task *
+iscsi_get_lba_status_sync(struct iscsi_context *iscsi, int lun, uint64_t starting_lba, uint32_t alloc_len);
 
 EXTERN struct scsi_task *
 iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,

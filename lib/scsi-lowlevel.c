@@ -269,6 +269,9 @@ static void *
 scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 {
 	struct scsi_readcapacity16 *rc16;
+	struct scsi_get_lba_status *gls;
+	int32_t len;
+	int i;
 
 	switch (task->params.serviceactionin.sa) {
 	case SCSI_READCAPACITY16:
@@ -276,17 +279,45 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 		if (rc16 == NULL) {
 			return NULL;
 		}
-		rc16->returned_lba = htonl(*(uint32_t *)&(task->datain.data[0]));
-		rc16->returned_lba = (rc16->returned_lba << 32) | htonl(*(uint32_t *)&(task->datain.data[4]));
-		rc16->block_length = htonl(*(uint32_t *)&(task->datain.data[8]));
+		rc16->returned_lba = ntohl(*(uint32_t *)&(task->datain.data[0]));
+		rc16->returned_lba = (rc16->returned_lba << 32) | ntohl(*(uint32_t *)&(task->datain.data[4]));
+		rc16->block_length = ntohl(*(uint32_t *)&(task->datain.data[8]));
 		rc16->p_type       = (task->datain.data[12] >> 1) & 0x07;
 		rc16->prot_en      = task->datain.data[12] & 0x01;
 		rc16->p_i_exp      = (task->datain.data[13] >> 4) & 0x0f;
 		rc16->lbppbe       = task->datain.data[13] & 0x0f;
 		rc16->lbpme        = !!(task->datain.data[14] & 0x80);
 		rc16->lbprz        = !!(task->datain.data[14] & 0x40);
-		rc16->lalba        = htons(*(uint16_t *)&(task->datain.data[14])) & 0x3fff;
+		rc16->lalba        = ntohs(*(uint16_t *)&(task->datain.data[14])) & 0x3fff;
 		return rc16;
+	case SCSI_GET_LBA_STATUS:
+		len = ntohl(*(uint32_t *)&(task->datain.data[0]));
+		if (len > task->datain.size - 4) {
+			len = task->datain.size - 4;
+		}
+		len = len / 16;
+
+		gls = scsi_malloc(task, sizeof(struct scsi_get_lba_status));
+		if (gls == NULL) {
+			return NULL;
+		}
+		gls->num_descriptors = len;
+		gls->descriptors = scsi_malloc(task, sizeof(struct scsi_lba_status_descriptor) * gls->num_descriptors);
+		if (gls->descriptors == NULL) {
+			return NULL;
+		}
+
+		for (i = 0; i < (int)gls->num_descriptors; i++) {
+			gls->descriptors[i].lba  = ntohl(*(uint32_t *)&(task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 0]));
+			gls->descriptors[i].lba <<= 32;
+ 			gls->descriptors[i].lba |= ntohl(*(uint32_t *)&(task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 4]));
+
+			gls->descriptors[i].num_blocks = ntohl(*(uint32_t *)&(task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 8]));
+
+			gls->descriptors[i].provisioning = task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 12] & 0x0f;
+		}
+
+		return gls;
 	}
 
 	return NULL;
@@ -1386,6 +1417,37 @@ struct scsi_task *
 scsi_cdb_readcapacity16(void)
 {
 	return scsi_cdb_serviceactionin16(SCSI_READCAPACITY16, 32);
+}
+
+/*
+ * GET_LBA_STATUS
+ */
+struct scsi_task *
+scsi_cdb_get_lba_status(uint64_t starting_lba, uint32_t alloc_len)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_SERVICE_ACTION_IN;
+
+	task->cdb[1] = SCSI_GET_LBA_STATUS;
+
+	*(uint32_t *)&task->cdb[2] = htonl(starting_lba >> 32);
+	*(uint32_t *)&task->cdb[6] = htonl(starting_lba & 0xffffffff);
+	*(uint32_t *)&task->cdb[10] = htonl(alloc_len);
+
+	task->cdb_size   = 16;
+	task->xfer_dir   = SCSI_XFER_READ;
+	task->expxferlen = alloc_len;
+
+	task->params.serviceactionin.sa = SCSI_GET_LBA_STATUS;
+
+	return task;
 }
 
 int

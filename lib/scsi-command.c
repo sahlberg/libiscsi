@@ -626,6 +626,28 @@ iscsi_readcapacity16_task(struct iscsi_context *iscsi, int lun,
 }
 
 struct scsi_task *
+iscsi_get_lba_status_task(struct iscsi_context *iscsi, int lun,
+			  uint64_t starting_lba, uint32_t alloc_len,
+			  iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_get_lba_status(starting_lba, alloc_len);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"get-lba-status cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
 iscsi_read6_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   uint32_t datalen, int blocksize,
 		   iscsi_command_cb cb, void *private_data)
