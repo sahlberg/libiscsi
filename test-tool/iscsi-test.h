@@ -79,3 +79,4 @@ int T0240_prefetch10_simple(const char *initiator, const char *url);
 int T0250_prefetch16_simple(const char *initiator, const char *url);
 
 int T0260_get_lba_status_simple(const char *initiator, const char *url);
+int T0264_get_lba_status_beyondeol(const char *initiator, const char *url);

@@ -110,6 +110,7 @@ struct scsi_test tests[] = {
 
 /* get_lba_status */
 { "T0260_get_lba_status_simple",	T0260_get_lba_status_simple },
+{ "T0264_get_lba_status_beyondeol",	T0264_get_lba_status_beyondeol },
 
 { NULL, NULL }
 };

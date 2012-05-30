@@ -80,7 +80,7 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0234_write12_beyondeol.c \
 	test-tool/0240_prefetch10_simple.c \
 	test-tool/0250_prefetch16_simple.c \
-	test-tool/0260_get_lba_status_simple.c
+	test-tool/0260_get_lba_status_simple.c test-tool/0264_get_lba_status_beyondeol.c
 endif
 
 # LD_PRELOAD library.
