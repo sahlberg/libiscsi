@@ -23,6 +23,7 @@
 #include <string.h>
 #include <poll.h>
 #include <popt.h>
+#include <fnmatch.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 #include "iscsi.h"
@@ -252,7 +253,7 @@ int main(int argc, const char *argv[])
 	}
 
 	for (test = &tests[0]; test->name; test++) {
-		if (testname != NULL && strcmp(testname, test->name)) {
+		if (testname != NULL && fnmatch(testname, test->name, 0)) {
 			continue;
 		}
 
