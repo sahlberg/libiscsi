@@ -1102,6 +1102,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	if ((in->hdr[1] & ISCSI_PDU_LOGIN_TRANSIT)
 	&& (in->hdr[1] & ISCSI_PDU_LOGIN_NSG_FF) == ISCSI_PDU_LOGIN_NSG_FF) {
 		iscsi->is_loggedin = 1;
+		iscsi->itt++;
 		pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
 	} else {
 		if (iscsi_login_async(iscsi, pdu->callback, pdu->private_data) != 0) {
