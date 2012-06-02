@@ -20,13 +20,25 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0202_read16_flags(const char *initiator, const char *url)
+int T0202_read16_flags(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
-	int ret = 0, i, lun;
+	int ret = 0, lun;
 	uint32_t block_size;
+
+	printf("0202_read16_flags:\n");
+	printf("==================\n");
+	if (show_info) {
+		printf("Test how READ16 handles the flag bits\n");
+		printf("1, Reading with DPO should work\n");
+		printf("2, Reading with FUA should work\n");
+		printf("3, Reading with FUA_NV should work\n");
+		printf("4, Reading with FUA+FUA_NV should work\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

@@ -20,13 +20,24 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0121_read6_beyond_eol(const char *initiator, const char *url)
+int T0121_read6_beyond_eol(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity10 *rc10;
 	int ret, i, lun;
 	uint32_t block_size, num_blocks;
+
+	printf("0121_read6_beyond_eol:\n");
+	printf("======================\n");
+	if (show_info) {
+		printf("Test that READ6 fails if reading beyond end-of-lun.\n");
+		printf("1, Read 1-256 blocks one block beyond end-of-lun.\n");
+		printf("2, Read 2-256 blocks all but one beyond end-of-lun.\n");
+		printf("3, Read 0(==256) blocks 128 blocks beyond end-of-lun.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

@@ -20,13 +20,23 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0101_read10_beyond_eol(const char *initiator, const char *url)
+int T0101_read10_beyond_eol(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity10 *rc10;
 	int ret, i, lun;
 	uint32_t block_size, num_blocks;
+
+	printf("0101_read10_beyond_eol:\n");
+	printf("=======================\n");
+	if (show_info) {
+		printf("Test that READ10 fails if reading beyond end-of-lun.\n");
+		printf("1, Read 1-256 blocks one block beyond end-of-lun.\n");
+		printf("2, Read 2-256 blocks all but one beyond end-of-lun.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {
@@ -79,16 +89,11 @@ int T0101_read10_beyond_eol(const char *initiator, const char *url)
 			scsi_free_scsi_task(task);
 			goto finished;
 		}
-		if (task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST) {
-			printf("[FAILED]\n");
-			printf("Read10 beyond end-of-lun did not return sense key ILLEGAL_REQUEST.\n");
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto finished;
-		}
-		if (task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-			printf("[FAILED]\n");
-			printf("Read10 beyond end-of-lun did not return sense ascq LBA OUT OF RANGE.\n");
+		if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		        printf("[FAILED]\n");
+			printf("READ10 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;
@@ -115,16 +120,11 @@ int T0101_read10_beyond_eol(const char *initiator, const char *url)
 			scsi_free_scsi_task(task);
 			goto finished;
 		}
-		if (task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST) {
-			printf("[FAILED]\n");
-			printf("Read10 beyond end-of-lun did not return sense key ILLEGAL_REQUEST.\n");
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto finished;
-		}
-		if (task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-			printf("[FAILED]\n");
-			printf("Read10 beyond end-of-lun did not return sense ascq LBA OUT OF RANGE.\n");
+		if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		        printf("[FAILED]\n");
+			printf("READ10 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;

@@ -20,14 +20,23 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0264_get_lba_status_beyondeol(const char *initiator, const char *url)
+int T0264_get_lba_status_beyondeol(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
-	int ret, i, lun;
+	int ret, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
+
+	printf("0264_get_lba_status_beyondeol:\n");
+	printf("==============================\n");
+	if (show_info) {
+		printf("Test GET_LBA_STATUS functionality for beyond end-of-lun requests\n");
+		printf("1, Reading a descriptor beyond the end of the lun should fail.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

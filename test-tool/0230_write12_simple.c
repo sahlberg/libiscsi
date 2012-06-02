@@ -20,7 +20,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0230_write12_simple(const char *initiator, const char *url)
+int T0230_write12_simple(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -29,6 +29,16 @@ int T0230_write12_simple(const char *initiator, const char *url)
 	uint32_t block_size;
 	uint64_t num_blocks;
 	unsigned char data[512 * 256];
+
+	printf("0230_write12_simple:\n");
+	printf("===================\n");
+	if (show_info) {
+		printf("Test basic WRITE12 functionality.\n");
+		printf("1, Verify we can write the first 1-256 blocks of the LUN.\n");
+		printf("2, Verify we can write the last 1-256 blocks of the LUN.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

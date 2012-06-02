@@ -20,13 +20,25 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0102_read10_0blocks(const char *initiator, const char *url)
+int T0102_read10_0blocks(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity10 *rc10;
 	int ret, lun;
 	uint32_t block_size, num_blocks;
+
+	printf("0102_read10_0blocks:\n");
+	printf("====================\n");
+	if (show_info) {
+		printf("Test that READ10 works correctly when reading 0 number of blocks.\n");
+		printf("1, Read at LBA:0 should work.\n");
+		printf("2, Read at LBA:end-of-lun+1 should fail.\n");
+		printf("3, Read at LBA:end-of-lun+2 should fail.\n");
+		printf("4, Read at LBA:-1 should fail.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {
@@ -90,9 +102,18 @@ int T0102_read10_0blocks(const char *initiator, const char *url)
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
  	        printf("[FAILED]\n");
-		printf("Read10 of 0 one block beyond end-of-lun failed with sense.\n");
+		printf("Read10 of 0 blocks one block beyond end-of-lun should fail.\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+	        printf("[FAILED]\n");
+		printf("READ10 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
@@ -110,9 +131,18 @@ int T0102_read10_0blocks(const char *initiator, const char *url)
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
  	        printf("[FAILED]\n");
-		printf("Read10 of 0 two blocks beyond end-of-lun failed with sense.\n");
+		printf("Read10 of 0 blocks two blocks beyond end-of-lun should fail.\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+	        printf("[FAILED]\n");
+		printf("READ10 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
@@ -130,9 +160,18 @@ int T0102_read10_0blocks(const char *initiator, const char *url)
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
  	        printf("[FAILED]\n");
-		printf("Read10 of 0 at lba:-1 failed with sense.\n");
+		printf("Read10 of 0 blocks at lba:-1 should fail.\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+	        printf("[FAILED]\n");
+		printf("READ10 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;

@@ -29,11 +29,12 @@
 #include "iscsi-test.h"
 
 const char *initiator = "iqn.2010-11.iscsi-test";
-int data_loss = 0;
+static int data_loss = 0;
+static int show_info = 0;
 
 struct scsi_test {
        const char *name;
-       int (*test)(const char *initiator, const char *url);
+       int (*test)(const char *initiator, const char *url, int data_loss, int show_info);
 };
 
 struct scsi_test tests[] = {
@@ -47,7 +48,6 @@ struct scsi_test tests[] = {
 
 /* readcapacity10*/
 { "T0110_readcapacity10_simple",	T0110_readcapacity10_simple },
-{ "T0111_readcapacity10_pmi",		T0111_readcapacity10_pmi },
 
 /* read6*/
 { "T0120_read6_simple",			T0120_read6_simple },
@@ -128,6 +128,7 @@ void print_help(void)
 	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
 	fprintf(stderr, "  -t, --test=test-name              Which test to run. Default is to run all tests.\n");
 	fprintf(stderr, "  -l, --list                        List all tests.\n");
+	fprintf(stderr, "  --dataloss                        All destructive tests.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Help options:\n");
 	fprintf(stderr, "  -?, --help                        Show this help message\n");
@@ -206,6 +207,7 @@ int main(int argc, const char *argv[])
 		{ "list", 'l', POPT_ARG_NONE, &list_tests, 0, "List all tests", NULL },
 		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
 		{ "test", 't', POPT_ARG_STRING, &testname, 0, "Which test to run", "testname" },
+		{ "info", 'i', POPT_ARG_NONE, &show_info, 0, "Show information about the test", "testname" },
 		{ "dataloss", 0, POPT_ARG_NONE, &data_loss, 0, "Allow destructuve tests", NULL },
 		POPT_TABLEEND
 	};
@@ -254,9 +256,7 @@ int main(int argc, const char *argv[])
 			continue;
 		}
 
-		printf("=========\n");
-		printf("Running test %s\n", test->name);
-		res = test->test(initiator, url);
+		res = test->test(initiator, url, data_loss, show_info);
 		if (res == 0) {
 			printf("TEST %s [OK]\n", test->name);
 		} else {

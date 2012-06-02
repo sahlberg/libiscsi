@@ -20,12 +20,21 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0160_readcapacity16_simple(const char *initiator, const char *url)
+int T0160_readcapacity16_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
+
+	printf("0160_readcapacity16_simple:\n");
+	printf("===========================\n");
+	if (show_info) {
+		printf("Test that basic READCAPACITY16 works\n");
+		printf("1, Readcapacity16 should work.\n");
+		printf("\n");
+		return 0;
+	}
 
 	ret = 0;
 

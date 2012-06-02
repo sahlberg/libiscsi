@@ -20,13 +20,23 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0170_unmap_simple(const char *initiator, const char *url)
+int T0170_unmap_simple(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
 	uint32_t block_size, num_blocks;
+
+	printf("0170_unmap_simple:\n");
+	printf("==================\n");
+	if (show_info) {
+		printf("Test basic UNMAP functionality.\n");
+		printf("1, Test UNMAP the first 1-256 blocks of the LUN.\n");
+		printf("2, Test UNMAP the last 1-256 blocks of the LUN.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

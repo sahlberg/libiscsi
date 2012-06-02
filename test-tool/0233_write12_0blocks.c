@@ -20,14 +20,25 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0233_write12_0blocks(const char *initiator, const char *url)
+int T0233_write12_0blocks(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
-	int ret = 0, i, lun;
+	int ret = 0, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
+
+	printf("0233_write12_0blocks:\n");
+	printf("====================\n");
+	if (show_info) {
+		printf("Test that WRITE12 works correctly when writing 0 number of blocks.\n");
+		printf("1, Read at LBA:0 should work.\n");
+		printf("2, Read at LBA:end-of-lun should work.\n");
+		printf("3, Read at LBA:end-of-lun+1 should fail.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

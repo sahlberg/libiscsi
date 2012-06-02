@@ -20,7 +20,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0240_prefetch10_simple(const char *initiator, const char *url)
+int T0240_prefetch10_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -28,6 +28,16 @@ int T0240_prefetch10_simple(const char *initiator, const char *url)
 	int ret, i, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
+
+	printf("0240_prefetch10_simple:\n");
+	printf("===================\n");
+	if (show_info) {
+		printf("Test basic PREFETCH10 functionality.\n");
+		printf("1, Verify we can prefetch the first 1-256 blocks of the LUN.\n");
+		printf("2, Verify we can prefetch the last 1-256 blocks of the LUN.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

@@ -20,7 +20,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0110_readcapacity10_simple(const char *initiator, const char *url)
+int T0110_readcapacity10_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -28,6 +28,15 @@ int T0110_readcapacity10_simple(const char *initiator, const char *url)
 	int ret, lun;
 
 	ret = 0;
+
+	printf("0110_readcapacity10_simple:\n");
+	printf("===========================\n");
+	if (show_info) {
+		printf("Test that basic READCAPACITY10 works\n");
+		printf("1, Readcapacity10 should work.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

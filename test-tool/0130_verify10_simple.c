@@ -20,7 +20,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0130_verify10_simple(const char *initiator, const char *url)
+int T0130_verify10_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -28,6 +28,15 @@ int T0130_verify10_simple(const char *initiator, const char *url)
 	struct scsi_readcapacity10 *rc10;
 	int ret, i, lun;
 	uint32_t block_size, num_blocks;
+
+	printf("0130_verify10_simple:\n");
+	printf("=====================\n");
+	if (show_info) {
+		printf("Test basic VERIFY10 functionality.\n");
+		printf("1, Read and verify the first 1-256 blocks of the LUN using READ10/VERIFY10.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

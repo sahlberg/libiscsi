@@ -20,7 +20,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0180_writesame10_unmap(const char *initiator, const char *url)
+int T0180_writesame10_unmap(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -28,6 +28,16 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 	int ret, i, lun;
 	uint32_t block_size, num_blocks;
 	int lbppb;
+
+	printf("0180_writesame10_unmap:\n");
+	printf("=======================\n");
+	if (show_info) {
+		printf("Test basic WRITESAME10-UNMAP functionality.\n");
+		printf("1, UNMAP the first 1-256 blocks at the start of the LUN\n");
+		printf("2, UNMAP the last 1-256 blocks at the end of the LUN\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

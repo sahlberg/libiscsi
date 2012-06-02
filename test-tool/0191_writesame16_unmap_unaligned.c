@@ -20,7 +20,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0191_writesame16_unmap_unaligned(const char *initiator, const char *url)
+int T0191_writesame16_unmap_unaligned(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -28,6 +28,15 @@ int T0191_writesame16_unmap_unaligned(const char *initiator, const char *url)
 	int ret, i, lun;
 	uint32_t block_size, num_blocks;
 	int lbppb;
+
+	printf("0191_writesame16_unmap_unaligned:\n");
+	printf("=================================\n");
+	if (show_info) {
+		printf("Test unaligned WRITESAME16-UNMAP functionality.\n");
+		printf("1, UNMAP the first 1-lbppb blocks at the start of the LUN\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

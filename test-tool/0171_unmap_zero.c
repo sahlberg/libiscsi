@@ -20,13 +20,25 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0171_unmap_zero(const char *initiator, const char *url)
+int T0171_unmap_zero(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
 	uint32_t block_size, num_blocks;
+
+	printf("0171_unmap_zero:\n");
+	printf("================\n");
+	if (show_info) {
+		printf("Test UNMAP of 0 blocks.\n");
+		printf("1, Try to UNMAP 0 blocks at LBA 0 to LBA 255\n");
+		printf("2, Try to UNMAP 0 blocks at 0 to 255 blocks from end-of-lun\n");
+		printf("3, Try to UNMAP 0 blocks at 1 to 256 blocks beyond end-of-lun\n");
+		printf("4, Send UNMAP without any block descriptors\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {
@@ -75,7 +87,7 @@ int T0171_unmap_zero(const char *initiator, const char *url)
 	
 	ret = 0;
 
-	/* unmap no blocks at the first 0 - 256 blocks at the start of the LUN */
+	/* unmap no blocks at LBA 0 - 255 */
 	printf("Unmapping of no block at lbas 0-255 blocks ... ");
 	for (i=0; i<=255; i++) {
 		struct unmap_list list[1];

@@ -20,7 +20,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0232_write12_flags(const char *initiator, const char *url)
+int T0232_write12_flags(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -28,6 +28,18 @@ int T0232_write12_flags(const char *initiator, const char *url)
 	int ret = 0, lun;
 	uint32_t block_size;
 	unsigned char data[256 * 512];
+
+	printf("0232_write12_flags:\n");
+	printf("===================\n");
+	if (show_info) {
+		printf("Test how WRITE12 handles the flags\n");
+		printf("1, Write with DPU should work.\n");
+		printf("2, Write with FUA should work.\n");
+		printf("3, Write with FUA_NV should work.\n");
+		printf("4, Write with FUA+FUA_NV should work.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

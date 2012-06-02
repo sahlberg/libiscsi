@@ -22,13 +22,26 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0105_read10_invalid(const char *initiator, const char *url)
+int T0105_read10_invalid(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct iscsi_data data;
 	char buf[512];
 	int ret, lun;
+
+	printf("0105_read10_invalid:\n");
+	printf("=======================\n");
+	if (show_info) {
+		printf("Test various protocol violations.\n");
+		printf("1, Read 1 block but set xferlength to 0. Should result in residual overflow of 512 bytes.\n");
+		printf("2, Read 1 block but set xferlength to 1024. Should result in residual underflow of 512 bytes.\n");
+		printf("3, Read 1 block but set xferlength to 200. Should result in residual overflow of 312 bytes.\n");
+		printf("4, Read 2 blocks but set xferlength to 512. Should result in residual overflow of 512 bytes.\n");
+		printf("5, Read 1 block but send one block as data-out write on the iSCSI level. Should result in both residual overflow and underflow of 512 bytes.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

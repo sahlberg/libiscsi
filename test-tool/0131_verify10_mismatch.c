@@ -21,7 +21,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0131_verify10_mismatch(const char *initiator, const char *url)
+int T0131_verify10_mismatch(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -29,6 +29,15 @@ int T0131_verify10_mismatch(const char *initiator, const char *url)
 	struct scsi_readcapacity10 *rc10;
 	int ret, i, lun;
 	uint32_t block_size, num_blocks;
+
+	printf("0131_verify10_mismatch:\n");
+	printf("=======================\n");
+	if (show_info) {
+		printf("Test basic VERIFY10 functionality.\n");
+		printf("1, Verify the first 1-256 blocks with a deliberate error detects the mismatch.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

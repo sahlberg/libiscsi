@@ -22,11 +22,24 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0104_read10_flags(const char *initiator, const char *url)
+int T0104_read10_flags(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	int ret, lun;
+
+	printf("0104_read10_flags:\n");
+	printf("=======================\n");
+	if (show_info) {
+		printf("Test how READ10 handles DPO, FUA and FUA_NV flags.\n");
+		printf("1, DPO:1 should work\n");
+		printf("2, FUA:1 and FUA_NV:0 should work\n");
+		printf("3, FUA:1 and FUA_NV:1 should work\n");
+		printf("4, FUA:0 and FUA_NV:1 should work\n");
+		printf("5, DPO:1 , FUA:1 and FUA_NV:1 should work\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

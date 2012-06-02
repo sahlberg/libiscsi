@@ -20,13 +20,22 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0120_read6_simple(const char *initiator, const char *url)
+int T0120_read6_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity10 *rc10;
 	int ret, i, lun;
 	uint32_t block_size, num_blocks;
+
+	printf("0120_read6_simple:\n");
+	printf("===================\n");
+	if (show_info) {
+		printf("Test basic READ6 functionality.\n");
+		printf("1, Verify we can read the first 1-256 blocks of the LUN using READ6.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

@@ -20,14 +20,24 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0260_get_lba_status_simple(const char *initiator, const char *url)
+int T0260_get_lba_status_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
-	int ret, i, lun;
+	int ret, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
+
+	printf("0260_get_lba_status_simple:\n");
+	printf("===================\n");
+	if (show_info) {
+		printf("Test basic GET_LBA_STATUS functionality.\n");
+		printf("1, Verify we can read a descriptor at the start of the lun.\n");
+		printf("2, Verify we can read a descriptor at the end of the lun.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

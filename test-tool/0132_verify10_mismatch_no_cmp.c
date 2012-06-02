@@ -21,7 +21,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0132_verify10_mismatch_no_cmp(const char *initiator, const char *url)
+int T0132_verify10_mismatch_no_cmp(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -29,6 +29,15 @@ int T0132_verify10_mismatch_no_cmp(const char *initiator, const char *url)
 	struct scsi_readcapacity10 *rc10;
 	int ret, i, lun;
 	uint32_t block_size, num_blocks;
+
+	printf("0132_verify10_mismatch_no_cmp:\n");
+	printf("==============================\n");
+	if (show_info) {
+		printf("Test VERIFY10 BYTCHK:0 should not detect mismatches.\n");
+		printf("1, Verify the first 1-256 blocks does nto detect a mismatch if BYTCHK is 0\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {
@@ -67,7 +76,7 @@ int T0132_verify10_mismatch_no_cmp(const char *initiator, const char *url)
 	/* read and verify the first 1 - 256 blocks at the start of the LUN */
 	printf("Read+verify first 1-256 blocks ... ");
 	for (i = 1; i <= 256; i++) {
-		char *buf;
+		unsigned char *buf;
 
 		task = iscsi_read10_sync(iscsi, lun, 0, i * block_size, block_size);
 		if (task == NULL) {

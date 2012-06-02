@@ -20,7 +20,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0224_write16_beyondeol(const char *initiator, const char *url)
+int T0224_write16_beyondeol(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -29,6 +29,15 @@ int T0224_write16_beyondeol(const char *initiator, const char *url)
 	uint32_t block_size;
 	uint64_t num_blocks;
 	unsigned char data[258 * 512];
+
+	printf("0224_write16_beyond_eol:\n");
+	printf("=======================\n");
+	if (show_info) {
+		printf("Test that WRITE16 fails if writing beyond end-of-lun.\n");
+		printf("1, Writing 1-256 blocks beyond end-of-lun should fail.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {

@@ -22,13 +22,22 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0103_read10_rdprotect(const char *initiator, const char *url)
+int T0103_read10_rdprotect(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	int full_size;
 	struct scsi_inquiry_standard *inq;
 	int ret, i, lun;
+
+	printf("0103_read10_rdprotect:\n");
+	printf("======================\n");
+	if (show_info) {
+		printf("Test how READ10 handles the rdprotect bits\n");
+		printf("1, Any non-zero valued for rdprotect should fail.\n");
+		printf("\n");
+		return 0;
+	}
 
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {
