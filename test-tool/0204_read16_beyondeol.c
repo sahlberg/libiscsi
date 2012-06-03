@@ -116,7 +116,7 @@ int T0204_read16_beyondeol(const char *initiator, const char *url, int data_loss
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("Read16 command should fail when reading at LBA -1\n");
+			printf("Read16 command should fail when reading at LBA 2^63\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;
