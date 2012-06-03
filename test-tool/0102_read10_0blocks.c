@@ -35,7 +35,7 @@ int T0102_read10_0blocks(const char *initiator, const char *url, int data_loss _
 		printf("1, Read at LBA:0 should work.\n");
 		printf("2, Read at LBA:end-of-lun+1 should fail.\n");
 		printf("3, Read at LBA:end-of-lun+2 should fail.\n");
-		printf("4, Read at LBA:-1 should fail.\n");
+		printf("4, Read at LBA:-1 should fail. (only test this if the device is < 2TB)\n");
 		printf("\n");
 		return 0;
 	}
@@ -151,7 +151,10 @@ int T0102_read10_0blocks(const char *initiator, const char *url, int data_loss _
 	printf("[OK]\n");
 
 
-	/* read10 0 at lba -1 */
+	/* read10 0 at lba -1, only do this if the device is < 2TB */
+	if (num_blocks == 0xffffffff) {
+		goto finished;
+	}
 	printf("Reading 0 blocks at lba:-1 ... ");
 	task = iscsi_read10_sync(iscsi, lun, 0xffffff, 0, block_size);
 	if (task == NULL) {

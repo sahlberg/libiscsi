@@ -36,6 +36,7 @@ int T0203_read16_0blocks(const char *initiator, const char *url, int data_loss _
 		printf("1, Read at 0 should work.\n");
 		printf("2, Read at end-of-lun should work.\n");
 		printf("3, Read beyond end-of-lun should fail.\n");
+		printf("4, Read at LBA -1 should fail.\n");
 		printf("\n");
 		return 0;
 	}
@@ -117,6 +118,23 @@ int T0203_read16_0blocks(const char *initiator, const char *url, int data_loss _
 	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Read16 command: Should fail when reading 0blocks beyond end\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+	printf("[OK]\n");
+
+	printf("Read16 0blocks at LBA:-1 ");
+	task = iscsi_read16_sync(iscsi, lun, -1, 0, block_size, 0, 0, 0, 0, 0);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send read16 command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		goto finished;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("Read16 command: Should fail when reading 0blocks at LBA -1\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
