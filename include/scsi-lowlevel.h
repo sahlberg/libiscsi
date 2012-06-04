@@ -40,7 +40,8 @@ enum scsi_opcode {
 	SCSI_OPCODE_SERVICE_ACTION_IN  = 0x9E,
 	SCSI_OPCODE_REPORTLUNS         = 0xA0,
 	SCSI_OPCODE_READ12             = 0xA8,
-	SCSI_OPCODE_WRITE12            = 0xAA
+	SCSI_OPCODE_WRITE12            = 0xAA,
+	SCSI_OPCODE_VERIFY12           = 0xAF
 };
 
 enum scsi_service_action_in {
@@ -124,6 +125,13 @@ struct scsi_verify10_params {
 	int dpo;
 	int bytchk;
 };
+struct scsi_verify12_params {
+	uint32_t lba;
+	uint32_t num_blocks;
+	int vprotect;
+	int dpo;
+	int bytchk;
+};
 struct scsi_verify16_params {
 	uint64_t lba;
 	uint32_t num_blocks;
@@ -187,6 +195,7 @@ struct scsi_task {
 		struct scsi_write12_params         write12;
 		struct scsi_write16_params         write16;
 		struct scsi_verify10_params        verify10;
+		struct scsi_verify12_params        verify12;
 		struct scsi_verify16_params        verify16;
 		struct scsi_readcapacity10_params  readcapacity10;
 		struct scsi_reportluns_params      reportluns;
@@ -614,6 +623,7 @@ EXTERN struct scsi_task *scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int fu
 EXTERN struct scsi_task *scsi_cdb_write12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 EXTERN struct scsi_task *scsi_cdb_write16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 EXTERN struct scsi_task *scsi_cdb_verify10(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize);
+EXTERN struct scsi_task *scsi_cdb_verify12(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize);
 EXTERN struct scsi_task *scsi_cdb_verify16(uint64_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize);
 
 EXTERN struct scsi_task *scsi_cdb_synchronizecache10(int lba, int num_blocks,

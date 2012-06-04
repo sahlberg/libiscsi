@@ -524,6 +524,26 @@ iscsi_verify10_sync(struct iscsi_context *iscsi, int lun, unsigned char *data, u
 }
 
 struct scsi_task *
+iscsi_verify12_sync(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba,
+		    int vprotect, int dpo, int bytchk, int blocksize)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_verify12_task(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize,
+				       scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi,
+				"Failed to send Verify12 command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
 iscsi_verify16_sync(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba,
 		    int vprotect, int dpo, int bytchk, int blocksize)
 {

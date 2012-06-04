@@ -82,7 +82,9 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0250_prefetch16_simple.c \
 	test-tool/0260_get_lba_status_simple.c test-tool/0264_get_lba_status_beyondeol.c \
 	test-tool/0270_verify16_simple.c test-tool/0271_verify16_mismatch.c \
-	test-tool/0272_verify16_mismatch_no_cmp.c test-tool/0273_verify16_beyondeol.c
+	test-tool/0272_verify16_mismatch_no_cmp.c test-tool/0273_verify16_beyondeol.c \
+	test-tool/0280_verify12_simple.c test-tool/0281_verify12_mismatch.c \
+	test-tool/0282_verify12_mismatch_no_cmp.c
 endif
 
 # LD_PRELOAD library.

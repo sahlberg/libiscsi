@@ -119,6 +119,11 @@ struct scsi_test tests[] = {
 { "T0272_verify16_mismatch_no_cmp",	T0272_verify16_mismatch_no_cmp },
 { "T0273_verify16_beyondeol",		T0273_verify16_beyondeol },
 
+/* verify12*/
+{ "T0280_verify12_simple",		T0280_verify12_simple },
+{ "T0281_verify12_mismatch",		T0281_verify12_mismatch },
+{ "T0282_verify12_mismatch_no_cmp",	T0282_verify12_mismatch_no_cmp },
+
 { NULL, NULL }
 };
 
