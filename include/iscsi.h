@@ -642,6 +642,12 @@ iscsi_verify10_task(struct iscsi_context *iscsi, int lun,
 		    int blocksize, iscsi_command_cb cb,
 		    void *private_data);
 EXTERN struct scsi_task *
+iscsi_verify16_task(struct iscsi_context *iscsi, int lun,
+		    unsigned char *data, uint32_t datalen, uint64_t lba,
+		    int vprotect, int dpo, int bytchk, 
+		    int blocksize, iscsi_command_cb cb,
+		    void *private_data);
+EXTERN struct scsi_task *
 iscsi_writesame10_task(struct iscsi_context *iscsi, int lun,
 		       unsigned char *data, uint32_t datalen,
 		       uint32_t lba, uint16_t num_blocks,
@@ -748,6 +754,12 @@ iscsi_prefetch16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 EXTERN struct scsi_task *
 iscsi_verify10_sync(struct iscsi_context *iscsi, int lun,
 		    unsigned char *data, uint32_t datalen, uint32_t lba,
+		    int vprotect, int dpo, int bytchk, 
+		    int blocksize);
+
+EXTERN struct scsi_task *
+iscsi_verify16_sync(struct iscsi_context *iscsi, int lun,
+		    unsigned char *data, uint32_t datalen, uint64_t lba,
 		    int vprotect, int dpo, int bytchk, 
 		    int blocksize);
 

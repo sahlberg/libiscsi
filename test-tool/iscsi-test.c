@@ -113,6 +113,12 @@ struct scsi_test tests[] = {
 { "T0260_get_lba_status_simple",	T0260_get_lba_status_simple },
 { "T0264_get_lba_status_beyondeol",	T0264_get_lba_status_beyondeol },
 
+/* verify16*/
+{ "T0270_verify16_simple",		T0270_verify16_simple },
+{ "T0271_verify16_mismatch",		T0271_verify16_mismatch },
+{ "T0272_verify16_mismatch_no_cmp",	T0272_verify16_mismatch_no_cmp },
+{ "T0273_verify16_beyondeol",		T0273_verify16_beyondeol },
+
 { NULL, NULL }
 };
 

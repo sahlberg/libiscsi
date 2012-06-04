@@ -72,6 +72,8 @@ iscsi_unmap_sync
 iscsi_unmap_task
 iscsi_verify10_sync
 iscsi_verify10_task
+iscsi_verify16_sync
+iscsi_verify16_task
 iscsi_which_events
 iscsi_write10_sync
 iscsi_write10_task
@@ -100,6 +102,7 @@ scsi_cdb_synchronizecache10
 scsi_cdb_testunitready
 scsi_cdb_unmap
 scsi_cdb_verify10
+scsi_cdb_verify16
 scsi_cdb_write10
 scsi_cdb_write12
 scsi_cdb_write16

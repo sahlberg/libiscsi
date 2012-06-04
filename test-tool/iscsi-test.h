@@ -77,3 +77,8 @@ int T0250_prefetch16_simple(const char *initiator, const char *url, int data_los
 
 int T0260_get_lba_status_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0264_get_lba_status_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
+
+int T0270_verify16_simple(const char *initiator, const char *url, int data_loss, int show_info);
+int T0271_verify16_mismatch(const char *initiator, const char *url, int data_loss, int show_info);
+int T0272_verify16_mismatch_no_cmp(const char *initiator, const char *url, int data_loss, int show_info);
+int T0273_verify16_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);

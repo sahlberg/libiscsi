@@ -900,6 +900,39 @@ iscsi_verify10_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 }
 
 struct scsi_task *
+iscsi_verify16_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
+		    uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize,
+		    iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+	struct iscsi_data outdata;
+
+	if (datalen % blocksize != 0) {
+		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
+				"blocksize:%d.", datalen, blocksize);
+		return NULL;
+	}
+
+	task = scsi_cdb_verify16(lba, datalen, vprotect, dpo, bytchk, blocksize);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"verify16 cdb.");
+		return NULL;
+	}
+
+	outdata.data = data;
+	outdata.size = datalen;
+
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, &outdata,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
 iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd, int pc,
 		       int page_code, int sub_page_code,
 		       unsigned char alloc_len,
