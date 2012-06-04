@@ -59,6 +59,7 @@ struct scsi_test tests[] = {
 { "T0130_verify10_simple",		T0130_verify10_simple },
 { "T0131_verify10_mismatch",		T0131_verify10_mismatch },
 { "T0132_verify10_mismatch_no_cmp",	T0132_verify10_mismatch_no_cmp },
+{ "T0133_verify10_beyondeol",		T0133_verify10_beyondeol },
 
 /* readcapacity16*/
 { "T0160_readcapacity16_simple",	T0160_readcapacity16_simple },
@@ -123,6 +124,7 @@ struct scsi_test tests[] = {
 { "T0280_verify12_simple",		T0280_verify12_simple },
 { "T0281_verify12_mismatch",		T0281_verify12_mismatch },
 { "T0282_verify12_mismatch_no_cmp",	T0282_verify12_mismatch_no_cmp },
+{ "T0283_verify12_beyondeol",		T0283_verify12_beyondeol },
 
 { NULL, NULL }
 };

@@ -35,6 +35,7 @@ int T0122_read6_invalid(const char *initiator, const char *url, int data_loss, i
 int T0130_verify10_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0131_verify10_mismatch(const char *initiator, const char *url, int data_loss, int show_info);
 int T0132_verify10_mismatch_no_cmp(const char *initiator, const char *url, int data_loss, int show_info);
+int T0133_verify10_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0160_readcapacity16_simple(const char *initiator, const char *url, int data_loss, int show_info);
 
@@ -86,3 +87,4 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url, int data_lo
 int T0280_verify12_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0281_verify12_mismatch(const char *initiator, const char *url, int data_loss, int show_info);
 int T0282_verify12_mismatch_no_cmp(const char *initiator, const char *url, int data_loss, int show_info);
+int T0283_verify12_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);

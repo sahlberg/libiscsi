@@ -61,7 +61,7 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0120_read6_simple.c \
 	test-tool/0121_read6_beyond_eol.c test-tool/0122_read6_invalid.c \
 	test-tool/0130_verify10_simple.c test-tool/0131_verify10_mismatch.c \
-	test-tool/0132_verify10_mismatch_no_cmp.c \
+	test-tool/0132_verify10_mismatch_no_cmp.c test-tool/0133_verify10_beyondeol.c \
 	test-tool/0160_readcapacity16_simple.c \
 	test-tool/0170_unmap_simple.c test-tool/0171_unmap_zero.c \
 	test-tool/0180_writesame10_unmap.c test-tool/0181_writesame10_unmap_unaligned.c \
@@ -84,7 +84,7 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0270_verify16_simple.c test-tool/0271_verify16_mismatch.c \
 	test-tool/0272_verify16_mismatch_no_cmp.c test-tool/0273_verify16_beyondeol.c \
 	test-tool/0280_verify12_simple.c test-tool/0281_verify12_mismatch.c \
-	test-tool/0282_verify12_mismatch_no_cmp.c
+	test-tool/0282_verify12_mismatch_no_cmp.c test-tool/0283_verify12_beyondeol.c
 endif
 
 # LD_PRELOAD library.
