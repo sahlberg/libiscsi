@@ -254,14 +254,16 @@ iscsi_read6_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 struct scsi_task *
 iscsi_read10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
-		  uint32_t datalen, int blocksize)
+		  uint32_t datalen, int blocksize,
+		  int rdprotect, int dpo, int fua, int fua_nv, int group_number)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_read10_task(iscsi, lun, lba, datalen, blocksize,
-				       scsi_sync_cb, &state) == NULL) {
+	if (iscsi_read10_task(iscsi, lun, lba, datalen, blocksize, rdprotect, 
+			      dpo, fua, fua_nv, group_number,
+			      scsi_sync_cb, &state) == NULL) {
 		iscsi_set_error(iscsi,
 				"Failed to send Read10 command");
 		return NULL;
@@ -438,15 +440,17 @@ iscsi_prefetch16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 struct scsi_task *
-iscsi_write10_sync(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba,
-		   int fua, int fuanv, int blocksize)
+iscsi_write10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		   unsigned char *data, uint32_t datalen, int blocksize,
+		   int wrprotect, int dpo, int fua, int fua_nv, int group_number)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_write10_task(iscsi, lun, data, datalen, lba, fua, fuanv, blocksize,
-				       scsi_sync_cb, &state) == NULL) {
+	if (iscsi_write10_task(iscsi, lun, lba, data, datalen, blocksize,
+			       wrprotect, dpo, fua, fua_nv, group_number,
+			       scsi_sync_cb, &state) == NULL) {
 		iscsi_set_error(iscsi,
 				"Failed to send Write10 command");
 		return NULL;

@@ -677,7 +677,7 @@ scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize)
  * READ10
  */
 struct scsi_task *
-scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize)
+scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number)
 {
 	struct scsi_task *task;
 
@@ -689,8 +689,21 @@ scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize)
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_READ10;
 
+	task->cdb[1] |= ((rdprotect & 0x07) << 5);
+	if (dpo) {
+		task->cdb[1] |= 0x10;
+	}
+	if (fua) {
+		task->cdb[1] |= 0x08;
+	}
+	if (fua_nv) {
+		task->cdb[1] |= 0x02;
+	}
+
 	*(uint32_t *)&task->cdb[2] = htonl(lba);
 	*(uint16_t *)&task->cdb[7] = htons(xferlen/blocksize);
+
+	task->cdb[6] |= (group_number & 0x1f);
 
 	task->cdb_size = 10;
 	if (xferlen != 0) {
@@ -803,7 +816,7 @@ scsi_cdb_read16(uint64_t lba, uint32_t xferlen, int blocksize, int rdprotect, in
  * WRITE10
  */
 struct scsi_task *
-scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int fua, int fua_nv, int blocksize)
+scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
 {
 	struct scsi_task *task;
 
@@ -815,6 +828,10 @@ scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int fua, int fua_nv, int blocks
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_WRITE10;
 
+	task->cdb[1] |= ((wrprotect & 0x07) << 5);
+	if (dpo) {
+		task->cdb[1] |= 0x10;
+	}
 	if (fua) {
 		task->cdb[1] |= 0x08;
 	}
@@ -824,6 +841,8 @@ scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int fua, int fua_nv, int blocks
 
 	*(uint32_t *)&task->cdb[2] = htonl(lba);
 	*(uint16_t *)&task->cdb[7] = htons(xferlen/blocksize);
+
+	task->cdb[6] |= (group_number & 0x1f);
 
 	task->cdb_size = 10;
 	if (xferlen != 0) {

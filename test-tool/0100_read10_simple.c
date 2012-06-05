@@ -75,7 +75,7 @@ int T0100_read10_simple(const char *initiator, const char *url, int data_loss _U
 	/* read the first 1 - 256 blocks at the start of the LUN */
 	printf("Reading first 1-256 blocks ... ");
 	for (i=1; i<=256; i++) {
-		task = iscsi_read10_sync(iscsi, lun, 0, i * block_size, block_size);
+		task = iscsi_read10_sync(iscsi, lun, 0, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
@@ -97,7 +97,7 @@ int T0100_read10_simple(const char *initiator, const char *url, int data_loss _U
 	/* read the last 1 - 256 blocks at the end of the LUN */
 	printf("Reading last 1-256 blocks ... ");
 	for (i=1; i<=256; i++) {
-		task = iscsi_read10_sync(iscsi, lun, num_blocks +1 - i, i * block_size, block_size);
+		task = iscsi_read10_sync(iscsi, lun, num_blocks +1 - i, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));

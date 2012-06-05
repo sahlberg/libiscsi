@@ -78,7 +78,7 @@ int T0131_verify10_mismatch(const char *initiator, const char *url, int data_los
 	for (i = 1; i <= 256; i++) {
 		unsigned char *buf;
 
-		task = iscsi_read10_sync(iscsi, lun, 0, i * block_size, block_size);
+		task = iscsi_read10_sync(iscsi, lun, 0, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));

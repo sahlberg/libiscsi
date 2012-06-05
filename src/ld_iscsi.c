@@ -261,7 +261,7 @@ ssize_t read(int fd, void *buf, size_t count)
 		num_blocks = (iscsi_fd_list[fd].offset - offset + count + iscsi_fd_list[fd].block_size - 1) / iscsi_fd_list[fd].block_size;
 
 		iscsi_fd_list[fd].in_flight = 1;
-		task = iscsi_read10_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, offset / iscsi_fd_list[fd].block_size, num_blocks * iscsi_fd_list[fd].block_size, iscsi_fd_list[fd].block_size);
+		task = iscsi_read10_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, offset / iscsi_fd_list[fd].block_size, num_blocks * iscsi_fd_list[fd].block_size, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
 		iscsi_fd_list[fd].in_flight = 0;
 		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 			fprintf(stderr, "ld-iscsi: failed to send read10 command\n");

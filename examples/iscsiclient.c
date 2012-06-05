@@ -183,7 +183,7 @@ void read6_cb(struct iscsi_context *iscsi, int status, void *command_data, void 
 
 	scsi_free_scsi_task(task);
 
-	if ((task = iscsi_read10_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, read10_cb, private_data)) == NULL) {
+	if ((task = iscsi_read10_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, 0, 0, 0, 0, 0, read10_cb, private_data)) == NULL) {
 		printf("failed to send read10 command\n");
 		exit(10);
 	}

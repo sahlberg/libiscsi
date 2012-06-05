@@ -76,7 +76,7 @@ int T0102_read10_0blocks(const char *initiator, const char *url, int data_loss _
 
 	/* read10 0 blocks one block at lba 0 */
 	printf("Reading 0 blocks at lba:0 ... ");
-	task = iscsi_read10_sync(iscsi, lun, 0, 0, block_size);
+	task = iscsi_read10_sync(iscsi, lun, 0, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
  	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
@@ -95,7 +95,7 @@ int T0102_read10_0blocks(const char *initiator, const char *url, int data_loss _
 
 	/* read10 0 blocks one block beyond the eol */
 	printf("Reading 0 blocks at one block beyond end ... ");
-	task = iscsi_read10_sync(iscsi, lun, num_blocks + 1, 0, block_size);
+	task = iscsi_read10_sync(iscsi, lun, num_blocks + 1, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
  	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
@@ -124,7 +124,7 @@ int T0102_read10_0blocks(const char *initiator, const char *url, int data_loss _
 
 	/* read10 0 blocks two blocks beyond the eol */
 	printf("Reading 0 blocks at two blocks beyond end ... ");
-	task = iscsi_read10_sync(iscsi, lun, num_blocks + 1, 0, block_size);
+	task = iscsi_read10_sync(iscsi, lun, num_blocks + 1, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
  	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
@@ -156,7 +156,7 @@ int T0102_read10_0blocks(const char *initiator, const char *url, int data_loss _
 		goto finished;
 	}
 	printf("Reading 0 blocks at lba:-1 ... ");
-	task = iscsi_read10_sync(iscsi, lun, 0xffffff, 0, block_size);
+	task = iscsi_read10_sync(iscsi, lun, 0xffffff, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
  	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));

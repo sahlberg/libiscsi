@@ -75,7 +75,7 @@ int T0101_read10_beyond_eol(const char *initiator, const char *url, int data_los
 	/* read 1-256 blocks, one block beyond the end-of-lun */
 	printf("Reading last 1-256 blocks one block beyond eol ... ");
 	for (i=1; i<=256; i++) {
-		task = iscsi_read10_sync(iscsi, lun, num_blocks + 2 - i, i * block_size, block_size);
+		task = iscsi_read10_sync(iscsi, lun, num_blocks + 2 - i, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 			printf("[FAILED]\n");
 			printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
@@ -106,7 +106,7 @@ int T0101_read10_beyond_eol(const char *initiator, const char *url, int data_los
 	/* read 2-256 blocks, all but one block beyond the eol */
 	printf("Reading 1-255 blocks beyond eol starting at last block ... ");
 	for (i=2; i<=256; i++) {
-		task = iscsi_read10_sync(iscsi, lun, num_blocks, i * block_size, block_size);
+		task = iscsi_read10_sync(iscsi, lun, num_blocks, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 			printf("[FAILED]\n");
 			printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));

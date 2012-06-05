@@ -608,13 +608,14 @@ iscsi_read6_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 EXTERN struct scsi_task *
 iscsi_read10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
-		       uint32_t datalen, int blocksize, iscsi_command_cb cb,
-		       void *private_data);
+		  uint32_t datalen, int blocksize,
+		  int rdprotect, int dpo, int fua, int fua_nv, int group_number,
+		  iscsi_command_cb cb, void *private_data);
 EXTERN struct scsi_task *
-iscsi_write10_task(struct iscsi_context *iscsi, int lun,
-			unsigned char *data, uint32_t datalen, uint32_t lba, int fua,
-			int fua_nv, int blocksize, iscsi_command_cb cb,
-			void *private_data);
+iscsi_write10_task(struct iscsi_context *iscsi, int lun, uint32_t lba, 
+		   unsigned char *data, uint32_t datalen, int blocksize,
+		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
+		   iscsi_command_cb cb, void *private_data);
 EXTERN struct scsi_task *
 iscsi_read12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   uint32_t datalen, int blocksize,
@@ -708,12 +709,13 @@ iscsi_read6_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 EXTERN struct scsi_task *
 iscsi_read10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
-		  uint32_t datalen, int blocksize);
+		  uint32_t datalen, int blocksize,
+		  int rdprotect, int dpo, int fua, int fua_nv, int group_number);
 
 EXTERN struct scsi_task *
-iscsi_write10_sync(struct iscsi_context *iscsi, int lun,
-			unsigned char *data, uint32_t datalen, uint32_t lba, int fua,
-			int fua_nv, int blocksize);
+iscsi_write10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		   unsigned char *data, uint32_t datalen, int blocksize,
+		   int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 
 EXTERN struct scsi_task *
 iscsi_read12_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
