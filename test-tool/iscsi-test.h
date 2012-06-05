@@ -88,3 +88,9 @@ int T0280_verify12_simple(const char *initiator, const char *url, int data_loss,
 int T0281_verify12_mismatch(const char *initiator, const char *url, int data_loss, int show_info);
 int T0282_verify12_mismatch_no_cmp(const char *initiator, const char *url, int data_loss, int show_info);
 int T0283_verify12_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
+
+int T0290_write10_simple(const char *initiator, const char *url, int data_loss, int show_info);
+int T0291_write10_wrprotect(const char *initiator, const char *url, int data_loss, int show_info);
+int T0292_write10_flags(const char *initiator, const char *url, int data_loss, int show_info);
+int T0293_write10_0blocks(const char *initiator, const char *url, int data_loss, int show_info);
+int T0294_write10_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);

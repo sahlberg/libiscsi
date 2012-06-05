@@ -20,7 +20,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0221_write16_wrprotect(const char *initiator, const char *url, int data_loss, int show_info)
+int T0291_write10_wrprotect(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -29,10 +29,10 @@ int T0221_write16_wrprotect(const char *initiator, const char *url, int data_los
 	uint32_t block_size;
 	unsigned char data[256 * 512];
 
-	printf("0221_write16_wrprotect:\n");
+	printf("0291_write10_wrprotect:\n");
 	printf("======================\n");
 	if (show_info) {
-		printf("Test how WRITE16 handles the wrprotect bits\n");
+		printf("Test how WRITE10 handles the wrprotect bits\n");
 		printf("1, Any non-zero valued for wrprotect should fail.\n");
 		printf("\n");
 		return 0;
@@ -80,12 +80,12 @@ int T0221_write16_wrprotect(const char *initiator, const char *url, int data_los
 		goto finished;
 	}
 
-	printf("Write16 with WRPROTECT ");
+	printf("Write10 with WRPROTECT ");
 	for (i = 1; i <= 7; i++) {
-		task = iscsi_write16_sync(iscsi, lun, 0, data, block_size, block_size, i, 0, 0, 0, 0);
+		task = iscsi_write10_sync(iscsi, lun, 0, data, block_size, block_size, i, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send write16 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send write10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			goto finished;
 		}
@@ -93,7 +93,7 @@ int T0221_write16_wrprotect(const char *initiator, const char *url, int data_los
 		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 		    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 		        printf("[FAILED]\n");
-			printf("Write16 with WRPROTECT!=0 should have failed with CHECK_CONDITION/ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB\n");
+			printf("Write10 with WRPROTECT!=0 should have failed with CHECK_CONDITION/ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;

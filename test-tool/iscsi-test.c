@@ -126,6 +126,13 @@ struct scsi_test tests[] = {
 { "T0282_verify12_mismatch_no_cmp",	T0282_verify12_mismatch_no_cmp },
 { "T0283_verify12_beyondeol",		T0283_verify12_beyondeol },
 
+/* write10*/
+{ "T0290_write10_simple",		T0290_write10_simple },
+{ "T0291_write10_wrprotect",		T0291_write10_wrprotect },
+{ "T0292_write10_flags",	       	T0292_write10_flags },
+{ "T0293_write10_0blocks",		T0293_write10_0blocks },
+{ "T0294_write10_beyondeol",		T0294_write10_beyondeol },
+
 { NULL, NULL }
 };
 

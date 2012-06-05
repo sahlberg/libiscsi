@@ -20,20 +20,22 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0221_write16_wrprotect(const char *initiator, const char *url, int data_loss, int show_info)
+int T0290_write10_simple(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
-	int ret = 0, i, lun;
+	int ret, i, lun;
 	uint32_t block_size;
-	unsigned char data[256 * 512];
+	uint32_t num_blocks;
+	unsigned char data[512 * 256];
 
-	printf("0221_write16_wrprotect:\n");
-	printf("======================\n");
+	printf("0290_write10_simple:\n");
+	printf("===================\n");
 	if (show_info) {
-		printf("Test how WRITE16 handles the wrprotect bits\n");
-		printf("1, Any non-zero valued for wrprotect should fail.\n");
+		printf("Test basic WRITE10 functionality.\n");
+		printf("1, Verify we can write the first 1-256 blocks of the LUN.\n");
+		printf("2, Verify we can write the last 1-256 blocks of the LUN.\n");
 		printf("\n");
 		return 0;
 	}
@@ -64,36 +66,33 @@ int T0221_write16_wrprotect(const char *initiator, const char *url, int data_los
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
-
 	block_size = rc16->block_length;
-
-	if(rc16->prot_en != 0) {
-		printf("device is formatted with protection information, skipping test\n");
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
+	num_blocks = rc16->returned_lba;
 	scsi_free_scsi_task(task);
+
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
 		ret = -1;
 		goto finished;
 	}
+	
 
-	printf("Write16 with WRPROTECT ");
-	for (i = 1; i <= 7; i++) {
-		task = iscsi_write16_sync(iscsi, lun, 0, data, block_size, block_size, i, 0, 0, 0, 0);
+	ret = 0;
+
+	/* write the first 1 - 256 blocks at the start of the LUN */
+	printf("Writing first 1-256 blocks ... ");
+	for (i = 1; i <= 256; i++) {
+		task = iscsi_write10_sync(iscsi, lun, 0, data, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send write16 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send write10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			goto finished;
 		}
-		if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("Write16 with WRPROTECT!=0 should have failed with CHECK_CONDITION/ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB\n");
+			printf("Write10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;
@@ -101,6 +100,29 @@ int T0221_write16_wrprotect(const char *initiator, const char *url, int data_los
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
+
+
+	/* write the last 1 - 256 blocks at the end of the LUN */
+	printf("Writing last 1-256 blocks ... ");
+	for (i = 1; i <= 256; i++) {
+		task = iscsi_write10_sync(iscsi, lun, num_blocks +1 - i, data, i * block_size, block_size, 0, 0, 0, 0, 0);
+		if (task == NULL) {
+		        printf("[FAILED]\n");
+			printf("Failed to send write10 command: %s\n", iscsi_get_error(iscsi));
+			ret = -1;
+			goto finished;
+		}
+		if (task->status != SCSI_STATUS_GOOD) {
+		        printf("[FAILED]\n");
+			printf("Write10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+			ret = -1;
+			scsi_free_scsi_task(task);
+			goto finished;
+		}
+		scsi_free_scsi_task(task);
+	}
+	printf("[OK]\n");
+
 
 finished:
 	iscsi_logout_sync(iscsi);

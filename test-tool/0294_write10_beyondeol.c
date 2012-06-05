@@ -20,20 +20,21 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0221_write16_wrprotect(const char *initiator, const char *url, int data_loss, int show_info)
+int T0294_write10_beyondeol(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
-	int ret = 0, i, lun;
+	int ret, i, lun;
 	uint32_t block_size;
-	unsigned char data[256 * 512];
+	uint32_t num_blocks;
+	unsigned char data[258 * 512];
 
-	printf("0221_write16_wrprotect:\n");
-	printf("======================\n");
+	printf("0294_write10_beyond_eol:\n");
+	printf("=======================\n");
 	if (show_info) {
-		printf("Test how WRITE16 handles the wrprotect bits\n");
-		printf("1, Any non-zero valued for wrprotect should fail.\n");
+		printf("Test that WRITE10 fails if writing beyond end-of-lun.\n");
+		printf("1, Writing 1-256 blocks beyond end-of-lun should fail.\n");
 		printf("\n");
 		return 0;
 	}
@@ -59,19 +60,13 @@ int T0221_write16_wrprotect(const char *initiator, const char *url, int data_los
 	}
 	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
+		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
-
 	block_size = rc16->block_length;
-
-	if(rc16->prot_en != 0) {
-		printf("device is formatted with protection information, skipping test\n");
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
+	num_blocks = rc16->returned_lba;
 	scsi_free_scsi_task(task);
 
 	if (!data_loss) {
@@ -80,20 +75,22 @@ int T0221_write16_wrprotect(const char *initiator, const char *url, int data_los
 		goto finished;
 	}
 
-	printf("Write16 with WRPROTECT ");
-	for (i = 1; i <= 7; i++) {
-		task = iscsi_write16_sync(iscsi, lun, 0, data, block_size, block_size, i, 0, 0, 0, 0);
+
+	ret = 0;
+
+	/* read 1 - 256 blocks beyond the end of the device */
+	printf("Writing 1-256 blocks beyond end-of-device ... ");
+	for (i = 2; i <= 257; i++) {
+		task = iscsi_write10_sync(iscsi, lun, num_blocks, data, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send write16 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send write10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			goto finished;
 		}
-		if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("Write16 with WRPROTECT!=0 should have failed with CHECK_CONDITION/ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB\n");
+			printf("Write10 command should fail when writing beyond end of device\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;
@@ -101,6 +98,7 @@ int T0221_write16_wrprotect(const char *initiator, const char *url, int data_los
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
+
 
 finished:
 	iscsi_logout_sync(iscsi);
