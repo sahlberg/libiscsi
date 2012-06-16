@@ -95,14 +95,14 @@ void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void
 	wt->rt = task;
 	wt->client = client;
 
-	if (iscsi_write10_async(client->dst_iscsi,
+	if (iscsi_write10_task(client->dst_iscsi,
 			client->dst_lun,
+			task->params.read10.lba,
 			task->datain.data,
 			task->datain.size,
-			task->params.read10.lba,
-			0, 0,
-			client->dst_blocksize, write10_cb,
-			wt) != 0) {
+			client->dst_blocksize,
+			0, 0, 0, 0, 0,
+			write10_cb, wt) == NULL) {
 		printf("failed to send read10 command\n");
 		scsi_free_scsi_task(task);
 		exit(10);
@@ -122,10 +122,11 @@ void fill_read_queue(struct client *client)
 			num_blocks = blocks_per_io;
 		}
 
-		if (iscsi_read10_async(client->src_iscsi,
+		if (iscsi_read10_task(client->src_iscsi,
 				client->src_lun, client->pos,
 				num_blocks * client->src_blocksize,
-				client->src_blocksize, read10_cb, client) != 0) {
+				client->src_blocksize, 0, 0, 0, 0, 0,
+				read10_cb, client) == NULL) {
 			printf("failed to send read10 command\n");
 			exit(10);
 		}
