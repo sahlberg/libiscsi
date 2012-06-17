@@ -1016,13 +1016,9 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 		if (!strncmp(ptr, "HeaderDigest=", 13)) {
 			if (!strcmp(ptr + 13, "CRC32C")) {
-				iscsi->header_digest
-				  = ISCSI_HEADER_DIGEST_CRC32C;
 				iscsi->want_header_digest
 				  = ISCSI_HEADER_DIGEST_CRC32C;
 			} else {
-				iscsi->header_digest
-				  = ISCSI_HEADER_DIGEST_NONE;
 				iscsi->want_header_digest
 				  = ISCSI_HEADER_DIGEST_NONE;
 			}
@@ -1103,6 +1099,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	&& (in->hdr[1] & ISCSI_PDU_LOGIN_NSG_FF) == ISCSI_PDU_LOGIN_NSG_FF) {
 		iscsi->is_loggedin = 1;
 		iscsi->itt++;
+		iscsi->header_digest  = iscsi->want_header_digest;
 		pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
 	} else {
 		if (iscsi_login_async(iscsi, pdu->callback, pdu->private_data) != 0) {
