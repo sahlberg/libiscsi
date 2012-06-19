@@ -512,7 +512,17 @@ iscsi_free_iscsi_inqueue(struct iscsi_in_pdu *inqueue)
 
 int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval)
 {
-	int value;
+	int level, value;
+#if defined(__FreeBSD__) || defined(__sun)
+	struct protoent *buf;
+
+	if ((buf = getprotobyname("tcp")) != NULL)
+		level = buf->p_proto;
+	else
+		return -1;
+#else
+	level = SOL_TCP;
+#endif
 
 #ifdef SO_KEEPALIVE
 	value =1;
@@ -523,21 +533,21 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, in
 #endif
 #ifdef TCP_KEEPCNT
 	value = count;
-	if (setsockopt(iscsi->fd, SOL_TCP, TCP_KEEPCNT, &value, sizeof(value)) != 0) {
+	if (setsockopt(iscsi->fd, level, TCP_KEEPCNT, &value, sizeof(value)) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive count. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
 #endif
 #ifdef TCP_KEEPINTVL
 	value = interval;
-	if (setsockopt(iscsi->fd, SOL_TCP, TCP_KEEPINTVL, &value, sizeof(value)) != 0) {
+	if (setsockopt(iscsi->fd, level, TCP_KEEPINTVL, &value, sizeof(value)) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive interval. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
 #endif
 #ifdef TCP_KEEPIDLE
 	value = idle;
-	if (setsockopt(iscsi->fd, SOL_TCP, TCP_KEEPIDLE, &value, sizeof(value)) != 0) {
+	if (setsockopt(iscsi->fd, level, TCP_KEEPIDLE, &value, sizeof(value)) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive idle. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
