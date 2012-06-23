@@ -67,9 +67,11 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0180_writesame10_unmap.c test-tool/0181_writesame10_unmap_unaligned.c \
 	test-tool/0182_writesame10_beyondeol.c \
 	test-tool/0183_writesame10_wrprotect.c \
+	test-tool/0184_writesame10_0blocks.c \
 	test-tool/0190_writesame16_unmap.c test-tool/0191_writesame16_unmap_unaligned.c \
 	test-tool/0192_writesame16_beyondeol.c \
 	test-tool/0193_writesame16_wrprotect.c \
+	test-tool/0194_writesame16_0blocks.c \
 	test-tool/0200_read16_simple.c test-tool/0201_read16_rdprotect.c \
 	test-tool/0202_read16_flags.c  test-tool/0203_read16_0blocks.c   \
 	test-tool/0204_read16_beyondeol.c  \
