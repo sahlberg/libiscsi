@@ -36,6 +36,8 @@ int T0233_write12_0blocks(const char *initiator, const char *url, int data_loss,
 		printf("1, Read at LBA:0 should work.\n");
 		printf("2, Read at LBA:end-of-lun should work.\n");
 		printf("3, Read at LBA:end-of-lun+1 should fail.\n");
+		printf("4, Read at LBA:2^63 should fail (only on LUNs < 2TB).\n");
+		printf("5, Read at LBA:-1 should fail (only on LUNs < 2TB).\n");
 		printf("\n");
 		return 0;
 	}
@@ -78,56 +80,108 @@ int T0233_write12_0blocks(const char *initiator, const char *url, int data_loss,
 	}
 
 
-	printf("Write12 0blocks at LBA:0 ");
+	printf("WRITE12 0blocks at LBA:0 ");
 	task = iscsi_write12_sync(iscsi, lun, 0, NULL, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send write12 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto test2;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
-		printf("Write12 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		printf("WRITE12 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto finished;
+		goto test2;
 	}
 	printf("[OK]\n");
 
-	printf("Write12 0blocks at LBA:<end-of-disk> ");
+
+test2:
+	printf("WRITE12 0blocks at LBA:<end-of-disk> ");
 	task = iscsi_write12_sync(iscsi, lun, num_blocks, NULL, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send write12 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto test3;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
-		printf("Write12 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		printf("WRITE12 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto finished;
+		goto test3;
 	}
 	printf("[OK]\n");
 
-	printf("Write12 0blocks at LBA:<beyond end-of-disk> ");
+
+test3:
+	printf("WRITE12 0blocks at LBA:<beyond end-of-disk> ");
 	task = iscsi_write12_sync(iscsi, lun, num_blocks + 1, NULL, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send write12 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto test4;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
-		printf("Write12 command: Should fail when writing 0blocks beyond end\n");
+		printf("WRITE12 command: Should fail when writing 0blocks beyond end\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto finished;
+		goto test4;
 	}
 	printf("[OK]\n");
+
+test4:
+	printf("WRITE12 0blocks at LBA 2^31 ... ");
+	if (num_blocks > 0x80000000) {
+		printf("LUN is too big, skipping test\n");
+		goto test5;
+	}
+	task = iscsi_write12_sync(iscsi, lun, 0x80000000, NULL, 0, block_size, 0, 0, 0, 0, 0);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send WRITE12 command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		goto test5;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("WRITE12 command: Should fail when writing 0blocks at 2^31\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test5;
+	}
+	printf("[OK]\n");
+
+
+test5:
+	printf("WRITE12 0blocks at LBA -1 ... ");
+	if (num_blocks > 0x80000000) {
+		printf("LUN is too big, skipping test\n");
+		goto test5;
+	}
+	task = iscsi_write12_sync(iscsi, lun, -1, NULL, 0, block_size, 0, 0, 0, 0, 0);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send WRITE12 command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		goto test6;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("WRITE12 command: Should fail when writing 0blocks at -1\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test6;
+	}
+	printf("[OK]\n");
+
+
+test6:
 
 finished:
 	iscsi_logout_sync(iscsi);
