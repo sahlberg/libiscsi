@@ -36,7 +36,8 @@ int T0213_read12_0blocks(const char *initiator, const char *url, int data_loss _
 		printf("1, Read at 0 should work.\n");
 		printf("2, Read at end-of-lun should work.\n");
 		printf("3, Read beyond end-of-lun should fail.\n");
-		printf("4, Read at LBA:-1 should fail. (only test this if the device is < 2TB)\n");
+		printf("4, Read at LBA:2^31 should fail (only on LUNs < 2TB).\n");
+		printf("5, Read at LBA:-1 should fail (only on LUNs < 2TB).\n");
 		printf("\n");
 		return 0;
 	}
@@ -73,77 +74,110 @@ int T0213_read12_0blocks(const char *initiator, const char *url, int data_loss _
 	scsi_free_scsi_task(task);
 
 
-	printf("Read12 0blocks at LBA:0 ");
+	printf("READ12 0blocks at LBA:0 ");
 	task = iscsi_read12_sync(iscsi, lun, 0, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
-		printf("Failed to send read12 command: %s\n", iscsi_get_error(iscsi));
+		printf("Failed to send READ12 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto test2;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
-		printf("Read12 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		printf("READ12 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto finished;
+		goto test2;
 	}
 	printf("[OK]\n");
 
-	printf("Read12 0blocks at LBA:<end-of-disk> ");
+
+test2:
+	printf("READ12 0blocks at LBA:<end-of-disk> ");
 	task = iscsi_read12_sync(iscsi, lun, num_blocks, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
-		printf("Failed to send read12 command: %s\n", iscsi_get_error(iscsi));
+		printf("Failed to send READ12 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto test3;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
-		printf("Read12 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		printf("READ12 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto finished;
+		goto test3;
 	}
 	printf("[OK]\n");
 
-	printf("Read12 0blocks at LBA:<beyond end-of-disk> ");
+
+test3:
+	printf("READ12 0blocks at LBA:<beyond end-of-disk> ");
 	task = iscsi_read12_sync(iscsi, lun, num_blocks + 1, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
-		printf("Failed to send read12 command: %s\n", iscsi_get_error(iscsi));
+		printf("Failed to send READ12 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto test4;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
-		printf("Read12 command: Should fail when reading 0blocks beyond end\n");
+		printf("READ12 command: Should fail when reading 0blocks beyond end\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto finished;
+		goto test4;
 	}
 	printf("[OK]\n");
 
-	/* read12 0 at lba -1, only do this if the device is < 2TB */
-	if (num_blocks == 0xffffffff) {
-		goto finished;
+
+test4:
+	printf("READ12 0blocks at LBA 2^31 ... ");
+	if (num_blocks > 0x80000000) {
+		printf("LUN is too big, skipping test\n");
+		goto test5;
 	}
-	printf("Reading 0 blocks at lba:-1 ... ");
-	task = iscsi_read12_sync(iscsi, lun, -1, 0, block_size, 0, 0, 0, 0, 0);
+	task = iscsi_read12_sync(iscsi, lun, 0x80000000, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
-		printf("Failed to send read12 command: %s\n", iscsi_get_error(iscsi));
+		printf("Failed to send READ12 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto test5;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
-		printf("Read12 command: Should fail when reading 0blocks at -1\n");
+		printf("READ12 command: Should fail when reading 0blocks at 2^31\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto finished;
+		goto test5;
 	}
 	printf("[OK]\n");
+
+
+test5:
+	printf("READ12 0blocks at LBA -1 ... ");
+	if (num_blocks > 0x80000000) {
+		printf("LUN is too big, skipping test\n");
+		goto test5;
+	}
+	task = iscsi_read12_sync(iscsi, lun, -1, 0, block_size, 0, 0, 0, 0, 0);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send READ12 command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		goto test6;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("READ12 command: Should fail when reading 0blocks at -1\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test6;
+	}
+	printf("[OK]\n");
+
+
+test6:
+
 
 finished:
 	iscsi_logout_sync(iscsi);
