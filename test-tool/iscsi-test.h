@@ -44,9 +44,11 @@ int T0171_unmap_zero(const char *initiator, const char *url, int data_loss, int 
 
 int T0180_writesame10_unmap(const char *initiator, const char *url, int data_loss, int show_info);
 int T0181_writesame10_unmap_unaligned(const char *initiator, const char *url, int data_loss, int show_info);
+int T0182_writesame10_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0190_writesame16_unmap(const char *initiator, const char *url, int data_loss, int show_info);
 int T0191_writesame16_unmap_unaligned(const char *initiator, const char *url, int data_loss, int show_info);
+int T0192_writesame16_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0200_read16_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0201_read16_rdprotect(const char *initiator, const char *url, int data_loss, int show_info);
