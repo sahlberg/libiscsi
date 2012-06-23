@@ -131,7 +131,7 @@ test2:
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("WRITESAME10 command should fail when writing at LBA 2^63\n");
+			printf("WRITESAME10 command should fail when writing at LBA 2^31\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test3;
