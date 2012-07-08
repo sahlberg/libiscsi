@@ -15,6 +15,9 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef __iscsi_slist_h__
+#define __iscsi_slist_h__
+
 #define SLIST_ADD(list, item) \
 	do {							\
 		(item)->next = (*list);				\
@@ -46,6 +49,4 @@
 	   (*list) = head;					\
 	}
 
-
-
-
+#endif /* __iscsi_slist_h__ */
