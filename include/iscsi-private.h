@@ -24,6 +24,10 @@
 #define ssize_t SSIZE_T
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef discard_const
 #define discard_const(ptr) ((void *)((intptr_t)(ptr)))
 #endif
@@ -266,6 +270,10 @@ unsigned long crc32c(char *buf, int len);
 struct scsi_task *iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu);
 
 int iscsi_reconnect(struct iscsi_context *iscsi);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __iscsi_private_h__ */
 

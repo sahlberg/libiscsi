@@ -17,6 +17,10 @@
 #ifndef __scsi_lowlevel_h__
 #define __scsi_lowlevel_h__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SCSI_CDB_MAX_SIZE			16
 
 enum scsi_opcode {
@@ -505,7 +509,7 @@ struct scsi_mode_page_caching {
 	int minimum_prefetch;
 	int maximum_prefetch;
 	int maximum_prefetch_ceiling;
-       
+
 	int fsw;
 	int lbcss;
 	int dra;
@@ -571,7 +575,7 @@ struct scsi_mode_sense {
        uint8_t medium_type;
        uint8_t device_specific_parameter;
        uint8_t block_descriptor_length;
-       struct scsi_mode_page *pages;       
+       struct scsi_mode_page *pages;
 };
 
 EXTERN struct scsi_task *scsi_cdb_modesense6(int dbd,
@@ -638,6 +642,10 @@ EXTERN struct scsi_task *scsi_cdb_prefetch10(uint32_t lba, int num_blocks, int i
 EXTERN struct scsi_task *scsi_cdb_prefetch16(uint64_t lba, int num_blocks, int immed, int group);
 
 void *scsi_malloc(struct scsi_task *task, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __scsi_lowlevel_h__ */
 
