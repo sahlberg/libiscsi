@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.4.0
+Version: 1.5.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -91,6 +91,15 @@ The libiscsi-devel package includes the header files for libiscsi.
 %{_libdir}/libiscsi.so
 
 %changelog
+* Mon Jul 9 2012 : 1.5.0
+ - Make sure we can handle racy eventsystems which might call us for 
+   POLLIN eventhough there is no longer any data to read from the socket.
+ - Only set up tcp keepalives on systems that support them.
+ - Only export symbols we really want to make public
+ - FreeBSD and Illumos does not define SOL_TCP
+ - Lots of updates to the test tool
+ - Fix a bug related to header-digest that could make the login fail
+   on targets that require header digest.
 * Thu May 3 2012 : 1.4.0
  - Add WRITESAME10/16 and tests for them
  - Add READ/WRITE12/16 and tests for them
