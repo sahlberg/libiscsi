@@ -156,7 +156,7 @@ void print_help(void)
 	fprintf(stderr, "  -t, --test=test-name              Which test to run. Default is to run all tests.\n");
 	fprintf(stderr, "  -l, --list                        List all tests.\n");
 	fprintf(stderr, "  --info,                           Print extra info about a test.\n");
-	fprintf(stderr, "  --dataloss                        All destructive tests.\n");
+	fprintf(stderr, "  --dataloss                        Allow destructive tests.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Help options:\n");
 	fprintf(stderr, "  -?, --help                        Show this help message\n");
