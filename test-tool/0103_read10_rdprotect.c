@@ -117,7 +117,7 @@ int T0103_read10_rdprotect(const char *initiator, const char *url, int data_loss
 		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 		    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 		        printf("[FAILED]\n");
-			printf("Read10 with rdprotect should fail with ILLEGAL REQUEST/INVALID OPCODE\n");
+			printf("READ10 with rdprotect should fail with ILLEGAL REQUEST/INVALID_FIELD_IN_CDB\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;
