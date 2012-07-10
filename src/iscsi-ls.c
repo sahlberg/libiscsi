@@ -60,7 +60,7 @@ void show_lun(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
 	struct scsi_inquiry_standard *inq;
-	int type;
+	int type, no_media;
 	long long size = 0;
 	int size_pf = 0;
 	static const char sf[] = {' ', 'k', 'M', 'G', 'T' };
@@ -77,7 +77,14 @@ tur_try_again:
 			goto tur_try_again;
 		}
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+
+	no_media = 0;
+	if (task->status     == SCSI_STATUS_CHECK_CONDITION
+	&&  task->sense.key  == SCSI_SENSE_NOT_READY
+	&&  task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT) {
+	    	/* not an error, just a cdrom without a disk most likely */
+		no_media = 1;
+	} else if (task->status != SCSI_STATUS_GOOD) {
 		fprintf(stderr, "TESTUNITREADY failed with %s\n", iscsi_get_error(iscsi));
 		exit(10);
 	}
@@ -130,6 +137,9 @@ tur_try_again:
 	printf("Lun:%-4d Type:%s", lun, scsi_devtype_to_str(type));
 	if (type == SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 		printf(" (Size:%lld%c)", size, sf[size_pf]);
+	}
+	if (no_media) {
+		printf(" (No media loaded)");
 	}
 	printf("\n");
 }
