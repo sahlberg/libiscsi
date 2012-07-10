@@ -145,7 +145,7 @@ struct scsi_test tests[] = {
 void print_usage(void)
 {
 	fprintf(stderr, "Usage: iscsi-test [-?] [-?|--help] [--usage] [-t|--test=<test>]\n"
-			"\t\t[-l|--list] [-i|--initiator-name=<iqn-name>]\n"
+			"\t\t[-l|--list] [--info] [-i|--initiator-name=<iqn-name>]\n"
 			"\t\t<iscsi-url>\n");
 }
 
@@ -155,6 +155,7 @@ void print_help(void)
 	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
 	fprintf(stderr, "  -t, --test=test-name              Which test to run. Default is to run all tests.\n");
 	fprintf(stderr, "  -l, --list                        List all tests.\n");
+	fprintf(stderr, "  --info,                           Print extra info about a test.\n");
 	fprintf(stderr, "  --dataloss                        All destructive tests.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Help options:\n");
@@ -234,7 +235,7 @@ int main(int argc, const char *argv[])
 		{ "list", 'l', POPT_ARG_NONE, &list_tests, 0, "List all tests", NULL },
 		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
 		{ "test", 't', POPT_ARG_STRING, &testname, 0, "Which test to run", "testname" },
-		{ "info", 'i', POPT_ARG_NONE, &show_info, 0, "Show information about the test", "testname" },
+		{ "info", 0, POPT_ARG_NONE, &show_info, 0, "Show information about the test", "testname" },
 		{ "dataloss", 0, POPT_ARG_NONE, &data_loss, 0, "Allow destructuve tests", NULL },
 		POPT_TABLEEND
 	};
