@@ -267,6 +267,9 @@ int main(int argc, const char *argv[])
 	if (list_tests != 0) {
 		for (test = &tests[0]; test->name; test++) {
 			printf("%s\n", test->name);
+			if (show_info) {
+				test->test(initiator, url, data_loss, show_info);
+			}
 		}
 		exit(0);
 	}
