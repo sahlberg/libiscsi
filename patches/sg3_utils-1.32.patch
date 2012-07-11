@@ -1,6 +1,6 @@
-commit 0fbfdc4cb083c0a077f719e78658bc80b2123f83
+commit 2648e61716b76bd7deeb2218a5ff7ae0493930ed
 Author: Ronnie Sahlberg <ronniesahlberg@gmail.com>
-Date:   Tue Jan 17 20:29:11 2012 +1100
+Date:   Wed Jul 11 15:41:59 2012 +1000
 
     iscsi support
 
@@ -101,6 +101,46 @@ index 355ca84..1916603 100644
 +fi
 +
  AC_OUTPUT(Makefile include/Makefile lib/Makefile src/Makefile doc/Makefile)
+diff --git a/include/sg_pt_iscsi.h b/include/sg_pt_iscsi.h
+new file mode 100644
+index 0000000..f849eb0
+--- /dev/null
++++ b/include/sg_pt_iscsi.h
+@@ -0,0 +1,34 @@
++/*
++ * Copyright (c) 2010 Ronnie Sahlberg
++ * All rights reserved.
++ * Use of this source code is governed by a BSD-style
++ * license that can be found in the BSD_LICENSE file.
++ */
++
++extern struct sg_context *iscsi;
++
++#define ISCSI_FAKE_FD 0x7fffffff
++
++int do_iscsi_pt(struct sg_pt_base * vp, int fd, int time_secs, int verbose);
++struct sg_pt_base *construct_iscsi_pt_obj(void);
++void clear_iscsi_pt_obj(struct sg_pt_base * vp);
++void destruct_iscsi_pt_obj(struct sg_pt_base * vp);
++void set_iscsi_pt_cdb(struct sg_pt_base * vp, const unsigned char * cdb, int cdb_len);
++void set_iscsi_pt_sense(struct sg_pt_base * vp, unsigned char * sense, int max_sense_len);
++void set_iscsi_pt_data_in(struct sg_pt_base * vp, unsigned char * dxferp, int dxfer_len);
++void set_iscsi_pt_data_out(struct sg_pt_base * vp, const unsigned char * dxferp, int dxfer_len);
++int get_iscsi_pt_resid(const struct sg_pt_base * vp);
++int get_iscsi_pt_result_category(const struct sg_pt_base * vp);
++int get_iscsi_pt_os_err(const struct sg_pt_base * vp);
++int get_iscsi_pt_sense_len(const struct sg_pt_base * vp);
++void set_iscsi_pt_packet_id(struct sg_pt_base * vp, int pack_id);
++int iscsi_pt_close_device(int device_fd);
++char *get_iscsi_pt_os_err_str(const struct sg_pt_base * vp, int max_b_len, char * b);
++int get_iscsi_pt_transport_err(const struct sg_pt_base * vp);
++char *get_iscsi_pt_transport_err_str(const struct sg_pt_base * vp, int max_b_len, char * b);
++void set_iscsi_pt_tag(struct sg_pt_base * vp, uint64_t tag);
++void set_iscsi_pt_task_management(struct sg_pt_base * vp, int tmf_code);
++void set_iscsi_pt_task_attr(struct sg_pt_base * vp, int attribute, int priority);
++int get_iscsi_pt_duration_ms(const struct sg_pt_base * vp);
++int get_iscsi_pt_status_response(const struct sg_pt_base * vp);
++int iscsi_pt_open_device(const char *device_name, int read_only, int verbose);
 diff --git a/lib/Makefile.am b/lib/Makefile.am
 index 3d5213e..6990f12 100644
 --- a/lib/Makefile.am
@@ -162,6 +202,404 @@ index 3d5213e..6990f12 100644
  libsgutils2_la_DEPENDENCIES = @GETOPT_O_FILES@
  
  
+diff --git a/lib/sg_pt_iscsi.c b/lib/sg_pt_iscsi.c
+new file mode 100644
+index 0000000..8f09baf
+--- /dev/null
++++ b/lib/sg_pt_iscsi.c
+@@ -0,0 +1,392 @@
++/*
++ * Copyright (c) 2010 Ronnie Sahlberg
++ * All rights reserved.
++ * Use of this source code is governed by a BSD-style
++ * license that can be found in the BSD_LICENSE file.
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
++#ifdef CONFIG_LIBISCSI
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <ctype.h>
++#include <unistd.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <sys/ioctl.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <stdint.h>
++#include <iscsi/iscsi.h>
++#include <iscsi/scsi-lowlevel.h>
++
++
++#include "sg_lib.h"
++#include "sg_pt.h"
++#include "sg_linux_inc.h"
++#include "sg_pt_iscsi.h"
++
++struct sg_context {
++    struct iscsi_context *context;
++    int lun;
++};
++struct sg_context *iscsi;
++
++struct sg_pt_iscsi {
++    int os_err;
++
++    int xferdir;
++    const unsigned char *cdb;
++    int cdb_len;
++    unsigned char *sense;
++    int sense_len;
++    int max_sense_len;
++    struct iscsi_data datain;
++    struct iscsi_data dataout;
++    int device_status;
++};
++
++struct sg_pt_base {
++    struct sg_pt_iscsi impl;
++};
++
++int
++do_iscsi_pt(struct sg_pt_base * vp, int fd, int time_secs, int verbose)
++{
++    struct sg_pt_iscsi * ptp = &vp->impl;
++    struct scsi_task *task;
++    struct iscsi_data *data = NULL;
++
++    /* keep compiler happy */
++    time_secs = time_secs;
++    verbose   = verbose;
++    fd = fd;
++
++    task = malloc(sizeof(struct scsi_task));
++    bzero(task, sizeof(struct scsi_task));
++
++    ptp->os_err = 0;
++
++    task->cdb_size = ptp->cdb_len;
++    memcpy(&task->cdb[0], ptp->cdb, task->cdb_size);
++
++    task->xfer_dir = ptp->xferdir;
++    switch (task->xfer_dir) {
++    case SCSI_XFER_NONE:
++        task->expxferlen = 0;
++        break;
++    case SCSI_XFER_READ:
++        task->expxferlen = ptp->datain.size;
++        break;
++    case SCSI_XFER_WRITE:
++        task->expxferlen = ptp->dataout.size;
++        data = &ptp->dataout;
++        break;
++    }
++
++    if (iscsi_scsi_command_sync(iscsi->context, iscsi->lun, task, data) == NULL) {
++        printf("error\n");
++        scsi_free_scsi_task(task);
++        ptp->os_err = -1;
++        return -1;
++    }
++
++    ptp->device_status = task->status;
++    if (task->status == SCSI_STATUS_GOOD) {
++        memcpy(ptp->datain.data, task->datain.data, 
++               task->datain.size<ptp->datain.size?
++                   task->datain.size:ptp->datain.size);
++        scsi_free_scsi_task(task);
++        return 0;
++    }
++
++    if (task->status == SCSI_STATUS_CHECK_CONDITION) {
++        /* +2 is to strip off the initial "length" and just copy the sense blob itself */
++        ptp->sense_len = (ptp->max_sense_len<(task->datain.size-2))?ptp->max_sense_len:(task->datain.size-2);
++        memcpy(ptp->sense,  task->datain.data+2, ptp->sense_len);
++        scsi_free_scsi_task(task);
++        return 0;
++    }
++    return -1;
++}
++
++
++struct sg_pt_base *
++construct_iscsi_pt_obj(void)
++{
++    struct sg_pt_iscsi * ptp;
++
++    ptp = (struct sg_pt_iscsi *)
++          calloc(1, sizeof(struct sg_pt_iscsi));
++    ptp->xferdir = SCSI_XFER_NONE;
++    return (struct sg_pt_base *)ptp;
++}
++
++void
++clear_iscsi_pt_obj(struct sg_pt_base * vp)
++{
++    struct sg_pt_iscsi * ptp = &vp->impl;
++
++    if (ptp) {
++        memset(ptp, 0, sizeof(struct sg_pt_iscsi));
++        ptp->xferdir = SCSI_XFER_READ;
++    }
++}
++
++void
++destruct_iscsi_pt_obj(struct sg_pt_base * vp)
++{
++    struct sg_pt_iscsi * ptp = &vp->impl;
++
++    if (ptp)
++        free(ptp);
++}
++
++void
++set_iscsi_pt_cdb(struct sg_pt_base * vp, const unsigned char * cdb,
++                int cdb_len)
++{
++    struct sg_pt_iscsi * ptp = &vp->impl;
++
++    ptp->cdb     = cdb;
++    ptp->cdb_len = cdb_len;
++}
++
++void
++set_iscsi_pt_sense(struct sg_pt_base * vp, unsigned char * sense,
++                  int max_sense_len)
++{
++    struct sg_pt_iscsi * ptp = &vp->impl;
++
++    memset(sense, 0, max_sense_len);
++    ptp->sense         = sense;
++    ptp->max_sense_len = max_sense_len;
++}
++
++void
++set_iscsi_pt_data_in(struct sg_pt_base * vp, unsigned char * dxferp,
++                    int dxfer_len)
++{
++    struct sg_pt_iscsi * ptp = &vp->impl;
++
++    if (dxfer_len > 0) {
++        ptp->datain.data = dxferp;
++        ptp->datain.size = dxfer_len;
++        ptp->xferdir     = SCSI_XFER_READ;
++    }
++}
++
++void
++set_iscsi_pt_data_out(struct sg_pt_base * vp, const unsigned char * dxferp,
++                     int dxfer_len)
++{
++    struct sg_pt_iscsi * ptp = &vp->impl;
++
++    if (dxfer_len > 0) {
++        ptp->dataout.data = (unsigned char *)dxferp;
++        ptp->dataout.size = dxfer_len;
++        ptp->xferdir      = SCSI_XFER_WRITE;
++    }
++}
++
++int
++get_iscsi_pt_resid(const struct sg_pt_base * vp)
++{
++    /* keep compiler happy */
++    vp = vp;
++
++    return 0;
++}
++
++int
++get_iscsi_pt_result_category(const struct sg_pt_base * vp)
++{
++    const struct sg_pt_iscsi * ptp = &vp->impl;
++
++    if (ptp->os_err)
++        return SCSI_PT_RESULT_OS_ERR;
++
++    if (ptp->device_status)
++        return SCSI_PT_RESULT_SENSE;
++    else
++        return SCSI_PT_RESULT_GOOD;
++}
++
++int
++get_iscsi_pt_os_err(const struct sg_pt_base * vp)
++{
++    const struct sg_pt_iscsi * ptp = &vp->impl;
++
++    return ptp->os_err;
++}
++
++int
++get_iscsi_pt_sense_len(const struct sg_pt_base * vp)
++{
++    const struct sg_pt_iscsi * ptp = &vp->impl;
++
++    return ptp->sense_len;
++}
++
++void
++set_iscsi_pt_packet_id(struct sg_pt_base * vp, int pack_id)
++{
++    /* keep compiler happy */
++    vp = vp;
++    pack_id = pack_id;
++}
++
++int
++iscsi_pt_close_device(int device_fd)
++{
++    /* keep compiler happy */
++    device_fd = device_fd;
++
++    iscsi_logout_sync(iscsi->context);
++    iscsi_destroy_context(iscsi->context);
++    free(iscsi);
++    iscsi = NULL;
++    return 0;
++}
++
++char *
++get_iscsi_pt_os_err_str(const struct sg_pt_base * vp, int max_b_len, char * b)
++{
++    const struct sg_pt_iscsi * ptp = &vp->impl;
++    const char * cp;
++
++    cp = safe_strerror(ptp->os_err);
++    strncpy(b, cp, max_b_len);
++    if ((int)strlen(cp) >= max_b_len)
++        b[max_b_len - 1] = '\0';
++    return b;
++}
++
++int
++get_iscsi_pt_transport_err(const struct sg_pt_base * vp)
++{
++    /* keep compiler happy */
++    vp = vp;
++
++    return 0;
++}
++
++char *
++get_iscsi_pt_transport_err_str(const struct sg_pt_base * vp, int max_b_len,
++                              char * b)
++{
++    /* keep compiler happy */
++    vp = vp;
++    max_b_len = max_b_len;
++    b = b;
++
++    return "";
++}
++
++void
++set_iscsi_pt_tag(struct sg_pt_base * vp, uint64_t tag)
++{
++    /* keep compiler happy */
++    vp = vp;
++    tag = tag;
++}
++
++void
++set_iscsi_pt_task_management(struct sg_pt_base * vp, int tmf_code)
++{
++    /* keep compiler happy */
++    vp = vp;
++    tmf_code = tmf_code;
++}
++
++void
++set_iscsi_pt_task_attr(struct sg_pt_base * vp, int attribute, int priority)
++{
++    /* keep compiler happy */
++    vp = vp;
++    attribute = attribute;
++    priority = priority;
++}
++
++int
++get_iscsi_pt_duration_ms(const struct sg_pt_base * vp)
++{
++    /* keep compiler happy */
++    vp = vp;
++
++    return 0;
++}
++
++
++int
++get_iscsi_pt_status_response(const struct sg_pt_base * vp)
++{
++    /* keep compiler happy */
++    vp = vp;
++
++    return 0;
++}
++
++int
++iscsi_pt_open_device(const char *device_name, int read_only, int verbose)
++{
++    char *tmpstr = NULL, *portal, *target, *lun;
++
++    /* keep compiler happy */
++    read_only = read_only;
++    verbose = verbose;
++
++    if (strncmp(device_name, "iscsi://", 8)) {
++        return -1;
++    }
++
++    tmpstr = strdup(device_name);
++    portal = tmpstr+8;
++    target = index(portal, '/');
++    if (!target) {
++        fprintf(stderr, "Invalid iscsi url : %s\n", device_name);
++        free(tmpstr);
++        return -1;
++    }
++    *target++ = 0;
++    lun = index(target, '/');
++    if (!lun) {
++        fprintf(stderr, "Invalid iscsi url : %s\n", device_name);
++        free(tmpstr);
++        return -1;
++    }
++    *lun++ = 0;
++
++    iscsi = malloc(sizeof(struct sg_context));
++    iscsi->context = iscsi_create_context("iqn.2010-12.org.sg3utils");
++    if (!iscsi->context) {
++        fprintf(stderr, "Failed to create iscsi context for url %s\n", device_name);
++        free(tmpstr);
++        free(iscsi);
++	iscsi = NULL;
++        return -1;
++    }
++
++    iscsi->lun = atoi(lun);
++    iscsi_set_targetname(iscsi->context, target);
++    iscsi_set_session_type(iscsi->context, ISCSI_SESSION_NORMAL);
++    iscsi_set_header_digest(iscsi->context, ISCSI_HEADER_DIGEST_NONE_CRC32C);
++
++    if (iscsi_full_connect_sync(iscsi->context, portal, iscsi->lun) != 0) {
++        fprintf(stderr, "iSCSI login failed: %s\n", iscsi_get_error(iscsi->context));
++        free(tmpstr);
++        iscsi_destroy_context(iscsi->context);
++        free(iscsi);
++	iscsi = NULL;
++        return -1;
++    }
++
++    return ISCSI_FAKE_FD;
++}
++
++#endif
 diff --git a/lib/sg_pt_linux.c b/lib/sg_pt_linux.c
 index 0a5216e..6be755e 100644
 --- a/lib/sg_pt_linux.c
