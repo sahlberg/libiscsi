@@ -253,7 +253,10 @@ test4:
 	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 	    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 	        printf("[FAILED]\n");
-		printf("WRITESAME10 with UNMAP=0 ANCHOR=1 failed with wrong sense code %s\n", iscsi_get_error(iscsi));
+		printf("WRITESAME10 with UNMAP=0 ANCHOR=1 failed with wrong sense code %d %s(%d) %s(0x%04x)   should be CHECK_CONDITION/ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB\n", 
+			task->status,
+			scsi_sense_key_str(task->sense.key), task->sense.key,
+			scsi_sense_ascq_str(task->sense.ascq), task->sense.ascq);
 		scsi_free_scsi_task(task);
 		ret = -1;
 		goto test5;
@@ -282,7 +285,10 @@ test5:
 		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 		    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 			printf("[FAILED]\n");
-			printf("WRITESAME10 with UNMAP=1 ANCHOR=1 failed with wrong sense code %s\n", iscsi_get_error(iscsi));
+			printf("WRITESAME10 with UNMAP=1 ANCHOR=1 failed with wrong sense code %d %s(%d) %s(0x%04x)   should be CHECK_CONDITION/ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB\n", 
+				task->status,
+				scsi_sense_key_str(task->sense.key), task->sense.key,
+				scsi_sense_ascq_str(task->sense.ascq), task->sense.ascq);
 			scsi_free_scsi_task(task);
 			ret = -1;
 			goto test6;
