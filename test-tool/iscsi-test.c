@@ -225,7 +225,7 @@ int main(int argc, const char *argv[])
 	int extra_argc = 0;
 	const char *url = NULL;
 	int show_help = 0, show_usage = 0, list_tests = 0;
-	int res;
+	int res, ret;
 	struct scsi_test *test;
 	char *testname = NULL;
 
@@ -282,6 +282,7 @@ int main(int argc, const char *argv[])
 		exit(10);
 	}
 
+	ret = 0;
 	for (test = &tests[0]; test->name; test++) {
 		if (testname != NULL && fnmatch(testname, test->name, 0)) {
 			continue;
@@ -292,10 +293,11 @@ int main(int argc, const char *argv[])
 			printf("TEST %s [OK]\n", test->name);
 		} else {
 			printf("TEST %s [FAILED]\n", test->name);
+			ret++;
 		}
 		printf("\n");
 	}
 
-	return 0;
+	return ret;
 }
 
