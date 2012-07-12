@@ -19,6 +19,7 @@ iscsi_login_async
 iscsi_login_sync
 iscsi_logout_async
 iscsi_logout_sync
+iscsi_modesense6_sync
 iscsi_modesense6_task
 iscsi_nop_out_async
 iscsi_parse_full_url

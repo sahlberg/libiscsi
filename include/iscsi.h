@@ -697,6 +697,11 @@ iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
 			struct scsi_task *task, struct iscsi_data *data);
 
 EXTERN struct scsi_task *
+iscsi_modesense6_sync(struct iscsi_context *iscsi, int lun, int dbd,
+		      int pc, int page_code, int sub_page_code,
+		      unsigned char alloc_len);
+
+EXTERN struct scsi_task *
 iscsi_reportluns_sync(struct iscsi_context *iscsi, int report_type,
 		      int alloc_len);
 

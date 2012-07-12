@@ -659,3 +659,23 @@ iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
 }
 
 
+struct scsi_task *
+iscsi_modesense6_sync(struct iscsi_context *iscsi, int lun, int dbd,
+		      int pc, int page_code, int sub_page_code,
+		      unsigned char alloc_len)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_modesense6_task(iscsi, lun, dbd, pc, page_code, sub_page_code, alloc_len,
+				  scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi,
+				"Failed to send MODE_SENSE6 command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
