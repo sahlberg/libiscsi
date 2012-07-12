@@ -66,7 +66,9 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 	/* Dont fail the login just because there is no medium in the device */
 	if (status != 0
 	&& task->sense.key == SCSI_SENSE_NOT_READY
-	&& task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT) {
+	&& (task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	 || task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED
+	 || task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN)) {
 		status = 0;
 	}
 
