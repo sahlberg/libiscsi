@@ -31,6 +31,7 @@ enum scsi_opcode {
 	SCSI_OPCODE_READCAPACITY10     = 0x25,
 	SCSI_OPCODE_READ10             = 0x28,
 	SCSI_OPCODE_WRITE10            = 0x2A,
+	SCSI_OPCODE_WRITE_VERIFY10     = 0x2E,
 	SCSI_OPCODE_VERIFY10           = 0x2F,
 	SCSI_OPCODE_PREFETCH10         = 0x34,
 	SCSI_OPCODE_SYNCHRONIZECACHE10 = 0x35,
@@ -38,6 +39,7 @@ enum scsi_opcode {
 	SCSI_OPCODE_UNMAP              = 0x42,
 	SCSI_OPCODE_READ16             = 0x88,
 	SCSI_OPCODE_WRITE16            = 0x8A,
+	SCSI_OPCODE_WRITE_VERIFY16     = 0x8E,
 	SCSI_OPCODE_VERIFY16           = 0x8F,
 	SCSI_OPCODE_PREFETCH16         = 0x90,
 	SCSI_OPCODE_SYNCHRONIZECACHE16 = 0x91,
@@ -46,6 +48,7 @@ enum scsi_opcode {
 	SCSI_OPCODE_REPORTLUNS         = 0xA0,
 	SCSI_OPCODE_READ12             = 0xA8,
 	SCSI_OPCODE_WRITE12            = 0xAA,
+	SCSI_OPCODE_WRITE_VERIFY12     = 0xAE,
 	SCSI_OPCODE_VERIFY12           = 0xAF
 };
 
@@ -127,6 +130,18 @@ struct scsi_write16_params {
 	uint64_t lba;
 	uint32_t num_blocks;
 };
+struct scsi_writeverify10_params {
+	uint32_t lba;
+	uint32_t num_blocks;
+};
+struct scsi_writeverify12_params {
+	uint32_t lba;
+	uint32_t num_blocks;
+};
+struct scsi_writeverify16_params {
+	uint64_t lba;
+	uint32_t num_blocks;
+};
 struct scsi_verify10_params {
 	uint32_t lba;
 	uint32_t num_blocks;
@@ -203,6 +218,9 @@ struct scsi_task {
 		struct scsi_write10_params         write10;
 		struct scsi_write12_params         write12;
 		struct scsi_write16_params         write16;
+		struct scsi_writeverify10_params   writeverify10;
+		struct scsi_writeverify12_params   writeverify12;
+		struct scsi_writeverify16_params   writeverify16;
 		struct scsi_verify10_params        verify10;
 		struct scsi_verify12_params        verify12;
 		struct scsi_verify16_params        verify16;
@@ -631,6 +649,9 @@ EXTERN struct scsi_task *scsi_cdb_read16(uint64_t lba, uint32_t xferlen, int blo
 EXTERN struct scsi_task *scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 EXTERN struct scsi_task *scsi_cdb_write12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 EXTERN struct scsi_task *scsi_cdb_write16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
+EXTERN struct scsi_task *scsi_cdb_writeverify10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number);
+EXTERN struct scsi_task *scsi_cdb_writeverify12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number);
+EXTERN struct scsi_task *scsi_cdb_writeverify16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number);
 EXTERN struct scsi_task *scsi_cdb_verify10(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize);
 EXTERN struct scsi_task *scsi_cdb_verify12(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize);
 EXTERN struct scsi_task *scsi_cdb_verify16(uint64_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize);

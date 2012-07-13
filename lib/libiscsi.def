@@ -88,6 +88,12 @@ iscsi_write12_sync
 iscsi_write12_task
 iscsi_write16_sync
 iscsi_write16_task
+iscsi_writeverify10_sync
+iscsi_writeverify10_task
+iscsi_writeverify12_sync
+iscsi_writeverify12_task
+iscsi_writeverify16_sync
+iscsi_writeverify16_task
 iscsi_writesame10_sync
 iscsi_writesame10_task
 iscsi_writesame16_sync
@@ -114,6 +120,9 @@ scsi_cdb_verify16
 scsi_cdb_write10
 scsi_cdb_write12
 scsi_cdb_write16
+scsi_cdb_writeverify10
+scsi_cdb_writeverify12
+scsi_cdb_writeverify16
 scsi_cdb_writesame10
 scsi_cdb_writesame16
 scsi_codeset_to_str

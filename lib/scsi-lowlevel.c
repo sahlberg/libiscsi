@@ -1623,6 +1623,136 @@ scsi_cdb_get_lba_status(uint64_t starting_lba, uint32_t alloc_len)
 	return task;
 }
 
+/*
+ * WRITEVERIFY10
+ */
+struct scsi_task *
+scsi_cdb_writeverify10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_WRITE_VERIFY10;
+
+	task->cdb[1] |= ((wrprotect & 0x07) << 5);
+	if (dpo) {
+		task->cdb[1] |= 0x10;
+	}
+	if (bytchk) {
+		task->cdb[1] |= 0x02;
+	}
+
+	*(uint32_t *)&task->cdb[2] = htonl(lba);
+	*(uint16_t *)&task->cdb[7] = htons(xferlen/blocksize);
+
+	task->cdb[6] |= (group_number & 0x1f);
+
+	task->cdb_size = 10;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_WRITE;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = xferlen;
+
+	task->params.writeverify10.lba        = lba;
+	task->params.writeverify10.num_blocks = xferlen/blocksize;
+
+	return task;
+}
+
+/*
+ * WRITEVERIFY12
+ */
+struct scsi_task *
+scsi_cdb_writeverify12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_WRITE_VERIFY12;
+
+	task->cdb[1] |= ((wrprotect & 0x07) << 5);
+	if (dpo) {
+		task->cdb[1] |= 0x10;
+	}
+	if (bytchk) {
+		task->cdb[1] |= 0x02;
+	}
+
+	*(uint32_t *)&task->cdb[2] = htonl(lba);
+	*(uint32_t *)&task->cdb[6] = htonl(xferlen/blocksize);
+
+	task->cdb[10] |= (group_number & 0x1f);
+
+	task->cdb_size = 12;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_WRITE;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = xferlen;
+
+	task->params.writeverify12.lba        = lba;
+	task->params.writeverify12.num_blocks = xferlen/blocksize;
+
+	return task;
+}
+
+/*
+ * WRITEVERIFY16
+ */
+struct scsi_task *
+scsi_cdb_writeverify16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_WRITE_VERIFY16;
+
+	task->cdb[1] |= ((wrprotect & 0x07) << 5);
+	if (dpo) {
+		task->cdb[1] |= 0x10;
+	}
+	if (bytchk) {
+		task->cdb[1] |= 0x02;
+	}
+
+	*(uint32_t *)&task->cdb[2] = htonl(lba >> 32);
+	*(uint32_t *)&task->cdb[6] = htonl(lba & 0xffffffff);
+	*(uint32_t *)&task->cdb[10] = htonl(xferlen/blocksize);
+
+	task->cdb[14] |= (group_number & 0x1f);
+
+	task->cdb_size = 16;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_WRITE;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = xferlen;
+
+	task->params.writeverify16.lba        = lba;
+	task->params.writeverify16.num_blocks = xferlen/blocksize;
+
+	return task;
+}
+
 int
 scsi_datain_getfullsize(struct scsi_task *task)
 {
