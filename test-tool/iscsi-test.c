@@ -142,6 +142,15 @@ struct scsi_test tests[] = {
 /* Readonly */
 { "T0300_readonly",			T0300_readonly },
 
+/* writeverify10*/
+{ "T0310_writeverify10_simple",		T0310_writeverify10_simple },
+
+/* writeverify12*/
+{ "T0320_writeverify12_simple",		T0320_writeverify12_simple },
+
+/* writeverify16*/
+{ "T0330_writeverify16_simple",		T0330_writeverify16_simple },
+
 { NULL, NULL }
 };
 

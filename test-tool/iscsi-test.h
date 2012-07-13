@@ -102,3 +102,9 @@ int T0293_write10_0blocks(const char *initiator, const char *url, int data_loss,
 int T0294_write10_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0300_readonly(const char *initiator, const char *url, int data_loss, int show_info);
+
+int T0310_writeverify10_simple(const char *initiator, const char *url, int data_loss, int show_info);
+
+int T0320_writeverify12_simple(const char *initiator, const char *url, int data_loss, int show_info);
+
+int T0330_writeverify16_simple(const char *initiator, const char *url, int data_loss, int show_info);
