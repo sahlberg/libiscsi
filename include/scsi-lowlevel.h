@@ -40,6 +40,7 @@ enum scsi_opcode {
 	SCSI_OPCODE_WRITE16            = 0x8A,
 	SCSI_OPCODE_VERIFY16           = 0x8F,
 	SCSI_OPCODE_PREFETCH16         = 0x90,
+	SCSI_OPCODE_SYNCHRONIZECACHE16 = 0x91,
 	SCSI_OPCODE_WRITE_SAME16       = 0x93,
 	SCSI_OPCODE_SERVICE_ACTION_IN  = 0x9E,
 	SCSI_OPCODE_REPORTLUNS         = 0xA0,
@@ -635,6 +636,8 @@ EXTERN struct scsi_task *scsi_cdb_verify12(uint32_t lba, uint32_t xferlen, int v
 EXTERN struct scsi_task *scsi_cdb_verify16(uint64_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize);
 
 EXTERN struct scsi_task *scsi_cdb_synchronizecache10(int lba, int num_blocks,
+			int syncnv, int immed);
+EXTERN struct scsi_task *scsi_cdb_synchronizecache16(uint64_t lba, uint32_t num_blocks,
 			int syncnv, int immed);
 EXTERN struct scsi_task *scsi_cdb_serviceactionin16(enum scsi_service_action_in sa, uint32_t xferlen);
 EXTERN struct scsi_task *scsi_cdb_readcapacity16(void);

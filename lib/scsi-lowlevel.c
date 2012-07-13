@@ -1459,6 +1459,38 @@ scsi_cdb_synchronizecache10(int lba, int num_blocks, int syncnv, int immed)
 	return task;
 }
 
+/*
+ * SYNCHRONIZECACHE16
+ */
+struct scsi_task *
+scsi_cdb_synchronizecache16(uint64_t lba, uint32_t num_blocks, int syncnv, int immed)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_SYNCHRONIZECACHE16;
+
+	if (syncnv) {
+		task->cdb[1] |= 0x04;
+	}
+	if (immed) {
+		task->cdb[1] |= 0x02;
+	}
+	*(uint32_t *)&task->cdb[2]  = htonl(lba >> 32);
+	*(uint32_t *)&task->cdb[6]  = htonl(lba & 0xffffffff);
+	*(uint32_t *)&task->cdb[10] = htonl(num_blocks);
+
+	task->cdb_size   = 16;
+	task->xfer_dir   = SCSI_XFER_NONE;
+	task->expxferlen = 0;
+
+	return task;
+}
 
 /*
  * PREFETCH10

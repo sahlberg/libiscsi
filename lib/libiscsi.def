@@ -63,6 +63,8 @@ iscsi_set_targetname
 iscsi_set_tcp_keepalive
 iscsi_synchronizecache10_sync
 iscsi_synchronizecache10_task
+iscsi_synchronizecache16_sync
+iscsi_synchronizecache16_task
 iscsi_task_mgmt_abort_task_async
 iscsi_task_mgmt_abort_task_set_async
 iscsi_task_mgmt_async

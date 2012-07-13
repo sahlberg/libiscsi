@@ -596,6 +596,11 @@ iscsi_synchronizecache10_task(struct iscsi_context *iscsi, int lun,
 				   int immed, iscsi_command_cb cb,
 				   void *private_data);
 EXTERN struct scsi_task *
+iscsi_synchronizecache16_task(struct iscsi_context *iscsi, int lun,
+				   uint64_t lba, uint32_t num_blocks, int syncnv,
+				   int immed, iscsi_command_cb cb,
+				   void *private_data);
+EXTERN struct scsi_task *
 iscsi_prefetch10_task(struct iscsi_context *iscsi, int lun,
 		      uint32_t lba, int num_blocks,
 		      int immed, int group,
@@ -759,6 +764,10 @@ iscsi_get_lba_status_sync(struct iscsi_context *iscsi, int lun, uint64_t startin
 EXTERN struct scsi_task *
 iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
 			      int num_blocks, int syncnv, int immed);
+
+EXTERN struct scsi_task *
+iscsi_synchronizecache16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
+			      uint32_t num_blocks, int syncnv, int immed);
 
 EXTERN struct scsi_task *
 iscsi_prefetch10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
