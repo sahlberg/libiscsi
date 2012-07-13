@@ -144,12 +144,15 @@ struct scsi_test tests[] = {
 
 /* writeverify10*/
 { "T0310_writeverify10_simple",		T0310_writeverify10_simple },
+{ "T0311_writeverify10_wrprotect",	T0311_writeverify10_wrprotect },
 
 /* writeverify12*/
 { "T0320_writeverify12_simple",		T0320_writeverify12_simple },
+{ "T0321_writeverify12_wrprotect",	T0321_writeverify12_wrprotect },
 
 /* writeverify16*/
 { "T0330_writeverify16_simple",		T0330_writeverify16_simple },
+{ "T0331_writeverify16_wrprotect",	T0331_writeverify16_wrprotect },
 
 { NULL, NULL }
 };
