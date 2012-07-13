@@ -100,3 +100,5 @@ int T0291_write10_wrprotect(const char *initiator, const char *url, int data_los
 int T0292_write10_flags(const char *initiator, const char *url, int data_loss, int show_info);
 int T0293_write10_0blocks(const char *initiator, const char *url, int data_loss, int show_info);
 int T0294_write10_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
+
+int T0300_readonly(const char *initiator, const char *url, int data_loss, int show_info);

@@ -139,6 +139,9 @@ struct scsi_test tests[] = {
 { "T0293_write10_0blocks",		T0293_write10_0blocks },
 { "T0294_write10_beyondeol",		T0294_write10_beyondeol },
 
+/* Readonly */
+{ "T0300_readonly",			T0300_readonly },
+
 { NULL, NULL }
 };
 

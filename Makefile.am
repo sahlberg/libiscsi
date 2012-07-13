@@ -93,7 +93,8 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0282_verify12_mismatch_no_cmp.c test-tool/0283_verify12_beyondeol.c \
 	test-tool/0290_write10_simple.c test-tool/0291_write10_wrprotect.c \
 	test-tool/0292_write10_flags.c  test-tool/0293_write10_0blocks.c   \
-	test-tool/0294_write10_beyondeol.c
+	test-tool/0294_write10_beyondeol.c \
+	test-tool/0300_readonly.c
 endif
 
 # LD_PRELOAD library.
