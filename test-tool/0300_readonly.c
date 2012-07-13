@@ -26,7 +26,7 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	struct scsi_mode_sense *ms;
-	int ret, i, lun;
+	int ret, lun;
 	uint32_t block_size;
 	uint32_t num_blocks;
 	unsigned char data[258 * 512];
@@ -48,6 +48,9 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 		printf("6, WRITESAME10 with UNMAP at LUN 0 should fail (skipped if not thin-provisioned).\n");
 		printf("7, WRITESAME16 with UNMAP at LUN 0 should fail (skipped if not thin-provisioned).\n");
 		printf("8, UNMAP at LUN 0 should fail (skipped if not thin-provisioned).\n");
+		printf("9, WRITEVERIFY10 at LUN 0 should fail.\n");
+		printf("10, WRITEVERIFY12 at LUN 0 should fail.\n");
+		printf("11, WRITEVERIFY16 at LUN 0 should fail.\n");
 		printf("\n");
 		return 0;
 	}
@@ -387,6 +390,95 @@ test8:
 
 test9:
 
+	/* Write one block at lba 0 */
+	printf("WRITEVERIFY10 to LUN 0 ... ");
+	task = iscsi_writeverify10_sync(iscsi, lun, 0, data, block_size, block_size, 0, 0, 0, 0);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send WRITEVERIFY10 command: %s\n", iscsi_get_error(iscsi));
+		ret++;
+		goto test10;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("WRITEVERIFY10 command should fail when writing to readonly devices\n");
+		ret++;
+		scsi_free_scsi_task(task);
+		goto test10;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+		printf("[FAILED]\n");
+		printf("WRITEVERIFY10 failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
+		ret++;
+		scsi_free_scsi_task(task);
+		goto test10;
+	}	
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+test10:
+
+	/* Write one block at lba 0 */
+	printf("WRITEVERIFY12 to LUN 0 ... ");
+	task = iscsi_writeverify12_sync(iscsi, lun, 0, data, block_size, block_size, 0, 0, 0, 0);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send WRITEVERIFY12 command: %s\n", iscsi_get_error(iscsi));
+		ret++;
+		goto test11;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("WRITEVERIFY12 command should fail when writing to readonly devices\n");
+		ret++;
+		scsi_free_scsi_task(task);
+		goto test11;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+		printf("[FAILED]\n");
+		printf("WRITEVERIFY12 failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
+		ret++;
+		scsi_free_scsi_task(task);
+		goto test11;
+	}	
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+test11:
+
+	/* Write one block at lba 0 */
+	printf("WRITEVERIFY16 to LUN 0 ... ");
+	task = iscsi_writeverify16_sync(iscsi, lun, 0, data, block_size, block_size, 0, 0, 0, 0);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send WRITEVERIFY16 command: %s\n", iscsi_get_error(iscsi));
+		ret++;
+		goto test12;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("WRITEVERIFY16 command should fail when writing to readonly devices\n");
+		ret++;
+		scsi_free_scsi_task(task);
+		goto test12;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+		printf("[FAILED]\n");
+		printf("WRITEVERIFY16 failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
+		ret++;
+		scsi_free_scsi_task(task);
+		goto test12;
+	}	
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+test12:
 
 finished:
 	iscsi_logout_sync(iscsi);
