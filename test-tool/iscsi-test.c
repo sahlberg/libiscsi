@@ -157,6 +157,11 @@ struct scsi_test tests[] = {
 { "T0331_writeverify16_wrprotect",	T0331_writeverify16_wrprotect },
 { "T0334_writeverify16_beyondeol",	T0334_writeverify16_beyondeol },
 
+/* compareandwrite*/
+{ "T0340_compareandwrite_simple",	T0340_compareandwrite_simple },
+{ "T0341_compareandwrite_mismatch",	T0341_compareandwrite_mismatch },
+{ "T0343_compareandwrite_beyondeol",	T0343_compareandwrite_beyondeol },
+
 { NULL, NULL }
 };
 
