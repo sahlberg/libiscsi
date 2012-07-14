@@ -871,6 +871,41 @@ iscsi_write16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 struct scsi_task *
+iscsi_compareandwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba, 
+		   unsigned char *data, uint32_t datalen, int blocksize,
+		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
+		   iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+	struct iscsi_data outdata;
+
+	if (datalen % blocksize != 0) {
+		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
+				"blocksize:%d.", datalen, blocksize);
+		return NULL;
+	}
+
+	task = scsi_cdb_compareandwrite(lba, datalen, blocksize, wrprotect,
+				dpo, fua, fua_nv, group_number);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"compareandwrite cdb.");
+		return NULL;
+	}
+
+	outdata.data = data;
+	outdata.size = datalen;
+
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, &outdata,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
 iscsi_writeverify10_task(struct iscsi_context *iscsi, int lun, uint32_t lba, 
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int bytchk, int group_number,

@@ -88,6 +88,8 @@ iscsi_write12_sync
 iscsi_write12_task
 iscsi_write16_sync
 iscsi_write16_task
+iscsi_compareandwrite_sync
+iscsi_compareandwrite_task
 iscsi_writeverify10_sync
 iscsi_writeverify10_task
 iscsi_writeverify12_sync
