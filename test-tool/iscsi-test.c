@@ -164,6 +164,7 @@ struct scsi_test tests[] = {
 
 /* orwrite*/
 { "T0350_orwrite_simple",		T0350_orwrite_simple },
+{ "T0351_orwrite_wrprotect",		T0351_orwrite_wrprotect },
 { "T0354_orwrite_beyindeol",		T0354_orwrite_beyondeol },
 
 { NULL, NULL }
