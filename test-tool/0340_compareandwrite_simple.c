@@ -81,6 +81,7 @@ int T0340_compareandwrite_simple(const char *initiator, const char *url, int dat
 
 	ret = 0;
 
+
 	/* write the first 1 - 255 blocks at the start of the LUN */
 	printf("Compare and write first 1-255 blocks ... ");
 	for (i = 1; i < 256; i++) {
@@ -129,9 +130,9 @@ int T0340_compareandwrite_simple(const char *initiator, const char *url, int dat
 
 test2:
 	/* write the last 1 - 255 blocks at the end of the LUN */
-	printf("Compare and write last 1-256 blocks ... ");
+	printf("Compare and write last 1-255 blocks ... ");
 	for (i = 1; i < 256; i++) {
-		task = iscsi_read16_sync(iscsi, lun, 0, i * block_size, block_size, 0, 0, 0, 0, 0);
+		task = iscsi_read16_sync(iscsi, lun, num_blocks + 1 - i, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send READ16 command: %s\n", iscsi_get_error(iscsi));
