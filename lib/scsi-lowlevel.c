@@ -83,7 +83,7 @@ struct value_string {
 static const char *
 value_string_find(struct value_string *values, int value)
 {
-	for (; values->value; values++) {
+	for (; values->string; values++) {
 		if (value == values->value) {
 			return values->string;
 		}
@@ -153,6 +153,8 @@ scsi_sense_ascq_str(int ascq)
 		 "BUS_RESET"},
 		{SCSI_SENSE_ASCQ_INTERNAL_TARGET_FAILURE,
 		 "INTERNAL_TARGET_FAILURE"},
+		{SCSI_SENSE_ASCQ_MISCOMPARE_DURING_VERIFY,
+		 "MISCOMPARE_DURING_VERIFY"},
 	       {0, NULL}
 	};
 
