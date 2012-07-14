@@ -984,6 +984,53 @@ scsi_cdb_write16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
 }
 
 /*
+ * ORWRITE16
+ */
+struct scsi_task *
+scsi_cdb_orwrite16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_ORWRITE16;
+
+	task->cdb[1] |= ((wrprotect & 0x07) << 5);
+	if (dpo) {
+		task->cdb[1] |= 0x10;
+	}
+	if (fua) {
+		task->cdb[1] |= 0x08;
+	}
+	if (fua_nv) {
+		task->cdb[1] |= 0x02;
+	}
+
+	*(uint32_t *)&task->cdb[2] = htonl(lba >> 32);
+	*(uint32_t *)&task->cdb[6] = htonl(lba & 0xffffffff);
+	*(uint32_t *)&task->cdb[10] = htonl(xferlen/blocksize);
+
+	task->cdb[14] |= (group_number & 0x1f);
+
+	task->cdb_size = 16;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_WRITE;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = xferlen;
+
+	task->params.orwrite16.lba        = lba;
+	task->params.orwrite16.num_blocks = xferlen/blocksize;
+
+	return task;
+}
+
+/*
  * COMPAREANDWRITE
  */
 struct scsi_task *

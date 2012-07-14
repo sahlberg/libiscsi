@@ -529,6 +529,29 @@ iscsi_write16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 struct scsi_task *
+iscsi_orwrite16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
+		   unsigned char *data, uint32_t datalen, int blocksize,
+		   int wrprotect, int dpo, int fua, int fua_nv, int group_number)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_orwrite16_task(iscsi, lun, lba,
+			       data, datalen, blocksize, wrprotect, 
+			       dpo, fua, fua_nv, group_number,
+			       scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi,
+				"Failed to send Orwrite16 command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
 iscsi_compareandwrite_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number)
