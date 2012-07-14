@@ -142,7 +142,7 @@ int T0341_compareandwrite_mismatch(const char *initiator, const char *url, int d
 
 test2:
 	/* write the last 1 - 255 blocks at the end of the LUN */
-	printf("Compare and write last 1-255 blocks ... ");
+	printf("Compare and write last 1-255 blocks (data is not matching) ... ");
 	for (i = 1; i < 256; i++) {
 		task = iscsi_read16_sync(iscsi, lun, num_blocks + 1 - i, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
