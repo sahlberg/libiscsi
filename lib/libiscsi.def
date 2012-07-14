@@ -61,6 +61,8 @@ iscsi_set_isid_reserved
 iscsi_set_session_type
 iscsi_set_targetname
 iscsi_set_tcp_keepalive
+iscsi_startstopunit_sync
+iscsi_startstopunit_task
 iscsi_synchronizecache10_sync
 iscsi_synchronizecache10_task
 iscsi_synchronizecache16_sync
@@ -115,7 +117,9 @@ scsi_cdb_read6
 scsi_cdb_readcapacity10
 scsi_cdb_readcapacity16
 scsi_cdb_serviceactionin16
+scsi_cdb_startstopunit
 scsi_cdb_synchronizecache10
+scsi_cdb_synchronizecache16
 scsi_cdb_testunitready
 scsi_cdb_unmap
 scsi_cdb_verify10

@@ -1169,6 +1169,30 @@ iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd, int pc,
 }
 
 struct scsi_task *
+iscsi_startstopunit_task(struct iscsi_context *iscsi, int lun,
+			 int immed, int pcm, int pc,
+			 int no_flush, int loej, int start,
+			 iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_startstopunit(immed, pcm, pc, no_flush,
+				      loej, start);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"startstopunit cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
 iscsi_synchronizecache10_task(struct iscsi_context *iscsi, int lun, int lba,
 			       int num_blocks, int syncnv, int immed,
 			       iscsi_command_cb cb, void *private_data)

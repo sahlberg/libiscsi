@@ -1521,6 +1521,51 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
 	return ms;
 }
 
+/*
+ * STARTSTOPUNIT
+ */
+struct scsi_task *
+scsi_cdb_startstopunit(int immed, int pcm, int pc, int no_flush, int loej, int start)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_STARTSTOPUNIT;
+
+	if (immed) {
+		task->cdb[1] |= 0x01;
+	}
+	task->cdb[3] |= pcm & 0x0f; 
+	task->cdb[4] |= (pc << 4) & 0xf0;
+	if (no_flush) {
+		task->cdb[4] |= 0x04;
+	}
+	if (loej) {
+		task->cdb[4] |= 0x02;
+	}
+	if (start) {
+		task->cdb[4] |= 0x01;
+	}
+
+
+	task->cdb_size   = 6;
+	task->xfer_dir   = SCSI_XFER_NONE;
+	task->expxferlen = 0;
+
+	task->params.startstopunit.immed    = immed;
+	task->params.startstopunit.pcm      = pcm;
+	task->params.startstopunit.pc       = pc;
+	task->params.startstopunit.no_flush = no_flush;
+	task->params.startstopunit.loej     = loej;
+	task->params.startstopunit.start    = start;
+
+	return task;
+}
 
 /*
  * SYNCHRONIZECACHE10

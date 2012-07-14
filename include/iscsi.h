@@ -661,6 +661,11 @@ iscsi_orwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
 		   iscsi_command_cb cb, void *private_data);
 EXTERN struct scsi_task *
+iscsi_startstopunit_task(struct iscsi_context *iscsi, int lun,
+			 int immed, int pcm, int pc,
+			 int no_flush, int loej, int start,
+			 iscsi_command_cb cb, void *private_data);
+EXTERN struct scsi_task *
 iscsi_compareandwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
@@ -790,6 +795,11 @@ EXTERN struct scsi_task *
 iscsi_orwrite_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number);
+
+EXTERN struct scsi_task *
+iscsi_startstopunit_sync(struct iscsi_context *iscsi, int lun,
+			 int immed, int pcm, int pc,
+			 int no_flush, int loej, int start);
 
 EXTERN struct scsi_task *
 iscsi_compareandwrite_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
