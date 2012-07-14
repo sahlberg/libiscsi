@@ -103,7 +103,7 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0334_writeverify16_beyondeol.c \
 	test-tool/0340_compareandwrite_simple.c test-tool/0341_compareandwrite_mismatch.c \
 	test-tool/0343_compareandwrite_beyondeol.c \
-	test-tool/0350_orwrite_simple.c
+	test-tool/0350_orwrite_simple.c test-tool/0354_orwrite_beyondeol.c
 
 endif
 
