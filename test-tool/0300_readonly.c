@@ -51,6 +51,8 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 		printf("9, WRITEVERIFY10 at LUN 0 should fail.\n");
 		printf("10, WRITEVERIFY12 at LUN 0 should fail.\n");
 		printf("11, WRITEVERIFY16 at LUN 0 should fail.\n");
+		printf("12, COMPAREANDWRITE at LUN 0 should fail.\n");
+		printf("13, ORWRITE at LUN 0 should fail.\n");
 		printf("\n");
 		return 0;
 	}
@@ -479,6 +481,66 @@ test11:
 	printf("[OK]\n");
 
 test12:
+	/* Write one block at lba 0 */
+	printf("COMPAREWRITE to LUN 0 ... ");
+	task = iscsi_compareandwrite_sync(iscsi, lun, 0, data, block_size, block_size, 0, 0, 0, 0, 0);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send COMPAREANDWRITE command: %s\n", iscsi_get_error(iscsi));
+		ret++;
+		goto test13;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("COMPAREANDWRITE command should fail when writing to readonly devices\n");
+		ret++;
+		scsi_free_scsi_task(task);
+		goto test13;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+		printf("[FAILED]\n");
+		printf("COMPAREANDWRITE failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
+		ret++;
+		scsi_free_scsi_task(task);
+		goto test13;
+	}	
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+test13:
+
+	/* Write one block at lba 0 */
+	printf("ORWRITE to LUN 0 ... ");
+	task = iscsi_orwrite_sync(iscsi, lun, 0, data, block_size, block_size, 0, 0, 0, 0, 0);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send ORWRITE command: %s\n", iscsi_get_error(iscsi));
+		ret++;
+		goto test14;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("ORWRITE command should fail when writing to readonly devices\n");
+		ret++;
+		scsi_free_scsi_task(task);
+		goto test14;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+		printf("[FAILED]\n");
+		printf("ORWRITE failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
+		ret++;
+		scsi_free_scsi_task(task);
+		goto test14;
+	}	
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+test14:
+
 
 finished:
 	iscsi_logout_sync(iscsi);
