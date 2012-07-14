@@ -145,14 +145,17 @@ struct scsi_test tests[] = {
 /* writeverify10*/
 { "T0310_writeverify10_simple",		T0310_writeverify10_simple },
 { "T0311_writeverify10_wrprotect",	T0311_writeverify10_wrprotect },
+{ "T0314_writeverify10_beyondeol",	T0314_writeverify10_beyondeol },
 
 /* writeverify12*/
 { "T0320_writeverify12_simple",		T0320_writeverify12_simple },
 { "T0321_writeverify12_wrprotect",	T0321_writeverify12_wrprotect },
+{ "T0324_writeverify12_beyondeol",	T0324_writeverify12_beyondeol },
 
 /* writeverify16*/
 { "T0330_writeverify16_simple",		T0330_writeverify16_simple },
 { "T0331_writeverify16_wrprotect",	T0331_writeverify16_wrprotect },
+{ "T0334_writeverify16_beyondeol",	T0334_writeverify16_beyondeol },
 
 { NULL, NULL }
 };

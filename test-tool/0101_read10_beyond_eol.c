@@ -33,7 +33,7 @@ int T0101_read10_beyond_eol(const char *initiator, const char *url, int data_los
 	if (show_info) {
 		printf("Test that READ10 fails if reading beyond end-of-lun.\n");
 		printf("1, Read 1-256 blocks one block beyond end-of-lun.\n");
-		printf("2, Read 1-256 blocks at LBA 2^31 (only on LUNs < 2TB)\n");
+		printf("2, Read 1-256 blocks at LBA 2^31 (only on LUNs < 1TB)\n");
 		printf("3, Read 1-256 blocks at LBA -1 (only on LUN < 2TB)\n");
 		printf("4, Read 2-256 blocks all but one beyond end-of-lun.\n");
 		printf("\n");

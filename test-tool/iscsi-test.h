@@ -105,9 +105,12 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 
 int T0310_writeverify10_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0311_writeverify10_wrprotect(const char *initiator, const char *url, int data_loss, int show_info);
+int T0314_writeverify10_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0320_writeverify12_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0321_writeverify12_wrprotect(const char *initiator, const char *url, int data_loss, int show_info);
+int T0324_writeverify12_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0330_writeverify16_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0331_writeverify16_wrprotect(const char *initiator, const char *url, int data_loss, int show_info);
+int T0334_writeverify16_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);

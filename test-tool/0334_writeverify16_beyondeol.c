@@ -20,7 +20,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0214_read12_beyondeol(const char *initiator, const char *url, int data_loss _U_, int show_info)
+int T0334_writeverify16_beyondeol(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -28,14 +28,16 @@ int T0214_read12_beyondeol(const char *initiator, const char *url, int data_loss
 	int ret, i, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
+	unsigned char data[258 * 512];
 
-	printf("0214_read12_beyond_eol:\n");
+	printf("0334_writeverify16_beyond_eol:\n");
 	printf("=======================\n");
 	if (show_info) {
-		printf("Test that READ12 fails if reading beyond end-of-lun.\n");
-		printf("1, Read 1-256 blocks one block beyond end-of-lun.\n");
-		printf("2, Read 1-256 blocks at LBA 2^31 (Only on LUN < 1TB)\n");
-		printf("2, Read 1-256 blocks at LBA -1 (Only on LUN < 2TB)\n");
+		printf("Test that WRITEVERIFY10 fails if writing beyond end-of-lun.\n");
+		printf("1, Writing 1-256 blocks with one block beyond end-of-lun should fail.\n");
+		printf("2, Writing 1-256 blocks at LBA 2^63 should fail.\n");
+		printf("3, Writing 1-256 blocks at LBA -1 should fail.\n");
+		printf("4, Writing 1-256 blocks all but one block beyond eol\n");
 		printf("\n");
 		return 0;
 	}
@@ -70,32 +72,28 @@ int T0214_read12_beyondeol(const char *initiator, const char *url, int data_loss
 	num_blocks = rc16->returned_lba;
 	scsi_free_scsi_task(task);
 
+	if (!data_loss) {
+		printf("--dataloss flag is not set. Skipping test\n");
+		ret = -1;
+		goto finished;
+	}
 
 
 	ret = 0;
 
 	/* read 1 - 256 blocks beyond the end of the device */
-	printf("Reading 1-256 blocks beyond end-of-device ... ");
-	for (i = 2; i <= 257; i++) {
-		task = iscsi_read12_sync(iscsi, lun, num_blocks, i * block_size, block_size, 0, 0, 0, 0, 0);
+	printf("Writing 1-256 blocks with one block beyond end-of-device ... ");
+	for (i = 1; i <= 256; i++) {
+		task = iscsi_writeverify16_sync(iscsi, lun, num_blocks + 2 - i, data, i * block_size, block_size, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send READ12 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send WRITEVERIFY16 command: %s\n", iscsi_get_error(iscsi));
 			ret++;
 			goto test2;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("READ12 command should fail when reading beyond end of device\n");
-			ret++;
-			scsi_free_scsi_task(task);
-			goto test2;
-		}
-		if (task->status        != SCSI_STATUS_CHECK_CONDITION
-			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-			printf("[FAILED]\n");
-			printf("READ12 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("WRITEVERIFY16 command should fail when writing beyond end of device\n");
 			ret++;
 			scsi_free_scsi_task(task);
 			goto test2;
@@ -104,34 +102,21 @@ int T0214_read12_beyondeol(const char *initiator, const char *url, int data_loss
 	}
 	printf("[OK]\n");
 
+test2:
 
- test2:
-	/* read 1 - 256 blocks at LBA -1 */
-	printf("Reading 1-256 blocks at LBA -1 ... ");
-	if (num_blocks >= 0xffffffff) {
-		printf("LUN is too big, skipping test\n");
-		goto test3;
-	}
-	for (i = 2; i <= 257; i++) {
-		task = iscsi_read12_sync(iscsi, lun, -1, i * block_size, block_size, 0, 0, 0, 0, 0);
+	/* read 1 - 256 blocks at lba 2^63 */
+	printf("Writing 1-256 blocks at LBA 2^63 ... ");
+	for (i = 1; i <= 256; i++) {
+		task = iscsi_writeverify16_sync(iscsi, lun, 0x8000000000000000, data, i * block_size, block_size, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send READ12 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send WRITEVERIFY16 command: %s\n", iscsi_get_error(iscsi));
 			ret++;
 			goto test3;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("READ12 command should fail when reading from LBA -1\n");
-			ret++;
-			scsi_free_scsi_task(task);
-			goto test3;
-		}
-		if (task->status        != SCSI_STATUS_CHECK_CONDITION
-			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-			printf("[FAILED]\n");
-			printf("READ12 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("WRITEVERIFY16 command should fail when writing beyond end of device\n");
 			ret++;
 			scsi_free_scsi_task(task);
 			goto test3;
@@ -140,33 +125,21 @@ int T0214_read12_beyondeol(const char *initiator, const char *url, int data_loss
 	}
 	printf("[OK]\n");
 
- test3:
-	/* read 1 - 256 blocks at LBA -1 */
-	printf("Reading 1-256 blocks at LBA -1 ... ");
-	if (num_blocks > 0x80000000) {
-		printf("LUN is too big, skipping test\n");
-		goto test4;
-	}
-	for (i = 2; i <= 257; i++) {
-		task = iscsi_read12_sync(iscsi, lun, -1, i * block_size, block_size, 0, 0, 0, 0, 0);
+test3:
+
+	/* read 1 - 256 blocks at lba -1 */
+	printf("Writing 1-256 blocks at LBA -1 ... ");
+	for (i = 1; i <= 256; i++) {
+		task = iscsi_writeverify16_sync(iscsi, lun, 0xffffffffffffffff, data, i * block_size, block_size, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send READ12 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send WRITEVERIFY16 command: %s\n", iscsi_get_error(iscsi));
 			ret++;
 			goto test4;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("READ12 command should fail when reading from LBA -1\n");
-			ret++;
-			scsi_free_scsi_task(task);
-			goto test4;
-		}
-		if (task->status        != SCSI_STATUS_CHECK_CONDITION
-			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-			printf("[FAILED]\n");
-			printf("READ12 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("WRITEVERIFY16 command should fail when writing beyond end of device\n");
 			ret++;
 			scsi_free_scsi_task(task);
 			goto test4;
@@ -174,7 +147,40 @@ int T0214_read12_beyondeol(const char *initiator, const char *url, int data_loss
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
+
 test4:
+	/* read 2-256 blocks, all but one block beyond the eol */
+	printf("Writing 1-255 blocks beyond eol starting at last block ... ");
+	for (i=2; i<=256; i++) {
+		task = iscsi_writeverify16_sync(iscsi, lun, num_blocks, data, i * block_size, block_size, 0, 0, 0, 0);
+		if (task == NULL) {
+			printf("[FAILED]\n");
+			printf("Failed to send WRITEVERIFY16 command: %s\n", iscsi_get_error(iscsi));
+			ret = -1;
+			goto test5;
+		}
+		if (task->status == SCSI_STATUS_GOOD) {
+			printf("[FAILED]\n");
+			printf("WRITEVERIFY16 beyond end-of-lun did not return sense.\n");
+			ret = -1;
+			scsi_free_scsi_task(task);
+			goto test5;
+		}
+		if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		        printf("[FAILED]\n");
+			printf("WRITEVERIFY16 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			ret = -1;
+			scsi_free_scsi_task(task);
+			goto test5;
+		}
+		scsi_free_scsi_task(task);
+	}
+	printf("[OK]\n");
+
+
+test5:
 
 finished:
 	iscsi_logout_sync(iscsi);

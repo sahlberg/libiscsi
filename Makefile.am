@@ -96,8 +96,11 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0294_write10_beyondeol.c \
 	test-tool/0300_readonly.c \
 	test-tool/0310_writeverify10_simple.c test-tool/0311_writeverify10_wrprotect.c \
+	test-tool/0314_writeverify10_beyondeol.c \
 	test-tool/0320_writeverify12_simple.c test-tool/0321_writeverify12_wrprotect.c \
-	test-tool/0330_writeverify16_simple.c test-tool/0331_writeverify16_wrprotect.c
+	test-tool/0324_writeverify12_beyondeol.c \
+	test-tool/0330_writeverify16_simple.c test-tool/0331_writeverify16_wrprotect.c \
+	test-tool/0334_writeverify16_beyondeol.c
 endif
 
 # LD_PRELOAD library.
