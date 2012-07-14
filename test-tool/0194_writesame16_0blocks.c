@@ -25,7 +25,7 @@ int T0194_writesame16_0blocks(const char *initiator, const char *url, int data_l
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
-	int ret, i, lun;
+	int ret, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
 	unsigned char buf[512];
