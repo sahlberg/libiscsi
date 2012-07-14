@@ -985,7 +985,7 @@ scsi_cdb_write16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
  * COMPAREANDWRITE
  */
 struct scsi_task *
-scsi_cdb_compareandwrite(uint64_t lba, uint8_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
+scsi_cdb_compareandwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
 {
 	struct scsi_task *task;
 
@@ -1013,7 +1013,6 @@ scsi_cdb_compareandwrite(uint64_t lba, uint8_t xferlen, int blocksize, int wrpro
 	task->cdb[13] = xferlen/blocksize;
 
 	task->cdb[14] |= (group_number & 0x1f);
-
 	task->cdb_size = 16;
 	if (xferlen != 0) {
 		task->xfer_dir = SCSI_XFER_WRITE;
