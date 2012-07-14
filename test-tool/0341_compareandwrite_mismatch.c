@@ -108,6 +108,7 @@ int T0341_compareandwrite_mismatch(const char *initiator, const char *url, int d
 			goto test2;
 		}
 		memcpy(data, task->datain.data, i * block_size);
+		scsi_free_scsi_task(task);
 
 		/* flip some bits */
 		data[ (i - 1) * block_size] ^= 0xa5;
@@ -167,6 +168,7 @@ test2:
 			goto test3;
 		}
 		memcpy(data, task->datain.data, i * block_size);
+		scsi_free_scsi_task(task);
 
 		/* flip some bits */
 		data[ (i - 1) * block_size] ^= 0xa5;

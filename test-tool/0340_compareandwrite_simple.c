@@ -108,6 +108,7 @@ int T0340_compareandwrite_simple(const char *initiator, const char *url, int dat
 			goto test2;
 		}
 		memcpy(data, task->datain.data, i * block_size);
+		scsi_free_scsi_task(task);
 
 		task = iscsi_compareandwrite_sync(iscsi, lun, 0, data, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
@@ -155,6 +156,7 @@ test2:
 			goto test3;
 		}
 		memcpy(data, task->datain.data, i * block_size);
+		scsi_free_scsi_task(task);
 
 		task = iscsi_compareandwrite_sync(iscsi, lun, num_blocks + 1 - i, data, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
