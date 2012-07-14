@@ -656,7 +656,7 @@ iscsi_write16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
 		   iscsi_command_cb cb, void *private_data);
 EXTERN struct scsi_task *
-iscsi_orwrite16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
+iscsi_orwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
 		   iscsi_command_cb cb, void *private_data);
@@ -787,7 +787,7 @@ iscsi_write16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 
 EXTERN struct scsi_task *
-iscsi_orwrite16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
+iscsi_orwrite_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 

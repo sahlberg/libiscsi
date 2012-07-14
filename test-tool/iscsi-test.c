@@ -162,6 +162,9 @@ struct scsi_test tests[] = {
 { "T0341_compareandwrite_mismatch",	T0341_compareandwrite_mismatch },
 { "T0343_compareandwrite_beyondeol",	T0343_compareandwrite_beyondeol },
 
+/* orwrite*/
+{ "T0350_orwrite_simple",		T0350_orwrite_simple },
+
 { NULL, NULL }
 };
 

@@ -871,7 +871,7 @@ iscsi_write16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 struct scsi_task *
-iscsi_orwrite16_task(struct iscsi_context *iscsi, int lun, uint64_t lba, 
+iscsi_orwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba, 
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
 		   iscsi_command_cb cb, void *private_data)
@@ -885,11 +885,11 @@ iscsi_orwrite16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		return NULL;
 	}
 
-	task = scsi_cdb_orwrite16(lba, datalen, blocksize, wrprotect,
+	task = scsi_cdb_orwrite(lba, datalen, blocksize, wrprotect,
 				dpo, fua, fua_nv, group_number);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
-				"orwrite16 cdb.");
+				"orwrite cdb.");
 		return NULL;
 	}
 

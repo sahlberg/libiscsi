@@ -118,3 +118,5 @@ int T0334_writeverify16_beyondeol(const char *initiator, const char *url, int da
 int T0340_compareandwrite_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0341_compareandwrite_mismatch(const char *initiator, const char *url, int data_loss, int show_info);
 int T0343_compareandwrite_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
+
+int T0350_orwrite_simple(const char *initiator, const char *url, int data_loss, int show_info);
