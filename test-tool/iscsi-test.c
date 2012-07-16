@@ -169,6 +169,7 @@ struct scsi_test tests[] = {
 
 /* startstopunit*/
 { "T0360_startstopunit_simple",		T0360_startstopunit_simple },
+{ "T0361_startstopunit_pwrcnd",		T0361_startstopunit_pwrcnd },
 
 { NULL, NULL }
 };
