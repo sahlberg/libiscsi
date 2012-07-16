@@ -167,6 +167,9 @@ struct scsi_test tests[] = {
 { "T0351_orwrite_wrprotect",		T0351_orwrite_wrprotect },
 { "T0354_orwrite_beyindeol",		T0354_orwrite_beyondeol },
 
+/* startstopunit*/
+{ "T0360_startstopunit_simple",		T0360_startstopunit_simple },
+
 { NULL, NULL }
 };
 
