@@ -1568,6 +1568,33 @@ scsi_cdb_startstopunit(int immed, int pcm, int pc, int no_flush, int loej, int s
 }
 
 /*
+ * PREVENTALLOWMEDIUMREMOVAL
+ */
+struct scsi_task *
+scsi_cdb_preventallow(int prevent)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_PREVENTALLOW;
+
+	task->cdb[4] = prevent & 0x03;
+
+	task->cdb_size   = 6;
+	task->xfer_dir   = SCSI_XFER_NONE;
+	task->expxferlen = 0;
+
+	task->params.preventallow.prevent = prevent;
+
+	return task;
+}
+
+/*
  * SYNCHRONIZECACHE10
  */
 struct scsi_task *

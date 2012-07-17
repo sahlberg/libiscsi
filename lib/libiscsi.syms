@@ -28,6 +28,8 @@ iscsi_prefetch10_sync
 iscsi_prefetch10_task
 iscsi_prefetch16_sync
 iscsi_prefetch16_task
+iscsi_preventallow_sync
+iscsi_preventallow_task
 iscsi_queue_length
 iscsi_read10_sync
 iscsi_read10_task
@@ -108,6 +110,7 @@ scsi_cdb_get_lba_status
 scsi_cdb_modesense6
 scsi_cdb_prefetch10
 scsi_cdb_prefetch16
+scsi_cdb_preventallow
 scsi_cdb_read10
 scsi_cdb_read12
 scsi_cdb_read16

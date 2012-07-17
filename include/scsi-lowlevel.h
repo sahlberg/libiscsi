@@ -29,6 +29,7 @@ enum scsi_opcode {
 	SCSI_OPCODE_INQUIRY            = 0x12,
 	SCSI_OPCODE_MODESENSE6         = 0x1a,
 	SCSI_OPCODE_STARTSTOPUNIT      = 0x1b,
+	SCSI_OPCODE_PREVENTALLOW       = 0x1e,
 	SCSI_OPCODE_READCAPACITY10     = 0x25,
 	SCSI_OPCODE_READ10             = 0x28,
 	SCSI_OPCODE_WRITE10            = 0x2A,
@@ -142,6 +143,9 @@ struct scsi_startstopunit_params {
 	int loej;
 	int start;
 };
+struct scsi_preventallow_params {
+	int prevent;
+};
 struct scsi_orwrite_params {
 	uint64_t lba;
 	uint32_t num_blocks;
@@ -239,6 +243,7 @@ struct scsi_task {
 		struct scsi_write12_params         write12;
 		struct scsi_write16_params         write16;
 		struct scsi_startstopunit_params   startstopunit;
+		struct scsi_preventallow_params    preventallow;
 		struct scsi_orwrite_params         orwrite;
 		struct scsi_compareandwrite_params compareandwrite;
 		struct scsi_writeverify10_params   writeverify10;
@@ -673,6 +678,7 @@ EXTERN struct scsi_task *scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int bl
 EXTERN struct scsi_task *scsi_cdb_write12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 EXTERN struct scsi_task *scsi_cdb_write16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 EXTERN struct scsi_task *scsi_cdb_startstopunit(int immed, int pcm, int pc, int no_flush, int loej, int start);
+EXTERN struct scsi_task *scsi_cdb_preventallow(int prevent);
 EXTERN struct scsi_task *scsi_cdb_orwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 EXTERN struct scsi_task *scsi_cdb_compareandwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 EXTERN struct scsi_task *scsi_cdb_writeverify10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number);

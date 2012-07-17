@@ -1193,6 +1193,28 @@ iscsi_startstopunit_task(struct iscsi_context *iscsi, int lun,
 }
 
 struct scsi_task *
+iscsi_preventallow_task(struct iscsi_context *iscsi, int lun,
+			int prevent,
+			iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_preventallow(prevent);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"PreventAllowMediumRemoval cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
+				       private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
 iscsi_synchronizecache10_task(struct iscsi_context *iscsi, int lun, int lba,
 			       int num_blocks, int syncnv, int immed,
 			       iscsi_command_cb cb, void *private_data)
