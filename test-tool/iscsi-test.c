@@ -171,6 +171,9 @@ struct scsi_test tests[] = {
 { "T0360_startstopunit_simple",		T0360_startstopunit_simple },
 { "T0361_startstopunit_pwrcnd",		T0361_startstopunit_pwrcnd },
 
+/* nomedia*/
+{ "T0370_nomedia",			T0370_nomedia },
+
 { NULL, NULL }
 };
 
