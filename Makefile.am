@@ -113,7 +113,8 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0381_preventallow_eject.c \
 	test-tool/0382_preventallow_itnexus_loss.c \
 	test-tool/0383_preventallow_target_warm_reset.c \
-	test-tool/0384_preventallow_target_cold_reset.c
+	test-tool/0384_preventallow_target_cold_reset.c \
+	test-tool/0385_preventallow_lun_reset.c
 
 endif
 
