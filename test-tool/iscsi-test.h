@@ -134,3 +134,4 @@ int T0382_preventallow_itnexus_loss(const char *initiator, const char *url, int 
 int T0383_preventallow_target_warm_reset(const char *initiator, const char *url, int data_loss, int show_info);
 int T0384_preventallow_target_cold_reset(const char *initiator, const char *url, int data_loss, int show_info);
 int T0385_preventallow_lun_reset(const char *initiator, const char *url, int data_loss, int show_info);
+int T0386_preventallow_2_itl_nexuses(const char *initiator, const char *url, int data_loss, int show_info);

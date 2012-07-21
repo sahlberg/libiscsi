@@ -181,6 +181,7 @@ struct scsi_test tests[] = {
 { "T0383_preventallow_target_warm_reset",	T0383_preventallow_target_warm_reset },
 { "T0384_preventallow_target_cold_reset",	T0384_preventallow_target_cold_reset },
 { "T0385_preventallow_lun_reset",	T0385_preventallow_lun_reset },
+{ "T0386_preventallow_2_itl_nexuses",	T0386_preventallow_2_itl_nexuses },
 
 { NULL, NULL }
 };
