@@ -130,3 +130,4 @@ int T0370_nomedia(const char *initiator, const char *url, int data_loss, int sho
 
 int T0380_preventallow_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0381_preventallow_eject(const char *initiator, const char *url, int data_loss, int show_info);
+int T0382_preventallow_itnexus_loss(const char *initiator, const char *url, int data_loss, int show_info);

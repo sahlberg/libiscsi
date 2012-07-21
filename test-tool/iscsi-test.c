@@ -177,6 +177,7 @@ struct scsi_test tests[] = {
 /* preventallowmediumremoval*/
 { "T0380_preventallow_simple",		T0380_preventallow_simple },
 { "T0381_preventallow_eject",		T0381_preventallow_eject },
+{ "T0382_preventallow_itnexus_loss",	T0382_preventallow_itnexus_loss },
 
 { NULL, NULL }
 };
