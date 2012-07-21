@@ -204,6 +204,19 @@ test3:
 	}
 	printf("[OK]\n");
 
+again:
+	task = iscsi_testunitready_sync(iscsi, lun);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
+		ret++;
+		goto finished;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		scsi_free_scsi_task(task);
+		goto again;
+	}
+	scsi_free_scsi_task(task);
 
 test4:
 
