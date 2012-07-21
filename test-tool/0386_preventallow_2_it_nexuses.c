@@ -37,7 +37,7 @@ int T0386_preventallow_2_itl_nexuses(const char *initiator, const char *url, int
 	printf("============================\n");
 	if (show_info) {
 		printf("Test that each IT nexus has its own PREVENT setting\n");
-		printf("1, Verify we can set PREVENTALLOW on two IT_Nexuses(if the medium is removable)\n");
+		printf("1, Verify we can set PREVENTALLOW on two IT_Nexusen (if the medium is removable)\n");
 		printf("2, Verify we can no longer eject the media\n");
 		printf("3, Remove the PREVENT on this IT_Nexus\n");
 		printf("4, Verify we can still not eject the media\n");
@@ -119,7 +119,7 @@ int T0386_preventallow_2_itl_nexuses(const char *initiator, const char *url, int
 	}
 
 
-	printf("Try to set PREVENTALLOW ... ");
+	printf("Try to set PREVENTALLOW on 2 different IT_Nexusen ... ");
 	task = iscsi_preventallow_sync(iscsi, lun, 1);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
