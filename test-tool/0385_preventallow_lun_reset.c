@@ -182,7 +182,7 @@ test2:
 	printf("Eject failed. [OK]\n");
 
 test3:
-	printf("Send a Cold Reset to the target ... ");
+	printf("Send a LUN Reset to the target ... ");
 	iscsi_task_mgmt_lun_reset_async(iscsi, lun, mgmt_cb, &mgmt_task);
 	while (mgmt_task.finished == 0) {
 		pfd.fd = iscsi_get_fd(iscsi);
