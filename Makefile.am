@@ -115,7 +115,8 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0383_preventallow_target_warm_reset.c \
 	test-tool/0384_preventallow_target_cold_reset.c \
 	test-tool/0385_preventallow_lun_reset.c \
-	test-tool/0386_preventallow_2_it_nexuses.c
+	test-tool/0386_preventallow_2_it_nexuses.c \
+	test-tool/0390_mandatory_opcodes_sbc.c
 
 endif
 

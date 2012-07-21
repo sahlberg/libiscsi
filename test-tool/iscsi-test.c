@@ -183,6 +183,9 @@ struct scsi_test tests[] = {
 { "T0385_preventallow_lun_reset",	T0385_preventallow_lun_reset },
 { "T0386_preventallow_2_itl_nexuses",	T0386_preventallow_2_itl_nexuses },
 
+/* support for mandatory opcodes*/
+{ "T0390_mandatory_opcodes_sbc",	T0390_mandatory_opcodes_sbc },
+
 { NULL, NULL }
 };
 
