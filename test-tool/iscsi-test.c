@@ -178,6 +178,7 @@ struct scsi_test tests[] = {
 { "T0380_preventallow_simple",		T0380_preventallow_simple },
 { "T0381_preventallow_eject",		T0381_preventallow_eject },
 { "T0382_preventallow_itnexus_loss",	T0382_preventallow_itnexus_loss },
+{ "T0383_preventallow_target_warm_reset",	T0383_preventallow_target_warm_reset },
 
 { NULL, NULL }
 };
