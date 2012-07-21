@@ -129,3 +129,4 @@ int T0361_startstopunit_pwrcnd(const char *initiator, const char *url, int data_
 int T0370_nomedia(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0380_preventallow_simple(const char *initiator, const char *url, int data_loss, int show_info);
+int T0381_preventallow_eject(const char *initiator, const char *url, int data_loss, int show_info);

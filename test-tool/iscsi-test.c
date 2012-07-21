@@ -174,8 +174,9 @@ struct scsi_test tests[] = {
 /* nomedia*/
 { "T0370_nomedia",			T0370_nomedia },
 
-/* prventallowmediumremoval*/
+/* preventallowmediumremoval*/
 { "T0380_preventallow_simple",		T0380_preventallow_simple },
+{ "T0381_preventallow_eject",		T0381_preventallow_eject },
 
 { NULL, NULL }
 };
