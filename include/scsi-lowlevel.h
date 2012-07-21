@@ -94,6 +94,7 @@ EXTERN const char *scsi_sense_key_str(int key);
 #define SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED	0x3a01
 #define SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN	0x3a02
 #define SCSI_SENSE_ASCQ_INTERNAL_TARGET_FAILURE	        0x4400
+#define SCSI_SENSE_ASCQ_MEDIUM_REMOVAL_PREVENTED        0x5302
 
 EXTERN const char *scsi_sense_ascq_str(int ascq);
 
