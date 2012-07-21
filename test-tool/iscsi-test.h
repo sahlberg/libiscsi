@@ -132,3 +132,4 @@ int T0380_preventallow_simple(const char *initiator, const char *url, int data_l
 int T0381_preventallow_eject(const char *initiator, const char *url, int data_loss, int show_info);
 int T0382_preventallow_itnexus_loss(const char *initiator, const char *url, int data_loss, int show_info);
 int T0383_preventallow_target_warm_reset(const char *initiator, const char *url, int data_loss, int show_info);
+int T0384_preventallow_target_cold_reset(const char *initiator, const char *url, int data_loss, int show_info);
