@@ -199,7 +199,7 @@ test3:
 	}
 	if (mgmt_task.status != 0) {
 		printf("[FAILED]\n");
-		printf("Failed to reset the target\n");
+		printf("Failed to reset the LUN\n");
 		goto test4;
 	}
 	printf("[OK]\n");
