@@ -108,7 +108,8 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0354_orwrite_beyondeol.c \
 	test-tool/0360_startstopunit_simple.c \
 	test-tool/0361_startstopunit_pwrcnd.c \
-	test-tool/0370_nomedia.c
+	test-tool/0370_nomedia.c \
+	test-tool/0380_preventallow_simple.c
 
 endif
 
