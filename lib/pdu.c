@@ -516,7 +516,8 @@ iscsi_pdu_set_cdb(struct iscsi_pdu *pdu, struct scsi_task *task)
 void
 iscsi_pdu_set_lun(struct iscsi_pdu *pdu, uint32_t lun)
 {
-	pdu->outdata.data[9] = lun;
+	pdu->outdata.data[8] = lun >> 8;
+	pdu->outdata.data[9] = lun & 0xff;
 }
 
 void
