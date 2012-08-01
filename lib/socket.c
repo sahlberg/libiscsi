@@ -204,8 +204,8 @@ iscsi_which_events(struct iscsi_context *iscsi)
 {
 	int events = iscsi->is_connected ? POLLIN : POLLOUT;
 
-	if (iscsi->outqueue) {
-		events |= POLLOUT;
+	if (iscsi->outqueue && iscsi->outqueue->cmdsn <= iscsi->maxcmdsn) {
+	 	events |= POLLOUT;
 	}
 	return events;
 }
@@ -338,9 +338,14 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		return -1;
 	}
 
-	while (iscsi->outqueue != NULL) {
+	while (iscsi->outqueue) {
 		ssize_t total;
 
+		if (iscsi->outqueue->cmdsn > iscsi->maxcmdsn) {
+			/* stop sending. maxcmdsn is reached */
+			return 0;
+		}
+	     
 		total = iscsi->outqueue->outdata.size;
 		total = (total + 3) & 0xfffffffc;
 
