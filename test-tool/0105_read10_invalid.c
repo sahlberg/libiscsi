@@ -83,6 +83,11 @@ int T0105_read10_invalid(const char *initiator, const char *url, int data_loss _
 
 		goto finished;
 	}
+	if (task->status == SCSI_STATUS_CANCELLED) {
+		scsi_free_scsi_task(task);
+		printf("Target dropped the session [OK]\n");
+		goto test2;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==0 should not fail.\n");
