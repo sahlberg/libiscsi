@@ -503,6 +503,7 @@ iscsi_process_r2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	offset = ntohl(*(uint32_t *)&in->hdr[40]);
 	len    = ntohl(*(uint32_t *)&in->hdr[44]);
 
+	pdu->datasn = 0;
 	iscsi_send_data_out(iscsi, pdu, ttt, offset, len);
 	return 0;
 }
