@@ -56,7 +56,6 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 						"failed.");
 				ct->cb(iscsi, SCSI_STATUS_ERROR, NULL,
 				       ct->private_data);
-				free(ct);
 			}
 			scsi_free_scsi_task(task);
 			return;
@@ -74,7 +73,6 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 
 	ct->cb(iscsi, status?SCSI_STATUS_ERROR:SCSI_STATUS_GOOD, NULL,
 	       ct->private_data);
-	free(ct);
 	scsi_free_scsi_task(task);
 }
 
@@ -86,7 +84,6 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 
 	if (status != 0) {
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
-		free(ct);
 		return;
 	}
 
@@ -94,7 +91,6 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 				      iscsi_testunitready_cb, ct) == NULL) {
 		iscsi_set_error(iscsi, "iscsi_testunitready_async failed.");
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
-		free(ct);
 	}
 }
 
@@ -108,14 +104,12 @@ iscsi_connect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_
 		iscsi_set_error(iscsi, "Failed to connect to iSCSI socket. "
 				"%s", iscsi_get_error(iscsi));
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
-		free(ct);
 		return;
 	}
 
 	if (iscsi_login_async(iscsi, iscsi_login_cb, ct) != 0) {
 		iscsi_set_error(iscsi, "iscsi_login_async failed.");
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
-		free(ct);
 	}
 }
 
@@ -139,7 +133,6 @@ iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
 	ct->lun          = lun;
 	ct->private_data = private_data;
 	if (iscsi_connect_async(iscsi, portal, iscsi_connect_cb, ct) != 0) {
-		free(ct);
 		return -ENOMEM;
 	}
 	return 0;

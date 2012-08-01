@@ -244,6 +244,9 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	free(discard_const(iscsi->chap_c));
 	iscsi->chap_c = NULL;
 
+	free(iscsi->connect_data);
+	iscsi->connect_data = NULL;
+
 	free(iscsi);
 
 	return 0;
