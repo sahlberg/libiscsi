@@ -324,13 +324,18 @@ int
 iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			 struct iscsi_in_pdu *in)
 {
-	int statsn, flags, status;
+	uint32_t statsn, maxcmdsn, flags, status;
 	struct iscsi_scsi_cbdata *scsi_cbdata = pdu->scsi_cbdata;
 	struct scsi_task *task = scsi_cbdata->task;
 
 	statsn = ntohl(*(uint32_t *)&in->hdr[24]);
-	if (statsn > (int)iscsi->statsn) {
+	if (statsn > iscsi->statsn) {
 		iscsi->statsn = statsn;
+	}
+
+	maxcmdsn = ntohl(*(uint32_t *)&in->hdr[32]);
+	if (maxcmdsn > iscsi->maxcmdsn) {
+		iscsi->maxcmdsn = maxcmdsn;
 	}
 
 	flags = in->hdr[1];
@@ -419,14 +424,19 @@ int
 iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			   struct iscsi_in_pdu *in, int *is_finished)
 {
-	int statsn, flags, status;
+	uint32_t statsn, maxcmdsn, flags, status;
 	struct iscsi_scsi_cbdata *scsi_cbdata = pdu->scsi_cbdata;
 	struct scsi_task *task = scsi_cbdata->task;
 	int dsl;
 
 	statsn = ntohl(*(uint32_t *)&in->hdr[24]);
-	if (statsn > (int)iscsi->statsn) {
+	if (statsn > iscsi->statsn) {
 		iscsi->statsn = statsn;
+	}
+
+	maxcmdsn = ntohl(*(uint32_t *)&in->hdr[32]);
+	if (maxcmdsn > iscsi->maxcmdsn) {
+		iscsi->maxcmdsn = maxcmdsn;
 	}
 
 	flags = in->hdr[1];
@@ -497,11 +507,16 @@ int
 iscsi_process_r2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			 struct iscsi_in_pdu *in)
 {
-	uint32_t ttt, offset, len;
+	uint32_t ttt, offset, len, maxcmdsn;
 
 	ttt    = ntohl(*(uint32_t *)&in->hdr[20]);
 	offset = ntohl(*(uint32_t *)&in->hdr[40]);
 	len    = ntohl(*(uint32_t *)&in->hdr[44]);
+
+	maxcmdsn = ntohl(*(uint32_t *)&in->hdr[32]);
+	if (maxcmdsn > iscsi->maxcmdsn) {
+		iscsi->maxcmdsn = maxcmdsn;
+	}
 
 	pdu->datasn = 0;
 	iscsi_send_data_out(iscsi, pdu, ttt, offset, len);

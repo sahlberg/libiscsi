@@ -21,6 +21,7 @@
 #endif
 
 #include <stdio.h>
+#include <arpa/inet.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
@@ -82,9 +83,14 @@ int
 iscsi_process_task_mgmt_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			    struct iscsi_in_pdu *in)
 {
-	uint32_t response;
+	uint32_t response, maxcmdsn;
 
 	response = in->hdr[2];
+
+	maxcmdsn = ntohl(*(uint32_t *)&in->hdr[32]);
+	if (maxcmdsn > iscsi->maxcmdsn) {
+		iscsi->maxcmdsn = maxcmdsn;
+	}
 
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, &response, pdu->private_data);
 

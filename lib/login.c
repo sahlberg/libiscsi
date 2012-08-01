@@ -970,13 +970,18 @@ int
 iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			  struct iscsi_in_pdu *in)
 {
-	int status;
+	uint32_t status, maxcmdsn;
 	char *ptr = (char *)in->data;
 	int size = in->data_pos;
 
 	status = ntohs(*(uint16_t *)&in->hdr[36]);
 
 	iscsi->statsn = ntohs(*(uint16_t *)&in->hdr[24]);
+
+	maxcmdsn = ntohl(*(uint32_t *)&in->hdr[32]);
+	if (maxcmdsn > iscsi->maxcmdsn) {
+		iscsi->maxcmdsn = maxcmdsn;
+	}
 
 	/* XXX here we should parse the data returned in case the target
 	 * renegotiated some some parameters.
@@ -1161,8 +1166,15 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 int
 iscsi_process_logout_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
-struct iscsi_in_pdu *in _U_)
+struct iscsi_in_pdu *in)
 {
+	uint32_t maxcmdsn;
+
+	maxcmdsn = ntohl(*(uint32_t *)&in->hdr[32]);
+	if (maxcmdsn > iscsi->maxcmdsn) {
+		iscsi->maxcmdsn = maxcmdsn;
+	}
+
 	iscsi->is_loggedin = 0;
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
 
