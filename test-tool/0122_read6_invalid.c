@@ -69,6 +69,11 @@ int T0122_read6_invalid(const char *initiator, const char *url, int data_loss _U
 	task->xfer_dir = SCSI_XFER_READ;
 	task->expxferlen = 0;
 
+	/* we dont want autoreconnect since some targets will drop the session
+	 * on this condition.
+	 */
+	iscsi_set_noautoreconnect(iscsi, 1);
+
 	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send read6 command: %s\n", iscsi_get_error(iscsi));
@@ -95,6 +100,9 @@ int T0122_read6_invalid(const char *initiator, const char *url, int data_loss _U
 
 
 test2:
+	/* in case the previous test failed the session */
+	iscsi_set_noautoreconnect(iscsi, 0);
+
 	/* Try a read of 1 block but xferlength == 1024 */
 	printf("Read6 1 block but with iscsi ExpectedDataTransferLength==1024 ... ");
 

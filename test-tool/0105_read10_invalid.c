@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "iscsi.h"
+#include "iscsi-private.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
@@ -52,6 +53,7 @@ int T0105_read10_invalid(const char *initiator, const char *url, int data_loss _
 
 	ret = 0;
 
+
 	/* Try a read of 1 block but xferlength == 0 */
 	printf("Read10 1 block but with iscsi ExpectedDataTransferLength==0 ... ");
 
@@ -68,6 +70,11 @@ int T0105_read10_invalid(const char *initiator, const char *url, int data_loss _
 	task->cdb_size = 10;
 	task->xfer_dir = SCSI_XFER_READ;
 	task->expxferlen = 0;
+
+	/* we dont want autoreconnect since some targets will drop the session
+	 * on this condition.
+	 */
+	iscsi_set_noautoreconnect(iscsi, 1);
 
 	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
 	        printf("[FAILED]\n");
@@ -95,6 +102,9 @@ int T0105_read10_invalid(const char *initiator, const char *url, int data_loss _
 
 
 test2:
+	/* in case the previous test failed the session */
+	iscsi_set_noautoreconnect(iscsi, 0);
+
 	/* Try a read of 1 block but xferlength == 1024 */
 	printf("Read10 1 block but with iscsi ExpectedDataTransferLength==1024 ... ");
 

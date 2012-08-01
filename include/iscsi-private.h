@@ -117,6 +117,8 @@ struct iscsi_context {
 
 	int lun;
 	const char *portal;
+	int no_auto_reconnect;
+	int reconnect_deferred;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40
@@ -271,6 +273,7 @@ unsigned long crc32c(char *buf, int len);
 struct scsi_task *iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu);
 
 int iscsi_reconnect(struct iscsi_context *iscsi);
+void iscsi_set_noautoreconnect(struct iscsi_context *iscsi, int state);
 
 #ifdef __cplusplus
 }

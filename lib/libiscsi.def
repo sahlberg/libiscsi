@@ -46,6 +46,7 @@ iscsi_readcapacity10_task
 iscsi_readcapacity16_sync
 iscsi_readcapacity16_task
 iscsi_reconnect
+iscsi_set_noautoreconnect
 iscsi_reportluns_sync
 iscsi_reportluns_task
 iscsi_scsi_cancel_all_tasks

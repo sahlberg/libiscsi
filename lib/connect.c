@@ -145,9 +145,62 @@ iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
 	return 0;
 }
 
+/* Set auto reconnect status. If state !0  then we will not reconnect
+   automatically upon session failure.
+*/
+void iscsi_set_noautoreconnect(struct iscsi_context *iscsi, int state)
+{
+	iscsi->no_auto_reconnect = state;
+
+	/* If the session was dropped while auto reconnect was disabled
+	   then we explicitely reconnect here again.
+	 */
+	if (!state && iscsi->reconnect_deferred) {
+		iscsi->reconnect_deferred = 0;
+		iscsi_reconnect(iscsi);
+	}
+}
+
 int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
-	struct iscsi_context *iscsi;
+	struct iscsi_context *iscsi = old_iscsi;
+
+	/* This is mainly for tests, where we do not want to automatically
+	   reconnect but rather want the commands to fail with an error
+	   if the target drops the session.
+	 */
+	if (iscsi->no_auto_reconnect) {
+		struct iscsi_pdu *pdu;
+
+		iscsi->reconnect_deferred = 1;
+
+		while ((pdu = iscsi->outqueue)) {
+			SLIST_REMOVE(&iscsi->outqueue, pdu);
+			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
+				/* If an error happened during connect/login,
+				   we dont want to call any of the callbacks.
+				 */
+				if (iscsi->is_loggedin) {
+					pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
+						      NULL, pdu->private_data);
+				}		      
+			}
+			iscsi_free_pdu(iscsi, pdu);
+		}
+		while ((pdu = iscsi->waitpdu)) {
+			SLIST_REMOVE(&iscsi->waitpdu, pdu);
+			/* If an error happened during connect/login,
+			   we dont want to call any of the callbacks.
+			 */
+			if (iscsi->is_loggedin) {
+				pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
+					      NULL, pdu->private_data);
+			}
+			iscsi_free_pdu(iscsi, pdu);
+		}
+
+		return 0;
+	}
 
 try_again:
 
