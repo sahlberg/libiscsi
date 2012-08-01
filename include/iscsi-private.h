@@ -182,6 +182,7 @@ struct iscsi_pdu {
 	uint32_t lun;
 	uint32_t itt;
 	uint32_t cmdsn;
+	uint32_t datasn;
 	enum iscsi_opcode response_opcode;
 
 	iscsi_command_cb callback;

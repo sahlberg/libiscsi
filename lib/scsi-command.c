@@ -120,7 +120,7 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		iscsi_pdu_set_expstatsn(pdu, iscsi->statsn+1);
 
 		/* data sn */
-		iscsi_pdu_set_datasn(pdu, 0);
+		iscsi_pdu_set_datasn(pdu, cmd_pdu->datasn++);
 
 		/* buffer offset */
 		iscsi_pdu_set_bufferoffset(pdu, offset);
