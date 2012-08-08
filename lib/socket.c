@@ -68,11 +68,6 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	struct addrinfo *ai = NULL;
 	int socksize;
 
-	if (iscsi->connect_data != NULL) {
-		free(iscsi->connect_data);
-	}
-	iscsi->connect_data      = private_data;
-
 	if (iscsi->fd != -1) {
 		iscsi_set_error(iscsi,
 				"Trying to connect but already connected.");
@@ -159,6 +154,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	}
 
 	iscsi->socket_status_cb  = cb;
+	iscsi->connect_data      = private_data;
 
 	set_nonblocking(iscsi->fd);
 

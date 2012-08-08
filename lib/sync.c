@@ -97,6 +97,9 @@ iscsi_connect_sync(struct iscsi_context *iscsi, const char *portal)
 
 	event_loop(iscsi, &state);
 
+	/* clear connect_data so it doesnt point to our stack */
+	iscsi->connect_data = NULL;
+
 	return state.status;
 }
 
