@@ -76,8 +76,10 @@ iscsi_sync_cb(struct iscsi_context *iscsi _U_, int status,
 {
 	struct iscsi_sync_state *state = private_data;
 
-	state->status    = status;
-	state->finished = 1;
+	if (state != NULL) {
+		state->status    = status;
+		state->finished = 1;
+	}
 }
 
 int
