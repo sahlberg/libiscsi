@@ -20,6 +20,7 @@ EXTRA_PROGRAMS =
 iscsi_includedir = $(includedir)/iscsi
 dist_iscsi_include_HEADERS = include/iscsi.h include/scsi-lowlevel.h
 dist_noinst_HEADERS = include/iscsi-private.h include/md5.h include/slist.h
+dist_noinst_DATA = lib/libiscsi.syms
 
 lib_LTLIBRARIES = lib/libiscsi.la
 lib_libiscsi_la_SOURCES = \
