@@ -1,3 +1,14 @@
+commit 2b859765244332e95fe960e7ec94b744e02c7c83
+Author: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+Date:   Thu Aug 9 20:44:45 2012 +1000
+
+    ISCSI support
+    
+    Add support for specifying devices using '-f iscsi://<host>/<target>/<lun>
+    syntax
+    
+    Signed-off-by: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+
 diff --git a/Makefile.in b/Makefile.in
 index 6b967cf..fe81280 100644
 --- a/Makefile.in
@@ -96,10 +107,10 @@ index 073f4fa..84510cc 100644
  
  #undef min
 diff --git a/scsi_linux.c b/scsi_linux.c
-index cc14ebf..099cdb4 100644
+index cc14ebf..8a7becb 100644
 --- a/scsi_linux.c
 +++ b/scsi_linux.c
-@@ -58,14 +58,128 @@ $Revision: 193 $
+@@ -58,14 +58,133 @@ $Revision: 193 $
  static int pack_id;
  static int sg_timeout;
  
@@ -134,18 +145,23 @@ index cc14ebf..099cdb4 100644
 +		task->cdb_size = CDB_Length;
 +		memcpy(&task->cdb[0], CDB, task->cdb_size);
 +
-+		switch (Direction) {
-+		case Input:
-+			task->xfer_dir = SCSI_XFER_READ;
-+			task->expxferlen = DataBufferLength;
-+			break;
-+		case Output:
-+			task->xfer_dir = SCSI_XFER_WRITE;
-+			task->expxferlen = DataBufferLength;
-+			outdata.size = DataBufferLength;
-+			outdata.data = DataBuffer;
-+			data = &outdata;
-+			break;
++		if (DataBufferLength > 0) {
++			switch (Direction) {
++			case Input:
++				task->xfer_dir = SCSI_XFER_READ;
++				task->expxferlen = DataBufferLength;
++				break;
++			case Output:
++				task->xfer_dir = SCSI_XFER_WRITE;
++				task->expxferlen = DataBufferLength;
++				outdata.size = DataBufferLength;
++				outdata.data = DataBuffer;
++				data = &outdata;
++				break;
++			}
++		} else {
++			task->xfer_dir = SCSI_XFER_NONE;
++			task->expxferlen = 0;
 +		}
 +
 +		if (iscsi_scsi_command_sync(iscsi_lun.context, iscsi_lun.lun, task, data) == NULL) {
@@ -229,7 +245,7 @@ index cc14ebf..099cdb4 100644
  	if (DeviceFD < 0)
  		FatalError("cannot open SCSI device '%s' - %m\n", DeviceName);
  
-@@ -98,6 +212,14 @@ void SCSI_Default_Timeout(void)
+@@ -98,6 +217,14 @@ void SCSI_Default_Timeout(void)
  
  void SCSI_CloseDevice(char *DeviceName, DEVICE_TYPE DeviceFD)
  {
@@ -244,7 +260,7 @@ index cc14ebf..099cdb4 100644
  	if (close(DeviceFD) < 0)
  		FatalError("cannot close SCSI device '%s' - %m\n", DeviceName);
  }
-@@ -118,6 +240,16 @@ scsi_id_t *SCSI_GetIDLun(DEVICE_TYPE fd)
+@@ -118,6 +245,16 @@ scsi_id_t *SCSI_GetIDLun(DEVICE_TYPE fd)
  		int word2;
  	} idlun;
  
@@ -261,7 +277,7 @@ index cc14ebf..099cdb4 100644
  	status = ioctl(fd, SCSI_IOCTL_GET_IDLUN, &idlun);
  	if (status)
  	{
-@@ -157,6 +289,13 @@ int SCSI_ExecuteCommand(DEVICE_TYPE DeviceFD,
+@@ -157,6 +294,13 @@ int SCSI_ExecuteCommand(DEVICE_TYPE DeviceFD,
  	unsigned int status;
  	sg_io_hdr_t io_hdr;
  
@@ -275,7 +291,7 @@ index cc14ebf..099cdb4 100644
  	memset(&io_hdr, 0, sizeof(sg_io_hdr_t));
  	memset(RequestSense, 0, sizeof(RequestSense_T));
  
-@@ -261,6 +400,13 @@ int SCSI_ExecuteCommand(DEVICE_TYPE DeviceFD,
+@@ -261,6 +405,13 @@ int SCSI_ExecuteCommand(DEVICE_TYPE DeviceFD,
  	struct sg_header *Header; /* we actually point this into Command... */
  	struct sg_header *ResultHeader; /* we point this into ResultBuf... */
  
