@@ -54,6 +54,7 @@ bin_iscsi_dd_SOURCES = examples/iscsi-dd.c
 noinst_PROGRAMS += bin/iscsi-test
 dist_noinst_HEADERS += test-tool/iscsi-test.h
 bin_iscsi_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/test-tool
+bin_iscsi_test_LDFLAGS = -ldl
 bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0100_read10_simple.c test-tool/0101_read10_beyond_eol.c \
 	test-tool/0102_read10_0blocks.c test-tool/0103_read10_rdprotect.c \
@@ -117,7 +118,9 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0384_preventallow_target_cold_reset.c \
 	test-tool/0385_preventallow_lun_reset.c \
 	test-tool/0386_preventallow_2_it_nexuses.c \
-	test-tool/0390_mandatory_opcodes_sbc.c
+	test-tool/0390_mandatory_opcodes_sbc.c \
+	\
+	test-tool/1000_cmdsn_invalid.c
 
 endif
 

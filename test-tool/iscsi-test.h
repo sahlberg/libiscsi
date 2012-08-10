@@ -19,6 +19,13 @@
 
 struct iscsi_context *iscsi_context_login(const char *initiatorname, const char *url, int *lun);
 
+struct iscsi_async_state {
+	struct scsi_task *task;
+	int status;
+	int finished;
+};
+void wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_state *test_state);
+
 int T0100_read10_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0101_read10_beyond_eol(const char *initiator, const char *url, int data_loss, int show_info);
 int T0102_read10_0blocks(const char *initiator, const char *url, int data_loss, int show_info);
@@ -137,3 +144,5 @@ int T0385_preventallow_lun_reset(const char *initiator, const char *url, int dat
 int T0386_preventallow_2_itl_nexuses(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data_loss, int show_info);
+
+int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, int show_info);

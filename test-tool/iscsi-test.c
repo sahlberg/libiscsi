@@ -39,6 +39,8 @@ struct scsi_test {
 };
 
 struct scsi_test tests[] = {
+/* SCSI protocol tests */
+
 /* read10*/
 { "T0100_read10_simple",		T0100_read10_simple },
 { "T0101_read10_beyond_eol",		T0101_read10_beyond_eol },
@@ -186,6 +188,12 @@ struct scsi_test tests[] = {
 /* support for mandatory opcodes*/
 { "T0390_mandatory_opcodes_sbc",	T0390_mandatory_opcodes_sbc },
 
+
+/* iSCSI protocol tests */
+
+/* invalid cmdsn from initiator */
+{ "T1000_cmdsn_invalid",		T1000_cmdsn_invalid },
+
 { NULL, NULL }
 };
 
@@ -264,6 +272,37 @@ struct iscsi_context *iscsi_context_login(const char *initiatorname, const char 
 	return iscsi;
 }
 
+
+void wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_state *state)
+{
+	struct pollfd pfd;
+	int count = 0;
+	int ret;
+
+	while (state->finished == 0) {
+		pfd.fd = iscsi_get_fd(iscsi);
+		pfd.events = iscsi_which_events(iscsi);
+
+		ret = poll(&pfd, 1, 1000);
+		if (ret < 0) {
+			printf("Poll failed");
+			exit(10);
+		}
+		if (ret == 0) {
+			if (count++ > 5) {
+				state->finished     = 1;
+				state->status       = SCSI_STATUS_CANCELLED;
+				state->task->status = SCSI_STATUS_CANCELLED;
+				return;
+			}
+			continue;
+		}
+		if (iscsi_service(iscsi, pfd.revents) < 0) {
+			printf("iscsi_service failed with : %s\n", iscsi_get_error(iscsi));
+			break;
+		}
+	}
+}
 
 int main(int argc, const char *argv[])
 {

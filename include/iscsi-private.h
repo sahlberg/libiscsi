@@ -225,7 +225,8 @@ void iscsi_pdu_set_datasn(struct iscsi_pdu *pdu, uint32_t datasn);
 void iscsi_pdu_set_bufferoffset(struct iscsi_pdu *pdu, uint32_t bufferoffset);
 int iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		       unsigned char *dptr, int dsize);
-int iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+EXTERN int iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+
 int iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 		   unsigned char *dptr, int dsize, int pdualignment);
 

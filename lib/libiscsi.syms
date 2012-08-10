@@ -31,6 +31,7 @@ iscsi_prefetch16_task
 iscsi_preventallow_sync
 iscsi_preventallow_task
 iscsi_queue_length
+iscsi_queue_pdu
 iscsi_read10_sync
 iscsi_read10_task
 iscsi_read12_sync
