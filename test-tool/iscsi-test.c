@@ -29,7 +29,7 @@
 #include "iscsi.h"
 #include "iscsi-test.h"
 
-const char *initiator = "iqn.2010-11.iscsi-test";
+const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test";
 static int data_loss = 0;
 static int show_info = 0;
 
