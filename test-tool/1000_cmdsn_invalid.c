@@ -155,6 +155,8 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 test2:
 	/* in case the previous test failed the session */
 	iscsi_set_noautoreconnect(iscsi, 0);
+	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+	iscsi->target_max_recv_data_segment_length = 512;
 
 	printf("Write 2 blocks with CMDSN == 0 ... ");fflush(stdout);
 	change_cmdsn = 2;
