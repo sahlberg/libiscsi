@@ -24,7 +24,7 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
-const char *initiator = "iqn.2010-11.ronnie:iscsi-inq";
+const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-inq";
 
 
 void inquiry_block_limits(struct scsi_inquiry_block_limits *inq)
