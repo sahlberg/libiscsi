@@ -25,6 +25,7 @@ struct iscsi_async_state {
 	int finished;
 };
 void wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_state *test_state);
+void (*local_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 int T0100_read10_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0101_read10_beyond_eol(const char *initiator, const char *url, int data_loss, int show_info);
@@ -146,3 +147,4 @@ int T0386_preventallow_2_itl_nexuses(const char *initiator, const char *url, int
 int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
+int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, int show_info);

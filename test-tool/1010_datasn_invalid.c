@@ -22,22 +22,16 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-static int change_cmdsn;
+static int clamp_datasn;
 
-static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+static void my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	switch (change_cmdsn) {
+	switch (clamp_datasn) {
 	case 1:
-		/* change the cmdsn so it becomes too big */
-		*(uint32_t *)&pdu->outdata.data[24] = htonl(iscsi->maxcmdsn + 1);
-		break;
-	case 2:
-		/* change the cmdsn so it becomes too small */
-		*(uint32_t *)&pdu->outdata.data[24] = 0;
+		/* change datasn to 0 */
+		*(uint32_t *)&pdu->outdata.data[36] = 0;
 		break;
 	}
-
-	change_cmdsn = 0;	
 }
 
 static void test_cb(struct iscsi_context *iscsi _U_, int status,
@@ -55,7 +49,7 @@ static void test_cb(struct iscsi_context *iscsi _U_, int status,
 }
 
 
-int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, int show_info)
+int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -66,13 +60,11 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 	unsigned char data[512 * 256];
 	struct iscsi_async_state test_state;
 
-	printf("1000_cmdsn_invalid:\n");
+	printf("1010_datasn_invalid:\n");
 	printf("==================\n");
 	if (show_info) {
-		printf("Test sending commands with invalid cmdsn values.\n");
-		printf("CMDSN MUST be in the range EXPCMDSN and MAXCMDSN\n");
-		printf("1, Test that a CMDSN > MAXCMDSN is an error\n");
-		printf("2, Test that a CMDSN == 0 is an error\n");
+		printf("Test sending commands with invalid datasn values.\n");
+		printf("1, Test that 2 DATA-IN with DATASN==0 is an error\n");
 		printf("\n");
 		return 0;
 	}
@@ -121,8 +113,8 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 	iscsi->target_max_recv_data_segment_length = 512;
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
 
-	printf("Write 2 blocks with CMDSN > MAXCMDSN ... ");
-	change_cmdsn = 1;
+	printf("Write 2 DATA-IN with DATASN == 0 ... ");
+	clamp_datasn = 1;
 	/* we dont want autoreconnect since some targets will drop the
 	 * on this condition.
 	 */
@@ -141,6 +133,7 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 	test_state.finished = 0;
 	test_state.status   = 0;
 	wait_until_test_finished(iscsi, &test_state);
+	clamp_datasn = 0;	
 	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITE10 command successful. Should have failed with error\n");
@@ -153,41 +146,6 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 
 
 test2:
-	/* in case the previous test failed the session */
-	iscsi_set_noautoreconnect(iscsi, 0);
-
-	printf("Write 2 blocks with CMDSN == 0 ... ");fflush(stdout);
-	change_cmdsn = 2;
-	/* we dont want autoreconnect since some targets will drop the
-	 * on this condition.
-	 */
-
-	iscsi_set_noautoreconnect(iscsi, 1);
-	task = iscsi_write10_task(iscsi, lun, 0, data, 2 * block_size, block_size,
-				0, 0, 0, 0, 0,
-				test_cb, &test_state);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send WRITE10 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test3;
-	}
-	test_state.task     = task;
-	test_state.finished = 0;
-	test_state.status   = 0;
-	wait_until_test_finished(iscsi, &test_state);
-	if (task->status == SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("WRITE10 command successful. Should have failed with error\n");
-		ret++;
-		scsi_free_scsi_task(task);
-		goto test3;
-	}
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
-
-
-test3:
 	/* in case the previous test failed the session */
 	iscsi_set_noautoreconnect(iscsi, 0);
 

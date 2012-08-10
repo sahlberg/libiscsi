@@ -17,6 +17,10 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
+#define _GNU_SOURCE
+#include <sys/syscall.h>
+#include <dlfcn.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -26,7 +30,7 @@
 #include <fnmatch.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
-#include "iscsi.h"
+#include "iscsi-private.h"
 #include "iscsi-test.h"
 
 const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test";
@@ -194,6 +198,9 @@ struct scsi_test tests[] = {
 /* invalid cmdsn from initiator */
 { "T1000_cmdsn_invalid",		T1000_cmdsn_invalid },
 
+/* invalid datasn from initiator */
+{ "T1010_datasn_invalid",		T1010_datasn_invalid },
+
 { NULL, NULL }
 };
 
@@ -304,6 +311,16 @@ void wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_st
 	}
 }
 
+static int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+
+int iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	if (local_iscsi_queue_pdu != NULL) {
+		local_iscsi_queue_pdu(iscsi, pdu);
+	}
+	return real_iscsi_queue_pdu(iscsi, pdu);
+}
+
 int main(int argc, const char *argv[])
 {
 	poptContext pc;
@@ -325,6 +342,8 @@ int main(int argc, const char *argv[])
 		{ "dataloss", 0, POPT_ARG_NONE, &data_loss, 0, "Allow destructuve tests", NULL },
 		POPT_TABLEEND
 	};
+
+	real_iscsi_queue_pdu = dlsym(RTLD_NEXT, "iscsi_queue_pdu");
 
 	pc = poptGetContext(argv[0], argc, argv, popt_options, POPT_CONTEXT_POSIXMEHARDER);
 	if ((res = poptGetNextOpt(pc)) < -1) {
