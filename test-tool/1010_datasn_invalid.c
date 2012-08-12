@@ -42,6 +42,10 @@ static void my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pd
 		/* change datasn to -1 */
 		*(uint32_t *)&pdu->outdata.data[36] = htonl(-1);
 		break;
+	case 4:
+		/* change datasn from (0,1) to (1,0) */
+		*(uint32_t *)&pdu->outdata.data[36] = htonl(1 - ntohl(*(uint32_t *)&pdu->outdata.data[36]));
+		break;
 	}
 }
 
@@ -78,6 +82,7 @@ int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, 
 		printf("1, Test that 2 DATA-IN with DATASN==0 is an error\n");
 		printf("2, Test that 2 DATA-IN with DATASN==27 is an error\n");
 		printf("3, Test that 2 DATA-IN with DATASN==-1 is an error\n");
+		printf("4, Test that 2 DATA-IN with DATASN in reverse order (1,0) is an error\n");
 		printf("\n");
 		return 0;
 	}
@@ -238,6 +243,46 @@ test4:
 	/* in case the previous test failed the session */
 	iscsi_set_noautoreconnect(iscsi, 0);
 
+	/* in case the previous test failed the session */
+	iscsi_set_noautoreconnect(iscsi, 0);
+	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+	iscsi->target_max_recv_data_segment_length = 512;
+
+	printf("Write 2 DATA-IN with DATASN in reverse order (1, 0) ... ");
+	/* we dont want autoreconnect since some targets will drop the
+	 * on this condition.
+	 */
+	iscsi_set_noautoreconnect(iscsi, 1);
+
+	task = iscsi_write10_task(iscsi, lun, 0, data, 2 * block_size, block_size,
+				0, 0, 0, 0, 0,
+				test_cb, &test_state);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send WRITE10 command: %s\n", iscsi_get_error(iscsi));
+		ret++;
+		goto test5;
+	}
+	clamp_datasn = 4;
+	test_state.task     = task;
+	test_state.finished = 0;
+	test_state.status   = 0;
+	wait_until_test_finished(iscsi, &test_state);
+	clamp_datasn = 0;	
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("WRITE10 command successful. Should have failed with error\n");
+		ret++;
+		scsi_free_scsi_task(task);
+		goto test5;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+
+test5:
+	/* in case the previous test failed the session */
+	iscsi_set_noautoreconnect(iscsi, 0);
 
 finished:
 	local_iscsi_queue_pdu = NULL;
