@@ -201,6 +201,9 @@ struct scsi_test tests[] = {
 /* invalid datasn from initiator */
 { "T1010_datasn_invalid",		T1010_datasn_invalid },
 
+/* invalid bufferoffset from initiator */
+{ "T1020_bufferoffset_invalid",		T1020_bufferoffset_invalid },
+
 { NULL, NULL }
 };
 
