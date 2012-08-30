@@ -32,7 +32,7 @@ SONAME=$(firstword $(subst ., ,$(VERSION)))
 SOREL=$(shell printf "%d%02d%02d" $(subst ., ,$(VERSION)))
 lib_libiscsi_la_LDFLAGS = \
 	-version-info $(SONAME):$(SOREL):0 -bindir $(bindir) -no-undefined \
-	-export-symbols lib/libiscsi.syms
+	-export-symbols $(srcdir)/lib/libiscsi.syms
 
 # libiscsi utilities
 
