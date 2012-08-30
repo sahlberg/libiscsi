@@ -25,6 +25,7 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
+	struct scsi_inquiry_standard *inq;
 	struct scsi_mode_sense *ms;
 	int ret, lun;
 	uint32_t block_size;
@@ -91,8 +92,23 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 		goto finished;
 	}
 
-
-
+	/* This test is only valid for SBC devices */
+	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
+	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	inq = scsi_datain_unmarshall(task);
+	if (inq == NULL) {
+		printf("failed to unmarshall inquiry datain blob\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (inq->periperal_device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+		printf("LUN is not SBC device. Skipping test\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
 
 	/* verify the device is readonly */
 	task = iscsi_modesense6_sync(iscsi, lun, 0, SCSI_MODESENSE_PC_CURRENT,
