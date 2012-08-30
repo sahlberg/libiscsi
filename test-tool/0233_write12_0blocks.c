@@ -75,7 +75,7 @@ int T0233_write12_0blocks(const char *initiator, const char *url, int data_loss,
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
-		ret = -1;
+		ret = -2;
 		goto finished;
 	}
 

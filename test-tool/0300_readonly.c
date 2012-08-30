@@ -89,6 +89,7 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
+		ret = -2;
 		goto finished;
 	}
 
@@ -137,6 +138,7 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 	}
 	if (!(ms->device_specific_parameter & 0x80)) {
 		printf("Device is not read-only. Skipping test\n");
+		ret = -2;
 		goto finished;
 	}
 	scsi_free_scsi_task(task);

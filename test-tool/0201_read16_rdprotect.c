@@ -69,6 +69,7 @@ int T0201_read16_rdprotect(const char *initiator, const char *url, int data_loss
 	if(rc16->prot_en != 0) {
 		printf("device is formatted with protection information, skipping test\n");
 		scsi_free_scsi_task(task);
+		ret = -2;
 		goto finished;
 	}
 	scsi_free_scsi_task(task);

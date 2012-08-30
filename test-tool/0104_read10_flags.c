@@ -66,7 +66,7 @@ int T0104_read10_flags(const char *initiator, const char *url, int data_loss _U_
 	if (inq->periperal_device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 		printf("LUN is not SBC device. Skipping test\n");
 		scsi_free_scsi_task(task);
-		return -1;
+		return -2;
 	}
 
 	/* Try out DPO : 1 */

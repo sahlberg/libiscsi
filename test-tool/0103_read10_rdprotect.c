@@ -72,13 +72,13 @@ int T0103_read10_rdprotect(const char *initiator, const char *url, int data_loss
 	if (inq->periperal_device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 		printf("LUN is not SBC device. Skipping test\n");
 		scsi_free_scsi_task(task);
-		return -1;
+		return -2;
 	}
 
 	if (inq->protect) {
 		printf("LUN is formatted with protection information. Skipping test\n");
 		scsi_free_scsi_task(task);
-		return -1;
+		return -2;
 	}
 
 	scsi_free_scsi_task(task);

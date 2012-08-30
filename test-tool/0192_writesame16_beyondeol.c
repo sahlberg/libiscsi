@@ -73,7 +73,7 @@ int T0192_writesame16_beyondeol(const char *initiator, const char *url, int data
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
-		ret = -1;
+		ret = -2;
 		goto finished;
 	}
 
