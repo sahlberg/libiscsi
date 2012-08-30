@@ -119,6 +119,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data
 	if (inq->periperal_device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 		printf("Not a SBC device. Skipping test\n");
 		scsi_free_scsi_task(task);
+		ret = -2;
 		goto finished;
 	}
 
@@ -126,7 +127,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
-		ret = -1;
+		ret = -2;
 		goto finished;
 	}
 	

@@ -104,7 +104,7 @@ int T0382_preventallow_itnexus_loss(const char *initiator, const char *url, int 
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
-		ret = -1;
+		ret = -2;
 		goto finished;
 	}
 	
@@ -114,6 +114,7 @@ int T0382_preventallow_itnexus_loss(const char *initiator, const char *url, int 
 
 	if (!removable) {
 		printf("Media is not removable. Skipping tests\n");
+		ret = -2;
 		goto finished;
 	}
 

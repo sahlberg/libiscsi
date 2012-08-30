@@ -69,6 +69,7 @@ int T0311_writeverify10_wrprotect(const char *initiator, const char *url, int da
 
 	if(rc16->prot_en != 0) {
 		printf("device is formatted with protection information, skipping test\n");
+		ret = -2;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
@@ -76,7 +77,7 @@ int T0311_writeverify10_wrprotect(const char *initiator, const char *url, int da
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
-		ret = -1;
+		ret = -2;
 		goto finished;
 	}
 
