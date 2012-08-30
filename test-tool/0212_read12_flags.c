@@ -25,6 +25,7 @@ int T0212_read12_flags(const char *initiator, const char *url, int data_loss _U_
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
+	struct scsi_inquiry_standard *inq;
 	int ret = 0, lun;
 	uint32_t block_size;
 
@@ -43,6 +44,24 @@ int T0212_read12_flags(const char *initiator, const char *url, int data_loss _U_
 	iscsi = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {
 		printf("Failed to login to target\n");
+		return -1;
+	}
+
+	/* This test is only valid for SBC devices */
+	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
+	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	inq = scsi_datain_unmarshall(task);
+	if (inq == NULL) {
+		printf("failed to unmarshall inquiry datain blob\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (inq->periperal_device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+		printf("LUN is not SBC device. Skipping test\n");
+		scsi_free_scsi_task(task);
 		return -1;
 	}
 
