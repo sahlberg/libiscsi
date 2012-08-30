@@ -140,7 +140,7 @@ test2:
 	
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
-		ret = -1;
+		ret = -2;
 		goto finished;
 	}
 

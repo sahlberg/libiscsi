@@ -68,7 +68,7 @@ int T0260_get_lba_status_simple(const char *initiator, const char *url, int data
 
 	if (rc16->lbpme == 0){
 		printf("Logical unit is fully provisioned. Skipping test\n");
-		ret = -1;
+		ret = -2;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}

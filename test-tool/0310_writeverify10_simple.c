@@ -73,7 +73,7 @@ int T0310_writeverify10_simple(const char *initiator, const char *url, int data_
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
-		ret = -1;
+		ret = -2;
 		goto finished;
 	}
 	

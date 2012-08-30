@@ -71,7 +71,7 @@ int T0183_writesame10_wrprotect(const char *initiator, const char *url, int data
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
-		ret = -1;
+		ret = -2;
 		goto finished;
 	}
 

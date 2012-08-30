@@ -67,7 +67,7 @@ int T0264_get_lba_status_beyondeol(const char *initiator, const char *url, int d
 
 	if (rc16->lbpme == 0){
 		printf("Logical unit is fully provisioned. Skipping test\n");
-		ret = -1;
+		ret = -2;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}

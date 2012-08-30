@@ -25,6 +25,7 @@ int T0232_write12_flags(const char *initiator, const char *url, int data_loss, i
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
+	struct scsi_inquiry_standard *inq;
 	int ret = 0, lun;
 	uint32_t block_size;
 	unsigned char data[256 * 512];
@@ -45,6 +46,24 @@ int T0232_write12_flags(const char *initiator, const char *url, int data_loss, i
 	if (iscsi == NULL) {
 		printf("Failed to login to target\n");
 		return -1;
+	}
+
+	/* This test is only valid for SBC devices */
+	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
+	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	inq = scsi_datain_unmarshall(task);
+	if (inq == NULL) {
+		printf("failed to unmarshall inquiry datain blob\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (inq->periperal_device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+		printf("LUN is not SBC device. Skipping test\n");
+		scsi_free_scsi_task(task);
+		return -2;
 	}
 
 	/* find the size of the LUN */
@@ -91,7 +110,7 @@ int T0232_write12_flags(const char *initiator, const char *url, int data_loss, i
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
-		ret = -1;
+		ret = -2;
 		goto finished;
 	}
 
