@@ -331,7 +331,7 @@ int main(int argc, const char *argv[])
 	int extra_argc = 0;
 	const char *url = NULL;
 	int show_help = 0, show_usage = 0, list_tests = 0;
-	int res, ret;
+	int res, num_failed, num_skipped;
 	struct scsi_test *test;
 	char *testname = NULL;
 
@@ -390,7 +390,7 @@ int main(int argc, const char *argv[])
 		exit(10);
 	}
 
-	ret = 0;
+	num_failed = num_skipped = 0;
 	for (test = &tests[0]; test->name; test++) {
 		if (testname != NULL && fnmatch(testname, test->name, 0)) {
 			continue;
@@ -399,13 +399,16 @@ int main(int argc, const char *argv[])
 		res = test->test(initiator, url, data_loss, show_info);
 		if (res == 0) {
 			printf("TEST %s [OK]\n", test->name);
+		} else if (res == -2) {
+			printf("TEST %s [SKIPPED]\n", test->name);
+			num_skipped++;
 		} else {
 			printf("TEST %s [FAILED]\n", test->name);
-			ret++;
+			num_failed++;
 		}
 		printf("\n");
 	}
 
-	return ret;
+	return num_failed ? num_failed : num_skipped ? 77 : 0;
 }
 

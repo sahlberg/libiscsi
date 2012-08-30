@@ -67,7 +67,7 @@ int T0170_unmap_simple(const char *initiator, const char *url, int data_loss, in
 
 	if (rc16->lbpme == 0){
 		printf("Logical unit is fully provisioned. Skipping test\n");
-		ret = -1;
+		ret = -2;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
@@ -79,7 +79,7 @@ int T0170_unmap_simple(const char *initiator, const char *url, int data_loss, in
 
 	if (!data_loss) {
 		printf("data_loss flag is not set. Skipping test\n");
-		ret = -1;
+		ret = -2;
 		goto finished;
 	}
 	

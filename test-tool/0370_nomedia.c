@@ -131,6 +131,7 @@ int T0370_nomedia(const char *initiator, const char *url, int data_loss, int sho
 
 	if (!removable) {
 		printf("Media is not removable. Skipping test.\n");
+		ret = -2;
 		goto finished;
 	}
 
@@ -538,6 +539,7 @@ test16:
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping all WRITE tests\n");
+		ret = -2;
 		goto cleanup;
 	}
 
