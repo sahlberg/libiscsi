@@ -29,7 +29,6 @@ int T0281_verify12_mismatch(const char *initiator, const char *url, int data_los
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
 	uint32_t block_size;
-	uint64_t num_blocks;
 
 	printf("0281_verify12_mismatch:\n");
 	printf("=======================\n");
@@ -67,7 +66,6 @@ int T0281_verify12_mismatch(const char *initiator, const char *url, int data_los
 		goto finished;
 	}
 	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
 	scsi_free_scsi_task(task);
 
 
@@ -120,6 +118,7 @@ int T0281_verify12_mismatch(const char *initiator, const char *url, int data_los
 			printf("Opcode is not implemented on target\n");
 			scsi_free_scsi_task(task);
 			scsi_free_scsi_task(vtask);
+			ret = -2;
 			goto finished;
 		}
 		if (vtask->status == SCSI_STATUS_GOOD) {

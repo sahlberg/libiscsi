@@ -115,6 +115,7 @@ int T0130_verify10_simple(const char *initiator, const char *url, int data_loss 
 			printf("Opcode is not implemented on target\n");
 			scsi_free_scsi_task(task);
 			scsi_free_scsi_task(vtask);
+			ret = -2;
 			goto finished;
 		}
 		if (vtask->status != SCSI_STATUS_GOOD) {

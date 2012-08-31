@@ -126,6 +126,7 @@ int T0341_compareandwrite_mismatch(const char *initiator, const char *url, int d
 			printf("[SKIPPED]\n");
 			printf("Opcode is not implemented on target\n");
 			scsi_free_scsi_task(task);
+			ret = -2;
 			goto finished;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {

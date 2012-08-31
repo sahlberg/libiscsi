@@ -85,6 +85,15 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url, int data_lo
 			ret = -1;
 			goto finished;
 		}
+		if (task->status        == SCSI_STATUS_CHECK_CONDITION
+		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+			printf("[SKIPPED]\n");
+			printf("Opcode is not implemented on target\n");
+			scsi_free_scsi_task(task);
+			ret = -2;
+			goto finished;
+		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("Verify16 command should fail when reading beyond end of device\n");
@@ -144,14 +153,6 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url, int data_lo
 			printf("Failed to send verify16 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			goto test2;
-		}
-		if (task->status        == SCSI_STATUS_CHECK_CONDITION
-		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-			printf("[SKIPPED]\n");
-			printf("Opcode is not implemented on target\n");
-			scsi_free_scsi_task(task);
-			goto finished;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");

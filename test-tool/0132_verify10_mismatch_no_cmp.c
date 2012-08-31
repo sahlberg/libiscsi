@@ -121,6 +121,7 @@ int T0132_verify10_mismatch_no_cmp(const char *initiator, const char *url, int d
 			printf("Opcode is not implemented on target\n");
 			scsi_free_scsi_task(task);
 			scsi_free_scsi_task(vtask);
+			ret = -2;
 			goto finished;
 		}
 		if (vtask->status != SCSI_STATUS_GOOD) {

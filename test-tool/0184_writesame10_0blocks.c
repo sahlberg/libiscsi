@@ -97,6 +97,7 @@ int T0184_writesame10_0blocks(const char *initiator, const char *url, int data_l
 		printf("[SKIPPED]\n");
 		printf("Opcode is not implemented on target\n");
 		scsi_free_scsi_task(task);
+		ret = -2;
 		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
