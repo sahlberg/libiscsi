@@ -102,6 +102,14 @@ int T0181_writesame10_unmap_unaligned(const char *initiator, const char *url, in
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
+			goto test2;
+		}
+		if (task->status        == SCSI_STATUS_CHECK_CONDITION
+		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+			printf("[SKIPPED]\n");
+			printf("Opcode is not implemented on target\n");
+			scsi_free_scsi_task(task);
 			goto finished;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
@@ -109,11 +117,13 @@ int T0181_writesame10_unmap_unaligned(const char *initiator, const char *url, in
 			printf("WRITESAME10 command to unmap a fractional physical block should fail\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto finished;
+			goto test2;
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
+
+test2:
 
 finished:
 	iscsi_logout_sync(iscsi);

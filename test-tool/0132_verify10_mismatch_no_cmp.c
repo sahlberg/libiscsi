@@ -125,7 +125,7 @@ int T0132_verify10_mismatch_no_cmp(const char *initiator, const char *url, int d
 		}
 		if (vtask->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("Verify10 returned sense but BYTCHK==1 means it should not check/compare the data.\n");
+			printf("Verify10 returned sense but BYTCHK==1 means it should not check/compare the data. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			scsi_free_scsi_task(vtask);

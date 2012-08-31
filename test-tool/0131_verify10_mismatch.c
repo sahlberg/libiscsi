@@ -131,7 +131,7 @@ int T0131_verify10_mismatch(const char *initiator, const char *url, int data_los
 
 		if (vtask->sense.key != SCSI_SENSE_MISCOMPARE) {
 		        printf("[FAILED]\n");
-			printf("Verify10 command returned wrong sense key. MISCOMPARE 0x%x expected but got key 0x%x\n", SCSI_SENSE_MISCOMPARE, vtask->sense.key);
+			printf("Verify10 command returned wrong sense key. MISCOMPARE 0x%x expected but got key 0x%x. Sense:%s\n", SCSI_SENSE_MISCOMPARE, vtask->sense.key, iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			scsi_free_scsi_task(vtask);

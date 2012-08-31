@@ -91,6 +91,14 @@ int T0194_writesame16_0blocks(const char *initiator, const char *url, int data_l
 		ret = -1;
 		goto test2;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[SKIPPED]\n");
+		printf("Opcode is not implemented on target\n");
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITESAME16 command: failed with sense. %s\n", iscsi_get_error(iscsi));

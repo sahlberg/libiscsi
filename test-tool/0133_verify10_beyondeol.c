@@ -102,7 +102,7 @@ int T0133_verify10_beyondeol(const char *initiator, const char *url, int data_lo
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
-			printf("VERIFY10 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("VERIFY10 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test2;
