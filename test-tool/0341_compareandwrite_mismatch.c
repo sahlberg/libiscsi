@@ -120,6 +120,14 @@ int T0341_compareandwrite_mismatch(const char *initiator, const char *url, int d
 			ret++;
 			goto test2;
 		}
+		if (task->status        == SCSI_STATUS_CHECK_CONDITION
+		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+			printf("[SKIPPED]\n");
+			printf("Opcode is not implemented on target\n");
+			scsi_free_scsi_task(task);
+			goto finished;
+		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("COMPAREANDWRITE successful. It should have failed with MISCOMPARE/MISCOMPARE_DURING_VERIFY\n");
