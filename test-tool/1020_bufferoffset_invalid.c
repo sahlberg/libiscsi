@@ -24,10 +24,10 @@
 
 static int change_bufferoffset;
 
-static void my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+static int my_iscsi_queue_pdu(struct iscsi_context *iscsi _U_, struct iscsi_pdu *pdu)
 {
 	if (pdu->outdata.data[0] != ISCSI_PDU_DATA_OUT) {
-		return;
+		return 0;
 	}
 	switch (change_bufferoffset) {
 	case 1:
@@ -39,6 +39,7 @@ static void my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pd
 		*(uint32_t *)&pdu->outdata.data[40] = htonl(ntohl(*(uint32_t *)&pdu->outdata.data[40]) - 512);
 		break;
 	}
+	return 0;
 }
 
 static void test_cb(struct iscsi_context *iscsi _U_, int status,
@@ -61,9 +62,8 @@ int T1020_bufferoffset_invalid(const char *initiator, const char *url, int data_
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
-	int ret, i, lun;
+	int ret, lun;
 	uint32_t block_size;
-	uint32_t num_blocks;
 	unsigned char data[512 * 256];
 	struct iscsi_async_state test_state;
 
@@ -73,7 +73,6 @@ int T1020_bufferoffset_invalid(const char *initiator, const char *url, int data_
 		printf("Test sending commands with invalid bufferoffset values.\n");
 		printf("We negotiate both DataPDUInOrder and DataSequenceInOrder so BufferOffset must be in sequence both within and across multiple sequences\n");
 		printf("1, Test that BufferOffset==1M too high is an error\n");
-		printf("2, Test that BufferOffset==-512 is an error\n");
 		printf("\n");
 		return 0;
 	}
@@ -105,7 +104,6 @@ int T1020_bufferoffset_invalid(const char *initiator, const char *url, int data_
 		goto finished;
 	}
 	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
 	scsi_free_scsi_task(task);
 
 
@@ -153,54 +151,8 @@ int T1020_bufferoffset_invalid(const char *initiator, const char *url, int data_
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-
 test2:
-	/* in case the previous test failed the session */
-	iscsi_set_noautoreconnect(iscsi, 0);
-	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsi->target_max_recv_data_segment_length = 512;
-
-	printf("Write 2 DATA-IN with BUFFEROFFSET==-512 ... ");
-	/* we dont want autoreconnect since some targets will drop the
-	 * on this condition.
-	 */
-	iscsi_set_noautoreconnect(iscsi, 1);
-
-	task = iscsi_write10_task(iscsi, lun, 0, data, 2 * block_size, block_size,
-				0, 0, 0, 0, 0,
-				test_cb, &test_state);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send WRITE10 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test3;
-	}
-	change_bufferoffset = 2;
-	test_state.task     = task;
-	test_state.finished = 0;
-	test_state.status   = 0;
-	wait_until_test_finished(iscsi, &test_state);
-	change_bufferoffset = 0;
-	if (task->status == SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("WRITE10 command successful. Should have failed with error\n");
-		ret++;
-		scsi_free_scsi_task(task);
-		goto test3;
-	}
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
-
-
-test3:
-	/* in case the previous test failed the session */
-	iscsi_set_noautoreconnect(iscsi, 0);
-	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsi->target_max_recv_data_segment_length = 512;
 
 finished:
-	local_iscsi_queue_pdu = NULL;
-	iscsi_logout_sync(iscsi);
-	iscsi_destroy_context(iscsi);
 	return ret;
 }

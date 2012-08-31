@@ -26,7 +26,7 @@ int T0120_read6_simple(const char *initiator, const char *url, int data_loss _U_
 	struct scsi_task *task;
 	struct scsi_readcapacity10 *rc10;
 	int ret, i, lun;
-	uint32_t block_size, num_blocks;
+	uint32_t block_size;
 
 	printf("0120_read6_simple:\n");
 	printf("===================\n");
@@ -64,7 +64,6 @@ int T0120_read6_simple(const char *initiator, const char *url, int data_loss _U_
 		goto finished;
 	}
 	block_size = rc10->block_size;
-	num_blocks = rc10->lba;
 	scsi_free_scsi_task(task);
 
 

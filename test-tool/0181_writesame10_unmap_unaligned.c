@@ -26,7 +26,6 @@ int T0181_writesame10_unmap_unaligned(const char *initiator, const char *url, in
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
-	uint32_t block_size, num_blocks;
 	int lbppb;
 
 	printf("0181_writesame10_unmap_unaligned:\n");
@@ -72,8 +71,6 @@ int T0181_writesame10_unmap_unaligned(const char *initiator, const char *url, in
 		goto finished;
 	}
 
-	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
 	lbppb = 1 << rc16->lbppbe;
 
 	scsi_free_scsi_task(task);

@@ -26,7 +26,6 @@ int T0260_get_lba_status_simple(const char *initiator, const char *url, int data
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
-	uint32_t block_size;
 	uint64_t num_blocks;
 
 	printf("0260_get_lba_status_simple:\n");
@@ -73,7 +72,6 @@ int T0260_get_lba_status_simple(const char *initiator, const char *url, int data
 		goto finished;
 	}
 
-	block_size = rc16->block_length;
 	num_blocks = rc16->returned_lba;
 
 	scsi_free_scsi_task(task);

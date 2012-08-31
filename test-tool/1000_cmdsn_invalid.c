@@ -38,6 +38,7 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 	}
 
 	change_cmdsn = 0;	
+	return 0;
 }
 
 static void test_cb(struct iscsi_context *iscsi _U_, int status,
@@ -60,9 +61,8 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
-	int ret, i, lun;
+	int ret, lun;
 	uint32_t block_size;
-	uint32_t num_blocks;
 	unsigned char data[512 * 256];
 	struct iscsi_async_state test_state;
 
@@ -104,7 +104,6 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 		goto finished;
 	}
 	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
 	scsi_free_scsi_task(task);
 
 

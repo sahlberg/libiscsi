@@ -30,7 +30,6 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data
 	int ret = 0, lun, sccs, encserv, lbpme;
 	unsigned char data[2048]; 
 	uint32_t block_size;
-	uint64_t num_blocks;
 	int full_size;
 
 	printf("0390_mandatory_opcodes_sbc:\n");
@@ -88,7 +87,6 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data
 		goto finished;
 	}
 	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
 	lbpme      = rc16->lbpme;
 	scsi_free_scsi_task(task);
 

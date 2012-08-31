@@ -29,7 +29,6 @@ int T0370_nomedia(const char *initiator, const char *url, int data_loss, int sho
 	struct scsi_inquiry_standard *inq;
 	int ret, lun, removable;
 	uint32_t block_size;
-	uint64_t num_blocks;
 	int full_size;
 	unsigned char buf[2048];
 
@@ -97,7 +96,6 @@ int T0370_nomedia(const char *initiator, const char *url, int data_loss, int sho
 		goto finished;
 	}
 	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
 	scsi_free_scsi_task(task);
 
 	/* See how big this inquiry data is */

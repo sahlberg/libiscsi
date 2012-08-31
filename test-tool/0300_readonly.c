@@ -29,7 +29,6 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 	struct scsi_mode_sense *ms;
 	int ret, lun;
 	uint32_t block_size;
-	uint32_t num_blocks;
 	unsigned char data[258 * 512];
 	int full_size;
 	int lbpme;
@@ -82,7 +81,6 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 		goto finished;
 	}
 	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
 	lbpme = rc16->lbpme;
 
 	scsi_free_scsi_task(task);

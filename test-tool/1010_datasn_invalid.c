@@ -24,10 +24,10 @@
 
 static int clamp_datasn;
 
-static void my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+static int my_iscsi_queue_pdu(struct iscsi_context *iscsi _U_, struct iscsi_pdu *pdu)
 {
 	if (pdu->outdata.data[0] != ISCSI_PDU_DATA_OUT) {
-		return;
+		return 0;
 	}
 	switch (clamp_datasn) {
 	case 1:
@@ -47,6 +47,7 @@ static void my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pd
 		*(uint32_t *)&pdu->outdata.data[36] = htonl(1 - ntohl(*(uint32_t *)&pdu->outdata.data[36]));
 		break;
 	}
+	return 0;
 }
 
 static void test_cb(struct iscsi_context *iscsi _U_, int status,
@@ -69,9 +70,8 @@ int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
-	int ret, i, lun;
+	int ret, lun;
 	uint32_t block_size;
-	uint32_t num_blocks;
 	unsigned char data[512 * 256];
 	struct iscsi_async_state test_state;
 
@@ -114,7 +114,6 @@ int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, 
 		goto finished;
 	}
 	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
 	scsi_free_scsi_task(task);
 
 

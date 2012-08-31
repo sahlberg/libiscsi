@@ -27,7 +27,6 @@ int T0193_writesame16_wrprotect(const char *initiator, const char *url, int data
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
 	uint32_t block_size;
-	uint64_t num_blocks;
 	unsigned char buf[512];
 
 	printf("0193_writesame16_wrptotect:\n");
@@ -66,7 +65,6 @@ int T0193_writesame16_wrprotect(const char *initiator, const char *url, int data
 		goto finished;
 	}
 	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
 	scsi_free_scsi_task(task);
 
 	if (!data_loss) {

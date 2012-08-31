@@ -26,7 +26,7 @@ int T0171_unmap_zero(const char *initiator, const char *url, int data_loss, int 
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
-	uint32_t block_size, num_blocks;
+	uint32_t num_blocks;
 
 	printf("0171_unmap_zero:\n");
 	printf("================\n");
@@ -74,7 +74,6 @@ int T0171_unmap_zero(const char *initiator, const char *url, int data_loss, int 
 		goto finished;
 	}
 
-	block_size = rc16->block_length;
 	num_blocks = rc16->returned_lba;
 
 	scsi_free_scsi_task(task);

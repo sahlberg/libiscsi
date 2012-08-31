@@ -28,7 +28,7 @@ int T0190_writesame16_unmap(const char *initiator, const char *url, int data_los
 	int full_size;
 	struct scsi_inquiry_logical_block_provisioning *inq_lbp;
 	int ret, i, lun;
-	uint32_t block_size, num_blocks;
+	uint32_t num_blocks;
 	int lbppb;
 	int lbpme;
 	int lbpws = 0;
@@ -74,20 +74,11 @@ int T0190_writesame16_unmap(const char *initiator, const char *url, int data_los
 		goto finished;
 	}
 
-	if (rc16->lbpme == 0){
-		printf("Logical unit is fully provisioned. All commands should fail with check condition.\n");
-		scsi_free_scsi_task(task);
-		goto test2;
-	}
-
-	block_size = rc16->block_length;
 	num_blocks = rc16->returned_lba;
 	lbppb = 1 << rc16->lbppbe;
 	lbpme = rc16->lbpme;
 
 	scsi_free_scsi_task(task);
-
-
 
 	if (lbpme == 0) {
 		printf("LBPME not set. Skip test for CPD page 0xB2 (logical block provisioning)\n");

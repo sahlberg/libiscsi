@@ -27,7 +27,7 @@ struct iscsi_async_state {
 void wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_state *test_state);
 
 struct iscsi_pdu;
-void (*local_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+int (*local_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 int T0100_read10_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0101_read10_beyond_eol(const char *initiator, const char *url, int data_loss, int show_info);

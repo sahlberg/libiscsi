@@ -26,7 +26,6 @@ int T0240_prefetch10_simple(const char *initiator, const char *url, int data_los
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
-	uint32_t block_size;
 	uint64_t num_blocks;
 
 	printf("0240_prefetch10_simple:\n");
@@ -65,7 +64,6 @@ int T0240_prefetch10_simple(const char *initiator, const char *url, int data_los
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	block_size = rc16->block_length;
 	num_blocks = rc16->returned_lba;
 	scsi_free_scsi_task(task);
 
