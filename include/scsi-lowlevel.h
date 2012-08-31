@@ -276,7 +276,12 @@ struct scsi_task {
 	struct scsi_data_buffer *in_buffers;
 };
 
+/* This function will free a scsi task structure.
+   You may NOT cancel a task until the callback has been invoked
+   and the command has completed on the iscsi layer.
+*/
 EXTERN void scsi_free_scsi_task(struct scsi_task *task);
+
 EXTERN void scsi_set_task_private_ptr(struct scsi_task *task, void *ptr);
 EXTERN void *scsi_get_task_private_ptr(struct scsi_task *task);
 
