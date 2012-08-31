@@ -28,6 +28,7 @@
 #include <poll.h>
 #include <popt.h>
 #include <fnmatch.h>
+#include "slist.h"
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-private.h"
@@ -282,7 +283,6 @@ struct iscsi_context *iscsi_context_login(const char *initiatorname, const char 
 	return iscsi;
 }
 
-
 void wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_state *state)
 {
 	struct pollfd pfd;
@@ -300,9 +300,18 @@ void wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_st
 		}
 		if (ret == 0) {
 			if (count++ > 5) {
+				struct iscsi_pdu *pdu;
+
 				state->finished     = 1;
 				state->status       = SCSI_STATUS_CANCELLED;
 				state->task->status = SCSI_STATUS_CANCELLED;
+				/* this may leak memory since we dont free the pdu */
+				while ((pdu = iscsi->outqueue)) {
+					SLIST_REMOVE(&iscsi->outqueue, pdu);
+				}
+				while ((pdu = iscsi->waitpdu)) {
+					SLIST_REMOVE(&iscsi->waitpdu, pdu);
+				}
 				return;
 			}
 			continue;
