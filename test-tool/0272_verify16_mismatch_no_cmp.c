@@ -29,7 +29,6 @@ int T0272_verify16_mismatch_no_cmp(const char *initiator, const char *url, int d
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
 	uint32_t block_size;
-	uint64_t num_blocks;
 
 	printf("0272_verify16_mismatch_no_cmp:\n");
 	printf("==============================\n");
@@ -67,7 +66,6 @@ int T0272_verify16_mismatch_no_cmp(const char *initiator, const char *url, int d
 		goto finished;
 	}
 	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
 	scsi_free_scsi_task(task);
 
 
@@ -84,14 +82,14 @@ int T0272_verify16_mismatch_no_cmp(const char *initiator, const char *url, int d
 		        printf("[FAILED]\n");
 			printf("Failed to send read16 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto finished;
+			goto test2;
 		}
 		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("Read16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto finished;
+			goto test2;
 		}
 
 		buf = task->datain.data;
@@ -100,7 +98,7 @@ int T0272_verify16_mismatch_no_cmp(const char *initiator, const char *url, int d
 			printf("Failed to access DATA-IN buffer %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto finished;
+			goto test2;
 		}
 		/* flip a random byte in the data */
 		buf[random() % task->datain.size] ^= 'X';
@@ -114,6 +112,15 @@ int T0272_verify16_mismatch_no_cmp(const char *initiator, const char *url, int d
 			printf("Failed to send verify16 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
+			goto test2;
+		}
+		if (vtask->status        == SCSI_STATUS_CHECK_CONDITION
+		    && vtask->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && vtask->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+			printf("[SKIPPED]\n");
+			printf("Opcode is not implemented on target\n");
+			scsi_free_scsi_task(task);
+			scsi_free_scsi_task(vtask);
 			goto finished;
 		}
 		if (vtask->status != SCSI_STATUS_GOOD) {
@@ -122,13 +129,15 @@ int T0272_verify16_mismatch_no_cmp(const char *initiator, const char *url, int d
 			ret = -1;
 			scsi_free_scsi_task(task);
 			scsi_free_scsi_task(vtask);
-			goto finished;
+			goto test2;
 		}
 
 		scsi_free_scsi_task(task);
 		scsi_free_scsi_task(vtask);
 	}
 	printf("[OK]\n");
+
+test2:
 
 finished:
 	iscsi_logout_sync(iscsi);
