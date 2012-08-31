@@ -28,7 +28,6 @@ int T0280_verify12_simple(const char *initiator, const char *url, int data_loss 
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
 	uint32_t block_size;
-	uint64_t num_blocks;
 
 	printf("0280_verify12_simple:\n");
 	printf("=====================\n");
@@ -66,7 +65,6 @@ int T0280_verify12_simple(const char *initiator, const char *url, int data_loss 
 		goto finished;
 	}
 	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
 	scsi_free_scsi_task(task);
 
 
@@ -90,7 +88,7 @@ int T0280_verify12_simple(const char *initiator, const char *url, int data_loss 
 			printf("Read12 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto finished;
+			goto test2;
 		}
 
 		buf = task->datain.data;
@@ -99,7 +97,7 @@ int T0280_verify12_simple(const char *initiator, const char *url, int data_loss 
 			printf("Failed to access DATA-IN buffer %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto finished;
+			goto test2;
 		}
 
 		vtask = iscsi_verify12_sync(iscsi, lun, buf, i * block_size, 0, 0, 1, 1, block_size);
@@ -108,6 +106,15 @@ int T0280_verify12_simple(const char *initiator, const char *url, int data_loss 
 			printf("Failed to send verify12 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
+			goto test2;
+		}
+		if (vtask->status        == SCSI_STATUS_CHECK_CONDITION
+		    && vtask->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && vtask->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+			printf("[SKIPPED]\n");
+			printf("Opcode is not implemented on target\n");
+			scsi_free_scsi_task(task);
+			scsi_free_scsi_task(vtask);
 			goto finished;
 		}
 		if (vtask->status != SCSI_STATUS_GOOD) {
@@ -116,13 +123,15 @@ int T0280_verify12_simple(const char *initiator, const char *url, int data_loss 
 			ret = -1;
 			scsi_free_scsi_task(task);
 			scsi_free_scsi_task(vtask);
-			goto finished;
+			goto test2;
 		}
 
 		scsi_free_scsi_task(task);
 		scsi_free_scsi_task(vtask);
 	}
 	printf("[OK]\n");
+
+test2:
 
 finished:
 	iscsi_logout_sync(iscsi);
