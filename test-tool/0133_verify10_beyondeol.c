@@ -81,12 +81,20 @@ int T0133_verify10_beyondeol(const char *initiator, const char *url, int data_lo
 		        printf("[FAILED]\n");
 			printf("Failed to send verify10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto finished;
+			goto test2;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("Verify10 command should fail when reading beyond end of device\n");
 			ret = -1;
+			scsi_free_scsi_task(task);
+			goto test2;
+		}
+		if (task->status        == SCSI_STATUS_CHECK_CONDITION
+		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+			printf("[SKIPPED]\n");
+			printf("Opcode is not implemented on target\n");
 			scsi_free_scsi_task(task);
 			goto finished;
 		}
@@ -97,11 +105,13 @@ int T0133_verify10_beyondeol(const char *initiator, const char *url, int data_lo
 			printf("VERIFY10 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto finished;
+			goto test2;
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
+
+test2:
 
 finished:
 	iscsi_logout_sync(iscsi);
