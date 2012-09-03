@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.5.0
+Version: 1.6.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -91,6 +91,18 @@ The libiscsi-devel package includes the header files for libiscsi.
 %{_libdir}/libiscsi.so
 
 %changelog
+* Mon Sep 3 2012 : 1.6.0
+ - Lots of test updates.
+ - Fix for iscsi-ls for removable media/medium not present
+ - Allow login to LUNs with no medium loaded
+ - Update SG3-UTILS patch
+ - Support > 255 LUNs
+ - Fix DATASN handling
+ - Add proper MAXCMDSN handling
+ - Various fixes to be able to interoperate with LIO
+ - Fix SEGV bug in the CONNECT code.
+ - Add libiscsi.syms to only export public symbols from the library
+ - Change all default iqn names so they are valid iqn names.
 * Mon Jul 9 2012 : 1.5.0
  - Make sure we can handle racy eventsystems which might call us for 
    POLLIN eventhough there is no longer any data to read from the socket.
