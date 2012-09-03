@@ -62,7 +62,7 @@ int T0104_read10_flags(const char *initiator, const char *url, int data_loss _U_
 		scsi_free_scsi_task(task);
 		return -1;
 	}
-	if (inq->periperal_device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 		printf("LUN is not SBC device. Skipping test\n");
 		scsi_free_scsi_task(task);
 		return -2;

@@ -469,8 +469,8 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 			return NULL;
 		}
 
-		inq->periperal_qualifier    = (task->datain.data[0]>>5)&0x07;
-		inq->periperal_device_type  = task->datain.data[0]&0x1f;
+		inq->qualifier              = (task->datain.data[0]>>5)&0x07;
+		inq->device_type            = task->datain.data[0]&0x1f;
 		inq->rmb                    = !!(task->datain.data[1]&0x80);
 		inq->version                = task->datain.data[2];
 		inq->normaca                = !!(task->datain.data[3]&0x20);
@@ -513,8 +513,8 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 		if (inq == NULL) {
 			return NULL;
 		}
-		inq->periperal_qualifier   = (task->datain.data[0]>>5)&0x07;
-		inq->periperal_device_type = task->datain.data[0]&0x1f;
+		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+		inq->device_type           = task->datain.data[0]&0x1f;
 		inq->pagecode              = task->datain.data[1];
 
 		inq->num_pages = task->datain.data[3];
@@ -533,8 +533,8 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 		if (inq == NULL) {
 			return NULL;
 		}
-		inq->periperal_qualifier   = (task->datain.data[0]>>5)&0x07;
-		inq->periperal_device_type = task->datain.data[0]&0x1f;
+		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+		inq->device_type           = task->datain.data[0]&0x1f;
 		inq->pagecode              = task->datain.data[1];
 
 		inq->usn = scsi_malloc(task, task->datain.data[3]+1);
@@ -555,8 +555,8 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 		if (inq == NULL) {
 			return NULL;
 		}
-		inq->periperal_qualifier   = (task->datain.data[0]>>5)&0x07;
-		inq->periperal_device_type = task->datain.data[0]&0x1f;
+		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+		inq->device_type           = task->datain.data[0]&0x1f;
 		inq->pagecode              = task->datain.data[1];
 
 		dptr = &task->datain.data[4];
@@ -603,8 +603,8 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 		if (inq == NULL) {
 			return NULL;
 		}
-		inq->periperal_qualifier   = (task->datain.data[0]>>5)&0x07;
-		inq->periperal_device_type = task->datain.data[0]&0x1f;
+		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+		inq->device_type           = task->datain.data[0]&0x1f;
 		inq->pagecode              = task->datain.data[1];
 
 		inq->wsnz                  = task->datain.data[4] & 0x01;
@@ -631,8 +631,8 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 		if (inq == NULL) {
 			return NULL;
 		}
-		inq->periperal_qualifier   = (task->datain.data[0]>>5)&0x07;
-		inq->periperal_device_type = task->datain.data[0]&0x1f;
+		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+		inq->device_type           = task->datain.data[0]&0x1f;
 		inq->pagecode              = task->datain.data[1];
 
 		inq->medium_rotation_rate  = ntohs(*(uint16_t *)&task->datain.data[4]);
@@ -646,8 +646,8 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 		if (inq == NULL) {
 			return NULL;
 		}
-		inq->periperal_qualifier   = (task->datain.data[0]>>5)&0x07;
-		inq->periperal_device_type = task->datain.data[0]&0x1f;
+		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+		inq->device_type           = task->datain.data[0]&0x1f;
 		inq->pagecode              = task->datain.data[1];
 
 		inq->threshold_exponent = task->datain.data[4];

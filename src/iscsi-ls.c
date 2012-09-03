@@ -103,7 +103,7 @@ tur_try_again:
 		fprintf(stderr, "failed to unmarshall inquiry datain blob\n");
 		exit(10);
 	}
-	type = inq->periperal_device_type;
+	type = inq->device_type;
 	scsi_free_scsi_task(task);
 
 

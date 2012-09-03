@@ -66,9 +66,9 @@ void inquiry_device_identification(struct scsi_inquiry_device_identification *in
 	int i;
 
 	printf("Peripheral Qualifier:%s\n",
-		scsi_devqualifier_to_str(inq->periperal_qualifier));
+		scsi_devqualifier_to_str(inq->qualifier));
 	printf("Peripheral Device Type:%s\n",
-		scsi_devtype_to_str(inq->periperal_device_type));
+		scsi_devtype_to_str(inq->device_type));
 	printf("Page Code:(0x%02x) %s\n",
 		inq->pagecode, scsi_inquiry_pagecode_to_str(inq->pagecode));
 
@@ -102,9 +102,9 @@ void inquiry_supported_pages(struct scsi_inquiry_supported_pages *inq)
 void inquiry_standard(struct scsi_inquiry_standard *inq)
 {
 	printf("Peripheral Qualifier:%s\n",
-		scsi_devqualifier_to_str(inq->periperal_qualifier));
+		scsi_devqualifier_to_str(inq->qualifier));
 	printf("Peripheral Device Type:%s\n",
-		scsi_devtype_to_str(inq->periperal_device_type));
+		scsi_devtype_to_str(inq->device_type));
 	printf("Removable:%d\n", inq->rmb);
 	printf("Version:%d %s\n", inq->version, scsi_version_to_str(inq->version));
 	printf("NormACA:%d\n", inq->normaca);

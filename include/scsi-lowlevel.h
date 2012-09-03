@@ -367,9 +367,13 @@ enum scsi_inquiry_tpgs {
 	SCSI_INQUIRY_TPGS_IMPLICIT_AND_EXPLICIT = 0x03
 };
 
+/* fix typos, leave old names for backward compatibility */
+#define periperal_qualifier qualifier
+#define periperal_device_type device_type
+
 struct scsi_inquiry_standard {
-	enum scsi_inquiry_peripheral_qualifier periperal_qualifier;
-	enum scsi_inquiry_peripheral_device_type periperal_device_type;
+	enum scsi_inquiry_peripheral_qualifier qualifier;
+	enum scsi_inquiry_peripheral_device_type device_type;
 	int rmb;
 	int version;
 	int normaca;
@@ -410,8 +414,8 @@ enum scsi_inquiry_pagecode {
 EXTERN const char *scsi_inquiry_pagecode_to_str(int pagecode);
 
 struct scsi_inquiry_supported_pages {
-	enum scsi_inquiry_peripheral_qualifier periperal_qualifier;
-	enum scsi_inquiry_peripheral_device_type periperal_device_type;
+	enum scsi_inquiry_peripheral_qualifier qualifier;
+	enum scsi_inquiry_peripheral_device_type device_type;
 	enum scsi_inquiry_pagecode pagecode;
 
 	int num_pages;
@@ -419,8 +423,8 @@ struct scsi_inquiry_supported_pages {
 };
 
 struct scsi_inquiry_block_limits {
-	enum scsi_inquiry_peripheral_qualifier periperal_qualifier;
-	enum scsi_inquiry_peripheral_device_type periperal_device_type;
+	enum scsi_inquiry_peripheral_qualifier qualifier;
+	enum scsi_inquiry_peripheral_device_type device_type;
 	enum scsi_inquiry_pagecode pagecode;
 
 	int wsnz;		   		/* write same no zero */
@@ -438,8 +442,8 @@ struct scsi_inquiry_block_limits {
 };
 
 struct scsi_inquiry_block_device_characteristics {
-	enum scsi_inquiry_peripheral_qualifier periperal_qualifier;
-	enum scsi_inquiry_peripheral_device_type periperal_device_type;
+	enum scsi_inquiry_peripheral_qualifier qualifier;
+	enum scsi_inquiry_peripheral_device_type device_type;
 	enum scsi_inquiry_pagecode pagecode;
 
 	int medium_rotation_rate;
@@ -452,8 +456,8 @@ enum scsi_inquiry_provisioning_type {
 };
 
 struct scsi_inquiry_logical_block_provisioning {
-	enum scsi_inquiry_peripheral_qualifier periperal_qualifier;
-	enum scsi_inquiry_peripheral_device_type periperal_device_type;
+	enum scsi_inquiry_peripheral_qualifier qualifier;
+	enum scsi_inquiry_peripheral_device_type device_type;
 	enum scsi_inquiry_pagecode pagecode;
 
        int threshold_exponent;
@@ -469,8 +473,8 @@ struct scsi_inquiry_logical_block_provisioning {
 EXTERN struct scsi_task *scsi_cdb_inquiry(int evpd, int page_code, int alloc_len);
 
 struct scsi_inquiry_unit_serial_number {
-	enum scsi_inquiry_peripheral_qualifier periperal_qualifier;
-	enum scsi_inquiry_peripheral_device_type periperal_device_type;
+	enum scsi_inquiry_peripheral_qualifier qualifier;
+	enum scsi_inquiry_peripheral_device_type device_type;
 	enum scsi_inquiry_pagecode pagecode;
 
 	char *usn;
@@ -533,8 +537,8 @@ struct scsi_inquiry_device_designator {
 };
 
 struct scsi_inquiry_device_identification {
-	enum scsi_inquiry_peripheral_qualifier periperal_qualifier;
-	enum scsi_inquiry_peripheral_device_type periperal_device_type;
+	enum scsi_inquiry_peripheral_qualifier qualifier;
+	enum scsi_inquiry_peripheral_device_type device_type;
 	enum scsi_inquiry_pagecode pagecode;
 
 	struct scsi_inquiry_device_designator *designators;

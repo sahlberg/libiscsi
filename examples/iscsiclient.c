@@ -294,7 +294,7 @@ void inquiry_cb(struct iscsi_context *iscsi, int status, void *command_data, voi
 		exit(10);
 	}
 
-	printf("Device Type is %d. VendorId:%s ProductId:%s\n", inq->periperal_device_type, inq->vendor_identification, inq->product_identification);
+	printf("Device Type is %d. VendorId:%s ProductId:%s\n", inq->device_type, inq->vendor_identification, inq->product_identification);
 	printf("Send MODESENSE6\n");
 	if (iscsi_modesense6_task(iscsi, clnt->lun, 0, SCSI_MODESENSE_PC_CURRENT, SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES, 0, 4, modesense6_cb, private_data) == NULL) {
 		printf("failed to send modesense6 command\n");
