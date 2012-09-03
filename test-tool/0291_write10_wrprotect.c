@@ -27,7 +27,7 @@ int T0291_write10_wrprotect(const char *initiator, const char *url, int data_los
 	struct scsi_readcapacity16 *rc16;
 	int ret = 0, i, lun;
 	uint32_t block_size;
-	unsigned char data[256 * 512];
+	unsigned char data[4096];
 
 	printf("0291_write10_wrprotect:\n");
 	printf("======================\n");

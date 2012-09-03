@@ -27,7 +27,7 @@ int T0321_writeverify12_wrprotect(const char *initiator, const char *url, int da
 	struct scsi_readcapacity16 *rc16;
 	int ret = 0, i, lun;
 	uint32_t block_size;
-	unsigned char data[256 * 512];
+	unsigned char data[4096];
 
 	printf("0321_writeverify12_wrprotect:\n");
 	printf("======================\n");

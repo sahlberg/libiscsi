@@ -30,7 +30,7 @@ int T0370_nomedia(const char *initiator, const char *url, int data_loss, int sho
 	int ret, lun, removable;
 	uint32_t block_size;
 	int full_size;
-	unsigned char buf[2048];
+	unsigned char buf[4096];
 
 	printf("0370_nomedia:\n");
 	printf("============\n");

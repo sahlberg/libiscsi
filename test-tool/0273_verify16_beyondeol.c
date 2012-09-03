@@ -28,7 +28,7 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url, int data_lo
 	int ret, i, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
-	unsigned char buf[512*256];
+	unsigned char buf[4096 * 256];
 
 	printf("0273_verify16_beyond_eol:\n");
 	printf("========================\n");

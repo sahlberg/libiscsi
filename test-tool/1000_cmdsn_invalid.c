@@ -63,7 +63,7 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
 	uint32_t block_size;
-	unsigned char data[512 * 256];
+	unsigned char data[4096 * 2];
 	struct iscsi_async_state test_state;
 
 	printf("1000_cmdsn_invalid:\n");
@@ -117,7 +117,7 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 	ret = 0;
 
 	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsi->target_max_recv_data_segment_length = 512;
+	iscsi->target_max_recv_data_segment_length = block_size;
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
 
 	printf("Write 2 blocks with CMDSN > MAXCMDSN ... ");
@@ -155,7 +155,7 @@ test2:
 	/* in case the previous test failed the session */
 	iscsi_set_noautoreconnect(iscsi, 0);
 	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsi->target_max_recv_data_segment_length = 512;
+	iscsi->target_max_recv_data_segment_length = block_size;
 
 	printf("Write 2 blocks with CMDSN == 0 ... ");fflush(stdout);
 	change_cmdsn = 2;

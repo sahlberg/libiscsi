@@ -28,7 +28,7 @@ int T0194_writesame16_0blocks(const char *initiator, const char *url, int data_l
 	int ret, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
-	unsigned char buf[512];
+	unsigned char buf[4096];
 
 	printf("0194_writesame16_0blocks:\n");
 	printf("=======================\n");

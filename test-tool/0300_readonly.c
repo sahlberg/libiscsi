@@ -29,7 +29,7 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 	struct scsi_mode_sense *ms;
 	int ret, lun;
 	uint32_t block_size;
-	unsigned char data[258 * 512];
+	unsigned char data[4096];
 	int full_size;
 	int lbpme;
 	struct unmap_list list[1];

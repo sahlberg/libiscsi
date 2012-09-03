@@ -72,7 +72,7 @@ int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, 
 	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
 	uint32_t block_size;
-	unsigned char data[512 * 256];
+	unsigned char data[4096 * 2];
 	struct iscsi_async_state test_state;
 
 	printf("1010_datasn_invalid:\n");
@@ -127,7 +127,7 @@ int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, 
 	ret = 0;
 
 	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsi->target_max_recv_data_segment_length = 512;
+	iscsi->target_max_recv_data_segment_length = block_size;
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
 
 	printf("Write 2 DATA-IN with DATASN == 0 ... ");
@@ -166,7 +166,7 @@ test2:
 	/* in case the previous test failed the session */
 	iscsi_set_noautoreconnect(iscsi, 0);
 	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsi->target_max_recv_data_segment_length = 512;
+	iscsi->target_max_recv_data_segment_length = block_size;
 
 	printf("Write 2 DATA-IN with DATASN == 27 ... ");
 	/* we dont want autoreconnect since some targets will drop the
@@ -204,7 +204,7 @@ test3:
 	/* in case the previous test failed the session */
 	iscsi_set_noautoreconnect(iscsi, 0);
 	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsi->target_max_recv_data_segment_length = 512;
+	iscsi->target_max_recv_data_segment_length = block_size;
 
 	printf("Write 2 DATA-IN with DATASN == -1 ... ");
 	/* we dont want autoreconnect since some targets will drop the
@@ -245,7 +245,7 @@ test4:
 	/* in case the previous test failed the session */
 	iscsi_set_noautoreconnect(iscsi, 0);
 	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsi->target_max_recv_data_segment_length = 512;
+	iscsi->target_max_recv_data_segment_length = block_size;
 
 	printf("Write 2 DATA-IN with DATASN in reverse order (1, 0) ... ");
 	/* we dont want autoreconnect since some targets will drop the

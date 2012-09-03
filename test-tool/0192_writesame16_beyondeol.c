@@ -28,7 +28,7 @@ int T0192_writesame16_beyondeol(const char *initiator, const char *url, int data
 	int ret, i, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
-	unsigned char buf[512];
+	unsigned char buf[4096];
 
 	printf("0192_writesame16_beyondeol:\n");
 	printf("=======================\n");

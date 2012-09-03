@@ -28,7 +28,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data
 	struct scsi_readcapacity16 *rc16;
 	struct scsi_inquiry_standard *inq;
 	int ret = 0, lun, sccs, encserv, lbpme;
-	unsigned char data[2048]; 
+	unsigned char data[4096]; 
 	uint32_t block_size;
 	int full_size;
 

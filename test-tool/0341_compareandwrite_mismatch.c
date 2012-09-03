@@ -29,7 +29,7 @@ int T0341_compareandwrite_mismatch(const char *initiator, const char *url, int d
 	int ret, i, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
-	unsigned char data[512 * 256];
+	unsigned char data[4096 * 256];
 
 	printf("0341_compareandwrite_mismatch:\n");
 	printf("===================\n");

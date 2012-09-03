@@ -28,7 +28,7 @@ int T0220_write16_simple(const char *initiator, const char *url, int data_loss, 
 	int ret, i, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
-	unsigned char data[512 * 256];
+	unsigned char data[4096 * 256];
 
 	printf("0220_write16_simple:\n");
 	printf("===================\n");

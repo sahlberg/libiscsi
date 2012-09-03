@@ -27,7 +27,7 @@ int T0183_writesame10_wrprotect(const char *initiator, const char *url, int data
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
 	uint32_t block_size;
-	unsigned char buf[512];
+	unsigned char buf[4096];
 
 	printf("0183_writesame10_wrptotect:\n");
 	printf("=======================\n");

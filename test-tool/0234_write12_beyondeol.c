@@ -28,7 +28,7 @@ int T0234_write12_beyondeol(const char *initiator, const char *url, int data_los
 	int ret, i, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
-	unsigned char data[258 * 512];
+	unsigned char data[4096 * 258];
 
 	printf("0234_write12_beyond_eol:\n");
 	printf("=======================\n");

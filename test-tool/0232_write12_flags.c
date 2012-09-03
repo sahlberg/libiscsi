@@ -28,7 +28,7 @@ int T0232_write12_flags(const char *initiator, const char *url, int data_loss, i
 	struct scsi_inquiry_standard *inq;
 	int ret = 0, lun;
 	uint32_t block_size;
-	unsigned char data[256 * 512];
+	unsigned char data[4096];
 
 	printf("0232_write12_flags:\n");
 	printf("===================\n");

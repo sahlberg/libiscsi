@@ -28,7 +28,7 @@ int T0314_writeverify10_beyondeol(const char *initiator, const char *url, int da
 	int ret, i, lun;
 	uint32_t block_size;
 	uint32_t num_blocks;
-	unsigned char data[258 * 512];
+	unsigned char data[4096 * 258];
 
 	printf("0314_writeverify10_beyond_eol:\n");
 	printf("=======================\n");

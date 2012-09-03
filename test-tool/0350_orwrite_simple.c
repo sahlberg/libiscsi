@@ -29,9 +29,9 @@ int T0350_orwrite_simple(const char *initiator, const char *url, int data_loss, 
 	int ret, i, j, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
-	unsigned char r1data[512 * 256];
-	unsigned char r2data[512 * 256];
-	unsigned char ordata[512 * 256];
+	unsigned char r1data[4096 * 256];
+	unsigned char r2data[4096 * 256];
+	unsigned char ordata[4096 * 256];
 
 	printf("0350_orwrite_simple:\n");
 	printf("===================\n");
