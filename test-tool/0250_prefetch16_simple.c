@@ -34,6 +34,7 @@ int T0250_prefetch16_simple(const char *initiator, const char *url, int data_los
 		printf("Test basic PREFETCH16 functionality.\n");
 		printf("1, Verify we can prefetch the first 1-256 blocks of the LUN.\n");
 		printf("2, Verify we can prefetch the last 1-256 blocks of the LUN.\n");
+		printf("3, Verify we can prefetch the last 256 blocks of the LUN by setting LEN==0.\n");
 		printf("\n");
 		return 0;
 	}
@@ -103,7 +104,7 @@ int T0250_prefetch16_simple(const char *initiator, const char *url, int data_los
 test2:
 	/* Prefetch the last 0 - 255 blocks at the end of the LUN */
 	printf("Prefetching last 0-255 blocks ... ");
-	for (i = 0; i < 256; i++) {
+	for (i = 1; i < 256; i++) {
 	  task = iscsi_prefetch16_sync(iscsi, lun, num_blocks - i, i, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
@@ -123,6 +124,26 @@ test2:
 	printf("[OK]\n");
 
 test3:
+
+	printf("Prefetching last 0-255 blocks ... ");
+	task = iscsi_prefetch16_sync(iscsi, lun, num_blocks - 256, 0, 0, 0);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send prefetch16 command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		goto test4;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("Prefetch16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test4;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+test4:
 
 finished:
 	iscsi_logout_sync(iscsi);
