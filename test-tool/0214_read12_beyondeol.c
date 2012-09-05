@@ -106,14 +106,14 @@ int T0214_read12_beyondeol(const char *initiator, const char *url, int data_loss
 
 
  test2:
-	/* read 1 - 256 blocks at LBA -1 */
-	printf("Reading 1-256 blocks at LBA -1 ... ");
+	/* read 1 - 256 blocks at LBA 2^31 */
+	printf("Reading 1-256 blocks at LBA 2^31 ... ");
 	if (num_blocks >= 0xffffffff) {
 		printf("LUN is too big, skipping test\n");
 		goto test3;
 	}
 	for (i = 2; i <= 257; i++) {
-		task = iscsi_read12_sync(iscsi, lun, -1, i * block_size, block_size, 0, 0, 0, 0, 0);
+		task = iscsi_read12_sync(iscsi, lun, 0x80000000U, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send READ12 command: %s\n", iscsi_get_error(iscsi));
@@ -122,7 +122,7 @@ int T0214_read12_beyondeol(const char *initiator, const char *url, int data_loss
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("READ12 command should fail when reading from LBA -1\n");
+			printf("READ12 command should fail when reading from LBA 2^31\n");
 			ret++;
 			scsi_free_scsi_task(task);
 			goto test3;
