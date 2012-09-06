@@ -77,7 +77,7 @@ int T0191_writesame16_unmap_unaligned(const char *initiator, const char *url, in
 
 	if (lbppb < 2) {
 		printf("LBPPB==%d  Can not unmap fractional physical block\n", lbppb);
-		ret = -1;
+		ret = -2;
 		goto finished;
 	}
 
