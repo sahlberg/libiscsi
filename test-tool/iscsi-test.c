@@ -119,9 +119,11 @@ struct scsi_test tests[] = {
 
 /* prefetch10*/
 { "T0240_prefetch10_simple",		T0240_prefetch10_simple },
+{ "T0241_prefetch10_flags",		T0241_prefetch10_flags },
 
 /* prefetch16*/
 { "T0250_prefetch16_simple",		T0250_prefetch16_simple },
+{ "T0251_prefetch16_flags",		T0251_prefetch16_flags },
 
 /* get_lba_status */
 { "T0260_get_lba_status_simple",	T0260_get_lba_status_simple },
