@@ -90,9 +90,11 @@ int T0234_write12_beyondeol(const char *initiator, const char *url, int data_los
 
 int T0240_prefetch10_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0241_prefetch10_flags(const char *initiator, const char *url, int data_loss, int show_info);
+int T0242_prefetch10_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0250_prefetch16_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0251_prefetch16_flags(const char *initiator, const char *url, int data_loss, int show_info);
+int T0252_prefetch16_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0260_get_lba_status_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0264_get_lba_status_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
