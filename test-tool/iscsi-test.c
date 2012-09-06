@@ -121,11 +121,13 @@ struct scsi_test tests[] = {
 { "T0240_prefetch10_simple",		T0240_prefetch10_simple },
 { "T0241_prefetch10_flags",		T0241_prefetch10_flags },
 { "T0242_prefetch10_beyondeol",		T0242_prefetch10_beyondeol },
+{ "T0243_prefetch10_0blocks",		T0243_prefetch10_0blocks },
 
 /* prefetch16*/
 { "T0250_prefetch16_simple",		T0250_prefetch16_simple },
 { "T0251_prefetch16_flags",		T0251_prefetch16_flags },
 { "T0252_prefetch16_beyondeol",		T0252_prefetch16_beyondeol },
+{ "T0253_prefetch16_0blocks",		T0253_prefetch16_0blocks },
 
 /* get_lba_status */
 { "T0260_get_lba_status_simple",	T0260_get_lba_status_simple },

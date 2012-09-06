@@ -89,9 +89,11 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0240_prefetch10_simple.c \
 	test-tool/0241_prefetch10_flags.c \
 	test-tool/0242_prefetch10_beyondeol.c \
+	test-tool/0243_prefetch10_0blocks.c \
 	test-tool/0250_prefetch16_simple.c \
 	test-tool/0251_prefetch16_flags.c \
 	test-tool/0252_prefetch16_beyondeol.c \
+	test-tool/0253_prefetch16_0blocks.c \
 	test-tool/0260_get_lba_status_simple.c test-tool/0264_get_lba_status_beyondeol.c \
 	test-tool/0270_verify16_simple.c test-tool/0271_verify16_mismatch.c \
 	test-tool/0272_verify16_mismatch_no_cmp.c test-tool/0273_verify16_beyondeol.c \
