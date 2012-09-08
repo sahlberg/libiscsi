@@ -112,12 +112,12 @@ int T0171_unmap_zero(const char *initiator, const char *url, int data_loss, int 
 	printf("[OK]\n");
 
 
-	/* unmap no blocks at the last 0 - 255 blocks at the end of the LUN */
+	/* unmap no blocks at the last 1 - 256 blocks at the end of the LUN */
 	printf("Unmapping last 1-256 blocks ... ");
 	for (i=0; i<=255; i++) {
 		struct unmap_list list[1];
 
-		list[0].lba = num_blocks + 1 - i;
+		list[0].lba = num_blocks - i;
 		list[0].num = 0;
 		task = iscsi_unmap_sync(iscsi, lun, 0, 0, &list[0], 1);
 		if (task == NULL) {
@@ -137,9 +137,9 @@ int T0171_unmap_zero(const char *initiator, const char *url, int data_loss, int 
 	}
 	printf("[OK]\n");
 
-	/* unmap no blocks 1-256 blocks beyond the end of the LUN */
-	printf("Unmapping no blocks but 1-256 blocks beyong end of LUN... ");
-	for (i=1; i<=256; i++) {
+	/* unmap no blocks 0-255 blocks beyond the end of the LUN */
+	printf("Unmapping no blocks but 0-255 blocks beyong end of LUN... ");
+	for (i=0; i<=255; i++) {
 		struct unmap_list list[1];
 
 		list[0].lba = num_blocks + 1 + i;
