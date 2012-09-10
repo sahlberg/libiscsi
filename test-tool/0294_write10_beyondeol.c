@@ -34,6 +34,7 @@ int T0294_write10_beyondeol(const char *initiator, const char *url, int data_los
 	printf("=======================\n");
 	if (show_info) {
 		printf("Test that WRITE10 fails if writing beyond end-of-lun.\n");
+		printf("This test is skipped for LUNs with more than 2^31 blocks\n");
 		printf("1, Writing 1-256 blocks beyond end-of-lun should fail.\n");
 		printf("\n");
 		return 0;
@@ -60,7 +61,7 @@ int T0294_write10_beyondeol(const char *initiator, const char *url, int data_los
 	}
 	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
+		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
@@ -78,19 +79,26 @@ int T0294_write10_beyondeol(const char *initiator, const char *url, int data_los
 
 	ret = 0;
 
-	/* read 1 - 256 blocks beyond the end of the device */
+	if (num_blocks >= 0x80000000) {
+		printf("[SKIPPED]\n");
+		printf("LUN is too big for read-beyond-eol tests with WRITE10. Skipping test.\n");
+		ret = -2;
+		goto finished;
+	}
+
+	/* write 1 - 256 blocks beyond the end of the device */
 	printf("Writing 1-256 blocks beyond end-of-device ... ");
 	for (i = 2; i <= 257; i++) {
 		task = iscsi_write10_sync(iscsi, lun, num_blocks, data, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send write10 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send WRITE10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			goto finished;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("Write10 command should fail when writing beyond end of device\n");
+			printf("WRITE10 command should fail when writing beyond end of device\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;

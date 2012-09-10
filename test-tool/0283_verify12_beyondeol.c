@@ -34,6 +34,7 @@ int T0283_verify12_beyondeol(const char *initiator, const char *url, int data_lo
 	printf("========================\n");
 	if (show_info) {
 		printf("Test that VERIFY12 fails if reading beyond end-of-lun.\n");
+		printf("This test is skipped for LUNs with more than 2^31 blocks\n");
 		printf("1, Verify 2-256 blocks one block beyond end-of-lun.\n");
 		printf("\n");
 		return 0;
@@ -73,6 +74,13 @@ int T0283_verify12_beyondeol(const char *initiator, const char *url, int data_lo
 
 	ret = 0;
 
+	if (num_blocks >= 0x80000000) {
+		printf("[SKIPPED]\n");
+		printf("LUN is too big for read-beyond-eol tests with VERIFY12. Skipping test.\n");
+		ret = -2;
+		goto finished;
+	}
+
 	/* verify 2 - 256 blocks beyond the end of the device */
 	printf("Verifying 2-256 blocks beyond end-of-device ... ");
 	for (i = 2; i <= 256; i++) {
@@ -94,7 +102,7 @@ int T0283_verify12_beyondeol(const char *initiator, const char *url, int data_lo
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("Verify12 command should fail when reading beyond end of device\n");
+			printf("VERIFY12 command should fail when reading beyond end of device\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test2;
@@ -103,7 +111,7 @@ int T0283_verify12_beyondeol(const char *initiator, const char *url, int data_lo
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
-			printf("VERIFY12 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("VERIFY12 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test2;

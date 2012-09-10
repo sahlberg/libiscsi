@@ -34,9 +34,10 @@ int T0314_writeverify10_beyondeol(const char *initiator, const char *url, int da
 	printf("=======================\n");
 	if (show_info) {
 		printf("Test that WRITEVERIFY10 fails if writing beyond end-of-lun.\n");
+		printf("This test is skipped for LUNs with more than 2^31 blocks\n");
 		printf("1, Writing 1-256 blocks with one block beyond end-of-lun should fail.\n");
-		printf("2, Writing 1-256 blocks at LBA 2^31 should fail. (Only on LUN < 1TB)\n");
-		printf("3, Writing 1-256 blocks at LBA -1 should fail. (Only on LUN < 2TB)\n");
+		printf("2, Writing 1-256 blocks at LBA 2^31 should fail.\n");
+		printf("3, Writing 1-256 blocks at LBA -1 should fail.\n");
 		printf("4, Writing 1-256 blocks all but one block beyond eol\n");
 		printf("\n");
 		return 0;
@@ -63,7 +64,7 @@ int T0314_writeverify10_beyondeol(const char *initiator, const char *url, int da
 	}
 	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
+		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
@@ -81,7 +82,14 @@ int T0314_writeverify10_beyondeol(const char *initiator, const char *url, int da
 
 	ret = 0;
 
-	/* read 1 - 256 blocks beyond the end of the device */
+	if (num_blocks >= 0x80000000) {
+		printf("[SKIPPED]\n");
+		printf("LUN is too big for read-beyond-eol tests with WRITEVERIFY10. Skipping test.\n");
+		ret = -2;
+		goto finished;
+	}
+
+	/* write+verify 1 - 256 blocks beyond the end of the device */
 	printf("Writing 1-256 blocks with one block beyond end-of-device ... ");
 	for (i = 1; i <= 256; i++) {
 		task = iscsi_writeverify10_sync(iscsi, lun, num_blocks + 2 - i, data, i * block_size, block_size, 0, 0, 0, 0);
@@ -91,10 +99,28 @@ int T0314_writeverify10_beyondeol(const char *initiator, const char *url, int da
 			ret++;
 			goto test2;
 		}
+		if (task->status        == SCSI_STATUS_CHECK_CONDITION
+		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+			printf("[SKIPPED]\n");
+			printf("Opcode is not implemented on target\n");
+			scsi_free_scsi_task(task);
+			ret = -2;
+			goto finished;
+		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("WRITEVERIFY10 command should fail when writing beyond end of device\n");
+			printf("WRITEVERIFY10 beyond end-of-lun did not return sense. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 			ret++;
+			scsi_free_scsi_task(task);
+			goto test2;
+		}
+		if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		        printf("[FAILED]\n");
+			printf("WRITEVERIFY10 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test2;
 		}
@@ -120,8 +146,17 @@ test2:
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("WRITEVERIFY10 command should fail when writing beyond end of device\n");
+			printf("WRITEVERIFY10 beyond end-of-lun did not return sense. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 			ret++;
+			scsi_free_scsi_task(task);
+			goto test3;
+		}
+		if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		        printf("[FAILED]\n");
+			printf("WRITEVERIFY10 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test3;
 		}
@@ -147,8 +182,17 @@ test3:
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("WRITEVERIFY10 command should fail when writing beyond end of device\n");
+			printf("WRITEVERIFY10 beyond end-of-lun did not return sense. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 			ret++;
+			scsi_free_scsi_task(task);
+			goto test4;
+		}
+		if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		        printf("[FAILED]\n");
+			printf("WRITEVERIFY10 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test4;
 		}
@@ -169,7 +213,7 @@ test4:
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
-			printf("WRITEVERIFY10 beyond end-of-lun did not return sense.\n");
+			printf("WRITEVERIFY10 beyond end-of-lun did not return sense. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test5;
@@ -178,7 +222,7 @@ test4:
 		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 		    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 		        printf("[FAILED]\n");
-			printf("WRITEVERIFY10 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("WRITEVERIFY10 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test5;

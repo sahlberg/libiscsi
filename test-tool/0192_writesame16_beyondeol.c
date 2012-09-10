@@ -62,7 +62,7 @@ int T0192_writesame16_beyondeol(const char *initiator, const char *url, int data
 	}
 	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
+		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
@@ -111,7 +111,7 @@ int T0192_writesame16_beyondeol(const char *initiator, const char *url, int data
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
-			printf("WRITESAME16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("WRITESAME16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test2;
@@ -144,7 +144,7 @@ test2:
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
-			printf("WRITESAME16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("WRITESAME16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test3;
@@ -177,7 +177,7 @@ test3:
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
-			printf("WRITESAME16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("WRITESAME16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test4;

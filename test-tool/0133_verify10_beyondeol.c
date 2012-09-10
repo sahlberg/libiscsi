@@ -34,6 +34,7 @@ int T0133_verify10_beyondeol(const char *initiator, const char *url, int data_lo
 	printf("========================\n");
 	if (show_info) {
 		printf("Test that VERIFY10 fails if reading beyond end-of-lun.\n");
+		printf("This test is skipped for LUNs with more than 2^31 blocks\n");
 		printf("1, Verify 2-256 blocks one block beyond end-of-lun.\n");
 		printf("\n");
 		return 0;
@@ -73,19 +74,26 @@ int T0133_verify10_beyondeol(const char *initiator, const char *url, int data_lo
 
 	ret = 0;
 
+	if (num_blocks >= 0x80000000) {
+		printf("[SKIPPED]\n");
+		printf("LUN is too big for read-beyond-eol tests with VERIFY10. Skipping test.\n");
+		ret = -2;
+		goto finished;
+	}
+
 	/* verify 2 - 256 blocks beyond the end of the device */
 	printf("Verifying 2-256 blocks beyond end-of-device ... ");
 	for (i = 2; i <= 256; i++) {
 		task = iscsi_verify10_sync(iscsi, lun, buf, i * block_size, num_blocks, 0, 1, 1, block_size);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send verify10 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send VERIFY10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			goto test2;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("Verify10 command should fail when reading beyond end of device\n");
+			printf("VERIFY10 command should fail when reading beyond end of device\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test2;

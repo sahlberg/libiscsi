@@ -34,9 +34,10 @@ int T0182_writesame10_beyondeol(const char *initiator, const char *url, int data
 	printf("=======================\n");
 	if (show_info) {
 		printf("Test that WRITESAME10 fails if writing beyond end-of-lun.\n");
+		printf("This test is skipped for LUNs with more than 2^31 blocks\n");
 		printf("1, Write 1-256 blocks one block beyond end-of-lun.\n");
-		printf("2, Write 1-256 blocks at LBA 2^31 (only on LUNs < 2TB)\n");
-		printf("3, Write 1-256 blocks at LBA -1 (only on LUN < 2TB)\n");
+		printf("2, Write 1-256 blocks at LBA 2^31\n");
+		printf("3, Write 1-256 blocks at LBA -1\n");
 		printf("\n");
 		return 0;
 	}
@@ -80,6 +81,12 @@ int T0182_writesame10_beyondeol(const char *initiator, const char *url, int data
 
 	ret = 0;
 
+	if (num_blocks >= 0x80000000) {
+		printf("[SKIPPED]\n");
+		printf("LUN is too big for read-beyond-eol tests with WRITESAME10. Skipping test.\n");
+		ret = -2;
+		goto finished;
+	}
 
 	/* write 1 - 256 blocks beyond the end of the device */
 	printf("Writing 1-256 blocks beyond end-of-device ... ");
@@ -112,7 +119,7 @@ int T0182_writesame10_beyondeol(const char *initiator, const char *url, int data
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
-			printf("WRITESAME10 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("WRITESAME10 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test2;
@@ -125,10 +132,6 @@ int T0182_writesame10_beyondeol(const char *initiator, const char *url, int data
 test2:
 	/* writing 1 - 256 blocks at LBA 2^31 */
 	printf("Writing 1-256 blocks at LBA 2^31 ... ");
-	if (num_blocks > 0x80000000) {
-		printf("LUN is too big, skipping test\n");
-		goto test3;
-	}
 	for (i = 1; i <= 256; i++) {
 		task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
 			0x80000000, i, 0, 0, 0, 0, 0, 0);
@@ -149,7 +152,7 @@ test2:
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
-			printf("WRITESAME10 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("WRITESAME10 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test3;
@@ -162,10 +165,6 @@ test2:
 test3:
 	/* write 1 - 256 blocks at LBA -1 */
 	printf("Writing 1-256 blocks at LBA -1 ... ");
-	if (num_blocks > 0x80000000) {
-		printf("LUN is too big, skipping test\n");
-		goto test4;
-	}
 	for (i = 1; i <= 256; i++) {
 		task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
 			-1, i, 0, 0, 0, 0, 0, 0);
@@ -186,7 +185,7 @@ test3:
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
-			printf("WRITESAME10 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("WRITESAME10 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test4;

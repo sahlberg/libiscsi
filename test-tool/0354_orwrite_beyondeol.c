@@ -63,7 +63,7 @@ int T0354_orwrite_beyondeol(const char *initiator, const char *url, int data_los
 	}
 	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
+		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
@@ -91,10 +91,28 @@ int T0354_orwrite_beyondeol(const char *initiator, const char *url, int data_los
 			ret++;
 			goto test2;
 		}
+		if (task->status        == SCSI_STATUS_CHECK_CONDITION
+		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+			printf("[SKIPPED]\n");
+			printf("Opcode is not implemented on target\n");
+			scsi_free_scsi_task(task);
+			ret = -2;
+			goto finished;
+		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("ORWRITE command should fail when writing beyond end of device\n");
+			printf("ORWRITE beyond end-of-lun did not return sense. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 			ret++;
+			scsi_free_scsi_task(task);
+			goto test2;
+		}
+		if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		        printf("[FAILED]\n");
+			printf("ORWRITE failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test2;
 		}
@@ -116,8 +134,17 @@ test2:
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("ORWRITE command should fail when writing beyond end of device\n");
+			printf("ORWRITE beyond end-of-lun did not return sense. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 			ret++;
+			scsi_free_scsi_task(task);
+			goto test3;
+		}
+		if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		        printf("[FAILED]\n");
+			printf("ORWRITE failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test3;
 		}
@@ -139,8 +166,17 @@ test3:
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("ORWRITE command should fail when writing beyond end of device\n");
+			printf("ORWRITE beyond end-of-lun did not return sense. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 			ret++;
+			scsi_free_scsi_task(task);
+			goto test4;
+		}
+		if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		        printf("[FAILED]\n");
+			printf("ORWRITE failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test4;
 		}
@@ -161,7 +197,7 @@ test4:
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
-			printf("ORWRITE beyond end-of-lun did not return sense.\n");
+			printf("ORWRITE beyond end-of-lun did not return sense. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test5;
@@ -170,7 +206,7 @@ test4:
 		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 		    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 		        printf("[FAILED]\n");
-			printf("ORWRITE failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("ORWRITE failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test5;

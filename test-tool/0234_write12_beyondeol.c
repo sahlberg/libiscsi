@@ -34,6 +34,7 @@ int T0234_write12_beyondeol(const char *initiator, const char *url, int data_los
 	printf("=======================\n");
 	if (show_info) {
 		printf("Test that WRITE12 fails if writing beyond end-of-lun.\n");
+		printf("This test is skipped for LUNs with more than 2^31 blocks\n");
 		printf("1, Writing 1-256 blocks beyond end-of-lun should fail.\n");
 		printf("\n");
 		return 0;
@@ -60,7 +61,7 @@ int T0234_write12_beyondeol(const char *initiator, const char *url, int data_los
 	}
 	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
+		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
@@ -77,6 +78,13 @@ int T0234_write12_beyondeol(const char *initiator, const char *url, int data_los
 
 
 	ret = 0;
+
+	if (num_blocks >= 0x80000000) {
+		printf("[SKIPPED]\n");
+		printf("LUN is too big for read-beyond-eol tests with WRITE12. Skipping test.\n");
+		ret = -2;
+		goto finished;
+	}
 
 	/* read 1 - 256 blocks beyond the end of the device */
 	printf("Writing 1-256 blocks beyond end-of-device ... ");

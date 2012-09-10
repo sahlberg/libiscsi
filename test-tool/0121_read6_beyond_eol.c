@@ -32,6 +32,7 @@ int T0121_read6_beyond_eol(const char *initiator, const char *url, int data_loss
 	printf("======================\n");
 	if (show_info) {
 		printf("Test that READ6 fails if reading beyond end-of-lun.\n");
+		printf("This test is skipped for LUNs with more than 2^20 blocks\n");
 		printf("1, Read 1-256 blocks one block beyond end-of-lun.\n");
 		printf("2, Read 2-256 blocks all but one beyond end-of-lun.\n");
 		printf("3, Read 0(==256) blocks 128 blocks beyond end-of-lun.\n");
@@ -48,19 +49,19 @@ int T0121_read6_beyond_eol(const char *initiator, const char *url, int data_loss
 	/* find the size of the LUN */
 	task = iscsi_readcapacity10_sync(iscsi, lun, 0, 0);
 	if (task == NULL) {
-		printf("Failed to send readcapacity10 command: %s\n", iscsi_get_error(iscsi));
+		printf("Failed to send READCAPACITY10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
-		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		printf("READCAPACITY10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	rc10 = scsi_datain_unmarshall(task);
 	if (rc10 == NULL) {
-		printf("failed to unmarshall readcapacity10 data. %s\n", iscsi_get_error(iscsi));
+		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
@@ -73,7 +74,8 @@ int T0121_read6_beyond_eol(const char *initiator, const char *url, int data_loss
 
 	if (num_blocks > 0x1fffff) {
 		printf("[SKIPPED]\n");
-		printf("Lun is too big for read-beyond-eol tests with read6\n");
+		printf("LUN is too big for read-beyond-eol tests with READ6. Skipping test.\n");
+		ret = -2;
 		goto finished;
 	}
 
@@ -84,100 +86,100 @@ int T0121_read6_beyond_eol(const char *initiator, const char *url, int data_loss
 		task = iscsi_read6_sync(iscsi, lun, num_blocks + 2 - i, i * block_size, block_size);
 		if (task == NULL) {
 			printf("[FAILED]\n");
-			printf("Failed to send read6 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send READ6 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test_2;
+			goto test2;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
-			printf("Read6 beyond end-of-lun did not fail with sense.\n");
+			printf("READ6 beyond end-of-lun did not fail with sense.\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test_2;
+			goto test2;
 		}
 		if (task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST) {
 			printf("[FAILED]\n");
-			printf("Read6 beyond end-of-lun did not return sense key ILLEGAL_REQUEST.\n");
+			printf("READ6 beyond end-of-lun did not return sense key ILLEGAL_REQUEST. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test_2;
+			goto test2;
 		}
 		if (task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
-			printf("Read6 beyond end-of-lun did not return sense ascq LBA OUT OF RANGE.\n");
+			printf("READ6 beyond end-of-lun did not return sense ascq LBA OUT OF RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test_2;
+			goto test2;
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 
 
-test_2:
+test2:
 	/* read 2-256 blocks, all but one block beyond the eol */
 	printf("Reading 1-255 blocks beyond eol starting at last block ... ");
 	for (i=2; i<=256; i++) {
 		task = iscsi_read6_sync(iscsi, lun, num_blocks, i * block_size, block_size);
 		if (task == NULL) {
 			printf("[FAILED]\n");
-			printf("Failed to send read6 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send READ6 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test_3;
+			goto test3;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
-			printf("Read6 beyond end-of-lun did not return sense.\n");
+			printf("READ6 beyond end-of-lun did not return sense.\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test_3;
+			goto test3;
 		}
 		if (task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST) {
 			printf("[FAILED]\n");
-			printf("Read6 beyond end-of-lun did not return sense key ILLEGAL_REQUEST.\n");
+			printf("READ6 beyond end-of-lun did not return sense key ILLEGAL_REQUEST. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test_3;
+			goto test3;
 		}
 		if (task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
-			printf("Read6 beyond end-of-lun did not return sense ascq LBA OUT OF RANGE.\n");
+			printf("READ6 beyond end-of-lun did not return sense ascq LBA OUT OF RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test_3;
+			goto test3;
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 
 
-test_3:
+test3:
 	/* read 0 (==256) blocks 128 blocks from eol */
 	printf("Reading 0(==256) blocks beyond eol starting at 128 blocks before eol ... ");
 	task = iscsi_read6_sync(iscsi, lun, num_blocks-128, i * block_size, block_size);
 	if (task == NULL) {
 		printf("[FAILED]\n");
-		printf("Failed to send read6 command: %s\n", iscsi_get_error(iscsi));
+		printf("Failed to send READ6 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		goto finished;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
-		printf("Read6 beyond end-of-lun did not return sense.\n");
+		printf("READ6 beyond end-of-lun did not return sense.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	if (task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST) {
 		printf("[FAILED]\n");
-		printf("Read6 beyond end-of-lun did not return sense key ILLEGAL_REQUEST.\n");
+		printf("READ6 beyond end-of-lun did not return sense key ILLEGAL_REQUEST. Sense:%s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	if (task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 		printf("[FAILED]\n");
-		printf("Read6 beyond end-of-lun did not return sense ascq LBA OUT OF RANGE.\n");
+		printf("READ6 beyond end-of-lun did not return sense ascq LBA OUT OF RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;

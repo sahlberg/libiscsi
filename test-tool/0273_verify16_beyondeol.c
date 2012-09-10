@@ -62,7 +62,7 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url, int data_lo
 	}
 	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
+		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
@@ -81,7 +81,7 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url, int data_lo
 		task = iscsi_verify16_sync(iscsi, lun, buf, i * block_size, num_blocks, 0, 1, 1, block_size);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send verify16 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			goto finished;
 		}
@@ -96,7 +96,7 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url, int data_lo
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("Verify16 command should fail when reading beyond end of device\n");
+			printf("VERIFY16 command should fail when reading beyond end of device\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;
@@ -105,7 +105,7 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url, int data_lo
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
-			printf("VERIFY16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("VERIFY16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;
@@ -120,13 +120,13 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url, int data_lo
 		task = iscsi_verify16_sync(iscsi, lun, buf, i * block_size, 0x8000000000000000ULL, 0, 1, 1, block_size);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send verify16 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			goto finished;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("Verify16 command should fail when reading at LBA 2^63\n");
+			printf("VERIFY16 command should fail when reading at LBA 2^63\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;
@@ -135,7 +135,7 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url, int data_lo
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
-			printf("VERIFY16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("VERIFY16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;
@@ -150,13 +150,13 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url, int data_lo
 		task = iscsi_verify16_sync(iscsi, lun, buf, i * block_size, -1LL, 0, 1, 1, block_size);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send verify16 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			goto test2;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("verify16 command should fail when reading at LBA -1\n");
+			printf("VERIFY16 command should fail when reading at LBA -1\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test2;
@@ -165,7 +165,7 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url, int data_lo
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
-			printf("VERIFY16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
+			printf("VERIFY16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test2;
