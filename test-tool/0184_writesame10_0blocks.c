@@ -33,12 +33,11 @@ int T0184_writesame10_0blocks(const char *initiator, const char *url, int data_l
 	printf("0184_writesame10_0blocks:\n");
 	printf("=======================\n");
 	if (show_info) {
-		printf("Test that WRITESAME10 works correctly when writing 0 blocks\n");
-		printf("1, Write at LBA:0 should work.\n");
-		printf("2, Write at LBA:end-of-lun should work.\n");
-		printf("3, Write at LBA:end-of-lun+1 should fail.\n");
-		printf("4, Write at LBA 2^31 (only on LUNs < 2TB)\n");
-		printf("5, Write at LBA -1 (only on LUN < 2TB)\n");
+		printf("Test that WRITESAME10 works correctly when transfer length is 0 blocks.\n");
+		printf("1, Writesame at LBA:0 should work.\n");
+		printf("2, Writesame at one block beyond end-of-lun should fail. (only on LUNs with less than 2^31 blocks)\n");
+		printf("3, Writesame at LBA:2^31 should fail (only on LUNs with less than 2^31 blocks).\n");
+		printf("4, Writesame at LBA:-1 should fail (only on LUNs with less than 2^31 blocks).\n");
 		printf("\n");
 		return 0;
 	}
@@ -64,7 +63,7 @@ int T0184_writesame10_0blocks(const char *initiator, const char *url, int data_l
 	}
 	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
+		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
@@ -82,7 +81,7 @@ int T0184_writesame10_0blocks(const char *initiator, const char *url, int data_l
 
 	ret = 0;
 
-	printf("Writesame10 0blocks at LBA:0 ");
+	printf("Writesame10 0blocks at LBA:0 ... ");
 	task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
 			0, 0, 0, 0, 0, 0, 0, 0);
 	if (task == NULL) {
@@ -107,54 +106,51 @@ int T0184_writesame10_0blocks(const char *initiator, const char *url, int data_l
 		scsi_free_scsi_task(task);
 		goto test2;
 	}
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
 test2:
-	printf("Writesame10 0blocks at LBA:<end-of-disk> ");
-	task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
-			num_blocks, 0, 0, 0, 0, 0, 0, 0);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
+	printf("Writesame10 0blocks at one block beyond <end-of-LUN> ... ");
+	if (num_blocks > 0x80000000) {
+	        printf("[SKIPPED]\n");
+		printf("LUN is too big, skipping test\n");
 		goto test3;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("WRITESAME10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto test3;
-	}
-	printf("[OK]\n");
-
-
-test3:
-	printf("Writesame10 0blocks at LBA:<beyond end-of-disk> ");
 	task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
 			num_blocks + 1, 0, 0, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test4;
+		goto test3;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITESAME10 command: Should fail when writing 0blocks beyond end\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test4;
+		goto test3;
 	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+	        printf("[FAILED]\n");
+		printf("WRITESAME10 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test3;
+	}
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
-test4:
+test3:
 	printf("Writesame10 0blocks at LBA 2^31 ... ");
 	if (num_blocks > 0x80000000) {
+	        printf("[SKIPPED]\n");
 		printf("LUN is too big, skipping test\n");
-		goto test5;
+		goto test4;
 	}
 	task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
 			0x80000000, 0, 0, 0, 0, 0, 0, 0);
@@ -162,23 +158,34 @@ test4:
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test5;
+		goto test4;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITESAME10 command: Should fail when writing 0blocks at 2^31\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test5;
+		goto test4;
 	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+	        printf("[FAILED]\n");
+		printf("WRITESAME10 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test4;
+	}
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
-test5:
+test4:
 	printf("Writesame10 0blocks at LBA -1 ... ");
 	if (num_blocks > 0x80000000) {
+	        printf("[SKIPPED]\n");
 		printf("LUN is too big, skipping test\n");
-		goto test6;
+		goto test5;
 	}
 	task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
 			-1, 0, 0, 0, 0, 0, 0, 0);
@@ -186,19 +193,29 @@ test5:
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test6;
+		goto test5;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITESAME10 command: Should fail when writing 0blocks at -1\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test6;
+		goto test5;
 	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+	        printf("[FAILED]\n");
+		printf("WRITESAME10 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test5;
+	}
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
-test6:
+test5:
 
 
 finished:
