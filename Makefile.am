@@ -65,6 +65,7 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0130_verify10_simple.c test-tool/0131_verify10_mismatch.c \
 	test-tool/0132_verify10_mismatch_no_cmp.c test-tool/0133_verify10_beyondeol.c \
 	test-tool/0160_readcapacity16_simple.c \
+	test-tool/0161_readcapacity16_alloclen.c \
 	test-tool/0170_unmap_simple.c test-tool/0171_unmap_zero.c \
 	test-tool/0180_writesame10_unmap.c test-tool/0181_writesame10_unmap_unaligned.c \
 	test-tool/0182_writesame10_beyondeol.c \

@@ -48,6 +48,7 @@ int T0132_verify10_mismatch_no_cmp(const char *initiator, const char *url, int d
 int T0133_verify10_beyondeol(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0160_readcapacity16_simple(const char *initiator, const char *url, int data_loss, int show_info);
+int T0161_readcapacity16_alloclen(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0170_unmap_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0171_unmap_zero(const char *initiator, const char *url, int data_loss, int show_info);

@@ -70,6 +70,7 @@ struct scsi_test tests[] = {
 
 /* readcapacity16*/
 { "T0160_readcapacity16_simple",	T0160_readcapacity16_simple },
+{ "T0161_readcapacity16_alloclen",	T0161_readcapacity16_alloclen },
 
 /* unmap*/
 { "T0170_unmap_simple",			T0170_unmap_simple },
