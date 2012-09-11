@@ -33,8 +33,10 @@ int T0360_startstopunit_simple(const char *initiator, const char *url, int data_
 	printf("===================\n");
 	if (show_info) {
 		printf("Test basic STARTSTOPUNIT functionality.\n");
-		printf("1, Verify we can eject the media\n");
-		printf("2, Verify we can load the media back again\n");
+		printf("1, Verify we can eject the media with IMMED==1\n");
+		printf("2, Verify we can load the media back again with IMMED==1\n");
+		printf("3, Verify we can eject the media with IMMED==0\n");
+		printf("4, Verify we can load the media back again with IMMED==0\n");
 		printf("\n");
 		return 0;
 	}
@@ -86,18 +88,20 @@ int T0360_startstopunit_simple(const char *initiator, const char *url, int data_
 	} else {
 		printf("Media is not removable. STARTSTOPUNIT should fail\n");
 	}
-	printf("Try to eject the media ... ");
+
+
+	printf("STARTSTOPUNIT try to eject the media with IMMED==1 ... ");
 	task = iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		goto test2;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
 		goto test2;
 	}
@@ -107,7 +111,7 @@ int T0360_startstopunit_simple(const char *initiator, const char *url, int data_
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		goto test2;
 	}
 	if (removable) {
@@ -118,7 +122,7 @@ int T0360_startstopunit_simple(const char *initiator, const char *url, int data_
 		        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 			printf("[FAILED]\n");
 			printf("TESTUNITREADY after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test2;
 		}	
@@ -126,30 +130,29 @@ int T0360_startstopunit_simple(const char *initiator, const char *url, int data_
 		if (task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
 			goto test2;
 		}
 	}
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
 
 test2:
 
-	printf("Try to mount the media again ... ");
+	printf("STARTSTOPUNIT try to mount the media again with IMMED==1 ... ");
 	task = iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 1);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		goto test3;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
 		goto test3;
 	}
@@ -159,23 +162,109 @@ test2:
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		goto test3;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
 		goto test3;
 	}
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
 
 test3:
 
+	printf("STARTSTOPUNIT try to eject the media with IMMED==0 ... ");
+	task = iscsi_startstopunit_sync(iscsi, lun, 0, 0, 0, 0, 1, 0);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		goto test4;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test4;
+	}
+	scsi_free_scsi_task(task);
+
+	task = iscsi_testunitready_sync(iscsi, lun);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		goto test4;
+	}
+	if (removable) {
+		if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->sense.key  != SCSI_SENSE_NOT_READY
+		    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+		        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+		        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+			printf("[FAILED]\n");
+			printf("TESTUNITREADY after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
+			ret = -1;
+			scsi_free_scsi_task(task);
+			goto test4;
+		}	
+	} else {
+		if (task->status != SCSI_STATUS_GOOD) {
+			printf("[FAILED]\n");
+			printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
+			ret = -1;
+			scsi_free_scsi_task(task);
+			goto test4;
+		}
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+
+test4:
+
+	printf("STARTSTOPUNIT try to mount the media again with IMMED==0 ... ");
+	task = iscsi_startstopunit_sync(iscsi, lun, 0, 0, 0, 0, 1, 1);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		goto test5;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test5;
+	}
+	scsi_free_scsi_task(task);
+
+	task = iscsi_testunitready_sync(iscsi, lun);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		goto test5;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		printf("[FAILED]\n");
+		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test5;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+
+test5:
 
 finished:
 	iscsi_logout_sync(iscsi);
