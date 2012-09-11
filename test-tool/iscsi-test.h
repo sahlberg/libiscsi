@@ -142,6 +142,7 @@ int T0354_orwrite_beyondeol(const char *initiator, const char *url, int data_los
 
 int T0360_startstopunit_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0361_startstopunit_pwrcnd(const char *initiator, const char *url, int data_loss, int show_info);
+int T0362_startstopunit_noloej(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0370_nomedia(const char *initiator, const char *url, int data_loss, int show_info);
 
