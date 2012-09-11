@@ -47,19 +47,19 @@ int T0100_read10_simple(const char *initiator, const char *url, int data_loss _U
 	/* find the size of the LUN */
 	task = iscsi_readcapacity10_sync(iscsi, lun, 0, 0);
 	if (task == NULL) {
-		printf("Failed to send readcapacity10 command: %s\n", iscsi_get_error(iscsi));
+		printf("Failed to send READCAPACITY10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
-		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		printf("READCAPACITY10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	rc10 = scsi_datain_unmarshall(task);
 	if (rc10 == NULL) {
-		printf("failed to unmarshall readcapacity10 data. %s\n", iscsi_get_error(iscsi));
+		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
@@ -78,13 +78,13 @@ int T0100_read10_simple(const char *initiator, const char *url, int data_loss _U
 		task = iscsi_read10_sync(iscsi, lun, 0, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send READ10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			goto finished;
 		}
 		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("Read10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+			printf("READ10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;
@@ -100,13 +100,13 @@ int T0100_read10_simple(const char *initiator, const char *url, int data_loss _U
 		task = iscsi_read10_sync(iscsi, lun, num_blocks +1 - i, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send READ10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			goto finished;
 		}
 		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("Read10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+			printf("READ10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;
