@@ -437,7 +437,7 @@ static int
 scsi_inquiry_datain_getfullsize(struct scsi_task *task)
 {
 	if (task->params.inquiry.evpd == 0) {
-		return task->datain.data[4] + 3;
+		return task->datain.data[4] + 5;
 	}
 
 	switch (task->params.inquiry.page_code) {
