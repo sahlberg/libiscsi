@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
@@ -26,19 +27,26 @@ int T0400_inquiry_basic(const char *initiator, const char *url, int data_loss, i
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_inquiry_standard *inq;
-	int ret, lun;
+	int ret, lun, i;
 	int full_size;
 
 	printf("0400_inquiry_basic:\n");
 	printf("===================\n");
 	if (show_info) {
 		printf("Test the standard INQUIRY data format.\n");
-		printf("1, Check we can read the standard INQUIRY data\n");
-		printf("2, Standard data must be at least 36 bytes in size\n");
-		printf("3, Device-type must be either of DISK/TAPE/CDROM\n");
-		printf("4, Check that peripheral qualifier field is 0\n");
-		printf("5, Check that the version field is valid\n");
-		printf("6, Check that response data format is valid\n");
+		printf("1, Check we can read the standard INQUIRY data.\n");
+		printf("2, Standard data must be at least 36 bytes in size.\n");
+		printf("3, Device-type must be either of DISK/TAPE/CDROM.\n");
+		printf("4, Check that peripheral-qualifier field is 0.\n");
+		printf("5, Check that the version field is valid.\n");
+		printf("6, Check that response-data-format is valid.\n");
+		printf("7, Check that additional-length is valid.\n");
+		printf("8, Verify HiSup flag is set.\n");
+		printf("9, Verify vendor-identification is in ASCII.\n");
+		printf("10, Verify product-identification is in ASCII.\n");
+		printf("11, Verify product-revision-level is in ASCII.\n");
+		printf("12, Verify AERC is clear in SPC-3 and later.\n");
+		printf("13, Verify TrmTsk is clear in SPC-2 and later.\n");
 		printf("\n");
 		return 0;
 	}
@@ -156,6 +164,87 @@ test6:
 	printf("[OK]\n");
 
 test7:
+	printf("Verify Additional-Length ... ");
+	if (inq->additional_length + 5 != full_size) {
+		printf("[FAILED]\n");
+		printf("Invalid additional-length. Was %d but should be %d\n", inq->additional_length, full_size-5);
+		ret = -1;
+		goto test8;
+	}
+	printf("[OK]\n");
+
+test8:
+	printf("Verify HiSup is set ... ");
+	if (!inq->hisup) {
+		printf("[FAILED]\n");
+		printf("HiSup flag is not set.\n");
+		ret = -1;
+		goto test9;
+	}
+	printf("[OK]\n");
+
+test9:
+	printf("Verify VENDOR_IDENTIFICATION is in ASCII ... ");
+	for (i = 8; i < 16; i++) {
+		if (!isascii(task->datain.data[i])) {
+			printf("[FAILED]\n");
+			printf("VENDOR_IDENTIFICATION contains non-ASCII characters\n");
+			ret = -1;
+			goto test10;
+		}
+	}
+	printf("[OK]\n");
+
+test10:
+	printf("Verify PRODUCT_IDENTIFICATION is in ASCII ... ");
+	for (i = 16; i < 32; i++) {
+		if (!isascii(task->datain.data[i])) {
+			printf("[FAILED]\n");
+			printf("PRODUCT_IDENTIFICATION contains non-ASCII characters\n");
+			ret = -1;
+			goto test11;
+		}
+	}
+	printf("[OK]\n");
+
+test11:
+	printf("Verify PRODUCT_REVISION_LEVEL is in ASCII ... ");
+	for (i = 32; i < 36; i++) {
+		if (!isascii(task->datain.data[i])) {
+			printf("[FAILED]\n");
+			printf("PRODUCT_REVISION_LEVEL contains non-ASCII characters\n");
+			ret = -1;
+			goto test12;
+		}
+	}
+	printf("[OK]\n");
+
+test12:
+	printf("Verify AERC is clear in SPC-3 and later ... ");
+	if (task->datain.data[3] & 0x80 && inq->version >= 5) {
+		printf("[FAILED]\n");
+		printf("AERC is set but this device reports SPC-3 or later\n");
+		ret = -1;
+		goto test13;	
+	}
+	printf("[OK]\n");
+
+test13:
+	printf("Verify TrmTsk is clear in SPC-2 and later ... ");
+	if (task->datain.data[3] & 0x40 && inq->version >= 4) {
+		printf("[FAILED]\n");
+		printf("TrmTsk is set but this device reports SPC-2 or later\n");
+		ret = -1;
+		goto test14;	
+	}
+	printf("[OK]\n");
+
+test14:
+
+
+
+	scsi_free_scsi_task(task);
+
 
 finished:
 	iscsi_logout_sync(iscsi);
