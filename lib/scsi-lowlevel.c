@@ -477,6 +477,8 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 		inq->hisup                  = !!(task->datain.data[3]&0x10);
 		inq->response_data_format   = task->datain.data[3]&0x0f;
 
+		inq->additional_length      = task->datain.data[4];
+
 		inq->sccs                   = !!(task->datain.data[5]&0x80);
 		inq->acc                    = !!(task->datain.data[5]&0x40);
 		inq->tpgs                   = (task->datain.data[5]>>4)&0x03;

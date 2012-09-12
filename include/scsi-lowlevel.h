@@ -380,6 +380,8 @@ struct scsi_inquiry_standard {
 	int hisup;
 	int response_data_format;
 
+	int additional_length;
+
 	int sccs;
 	int acc;
 	int tpgs;
