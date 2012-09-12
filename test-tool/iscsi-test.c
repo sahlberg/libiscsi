@@ -201,6 +201,8 @@ struct scsi_test tests[] = {
 /* support for mandatory opcodes*/
 { "T0390_mandatory_opcodes_sbc",	T0390_mandatory_opcodes_sbc },
 
+/* inquiry*/
+{ "T0400_inquiry_basic",		T0400_inquiry_basic },
 
 /* iSCSI protocol tests */
 
