@@ -186,36 +186,54 @@ test8:
 test9:
 	printf("Verify VENDOR_IDENTIFICATION is in ASCII ... ");
 	for (i = 8; i < 16; i++) {
-		if (!isascii(task->datain.data[i])) {
-			printf("[FAILED]\n");
-			printf("VENDOR_IDENTIFICATION contains non-ASCII characters\n");
-			ret = -1;
-			goto test10;
+		/* SPC-4 4.4.1 only characters 0x00 and 0x20-0x7E allowed */
+		if (task->datain.data[i] == 0) {
+			continue;
 		}
+		if (task->datain.data[i] >= 0x20 && task->datain.data[i] <= 0x7e) {
+			continue;
+		}
+		
+		printf("[FAILED]\n");
+		printf("VENDOR_IDENTIFICATION contains non-ASCII characters\n");
+		ret = -1;
+		goto test10;
 	}
 	printf("[OK]\n");
 
 test10:
 	printf("Verify PRODUCT_IDENTIFICATION is in ASCII ... ");
 	for (i = 16; i < 32; i++) {
-		if (!isascii(task->datain.data[i])) {
-			printf("[FAILED]\n");
-			printf("PRODUCT_IDENTIFICATION contains non-ASCII characters\n");
-			ret = -1;
-			goto test11;
+		/* SPC-4 4.4.1 only characters 0x00 and 0x20-0x7E allowed */
+		if (task->datain.data[i] == 0) {
+			continue;
 		}
+		if (task->datain.data[i] >= 0x20 && task->datain.data[i] <= 0x7e) {
+			continue;
+		}
+		
+		printf("[FAILED]\n");
+		printf("PRODUCT_IDENTIFICATION contains non-ASCII characters\n");
+		ret = -1;
+		goto test11;
 	}
 	printf("[OK]\n");
 
 test11:
 	printf("Verify PRODUCT_REVISION_LEVEL is in ASCII ... ");
 	for (i = 32; i < 36; i++) {
-		if (!isascii(task->datain.data[i])) {
-			printf("[FAILED]\n");
-			printf("PRODUCT_REVISION_LEVEL contains non-ASCII characters\n");
-			ret = -1;
-			goto test12;
+		/* SPC-4 4.4.1 only characters 0x00 and 0x20-0x7E allowed */
+		if (task->datain.data[i] == 0) {
+			continue;
 		}
+		if (task->datain.data[i] >= 0x20 && task->datain.data[i] <= 0x7e) {
+			continue;
+		}
+
+		printf("[FAILED]\n");
+		printf("PRODUCT_REVISION_LEVEL contains non-ASCII characters\n");
+		ret = -1;
+		goto test12;
 	}
 	printf("[OK]\n");
 
