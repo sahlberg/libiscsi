@@ -210,6 +210,7 @@ int __fxstat(int ver, int fd, struct stat *buf)
 		memset(buf, 0, sizeof(struct stat));
 		buf->st_mode = S_IRUSR | S_IRGRP | S_IROTH | S_IFREG;
 		buf->st_size = iscsi_fd_list[fd].num_blocks * iscsi_fd_list[fd].block_size;
+		buf->st_blksize = iscsi_fd_list[fd].block_size;
 
 		return 0;
 	}
