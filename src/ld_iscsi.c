@@ -130,7 +130,7 @@ int open(const char *path, int flags, mode_t mode)
 		iscsi_fd_list[fd].dup2fd     = -1;
 		iscsi_fd_list[fd].iscsi      = iscsi;
 		iscsi_fd_list[fd].block_size = rc10->block_size;
-		iscsi_fd_list[fd].num_blocks = rc10->lba;
+		iscsi_fd_list[fd].num_blocks = rc10->lba + 1;
 		iscsi_fd_list[fd].offset     = 0;
 		iscsi_fd_list[fd].lun        = iscsi_url->lun;
 
