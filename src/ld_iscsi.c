@@ -252,7 +252,7 @@ ssize_t read(int fd, void *buf, size_t count)
 {
 	if ((iscsi_fd_list[fd].is_iscsi == 1) && (iscsi_fd_list[fd].in_flight == 0)) {
 		uint64_t offset;
-		uint32_t num_blocks;
+		uint32_t num_blocks, lba;
 		struct scsi_task *task;
 
 		if (iscsi_fd_list[fd].dup2fd >= 0) {
@@ -260,6 +260,17 @@ ssize_t read(int fd, void *buf, size_t count)
 		}
 		offset = iscsi_fd_list[fd].offset / iscsi_fd_list[fd].block_size * iscsi_fd_list[fd].block_size;
 		num_blocks = (iscsi_fd_list[fd].offset - offset + count + iscsi_fd_list[fd].block_size - 1) / iscsi_fd_list[fd].block_size;
+		lba = offset / iscsi_fd_list[fd].block_size;
+
+		/* Don't try to read beyond the last LBA */
+		if (lba >= iscsi_fd_list[fd].num_blocks) {
+			return 0;
+		}
+		/* Trim num_blocks requested to last lba */
+		if ((lba + num_blocks) > iscsi_fd_list[fd].num_blocks) {
+			num_blocks = iscsi_fd_list[fd].num_blocks - lba;
+			count = num_blocks * iscsi_fd_list[fd].block_size;
+		}
 
 		iscsi_fd_list[fd].in_flight = 1;
 		task = iscsi_read10_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, offset / iscsi_fd_list[fd].block_size, num_blocks * iscsi_fd_list[fd].block_size, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
