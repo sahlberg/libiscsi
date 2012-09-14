@@ -24,6 +24,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include <asm/fcntl.h>
 
 #include "iscsi.h"
 #include "iscsi-private.h"
@@ -143,6 +144,11 @@ int open(const char *path, int flags, mode_t mode)
         return real_open(path, flags, mode);
 }
 
+int open64(const char *path, int flags, mode_t mode)
+{
+	return open(path, flags | O_LARGEFILE, mode);
+}
+
 int (*real_close)(int fd);
 
 int close(int fd)
@@ -210,7 +216,6 @@ int __fxstat(int ver, int fd, struct stat *buf)
 		memset(buf, 0, sizeof(struct stat));
 		buf->st_mode = S_IRUSR | S_IRGRP | S_IROTH | S_IFREG;
 		buf->st_size = iscsi_fd_list[fd].num_blocks * iscsi_fd_list[fd].block_size;
-		buf->st_blksize = iscsi_fd_list[fd].block_size;
 
 		return 0;
 	}
@@ -320,6 +325,54 @@ int dup2(int oldfd, int newfd)
 }
 
 
+int (*real_fxstat64)(int ver, int fd, struct stat64 *buf);
+
+int __fxstat64(int ver, int fd, struct stat64 *buf)
+{
+	if (iscsi_fd_list[fd].is_iscsi == 1) {
+		if (iscsi_fd_list[fd].dup2fd >= 0) {
+			return __fxstat64(ver, iscsi_fd_list[fd].dup2fd, buf);
+		}
+
+		memset(buf, 0, sizeof(struct stat64));
+		buf->st_mode = S_IRUSR | S_IRGRP | S_IROTH | S_IFREG;
+		buf->st_size = iscsi_fd_list[fd].num_blocks * iscsi_fd_list[fd].block_size;
+		return 0;
+	}
+
+	return real_fxstat64(ver, fd, buf);
+}
+
+
+int (*real_lxstat64)(int ver, __const char *path, struct stat64 *buf);
+
+int __lxstat64(int ver, const char *path, struct stat64 *buf)
+{
+	if (!strncmp(path, "iscsi:", 6)) {
+		int fd, ret;
+
+		fd = open64(path, 0, 0);
+		if (fd == -1) {
+			return fd;
+		}
+
+		ret = __fxstat64(ver, fd, buf);
+		close(fd);
+		return ret;		
+	}
+
+	return real_lxstat64(ver, path, buf);
+}
+
+
+int (*real_xstat64)(int ver, __const char *path, struct stat64 *buf);
+
+int __xstat64(int ver, const char *path, struct stat64 *buf)
+{
+	return __lxstat64(ver, path, buf);
+}
+
+
 static void __attribute__((constructor)) _init(void)
 {
 	int i;
@@ -367,5 +420,20 @@ static void __attribute__((constructor)) _init(void)
 	if (real_dup2 == NULL) {
 		fprintf(stderr, "ld_iscsi: Failed to dlsym(dup2)\n");
 		exit(10);
+	}
+
+	real_fxstat64 = dlsym(RTLD_NEXT, "__fxstat64");
+	if (real_fxstat64 == NULL) {
+		fprintf(stderr, "ld_iscsi: Failed to dlsym(__fxstat64)\n");
+	}
+
+	real_lxstat64 = dlsym(RTLD_NEXT, "__lxstat64");
+	if (real_lxstat64 == NULL) {
+		fprintf(stderr, "ld_iscsi: Failed to dlsym(_lxstat64)\n");
+	}
+
+	real_xstat64 = dlsym(RTLD_NEXT, "__xstat64");
+	if (real_xstat64 == NULL) {
+		fprintf(stderr, "ld_iscsi: Failed to dlsym(__xstat64)\n");
 	}
 }
