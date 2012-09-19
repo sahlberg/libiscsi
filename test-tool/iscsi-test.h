@@ -157,6 +157,7 @@ int T0386_preventallow_2_itl_nexuses(const char *initiator, const char *url, int
 int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0400_inquiry_basic(const char *initiator, const char *url, int data_loss, int show_info);
+int T0401_inquiry_alloclen(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
 int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
