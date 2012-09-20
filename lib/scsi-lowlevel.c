@@ -420,7 +420,11 @@ scsi_cdb_inquiry(int evpd, int page_code, int alloc_len)
 	*(uint16_t *)&task->cdb[3] = htons(alloc_len);
 
 	task->cdb_size = 6;
-	task->xfer_dir = SCSI_XFER_READ;
+	if (alloc_len > 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
 	task->expxferlen = alloc_len;
 
 	task->params.inquiry.evpd      = evpd;
