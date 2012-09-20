@@ -51,7 +51,7 @@ int T0401_inquiry_alloclen(const char *initiator, const char *url, int data_loss
 
 
 	printf("Test INQUIRY with alloclen 0-255 ... ");
-	for (i = 1; i < 256; i++) {
+	for (i = 0; i < 256; i++) {
 		task = iscsi_inquiry_sync(iscsi, lun, 0, 0, i);
 		if (task == NULL) {
 			printf("[FAILED]\n");
