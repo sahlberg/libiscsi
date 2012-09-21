@@ -46,6 +46,9 @@ struct scsi_test {
 struct scsi_test tests[] = {
 /* SCSI protocol tests */
 
+/* testunitready*/
+{ "T0000_testunitready_simple",		T0000_testunitready_simple },
+
 /* read10*/
 { "T0100_read10_simple",		T0100_read10_simple },
 { "T0101_read10_beyond_eol",		T0101_read10_beyond_eol },
