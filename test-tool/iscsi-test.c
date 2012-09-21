@@ -204,6 +204,7 @@ struct scsi_test tests[] = {
 /* inquiry*/
 { "T0400_inquiry_basic",		T0400_inquiry_basic },
 { "T0401_inquiry_alloclen",		T0401_inquiry_alloclen },
+{ "T0402_inquiry_evpd",			T0402_inquiry_evpd },
 
 /* iSCSI protocol tests */
 

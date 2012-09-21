@@ -129,6 +129,7 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0390_mandatory_opcodes_sbc.c \
 	test-tool/0400_inquiry_basic.c \
 	test-tool/0401_inquiry_alloclen.c \
+	test-tool/0402_inquiry_evpd.c \
 	\
 	test-tool/1000_cmdsn_invalid.c \
 	test-tool/1010_datasn_invalid.c \
