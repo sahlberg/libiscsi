@@ -35,7 +35,7 @@ int T0403_inquiry_supported_vpd(const char *initiator, const char *url, int data
 		SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION
 	};
 
-	printf("0402_inquiry_supported_vpd:\n");
+	printf("0403_inquiry_supported_vpd:\n");
 	printf("==========================\n");
 	if (show_info) {
 		printf("Check the INQUIRY SUPPORTED VPD page.\n");
