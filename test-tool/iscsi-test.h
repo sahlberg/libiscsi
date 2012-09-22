@@ -162,6 +162,7 @@ int T0400_inquiry_basic(const char *initiator, const char *url, int data_loss, i
 int T0401_inquiry_alloclen(const char *initiator, const char *url, int data_loss, int show_info);
 int T0402_inquiry_evpd(const char *initiator, const char *url, int data_loss, int show_info);
 int T0403_inquiry_supported_vpd(const char *initiator, const char *url, int data_loss, int show_info);
+int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
 int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
