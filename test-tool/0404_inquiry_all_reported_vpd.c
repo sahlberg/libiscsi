@@ -92,7 +92,7 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url, int d
 	printf("[OK]\n");
 
 test2:
-	printf("Read each page and verify the page size:\n");
+	printf("Read each page and verify qualifier, type and page code:\n");
 	for (i = 0; i < inq->num_pages; i++) {
 		struct scsi_task *pc_task;
 
