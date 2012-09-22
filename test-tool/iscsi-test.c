@@ -208,6 +208,7 @@ struct scsi_test tests[] = {
 { "T0400_inquiry_basic",		T0400_inquiry_basic },
 { "T0401_inquiry_alloclen",		T0401_inquiry_alloclen },
 { "T0402_inquiry_evpd",			T0402_inquiry_evpd },
+{ "T0403_inquiry_supported_vpd",	T0403_inquiry_supported_vpd },
 
 /* iSCSI protocol tests */
 
