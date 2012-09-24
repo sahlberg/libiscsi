@@ -46,6 +46,9 @@ struct scsi_test {
 struct scsi_test tests[] = {
 /* SCSI protocol tests */
 
+/* testunitready*/
+{ "T0000_testunitready_simple",		T0000_testunitready_simple },
+
 /* read10*/
 { "T0100_read10_simple",		T0100_read10_simple },
 { "T0101_read10_beyond_eol",		T0101_read10_beyond_eol },
@@ -203,6 +206,10 @@ struct scsi_test tests[] = {
 
 /* inquiry*/
 { "T0400_inquiry_basic",		T0400_inquiry_basic },
+{ "T0401_inquiry_alloclen",		T0401_inquiry_alloclen },
+{ "T0402_inquiry_evpd",			T0402_inquiry_evpd },
+{ "T0403_inquiry_supported_vpd",	T0403_inquiry_supported_vpd },
+{ "T0404_inquiry_all_reported_vpd",	T0404_inquiry_all_reported_vpd },
 
 /* read TOC/PMA/ATIP */
 { "T0410_readtoc_basic",                T0410_readtoc_basic },

@@ -29,6 +29,8 @@ void wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_st
 struct iscsi_pdu;
 int (*local_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
+int T0000_testunitready_simple(const char *initiator, const char *url, int data_loss, int show_info);
+
 int T0100_read10_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0101_read10_beyond_eol(const char *initiator, const char *url, int data_loss, int show_info);
 int T0102_read10_0blocks(const char *initiator, const char *url, int data_loss, int show_info);
@@ -157,6 +159,10 @@ int T0386_preventallow_2_itl_nexuses(const char *initiator, const char *url, int
 int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0400_inquiry_basic(const char *initiator, const char *url, int data_loss, int show_info);
+int T0401_inquiry_alloclen(const char *initiator, const char *url, int data_loss, int show_info);
+int T0402_inquiry_evpd(const char *initiator, const char *url, int data_loss, int show_info);
+int T0403_inquiry_supported_vpd(const char *initiator, const char *url, int data_loss, int show_info);
+int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss, int show_info);
 

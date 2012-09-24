@@ -208,7 +208,11 @@ scsi_reportluns_cdb(int report_type, int alloc_len)
 	*(uint32_t *)&task->cdb[6] = htonl(alloc_len);
 
 	task->cdb_size = 12;
-	task->xfer_dir = SCSI_XFER_READ;
+	if (alloc_len != 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
 	task->expxferlen = alloc_len;
 
 	task->params.reportluns.report_type = report_type;
@@ -571,7 +575,11 @@ scsi_cdb_inquiry(int evpd, int page_code, int alloc_len)
 	*(uint16_t *)&task->cdb[3] = htons(alloc_len);
 
 	task->cdb_size = 6;
-	task->xfer_dir = SCSI_XFER_READ;
+	if (alloc_len != 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
 	task->expxferlen = alloc_len;
 
 	task->params.inquiry.evpd      = evpd;
@@ -853,7 +861,11 @@ scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize)
 		task->cdb[4] = num_blocks;
 	}
 
-	task->xfer_dir = SCSI_XFER_READ;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
 	task->expxferlen = xferlen;
 
 	task->params.read6.lba        = lba;
@@ -1396,7 +1408,11 @@ scsi_cdb_unmap(int anchor, int group, uint16_t xferlen)
 	*(uint16_t *)&task->cdb[7] = htons(xferlen);
 
 	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_WRITE;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_WRITE;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
 	task->expxferlen = xferlen;
 
 	return task;
@@ -1517,7 +1533,11 @@ scsi_cdb_modesense6(int dbd, enum scsi_modesense_page_control pc,
 	task->cdb[4] = alloc_len;
 
 	task->cdb_size = 6;
-	task->xfer_dir = SCSI_XFER_READ;
+	if (alloc_len != 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
 	task->expxferlen = alloc_len;
 
 	task->params.modesense6.dbd           = dbd;
@@ -1899,7 +1919,11 @@ scsi_cdb_serviceactionin16(enum scsi_service_action_in sa, uint32_t xferlen)
 	*(uint32_t *)&task->cdb[10] = htonl(xferlen);
 
 	task->cdb_size   = 16;
-	task->xfer_dir   = SCSI_XFER_READ;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
 	task->expxferlen = xferlen;
 
 	task->params.serviceactionin.sa = sa;
@@ -1939,7 +1963,11 @@ scsi_cdb_get_lba_status(uint64_t starting_lba, uint32_t alloc_len)
 	*(uint32_t *)&task->cdb[10] = htonl(alloc_len);
 
 	task->cdb_size   = 16;
-	task->xfer_dir   = SCSI_XFER_READ;
+	if (alloc_len != 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
 	task->expxferlen = alloc_len;
 
 	task->params.serviceactionin.sa = SCSI_GET_LBA_STATUS;

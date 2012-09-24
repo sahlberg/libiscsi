@@ -56,6 +56,7 @@ dist_noinst_HEADERS += test-tool/iscsi-test.h
 bin_iscsi_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/test-tool
 bin_iscsi_test_LDFLAGS = -ldl
 bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
+	test-tool/0000_testunitready_simple.c \
 	test-tool/0100_read10_simple.c test-tool/0101_read10_beyond_eol.c \
 	test-tool/0102_read10_0blocks.c test-tool/0103_read10_rdprotect.c \
 	test-tool/0104_read10_flags.c test-tool/0105_read10_invalid.c \
@@ -128,6 +129,10 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0386_preventallow_2_it_nexuses.c \
 	test-tool/0390_mandatory_opcodes_sbc.c \
 	test-tool/0400_inquiry_basic.c \
+	test-tool/0401_inquiry_alloclen.c \
+	test-tool/0402_inquiry_evpd.c \
+	test-tool/0403_inquiry_supported_vpd.c \
+	test-tool/0404_inquiry_all_reported_vpd.c \
 	test-tool/0410_readtoc_basic.c \
 	\
 	test-tool/1000_cmdsn_invalid.c \
