@@ -336,7 +336,11 @@ scsi_cdb_readtoc(int msf, int format, int track_session, uint32_t xferlen)
 	}
 
 	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_READ;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
 	task->expxferlen = xferlen;
 
 	task->params.readtoc.msf = msf;
