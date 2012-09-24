@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2012 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
+   Copyright (C) 2012 by Jon Grimm <jon.grimm@gmail.com>
    
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -27,9 +27,10 @@ int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss, i
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_inquiry_standard *inq;
+	struct scsi_readcapacity10 *rc10;
 	struct scsi_readtoc_list *list;
 	int ret, lun, i, toc_device;
-	int full_size;
+	int media, full_size;
 
 	printf("0410_readtoc_basic:\n");
 	printf("===================\n");
@@ -106,6 +107,34 @@ int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss, i
 	}
 	printf("[OK]\n");
 
+	printf("CD/DVD Device. Check if media present.\n");
+	task = iscsi_readcapacity10_sync(iscsi, lun, 0, 0);
+	if (task == NULL) {
+ 	        printf("[FAILED]\n");
+		printf("Failed to send readcapacity10 command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		goto finished;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+ 	        printf("[FAILED]\n");
+		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+	rc10 = scsi_datain_unmarshall(task);
+	if (rc10 == NULL) {
+ 	        printf("[FAILED]\n");
+		printf("failed to unmarshall readcapacity10 data. %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+
+	/* LBA will return 0, if there is no media. */ 
+	media = rc10->lba ? 1 : 0;
+
+
 test1:
 
 	printf("Read TOC format 0000b (TOC)\n");
@@ -147,7 +176,39 @@ test1:
 	}
 
 
-	/* We should only still be here if we are an MMC device */
+	/* If no media, just check if we have appropriate error and bail. */
+	if (!media) {
+		printf("No media, check we get appropriate error.\n");
+		if (task->status == SCSI_STATUS_GOOD) {
+			printf("[FAILED]\n");
+			printf("READ TOC Should have failed\n");
+			ret = -1;
+		} else if (task->status != SCSI_STATUS_CHECK_CONDITION
+			   || task->sense.key != SCSI_SENSE_NOT_READY 
+			   || (task->sense.ascq 
+			       != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT 
+			       && task->sense.ascq
+			       != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+			       && task->sense.ascq
+			       != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {		
+			printf("[FAILED]\n");
+			printf("READ TOC failed but ascq was wrong. Should "
+			       "have failed with MEDIUM_NOT_PRESENT. "
+			       "Sense:%s\n", iscsi_get_error(iscsi));
+			ret = -1;       
+		} else {
+			printf("[OK]\n");
+			ret = 0;
+		}
+		
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+
+
+
+	/* We should only still be here if we are an MMC device and 
+	   have media. */
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("READ TOC command failed : %s\n", iscsi_get_error(iscsi));
