@@ -204,6 +204,9 @@ struct scsi_test tests[] = {
 /* inquiry*/
 { "T0400_inquiry_basic",		T0400_inquiry_basic },
 
+/* read TOC/PMA/ATIP */
+{ "T0410_readtoc_basic",                T0410_readtoc_basic },
+
 /* iSCSI protocol tests */
 
 /* invalid cmdsn from initiator */

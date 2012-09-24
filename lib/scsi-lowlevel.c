@@ -298,6 +298,157 @@ scsi_cdb_readcapacity10(int lba, int pmi)
 	return task;
 }
 
+
+
+/*
+ * READTOC
+ */
+struct scsi_task *
+scsi_cdb_readtoc(int msf, int format, int track_session, uint32_t xferlen)
+{
+	struct scsi_task *task;
+
+	if (format != SCSI_READ_TOC && format != SCSI_READ_SESSION_INFO 
+	    && format != SCSI_READ_FULL_TOC){
+		fprintf(stderr, "Read TOC format %d not fully supported yet\n", format);
+		return NULL;
+	}
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_READTOC;
+
+	if (msf) {
+		task->cdb[1] |= 0x02;
+	}
+
+	/* Prevent invalid setting of Track/Session Number */
+	if (format == SCSI_READ_TOC || format == SCSI_READ_FULL_TOC) {
+		task->cdb[6] = 0xff & track_session;
+	}
+
+	task->cdb_size = 10;
+	task->xfer_dir = SCSI_XFER_READ;
+	task->expxferlen = xferlen;
+
+	task->params.readtoc.msf = msf;
+	task->params.readtoc.format = format;
+	task->params.readtoc.track_session = track_session;
+
+	return task;
+}
+
+/*
+ * parse the data in blob and calcualte the size of a full read TOC
+ * datain structure
+ */
+static int
+scsi_readtoc_datain_getfullsize(struct scsi_task *task)
+{
+	uint16_t toc_data_len;
+
+	toc_data_len = ntohs(*((uint16_t *)&task->datain.data[0])) + 2;
+
+	return toc_data_len;
+}
+
+static void
+scsi_readtoc_desc_unmarshall(struct scsi_task *task, struct scsi_readtoc_list *list, int i)
+{
+	switch(task->params.readtoc.format){
+	case SCSI_READ_TOC:
+		list->desc[i].desc.toc.adr 
+			= task->datain.data[4+8*i+1] & 0xf0;
+		list->desc[i].desc.toc.control 
+			= task->datain.data[4+8*i+1] & 0x0f;
+		list->desc[i].desc.toc.track 
+			= task->datain.data[4+8*i+2];
+		list->desc[i].desc.toc.lba 
+			= ntohl(*(uint32_t *)&task->datain.data[4+8*i+4]);
+		break;
+	case SCSI_READ_SESSION_INFO:
+		list->desc[i].desc.ses.adr 
+			= task->datain.data[4+8*i+1] & 0xf0;
+		list->desc[i].desc.ses.control 
+			= task->datain.data[4+8*i+1] & 0x0f;
+		list->desc[i].desc.ses.first_in_last 
+			= task->datain.data[4+8*i+2];
+		list->desc[i].desc.ses.lba 
+			= ntohl(*(uint32_t *)&task->datain.data[4+8*i+4]);
+		break;
+	case SCSI_READ_FULL_TOC:
+		list->desc[i].desc.full.session 
+			= task->datain.data[4+11*i+0] & 0xf0;
+		list->desc[i].desc.full.adr 
+			= task->datain.data[4+11*i+1] & 0xf0;
+		list->desc[i].desc.full.control 
+			= task->datain.data[4+11*i+1] & 0x0f;
+		list->desc[i].desc.full.tno 
+			= task->datain.data[4+11*i+2];
+		list->desc[i].desc.full.point 
+			= task->datain.data[4+11*i+3];
+		list->desc[i].desc.full.min
+			= task->datain.data[4+11*i+4];
+		list->desc[i].desc.full.sec
+			= task->datain.data[4+11*i+5];
+		list->desc[i].desc.full.frame
+			= task->datain.data[4+11*i+6];
+		list->desc[i].desc.full.zero
+			= task->datain.data[4+11*i+7];
+		list->desc[i].desc.full.pmin 
+			= task->datain.data[4+11*i+8];
+		list->desc[i].desc.full.psec
+			= task->datain.data[4+11*i+9];
+		list->desc[i].desc.full.pframe
+			= task->datain.data[4+11*i+10];
+		break;
+	}
+}
+/*
+ * unmarshall the data in blob for read TOC into a structure
+ */
+static struct scsi_readtoc_list *
+scsi_readtoc_datain_unmarshall(struct scsi_task *task)
+{
+	struct scsi_readtoc_list *list;
+	int data_len;
+	int i, num_desc;
+
+	if (task->datain.size < 4) {
+		return NULL;
+	}
+	
+	/* Do we have all data? */
+	data_len = scsi_readtoc_datain_getfullsize(task) - 2;
+	if(task->datain.size < data_len) {
+		return NULL;
+	}
+
+	/* Remove header size (4) to get bytes in descriptor list */
+	num_desc = (data_len - 4) / 8; 
+
+	list = scsi_malloc(task, offsetof(struct scsi_readtoc_list, desc)
+			   + sizeof(struct scsi_readtoc_desc) * num_desc);
+	if (list == NULL) {
+		return NULL;
+	}
+
+	list->num = num_desc;
+	list->first = task->datain.data[2];
+	list->last = task->datain.data[3];
+	
+	for (i = 0; i < num_desc; i++) {
+		scsi_readtoc_desc_unmarshall(task, list, i);
+	}
+		
+	return list;
+}
+
+
 /*
  * service_action_in unmarshall
  */
@@ -1940,6 +2091,8 @@ scsi_datain_getfullsize(struct scsi_task *task)
 		return scsi_readcapacity10_datain_getfullsize(task);
 	case SCSI_OPCODE_SYNCHRONIZECACHE10:
 		return 0;
+	case SCSI_OPCODE_READTOC:
+		return scsi_readtoc_datain_getfullsize(task);
 	case SCSI_OPCODE_REPORTLUNS:
 		return scsi_reportluns_datain_getfullsize(task);
 	}
@@ -1960,6 +2113,8 @@ scsi_datain_unmarshall(struct scsi_task *task)
 		return scsi_readcapacity10_datain_unmarshall(task);
 	case SCSI_OPCODE_SYNCHRONIZECACHE10:
 		return NULL;
+	case SCSI_OPCODE_READTOC:
+		return scsi_readtoc_datain_unmarshall(task);
 	case SCSI_OPCODE_REPORTLUNS:
 		return scsi_reportluns_datain_unmarshall(task);
 	case SCSI_OPCODE_SERVICE_ACTION_IN:

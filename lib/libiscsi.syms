@@ -44,6 +44,8 @@ iscsi_readcapacity10_sync
 iscsi_readcapacity10_task
 iscsi_readcapacity16_sync
 iscsi_readcapacity16_task
+iscsi_readtoc_sync
+iscsi_readtoc_task
 iscsi_reconnect
 iscsi_set_noautoreconnect
 iscsi_reportluns_sync
@@ -119,6 +121,7 @@ scsi_cdb_read16
 scsi_cdb_read6
 scsi_cdb_readcapacity10
 scsi_cdb_readcapacity16
+scsi_cdb_readtoc
 scsi_cdb_serviceactionin16
 scsi_cdb_startstopunit
 scsi_cdb_synchronizecache10

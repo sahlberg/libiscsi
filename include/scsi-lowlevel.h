@@ -39,6 +39,7 @@ enum scsi_opcode {
 	SCSI_OPCODE_SYNCHRONIZECACHE10 = 0x35,
 	SCSI_OPCODE_WRITE_SAME10       = 0x41,
 	SCSI_OPCODE_UNMAP              = 0x42,
+	SCSI_OPCODE_READTOC           = 0x43,
 	SCSI_OPCODE_READ16             = 0x88,
 	SCSI_OPCODE_COMPARE_AND_WRITE  = 0x89,
 	SCSI_OPCODE_WRITE16            = 0x8A,
@@ -104,6 +105,56 @@ enum scsi_xfer_dir {
 	SCSI_XFER_NONE  = 0,
 	SCSI_XFER_READ  = 1,
 	SCSI_XFER_WRITE = 2
+};
+
+/*
+ * READTOC
+ */
+EXTERN struct scsi_task *scsi_cdb_readtoc(int msf, int format, int track_session, uint32_t xferlen);
+
+enum scsi_readtoc_fmt {
+	SCSI_READ_TOC          = 0,
+	SCSI_READ_SESSION_INFO = 1,
+	SCSI_READ_FULL_TOC     = 2,
+	SCSI_READ_PMA          = 3,
+	SCSI_READ_ATIP         = 4
+};
+struct scsi_readtoc_desc{
+	union {
+		struct scsi_toc_desc {
+			int adr;
+			int control;
+			int track;
+			uint32_t lba;
+		} toc;
+		struct scsi_session_desc {
+			int adr;
+			int control;
+			int first_in_last;
+			uint32_t lba;
+		} ses;
+		struct scsi_fulltoc_desc {
+			int session;
+			int adr;
+			int control;
+			int tno;
+			int point;
+			int min;
+			int sec;
+			int frame;
+			int zero;
+			int pmin;
+			int psec;
+			int pframe;
+		} full;
+	} desc;
+};
+
+struct scsi_readtoc_list {
+	int num;
+	int first;
+	int last;
+	struct scsi_readtoc_desc desc[0];
 };
 
 struct scsi_reportluns_params {
@@ -206,6 +257,11 @@ struct scsi_modesense6_params {
 struct scsi_serviceactionin_params {
 	enum scsi_service_action_in sa;
 };
+struct scsi_readtoc_params {
+	int msf;
+	int format;
+	int track_session;
+};
 
 struct scsi_sense {
 	unsigned char       error_type;
@@ -259,6 +315,7 @@ struct scsi_task {
 		struct scsi_inquiry_params         inquiry;
 		struct scsi_modesense6_params      modesense6;
 		struct scsi_serviceactionin_params serviceactionin;
+		struct scsi_readtoc_params         readtoc;
 	} params;
 
 	enum scsi_residual residual_status;
