@@ -25,10 +25,10 @@
 int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct scsi_task *task, *task1;
 	struct scsi_inquiry_standard *inq;
 	struct scsi_readcapacity10 *rc10;
-	struct scsi_readtoc_list *list;
+	struct scsi_readtoc_list *list, *list1;
 	int ret, lun, i, toc_device;
 	int media, full_size;
 
@@ -144,7 +144,6 @@ test1:
 		printf(" On non-MMC Device\n");
 	}
 
-		/* See how big this inquiry data is */
 	task = iscsi_readtoc_sync(iscsi, lun, 0, 0, 0, 255);
 	if (task == NULL) {
 		printf("[FAILED]\n");
@@ -234,6 +233,73 @@ test2:
 		ret = -1;
 		goto finished;
 	}
+	printf("[OK]\n");
+
+test3: 
+	printf("Check lba of 1 is same as lba 0\n");
+	task1 = iscsi_readtoc_sync(iscsi, lun, 0, 1, 0, 255);
+	if (task1 == NULL) {
+		printf("[FAILED]\n");
+		printf("Failed to send READ TOC command : %s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		ret = -1;
+		goto finished;
+	}
+
+	if (task1->status != SCSI_STATUS_GOOD) {
+		printf("[FAILED]\n");
+		printf("READ TOC command failed : %s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		scsi_free_scsi_task(task1);
+		ret = -1;
+		goto finished;
+	}
+
+
+	full_size = scsi_datain_getfullsize(task1);
+	if (full_size < 4) {
+		printf("[FAILED]\n");
+		printf("TOC Data Length %d < 4\n", full_size);
+		scsi_free_scsi_task(task);
+		scsi_free_scsi_task(task1);
+		ret = -1;
+		goto finished;
+	}
+	list1 = scsi_datain_unmarshall(task1);
+	if (list1 == NULL) {
+		printf("[FAILED]\n");
+		printf("Read TOC Unmarshall failed\n");
+		scsi_free_scsi_task(task);
+		scsi_free_scsi_task(task1);
+		ret = -1;
+		goto finished;
+	}
+	scsi_free_scsi_task(task1);
+
+	if (list->num != list1->num ||
+	    list->first != list1->first ||
+	    list->last != list1->last) {
+		printf("[FAILED]\n");
+		printf("Read TOC header of lba 0 != TOC of lba 1.\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+
+	for (i=0; i<list->num; i++) {
+		printf(" TOC descriptor %i\n", i);
+		if (list->desc[i].desc.toc.adr != list1->desc[i].desc.toc.adr ||
+		    list->desc[i].desc.toc.control != list1->desc[i].desc.toc.control ||
+		    list->desc[i].desc.toc.track != list1->desc[i].desc.toc.track ||
+		    list->desc[i].desc.toc.lba != list1->desc[i].desc.toc.lba) {
+			printf("[FAILED]\n");
+			printf("Read TOC descriptors of lba 0 != TOC of lba 1.\n");
+			ret = -1;
+			scsi_free_scsi_task(task);
+			goto finished;
+		}
+	}
+
 
 	printf("[OK]\n");
 	scsi_free_scsi_task(task);
