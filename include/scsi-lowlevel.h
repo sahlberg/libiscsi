@@ -110,7 +110,7 @@ enum scsi_xfer_dir {
 /*
  * READTOC
  */
-EXTERN struct scsi_task *scsi_cdb_readtoc(int msf, int format, int track_session, uint32_t xferlen);
+EXTERN struct scsi_task *scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len);
 
 enum scsi_readtoc_fmt {
 	SCSI_READ_TOC          = 0,
