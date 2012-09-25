@@ -822,6 +822,25 @@ iscsi_unmap_sync(struct iscsi_context *iscsi, int lun, int anchor, int group,
 }
 
 struct scsi_task *
+iscsi_readtoc_sync(struct iscsi_context *iscsi, int lun, int msf, int format, 
+		   int track_session, int maxsize)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_readtoc_task(iscsi, lun, msf, format, track_session, 
+			       maxsize, scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi, "Failed to send Read TOC command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
 iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
 			struct scsi_task *task, struct iscsi_data *data)
 {

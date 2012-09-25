@@ -211,6 +211,9 @@ struct scsi_test tests[] = {
 { "T0403_inquiry_supported_vpd",	T0403_inquiry_supported_vpd },
 { "T0404_inquiry_all_reported_vpd",	T0404_inquiry_all_reported_vpd },
 
+/* read TOC/PMA/ATIP */
+{ "T0410_readtoc_basic",                T0410_readtoc_basic },
+
 /* iSCSI protocol tests */
 
 /* invalid cmdsn from initiator */
