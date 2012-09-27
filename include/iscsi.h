@@ -732,6 +732,15 @@ iscsi_readtoc_task(struct iscsi_context *iscsi, int lun, int msf, int format,
 		   int track_session, int maxsize, 
 		   iscsi_command_cb cb, void *private_data);
 
+EXTERN struct scsi_task *
+iscsi_reserve6_task(struct iscsi_context *iscsi, int lun,
+		    iscsi_command_cb cb, void *private_data);
+
+EXTERN struct scsi_task *
+iscsi_release6_task(struct iscsi_context *iscsi, int lun,
+		    iscsi_command_cb cb, void *private_data);
+
+
 /*
  * Sync commands for SCSI
  */
@@ -888,6 +897,13 @@ iscsi_unmap_sync(struct iscsi_context *iscsi, int lun, int anchor, int group,
 EXTERN struct scsi_task *
 iscsi_readtoc_sync(struct iscsi_context *iscsi, int lun, int msf,
 		   int format, int track_session, int maxsize);
+
+EXTERN struct scsi_task *
+iscsi_reserve6_sync(struct iscsi_context *iscsi, int lun);
+
+EXTERN struct scsi_task *
+iscsi_release6_sync(struct iscsi_context *iscsi, int lun);
+
 
 /*
  * This function is used when  the application wants to specify its own buffers to read the data

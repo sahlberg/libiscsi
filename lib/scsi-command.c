@@ -1500,6 +1500,48 @@ iscsi_readtoc_task(struct iscsi_context *iscsi, int lun, int msf,
 }
 
 struct scsi_task *
+iscsi_reserve6_task(struct iscsi_context *iscsi, int lun,
+		    iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_reserve6();
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"reserve6 cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
+				     private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
+iscsi_release6_task(struct iscsi_context *iscsi, int lun,
+		    iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_release6();
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"release6 cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb, NULL,
+				     private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
 iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu)
 {
 	return pdu->scsi_cbdata->task;

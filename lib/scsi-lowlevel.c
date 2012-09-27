@@ -456,6 +456,49 @@ scsi_readtoc_datain_unmarshall(struct scsi_task *task)
 	return list;
 }
 
+/*
+ * RESERVE6
+ */
+struct scsi_task *
+scsi_cdb_reserve6(void)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0] = SCSI_OPCODE_RESERVE6;
+		
+	task->cdb_size = 6;
+	task->xfer_dir = SCSI_XFER_NONE;
+	
+	return task;
+}
+/*
+ * RELEASE10
+ */
+struct scsi_task *
+scsi_cdb_release6(void)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0] = SCSI_OPCODE_RELEASE6;
+		
+	task->cdb_size = 6;
+	task->xfer_dir = SCSI_XFER_NONE;
+
+	return task;
+}
+
 
 /*
  * service_action_in unmarshall
