@@ -68,11 +68,21 @@ int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss,
 		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("RESERVE6 command failed : %s\n",
-		       iscsi_get_error(iscsi));
+		if (task->status == SCSI_STATUS_CHECK_CONDITION
+		    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST 
+		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {		
+			printf("[OK]\n");
+			printf("RESERVE6 Not Supported\n");
+			ret = 0;
+		} else {
+			printf("[FAILED]\n");
+			printf("RESERVE6 failed but ascq was wrong. Should "
+			       "have failed with ILLEGAL_REQUEST/"
+			       "INVALID OPERATOR. Sense:%s\n", 
+			       iscsi_get_error(iscsi));
+			ret = -1;	
+		}
 		scsi_free_scsi_task(task);
-		ret = -1;
 		goto finished;
 	}
 
