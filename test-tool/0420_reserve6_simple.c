@@ -58,7 +58,7 @@ int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss,
 
 	ret = 0;
 
-	printf("Send RESERVE6...\n");
+	printf("Send RESERVE6 ... ");
 	task = iscsi_reserve6_sync(iscsi, lun);
 	if (task == NULL) {
 		printf("[FAILED]\n");
@@ -85,9 +85,9 @@ int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss,
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
-
 	printf("[OK]\n");
-	printf("Send RELEASE6...\n");
+
+	printf("Send RELEASE6 ... ");
 	task = iscsi_release6_sync(iscsi, lun);
 	if (task == NULL) {
 		printf("[FAILED]\n");
@@ -107,9 +107,10 @@ int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss,
 
 	printf("[OK]\n");
 
+
 test2:
 	printf("Test that reservation works.\n");
-	printf("Send RESERVE6 from Initiator 1...\n");
+	printf("Send RESERVE6 from Initiator 1 ... ");
 	task = iscsi_reserve6_sync(iscsi, lun);
 	if (task == NULL) {
 		printf("[FAILED]\n");
@@ -129,7 +130,7 @@ test2:
 
 	printf("[OK]\n");
 
-	printf("Send RESERVE6 from Initiator 1...\n");
+	printf("Send RESERVE6 from Initiator 1 ... ");
 	task = iscsi_reserve6_sync(iscsi, lun);
 	if (task == NULL) {
 		printf("[FAILED]\n");
@@ -148,8 +149,11 @@ test2:
 	}
 
 	printf("[OK]\n");
+
+
+
 test3:
-	printf("Send RESERVE6 from Initiator 2...Expect conflict.\n");
+	printf("Send RESERVE6 from Initiator 2. Expect conflict. ... ");
 	task = iscsi_reserve6_sync(iscsi2, lun);
 	if (task == NULL) {
 		printf("[FAILED]\n");
@@ -168,8 +172,11 @@ test3:
 	}
 
 	printf("[OK]\n");
+
+
+
 test4:
-	printf("Send TESTUNITREADY from Initiator 1...\n");
+	printf("Send TESTUNITREADY from Initiator 1 ... ");
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
@@ -188,9 +195,9 @@ test4:
 	}
 	printf("[OK]\n");
 
-test5:
 
-	printf("Send TESTUNITREADY from Initiator 2...Expect conflict.\n");
+test5:
+	printf("Send TESTUNITREADY from Initiator 2. Expect conflict. ... ");
 	task = iscsi_testunitready_sync(iscsi2, lun);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
@@ -208,9 +215,11 @@ test5:
 	}
 	printf("[OK]\n");
 
+
+
 test6:
 	printf("Test that release actually works\n");
-	printf("Send RELEASE6 from Initiator 1...\n");
+	printf("Send RELEASE6 from Initiator 1 ... ");
 	task = iscsi_release6_sync(iscsi, lun);
 	if (task == NULL) {
 		printf("[FAILED]\n");
@@ -230,7 +239,7 @@ test6:
 
 	printf("[OK]\n");
 
-	printf("Send RESERVE6 Initiator 2...\n");
+	printf("Send RESERVE6 Initiator 2 ... ");
 	task = iscsi_reserve6_sync(iscsi2, lun);
 	if (task == NULL) {
 		printf("[FAILED]\n");
@@ -249,7 +258,7 @@ test6:
 	}
 	printf("[OK]\n");
 
-	printf("Send RELEASE6 Initiator 2...\n");
+	printf("Send RELEASE6 Initiator 2 ... ");
 	task = iscsi_reserve6_sync(iscsi2, lun);
 	if (task == NULL) {
 		printf("[FAILED]\n");
