@@ -166,6 +166,8 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url, int d
 
 int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss, int show_info);
 
+int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss, int show_info);
+
 int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
 int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
 int T1020_bufferoffset_invalid(const char *initiator, const char *url, int data_loss, int show_info);

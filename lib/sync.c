@@ -841,6 +841,40 @@ iscsi_readtoc_sync(struct iscsi_context *iscsi, int lun, int msf, int format,
 }
 
 struct scsi_task *
+iscsi_reserve6_sync(struct iscsi_context *iscsi, int lun)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_reserve6_task(iscsi, lun, scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi, "Failed to send RESERVE6 command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
+iscsi_release6_sync(struct iscsi_context *iscsi, int lun)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_release6_task(iscsi, lun, scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi, "Failed to send RELEASE6 command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
 iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
 			struct scsi_task *task, struct iscsi_data *data)
 {

@@ -27,6 +27,8 @@ enum scsi_opcode {
 	SCSI_OPCODE_TESTUNITREADY      = 0x00,
 	SCSI_OPCODE_READ6              = 0x08,
 	SCSI_OPCODE_INQUIRY            = 0x12,
+	SCSI_OPCODE_RESERVE6           = 0x16,
+	SCSI_OPCODE_RELEASE6           = 0x17,
 	SCSI_OPCODE_MODESENSE6         = 0x1a,
 	SCSI_OPCODE_STARTSTOPUNIT      = 0x1b,
 	SCSI_OPCODE_PREVENTALLOW       = 0x1e,
@@ -39,7 +41,7 @@ enum scsi_opcode {
 	SCSI_OPCODE_SYNCHRONIZECACHE10 = 0x35,
 	SCSI_OPCODE_WRITE_SAME10       = 0x41,
 	SCSI_OPCODE_UNMAP              = 0x42,
-	SCSI_OPCODE_READTOC           = 0x43,
+	SCSI_OPCODE_READTOC            = 0x43,
 	SCSI_OPCODE_READ16             = 0x88,
 	SCSI_OPCODE_COMPARE_AND_WRITE  = 0x89,
 	SCSI_OPCODE_WRITE16            = 0x8A,
@@ -361,6 +363,15 @@ struct scsi_reportluns_list {
 };
 
 EXTERN struct scsi_task *scsi_reportluns_cdb(int report_type, int alloc_len);
+
+/*
+ * RESERVE6
+ */
+EXTERN struct scsi_task *scsi_cdb_reserve6(void);
+/*
+ * RELEASE6
+ */
+EXTERN struct scsi_task *scsi_cdb_release6(void);
 
 /*
  * READCAPACITY10

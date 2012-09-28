@@ -214,6 +214,9 @@ struct scsi_test tests[] = {
 /* read TOC/PMA/ATIP */
 { "T0410_readtoc_basic",                T0410_readtoc_basic },
 
+/* reserve6/release6 */
+{ "T0420_reserve6_simple",              T0420_reserve6_simple },
+
 /* iSCSI protocol tests */
 
 /* invalid cmdsn from initiator */
