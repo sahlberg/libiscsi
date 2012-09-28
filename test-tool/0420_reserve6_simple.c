@@ -130,7 +130,7 @@ test2:
 
 	printf("[OK]\n");
 
-	printf("Send RESERVE6 from Initiator 1 ... ");
+	printf("Send another RESERVE6 from Initiator 1 ... ");
 	task = iscsi_reserve6_sync(iscsi, lun);
 	if (task == NULL) {
 		printf("[FAILED]\n");
