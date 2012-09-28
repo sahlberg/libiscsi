@@ -36,6 +36,7 @@ int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss,
 		printf("1. Test simple RESERVE6 followed by RELEASE6\n");
 		printf("2. Test Initator 1 can reserve if already reserved by Intiator 1.\n");
 		printf("3. Test Initiator 2 can't reserve if already reserved by Initiator 1.\n");
+		printf("3a. Test Initiator 2 release when reserved by Initiator 1 returns success, but without releasing.\n");
 		printf("4. Test Initiator 1 can testunitready if reserved by Initiator 1.\n");
 		printf("5. Test Initiator 2 can't testunitready if reserved by Initiator 1.\n");
 		printf("6. Test Initiator 2 can get reservation once Intiator 1 releases reservation.\n");
@@ -129,7 +130,7 @@ test2:
 
 	printf("[OK]\n");
 
-	printf("Send RESERVE6 from Initiator 1...\n");
+	printf("Send another RESERVE6 from Initiator 1...\n");
 	task = iscsi_reserve6_sync(iscsi, lun);
 	if (task == NULL) {
 		printf("[FAILED]\n");
@@ -168,6 +169,29 @@ test3:
 	}
 
 	printf("[OK]\n");
+
+test3a:
+	printf("Send RELEASE6 from Initiator 2..Expect NO-OP.\n");
+	task = iscsi_release6_sync(iscsi2, lun);
+	if (task == NULL) {
+		printf("[FAILED]\n");
+		printf("Failed to send RELEASE6 command : %s\n",
+		       iscsi_get_error(iscsi));
+		ret = -1;
+		goto finished;
+	}
+	/* We expect this command to pass. */
+	if (task->status != SCSI_STATUS_GOOD) {
+		printf("[FAILED]\n");
+		printf("RELEASE6 command: failed with sense %s\n",
+		       iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		ret = -1;
+		goto test4;
+	}
+
+	printf("[OK]\n");
+
 test4:
 	printf("Send TESTUNITREADY from Initiator 1...\n");
 	task = iscsi_testunitready_sync(iscsi, lun);
