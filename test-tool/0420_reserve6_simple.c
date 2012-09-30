@@ -51,7 +51,7 @@ int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss,
 		return -1;
 	}
 
-	iscsi2 = iscsi_context_login(initiator, url, &lun);
+	iscsi2 = iscsi_context_login(initiator2, url, &lun);
 	if (iscsi2 == NULL) {
 		printf("Failed to login to target\n");
 		return -1;

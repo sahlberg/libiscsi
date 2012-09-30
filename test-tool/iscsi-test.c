@@ -35,6 +35,8 @@
 #include "iscsi-test.h"
 
 const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test";
+const char *initiator2 = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test-2";
+
 static int data_loss = 0;
 static int show_info = 0;
 
@@ -242,6 +244,7 @@ void print_help(void)
 {
 	fprintf(stderr, "Usage: iscsi-test [OPTION...] <iscsi-url>\n");
 	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
+	fprintf(stderr, "  -I, --initiator-name-2=iqn-name   Second initiatorname to use\n");
 	fprintf(stderr, "  -t, --test=test-name              Which test to run. Default is to run all tests.\n");
 	fprintf(stderr, "  -l, --list                        List all tests.\n");
 	fprintf(stderr, "  --info,                           Print extra info about a test.\n");
@@ -372,6 +375,7 @@ int main(int argc, const char *argv[])
 		{ "usage", 0, POPT_ARG_NONE, &show_usage, 0, "Display brief usage message", NULL },
 		{ "list", 'l', POPT_ARG_NONE, &list_tests, 0, "List all tests", NULL },
 		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
+		{ "initiator-name-2", 'I', POPT_ARG_STRING, &initiator, 0, "Second initiatorname to use for tests using more two sessions", "iqn-name" },
 		{ "test", 't', POPT_ARG_STRING, &testname, 0, "Which test to run", "testname" },
 		{ "info", 0, POPT_ARG_NONE, &show_info, 0, "Show information about the test", "testname" },
 		{ "dataloss", 0, POPT_ARG_NONE, &data_loss, 0, "Allow destructuve tests", NULL },
