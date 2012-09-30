@@ -1,0 +1,45 @@
+This directory contains a libiscsi based test tool.
+The purpose of this test tool is to validate iscsi and scsi protocol compliance of a target.
+
+
+Initiatornames and LUN-masking
+==============================
+If the target uses lun-masking or ACLs you need to set the target up to allow
+iscsi-test access to the LUNs you want to test.
+By default iscsi-test uses the following two initiator names :
+  iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test
+  iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test-2
+
+Most tests only use the first name but some tests, such as the RESERVE/RELEASE
+tests, will use both names.
+
+Optionally you can use different initiatir names for your testing using the
+command line flags :
+  --initiator-name=iqn.<some other name>
+  --initiator-name-2=iqn.<another different name>
+
+
+Listing all tests and test details:
+===================================
+The --list argument is used to show a lost of all major tests that are available
+  iscsi-test --list
+
+To list all tests and a description of each test and subtests, use
+  iscsi-test --list --info
+
+Running tests:
+==============
+Running tests you need to specify which test to run using the --test argument.
+This can either be the name of one specific test or a set of tests using * as
+the wildcard character.
+
+Example to run one specific test :
+  iscsi-test --test="T1020_bufferoffset_invalid" iscsi://127.0.0.1/iqn.ronnie.test/1
+
+Example to run all READ10 tests :
+  iscsi-test --test="*read10*" iscsi://127.0.0.1/iqn.ronnie.test/1
+
+Or to run every test :
+  iscsi-test --test="*" iscsi://127.0.0.1/iqn.ronnie.test/1
+
+
