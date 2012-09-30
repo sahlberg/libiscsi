@@ -218,6 +218,8 @@ struct scsi_test tests[] = {
 
 /* reserve6/release6 */
 { "T0420_reserve6_simple",              T0420_reserve6_simple },
+{ "T0421_reserve6_lun_reset",           T0421_reserve6_lun_reset },
+{ "T0422_reserve6_logout",              T0422_reserve6_logout },
 
 /* iSCSI protocol tests */
 

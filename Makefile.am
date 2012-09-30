@@ -135,6 +135,8 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0404_inquiry_all_reported_vpd.c \
 	test-tool/0410_readtoc_basic.c \
 	test-tool/0420_reserve6_simple.c \
+	test-tool/0421_reserve6_lun_reset.c \
+	test-tool/0422_reserve6_logout.c \
 	\
 	test-tool/1000_cmdsn_invalid.c \
 	test-tool/1010_datasn_invalid.c \
