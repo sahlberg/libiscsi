@@ -17,6 +17,9 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
+extern const char *initiator;
+extern const char *initiator2;
+
 struct iscsi_context *iscsi_context_login(const char *initiatorname, const char *url, int *lun);
 
 struct iscsi_async_state {
