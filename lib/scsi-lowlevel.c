@@ -308,7 +308,7 @@ scsi_cdb_readcapacity10(int lba, int pmi)
  * READTOC
  */
 struct scsi_task *
-scsi_cdb_readtoc(int msf, int format, int track_session, uint32_t xferlen)
+scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len)
 {
 	struct scsi_task *task;
 
@@ -335,13 +335,15 @@ scsi_cdb_readtoc(int msf, int format, int track_session, uint32_t xferlen)
 		task->cdb[6] = 0xff & track_session;
 	}
 
+	*(uint16_t *)&task->cdb[7] = htons(alloc_len);
+
 	task->cdb_size = 10;
-	if (xferlen != 0) {
+	if (alloc_len != 0) {
 		task->xfer_dir = SCSI_XFER_READ;
 	} else {
 		task->xfer_dir = SCSI_XFER_NONE;
 	}
-	task->expxferlen = xferlen;
+	task->expxferlen = alloc_len;
 
 	task->params.readtoc.msf = msf;
 	task->params.readtoc.format = format;

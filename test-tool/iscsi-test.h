@@ -17,6 +17,9 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
+extern const char *initiator;
+extern const char *initiator2;
+
 struct iscsi_context *iscsi_context_login(const char *initiatorname, const char *url, int *lun);
 
 struct iscsi_async_state {
@@ -167,6 +170,8 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url, int d
 int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss, int show_info);
+int T0421_reserve6_lun_reset(const char *initiator, const char *url, int data_loss, int show_info);
+int T0422_reserve6_logout(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
 int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
