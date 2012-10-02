@@ -172,6 +172,7 @@ int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss, i
 int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T0421_reserve6_lun_reset(const char *initiator, const char *url, int data_loss, int show_info);
 int T0422_reserve6_logout(const char *initiator, const char *url, int data_loss, int show_info);
+int T0423_reserve6_sessionloss(const char *initiator, const char *url, int data_loss, int show_info);
 
 int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
 int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
