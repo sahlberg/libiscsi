@@ -53,8 +53,9 @@ int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss,
 
 	iscsi2 = iscsi_context_login(initiator2, url, &lun);
 	if (iscsi2 == NULL) {
-		printf("Failed to login to target\n");
-		return -1;
+		printf("Failed to login to target\n");	
+		ret = 1;
+		goto out_login1;
 	}
 
 	ret = 0;
@@ -66,7 +67,7 @@ int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss,
 		printf("Failed to send RESERVE6 command : %s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto finished1;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		if (task->status == SCSI_STATUS_CHECK_CONDITION
@@ -74,18 +75,18 @@ int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss,
 		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {		
 			printf("[OK]\n");
 			printf("RESERVE6 Not Supported\n");
-			ret = 0;
+			goto finished2;
 		} else {
 			printf("[FAILED]\n");
 			printf("RESERVE6 failed but ascq was wrong. Should "
 			       "have failed with ILLEGAL_REQUEST/"
 			       "INVALID OPERATOR. Sense:%s\n", 
 			       iscsi_get_error(iscsi));
-			ret = -1;	
+			ret = -1;
+			goto finished2;
 		}
-		scsi_free_scsi_task(task);
-		goto finished;
 	}
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 	printf("Send RELEASE6 ... ");
@@ -95,63 +96,57 @@ int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss,
 		printf("Failed to send RELEASE6 command : %s\n", 
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto finished1;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("RELEASE6 command failed : %s\n", 
 		       iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
 		ret = -1;
-		goto finished;
+		goto finished2;
 	}
-
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
 test2:
 	printf("Test that reservation works.\n");
-	printf("Send RESERVE6 from Initiator 1 ... ");
+	printf("Send RESERVE6 from Initiator 1. ... ");
 	task = iscsi_reserve6_sync(iscsi, lun);
 	if (task == NULL) {
 		printf("[FAILED]\n");
 		printf("Failed to send RESERVE6 command : %s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto finished1;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("RESERVE6 command failed : %s\n",
 		       iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
 		ret = -1;
-		goto finished;
+		goto finished2;
 	}
-
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-	printf("Send another RESERVE6 from Initiator 1 ... ");
 	task = iscsi_reserve6_sync(iscsi, lun);
 	if (task == NULL) {
 		printf("[FAILED]\n");
 		printf("Failed to send RESERVE6 command : %s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto finished1;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("RESERVE6 command failed : %s\n",
 		       iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
 		ret = -1;
-		goto finished;
+		goto finished2;
 	}
-
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
-
-
 
 test3:
 	printf("Send RESERVE6 from Initiator 2. Expect conflict. ... ");
@@ -161,41 +156,40 @@ test3:
 		printf("Failed to send RESERVE6 command : %s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
-	}
+		goto finished1;
+	} 
 	/* We expect this command to fail for the test to pass. */
 	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
 		printf("[FAILED]\n");
 		printf("Expected RESERVATION CONFLICT\n");
-		scsi_free_scsi_task(task);
 		ret = -1;
-		goto finished;
+		goto finished2;
 	}
-
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-
 test3a:
-	printf("Send RELEASE6 from Initiator 2. Expect NO-OP ...");
+	printf("Send RELEASE6 from Initiator 2..Expect NO-OP. ... ");
 	task = iscsi_release6_sync(iscsi2, lun);
 	if (task == NULL) {
 		printf("[FAILED]\n");
 		printf("Failed to send RELEASE6 command : %s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto finished1;
 	}
 	/* We expect this command to pass. */
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("RELEASE6 command: failed with sense %s\n",
 		       iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
 		ret = -1;
+		/* Treat as non-fatal failure for now. STGT is broken.*/
+		scsi_free_scsi_task(task);
 		goto test4;
 	}
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
-
 
 test4:
 	printf("Send TESTUNITREADY from Initiator 1 ... ");
@@ -205,18 +199,17 @@ test4:
 		printf("Failed to send TEST UNIT READY command: %s\n", 
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto finished1;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TEST UNIT READY command: failed with sense %s\n",
 		       iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
 		ret = -1;
-		goto finished;
+		goto finished2;
 	}
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
-
 
 test5:
 	printf("Send TESTUNITREADY from Initiator 2. Expect conflict. ... ");
@@ -226,18 +219,16 @@ test5:
 		printf("Failed to send TEST UNIT READY command: %s\n", 
 		       iscsi_get_error(iscsi2));
 		ret = -1;
-		goto finished;
+		goto finished1;
 	}
 	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
 		printf("[FAILED]\n");
 		printf("Expected RESERVATION CONFLICT\n");
-		scsi_free_scsi_task(task);
 		ret = -1;
-		goto finished;
+		goto finished2;
 	}
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
-
-
 
 test6:
 	printf("Test that release actually works\n");
@@ -248,17 +239,16 @@ test6:
 		printf("Failed to send RELEASE6 command : %s\n", 
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto finished1;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("RELEASE6 command failed : %s\n", 
 		       iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
 		ret = -1;
-		goto finished;
+		goto finished2;
 	}
-
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 	printf("Send RESERVE6 Initiator 2 ... ");
@@ -268,16 +258,16 @@ test6:
 		printf("Failed to send RESERVE6 command : %s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto finished1;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("RESERVE6 command failed : %s\n",
 		       iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
 		ret = -1;
-		goto finished;
+		goto finished2;
 	}
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 	printf("Send RELEASE6 Initiator 2 ... ");
@@ -287,22 +277,26 @@ test6:
 		printf("Failed to send RELEASE6 command : %s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		goto finished;
+		goto finished1;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("RELEASE6 command failed : %s\n",
 		       iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
 		ret = -1;
-		goto finished;
+		goto finished2;
 	}
-
-	printf("[OK]\n");
-
 	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+        goto finished1;
 
-finished:
+
+finished2:
+	scsi_free_scsi_task(task);
+finished1:
+	iscsi_logout_sync(iscsi2);
+	iscsi_destroy_context(iscsi2);
+out_login1:
 	iscsi_logout_sync(iscsi);
 	iscsi_destroy_context(iscsi);
 	return ret;
