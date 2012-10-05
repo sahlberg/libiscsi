@@ -1,0 +1,212 @@
+/* 
+   Copyright (C) 2012 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
+   
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+   
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <poll.h>
+#include "iscsi.h"
+#include "scsi-lowlevel.h"
+#include "iscsi-test.h"
+
+struct mgmt_task {
+       uint32_t	 status;
+       uint32_t	 finished;
+};
+
+static void mgmt_cb(struct iscsi_context *iscsi _U_, int status _U_,
+				 void *command_data, void *private_data)
+{
+	struct mgmt_task *mgmt_task = (struct mgmt_task *)private_data;
+
+	mgmt_task->status   = *(uint32_t *)command_data;
+	mgmt_task->finished = 1;
+}
+
+int T0424_reserve6_target_reset(const char *initiator, const char *url, int data_loss, int show_info)
+{ 
+	struct iscsi_context *iscsi, *iscsi2;
+	struct scsi_task *task;
+	int ret, lun;
+	struct mgmt_task mgmt_task = {0, 0};
+	struct pollfd pfd;
+
+	printf("0424_reserve6_target_reset:\n");
+	printf("========================\n");
+	if (show_info) {
+		printf("Test that a RESERVE6 is dropped by a Target-reset\n");
+		printf("  If device does not support RESERVE6, just skip the test.\n");
+		printf("1, Reserve the device from the first initiator.\n");
+		printf("2, Verify we can access the LUN from the first initiator\n");
+		printf("3, Verify we can NOT access the LUN from the second initiator\n");
+		printf("4, Send a Target-reset\n");
+		printf("5, Verify we can access the LUN from the second initiator\n");
+		printf("\n");
+		return 0;
+	}
+
+	iscsi = iscsi_context_login(initiator, url, &lun);
+	if (iscsi == NULL) {
+		printf("Failed to login to target\n");
+		return -1;
+	}
+
+	iscsi2 = iscsi_context_login(initiator2, url, &lun);
+	if (iscsi2 == NULL) {
+		printf("Failed to login to target\n");
+		return -1;
+	}
+
+	ret = 0;
+
+
+
+
+	printf("Send RESERVE6 from the first initiator ... ");
+	task = iscsi_reserve6_sync(iscsi, lun);
+	if (task == NULL) {
+		printf("[FAILED]\n");
+		printf("Failed to send RESERVE6 command : %s\n",
+		       iscsi_get_error(iscsi));
+		ret = -1;
+		goto finished;
+	}
+	if (task->status == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST 
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {		
+		printf("[SKIPPED]\n");
+		printf("RESERVE6 Not Supported\n");
+		ret = -2;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		printf("[FAILED]\n");
+		printf("RESERVE6 failed with sense:%s\n", 
+		       iscsi_get_error(iscsi));
+		ret = -1;	
+		scsi_free_scsi_task(task);
+		goto test2;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+
+test2:
+	printf("Verify we can access the LUN from the first initiator ... ");
+	task = iscsi_testunitready_sync(iscsi, lun);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send TEST UNIT READY command: %s\n", 
+		       iscsi_get_error(iscsi));
+		ret = -1;
+		goto finished;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		printf("[FAILED]\n");
+		printf("TEST UNIT READY command: failed with sense %s\n",
+		       iscsi_get_error(iscsi));
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test3;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+
+test3:
+	printf("Verify we can NOT access the LUN from the second initiator ... ");
+	task = iscsi_testunitready_sync(iscsi2, lun);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send TEST UNIT READY command: %s\n", 
+		       iscsi_get_error(iscsi2));
+		ret = -1;
+		goto finished;
+	}
+	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
+		printf("[FAILED]\n");
+		printf("Expected RESERVATION CONFLICT\n");
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+test4:
+	printf("Send a Target Cold-Reset ... ");
+	iscsi_task_mgmt_target_cold_reset_async(iscsi, mgmt_cb, &mgmt_task);
+	while (mgmt_task.finished == 0) {
+		pfd.fd = iscsi_get_fd(iscsi);
+		pfd.events = iscsi_which_events(iscsi);
+
+		if (poll(&pfd, 1, -1) < 0) {
+			printf("Poll failed");
+			goto finished;
+		}
+		if (iscsi_service(iscsi, pfd.revents) < 0) {
+			printf("iscsi_service failed with : %s\n", iscsi_get_error(iscsi));
+			break;
+		}
+	}
+	if (mgmt_task.status != 0) {
+		printf("[FAILED]\n");
+		printf("Failed to reset the LUN\n");
+		goto finished;
+	}
+	printf("[OK]\n");
+
+test5:
+	/* We might be getting UNIT_ATTENTION/BUS_RESET after the lun-reset above.
+	   If so just loop and try the TESTUNITREADY again until it clears
+	*/
+	printf("Verify we can access the LUN from the second initiator ... ");
+	task = iscsi_testunitready_sync(iscsi2, lun);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send TEST UNIT READY command: %s\n", 
+		       iscsi_get_error(iscsi2));
+		ret = -1;
+		goto finished;
+	}
+	if (task->status == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key ==  SCSI_SENSE_UNIT_ATTENTION
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET) {
+		printf("Got BUS RESET. Retry accessing the LUN\n");
+		goto test5;
+	  
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		printf("[FAILED]\n");
+		printf("TEST UNIT READY command: failed with sense %s\n",
+		       iscsi_get_error(iscsi2));
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto test3;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+
+finished:
+	iscsi_logout_sync(iscsi);
+	iscsi_destroy_context(iscsi);
+	iscsi_logout_sync(iscsi2);
+	iscsi_destroy_context(iscsi2);
+	return ret;
+}
