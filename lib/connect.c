@@ -209,6 +209,9 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 		return 0;
 	}
 
+    int retry = 0;
+    srand (time(NULL)^getpid());
+
 try_again:
 
 	iscsi = iscsi_create_context(old_iscsi->initiator_name);
@@ -234,7 +237,17 @@ try_again:
 
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
 		iscsi_destroy_context(iscsi);
-		sleep(1);
+		int backoff=retry;
+		if (backoff > 10) {
+			backoff+=rand()%10;
+			backoff-=5;
+		}
+		if (backoff > 30) {
+			backoff=30;
+		}
+		DPRINTF(iscsi,1,"reconnect try %d failed, waiting %d seconds",retry,backoff);
+		sleep(backoff);
+		retry++;
 		goto try_again;
 	}
 
