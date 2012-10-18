@@ -65,6 +65,7 @@ struct iscsi_context {
 	const char *initiator_name;
 	const char *target_name;
 	const char *target_address;  /* If a redirect */
+	const char *connected_portal;
 	const char *alias;
 
 	const char *user;
@@ -120,6 +121,7 @@ struct iscsi_context {
 	const char *portal;
 	int no_auto_reconnect;
 	int reconnect_deferred;
+	int debug;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40

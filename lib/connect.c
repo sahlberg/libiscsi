@@ -158,6 +158,8 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
 	struct iscsi_context *iscsi = old_iscsi;
 
+    DPRINTF(iscsi,2,"reconnect initiated");
+
 	/* This is mainly for tests, where we do not want to automatically
 	   reconnect but rather want the commands to fail with an error
 	   if the target drops the session.
@@ -213,6 +215,8 @@ try_again:
 	iscsi->lun = old_iscsi->lun;
 
 	iscsi->portal = strdup(old_iscsi->portal);
+	
+	iscsi->debug = old_iscsi->debug;
 
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
 		iscsi_destroy_context(iscsi);

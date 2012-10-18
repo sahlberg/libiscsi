@@ -244,14 +244,17 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	free(discard_const(iscsi->chap_c));
 	iscsi->chap_c = NULL;
 
+    if (iscsi->connected_portal != NULL) {
+	    free(discard_const(iscsi->connected_portal));
+	    iscsi->connected_portal = NULL;
+	}
+
 	iscsi->connect_data = NULL;
 
 	free(iscsi);
 
 	return 0;
 }
-
-
 
 void
 iscsi_set_error(struct iscsi_context *iscsi, const char *error_string, ...)
@@ -270,9 +273,18 @@ iscsi_set_error(struct iscsi_context *iscsi, const char *error_string, ...)
 	free(iscsi->error_string);
 
 	iscsi->error_string = str;
+	
 	va_end(ap);
+	
+	DPRINTF(iscsi,1,str);
 }
 
+void
+iscsi_set_debug(struct iscsi_context *iscsi, int level)
+{
+	iscsi->debug = level;
+	DPRINTF(iscsi,2,"set debug level to %d",level);
+}
 
 const char *
 iscsi_get_error(struct iscsi_context *iscsi)

@@ -196,6 +196,7 @@ void print_help(void)
 	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
 	fprintf(stderr, "  -e, --evpd=integer                evpd\n");
 	fprintf(stderr, "  -c, --pagecode=integer            page code\n");
+	fprintf(stderr, "  -d, --debug=integer               debug level (0=disabled)\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Help options:\n");
 	fprintf(stderr, "  -?, --help                        Show this help message\n");
@@ -218,7 +219,7 @@ int main(int argc, const char *argv[])
 	const char *url = NULL;
 	struct iscsi_url *iscsi_url = NULL;
 	int evpd = 0, pagecode = 0;
-	int show_help = 0, show_usage = 0;
+	int show_help = 0, show_usage = 0, debug = 0;
 	int res;
 
 	struct poptOption popt_options[] = {
@@ -227,6 +228,7 @@ int main(int argc, const char *argv[])
 		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
 		{ "evpd", 'e', POPT_ARG_INT, &evpd, 0, "evpd", "integer" },
 		{ "pagecode", 'c', POPT_ARG_INT, &pagecode, 0, "page code", "integer" },
+		{ "debug", 'd', POPT_ARG_INT, &debug, 0, "Debugging level", "integer" },
 		POPT_TABLEEND
 	};
 
@@ -262,6 +264,10 @@ int main(int argc, const char *argv[])
 		fprintf(stderr, "Failed to create context\n");
 		exit(10);
 	}
+
+    if (debug > 0) {
+        iscsi_set_debug(iscsi, debug);
+    }
 
 	if (url == NULL) {
 		fprintf(stderr, "You must specify the URL\n");

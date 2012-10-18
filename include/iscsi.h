@@ -958,6 +958,14 @@ iscsi_scsi_task_cancel(struct iscsi_context *iscsi,
 EXTERN void
 iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi);
 
+#define DPRINTF(iscsi,level,fmt,args...) do { if ((iscsi)->debug >= level) {fprintf(stderr,"libiscsi: ");fprintf(stderr, (fmt), ##args); fprintf(stderr,"\n");} } while (0);
+
+/*
+ * This function is to set the debugging level (0=disabled).
+ */
+EXTERN void
+iscsi_set_debug(struct iscsi_context *iscsi, int level);
+
 #ifdef __cplusplus
 }
 #endif

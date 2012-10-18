@@ -68,6 +68,8 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	struct addrinfo *ai = NULL;
 	int socksize;
 
+    DPRINTF(iscsi,2,"connecting to portal %s",portal);
+
 	if (iscsi->fd != -1) {
 		iscsi_set_error(iscsi,
 				"Trying to connect but already connected.");
@@ -170,6 +172,10 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	}
 
 	freeaddrinfo(ai);
+	
+	if (iscsi->connected_portal) free(iscsi->connected_portal);
+	iscsi->connected_portal=strdup(portal);
+	
 	return 0;
 }
 
@@ -183,6 +189,9 @@ iscsi_disconnect(struct iscsi_context *iscsi)
 	}
 
 	close(iscsi->fd);
+	
+	if (iscsi->connected_portal)
+		DPRINTF(iscsi,2,"disconnected from portal %s",iscsi->connected_portal);
 
 	iscsi->fd  = -1;
 	iscsi->is_connected = 0;
