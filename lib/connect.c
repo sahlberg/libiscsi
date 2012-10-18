@@ -229,6 +229,8 @@ try_again:
 	iscsi->portal = strdup(old_iscsi->portal);
 	
 	iscsi->debug = old_iscsi->debug;
+	
+	iscsi->tcp_user_timeout = old_iscsi->tcp_user_timeout;
 
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
 		iscsi_destroy_context(iscsi);

@@ -159,7 +159,14 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	iscsi->connect_data      = private_data;
 
 	set_nonblocking(iscsi->fd);
-	iscsi_set_tcp_keepalive(iscsi, 30, 3, 30);
+	
+	if (iscsi->tcp_user_timeout > 0) {
+		set_tcp_user_timeout(iscsi);
+	}
+	else
+	{
+		iscsi_set_tcp_keepalive(iscsi, 30, 3, 30);
+	}
 
 	if (connect(iscsi->fd, ai->ai_addr, socksize) != 0
 	    && errno != EINPROGRESS) {
@@ -524,6 +531,40 @@ iscsi_free_iscsi_inqueue(struct iscsi_in_pdu *inqueue)
 	}
 }
 
+#ifndef TCP_USER_TIMEOUT
+#define TCP_USER_TIMEOUT        18
+#endif
+
+int set_tcp_user_timeout(struct iscsi_context *iscsi)
+{
+    int level, value;
+	
+	#if defined(__FreeBSD__) || defined(__sun)
+	struct protoent *buf;
+
+	if ((buf = getprotobyname("tcp")) != NULL)
+		level = buf->p_proto;
+	else
+		return -1;
+	#else
+		level = SOL_TCP;
+	#endif
+	
+	value = iscsi->tcp_user_timeout;
+	if (setsockopt(iscsi->fd, level, TCP_USER_TIMEOUT, &value, sizeof(value)) != 0) {
+		iscsi_set_error(iscsi, "TCP: Failed to set tcp user timeout. Error %s(%d)", strerror(errno), errno);
+		return -1;
+	}
+	DPRINTF(iscsi,3,"TCP_USER_TIMEOUT set to %d",value);
+	return 0;
+}
+
+void iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int timeout_ms)
+{
+    iscsi->tcp_user_timeout=timeout_ms;
+    DPRINTF(iscsi,2,"TCP_USER_TIMEOUT will be set to %dms on next socket creation",timeout_ms);    
+}
+
 int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval)
 {
 	int level, value;
@@ -544,6 +585,7 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, in
 		iscsi_set_error(iscsi, "TCP: Failed to set socket option SO_KEEPALIVE. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
+	DPRINTF(iscsi,3,"SO_KEEPALIVE set to %d",value);
 #endif
 #ifdef TCP_KEEPCNT
 	value = count;
@@ -551,6 +593,7 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, in
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive count. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
+	DPRINTF(iscsi,3,"TCP_KEEPCNT set to %d",value);
 #endif
 #ifdef TCP_KEEPINTVL
 	value = interval;
@@ -558,6 +601,7 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, in
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive interval. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
+	DPRINTF(iscsi,3,"TCP_KEEPINTVL set to %d",value);
 #endif
 #ifdef TCP_KEEPIDLE
 	value = idle;
@@ -565,6 +609,7 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, in
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive idle. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
+	DPRINTF(iscsi,3,"TCP_KEEPIDLE set to %d",value);
 #endif
 
 	return 0;

@@ -967,6 +967,13 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi);
 EXTERN void
 iscsi_set_debug(struct iscsi_context *iscsi, int level);
 
+/*
+ * This function is to set the TCP_USER_TIMEOUT option. It has to be called after iscsi
+ * context creation. The value given in ms is then applied each time a new socket is created.
+ */
+EXTERN void 
+iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int timeout_ms);
+
 #ifdef __cplusplus
 }
 #endif
