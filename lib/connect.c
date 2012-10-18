@@ -36,6 +36,10 @@ struct connect_task {
 };
 
 static void
+iscsi_connect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
+		 void *private_data);
+
+static void
 iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 		       void *command_data, void *private_data)
 {
@@ -81,6 +85,14 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 	       void *private_data)
 {
 	struct connect_task *ct = private_data;
+
+    if (status == 0x101 && iscsi->target_address) {
+		iscsi_disconnect(iscsi);
+		if (iscsi_connect_async(iscsi, iscsi->target_address, iscsi_connect_cb, iscsi->connect_data) != 0) {
+			return;
+		}
+		return;
+    }
 
 	if (status != 0) {
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
