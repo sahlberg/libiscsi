@@ -160,12 +160,10 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	set_nonblocking(iscsi->fd);
 	
+	iscsi_set_tcp_keepalive(iscsi, 30, 3, 30);
+	
 	if (iscsi->tcp_user_timeout > 0) {
 		set_tcp_user_timeout(iscsi);
-	}
-	else
-	{
-		iscsi_set_tcp_keepalive(iscsi, 30, 3, 30);
 	}
 
 	if (connect(iscsi->fd, ai->ai_addr, socksize) != 0
