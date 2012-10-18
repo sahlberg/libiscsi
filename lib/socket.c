@@ -157,6 +157,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	iscsi->connect_data      = private_data;
 
 	set_nonblocking(iscsi->fd);
+	iscsi_set_tcp_keepalive(iscsi, 30, 3, 30);
 
 	if (connect(iscsi->fd, ai->ai_addr, socksize) != 0
 	    && errno != EINPROGRESS) {
@@ -437,7 +438,6 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 			return -1;
 		}
 
-		iscsi_set_tcp_keepalive(iscsi, 30, 3, 30);
 		iscsi->is_connected = 1;
 		iscsi->socket_status_cb(iscsi, SCSI_STATUS_GOOD, NULL,
 					iscsi->connect_data);
