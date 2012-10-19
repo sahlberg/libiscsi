@@ -60,6 +60,7 @@ iscsi_scsi_command_sync
 iscsi_scsi_task_cancel
 iscsi_service
 iscsi_set_alias
+iscsi_set_debug
 iscsi_set_header_digest
 iscsi_set_initiator_username_pwd
 iscsi_set_isid_en
@@ -69,6 +70,7 @@ iscsi_set_isid_reserved
 iscsi_set_session_type
 iscsi_set_targetname
 iscsi_set_tcp_keepalive
+iscsi_set_tcp_user_timeout
 iscsi_startstopunit_sync
 iscsi_startstopunit_task
 iscsi_synchronizecache10_sync

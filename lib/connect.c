@@ -36,6 +36,10 @@ struct connect_task {
 };
 
 static void
+iscsi_connect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
+		 void *private_data);
+
+static void
 iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 		       void *command_data, void *private_data)
 {
@@ -81,6 +85,14 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 	       void *private_data)
 {
 	struct connect_task *ct = private_data;
+
+    if (status == 0x101 && iscsi->target_address) {
+		iscsi_disconnect(iscsi);
+		if (iscsi_connect_async(iscsi, iscsi->target_address, iscsi_connect_cb, iscsi->connect_data) != 0) {
+			return;
+		}
+		return;
+    }
 
 	if (status != 0) {
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
@@ -158,6 +170,8 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
 	struct iscsi_context *iscsi = old_iscsi;
 
+    DPRINTF(iscsi,2,"reconnect initiated");
+
 	/* This is mainly for tests, where we do not want to automatically
 	   reconnect but rather want the commands to fail with an error
 	   if the target drops the session.
@@ -195,6 +209,9 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 		return 0;
 	}
 
+    int retry = 0;
+    srand (time(NULL)^getpid());
+
 try_again:
 
 	iscsi = iscsi_create_context(old_iscsi->initiator_name);
@@ -213,10 +230,24 @@ try_again:
 	iscsi->lun = old_iscsi->lun;
 
 	iscsi->portal = strdup(old_iscsi->portal);
+	
+	iscsi->debug = old_iscsi->debug;
+	
+	iscsi->tcp_user_timeout = old_iscsi->tcp_user_timeout;
 
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
 		iscsi_destroy_context(iscsi);
-		sleep(1);
+		int backoff=retry;
+		if (backoff > 10) {
+			backoff+=rand()%10;
+			backoff-=5;
+		}
+		if (backoff > 30) {
+			backoff=30;
+		}
+		DPRINTF(iscsi,1,"reconnect try %d failed, waiting %d seconds",retry,backoff);
+		sleep(backoff);
+		retry++;
 		goto try_again;
 	}
 

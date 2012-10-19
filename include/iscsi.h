@@ -231,6 +231,7 @@ enum scsi_status {
 	SCSI_STATUS_GOOD                 = 0,
 	SCSI_STATUS_CHECK_CONDITION      = 2,
 	SCSI_STATUS_RESERVATION_CONFLICT = 0x18,
+	SCSI_STATUS_REDIRECT             = 0x101,
 	SCSI_STATUS_CANCELLED            = 0x0f000000,
 	SCSI_STATUS_ERROR                = 0x0f000001
 };
@@ -957,6 +958,21 @@ iscsi_scsi_task_cancel(struct iscsi_context *iscsi,
  */
 EXTERN void
 iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi);
+
+#define DPRINTF(iscsi,level,fmt,args...) do { if ((iscsi)->debug >= level) {fprintf(stderr,"libiscsi: ");fprintf(stderr, (fmt), ##args); fprintf(stderr,"\n");} } while (0);
+
+/*
+ * This function is to set the debugging level (0=disabled).
+ */
+EXTERN void
+iscsi_set_debug(struct iscsi_context *iscsi, int level);
+
+/*
+ * This function is to set the TCP_USER_TIMEOUT option. It has to be called after iscsi
+ * context creation. The value given in ms is then applied each time a new socket is created.
+ */
+EXTERN void 
+iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int timeout_ms);
 
 #ifdef __cplusplus
 }

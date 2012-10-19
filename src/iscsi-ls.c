@@ -291,6 +291,7 @@ void print_help(void)
 	fprintf(stderr, "Usage: iscsi-ls [OPTION...] <iscsi-url>\n");
 	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
 	fprintf(stderr, "  -s, --show-luns                   Show the luns for each target\n");
+	fprintf(stderr, "  -d, --debug=integer               debug level (0=disabled)\n");	
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Help options:\n");
 	fprintf(stderr, "  -?, --help                        Show this help message\n");
@@ -314,13 +315,14 @@ int main(int argc, const char *argv[])
 	const char *url = NULL;
 	poptContext pc;
 	int res;
-	int show_help = 0, show_usage = 0;
+	int show_help = 0, show_usage = 0, debug = 0;
 
 	struct poptOption popt_options[] = {
 		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
 		{ "usage", 0, POPT_ARG_NONE, &show_usage, 0, "Display brief usage message", NULL },
 		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
 		{ "show-luns", 's', POPT_ARG_NONE, &showluns, 0, "Show the luns for each target", NULL },
+		{ "debug", 'd', POPT_ARG_INT, &debug, 0, "Debugging level", "integer" },		
 		POPT_TABLEEND
 	};
 
@@ -353,7 +355,6 @@ int main(int argc, const char *argv[])
 
 	poptFreeContext(pc);
 
-
 	if (url == NULL) {
 		fprintf(stderr, "You must specify iscsi target portal.\n");
 		print_usage();
@@ -365,6 +366,10 @@ int main(int argc, const char *argv[])
 		printf("Failed to create context\n");
 		exit(10);
 	}
+
+    if (debug > 0) {
+        iscsi_set_debug(iscsi, debug);
+    }
 
 	iscsi_url = iscsi_parse_portal_url(iscsi, url);
 	if (iscsi_url == NULL) {
