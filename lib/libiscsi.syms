@@ -71,6 +71,9 @@ iscsi_set_session_type
 iscsi_set_targetname
 iscsi_set_tcp_keepalive
 iscsi_set_tcp_user_timeout
+iscsi_set_tcp_keepidle
+iscsi_set_tcp_keepcnt
+iscsi_set_tcp_keepintvl
 iscsi_startstopunit_sync
 iscsi_startstopunit_task
 iscsi_synchronizecache10_sync

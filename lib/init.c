@@ -71,6 +71,10 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->use_immediate_data                     = ISCSI_IMMEDIATE_DATA_YES;
 	iscsi->want_header_digest                     = ISCSI_HEADER_DIGEST_NONE_CRC32C;
 
+	iscsi->tcp_keepcnt=3;
+	iscsi->tcp_keepintvl=30;
+	iscsi->tcp_keepidle=30;
+
 	return iscsi;
 }
 

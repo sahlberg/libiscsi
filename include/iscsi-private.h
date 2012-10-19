@@ -86,6 +86,9 @@ struct iscsi_context {
 	int is_connected;
 	
 	int tcp_user_timeout;
+	int tcp_keepcnt;
+	int tcp_keepintvl;
+	int tcp_keepidle;
 
 	int current_phase;
 	int next_phase;

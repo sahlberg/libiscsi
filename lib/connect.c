@@ -234,6 +234,9 @@ try_again:
 	iscsi->debug = old_iscsi->debug;
 	
 	iscsi->tcp_user_timeout = old_iscsi->tcp_user_timeout;
+	iscsi->tcp_keepidle = old_iscsi->tcp_keepidle;
+	iscsi->tcp_keepcnt = old_iscsi->tcp_keepcnt;
+	iscsi->tcp_keepintvl = old_iscsi->tcp_keepintvl;
 
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
 		iscsi_destroy_context(iscsi);
