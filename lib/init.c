@@ -280,7 +280,7 @@ iscsi_set_error(struct iscsi_context *iscsi, const char *error_string, ...)
 	
 	va_end(ap);
 	
-	DPRINTF(iscsi,1,str);
+	DPRINTF(iscsi,1,"%s",str);
 }
 
 void

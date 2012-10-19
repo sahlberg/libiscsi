@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <time.h>
 #include "slist.h"
 #include "iscsi.h"
 #include "iscsi-private.h"

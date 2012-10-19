@@ -58,6 +58,34 @@ static void set_nonblocking(int fd)
 #endif
 }
 
+#ifndef TCP_USER_TIMEOUT
+#define TCP_USER_TIMEOUT        18
+#endif
+
+int set_tcp_user_timeout(struct iscsi_context *iscsi)
+{
+    int level, value;
+	
+	#if defined(__FreeBSD__) || defined(__sun)
+	struct protoent *buf;
+
+	if ((buf = getprotobyname("tcp")) != NULL)
+		level = buf->p_proto;
+	else
+		return -1;
+	#else
+		level = SOL_TCP;
+	#endif
+	
+	value = iscsi->tcp_user_timeout;
+	if (setsockopt(iscsi->fd, level, TCP_USER_TIMEOUT, &value, sizeof(value)) != 0) {
+		iscsi_set_error(iscsi, "TCP: Failed to set tcp user timeout. Error %s(%d)", strerror(errno), errno);
+		return -1;
+	}
+	DPRINTF(iscsi,3,"TCP_USER_TIMEOUT set to %d",value);
+	return 0;
+}
+
 int
 iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		    iscsi_command_cb cb, void *private_data)
@@ -178,7 +206,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	freeaddrinfo(ai);
 	
-	if (iscsi->connected_portal) free(iscsi->connected_portal);
+	if (iscsi->connected_portal) free(discard_const(iscsi->connected_portal));
 	iscsi->connected_portal=strdup(portal);
 	
 	return 0;
@@ -527,34 +555,6 @@ iscsi_free_iscsi_inqueue(struct iscsi_in_pdu *inqueue)
 	      iscsi_free_iscsi_in_pdu(inqueue);
 	      inqueue = next;
 	}
-}
-
-#ifndef TCP_USER_TIMEOUT
-#define TCP_USER_TIMEOUT        18
-#endif
-
-int set_tcp_user_timeout(struct iscsi_context *iscsi)
-{
-    int level, value;
-	
-	#if defined(__FreeBSD__) || defined(__sun)
-	struct protoent *buf;
-
-	if ((buf = getprotobyname("tcp")) != NULL)
-		level = buf->p_proto;
-	else
-		return -1;
-	#else
-		level = SOL_TCP;
-	#endif
-	
-	value = iscsi->tcp_user_timeout;
-	if (setsockopt(iscsi->fd, level, TCP_USER_TIMEOUT, &value, sizeof(value)) != 0) {
-		iscsi_set_error(iscsi, "TCP: Failed to set tcp user timeout. Error %s(%d)", strerror(errno), errno);
-		return -1;
-	}
-	DPRINTF(iscsi,3,"TCP_USER_TIMEOUT set to %d",value);
-	return 0;
 }
 
 void iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int timeout_ms)
