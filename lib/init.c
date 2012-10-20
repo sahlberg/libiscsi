@@ -74,6 +74,26 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->tcp_keepcnt=3;
 	iscsi->tcp_keepintvl=30;
 	iscsi->tcp_keepidle=30;
+	
+	if (getenv("LIBISCSI_TCP_USER_TIMEOUT") != NULL) {
+		iscsi_set_tcp_user_timeout(iscsi,atoi(getenv("LIBISCSI_TCP_USER_TIMEOUT")));
+	}
+
+	if (getenv("LIBISCSI_TCP_KEEPCNT") != NULL) {
+		iscsi_set_tcp_keepcnt(iscsi,atoi(getenv("LIBISCSI_TCP_KEEPCNT")));
+	}
+
+	if (getenv("LIBISCSI_TCP_KEEPINTVL") != NULL) {
+		iscsi_set_tcp_keepintvl(iscsi,atoi(getenv("LIBISCSI_TCP_KEEPINTVL")));
+	}
+
+	if (getenv("LIBISCSI_TCP_KEEPIDLE") != NULL) {
+		iscsi_set_tcp_keepidle(iscsi,atoi(getenv("LIBISCSI_TCP_KEEPIDLE")));
+	}
+	
+	if (getenv("LIBISCSI_DEBUG") != NULL) {
+		iscsi_set_debug(iscsi,atoi(getenv("LIBISCSI_DEBUG")));
+	}
 
 	return iscsi;
 }
