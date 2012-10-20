@@ -575,7 +575,7 @@ void iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value)
 void iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int value)
 {
 	iscsi->tcp_user_timeout=value;
-	DPRINTF(iscsi,2,"TCP_USER_TIMEOUT will be set to %dms on next socket creation",timeout_ms);    
+	DPRINTF(iscsi,2,"TCP_USER_TIMEOUT will be set to %dms on next socket creation",value);    
 }
 
 void iscsi_set_tcp_keepidle(struct iscsi_context *iscsi, int value)
