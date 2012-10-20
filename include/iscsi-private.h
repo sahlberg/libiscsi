@@ -89,6 +89,7 @@ struct iscsi_context {
 	int tcp_keepcnt;
 	int tcp_keepintvl;
 	int tcp_keepidle;
+	int tcp_syncnt;
 
 	int current_phase;
 	int next_phase;

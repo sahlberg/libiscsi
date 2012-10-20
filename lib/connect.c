@@ -238,6 +238,7 @@ try_again:
 	iscsi->tcp_keepidle = old_iscsi->tcp_keepidle;
 	iscsi->tcp_keepcnt = old_iscsi->tcp_keepcnt;
 	iscsi->tcp_keepintvl = old_iscsi->tcp_keepintvl;
+	iscsi->tcp_syncnt = old_iscsi->tcp_syncnt;
 
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
 		iscsi_destroy_context(iscsi);

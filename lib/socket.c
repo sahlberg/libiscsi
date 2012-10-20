@@ -86,6 +86,34 @@ int set_tcp_user_timeout(struct iscsi_context *iscsi)
 	return 0;
 }
 
+#ifndef TCP_SYNCNT
+#define TCP_SYNCNT        7
+#endif
+
+int set_tcp_syncnt(struct iscsi_context *iscsi)
+{
+    int level, value;
+	
+	#if defined(__FreeBSD__) || defined(__sun)
+	struct protoent *buf;
+
+	if ((buf = getprotobyname("tcp")) != NULL)
+		level = buf->p_proto;
+	else
+		return -1;
+	#else
+		level = SOL_TCP;
+	#endif
+	
+	value = iscsi->tcp_syncnt;
+	if (setsockopt(iscsi->fd, level, TCP_SYNCNT, &value, sizeof(value)) != 0) {
+		iscsi_set_error(iscsi, "TCP: Failed to set tcp syn retries. Error %s(%d)", strerror(errno), errno);
+		return -1;
+	}
+	DPRINTF(iscsi,3,"TCP_SYNCNT set to %d",value);
+	return 0;
+}
+
 int
 iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		    iscsi_command_cb cb, void *private_data)
@@ -192,6 +220,10 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	
 	if (iscsi->tcp_user_timeout > 0) {
 		set_tcp_user_timeout(iscsi);
+	}
+
+    if (iscsi->tcp_syncnt > 0) {
+		set_tcp_syncnt(iscsi);
 	}
 
 	if (connect(iscsi->fd, ai->ai_addr, socksize) != 0
@@ -461,7 +493,7 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 	if (iscsi->is_connected == 0 && iscsi->fd != -1 && revents&POLLOUT) {
 		int err = 0;
 		socklen_t err_size = sizeof(err);
-
+        DPRINTF(iscsi,3,"inside iscsi service is_connected=0");
 		if (getsockopt(iscsi->fd, SOL_SOCKET, SO_ERROR,
 			       &err, &err_size) != 0 || err != 0) {
 			if (err == 0) {
@@ -479,6 +511,8 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 			}
 			return -1;
 		}
+
+        DPRINTF(iscsi,2,"connection to %s established",iscsi->connected_portal);
 
 		iscsi->is_connected = 1;
 		iscsi->socket_status_cb(iscsi, SCSI_STATUS_GOOD, NULL,
@@ -555,6 +589,12 @@ iscsi_free_iscsi_inqueue(struct iscsi_in_pdu *inqueue)
 	      iscsi_free_iscsi_in_pdu(inqueue);
 	      inqueue = next;
 	}
+}
+
+void iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value)
+{
+    iscsi->tcp_syncnt=value;
+    DPRINTF(iscsi,2,"TCP_SYNCNT will be set to %d on next socket creation",value);    
 }
 
 void iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int timeout_ms)
