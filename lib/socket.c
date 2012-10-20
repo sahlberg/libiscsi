@@ -439,6 +439,17 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 	return 0;
 }
 
+int inline
+iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
+{
+	if (iscsi->is_loggedin) {
+		if (iscsi_reconnect(iscsi) == 0) {
+			return 0;
+		}
+	}
+	return -1;
+}
+
 int
 iscsi_service(struct iscsi_context *iscsi, int revents)
 {
@@ -460,24 +471,14 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 		}
 		iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR, NULL,
 					iscsi->connect_data);
-		if (iscsi->is_loggedin) {
-			if (iscsi_reconnect(iscsi) == 0) {
-				return 0;
-			}
-		}
-		return -1;
+		return iscsi_service_reconnect_if_loggedin(iscsi);
 	}
 	if (revents & POLLHUP) {
 		iscsi_set_error(iscsi, "iscsi_service: POLLHUP, "
 				"socket error.");
 		iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR, NULL,
 					iscsi->connect_data);
-		if (iscsi->is_loggedin) {
-			if (iscsi_reconnect(iscsi) == 0) {
-				return 0;
-			}
-		}
-		return -1;
+		return iscsi_service_reconnect_if_loggedin(iscsi);
 	}
 
 	if (iscsi->is_connected == 0 && iscsi->fd != -1 && revents&POLLOUT) {
@@ -493,12 +494,7 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 					strerror(err), err);
 			iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR,
 						NULL, iscsi->connect_data);
-			if (iscsi->is_loggedin) {
-				if (iscsi_reconnect(iscsi) == 0) {
-					return 0;
-				}
-			}
-			return -1;
+			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 
         DPRINTF(iscsi,2,"connection to %s established",iscsi->connected_portal);
@@ -511,22 +507,12 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 
 	if (revents & POLLOUT && iscsi->outqueue != NULL) {
 		if (iscsi_write_to_socket(iscsi) != 0) {
-			if (iscsi->is_loggedin) {
-				if (iscsi_reconnect(iscsi) == 0) {
-					return 0;
-				}
-			}
-			return -1;
+			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 	}
 	if (revents & POLLIN) {
 		if (iscsi_read_from_socket(iscsi) != 0) {
-			if (iscsi->is_loggedin) {
-				if (iscsi_reconnect(iscsi) == 0) {
-					return 0;
-				}
-			}
-			return -1;
+			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 	}
 
