@@ -272,7 +272,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	free(discard_const(iscsi->chap_c));
 	iscsi->chap_c = NULL;
 
-    if (iscsi->connected_portal != NULL) {
+	if (iscsi->connected_portal != NULL) {
 	    free(discard_const(iscsi->connected_portal));
 	    iscsi->connected_portal = NULL;
 	}
@@ -587,8 +587,7 @@ iscsi_destroy_url(struct iscsi_url *iscsi_url)
 
 int
 iscsi_set_initiator_username_pwd(struct iscsi_context *iscsi,
-    					    const char *user,
-					    const char *passwd)
+						    const char *user, const char *passwd)
 {
 	free(discard_const(iscsi->user));
 	iscsi->user = strdup(user);

@@ -87,13 +87,13 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 {
 	struct connect_task *ct = private_data;
 
-    if (status == SCSI_STATUS_REDIRECT && iscsi->target_address) {
+	if (status == SCSI_STATUS_REDIRECT && iscsi->target_address) {
 		iscsi_disconnect(iscsi);
 		if (iscsi_connect_async(iscsi, iscsi->target_address, iscsi_connect_cb, iscsi->connect_data) != 0) {
 			return;
 		}
 		return;
-    }
+	}
 
 	if (status != 0) {
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
@@ -171,7 +171,7 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
 	struct iscsi_context *iscsi = old_iscsi;
 
-    DPRINTF(iscsi,2,"reconnect initiated");
+	DPRINTF(iscsi,2,"reconnect initiated");
 
 	/* This is mainly for tests, where we do not want to automatically
 	   reconnect but rather want the commands to fail with an error
@@ -210,8 +210,8 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 		return 0;
 	}
 
-    int retry = 0;
-    srand (time(NULL)^getpid());
+	int retry = 0;
+	srand (time(NULL)^getpid());
 
 try_again:
 

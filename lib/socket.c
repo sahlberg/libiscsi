@@ -114,7 +114,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	struct addrinfo *ai = NULL;
 	int socksize;
 
-    DPRINTF(iscsi,2,"connecting to portal %s",portal);
+	DPRINTF(iscsi,2,"connecting to portal %s",portal);
 
 	if (iscsi->fd != -1) {
 		iscsi_set_error(iscsi,
@@ -212,7 +212,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		set_tcp_user_timeout(iscsi);
 	}
 
-    if (iscsi->tcp_syncnt > 0) {
+	if (iscsi->tcp_syncnt > 0) {
 		set_tcp_syncnt(iscsi);
 	}
 
@@ -497,7 +497,7 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 
-        DPRINTF(iscsi,2,"connection to %s established",iscsi->connected_portal);
+		DPRINTF(iscsi,2,"connection to %s established",iscsi->connected_portal);
 
 		iscsi->is_connected = 1;
 		iscsi->socket_status_cb(iscsi, SCSI_STATUS_GOOD, NULL,
@@ -568,32 +568,32 @@ iscsi_free_iscsi_inqueue(struct iscsi_in_pdu *inqueue)
 
 void iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value)
 {
-    iscsi->tcp_syncnt=value;
-    DPRINTF(iscsi,2,"TCP_SYNCNT will be set to %d on next socket creation",value);    
+	iscsi->tcp_syncnt=value;
+	DPRINTF(iscsi,2,"TCP_SYNCNT will be set to %d on next socket creation",value);    
 }
 
 void iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int timeout_ms)
 {
-    iscsi->tcp_user_timeout=timeout_ms;
-    DPRINTF(iscsi,2,"TCP_USER_TIMEOUT will be set to %dms on next socket creation",timeout_ms);    
+	iscsi->tcp_user_timeout=timeout_ms;
+	DPRINTF(iscsi,2,"TCP_USER_TIMEOUT will be set to %dms on next socket creation",timeout_ms);    
 }
 
 void iscsi_set_tcp_keepidle(struct iscsi_context *iscsi, int value)
 {
-    iscsi->tcp_keepidle=value;
-    DPRINTF(iscsi,2,"TCP_KEEPIDLE will be set to %d on next socket creation",value);    
+	iscsi->tcp_keepidle=value;
+	DPRINTF(iscsi,2,"TCP_KEEPIDLE will be set to %d on next socket creation",value);    
 }
 
 void iscsi_set_tcp_keepcnt(struct iscsi_context *iscsi, int value)
 {
-    iscsi->tcp_keepcnt=value;
-    DPRINTF(iscsi,2,"TCP_KEEPCNT will be set to %d on next socket creation",value);    
+	iscsi->tcp_keepcnt=value;
+	DPRINTF(iscsi,2,"TCP_KEEPCNT will be set to %d on next socket creation",value);    
 }
 
 void iscsi_set_tcp_keepintvl(struct iscsi_context *iscsi, int value)
 {
-    iscsi->tcp_keepintvl=value;
-    DPRINTF(iscsi,2,"TCP_KEEPINTVL will be set to %d on next socket creation",value);    
+	iscsi->tcp_keepintvl=value;
+	DPRINTF(iscsi,2,"TCP_KEEPINTVL will be set to %d on next socket creation",value);    
 }
 
 int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval)

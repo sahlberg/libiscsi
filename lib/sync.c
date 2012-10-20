@@ -30,9 +30,9 @@
 #include "scsi-lowlevel.h"
 
 struct iscsi_sync_state {
-       int finished;
-       int status;
-       struct scsi_task *task;
+   int finished;
+   int status;
+   struct scsi_task *task;
 };
 
 static void
