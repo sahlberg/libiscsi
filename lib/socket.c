@@ -493,7 +493,6 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 	if (iscsi->is_connected == 0 && iscsi->fd != -1 && revents&POLLOUT) {
 		int err = 0;
 		socklen_t err_size = sizeof(err);
-        DPRINTF(iscsi,3,"inside iscsi service is_connected=0");
 		if (getsockopt(iscsi->fd, SOL_SOCKET, SO_ERROR,
 			       &err, &err_size) != 0 || err != 0) {
 			if (err == 0) {
