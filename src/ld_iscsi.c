@@ -51,6 +51,7 @@ struct iscsi_fd_list {
        uint64_t num_blocks;
        off_t offset;
        mode_t mode;
+       int get_lba_status;
 };
 
 static struct iscsi_fd_list iscsi_fd_list[ISCSI_MAX_FD];
@@ -147,6 +148,14 @@ int open(const char *path, int flags, mode_t mode)
 		iscsi_fd_list[fd].offset     = 0;
 		iscsi_fd_list[fd].lun        = iscsi_url->lun;
 		iscsi_fd_list[fd].mode       = mode;
+
+		if (getenv("LD_ISCSI_GET_LBA_STATUS") != NULL) {
+			iscsi_fd_list[fd].get_lba_status = atoi(getenv("LD_ISCSI_GET_LBA_STATUS"));
+			if (rc16->lbpme == 0){
+				LD_ISCSI_DPRINTF(1,"Logical unit is fully provisioned. Will skip get_lba_status tasks");
+				iscsi_fd_list[fd].get_lba_status = 0;
+			}
+		}
 
 		scsi_free_scsi_task(task);
 		iscsi_destroy_url(iscsi_url);
@@ -272,6 +281,7 @@ ssize_t read(int fd, void *buf, size_t count)
 		uint64_t offset;
 		uint64_t num_blocks, lba;
 		struct scsi_task *task;
+		struct scsi_get_lba_status *lbas;
 
 		if (iscsi_fd_list[fd].dup2fd >= 0) {
 			return read(iscsi_fd_list[fd].dup2fd, buf, count);
@@ -290,13 +300,58 @@ ssize_t read(int fd, void *buf, size_t count)
 			count = num_blocks * iscsi_fd_list[fd].block_size;
 		}
 
+		iscsi_fd_list[fd].in_flight = 1;
+        if (iscsi_fd_list[fd].get_lba_status != 0) {
+			LD_ISCSI_DPRINTF(4,"get_lba_status_sync: lun %d, lba %lu, num_blocks: %lu",iscsi_fd_list[fd].lun,lba,num_blocks);
+			task = iscsi_get_lba_status_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, 8+16);
+			if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+				LD_ISCSI_DPRINTF(0,"failed to send get_lba_status command");
+				iscsi_fd_list[fd].in_flight = 0;
+				errno = EIO;
+				return -1;
+			}
+			lbas = scsi_datain_unmarshall(task);
+			if (lbas == NULL) {
+				LD_ISCSI_DPRINTF(0,"failed to unmarshall get_lba_status data");
+				scsi_free_scsi_task(task);
+				iscsi_fd_list[fd].in_flight = 0;
+				errno = EIO;
+				return -1;
+			}
+
+			u_int32_t i;
+			LD_ISCSI_DPRINTF(5,"get_lba_status: num_descriptors: %d",lbas->num_descriptors);
+			u_int32_t _num_allocated=0;
+			u_int32_t _num_blocks=0;
+			for (i=0;i<lbas->num_descriptors;i++) {
+				struct scsi_lba_status_descriptor *lbasd = &lbas->descriptors[i];
+				LD_ISCSI_DPRINTF(5,"get_lba_status_descriptor %d, lba %lu, num_blocks %d, type %d",i,lbasd->lba,lbasd->num_blocks,lbasd->provisioning);
+				if (lbasd->lba != _num_blocks+lba) {
+					LD_ISCSI_DPRINTF(0,"get_lba_status response is non-continuous");
+					scsi_free_scsi_task(task);
+					iscsi_fd_list[fd].in_flight = 0;
+					errno = EIO;
+					return -1;
+			    }
+				_num_allocated+=(lbasd->provisioning==0x00)?lbasd->num_blocks:0;
+				_num_blocks+=lbasd->num_blocks;
+			}
+			scsi_free_scsi_task(task);
+            if (_num_allocated == 0 && _num_blocks >= num_blocks) {
+		        LD_ISCSI_DPRINTF(4,"skipped read16_sync for non-allocated blocks: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
+				memset(buf, 0x00, count);
+		        iscsi_fd_list[fd].offset += count;
+		        iscsi_fd_list[fd].in_flight = 0;
+		        return count;
+			}
+		}
+
         LD_ISCSI_DPRINTF(4,"read16_sync: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
 
-		iscsi_fd_list[fd].in_flight = 1;
 		task = iscsi_read16_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, num_blocks * iscsi_fd_list[fd].block_size, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
 		iscsi_fd_list[fd].in_flight = 0;
 		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-			LD_ISCSI_DPRINTF(0,"failed to send read10 command");
+			LD_ISCSI_DPRINTF(0,"failed to send read16 command");
 			errno = EIO;
 			return -1;
 		}
