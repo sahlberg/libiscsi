@@ -1088,12 +1088,12 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		size -= len + 1;
 	}
 
-    if (status == SCSI_STATUS_REDIRECT && iscsi->target_address) {
+	if (status == SCSI_STATUS_REDIRECT && iscsi->target_address) {
 		DPRINTF(iscsi,2,"target requests redirect to %s",iscsi->target_address);
 		pdu->callback(iscsi, SCSI_STATUS_REDIRECT, NULL,
 				  pdu->private_data);
 		return 0;
-    }
+	}
 
 	if (status != 0) {
 		iscsi_set_error(iscsi, "Failed to log in to target. Status: %s(%d)",

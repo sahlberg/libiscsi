@@ -58,6 +58,52 @@ static void set_nonblocking(int fd)
 #endif
 }
 
+int set_tcp_sockopt(int sockfd, int optname, int value)
+{
+	int level;
+	
+	#if defined(__FreeBSD__) || defined(__sun)
+	struct protoent *buf;
+
+	if ((buf = getprotobyname("tcp")) != NULL)
+		level = buf->p_proto;
+	else
+		return -1;
+	#else
+		level = SOL_TCP;
+	#endif	
+	
+	return setsockopt(sockfd, level, optname, &value, sizeof(value));
+}
+
+#ifndef TCP_USER_TIMEOUT
+#define TCP_USER_TIMEOUT        18
+#endif
+
+int set_tcp_user_timeout(struct iscsi_context *iscsi)
+{
+	if (set_tcp_sockopt(iscsi->fd, TCP_USER_TIMEOUT, iscsi->tcp_user_timeout) != 0) {
+		iscsi_set_error(iscsi, "TCP: Failed to set tcp user timeout. Error %s(%d)", strerror(errno), errno);
+		return -1;
+	}
+	DPRINTF(iscsi,3,"TCP_USER_TIMEOUT set to %d",iscsi->tcp_user_timeout);
+	return 0;
+}
+
+#ifndef TCP_SYNCNT
+#define TCP_SYNCNT        7
+#endif
+
+int set_tcp_syncnt(struct iscsi_context *iscsi)
+{
+	if (set_tcp_sockopt(iscsi->fd, TCP_SYNCNT, iscsi->tcp_syncnt) != 0) {
+		iscsi_set_error(iscsi, "TCP: Failed to set tcp syn retries. Error %s(%d)", strerror(errno), errno);
+		return -1;
+	}
+	DPRINTF(iscsi,3,"TCP_SYNCNT set to %d",iscsi->tcp_syncnt);
+	return 0;
+}
+
 int
 iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		    iscsi_command_cb cb, void *private_data)
@@ -68,7 +114,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	struct addrinfo *ai = NULL;
 	int socksize;
 
-    DPRINTF(iscsi,2,"connecting to portal %s",portal);
+	DPRINTF(iscsi,2,"connecting to portal %s",portal);
 
 	if (iscsi->fd != -1) {
 		iscsi_set_error(iscsi,
@@ -160,10 +206,14 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	set_nonblocking(iscsi->fd);
 	
-	iscsi_set_tcp_keepalive(iscsi, 30, 3, 30);
+	iscsi_set_tcp_keepalive(iscsi, iscsi->tcp_keepidle, iscsi->tcp_keepcnt, iscsi->tcp_keepintvl);
 	
 	if (iscsi->tcp_user_timeout > 0) {
 		set_tcp_user_timeout(iscsi);
+	}
+
+	if (iscsi->tcp_syncnt > 0) {
+		set_tcp_syncnt(iscsi);
 	}
 
 	if (connect(iscsi->fd, ai->ai_addr, socksize) != 0
@@ -178,7 +228,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	freeaddrinfo(ai);
 	
-	if (iscsi->connected_portal) free(iscsi->connected_portal);
+	if (iscsi->connected_portal) free(discard_const(iscsi->connected_portal));
 	iscsi->connected_portal=strdup(portal);
 	
 	return 0;
@@ -389,6 +439,17 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 	return 0;
 }
 
+int inline
+iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
+{
+	if (iscsi->is_loggedin) {
+		if (iscsi_reconnect(iscsi) == 0) {
+			return 0;
+		}
+	}
+	return -1;
+}
+
 int
 iscsi_service(struct iscsi_context *iscsi, int revents)
 {
@@ -410,30 +471,19 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 		}
 		iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR, NULL,
 					iscsi->connect_data);
-		if (iscsi->is_loggedin) {
-			if (iscsi_reconnect(iscsi) == 0) {
-				return 0;
-			}
-		}
-		return -1;
+		return iscsi_service_reconnect_if_loggedin(iscsi);
 	}
 	if (revents & POLLHUP) {
 		iscsi_set_error(iscsi, "iscsi_service: POLLHUP, "
 				"socket error.");
 		iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR, NULL,
 					iscsi->connect_data);
-		if (iscsi->is_loggedin) {
-			if (iscsi_reconnect(iscsi) == 0) {
-				return 0;
-			}
-		}
-		return -1;
+		return iscsi_service_reconnect_if_loggedin(iscsi);
 	}
 
 	if (iscsi->is_connected == 0 && iscsi->fd != -1 && revents&POLLOUT) {
 		int err = 0;
 		socklen_t err_size = sizeof(err);
-
 		if (getsockopt(iscsi->fd, SOL_SOCKET, SO_ERROR,
 			       &err, &err_size) != 0 || err != 0) {
 			if (err == 0) {
@@ -444,13 +494,10 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 					strerror(err), err);
 			iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR,
 						NULL, iscsi->connect_data);
-			if (iscsi->is_loggedin) {
-				if (iscsi_reconnect(iscsi) == 0) {
-					return 0;
-				}
-			}
-			return -1;
+			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
+
+		DPRINTF(iscsi,2,"connection to %s established",iscsi->connected_portal);
 
 		iscsi->is_connected = 1;
 		iscsi->socket_status_cb(iscsi, SCSI_STATUS_GOOD, NULL,
@@ -460,22 +507,12 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 
 	if (revents & POLLOUT && iscsi->outqueue != NULL) {
 		if (iscsi_write_to_socket(iscsi) != 0) {
-			if (iscsi->is_loggedin) {
-				if (iscsi_reconnect(iscsi) == 0) {
-					return 0;
-				}
-			}
-			return -1;
+			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 	}
 	if (revents & POLLIN) {
 		if (iscsi_read_from_socket(iscsi) != 0) {
-			if (iscsi->is_loggedin) {
-				if (iscsi_reconnect(iscsi) == 0) {
-					return 0;
-				}
-			}
-			return -1;
+			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 	}
 
@@ -529,85 +566,66 @@ iscsi_free_iscsi_inqueue(struct iscsi_in_pdu *inqueue)
 	}
 }
 
-#ifndef TCP_USER_TIMEOUT
-#define TCP_USER_TIMEOUT        18
-#endif
-
-int set_tcp_user_timeout(struct iscsi_context *iscsi)
+void iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value)
 {
-    int level, value;
-	
-	#if defined(__FreeBSD__) || defined(__sun)
-	struct protoent *buf;
-
-	if ((buf = getprotobyname("tcp")) != NULL)
-		level = buf->p_proto;
-	else
-		return -1;
-	#else
-		level = SOL_TCP;
-	#endif
-	
-	value = iscsi->tcp_user_timeout;
-	if (setsockopt(iscsi->fd, level, TCP_USER_TIMEOUT, &value, sizeof(value)) != 0) {
-		iscsi_set_error(iscsi, "TCP: Failed to set tcp user timeout. Error %s(%d)", strerror(errno), errno);
-		return -1;
-	}
-	DPRINTF(iscsi,3,"TCP_USER_TIMEOUT set to %d",value);
-	return 0;
+	iscsi->tcp_syncnt=value;
+	DPRINTF(iscsi,2,"TCP_SYNCNT will be set to %d on next socket creation",value);    
 }
 
-void iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int timeout_ms)
+void iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int value)
 {
-    iscsi->tcp_user_timeout=timeout_ms;
-    DPRINTF(iscsi,2,"TCP_USER_TIMEOUT will be set to %dms on next socket creation",timeout_ms);    
+	iscsi->tcp_user_timeout=value;
+	DPRINTF(iscsi,2,"TCP_USER_TIMEOUT will be set to %dms on next socket creation",value);    
+}
+
+void iscsi_set_tcp_keepidle(struct iscsi_context *iscsi, int value)
+{
+	iscsi->tcp_keepidle=value;
+	DPRINTF(iscsi,2,"TCP_KEEPIDLE will be set to %d on next socket creation",value);    
+}
+
+void iscsi_set_tcp_keepcnt(struct iscsi_context *iscsi, int value)
+{
+	iscsi->tcp_keepcnt=value;
+	DPRINTF(iscsi,2,"TCP_KEEPCNT will be set to %d on next socket creation",value);    
+}
+
+void iscsi_set_tcp_keepintvl(struct iscsi_context *iscsi, int value)
+{
+	iscsi->tcp_keepintvl=value;
+	DPRINTF(iscsi,2,"TCP_KEEPINTVL will be set to %d on next socket creation",value);    
 }
 
 int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval)
 {
-	int level, value;
-#if defined(__FreeBSD__) || defined(__sun)
-	struct protoent *buf;
-
-	if ((buf = getprotobyname("tcp")) != NULL)
-		level = buf->p_proto;
-	else
-		return -1;
-#else
-	level = SOL_TCP;
-#endif
-
 #ifdef SO_KEEPALIVE
-	value =1;
+	int value = 1;
 	if (setsockopt(iscsi->fd, SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value)) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set socket option SO_KEEPALIVE. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
 	DPRINTF(iscsi,3,"SO_KEEPALIVE set to %d",value);
-#endif
 #ifdef TCP_KEEPCNT
-	value = count;
-	if (setsockopt(iscsi->fd, level, TCP_KEEPCNT, &value, sizeof(value)) != 0) {
+	if (set_tcp_sockopt(iscsi->fd, TCP_KEEPCNT, count) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive count. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
-	DPRINTF(iscsi,3,"TCP_KEEPCNT set to %d",value);
+	DPRINTF(iscsi,3,"TCP_KEEPCNT set to %d",count);
 #endif
 #ifdef TCP_KEEPINTVL
-	value = interval;
-	if (setsockopt(iscsi->fd, level, TCP_KEEPINTVL, &value, sizeof(value)) != 0) {
+	if (set_tcp_sockopt(iscsi->fd, TCP_KEEPINTVL, interval) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive interval. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
-	DPRINTF(iscsi,3,"TCP_KEEPINTVL set to %d",value);
+	DPRINTF(iscsi,3,"TCP_KEEPINTVL set to %d",interval);
 #endif
 #ifdef TCP_KEEPIDLE
-	value = idle;
-	if (setsockopt(iscsi->fd, level, TCP_KEEPIDLE, &value, sizeof(value)) != 0) {
+	if (set_tcp_sockopt(iscsi->fd, TCP_KEEPIDLE, idle) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive idle. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
-	DPRINTF(iscsi,3,"TCP_KEEPIDLE set to %d",value);
+	DPRINTF(iscsi,3,"TCP_KEEPIDLE set to %d",idle);
+#endif
 #endif
 
 	return 0;
