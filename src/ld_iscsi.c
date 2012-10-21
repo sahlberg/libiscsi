@@ -67,6 +67,12 @@ int open(const char *path, int flags, mode_t mode)
 		struct scsi_task *task;
 		struct scsi_readcapacity10 *rc10;
 
+        if (mode & O_NONBLOCK) {
+			LD_ISCSI_DPRINTF(0,"Non-blocking I/O is currently not supported");
+			errno = EINVAL;
+			return -1;			
+		}
+
 		iscsi = iscsi_create_context(initiator);
 		if (iscsi == NULL) {
 			LD_ISCSI_DPRINTF(0,"Failed to create context");
