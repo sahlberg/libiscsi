@@ -52,6 +52,8 @@ struct iscsi_fd_list {
        off_t offset;
        mode_t mode;
        int get_lba_status;
+       struct scsi_lba_status_descriptor lbasd_cached;
+       int lbasd_cache_valid;
 };
 
 static struct iscsi_fd_list iscsi_fd_list[ISCSI_MAX_FD];
@@ -302,6 +304,17 @@ ssize_t read(int fd, void *buf, size_t count)
 
 		iscsi_fd_list[fd].in_flight = 1;
         if (iscsi_fd_list[fd].get_lba_status != 0) {
+			if (iscsi_fd_list[fd].lbasd_cache_valid==1) {
+				LD_ISCSI_DPRINTF(5,"cached get_lba_status_descriptor is lba %lu, num_blocks %d, provisioning %d",iscsi_fd_list[fd].lbasd_cached.lba,iscsi_fd_list[fd].lbasd_cached.num_blocks,iscsi_fd_list[fd].lbasd_cached.provisioning);
+			    if (iscsi_fd_list[fd].lbasd_cached.provisioning != 0x00 && lba >= iscsi_fd_list[fd].lbasd_cached.lba && lba+num_blocks < iscsi_fd_list[fd].lbasd_cached.lba+iscsi_fd_list[fd].lbasd_cached.num_blocks)
+			    {
+					LD_ISCSI_DPRINTF(4,"skipped read16_sync for non-allocated blocks: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
+					memset(buf, 0x00, count);
+					iscsi_fd_list[fd].offset += count;
+					iscsi_fd_list[fd].in_flight = 0;
+					return count;
+				}
+			}
 			LD_ISCSI_DPRINTF(4,"get_lba_status_sync: lun %d, lba %lu, num_blocks: %lu",iscsi_fd_list[fd].lun,lba,num_blocks);
 			task = iscsi_get_lba_status_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, 8+16);
 			if (task == NULL || task->status != SCSI_STATUS_GOOD) {
@@ -325,7 +338,7 @@ ssize_t read(int fd, void *buf, size_t count)
 			u_int32_t _num_blocks=0;
 			for (i=0;i<lbas->num_descriptors;i++) {
 				struct scsi_lba_status_descriptor *lbasd = &lbas->descriptors[i];
-				LD_ISCSI_DPRINTF(5,"get_lba_status_descriptor %d, lba %lu, num_blocks %d, type %d",i,lbasd->lba,lbasd->num_blocks,lbasd->provisioning);
+				LD_ISCSI_DPRINTF(5,"get_lba_status_descriptor %d, lba %lu, num_blocks %d, provisioning %d",i,lbasd->lba,lbasd->num_blocks,lbasd->provisioning);
 				if (lbasd->lba != _num_blocks+lba) {
 					LD_ISCSI_DPRINTF(0,"get_lba_status response is non-continuous");
 					scsi_free_scsi_task(task);
@@ -335,6 +348,8 @@ ssize_t read(int fd, void *buf, size_t count)
 			    }
 				_num_allocated+=(lbasd->provisioning==0x00)?lbasd->num_blocks:0;
 				_num_blocks+=lbasd->num_blocks;
+				iscsi_fd_list[fd].lbasd_cached=lbas->descriptors[i];
+				iscsi_fd_list[fd].lbasd_cache_valid=1;
 			}
 			scsi_free_scsi_task(task);
             if (_num_allocated == 0 && _num_blocks >= num_blocks) {
