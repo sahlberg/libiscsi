@@ -37,6 +37,10 @@ static const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:ld-iscs
 
 #define ISCSI_MAX_FD  255
 
+static int debug = 0;
+
+#define LD_ISCSI_DPRINTF(level,fmt,args...) do { if ((debug) >= level) {fprintf(stderr,"ld_iscsi: ");fprintf(stderr, (fmt), ##args); fprintf(stderr,"\n");} } while (0);
+
 struct iscsi_fd_list {
        int is_iscsi;
        int dup2fd;
@@ -64,15 +68,14 @@ int open(const char *path, int flags, mode_t mode)
 
 		iscsi = iscsi_create_context(initiator);
 		if (iscsi == NULL) {
-			fprintf(stderr, "ld-iscsi: Failed to create context\n");
+			LD_ISCSI_DPRINTF(0,"Failed to create context");
 			errno = ENOMEM;
 			return -1;
 		}
 
 		iscsi_url = iscsi_parse_full_url(iscsi, path);
 		if (iscsi_url == NULL) {
-			fprintf(stderr, "ld-iscsi: Failed to parse URL: %s\n", 
-				iscsi_get_error(iscsi));
+			LD_ISCSI_DPRINTF(0,"Failed to parse URL: %s\n", iscsi_get_error(iscsi));
 			iscsi_destroy_context(iscsi);
 			errno = EINVAL;
 			return -1;
@@ -84,7 +87,7 @@ int open(const char *path, int flags, mode_t mode)
 
 		if (iscsi_url->user != NULL) {
 			if (iscsi_set_initiator_username_pwd(iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
-				fprintf(stderr, "Failed to set initiator username and password\n");
+				LD_ISCSI_DPRINTF(0,"Failed to set initiator username and password");
 				iscsi_destroy_context(iscsi);
 				errno = ENOMEM;
 				return -1;
@@ -92,7 +95,7 @@ int open(const char *path, int flags, mode_t mode)
 		}
 
 		if (iscsi_full_connect_sync(iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
-			fprintf(stderr, "ld-iscsi: Login Failed. %s\n", iscsi_get_error(iscsi));
+			LD_ISCSI_DPRINTF(0,"Login Failed. %s\n", iscsi_get_error(iscsi));
 			iscsi_destroy_url(iscsi_url);
 			iscsi_destroy_context(iscsi);
 			errno = EIO;
@@ -101,7 +104,7 @@ int open(const char *path, int flags, mode_t mode)
 
 		task = iscsi_readcapacity10_sync(iscsi, iscsi_url->lun, 0, 0);
 		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-			fprintf(stderr, "ld-iscsi: failed to send readcapacity command\n");
+			LD_ISCSI_DPRINTF(0,"failed to send readcapacity command");
 			iscsi_destroy_url(iscsi_url);
 			iscsi_destroy_context(iscsi);
 			errno = EIO;
@@ -110,7 +113,7 @@ int open(const char *path, int flags, mode_t mode)
 
 		rc10 = scsi_datain_unmarshall(task);
 		if (rc10 == NULL) {
-			fprintf(stderr, "ld-iscsi: failed to unmarshall readcapacity10 data\n");
+			LD_ISCSI_DPRINTF(0,"failed to unmarshall readcapacity10 data");
 			scsi_free_scsi_task(task);
 			iscsi_destroy_url(iscsi_url);
 			iscsi_destroy_context(iscsi);
@@ -120,7 +123,7 @@ int open(const char *path, int flags, mode_t mode)
 
 		fd = iscsi_get_fd(iscsi);
 		if (fd >= ISCSI_MAX_FD) {
-			fprintf(stderr, "ld-iscsi: Too many files open\n");
+			LD_ISCSI_DPRINTF(0,"Too many files open");
 			iscsi_destroy_url(iscsi_url);
 			iscsi_destroy_context(iscsi);
 			errno = ENFILE;
@@ -277,11 +280,13 @@ ssize_t read(int fd, void *buf, size_t count)
 			count = num_blocks * iscsi_fd_list[fd].block_size;
 		}
 
+        LD_ISCSI_DPRINTF(4,"read10_sync: lun %d, lba %u, num_blocks: %u, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
+
 		iscsi_fd_list[fd].in_flight = 1;
 		task = iscsi_read10_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, num_blocks * iscsi_fd_list[fd].block_size, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
 		iscsi_fd_list[fd].in_flight = 0;
 		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-			fprintf(stderr, "ld-iscsi: failed to send read10 command\n");
+			LD_ISCSI_DPRINTF(0,"failed to send read10 command");
 			errno = EIO;
 			return -1;
 		}
@@ -381,59 +386,63 @@ static void __attribute__((constructor)) _init(void)
 		iscsi_fd_list[i].dup2fd = -1;
 	}
 
+	if (getenv("LD_ISCSI_DEBUG") != NULL) {
+		debug = atoi(getenv("LD_ISCSI_DEBUG"));
+	}
+
 	real_open = dlsym(RTLD_NEXT, "open");
 	if (real_open == NULL) {
-		fprintf(stderr, "ld_iscsi: Failed to dlsym(open)\n");
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(open)");
 		exit(10);
 	}
 
 	real_close = dlsym(RTLD_NEXT, "close");
 	if (real_close == NULL) {
-		fprintf(stderr, "ld_iscsi: Failed to dlsym(close)\n");
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(close)");
 		exit(10);
 	}
 
 	real_fxstat = dlsym(RTLD_NEXT, "__fxstat");
 	if (real_fxstat == NULL) {
-		fprintf(stderr, "ld_iscsi: Failed to dlsym(__fxstat)\n");
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(__fxstat)");
 		exit(10);
 	}
 
 	real_lxstat = dlsym(RTLD_NEXT, "__lxstat");
 	if (real_lxstat == NULL) {
-		fprintf(stderr, "ld_iscsi: Failed to dlsym(__lxstat)\n");
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(__lxstat)");
 		exit(10);
 	}
 	real_xstat = dlsym(RTLD_NEXT, "__xstat");
 	if (real_xstat == NULL) {
-		fprintf(stderr, "ld_iscsi: Failed to dlsym(__xstat)\n");
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(__xstat)");
 		exit(10);
 	}
 
 	real_read = dlsym(RTLD_NEXT, "read");
 	if (real_read == NULL) {
-		fprintf(stderr, "ld_iscsi: Failed to dlsym(read)\n");
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(read)");
 		exit(10);
 	}
 
 	real_dup2 = dlsym(RTLD_NEXT, "dup2");
 	if (real_dup2 == NULL) {
-		fprintf(stderr, "ld_iscsi: Failed to dlsym(dup2)\n");
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(dup2)");
 		exit(10);
 	}
 
 	real_fxstat64 = dlsym(RTLD_NEXT, "__fxstat64");
 	if (real_fxstat64 == NULL) {
-		fprintf(stderr, "ld_iscsi: Failed to dlsym(__fxstat64)\n");
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(__fxstat64)");
 	}
 
 	real_lxstat64 = dlsym(RTLD_NEXT, "__lxstat64");
 	if (real_lxstat64 == NULL) {
-		fprintf(stderr, "ld_iscsi: Failed to dlsym(_lxstat64)\n");
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(_lxstat64)");
 	}
 
 	real_xstat64 = dlsym(RTLD_NEXT, "__xstat64");
 	if (real_xstat64 == NULL) {
-		fprintf(stderr, "ld_iscsi: Failed to dlsym(__xstat64)\n");
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(__xstat64)");
 	}
 }
