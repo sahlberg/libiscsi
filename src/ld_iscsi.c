@@ -65,7 +65,7 @@ int open(const char *path, int flags, mode_t mode)
 		struct iscsi_context *iscsi;
 		struct iscsi_url *iscsi_url;
 		struct scsi_task *task;
-		struct scsi_readcapacity10 *rc10;
+		struct scsi_readcapacity16 *rc16;
 
         if (mode & O_NONBLOCK) {
 			LD_ISCSI_DPRINTF(0,"Non-blocking I/O is currently not supported");
@@ -109,7 +109,7 @@ int open(const char *path, int flags, mode_t mode)
 			return -1;
 		}
 
-		task = iscsi_readcapacity10_sync(iscsi, iscsi_url->lun, 0, 0);
+		task = iscsi_readcapacity16_sync(iscsi, iscsi_url->lun);
 		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 			LD_ISCSI_DPRINTF(0,"failed to send readcapacity command");
 			iscsi_destroy_url(iscsi_url);
@@ -118,8 +118,8 @@ int open(const char *path, int flags, mode_t mode)
 			return -1;
 		}
 
-		rc10 = scsi_datain_unmarshall(task);
-		if (rc10 == NULL) {
+		rc16 = scsi_datain_unmarshall(task);
+		if (rc16 == NULL) {
 			LD_ISCSI_DPRINTF(0,"failed to unmarshall readcapacity10 data");
 			scsi_free_scsi_task(task);
 			iscsi_destroy_url(iscsi_url);
@@ -127,6 +127,8 @@ int open(const char *path, int flags, mode_t mode)
 			errno = EIO;
 			return -1;
 		}
+      
+        LD_ISCSI_DPRINTF(4,"readcapacity16_sync: block_size: %d, num_blocks: %lu",rc16->block_length,rc16->returned_lba + 1);
 
 		fd = iscsi_get_fd(iscsi);
 		if (fd >= ISCSI_MAX_FD) {
@@ -140,8 +142,8 @@ int open(const char *path, int flags, mode_t mode)
 		iscsi_fd_list[fd].is_iscsi   = 1;
 		iscsi_fd_list[fd].dup2fd     = -1;
 		iscsi_fd_list[fd].iscsi      = iscsi;
-		iscsi_fd_list[fd].block_size = rc10->block_size;
-		iscsi_fd_list[fd].num_blocks = rc10->lba + 1;
+		iscsi_fd_list[fd].block_size = rc16->block_length;
+		iscsi_fd_list[fd].num_blocks = rc16->returned_lba + 1;
 		iscsi_fd_list[fd].offset     = 0;
 		iscsi_fd_list[fd].lun        = iscsi_url->lun;
 		iscsi_fd_list[fd].mode       = mode;
