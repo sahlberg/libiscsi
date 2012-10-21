@@ -50,6 +50,7 @@ struct iscsi_fd_list {
        uint32_t block_size;
        uint64_t num_blocks;
        off_t offset;
+       mode_t mode;
 };
 
 static struct iscsi_fd_list iscsi_fd_list[ISCSI_MAX_FD];
@@ -137,6 +138,7 @@ int open(const char *path, int flags, mode_t mode)
 		iscsi_fd_list[fd].num_blocks = rc10->lba + 1;
 		iscsi_fd_list[fd].offset     = 0;
 		iscsi_fd_list[fd].lun        = iscsi_url->lun;
+		iscsi_fd_list[fd].mode       = mode;
 
 		scsi_free_scsi_task(task);
 		iscsi_destroy_url(iscsi_url);
