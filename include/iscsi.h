@@ -974,6 +974,28 @@ iscsi_set_debug(struct iscsi_context *iscsi, int level);
 EXTERN void 
 iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int timeout_ms);
 
+/*
+ * This function is to set the TCP_KEEPIDLE option. It has to be called after iscsi
+ * context creation. 
+ */
+EXTERN void 
+iscsi_set_tcp_keepidle(struct iscsi_context *iscsi, int value);
+
+/*
+ * This function is to set the TCP_KEEPCNT option. It has to be called after iscsi
+ * context creation. 
+ */
+EXTERN void 
+iscsi_set_tcp_keepcnt(struct iscsi_context *iscsi, int value);
+
+/*
+ * This function is to set the TCP_KEEPINTVL option. It has to be called after iscsi
+ * context creation. 
+ */
+EXTERN void 
+iscsi_set_tcp_keepintvl(struct iscsi_context *iscsi, int value);
+
+
 #ifdef __cplusplus
 }
 #endif
