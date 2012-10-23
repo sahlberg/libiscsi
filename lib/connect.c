@@ -241,7 +241,6 @@ try_again:
 	iscsi->tcp_syncnt = old_iscsi->tcp_syncnt;
 
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
-		iscsi_destroy_context(iscsi);
 		int backoff=retry;
 		if (backoff > 10) {
 			backoff+=rand()%10;
@@ -251,6 +250,7 @@ try_again:
 			backoff=30;
 		}
 		DPRINTF(iscsi,1,"reconnect try %d failed, waiting %d seconds",retry,backoff);
+		iscsi_destroy_context(iscsi);
 		sleep(backoff);
 		retry++;
 		goto try_again;
