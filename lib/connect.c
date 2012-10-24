@@ -285,6 +285,15 @@ try_again:
 			continue;
 		}
 
+		if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
+			/* We dont want to requeue things like DATA-OUT since these guys
+			 * will be reissued automatically anyway once the corresponding
+			 * write command is replayed.
+		 	 */
+			iscsi_free_pdu(old_iscsi, pdu);
+			continue;
+		}
+
 		pdu->itt   = iscsi->itt++;
 		iscsi_pdu_set_itt(pdu, pdu->itt);
 
