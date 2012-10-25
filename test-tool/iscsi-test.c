@@ -242,7 +242,7 @@ struct scsi_test tests[] = {
 
 void print_usage(void)
 {
-	fprintf(stderr, "Usage: iscsi-test [-?] [-?|--help] [--usage] [-t|--test=<test>]\n"
+	fprintf(stderr, "Usage: iscsi-test [-?] [-?|--help] [--usage] [-t|--test=<test>] [-s|--skip=<test>]\n"
 			"\t\t[-l|--list] [--info] [-i|--initiator-name=<iqn-name>]\n"
 			"\t\t<iscsi-url>\n");
 }
@@ -253,6 +253,7 @@ void print_help(void)
 	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
 	fprintf(stderr, "  -I, --initiator-name-2=iqn-name   Second initiatorname to use\n");
 	fprintf(stderr, "  -t, --test=test-name              Which test to run. Default is to run all tests.\n");
+	fprintf(stderr, "  -s, --skip=test-name              Which test to skip. Default is to run all tests.\n");
 	fprintf(stderr, "  -l, --list                        List all tests.\n");
 	fprintf(stderr, "  --info,                           Print extra info about a test.\n");
 	fprintf(stderr, "  --dataloss                        Allow destructive tests.\n");
@@ -376,6 +377,7 @@ int main(int argc, const char *argv[])
 	int res, num_failed, num_skipped;
 	struct scsi_test *test;
 	char *testname = NULL;
+	char *skipname = NULL;
 
 	struct poptOption popt_options[] = {
 		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
@@ -384,6 +386,7 @@ int main(int argc, const char *argv[])
 		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
 		{ "initiator-name-2", 'I', POPT_ARG_STRING, &initiator, 0, "Second initiatorname to use for tests using more two sessions", "iqn-name" },
 		{ "test", 't', POPT_ARG_STRING, &testname, 0, "Which test to run", "testname" },
+		{ "skip", 's', POPT_ARG_STRING, &skipname, 0, "Which test to skip", "skipname" },
 		{ "info", 0, POPT_ARG_NONE, &show_info, 0, "Show information about the test", "testname" },
 		{ "dataloss", 0, POPT_ARG_NONE, &data_loss, 0, "Allow destructuve tests", NULL },
 		POPT_TABLEEND
@@ -437,6 +440,21 @@ int main(int argc, const char *argv[])
 	for (test = &tests[0]; test->name; test++) {
 		if (testname != NULL && fnmatch(testname, test->name, 0)) {
 			continue;
+		}
+		
+		if (skipname != NULL) {
+			char * pchr = skipname;
+			char * pchr2 = NULL;
+			int skip = 0;
+			do {
+				pchr2 = strchr(pchr,',');
+				if (pchr2) pchr2[0]=0x00;
+				if (!fnmatch(pchr, test->name, 0)) {
+					skip = 1;
+				}
+				if (pchr2) {pchr2[0]=',';pchr=pchr2+1;}
+			} while (pchr2);
+			if (skip) continue;
 		}
 
 		res = test->test(initiator, url, data_loss, show_info);
