@@ -740,6 +740,10 @@ EXTERN struct scsi_task *
 iscsi_release6_task(struct iscsi_context *iscsi, int lun,
 		    iscsi_command_cb cb, void *private_data);
 
+EXTERN struct scsi_task *
+iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi, int lun,
+				    int return_timeouts, int maxsize, 
+				    iscsi_command_cb cb, void *private_data);
 
 /*
  * Sync commands for SCSI
@@ -904,6 +908,9 @@ iscsi_reserve6_sync(struct iscsi_context *iscsi, int lun);
 EXTERN struct scsi_task *
 iscsi_release6_sync(struct iscsi_context *iscsi, int lun);
 
+EXTERN struct scsi_task *
+iscsi_report_supported_opcodes_sync(struct iscsi_context *iscsi, int lun,
+				    int return_timeouts, int maxsize);
 
 /*
  * This function is used when  the application wants to specify its own buffers to read the data

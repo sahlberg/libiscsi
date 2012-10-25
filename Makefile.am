@@ -138,6 +138,7 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0421_reserve6_lun_reset.c \
 	test-tool/0422_reserve6_logout.c \
 	test-tool/0423_reserve6_sessionloss.c \
+	test-tool/0430_report_all_supported_ops.c \
 	\
 	test-tool/1000_cmdsn_invalid.c \
 	test-tool/1010_datasn_invalid.c \

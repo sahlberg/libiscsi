@@ -53,6 +53,7 @@ enum scsi_opcode {
 	SCSI_OPCODE_WRITE_SAME16       = 0x93,
 	SCSI_OPCODE_SERVICE_ACTION_IN  = 0x9E,
 	SCSI_OPCODE_REPORTLUNS         = 0xA0,
+	SCSI_OPCODE_MAINTENANCE_IN     = 0xA3,
 	SCSI_OPCODE_READ12             = 0xA8,
 	SCSI_OPCODE_WRITE12            = 0xAA,
 	SCSI_OPCODE_WRITE_VERIFY12     = 0xAE,
@@ -62,6 +63,16 @@ enum scsi_opcode {
 enum scsi_service_action_in {
 	SCSI_READCAPACITY16            = 0x10,
 	SCSI_GET_LBA_STATUS            = 0x12
+};
+
+enum scsi_maintenance_in {
+	SCSI_REPORT_SUPPORTED_OP_CODES = 0x0c
+};
+
+enum scsi_op_code_reporting_options {
+	SCSI_REPORT_SUPPORTING_OPS_ALL       = 0x00,
+	SCSI_REPORT_SUPPORTING_OPCODE        = 0x01,
+	SCSI_REPORT_SUPPORTING_SERVICEACTION = 0x02
 };
 
 /* sense keys */
@@ -265,6 +276,18 @@ struct scsi_readtoc_params {
 	int track_session;
 };
 
+
+struct scsi_report_supported_params {
+	int return_timeouts;
+};
+
+struct scsi_maintenancein_params {
+	enum scsi_maintenance_in sa;
+	union {
+		struct scsi_report_supported_params reportsupported;
+	} params;
+};
+
 struct scsi_sense {
 	unsigned char       error_type;
 	enum scsi_sense_key key;
@@ -318,6 +341,7 @@ struct scsi_task {
 		struct scsi_modesense6_params      modesense6;
 		struct scsi_serviceactionin_params serviceactionin;
 		struct scsi_readtoc_params         readtoc;
+		struct scsi_maintenancein_params   maintenancein;
 	} params;
 
 	enum scsi_residual residual_status;
@@ -748,6 +772,30 @@ struct scsi_get_lba_status {
        struct scsi_lba_status_descriptor *descriptors;
 };
 
+
+struct scsi_op_timeout_descriptor {
+	uint16_t descriptor_length;
+	uint8_t reserved;
+	uint8_t command_specific;
+	uint32_t nominal_processing_timeout;
+	uint32_t recommended_timeout;
+	
+};
+struct scsi_command_descriptor {
+	uint8_t op_code;
+	uint8_t reserved1;
+	uint16_t service_action;
+	uint8_t reserved2;
+	uint8_t reserved3;
+	uint16_t cdb_length;
+	struct scsi_op_timeout_descriptor to[0];
+};
+
+struct scsi_report_supported_op_codes {
+	uint32_t num_descriptors;
+	struct scsi_command_descriptor descriptors[0];
+};
+
 EXTERN int scsi_datain_getfullsize(struct scsi_task *task);
 EXTERN void *scsi_datain_unmarshall(struct scsi_task *task);
 
@@ -781,6 +829,7 @@ EXTERN struct scsi_task *scsi_cdb_writesame10(int wrprotect, int anchor, int unm
 EXTERN struct scsi_task *scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint64_t lba, int group, uint32_t num_blocks);
 EXTERN struct scsi_task *scsi_cdb_prefetch10(uint32_t lba, int num_blocks, int immed, int group);
 EXTERN struct scsi_task *scsi_cdb_prefetch16(uint64_t lba, int num_blocks, int immed, int group);
+EXTERN struct scsi_task *scsi_cdb_report_supported_opcodes(int report_timeouts, uint32_t alloc_len);
 
 void *scsi_malloc(struct scsi_task *task, size_t size);
 

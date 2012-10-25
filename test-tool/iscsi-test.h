@@ -174,6 +174,8 @@ int T0421_reserve6_lun_reset(const char *initiator, const char *url, int data_lo
 int T0422_reserve6_logout(const char *initiator, const char *url, int data_loss, int show_info);
 int T0423_reserve6_sessionloss(const char *initiator, const char *url, int data_loss, int show_info);
 
+int T0430_report_all_supported_ops(const char *initiator, const char *url, int data_loss, int show_info);
+
 int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
 int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
 int T1020_bufferoffset_invalid(const char *initiator, const char *url, int data_loss, int show_info);
