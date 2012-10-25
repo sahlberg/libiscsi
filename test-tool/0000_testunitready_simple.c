@@ -41,6 +41,7 @@ int T0000_testunitready_simple(const char *initiator, const char *url, int data_
 		return -1;
 	}
 
+	ret=0;
 
 	printf("Test TESTUNITREADY ... ");
 	task = iscsi_testunitready_sync(iscsi, lun);
