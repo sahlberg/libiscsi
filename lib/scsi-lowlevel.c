@@ -76,8 +76,8 @@ scsi_malloc(struct scsi_task *task, size_t size)
 }
 
 struct value_string {
-       int value;
-       const char *string;
+   int value;
+   const char *string;
 };
 
 static const char *
@@ -1399,7 +1399,7 @@ scsi_cdb_compareandwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrpr
 		task->xfer_dir = SCSI_XFER_WRITE;
 	} else {
 		task->xfer_dir = SCSI_XFER_NONE;
-        }
+	}
 	task->expxferlen = xferlen;
 
 	task->params.compareandwrite.lba        = lba;
@@ -2508,9 +2508,9 @@ scsi_get_task_private_ptr(struct scsi_task *task)
 
 
 struct scsi_data_buffer {
-       struct scsi_data_buffer *next;
-       uint32_t len;
-       unsigned char *data;
+   struct scsi_data_buffer *next;
+   uint32_t len;
+   unsigned char *data;
 };
 
 int

@@ -65,7 +65,7 @@ int T1020_bufferoffset_invalid(const char *initiator, const char *url, int data_
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
-	unsigned char data[block_size * 256];
+	unsigned char data[4096 * 256];
 	struct iscsi_async_state test_state;
 
 	printf("1020_bufferoffset_invalid:\n");

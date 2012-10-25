@@ -71,6 +71,34 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->use_immediate_data                     = ISCSI_IMMEDIATE_DATA_YES;
 	iscsi->want_header_digest                     = ISCSI_HEADER_DIGEST_NONE_CRC32C;
 
+	iscsi->tcp_keepcnt=3;
+	iscsi->tcp_keepintvl=30;
+	iscsi->tcp_keepidle=30;
+
+	if (getenv("LIBISCSI_DEBUG") != NULL) {
+		iscsi_set_debug(iscsi,atoi(getenv("LIBISCSI_DEBUG")));
+	}
+	
+	if (getenv("LIBISCSI_TCP_USER_TIMEOUT") != NULL) {
+		iscsi_set_tcp_user_timeout(iscsi,atoi(getenv("LIBISCSI_TCP_USER_TIMEOUT")));
+	}
+
+	if (getenv("LIBISCSI_TCP_KEEPCNT") != NULL) {
+		iscsi_set_tcp_keepcnt(iscsi,atoi(getenv("LIBISCSI_TCP_KEEPCNT")));
+	}
+
+	if (getenv("LIBISCSI_TCP_KEEPINTVL") != NULL) {
+		iscsi_set_tcp_keepintvl(iscsi,atoi(getenv("LIBISCSI_TCP_KEEPINTVL")));
+	}
+
+	if (getenv("LIBISCSI_TCP_KEEPIDLE") != NULL) {
+		iscsi_set_tcp_keepidle(iscsi,atoi(getenv("LIBISCSI_TCP_KEEPIDLE")));
+	}
+
+	if (getenv("LIBISCSI_TCP_SYNCNT") != NULL) {
+		iscsi_set_tcp_syncnt(iscsi,atoi(getenv("LIBISCSI_TCP_SYNCNT")));
+	}
+
 	return iscsi;
 }
 
@@ -244,14 +272,17 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	free(discard_const(iscsi->chap_c));
 	iscsi->chap_c = NULL;
 
+	if (iscsi->connected_portal != NULL) {
+	    free(discard_const(iscsi->connected_portal));
+	    iscsi->connected_portal = NULL;
+	}
+
 	iscsi->connect_data = NULL;
 
 	free(iscsi);
 
 	return 0;
 }
-
-
 
 void
 iscsi_set_error(struct iscsi_context *iscsi, const char *error_string, ...)
@@ -270,9 +301,18 @@ iscsi_set_error(struct iscsi_context *iscsi, const char *error_string, ...)
 	free(iscsi->error_string);
 
 	iscsi->error_string = str;
+	
 	va_end(ap);
+	
+	DPRINTF(iscsi,1,"%s",str);
 }
 
+void
+iscsi_set_debug(struct iscsi_context *iscsi, int level)
+{
+	iscsi->debug = level;
+	DPRINTF(iscsi,2,"set debug level to %d",level);
+}
 
 const char *
 iscsi_get_error(struct iscsi_context *iscsi)
@@ -547,8 +587,7 @@ iscsi_destroy_url(struct iscsi_url *iscsi_url)
 
 int
 iscsi_set_initiator_username_pwd(struct iscsi_context *iscsi,
-    					    const char *user,
-					    const char *passwd)
+						    const char *user, const char *passwd)
 {
 	free(discard_const(iscsi->user));
 	iscsi->user = strdup(user);

@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <time.h>
 #include "slist.h"
 #include "iscsi.h"
 #include "iscsi-private.h"
@@ -34,6 +35,10 @@ struct connect_task {
 	void *private_data;
 	int lun;
 };
+
+static void
+iscsi_connect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
+		 void *private_data);
 
 static void
 iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
@@ -81,6 +86,14 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 	       void *private_data)
 {
 	struct connect_task *ct = private_data;
+
+	if (status == SCSI_STATUS_REDIRECT && iscsi->target_address) {
+		iscsi_disconnect(iscsi);
+		if (iscsi_connect_async(iscsi, iscsi->target_address, iscsi_connect_cb, iscsi->connect_data) != 0) {
+			return;
+		}
+		return;
+	}
 
 	if (status != 0) {
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
@@ -158,6 +171,8 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
 	struct iscsi_context *iscsi = old_iscsi;
 
+	DPRINTF(iscsi,2,"reconnect initiated");
+
 	/* This is mainly for tests, where we do not want to automatically
 	   reconnect but rather want the commands to fail with an error
 	   if the target drops the session.
@@ -195,6 +210,9 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 		return 0;
 	}
 
+	int retry = 0;
+	srand (time(NULL)^getpid());
+
 try_again:
 
 	iscsi = iscsi_create_context(old_iscsi->initiator_name);
@@ -213,10 +231,28 @@ try_again:
 	iscsi->lun = old_iscsi->lun;
 
 	iscsi->portal = strdup(old_iscsi->portal);
+	
+	iscsi->debug = old_iscsi->debug;
+	
+	iscsi->tcp_user_timeout = old_iscsi->tcp_user_timeout;
+	iscsi->tcp_keepidle = old_iscsi->tcp_keepidle;
+	iscsi->tcp_keepcnt = old_iscsi->tcp_keepcnt;
+	iscsi->tcp_keepintvl = old_iscsi->tcp_keepintvl;
+	iscsi->tcp_syncnt = old_iscsi->tcp_syncnt;
 
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
+		int backoff=retry;
+		if (backoff > 10) {
+			backoff+=rand()%10;
+			backoff-=5;
+		}
+		if (backoff > 30) {
+			backoff=30;
+		}
+		DPRINTF(iscsi,1,"reconnect try %d failed, waiting %d seconds",retry,backoff);
 		iscsi_destroy_context(iscsi);
-		sleep(1);
+		sleep(backoff);
+		retry++;
 		goto try_again;
 	}
 
@@ -246,6 +282,15 @@ try_again:
 
 		SLIST_REMOVE(&old_iscsi->outqueue, pdu);
 		if (pdu->itt == 0xffffffff) {
+			continue;
+		}
+
+		if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
+			/* We dont want to requeue things like DATA-OUT since these guys
+			 * will be reissued automatically anyway once the corresponding
+			 * write command is replayed.
+		 	 */
+			iscsi_free_pdu(old_iscsi, pdu);
 			continue;
 		}
 

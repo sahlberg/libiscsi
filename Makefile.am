@@ -37,9 +37,10 @@ lib_libiscsi_la_LDFLAGS = \
 # libiscsi utilities
 
 if PROGRAMS
-bin_PROGRAMS += bin/iscsi-inq bin/iscsi-ls
+bin_PROGRAMS += bin/iscsi-inq bin/iscsi-ls bin/iscsi-readcapacity16
 bin_iscsi_inq_SOURCES = src/iscsi-inq.c
 bin_iscsi_ls_SOURCES = src/iscsi-ls.c
+bin_iscsi_readcapacity16_SOURCES = src/iscsi-readcapacity16.c
 
 # Other examples
 
@@ -138,11 +139,13 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/0421_reserve6_lun_reset.c \
 	test-tool/0422_reserve6_logout.c \
 	test-tool/0423_reserve6_sessionloss.c \
+	test-tool/0424_reserve6_target_reset.c \
 	test-tool/0430_report_all_supported_ops.c \
 	\
 	test-tool/1000_cmdsn_invalid.c \
 	test-tool/1010_datasn_invalid.c \
-	test-tool/1020_bufferoffset_invalid.c
+	test-tool/1020_bufferoffset_invalid.c \
+	test-tool/1030_unsolicited_data_overflow.c
 
 endif
 

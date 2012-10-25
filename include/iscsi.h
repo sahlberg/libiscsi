@@ -231,6 +231,7 @@ enum scsi_status {
 	SCSI_STATUS_GOOD                 = 0,
 	SCSI_STATUS_CHECK_CONDITION      = 2,
 	SCSI_STATUS_RESERVATION_CONFLICT = 0x18,
+	SCSI_STATUS_REDIRECT             = 0x101,
 	SCSI_STATUS_CANCELLED            = 0x0f000000,
 	SCSI_STATUS_ERROR                = 0x0f000001
 };
@@ -331,6 +332,15 @@ EXTERN int iscsi_full_connect_sync(struct iscsi_context *iscsi, const char *port
  * <0 error
  */
 EXTERN int iscsi_disconnect(struct iscsi_context *iscsi);
+
+/*
+ * Disconnect a connection to a target and try to reconnect.
+ *
+ * Returns:
+ *  0 reconnect was successful
+ * <0 error
+ */
+EXTERN int iscsi_reconnect(struct iscsi_context *iscsi);
 
 /*
  * Asynchronous call to perform an ISCSI login.
@@ -955,6 +965,53 @@ iscsi_scsi_task_cancel(struct iscsi_context *iscsi,
  */
 EXTERN void
 iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi);
+
+#define DPRINTF(iscsi,level,fmt,args...) \
+	do { \
+		if ((iscsi)->debug >= level) { \
+			fprintf(stderr,"libiscsi: "); \
+			fprintf(stderr, (fmt), ##args); \
+			if (iscsi->target_name) { \
+				fprintf(stderr," [%s]",iscsi->target_name); \
+			} \
+			fprintf(stderr,"\n"); \
+		} \
+	} while (0);
+
+/*
+ * This function is to set the debugging level (0=disabled).
+ */
+EXTERN void
+iscsi_set_debug(struct iscsi_context *iscsi, int level);
+
+/*
+ * This function is to set the TCP_USER_TIMEOUT option. It has to be called after iscsi
+ * context creation. The value given in ms is then applied each time a new socket is created.
+ */
+EXTERN void 
+iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int timeout_ms);
+
+/*
+ * This function is to set the TCP_KEEPIDLE option. It has to be called after iscsi
+ * context creation. 
+ */
+EXTERN void 
+iscsi_set_tcp_keepidle(struct iscsi_context *iscsi, int value);
+
+/*
+ * This function is to set the TCP_KEEPCNT option. It has to be called after iscsi
+ * context creation. 
+ */
+EXTERN void 
+iscsi_set_tcp_keepcnt(struct iscsi_context *iscsi, int value);
+
+/*
+ * This function is to set the TCP_KEEPINTVL option. It has to be called after iscsi
+ * context creation. 
+ */
+EXTERN void 
+iscsi_set_tcp_keepintvl(struct iscsi_context *iscsi, int value);
+
 
 #ifdef __cplusplus
 }
