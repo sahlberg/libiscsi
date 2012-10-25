@@ -223,6 +223,9 @@ struct scsi_test tests[] = {
 { "T0423_reserve6_sessionloss",         T0423_reserve6_sessionloss },
 { "T0424_reserve6_target_reset",           T0424_reserve6_target_reset },
 
+/* Maintenance In - Report Supported Operations */
+{ "T0430_report_all_supported_ops",     T0430_report_all_supported_ops },
+
 /* iSCSI protocol tests */
 
 /* invalid cmdsn from initiator */
