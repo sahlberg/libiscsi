@@ -37,9 +37,10 @@ lib_libiscsi_la_LDFLAGS = \
 # libiscsi utilities
 
 if PROGRAMS
-bin_PROGRAMS += bin/iscsi-inq bin/iscsi-ls
+bin_PROGRAMS += bin/iscsi-inq bin/iscsi-ls bin/iscsi-readcapacity16
 bin_iscsi_inq_SOURCES = src/iscsi-inq.c
 bin_iscsi_ls_SOURCES = src/iscsi-ls.c
+bin_iscsi_readcapacity16_SOURCES = src/iscsi-readcapacity16.c
 
 # Other examples
 

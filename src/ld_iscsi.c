@@ -70,7 +70,7 @@ int open(const char *path, int flags, mode_t mode)
 		struct scsi_task *task;
 		struct scsi_readcapacity16 *rc16;
 
-        if (mode & O_NONBLOCK) {
+		if (mode & O_NONBLOCK) {
 			LD_ISCSI_DPRINTF(0,"Non-blocking I/O is currently not supported");
 			errno = EINVAL;
 			return -1;			
@@ -165,7 +165,7 @@ int open(const char *path, int flags, mode_t mode)
 		return fd;
 	}
 
-        return real_open(path, flags, mode);
+	return real_open(path, flags, mode);
 }
 
 int open64(const char *path, int flags, mode_t mode)
@@ -361,7 +361,7 @@ ssize_t read(int fd, void *buf, size_t count)
 			}
 		}
 
-        LD_ISCSI_DPRINTF(4,"read16_sync: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
+		LD_ISCSI_DPRINTF(4,"read16_sync: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
 
 		task = iscsi_read16_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, num_blocks * iscsi_fd_list[fd].block_size, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
 		iscsi_fd_list[fd].in_flight = 0;
