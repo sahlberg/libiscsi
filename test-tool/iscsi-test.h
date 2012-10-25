@@ -178,3 +178,5 @@ int T0424_reserve6_target_reset(const char *initiator, const char *url, int data
 int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
 int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, int show_info);
 int T1020_bufferoffset_invalid(const char *initiator, const char *url, int data_loss, int show_info);
+int T1030_unsolicited_data_overflow(const char *initiator, const char *url, int data_loss, int show_info);
+

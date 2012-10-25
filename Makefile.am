@@ -143,7 +143,8 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	\
 	test-tool/1000_cmdsn_invalid.c \
 	test-tool/1010_datasn_invalid.c \
-	test-tool/1020_bufferoffset_invalid.c
+	test-tool/1020_bufferoffset_invalid.c \
+	test-tool/1030_unsolicited_data_overflow.c
 
 endif
 

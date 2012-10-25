@@ -234,6 +234,9 @@ struct scsi_test tests[] = {
 /* invalid bufferoffset from initiator */
 { "T1020_bufferoffset_invalid",		T1020_bufferoffset_invalid },
 
+/* sending too much unsolicited data */
+{ "T1030_unsolicited_data_overflow",	T1030_unsolicited_data_overflow },
+
 { NULL, NULL }
 };
 
