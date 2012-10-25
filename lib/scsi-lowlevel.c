@@ -221,7 +221,7 @@ scsi_reportluns_cdb(int report_type, int alloc_len)
 }
 
 /*
- * parse the data in blob and calcualte the size of a full report luns
+ * parse the data in blob and calculate the size of a full report luns
  * datain structure
  */
 static int
@@ -353,7 +353,7 @@ scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len)
 }
 
 /*
- * parse the data in blob and calcualte the size of a full read TOC
+ * parse the data in blob and calculate the size of a full read TOC
  * datain structure
  */
 static int
@@ -565,7 +565,7 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 
 
 /*
- * parse the data in blob and calcualte the size of a full report luns
+ * parse the data in blob and calculate the size of a full maintenancein
  * datain structure
  */
 static int
@@ -678,7 +678,7 @@ scsi_cdb_report_supported_opcodes(int return_timeouts, uint32_t alloc_len)
 }
 
 /*
- * parse the data in blob and calcualte the size of a full
+ * parse the data in blob and calculate the size of a full
  * readcapacity10 datain structure
  */
 static int
@@ -752,7 +752,7 @@ scsi_cdb_inquiry(int evpd, int page_code, int alloc_len)
 }
 
 /*
- * parse the data in blob and calcualte the size of a full
+ * parse the data in blob and calculate the size of a full
  * inquiry datain structure
  */
 static int
@@ -1712,7 +1712,7 @@ scsi_cdb_modesense6(int dbd, enum scsi_modesense_page_control pc,
 }
 
 /*
- * parse the data in blob and calcualte the size of a full
+ * parse the data in blob and calculate the size of a full
  * modesense6 datain structure
  */
 static int
