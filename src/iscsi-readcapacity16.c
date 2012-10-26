@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 #include <poll.h>
 #include <popt.h>
@@ -60,6 +61,8 @@ int main(int argc, const char *argv[])
 	struct iscsi_url *iscsi_url = NULL;
 	int show_help = 0, show_usage = 0, debug = 0;
 	int res;
+	struct scsi_task *task;
+	struct scsi_readcapacity16 *rc16;
 
 	struct poptOption popt_options[] = {
 		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
@@ -102,9 +105,9 @@ int main(int argc, const char *argv[])
 		exit(10);
 	}
 
-    if (debug > 0) {
-        iscsi_set_debug(iscsi, debug);
-    }
+	if (debug > 0) {
+		iscsi_set_debug(iscsi, debug);
+	}
 
 	if (url == NULL) {
 		fprintf(stderr, "You must specify the URL\n");
@@ -136,9 +139,6 @@ int main(int argc, const char *argv[])
 		exit(10);
 	}
 
-	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
-
 	task = iscsi_readcapacity16_sync(iscsi, iscsi_url->lun);
 	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 		fprintf(stderr,"failed to send readcapacity command\n");
@@ -155,8 +155,15 @@ int main(int argc, const char *argv[])
 		iscsi_destroy_context(iscsi);
 		exit(10);
 	}
-      
-    fprintf(stdout,"%lu",rc16->block_length*(rc16->returned_lba + 1));
+
+	printf("RETURNED LOGICAL BLOCK ADDRESS:%" PRIu64 "\n", rc16->returned_lba);
+	printf("LOGICAL BLOCK LENGTH IN BYTES:%u\n", rc16->block_length);
+	printf("P_TYPE:%d PROT_EN:%d\n", rc16->p_type, rc16->prot_en);
+	printf("P_I_EXPONENT:%d LOGICAL BLOCKS PER PHYSICAL BLOCK EXPONENT:%d\n", rc16->p_i_exp, rc16->lbppbe);
+	printf("LBPME:%d LBPRZ:%d\n", rc16->lbpme, rc16->lbprz);
+	printf("LOWEST ALIGNED LOGICAL BLOCK ADDRESS:%d\n", rc16->lalba);
+
+	printf("Total size:%" PRIu64 "\n", rc16->block_length * (rc16->returned_lba + 1));
 
 	iscsi_destroy_url(iscsi_url);
 
