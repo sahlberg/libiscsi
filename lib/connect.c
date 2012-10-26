@@ -211,7 +211,6 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 	}
 
 	int retry = 0;
-	srand (time(NULL)^getpid());
 
 try_again:
 
