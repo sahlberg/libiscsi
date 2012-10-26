@@ -333,6 +333,10 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 	}
 
 	data_size = iscsi_get_pdu_data_size(&in->hdr[0]);
+	if (data_size < 0 || data_size > iscsi->initiator_max_recv_data_segment_length) {
+		iscsi_set_error(iscsi, "Invalid data size received from target (%d)", (int)data_size);
+		return -1;
+	}
 	if (data_size != 0) {
 		unsigned char *buf = NULL;
 

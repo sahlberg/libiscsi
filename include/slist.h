@@ -49,4 +49,15 @@
 	   (*list) = head;					\
 	}
 
+#define SLIST_LENGTH(list,length) \
+	do { \
+	    (length) = 0; \
+		void *head = (*list); \
+		while ((*list)) { \
+			(*list) = (*list)->next; \
+			(length)++; \
+		} \
+		(*list) = head; \
+	} while (0);
+
 #endif /* __iscsi_slist_h__ */

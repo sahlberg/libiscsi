@@ -211,7 +211,6 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 	}
 
 	int retry = 0;
-	srand (time(NULL)^getpid());
 
 try_again:
 
@@ -328,6 +327,10 @@ try_again:
 	free(discard_const(old_iscsi->user));
 	free(discard_const(old_iscsi->passwd));
 	free(discard_const(old_iscsi->chap_c));
+
+	if (old_iscsi->connected_portal != NULL) {
+	    free(discard_const(old_iscsi->connected_portal));
+	}
 
 	close(iscsi->fd);
 	iscsi->fd = old_iscsi->fd;
