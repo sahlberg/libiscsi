@@ -221,7 +221,7 @@ scsi_reportluns_cdb(int report_type, int alloc_len)
 }
 
 /*
- * parse the data in blob and calcualte the size of a full report luns
+ * parse the data in blob and calculate the size of a full report luns
  * datain structure
  */
 static int
@@ -353,7 +353,7 @@ scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len)
 }
 
 /*
- * parse the data in blob and calcualte the size of a full read TOC
+ * parse the data in blob and calculate the size of a full read TOC
  * datain structure
  */
 static int
@@ -563,8 +563,122 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 	return NULL;
 }
 
+
 /*
- * parse the data in blob and calcualte the size of a full
+ * parse the data in blob and calculate the size of a full maintenancein
+ * datain structure
+ */
+static int
+scsi_maintenancein_datain_getfullsize(struct scsi_task *task)
+{
+
+	switch (task->params.maintenancein.sa) {
+	case SCSI_REPORT_SUPPORTED_OP_CODES:	
+		return ntohl(*(uint32_t *)&(task->datain.data[0])) + 4;
+	default:
+		return -1;
+	}
+
+}
+
+
+/*
+ * maintenance_in unmarshall
+ */
+static void *
+scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
+{
+	struct scsi_report_supported_op_codes *rsoc;
+	struct scsi_command_descriptor *desc, *datain;
+	uint32_t len, i;
+	int return_timeouts, desc_size;
+
+	switch (task->params.maintenancein.sa) {
+	case SCSI_REPORT_SUPPORTED_OP_CODES:
+		if (task->datain.size < 4) {
+			return NULL;
+		}
+
+		len = ntohl(*(uint32_t *)&(task->datain.data[0]));
+		rsoc = scsi_malloc(task, sizeof(struct scsi_report_supported_op_codes) + len);
+		if (rsoc == NULL) {
+			return NULL;
+		}
+		/* Does the descriptor include command timeout info? */
+		return_timeouts = task->params.maintenancein.params.reportsupported.return_timeouts; 
+
+		/* Size of descriptor depends on whether timeout included. */
+		desc_size = sizeof (struct scsi_command_descriptor);
+		if (return_timeouts) {
+			desc_size += sizeof (struct scsi_op_timeout_descriptor);
+		}
+		rsoc->num_descriptors = len / desc_size;
+		
+		desc = &rsoc->descriptors[0];
+		datain = (struct scsi_command_descriptor *)&task->datain.data[4];
+
+		for (i=0; i < rsoc->num_descriptors; i++) {
+			desc->op_code = datain->op_code;
+			desc->service_action = ntohs(datain->service_action);
+			desc->cdb_length =  ntohs(datain->cdb_length);
+			if (return_timeouts) {
+				desc->to[0].descriptor_length = ntohs(datain->to[0].descriptor_length);
+				desc->to[0].command_specific = datain->to[0].command_specific;
+				desc->to[0].nominal_processing_timeout 
+					= ntohl(datain->to[0].nominal_processing_timeout);
+				desc->to[0].recommended_timeout 
+					= ntohl(datain->to[0].recommended_timeout);
+			}
+			desc = (struct scsi_command_descriptor *)((char *)desc + desc_size);
+			datain = (struct scsi_command_descriptor *)((char *)datain + desc_size);
+		}
+
+		return rsoc;
+	};
+
+	return NULL;
+}
+
+/*
+ * MAINTENANCE In / Read Supported Op Codes
+ */
+struct scsi_task *
+scsi_cdb_report_supported_opcodes(int return_timeouts, uint32_t alloc_len)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_MAINTENANCE_IN;
+	task->cdb[1]   = SCSI_REPORT_SUPPORTED_OP_CODES;
+	task->cdb[2]   = SCSI_REPORT_SUPPORTING_OPS_ALL;
+
+	if (return_timeouts) {
+		task->cdb[2] |= 0x80;
+	}
+
+	*(uint32_t *)&task->cdb[6] = htonl(alloc_len);
+
+	task->cdb_size = 12;
+	if (alloc_len != 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = alloc_len;
+
+	task->params.maintenancein.sa = SCSI_REPORT_SUPPORTED_OP_CODES;
+	task->params.maintenancein.params.reportsupported.return_timeouts = return_timeouts;
+
+	return task;
+}
+
+/*
+ * parse the data in blob and calculate the size of a full
  * readcapacity10 datain structure
  */
 static int
@@ -638,7 +752,7 @@ scsi_cdb_inquiry(int evpd, int page_code, int alloc_len)
 }
 
 /*
- * parse the data in blob and calcualte the size of a full
+ * parse the data in blob and calculate the size of a full
  * inquiry datain structure
  */
 static int
@@ -1598,7 +1712,7 @@ scsi_cdb_modesense6(int dbd, enum scsi_modesense_page_control pc,
 }
 
 /*
- * parse the data in blob and calcualte the size of a full
+ * parse the data in blob and calculate the size of a full
  * modesense6 datain structure
  */
 static int
@@ -2172,6 +2286,8 @@ scsi_datain_getfullsize(struct scsi_task *task)
 		return scsi_readtoc_datain_getfullsize(task);
 	case SCSI_OPCODE_REPORTLUNS:
 		return scsi_reportluns_datain_getfullsize(task);
+	case SCSI_OPCODE_MAINTENANCE_IN:
+		return scsi_maintenancein_datain_getfullsize(task);
 	}
 	return -1;
 }
@@ -2196,6 +2312,8 @@ scsi_datain_unmarshall(struct scsi_task *task)
 		return scsi_reportluns_datain_unmarshall(task);
 	case SCSI_OPCODE_SERVICE_ACTION_IN:
 		return scsi_serviceactionin_datain_unmarshall(task);
+	case SCSI_OPCODE_MAINTENANCE_IN:
+		return scsi_maintenancein_datain_unmarshall(task);
 	}
 	return NULL;
 }

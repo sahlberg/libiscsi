@@ -875,6 +875,24 @@ iscsi_release6_sync(struct iscsi_context *iscsi, int lun)
 }
 
 struct scsi_task *
+iscsi_report_supported_opcodes_sync(struct iscsi_context *iscsi, int lun, int return_timeouts, int maxsize)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_report_supported_opcodes_task(iscsi, lun, return_timeouts, maxsize, scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi, "Failed to send MaintenanceIn:"
+				"Report Supported Opcodes command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
 iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
 			struct scsi_task *task, struct iscsi_data *data)
 {
