@@ -329,6 +329,10 @@ try_again:
 	free(discard_const(old_iscsi->passwd));
 	free(discard_const(old_iscsi->chap_c));
 
+	if (old_iscsi->connected_portal != NULL) {
+	    free(discard_const(old_iscsi->connected_portal));
+	}
+
 	close(iscsi->fd);
 	iscsi->fd = old_iscsi->fd;
 	memcpy(old_iscsi, iscsi, sizeof(struct iscsi_context));
