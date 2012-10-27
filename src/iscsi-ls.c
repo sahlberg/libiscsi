@@ -312,7 +312,7 @@ int main(int argc, const char *argv[])
 	struct client_state state;
 	const char **extra_argv;
 	int extra_argc = 0;
-	const char *url = NULL;
+	char *url = NULL;
 	poptContext pc;
 	int res;
 	int show_help = 0, show_usage = 0, debug = 0;
@@ -367,11 +367,14 @@ int main(int argc, const char *argv[])
 		exit(10);
 	}
 
-    if (debug > 0) {
-        iscsi_set_debug(iscsi, debug);
-    }
+	if (debug > 0) {
+		iscsi_set_debug(iscsi, debug);
+	}
 
 	iscsi_url = iscsi_parse_portal_url(iscsi, url);
+	
+	if (url) free(url);
+	
 	if (iscsi_url == NULL) {
 		fprintf(stderr, "Failed to parse URL: %s\n", 
 			iscsi_get_error(iscsi));

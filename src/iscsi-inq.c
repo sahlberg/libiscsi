@@ -216,7 +216,7 @@ int main(int argc, const char *argv[])
 	struct iscsi_context *iscsi;
 	const char **extra_argv;
 	int extra_argc = 0;
-	const char *url = NULL;
+	char *url = NULL;
 	struct iscsi_url *iscsi_url = NULL;
 	int evpd = 0, pagecode = 0;
 	int show_help = 0, show_usage = 0, debug = 0;
@@ -275,6 +275,9 @@ int main(int argc, const char *argv[])
 		exit(10);
 	}
 	iscsi_url = iscsi_parse_full_url(iscsi, url);
+	
+	if (url) free(url);
+	
 	if (iscsi_url == NULL) {
 		fprintf(stderr, "Failed to parse URL: %s\n", 
 			iscsi_get_error(iscsi));
