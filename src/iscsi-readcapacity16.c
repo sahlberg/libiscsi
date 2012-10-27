@@ -30,13 +30,14 @@ const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-readcapa
 
 void print_usage(void)
 {
-	fprintf(stderr, "Usage: iscsi-readcapacity16 [-?] [-?|--help] [--usage] [-i|--initiator-name=iqn-name] <iscsi-url>\n");
+	fprintf(stderr, "Usage: iscsi-readcapacity16 [-?] [-?|--help] [--usage] [-i|--initiator-name=iqn-name] [-s] <iscsi-url>\n");
 }
 
 void print_help(void)
 {
 	fprintf(stderr, "Usage: iscsi_readcapacity16 [OPTION...] <iscsi-url>\n");
 	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
+	fprintf(stderr, "  -s, --size                        print target size only\n");
 	fprintf(stderr, "  -d, --debug=integer               debug level (0=disabled)\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Help options:\n");
@@ -59,7 +60,7 @@ int main(int argc, const char *argv[])
 	int extra_argc = 0;
 	const char *url = NULL;
 	struct iscsi_url *iscsi_url = NULL;
-	int show_help = 0, show_usage = 0, debug = 0;
+	int show_help = 0, show_usage = 0, debug = 0, size_only=0;
 	int res;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
@@ -68,6 +69,7 @@ int main(int argc, const char *argv[])
 		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
 		{ "usage", 0, POPT_ARG_NONE, &show_usage, 0, "Display brief usage message", NULL },
 		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
+		{ "size", 's', POPT_ARG_NONE, &size_only, 0, "Print target size only", NULL },
 		{ "debug", 'd', POPT_ARG_INT, &debug, 0, "Debugging level", "integer" },
 		POPT_TABLEEND
 	};
@@ -155,16 +157,22 @@ int main(int argc, const char *argv[])
 		iscsi_destroy_context(iscsi);
 		exit(10);
 	}
+ 
+	if (!size_only) {
+		printf("RETURNED LOGICAL BLOCK ADDRESS:%" PRIu64 "\n", rc16->returned_lba);
+		printf("LOGICAL BLOCK LENGTH IN BYTES:%u\n", rc16->block_length);
+		printf("P_TYPE:%d PROT_EN:%d\n", rc16->p_type, rc16->prot_en);
+		printf("P_I_EXPONENT:%d LOGICAL BLOCKS PER PHYSICAL BLOCK EXPONENT:%d\n", rc16->p_i_exp, rc16->lbppbe);
+		printf("LBPME:%d LBPRZ:%d\n", rc16->lbpme, rc16->lbprz);
+		printf("LOWEST ALIGNED LOGICAL BLOCK ADDRESS:%d\n", rc16->lalba);
 
-	printf("RETURNED LOGICAL BLOCK ADDRESS:%" PRIu64 "\n", rc16->returned_lba);
-	printf("LOGICAL BLOCK LENGTH IN BYTES:%u\n", rc16->block_length);
-	printf("P_TYPE:%d PROT_EN:%d\n", rc16->p_type, rc16->prot_en);
-	printf("P_I_EXPONENT:%d LOGICAL BLOCKS PER PHYSICAL BLOCK EXPONENT:%d\n", rc16->p_i_exp, rc16->lbppbe);
-	printf("LBPME:%d LBPRZ:%d\n", rc16->lbpme, rc16->lbprz);
-	printf("LOWEST ALIGNED LOGICAL BLOCK ADDRESS:%d\n", rc16->lalba);
-
-	printf("Total size:%" PRIu64 "\n", rc16->block_length * (rc16->returned_lba + 1));
-
+		printf("Total size:%" PRIu64 "\n", rc16->block_length * (rc16->returned_lba + 1));
+	}
+	else
+	{
+		printf("%" PRIu64 "\n", rc16->block_length * (rc16->returned_lba + 1));
+	}
+	
 	iscsi_destroy_url(iscsi_url);
 
 	iscsi_logout_sync(iscsi);

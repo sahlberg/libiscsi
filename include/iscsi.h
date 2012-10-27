@@ -979,7 +979,14 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi);
 	} while (0);
 
 /*
- * This function is to set the debugging level (0=disabled).
+ * This function is to set the debugging level where level is
+ * 
+ * 0  = disabled (default)
+ * 1  = errors only
+ * 2  = connection related info
+ * 3  = user set variables
+ * 4  = function calls
+ * 5  = ...
  */
 EXTERN void
 iscsi_set_debug(struct iscsi_context *iscsi, int level);
