@@ -971,7 +971,7 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi);
 		if ((iscsi)->debug >= level) { \
 			fprintf(stderr,"libiscsi: "); \
 			fprintf(stderr, (fmt), ##args); \
-			if (iscsi->target_name) { \
+			if (iscsi->target_name[0]) { \
 				fprintf(stderr," [%s]",iscsi->target_name); \
 			} \
 			fprintf(stderr,"\n"); \

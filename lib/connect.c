@@ -89,7 +89,7 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 {
 	struct connect_task *ct = private_data;
 
-	if (status == SCSI_STATUS_REDIRECT && iscsi->target_address) {
+	if (status == SCSI_STATUS_REDIRECT && iscsi->target_address[0]) {
 		iscsi_disconnect(iscsi);
 		if (iscsi_connect_async(iscsi, iscsi->target_address, iscsi_connect_cb, iscsi->connect_data) != 0) {
 			free(ct);
@@ -140,7 +140,7 @@ iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
 	struct connect_task *ct;
 
 	iscsi->lun = lun;
-	iscsi->portal = strdup(portal);
+	strncpy(iscsi->portal,portal,MAX_STRING_SIZE);
 
 	ct = malloc(sizeof(struct connect_task));
 	if (ct == NULL) {
@@ -227,7 +227,7 @@ try_again:
 
 	iscsi_set_header_digest(iscsi, old_iscsi->want_header_digest);
 
-	if (old_iscsi->user != NULL) {
+	if (old_iscsi->user[0]) {
 		iscsi_set_initiator_username_pwd(iscsi, old_iscsi->user, old_iscsi->passwd);
 	}
 
@@ -235,7 +235,7 @@ try_again:
 
 	iscsi->lun = old_iscsi->lun;
 
-	iscsi->portal = strdup(old_iscsi->portal);
+	strncpy(iscsi->portal,old_iscsi->portal,MAX_STRING_SIZE);
 	
 	iscsi->debug = old_iscsi->debug;
 	
@@ -317,25 +317,11 @@ try_again:
 		goto try_again;
 	}
 	
-
-	free(discard_const(old_iscsi->initiator_name));
-	free(discard_const(old_iscsi->target_name));
-	free(discard_const(old_iscsi->target_address));
-	free(discard_const(old_iscsi->alias));
-	free(discard_const(old_iscsi->portal));
 	if (old_iscsi->incoming != NULL) {
 		iscsi_free_iscsi_in_pdu(old_iscsi->incoming);
 	}
 	if (old_iscsi->inqueue != NULL) {
 		iscsi_free_iscsi_inqueue(old_iscsi->inqueue);
-	}
-	free(old_iscsi->error_string);
-	free(discard_const(old_iscsi->user));
-	free(discard_const(old_iscsi->passwd));
-	free(discard_const(old_iscsi->chap_c));
-
-	if (old_iscsi->connected_portal != NULL) {
-	    free(discard_const(old_iscsi->connected_portal));
 	}
 
 	close(iscsi->fd);

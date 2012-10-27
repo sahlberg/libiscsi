@@ -45,8 +45,8 @@ iscsi_create_context(const char *initiator_name)
 
 	memset(iscsi, 0, sizeof(struct iscsi_context));
 
-	iscsi->initiator_name = strdup(initiator_name);
-	if (iscsi->initiator_name == NULL) {
+	strncpy(iscsi->initiator_name,initiator_name,MAX_STRING_SIZE);
+	if (!iscsi->initiator_name[0]) {
 		free(iscsi);
 		return NULL;
 	}
@@ -169,14 +169,7 @@ iscsi_set_alias(struct iscsi_context *iscsi, const char *alias)
 		return -1;
 	}
 
-	free(discard_const(iscsi->alias));
-
-	iscsi->alias = strdup(alias);
-	if (iscsi->alias == NULL) {
-		iscsi_set_error(iscsi, "Failed to allocate alias name");
-		return -1;
-	}
-
+	strncpy(iscsi->alias,alias,MAX_STRING_SIZE);
 	return 0;
 }
 
@@ -189,13 +182,7 @@ iscsi_set_targetname(struct iscsi_context *iscsi, const char *target_name)
 		return -1;
 	}
 
-	free(discard_const(iscsi->target_name));
-
-	iscsi->target_name = strdup(target_name);
-	if (iscsi->target_name == NULL) {
-		iscsi_set_error(iscsi, "Failed to allocate target name");
-		return -1;
-	}
+	strncpy(iscsi->target_name,target_name,MAX_STRING_SIZE);
 
 	return 0;
 }
@@ -238,43 +225,11 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		iscsi_free_pdu(iscsi, pdu);
 	}
 
-	free(discard_const(iscsi->initiator_name));
-	iscsi->initiator_name = NULL;
-
-	free(discard_const(iscsi->target_name));
-	iscsi->target_name = NULL;
-
-	free(discard_const(iscsi->target_address));
-	iscsi->target_address = NULL;
-
-	free(discard_const(iscsi->alias));
-	iscsi->alias = NULL;
-
-	free(discard_const(iscsi->portal));
-	iscsi->portal = NULL;
-
 	if (iscsi->incoming != NULL) {
 		iscsi_free_iscsi_in_pdu(iscsi->incoming);
 	}
 	if (iscsi->inqueue != NULL) {
 		iscsi_free_iscsi_inqueue(iscsi->inqueue);
-	}
-
-	free(iscsi->error_string);
-	iscsi->error_string = NULL;
-
-	free(discard_const(iscsi->user));
-	iscsi->user = NULL;
-
-	free(discard_const(iscsi->passwd));
-	iscsi->passwd = NULL;
-
-	free(discard_const(iscsi->chap_c));
-	iscsi->chap_c = NULL;
-
-	if (iscsi->connected_portal != NULL) {
-	    free(discard_const(iscsi->connected_portal));
-	    iscsi->connected_portal = NULL;
 	}
 
 	iscsi->connect_data = NULL;
@@ -288,23 +243,14 @@ void
 iscsi_set_error(struct iscsi_context *iscsi, const char *error_string, ...)
 {
 	va_list ap;
-	char *str;
 
 	va_start(ap, error_string);
-	str = malloc(1024);
-	if (vsnprintf(str, 1024, error_string, ap) < 0) {
-		/* not much we can do here */
-		free(str);
-		str = NULL;
+	if (vsnprintf(iscsi->error_string, MAX_STRING_SIZE, error_string, ap) < 0) {
+		strncpy(iscsi->error_string,"could not format error string!",MAX_STRING_SIZE);
 	}
-
-	free(iscsi->error_string);
-
-	iscsi->error_string = str;
-	
 	va_end(ap);
 	
-	DPRINTF(iscsi,1,"%s",str);
+	DPRINTF(iscsi,1,"%s",iscsi->error_string);
 }
 
 void
@@ -589,19 +535,7 @@ int
 iscsi_set_initiator_username_pwd(struct iscsi_context *iscsi,
 						    const char *user, const char *passwd)
 {
-	free(discard_const(iscsi->user));
-	iscsi->user = strdup(user);
-	if (iscsi->user == NULL) {
-		iscsi_set_error(iscsi, "Out-of-memory: failed to strdup username");
-		return -1;
-	}
-
-	free(discard_const(iscsi->passwd));
-	iscsi->passwd = strdup(passwd);
-	if (iscsi->passwd == NULL) {
-		iscsi_set_error(iscsi, "Out-of-memory: failed to strdup password");
-		return -1;
-	}
-
+	strncpy(iscsi->user,user,MAX_STRING_SIZE);
+	strncpy(iscsi->passwd,passwd,MAX_STRING_SIZE);
 	return 0;
 }

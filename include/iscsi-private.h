@@ -61,15 +61,21 @@ enum iscsi_immediate_data {
 	ISCSI_IMMEDIATE_DATA_YES = 1
 };
 
-struct iscsi_context {
-	const char *initiator_name;
-	const char *target_name;
-	const char *target_address;  /* If a redirect */
-	const char *connected_portal;
-	const char *alias;
+#define MAX_STRING_SIZE (255)
 
-	const char *user;
-	const char *passwd;
+struct iscsi_context {
+	char initiator_name[MAX_STRING_SIZE+1];
+	char target_name[MAX_STRING_SIZE+1];
+	char target_address[MAX_STRING_SIZE+1];  /* If a redirect */
+	char connected_portal[MAX_STRING_SIZE+1];
+	char portal[MAX_STRING_SIZE+1];
+	char alias[MAX_STRING_SIZE+1];
+
+	char user[MAX_STRING_SIZE+1];
+	char passwd[MAX_STRING_SIZE+1];
+	char chap_c[MAX_STRING_SIZE+1];
+
+	char error_string[MAX_STRING_SIZE+1];
 
 	enum iscsi_session_type session_type;
 	unsigned char isid[6];
@@ -79,8 +85,6 @@ struct iscsi_context {
 	uint32_t statsn;
 	enum iscsi_header_digest want_header_digest;
 	enum iscsi_header_digest header_digest;
-
-	char *error_string;
 
 	int fd;
 	int is_connected;
@@ -103,7 +107,6 @@ struct iscsi_context {
 
 	int chap_a;
 	int chap_i;
-	char *chap_c;
 
 	iscsi_command_cb socket_status_cb;
 	void *connect_data;
@@ -124,7 +127,6 @@ struct iscsi_context {
 	enum iscsi_immediate_data use_immediate_data;
 
 	int lun;
-	const char *portal;
 	int no_auto_reconnect;
 	int reconnect_deferred;
 	int debug;

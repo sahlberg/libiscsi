@@ -228,8 +228,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	freeaddrinfo(ai);
 	
-	if (iscsi->connected_portal) free(discard_const(iscsi->connected_portal));
-	iscsi->connected_portal=strdup(portal);
+	strncpy(iscsi->connected_portal,portal,MAX_STRING_SIZE);
 	
 	return 0;
 }
@@ -245,7 +244,7 @@ iscsi_disconnect(struct iscsi_context *iscsi)
 
 	close(iscsi->fd);
 	
-	if (iscsi->connected_portal)
+	if (iscsi->connected_portal[0])
 		DPRINTF(iscsi,2,"disconnected from portal %s",iscsi->connected_portal);
 
 	iscsi->fd  = -1;
