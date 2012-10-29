@@ -60,6 +60,16 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url, int d
 		ret = -1;
 		goto finished;
 	}
+	if (task->status == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[SKIPPED]\n");
+		printf("REPORT SUPPORTED OPCODES command failed : %s\n", 
+		       iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		ret = -2;
+		goto finished;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("REPORT SUPPORTED OPCODES command failed : %s\n", 
@@ -112,6 +122,17 @@ test2:
 		printf("Failed to send Report Supported Opcodes command : %s\n", 
 		       iscsi_get_error(iscsi));
 		ret = -1;
+		goto finished;
+	}
+	if (task->status == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
+	    && (task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE 
+		|| task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB)) {
+		printf("[SKIPPED]\n");
+		printf("REPORT SUPPORTED OPCODES command failed : %s\n", 
+		       iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		ret = -2;
 		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
