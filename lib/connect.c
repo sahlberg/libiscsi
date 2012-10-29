@@ -61,9 +61,9 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 						"failed.");
 				ct->cb(iscsi, SCSI_STATUS_ERROR, NULL,
 				       ct->private_data);
+				free(ct);
 			}
 			scsi_free_scsi_task(task);
-			free(ct);
 			return;
 		}
 	}
