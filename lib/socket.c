@@ -508,12 +508,12 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 		return 0;
 	}
 
-	if (revents & POLLOUT && iscsi->outqueue != NULL) {
+	if (iscsi->is_connected && revents & POLLOUT && iscsi->outqueue != NULL) {
 		if (iscsi_write_to_socket(iscsi) != 0) {
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 	}
-	if (revents & POLLIN) {
+	if (iscsi->is_connected && revents & POLLIN) {
 		if (iscsi_read_from_socket(iscsi) != 0) {
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
