@@ -402,7 +402,7 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 
 	if (user != NULL && passwd != NULL) {
 		strncpy(iscsi_url->user,user,MAX_STRING_SIZE);
-		strncpy(iscsi_url->user,passwd,MAX_STRING_SIZE);
+		strncpy(iscsi_url->passwd,passwd,MAX_STRING_SIZE);
 	}
 	
 	if (full) {
