@@ -312,10 +312,12 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 	int l;
 
 	if (strncmp(url, "iscsi://", 8)) {
+		if (full) {
 		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI URL must be of "
-				"the form: %s",
-				url,
-				ISCSI_URL_SYNTAX);
+				"the form: %s",url,ISCSI_URL_SYNTAX); }
+		else {
+		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI Portal URL must be of "
+				"the form: %s",url,ISCSI_PORTAL_URL_SYNTAX); }
 		return NULL;
 	}
 
