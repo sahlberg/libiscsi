@@ -32,6 +32,8 @@ extern "C" {
 struct iscsi_context;
 struct sockaddr;
 
+#define MAX_STRING_SIZE (255)
+
 /*
  * Syntax for normal and portal/discovery URLs.
  */
@@ -69,13 +71,11 @@ EXTERN int iscsi_queue_length(struct iscsi_context *iscsi);
  */
 int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval);
 
-
-
 struct iscsi_url {
-       const char *portal;
-       const char *target;
-       const char *user;
-       const char *passwd;
+       char portal[MAX_STRING_SIZE+1];
+       char target[MAX_STRING_SIZE+1];
+       char user[MAX_STRING_SIZE+1];
+       char passwd[MAX_STRING_SIZE+1];
        int lun;
 };
 

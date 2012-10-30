@@ -475,9 +475,9 @@ int main(int argc, const char *argv[])
 		printf("\n");
 	}
 
-    free(skipname);
-    free(testname);
-    free(url);
+	free(skipname);
+	free(testname);
+	free(url);
 
 	return num_failed ? num_failed : num_skipped ? 77 : 0;
 }

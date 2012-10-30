@@ -61,8 +61,6 @@ enum iscsi_immediate_data {
 	ISCSI_IMMEDIATE_DATA_YES = 1
 };
 
-#define MAX_STRING_SIZE (255)
-
 struct iscsi_context {
 	char initiator_name[MAX_STRING_SIZE+1];
 	char target_name[MAX_STRING_SIZE+1];

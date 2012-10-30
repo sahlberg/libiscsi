@@ -302,7 +302,7 @@ struct iscsi_url *
 iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 {
 	struct iscsi_url *iscsi_url;
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 	char *portal;
 	char *user = NULL;
 	char *passwd = NULL;
@@ -319,11 +319,7 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 		return NULL;
 	}
 
-	str = strdup(url + 8);
-	if (str == NULL) {
-		iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup url %s", url);
-		return NULL;
-	}
+	strncpy(str,url + 8,MAX_STRING_SIZE);
 	portal = str;
 
 	user   = getenv("LIBISCSI_CHAP_USERNAME");
@@ -353,7 +349,6 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 				"form: %s",
 				url,
 				ISCSI_URL_SYNTAX);
-		free(str);
 		return NULL;
 	}
 	*target++ = 0;
@@ -364,7 +359,6 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 				"iSCSI URL must be of the form: %s",
 				url,
 				ISCSI_URL_SYNTAX);
-		free(str);
 		return NULL;
 	}
 
@@ -374,7 +368,6 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 				"iSCSI URL must be of the form: %s",
 				url,
 				ISCSI_URL_SYNTAX);
-		free(str);
 		return NULL;
 	}
 	*lun++ = 0;
@@ -385,54 +378,25 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 				"iSCSI URL must be of the form: %s",
 				url,
 				ISCSI_URL_SYNTAX);
-		free(str);
 		return NULL;
 	}
 
 	iscsi_url = malloc(sizeof(struct iscsi_url));
 	if (iscsi_url == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate iscsi_url structure");
-		free(str);
 		return NULL;
 	}
 	memset(iscsi_url, 0, sizeof(struct iscsi_url));
 
-	iscsi_url->portal = strdup(portal);
-	if (iscsi_url->portal == NULL) {
-		iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup portal string");
-		iscsi_destroy_url(iscsi_url);
-		free(str);
-		return NULL;
-	}
-
-	iscsi_url->target = strdup(target);
-	if (iscsi_url->target == NULL) {
-		iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup target string");
-		iscsi_destroy_url(iscsi_url);
-		free(str);
-		return NULL;
-	}
+	strncpy(iscsi_url->portal,portal,MAX_STRING_SIZE);
+	strncpy(iscsi_url->target,target,MAX_STRING_SIZE);
 
 	if (user != NULL && passwd != NULL) {
-		iscsi_url->user = strdup(user);
-		if (iscsi_url->user == NULL) {
-			iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup username string");
-			iscsi_destroy_url(iscsi_url);
-			free(str);
-			return NULL;
-		}
-
-		iscsi_url->passwd = strdup(passwd);
-		if (iscsi_url->passwd == NULL) {
-			iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup password string");
-			iscsi_destroy_url(iscsi_url);
-			free(str);
-			return NULL;
-		}
+		strncpy(iscsi_url->user,user,MAX_STRING_SIZE);
+		strncpy(iscsi_url->user,passwd,MAX_STRING_SIZE);
 	}
 	
 	iscsi_url->lun = l;
-	free(str);
 	return iscsi_url;
 }
 
@@ -440,7 +404,7 @@ struct iscsi_url *
 iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url)
 {
 	struct iscsi_url *iscsi_url;
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 	char *portal;
 	char *user = NULL;
 	char *passwd = NULL;
@@ -454,11 +418,7 @@ iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url)
 		return NULL;
 	}
 
-	str = strdup(url + 8);
-	if (str == NULL) {
-		iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup url %s", url);
-		return NULL;
-	}
+	strncpy(str,url + 8,MAX_STRING_SIZE);
 	portal = str;
 
 	user   = getenv("LIBISCSI_CHAP_USERNAME");
@@ -477,56 +437,26 @@ iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url)
 		}
 	}
 
-
 	iscsi_url = malloc(sizeof(struct iscsi_url));
 	if (iscsi_url == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate iscsi_url structure");
-		free(str);
 		return NULL;
 	}
 	memset(iscsi_url, 0, sizeof(struct iscsi_url));
 
-	iscsi_url->portal = strdup(portal);
-	if (iscsi_url->portal == NULL) {
-		iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup portal string");
-		iscsi_destroy_url(iscsi_url);
-		free(str);
-		return NULL;
-	}
+	strncpy(iscsi_url->portal,portal,MAX_STRING_SIZE);
 
 	if (user != NULL && passwd != NULL) {
-		iscsi_url->user = strdup(user);
-		if (iscsi_url->user == NULL) {
-			iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup username string");
-			iscsi_destroy_url(iscsi_url);
-			free(str);
-			return NULL;
-		}
-
-		iscsi_url->passwd = strdup(passwd);
-		if (iscsi_url->passwd == NULL) {
-			iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup password string");
-			iscsi_destroy_url(iscsi_url);
-			free(str);
-			return NULL;
-		}
+		strncpy(iscsi_url->user,user,MAX_STRING_SIZE);
+		strncpy(iscsi_url->user,passwd,MAX_STRING_SIZE);
 	}
-	
-	free(str);
+
 	return iscsi_url;
 }
 
 void
 iscsi_destroy_url(struct iscsi_url *iscsi_url)
 {
-	if (iscsi_url == NULL) {
-		return;
-	}
-
-	free(discard_const(iscsi_url->portal));
-	free(discard_const(iscsi_url->target));
-	free(discard_const(iscsi_url->user));
-	free(discard_const(iscsi_url->passwd));
 	free(iscsi_url);
 }
 
