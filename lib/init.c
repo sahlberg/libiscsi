@@ -388,6 +388,8 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 	}
 	memset(iscsi_url, 0, sizeof(struct iscsi_url));
 
+    
+
 	strncpy(iscsi_url->portal,portal,MAX_STRING_SIZE);
 	strncpy(iscsi_url->target,target,MAX_STRING_SIZE);
 
@@ -436,6 +438,9 @@ iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url)
 			passwd = tmp;
 		}
 	}
+
+    tmp=strchr(portal,'/');
+    if (tmp) *tmp=0;
 
 	iscsi_url = malloc(sizeof(struct iscsi_url));
 	if (iscsi_url == NULL) {
