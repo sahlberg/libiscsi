@@ -1019,6 +1019,12 @@ iscsi_set_tcp_keepcnt(struct iscsi_context *iscsi, int value);
 EXTERN void 
 iscsi_set_tcp_keepintvl(struct iscsi_context *iscsi, int value);
 
+/*
+ * This function is to set the TCP_SYNCNT option. It has to be called after iscsi
+ * context creation. 
+ */
+EXTERN void 
+iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value);
 
 #ifdef __cplusplus
 }
