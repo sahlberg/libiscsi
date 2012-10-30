@@ -299,7 +299,7 @@ iscsi_is_logged_in(struct iscsi_context *iscsi)
 }
 
 struct iscsi_url *
-iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
+iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 {
 	struct iscsi_url *iscsi_url;
 	char str[MAX_STRING_SIZE+1];
@@ -339,48 +339,54 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 			*tmp++ = 0;
 			passwd = tmp;
 		}
-
 	}
 
-	target = strchr(portal, '/');
-	if (target == NULL) {
-		iscsi_set_error(iscsi, "Invalid URL %s\nCould not parse "
+	if (full) {
+		target = strchr(portal, '/');
+		if (target == NULL) {
+			iscsi_set_error(iscsi, "Invalid URL %s\nCould not parse "
 				"'<target-iqn>'\niSCSI URL must be of the "
 				"form: %s",
 				url,
 				ISCSI_URL_SYNTAX);
-		return NULL;
-	}
-	*target++ = 0;
+			return NULL;
+		}
+		*target++ = 0;
 
-	if (*target == 0) {
-		iscsi_set_error(iscsi, "Invalid URL %s\nCould not parse "
+		if (*target == 0) {
+			iscsi_set_error(iscsi, "Invalid URL %s\nCould not parse "
 				"<target-iqn>\n"
 				"iSCSI URL must be of the form: %s",
 				url,
 				ISCSI_URL_SYNTAX);
-		return NULL;
-	}
+			return NULL;
+		}
 
-	lun = strchr(target, '/');
-	if (lun == NULL) {
-		iscsi_set_error(iscsi, "Invalid URL %s\nCould not parse <lun>\n"
+		lun = strchr(target, '/');
+		if (lun == NULL) {
+			iscsi_set_error(iscsi, "Invalid URL %s\nCould not parse <lun>\n"
 				"iSCSI URL must be of the form: %s",
 				url,
 				ISCSI_URL_SYNTAX);
-		return NULL;
-	}
-	*lun++ = 0;
+			return NULL;
+		}
+		*lun++ = 0;
 
-	l = strtol(lun, &tmp, 10);
-	if (*lun == 0 || *tmp != 0) {
-		iscsi_set_error(iscsi, "Invalid URL %s\nCould not parse <lun>\n"
+		l = strtol(lun, &tmp, 10);
+		if (*lun == 0 || *tmp != 0) {
+			iscsi_set_error(iscsi, "Invalid URL %s\nCould not parse <lun>\n"
 				"iSCSI URL must be of the form: %s",
 				url,
 				ISCSI_URL_SYNTAX);
-		return NULL;
+			return NULL;
+		}
 	}
-
+	else
+	{
+		tmp=strchr(portal,'/');
+		if (tmp) *tmp=0;
+	}
+	
 	iscsi_url = malloc(sizeof(struct iscsi_url));
 	if (iscsi_url == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate iscsi_url structure");
@@ -388,75 +394,31 @@ iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
 	}
 	memset(iscsi_url, 0, sizeof(struct iscsi_url));
 
-    
-
 	strncpy(iscsi_url->portal,portal,MAX_STRING_SIZE);
-	strncpy(iscsi_url->target,target,MAX_STRING_SIZE);
 
 	if (user != NULL && passwd != NULL) {
 		strncpy(iscsi_url->user,user,MAX_STRING_SIZE);
 		strncpy(iscsi_url->user,passwd,MAX_STRING_SIZE);
 	}
 	
-	iscsi_url->lun = l;
+	if (full) {
+		strncpy(iscsi_url->target,target,MAX_STRING_SIZE);
+		iscsi_url->lun = l;
+	}
+	
 	return iscsi_url;
+}
+
+struct iscsi_url *
+iscsi_parse_full_url(struct iscsi_context *iscsi, const char *url)
+{
+	return iscsi_parse_url(iscsi,url,1);
 }
 
 struct iscsi_url *
 iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url)
 {
-	struct iscsi_url *iscsi_url;
-	char str[MAX_STRING_SIZE+1];
-	char *portal;
-	char *user = NULL;
-	char *passwd = NULL;
-	char *tmp;
-
-	if (strncmp(url, "iscsi://", 8)) {
-		iscsi_set_error(iscsi, "Invalid URL %s\niSCSI Portal URL must be of "
-				"the form: %s",
-				url,
-				ISCSI_PORTAL_URL_SYNTAX);
-		return NULL;
-	}
-
-	strncpy(str,url + 8,MAX_STRING_SIZE);
-	portal = str;
-
-	user   = getenv("LIBISCSI_CHAP_USERNAME");
-	passwd = getenv("LIBISCSI_CHAP_PASSWORD");
-
-	tmp = strchr(portal, '@');
-	if (tmp != NULL) {
-		user = portal;
-		*tmp++	= 0;
-		portal = tmp;
-
-		tmp = strchr(user, '%');
-		if (tmp != NULL) {
-			*tmp++ = 0;
-			passwd = tmp;
-		}
-	}
-
-    tmp=strchr(portal,'/');
-    if (tmp) *tmp=0;
-
-	iscsi_url = malloc(sizeof(struct iscsi_url));
-	if (iscsi_url == NULL) {
-		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate iscsi_url structure");
-		return NULL;
-	}
-	memset(iscsi_url, 0, sizeof(struct iscsi_url));
-
-	strncpy(iscsi_url->portal,portal,MAX_STRING_SIZE);
-
-	if (user != NULL && passwd != NULL) {
-		strncpy(iscsi_url->user,user,MAX_STRING_SIZE);
-		strncpy(iscsi_url->user,passwd,MAX_STRING_SIZE);
-	}
-
-	return iscsi_url;
+	return iscsi_parse_url(iscsi,url,0);
 }
 
 void
