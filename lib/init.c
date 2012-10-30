@@ -243,13 +243,15 @@ void
 iscsi_set_error(struct iscsi_context *iscsi, const char *error_string, ...)
 {
 	va_list ap;
+	char errstr[MAX_STRING_SIZE+1] = {0};
 
 	va_start(ap, error_string);
-	if (vsnprintf(iscsi->error_string, MAX_STRING_SIZE, error_string, ap) < 0) {
-		strncpy(iscsi->error_string,"could not format error string!",MAX_STRING_SIZE);
+	if (vsnprintf(errstr, MAX_STRING_SIZE, error_string, ap) < 0) {
+		strncpy(errstr,"could not format error string!",MAX_STRING_SIZE);
 	}
 	va_end(ap);
 	
+	strncpy(iscsi->error_string,errstr,MAX_STRING_SIZE);
 	DPRINTF(iscsi,1,"%s",iscsi->error_string);
 }
 
