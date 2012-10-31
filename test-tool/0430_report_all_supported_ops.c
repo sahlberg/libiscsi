@@ -60,6 +60,16 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url, int d
 		ret = -1;
 		goto finished;
 	}
+	if (task->status == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[SKIPPED]\n");
+		printf("REPORT SUPPORTED OPCODES command failed : %s\n", 
+		       iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		ret = -2;
+		goto finished;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("REPORT SUPPORTED OPCODES command failed : %s\n", 
@@ -83,7 +93,7 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url, int d
 	rsoc = scsi_datain_unmarshall(task);
 	if (rsoc == NULL) {
 		printf("[FAILED]\n");
-		printf("failed to unmarshall inquiry datain blob\n");
+		printf("failed to unmarshall REPORT SUPPORTED OPCODES datain blob\n");
 		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
@@ -114,6 +124,17 @@ test2:
 		ret = -1;
 		goto finished;
 	}
+	if (task->status == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
+	    && (task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE 
+		|| task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB)) {
+		printf("[SKIPPED]\n");
+		printf("REPORT SUPPORTED OPCODES command failed : %s\n", 
+		       iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		ret = -2;
+		goto finished;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("REPORT SUPPORTED OPCODES command failed : %s\n", 
@@ -128,7 +149,7 @@ test2:
 		scsi_free_scsi_task(task);
 
 		/* we need more data for the full list */
-		if ((task = iscsi_report_supported_opcodes_sync(iscsi, lun,  0, full_size)) == NULL) {
+		if ((task = iscsi_report_supported_opcodes_sync(iscsi, lun,  1, full_size)) == NULL) {
 			printf("[FAILED]\n");
 			printf("REPORT SUPPORTED OPCODES failed : %s\n", iscsi_get_error(iscsi));
 			ret = -1;
@@ -138,7 +159,7 @@ test2:
 	rsoc = scsi_datain_unmarshall(task);
 	if (rsoc == NULL) {
 		printf("[FAILED]\n");
-		printf("failed to unmarshall inquiry datain blob\n");
+		printf("failed to unmarshall REPORT SUPPORTED OPCODES datain blob\n");
 		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
@@ -150,7 +171,7 @@ test2:
 		+  sizeof (struct scsi_op_timeout_descriptor);
 	desc = &rsoc->descriptors[0];
 	for (i=0; i < rsoc->num_descriptors; i++) {
-		printf("op:%x\tsa:%x\tcdb_length:%d\ttimout info: length:%d\tcommand specific:%x\tnominal processing%d\trecommended%d\n",
+		printf("op:%x\tsa:%x\tcdb_length:%d\ttimeout info: length:%d\tcommand specific:%x\tnominal processing%d\trecommended%d\n",
 		       desc->op_code,
 		       desc->service_action,
 		       desc->cdb_length,
