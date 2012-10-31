@@ -106,7 +106,7 @@ iscsi_login_add_targetname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return 0;
 	}
 
-	if (iscsi->target_name == NULL) {
+	if (!iscsi->target_name[0]) {
 		iscsi_set_error(iscsi, "Trying normal connect but "
 				"target name not set.");
 		return -1;
@@ -663,7 +663,7 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return 0;
 	}
 
-	if (iscsi->chap_c == NULL) {
+	if (!iscsi->chap_c[0]) {
 		iscsi_set_error(iscsi, "No CHAP challenge found");
 		return -1;
 	}
@@ -748,7 +748,7 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	/* login request */
 	iscsi_pdu_set_immediate(pdu);
 
-	if (iscsi->user == NULL) {
+	if (!iscsi->user[0]) {
 		iscsi->current_phase = ISCSI_PDU_LOGIN_CSG_OPNEG;
 	}
 
@@ -1008,15 +1008,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 		/* parse the strings */
 		if (!strncmp(ptr, "TargetAddress=", 14)) {
-			free(discard_const(iscsi->target_address));
-			iscsi->target_address = strdup(ptr+14);
-			if (iscsi->target_address == NULL) {
-				iscsi_set_error(iscsi, "Failed to allocate"
-						" target address");
-				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-					pdu->private_data);
-				return -1;
-			}
+			strncpy(iscsi->target_address,ptr+14,MAX_STRING_SIZE);
 		}
 
 		if (!strncmp(ptr, "HeaderDigest=", 13)) {
@@ -1074,13 +1066,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		}
 
 		if (!strncmp(ptr, "CHAP_C=0x", 9)) {
-			free(iscsi->chap_c);
-			iscsi->chap_c = strdup(ptr+9);
-			if (iscsi->chap_c == NULL) {
-				iscsi_set_error(iscsi, "Out-of-memory: Failed to strdup CHAP challenge.");
-				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL, pdu->private_data);
-				return -1;
-			}
+			strncpy(iscsi->chap_c,ptr+9,MAX_STRING_SIZE);
 			iscsi->secneg_phase = ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE;
 		}
 

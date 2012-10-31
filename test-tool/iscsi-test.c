@@ -437,6 +437,8 @@ int main(int argc, const char *argv[])
 	if (url == NULL) {
 		fprintf(stderr, "You must specify the URL\n");
 		print_usage();
+		free(skipname);
+        free(testname);
 		exit(10);
 	}
 
@@ -473,6 +475,10 @@ int main(int argc, const char *argv[])
 		}
 		printf("\n");
 	}
+
+	free(skipname);
+	free(testname);
+	free(url);
 
 	return num_failed ? num_failed : num_skipped ? 77 : 0;
 }
