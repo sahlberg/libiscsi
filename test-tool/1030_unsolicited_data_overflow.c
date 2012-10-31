@@ -1,16 +1,16 @@
-/* 
+/*
    Copyright (C) 2012 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
@@ -40,14 +40,13 @@ static void test_cb(struct iscsi_context *iscsi _U_, int status,
 }
 
 int T1030_unsolicited_data_overflow(const char *initiator, const char *url, int data_loss, int show_info)
-{ 
+{
   struct iscsi_context *iscsi, *iscsi2;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
 	unsigned char *buf = NULL;
 	struct iscsi_async_state test_state;
-	uint32_t old_first_burst_len;
 
 	printf("1030_unsolicited_data_overflow:\n");
 	printf("===============================\n");
@@ -99,7 +98,7 @@ int T1030_unsolicited_data_overflow(const char *initiator, const char *url, int 
 	ret = 0;
 
 	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_YES;
-	old_first_burst_len = iscsi->first_burst_length;
+
 	/* make first burst REAL big */
 	iscsi->first_burst_length *= 16;
 	buf = malloc(iscsi->first_burst_length);
@@ -141,9 +140,8 @@ test2:
 	printf("[OK]\n");
 
 finished:
-	if (buf) {
-		free(buf);
-	}
+
+	free(buf);
 	iscsi_destroy_context(iscsi);
 	iscsi_destroy_context(iscsi2);
 	return ret;
