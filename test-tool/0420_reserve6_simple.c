@@ -22,7 +22,8 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss, int show_info)
+int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss _U_,
+			  int show_info)
 {
 	struct iscsi_context *iscsi, *iscsi2;
 	struct scsi_task *task;
@@ -108,8 +109,6 @@ int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss,
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-
-test2:
 	printf("Test that reservation works.\n");
 	printf("Send RESERVE6 from Initiator 1. ... ");
 	task = iscsi_reserve6_sync(iscsi, lun);
@@ -148,7 +147,6 @@ test2:
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-test3:
 	printf("Send RESERVE6 from Initiator 2. Expect conflict. ... ");
 	task = iscsi_reserve6_sync(iscsi2, lun);
 	if (task == NULL) {
@@ -168,7 +166,6 @@ test3:
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-test3a:
 	printf("Send RELEASE6 from Initiator 2..Expect NO-OP. ... ");
 	task = iscsi_release6_sync(iscsi2, lun);
 	if (task == NULL) {
@@ -211,7 +208,6 @@ test4:
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-test5:
 	printf("Send TESTUNITREADY from Initiator 2. Expect conflict. ... ");
 	task = iscsi_testunitready_sync(iscsi2, lun);
 	if (task == NULL) {
@@ -230,7 +226,6 @@ test5:
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-test6:
 	printf("Test that release actually works\n");
 	printf("Send RELEASE6 from Initiator 1 ... ");
 	task = iscsi_release6_sync(iscsi, lun);
