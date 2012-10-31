@@ -239,6 +239,7 @@ struct scsi_test tests[] = {
 
 /* sending too much unsolicited data */
 { "T1030_unsolicited_data_overflow",	T1030_unsolicited_data_overflow },
+{ "T1031_unsolicited_data_out",		T1031_unsolicited_data_out },
 
 { NULL, NULL }
 };
