@@ -1,16 +1,16 @@
-/* 
+/*
    Copyright (C) 2012 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
@@ -38,7 +38,7 @@ static void mgmt_cb(struct iscsi_context *iscsi _U_, int status _U_,
 }
 
 int T0424_reserve6_target_reset(const char *initiator, const char *url, int data_loss, int show_info)
-{ 
+{
 	struct iscsi_context *iscsi, *iscsi2;
 	struct scsi_task *task;
 	int ret, lun;
@@ -65,7 +65,7 @@ int T0424_reserve6_target_reset(const char *initiator, const char *url, int data
 		return -1;
 	}
 
-	iscsi2 = iscsi_context_login(initiator2, url, &lun);
+	iscsi2 = iscsi_context_login(initiatorname2, url, &lun);
 	if (iscsi2 == NULL) {
 		printf("Failed to login to target\n");
 		return -1;
@@ -86,8 +86,8 @@ int T0424_reserve6_target_reset(const char *initiator, const char *url, int data
 		goto finished;
 	}
 	if (task->status == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST 
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {		
+	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 		printf("[SKIPPED]\n");
 		printf("RESERVE6 Not Supported\n");
 		ret = -2;
@@ -96,9 +96,9 @@ int T0424_reserve6_target_reset(const char *initiator, const char *url, int data
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
-		printf("RESERVE6 failed with sense:%s\n", 
+		printf("RESERVE6 failed with sense:%s\n",
 		       iscsi_get_error(iscsi));
-		ret = -1;	
+		ret = -1;
 		scsi_free_scsi_task(task);
 		goto test2;
 	}
@@ -111,7 +111,7 @@ test2:
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
-		printf("Failed to send TEST UNIT READY command: %s\n", 
+		printf("Failed to send TEST UNIT READY command: %s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
 		goto finished;
@@ -133,7 +133,7 @@ test3:
 	task = iscsi_testunitready_sync(iscsi2, lun);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
-		printf("Failed to send TEST UNIT READY command: %s\n", 
+		printf("Failed to send TEST UNIT READY command: %s\n",
 		       iscsi_get_error(iscsi2));
 		ret = -1;
 		goto finished;
@@ -179,7 +179,7 @@ test5:
 	task = iscsi_testunitready_sync(iscsi2, lun);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
-		printf("Failed to send TEST UNIT READY command: %s\n", 
+		printf("Failed to send TEST UNIT READY command: %s\n",
 		       iscsi_get_error(iscsi2));
 		ret = -1;
 		goto finished;
@@ -189,7 +189,7 @@ test5:
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET) {
 		printf("Got BUS RESET. Retry accessing the LUN\n");
 		goto test5;
-	  
+
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
