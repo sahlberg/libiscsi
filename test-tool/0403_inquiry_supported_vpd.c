@@ -28,7 +28,8 @@ int T0403_inquiry_supported_vpd(const char *initiator, const char *url,
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_inquiry_supported_pages *inq;
-	int ret, lun, i, j;
+	size_t i;
+	int ret, lun, j;
 	int full_size;
 	int page_code;
 	enum scsi_inquiry_pagecode required_spc_pages[] = {
