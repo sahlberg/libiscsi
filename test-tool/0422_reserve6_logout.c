@@ -22,7 +22,8 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0422_reserve6_logout(const char *initiator, const char *url, int data_loss, int show_info)
+int T0422_reserve6_logout(const char *initiator, const char *url, int data_loss _U_,
+			  int show_info)
 {
 	struct iscsi_context *iscsi, *iscsi2;
 	struct scsi_task *task;
@@ -131,13 +132,11 @@ test3:
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-test4:
 	printf("Logout the first initiator ... ");
 	iscsi_logout_sync(iscsi);
 	iscsi_destroy_context(iscsi);
 	printf("[OK]\n");
 
-test5:
 	printf("Verify we can access the LUN from the second initiator ... ");
 	task = iscsi_testunitready_sync(iscsi2, lun);
 	if (task == NULL) {
