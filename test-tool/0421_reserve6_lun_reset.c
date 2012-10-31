@@ -37,7 +37,8 @@ static void mgmt_cb(struct iscsi_context *iscsi _U_, int status _U_,
 	mgmt_task->finished = 1;
 }
 
-int T0421_reserve6_lun_reset(const char *initiator, const char *url, int data_loss, int show_info)
+int T0421_reserve6_lun_reset(const char *initiator, const char *url,
+			     int data_loss _U_, int show_info)
 {
 	struct iscsi_context *iscsi, *iscsi2;
 	struct scsi_task *task;
@@ -148,7 +149,6 @@ test3:
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-test4:
 	printf("Send a LUN Reset to the target ... ");
 	iscsi_task_mgmt_lun_reset_async(iscsi, lun, mgmt_cb, &mgmt_task);
 	while (mgmt_task.finished == 0) {
