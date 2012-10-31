@@ -37,7 +37,8 @@ static void mgmt_cb(struct iscsi_context *iscsi _U_, int status _U_,
 	mgmt_task->finished = 1;
 }
 
-int T0424_reserve6_target_reset(const char *initiator, const char *url, int data_loss, int show_info)
+int T0424_reserve6_target_reset(const char *initiator, const char *url,
+				int data_loss _U_, int show_info)
 {
 	struct iscsi_context *iscsi, *iscsi2;
 	struct scsi_task *task;
@@ -73,9 +74,6 @@ int T0424_reserve6_target_reset(const char *initiator, const char *url, int data
 
 	ret = 0;
 
-
-
-
 	printf("Send RESERVE6 from the first initiator ... ");
 	task = iscsi_reserve6_sync(iscsi, lun);
 	if (task == NULL) {
@@ -104,7 +102,6 @@ int T0424_reserve6_target_reset(const char *initiator, const char *url, int data
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
-
 
 test2:
 	printf("Verify we can access the LUN from the first initiator ... ");
@@ -148,7 +145,6 @@ test3:
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-test4:
 	printf("Send a Target Cold-Reset ... ");
 	iscsi_task_mgmt_target_cold_reset_async(iscsi, mgmt_cb, &mgmt_task);
 	while (mgmt_task.finished == 0) {
