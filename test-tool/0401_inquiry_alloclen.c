@@ -22,13 +22,12 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0401_inquiry_alloclen(const char *initiator, const char *url, int data_loss, int show_info)
+int T0401_inquiry_alloclen(const char *initiator, const char *url, int data_loss _U_,
+			   int show_info)
 {
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_inquiry_standard *inq;
 	int ret, lun, i;
-	int full_size;
 
 	printf("0401_inquiry_alloclen:\n");
 	printf("===================\n");
