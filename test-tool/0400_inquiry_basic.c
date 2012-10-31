@@ -1,16 +1,16 @@
-/* 
+/*
    Copyright (C) 2012 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
@@ -22,8 +22,9 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0400_inquiry_basic(const char *initiator, const char *url, int data_loss, int show_info)
-{ 
+int T0400_inquiry_basic(const char *initiator, const char *url, int data_loss _U_,
+			int show_info)
+{
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_inquiry_standard *inq;
@@ -100,7 +101,6 @@ int T0400_inquiry_basic(const char *initiator, const char *url, int data_loss, i
 	}
 	printf("[OK]\n");
 
-test2:
 	printf("Check that standard data is >= 36 bytes in size ... ");
 	if (full_size < 36) {
 		printf("[FAILED]\n");
@@ -111,8 +111,6 @@ test2:
 	}
 	printf("[OK]\n");
 
-
-test3:
 	printf("Check device-type is either of DISK, TAPE or CD/DVD  ... ");
 	switch (inq->device_type) {
 	case SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS:
@@ -193,7 +191,7 @@ test9:
 		if (task->datain.data[i] >= 0x20 && task->datain.data[i] <= 0x7e) {
 			continue;
 		}
-		
+
 		printf("[FAILED]\n");
 		printf("VENDOR_IDENTIFICATION contains non-ASCII characters\n");
 		ret = -1;
@@ -211,7 +209,7 @@ test10:
 		if (task->datain.data[i] >= 0x20 && task->datain.data[i] <= 0x7e) {
 			continue;
 		}
-		
+
 		printf("[FAILED]\n");
 		printf("PRODUCT_IDENTIFICATION contains non-ASCII characters\n");
 		ret = -1;
@@ -243,7 +241,7 @@ test12:
 		printf("[FAILED]\n");
 		printf("AERC is set but this device reports SPC-3 or later\n");
 		ret = -1;
-		goto test13;	
+		goto test13;
 	}
 	printf("[OK]\n");
 
@@ -253,7 +251,7 @@ test13:
 		printf("[FAILED]\n");
 		printf("TrmTsk is set but this device reports SPC-2 or later\n");
 		ret = -1;
-		goto test14;	
+		goto test14;
 	}
 	printf("[OK]\n");
 
