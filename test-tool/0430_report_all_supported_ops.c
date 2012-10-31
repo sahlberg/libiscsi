@@ -1,17 +1,17 @@
-/* 
+/*
    Copyright (C) 2012 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
    Copyright (C) 2012 by Jon Grimm <jon.grimm@gmail.com>
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
@@ -23,14 +23,16 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0430_report_all_supported_ops(const char *initiator, const char *url, int data_loss, int show_info)
-{ 
+int T0430_report_all_supported_ops(const char *initiator, const char *url,
+				   int data_loss _U_, int show_info)
+{
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_report_supported_op_codes *rsoc;
 	struct scsi_command_descriptor *desc;
-	int ret, lun, i;
+	int ret, lun;
 	int full_size, desc_size;
+	unsigned i;
 
 	printf("0430_report_all_supported_ops:\n");
 	printf("===================\n");
@@ -55,7 +57,7 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url, int d
 	task = iscsi_report_supported_opcodes_sync(iscsi, lun, 0, 4);
 	if (task == NULL) {
 		printf("[FAILED]\n");
-		printf("Failed to send Report Supported Opcodes command : %s\n", 
+		printf("Failed to send Report Supported Opcodes command : %s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
 		goto finished;
@@ -64,7 +66,7 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url, int d
 	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 		printf("[SKIPPED]\n");
-		printf("REPORT SUPPORTED OPCODES command failed : %s\n", 
+		printf("REPORT SUPPORTED OPCODES command failed : %s\n",
 		       iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		ret = -2;
@@ -72,7 +74,7 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url, int d
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
-		printf("REPORT SUPPORTED OPCODES command failed : %s\n", 
+		printf("REPORT SUPPORTED OPCODES command failed : %s\n",
 		       iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		ret = -1;
@@ -101,7 +103,7 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url, int d
 
 	printf("Supported Commands: %d\n", rsoc->num_descriptors);
 	printf("=======================\n");
-	for (i=0; i < rsoc->num_descriptors; i++) {
+	for (i = 0; i < rsoc->num_descriptors; i++) {
 		printf("op:%x\tsa:%x\tcdb length:%d\n",
 		       rsoc->descriptors[i].op_code,
 		       rsoc->descriptors[i].service_action,
@@ -111,25 +113,23 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url, int d
 	printf("\n[OK]\n");
 	scsi_free_scsi_task(task);
 
-
-test2:
 	/*Report All Supported Operations including timeout info.*/
 	printf("See if Report Supported Opcodes with Timeouts is supported... ");
 	/* See how big data is */
 	task = iscsi_report_supported_opcodes_sync(iscsi, lun, 1, 4);
 	if (task == NULL) {
 		printf("[FAILED]\n");
-		printf("Failed to send Report Supported Opcodes command : %s\n", 
+		printf("Failed to send Report Supported Opcodes command : %s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
 		goto finished;
 	}
 	if (task->status == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
-	    && (task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE 
+	    && (task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE
 		|| task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB)) {
 		printf("[SKIPPED]\n");
-		printf("REPORT SUPPORTED OPCODES command failed : %s\n", 
+		printf("REPORT SUPPORTED OPCODES command failed : %s\n",
 		       iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		ret = -2;
@@ -137,7 +137,7 @@ test2:
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
-		printf("REPORT SUPPORTED OPCODES command failed : %s\n", 
+		printf("REPORT SUPPORTED OPCODES command failed : %s\n",
 		       iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		ret = -1;
@@ -170,7 +170,7 @@ test2:
 	desc_size = sizeof (struct scsi_command_descriptor)
 		+  sizeof (struct scsi_op_timeout_descriptor);
 	desc = &rsoc->descriptors[0];
-	for (i=0; i < rsoc->num_descriptors; i++) {
+	for (i = 0; i < rsoc->num_descriptors; i++) {
 		printf("op:%x\tsa:%x\tcdb_length:%d\ttimeout info: length:%d\tcommand specific:%x\tnominal processing%d\trecommended%d\n",
 		       desc->op_code,
 		       desc->service_action,
@@ -179,7 +179,7 @@ test2:
 		       desc->to[0].command_specific,
 		       desc->to[0].nominal_processing_timeout,
 		       desc->to[0].recommended_timeout);
-		desc = (struct scsi_command_descriptor *)((char *)desc + 
+		desc = (struct scsi_command_descriptor *)((char *)desc +
 							  desc_size);
 	}
 
