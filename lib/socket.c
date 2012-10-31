@@ -228,8 +228,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	freeaddrinfo(ai);
 	
-	if (iscsi->connected_portal) free(discard_const(iscsi->connected_portal));
-	iscsi->connected_portal=strdup(portal);
+	strncpy(iscsi->connected_portal,portal,MAX_STRING_SIZE);
 	
 	return 0;
 }
@@ -245,7 +244,7 @@ iscsi_disconnect(struct iscsi_context *iscsi)
 
 	close(iscsi->fd);
 	
-	if (iscsi->connected_portal)
+	if (iscsi->connected_portal[0])
 		DPRINTF(iscsi,2,"disconnected from portal %s",iscsi->connected_portal);
 
 	iscsi->fd  = -1;
@@ -522,12 +521,12 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 		return 0;
 	}
 
-	if (revents & POLLOUT && iscsi->outqueue != NULL) {
+	if (iscsi->is_connected && revents & POLLOUT && iscsi->outqueue != NULL) {
 		if (iscsi_write_to_socket(iscsi) != 0) {
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 	}
-	if (revents & POLLIN) {
+	if (iscsi->is_connected && revents & POLLIN) {
 		if (iscsi_read_from_socket(iscsi) != 0) {
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}

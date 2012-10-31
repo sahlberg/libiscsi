@@ -32,6 +32,8 @@ extern "C" {
 struct iscsi_context;
 struct sockaddr;
 
+#define MAX_STRING_SIZE (255)
+
 /*
  * Syntax for normal and portal/discovery URLs.
  */
@@ -69,13 +71,11 @@ EXTERN int iscsi_queue_length(struct iscsi_context *iscsi);
  */
 int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval);
 
-
-
 struct iscsi_url {
-       const char *portal;
-       const char *target;
-       const char *user;
-       const char *passwd;
+       char portal[MAX_STRING_SIZE+1];
+       char target[MAX_STRING_SIZE+1];
+       char user[MAX_STRING_SIZE+1];
+       char passwd[MAX_STRING_SIZE+1];
        int lun;
 };
 
@@ -971,7 +971,7 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi);
 		if ((iscsi)->debug >= level) { \
 			fprintf(stderr,"libiscsi: "); \
 			fprintf(stderr, (fmt), ##args); \
-			if (iscsi->target_name) { \
+			if (iscsi->target_name[0]) { \
 				fprintf(stderr," [%s]",iscsi->target_name); \
 			} \
 			fprintf(stderr,"\n"); \
@@ -1019,6 +1019,12 @@ iscsi_set_tcp_keepcnt(struct iscsi_context *iscsi, int value);
 EXTERN void 
 iscsi_set_tcp_keepintvl(struct iscsi_context *iscsi, int value);
 
+/*
+ * This function is to set the TCP_SYNCNT option. It has to be called after iscsi
+ * context creation. 
+ */
+EXTERN void 
+iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value);
 
 #ifdef __cplusplus
 }
