@@ -1,16 +1,16 @@
-/* 
+/*
    Copyright (C) 2012 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
@@ -22,8 +22,9 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url, int data_loss, int show_info)
-{ 
+int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url,
+				   int data_loss _U_, int show_info)
+{
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_inquiry_supported_pages *inq;
@@ -91,7 +92,6 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url, int d
 	}
 	printf("[OK]\n");
 
-test2:
 	printf("Read each page and verify qualifier, type and page code:\n");
 	for (i = 0; i < inq->num_pages; i++) {
 		struct scsi_task *pc_task;
@@ -116,7 +116,8 @@ test2:
 		printf("Verify page 0x%02x qualifier   ... ", inq->pages[i]);
 		if ((pc_task->datain.data[0] & 0xe0) >> 5 != inq->qualifier) {
 			printf("[FAILED]\n");
-			printf("Qualifier differs between VPD pages\n", iscsi_get_error(iscsi));
+			printf("Qualifier differs between VPD pages: %x != %x\n",
+			       pc_task->datain.data[0] & 0xe0, inq->qualifier);
 			ret = -1;
 			scsi_free_scsi_task(pc_task);
 			continue;
@@ -125,9 +126,10 @@ test2:
  		}
 
 		printf("Verify page 0x%02x device type ... ", inq->pages[i]);
-		if (pc_task->datain.data[0] & 0x1f != inq->device_type) {
+		if ((pc_task->datain.data[0] & 0x1f) != inq->device_type) {
 			printf("[FAILED]\n");
-			printf("Device Type differs between VPD pages\n", iscsi_get_error(iscsi));
+			printf("Device Type differs between VPD pages: %x != %x\n",
+			       pc_task->datain.data[0] & 0x1f, inq->device_type);
 			ret = -1;
 			scsi_free_scsi_task(pc_task);
 			continue;
@@ -138,7 +140,8 @@ test2:
 		printf("Verify page 0x%02x page code   ... ", inq->pages[i]);
 		if (pc_task->datain.data[1] != inq->pages[i]) {
 			printf("[FAILED]\n");
-			printf("Page code is wrong\n", iscsi_get_error(iscsi));
+			printf("Page code is wrong: %x != %x\n",
+			       pc_task->datain.data[1], inq->pages[i]);
 			ret = -1;
 			scsi_free_scsi_task(pc_task);
 			continue;
@@ -149,8 +152,6 @@ test2:
 		scsi_free_scsi_task(pc_task);
 	}
 
-
-test3:
 	scsi_free_scsi_task(task);
 
 finished:
