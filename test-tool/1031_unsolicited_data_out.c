@@ -152,7 +152,8 @@ my_iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opc
 int T1031_unsolicited_data_out(const char *initiator, const char *url,
 			       int data_loss _U_, int show_info)
 {
-  struct iscsi_context *iscsi, *iscsi2;
+	struct iscsi_context *iscsi = NULL;
+	struct iscsi_context *iscsi2 = NULL;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int i, ret, lun;
