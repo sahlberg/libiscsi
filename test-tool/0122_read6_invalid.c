@@ -119,7 +119,8 @@ int T0122_read6_invalid(const char *initiator, const char *url, int data_loss _U
 		scsi_free_scsi_task(task);
 		goto test2;
 	}
-	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW || task->residual != block_size) {
+	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
+	    task->residual != (ssize_t)block_size) {
 	        printf("[FAILED]\n");
 		printf("Read6 returned incorrect residual overflow.\n");
 		ret = -1;
@@ -165,7 +166,8 @@ test2:
 		scsi_free_scsi_task(task);
 		goto test3;
 	}
-	if (task->residual_status != SCSI_RESIDUAL_UNDERFLOW || task->residual != block_size) {
+	if (task->residual_status != SCSI_RESIDUAL_UNDERFLOW ||
+	    task->residual != (ssize_t)block_size) {
 	        printf("[FAILED]\n");
 		printf("Read6 returned incorrect residual underflow.\n");
 		ret = -1;
@@ -208,7 +210,8 @@ test3:
 		scsi_free_scsi_task(task);
 		goto test4;
 	}
-	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW || task->residual != block_size - 200) {
+	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
+	    task->residual != (ssize_t)block_size - 200) {
 	        printf("[FAILED]\n");
 		printf("Read6 returned incorrect residual overflow.\n");
 		ret = -1;
@@ -250,7 +253,8 @@ test4:
 		scsi_free_scsi_task(task);
 		goto test5;
 	}
-	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW || task->residual != block_size) {
+	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
+	    task->residual != (ssize_t)block_size) {
 	        printf("[FAILED]\n");
 		printf("Read6 returned incorrect residual overflow.\n");
 		ret = -1;
