@@ -1,18 +1,18 @@
-/* 
+/*
    iscsi-test tool
 
    Copyright (C) 2010 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
@@ -34,8 +34,8 @@
 #include "iscsi-private.h"
 #include "iscsi-test.h"
 
-const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test";
-const char *initiator2 = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test-2";
+const char *initiatorname1 = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test";
+const char *initiatorname2 = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test-2";
 
 static int data_loss = 0;
 static int show_info = 0;
@@ -288,7 +288,7 @@ struct iscsi_context *iscsi_context_login(const char *initiatorname, const char 
 
 	iscsi_url = iscsi_parse_full_url(iscsi, url);
 	if (iscsi_url == NULL) {
-		fprintf(stderr, "Failed to parse URL: %s\n", 
+		fprintf(stderr, "Failed to parse URL: %s\n",
 			iscsi_get_error(iscsi));
 		iscsi_destroy_context(iscsi);
 		return NULL;
@@ -387,8 +387,8 @@ int main(int argc, const char *argv[])
 		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
 		{ "usage", 0, POPT_ARG_NONE, &show_usage, 0, "Display brief usage message", NULL },
 		{ "list", 'l', POPT_ARG_NONE, &list_tests, 0, "List all tests", NULL },
-		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
-		{ "initiator-name-2", 'I', POPT_ARG_STRING, &initiator, 0, "Second initiatorname to use for tests using more two sessions", "iqn-name" },
+		{ "initiator-name", 'i', POPT_ARG_STRING, &initiatorname1, 0, "Initiatorname to use", "iqn-name" },
+		{ "initiator-name-2", 'I', POPT_ARG_STRING, &initiatorname2, 0, "Second initiatorname to use for tests using more than one session", "iqn-name" },
 		{ "test", 't', POPT_ARG_STRING, &testname, 0, "Which test to run", "testname" },
 		{ "skip", 's', POPT_ARG_STRING, &skipname, 0, "Which test to skip", "skipname" },
 		{ "info", 0, POPT_ARG_NONE, &show_info, 0, "Show information about the test", "testname" },
@@ -427,7 +427,7 @@ int main(int argc, const char *argv[])
 		for (test = &tests[0]; test->name; test++) {
 			printf("%s\n", test->name);
 			if (show_info) {
-				test->test(initiator, url, data_loss, show_info);
+				test->test(initiatorname1, url, data_loss, show_info);
 			}
 		}
 		exit(0);
@@ -438,7 +438,7 @@ int main(int argc, const char *argv[])
 		fprintf(stderr, "You must specify the URL\n");
 		print_usage();
 		free(skipname);
-        free(testname);
+		free(testname);
 		exit(10);
 	}
 
@@ -447,7 +447,7 @@ int main(int argc, const char *argv[])
 		if (testname != NULL && fnmatch(testname, test->name, 0)) {
 			continue;
 		}
-		
+
 		if (skipname != NULL) {
 			char * pchr = skipname;
 			char * pchr2 = NULL;
@@ -463,7 +463,7 @@ int main(int argc, const char *argv[])
 			if (skip) continue;
 		}
 
-		res = test->test(initiator, url, data_loss, show_info);
+		res = test->test(initiatorname1, url, data_loss, show_info);
 		if (res == 0) {
 			printf("TEST %s [OK]\n", test->name);
 		} else if (res == -2) {
@@ -482,4 +482,3 @@ int main(int argc, const char *argv[])
 
 	return num_failed ? num_failed : num_skipped ? 77 : 0;
 }
-

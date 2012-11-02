@@ -1,16 +1,16 @@
-/* 
+/*
    Copyright (C) 2012 by Jon Grimm <jon.grimm@gmail.com>
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
@@ -22,8 +22,9 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss, int show_info)
-{ 
+int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss _U_,
+			int show_info)
+{
 	struct iscsi_context *iscsi;
 	struct scsi_task *task, *task1;
 	struct scsi_inquiry_standard *inq;
@@ -132,13 +133,13 @@ int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss, i
 			scsi_free_scsi_task(task);
 			goto finished;
 		}
-		/* LBA will return 0, if the medium is blank. */ 
+		/* LBA will return 0, if the medium is blank. */
 		is_blank = rc10->lba ? 0 : 1;
 	}
 	/* If we get 'medium not present' there is no medium in the drive */
 	if (task->status == SCSI_STATUS_CHECK_CONDITION
-	   && task->sense.key == SCSI_SENSE_NOT_READY 
-	   && (task->sense.ascq    == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT 
+	   && task->sense.key == SCSI_SENSE_NOT_READY
+	   && (task->sense.ascq    == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
 	       || task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
 	       || task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		no_medium = 1;
@@ -189,9 +190,9 @@ test1:
 		}
 
 		if (task->status != SCSI_STATUS_CHECK_CONDITION
-		   || task->sense.key != SCSI_SENSE_NOT_READY 
+		   || task->sense.key != SCSI_SENSE_NOT_READY
 		   || (task->sense.ascq    != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT 		       && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-		       && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {		
+		       && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 			printf("[FAILED]\n");
 			printf("READTOC failed but ascq was wrong. Should "
 			       "have failed with MEDIUM_NOT_PRESENT. "
@@ -216,8 +217,8 @@ test1:
 			printf("READTOC Should have failed\n");
 			ret = -1;
 		} else if (task->status != SCSI_STATUS_CHECK_CONDITION
-			   || task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST 
-			   || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {		
+			   || task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST
+			   || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 			printf("[FAILED]\n");
 			printf("READTOC failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/INVALID OPERATION_CODE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
@@ -229,7 +230,6 @@ test1:
 		goto finished;
 	}
 
-
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("READTOC command failed : %s\n", iscsi_get_error(iscsi));
@@ -239,9 +239,6 @@ test1:
 	}
 	printf("[OK]\n");
 
-
-
-test2:
 	/* If we get here, there is a disk loaded and it contains data */
 	printf("Verify we got at least 4 bytes of data for track 0 ... ");
 	full_size = scsi_datain_getfullsize(task);
@@ -262,8 +259,6 @@ test2:
 	}
 	printf("[OK]\n");
 
-
-test3: 
 	printf("Verify we can READTOC format 0000b (TOC) track 1 ... ");
 	task1 = iscsi_readtoc_sync(iscsi, lun, 0, 1, 0, 255);
 	if (task1 == NULL) {
@@ -284,8 +279,6 @@ test3:
 	}
 	printf("[OK]\n");
 
-
-test4:
 	printf("Verify we got at least 4 bytes of data for track 1 ... ");
 	full_size = scsi_datain_getfullsize(task1);
 	if (full_size < 4) {
@@ -307,7 +300,6 @@ test4:
 	}
 	printf("[OK]\n");
 
-test5:
 	printf("Verify track 0 and 1 both returned the same data ... ");
 	if (list->num != list1->num ||
 	    list->first != list1->first ||
