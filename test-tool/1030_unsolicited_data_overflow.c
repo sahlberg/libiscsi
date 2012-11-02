@@ -41,7 +41,8 @@ static void test_cb(struct iscsi_context *iscsi _U_, int status,
 
 int T1030_unsolicited_data_overflow(const char *initiator, const char *url, int data_loss, int show_info)
 {
-  struct iscsi_context *iscsi, *iscsi2;
+	struct iscsi_context *iscsi = NULL;
+	struct iscsi_context *iscsi2 = NULL;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
@@ -140,7 +141,6 @@ test2:
 	printf("[OK]\n");
 
 finished:
-
 	free(buf);
 	iscsi_destroy_context(iscsi);
 	iscsi_destroy_context(iscsi2);
