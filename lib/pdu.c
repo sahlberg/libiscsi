@@ -107,7 +107,6 @@ iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 	       unsigned char *dptr, int dsize, int pdualignment)
 {
 	int len, aligned;
-	unsigned char *buf;
 
 	if (dsize == 0) {
 		iscsi_set_error(iscsi, "Trying to append zero size data to "
@@ -121,25 +120,33 @@ iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 		aligned = (aligned+3)&0xfffffffc;
 	}
 
-	buf = iscsi_malloc(iscsi, aligned);
-	if (buf == NULL) {
+	int new_alloc_size=data->alloc_size;
+	if (new_alloc_size < PAGE_SIZE) new_alloc_size=PAGE_SIZE;
+	
+	while (aligned > new_alloc_size) new_alloc_size<<=1;
+
+	if (data->data != NULL && data->alloc_size == 0) data->alloc_size=data->size;
+	
+	if (data->alloc_size == 0)
+		data->data = iscsi_malloc(iscsi, new_alloc_size);
+	else
+		if (data->alloc_size != new_alloc_size)
+			data->data = realloc(data->data, new_alloc_size);
+	
+	if (data->data == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate buffer for %d "
 				"bytes", len);
 		return -1;
 	}
+	
+	data->alloc_size = new_alloc_size;
+	memcpy(data->data + data->size, dptr, dsize);
 
-	if (data->size > 0) {
-		memcpy(buf, data->data, data->size);
-	}
-	memcpy(buf + data->size, dptr, dsize);
 	if (len != aligned) {
 		/* zero out any padding at the end */
-	  memset(buf+len, 0, aligned-len);
+		memset(data->data+len, 0, aligned-len);
 	}
 
-	iscsi_free(iscsi, data->data);
-
-	data->data  = buf;
 	data->size = len;
 
 	return 0;
