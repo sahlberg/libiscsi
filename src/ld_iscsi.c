@@ -488,6 +488,26 @@ ssize_t write(int fd, const void *buf, size_t count)
 	return real_write(fd, buf, count);
 }
 
+ssize_t (*real_pwrite)(int fd, const void *buf, size_t count, off_t offset);
+ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
+	if ((iscsi_fd_list[fd].is_iscsi == 1 && iscsi_fd_list[fd].in_flight == 0)) {
+		off_t old_offset;
+		if ((old_offset = lseek(fd, 0, SEEK_CUR)) < 0) {
+			errno = EIO;
+			return -1;
+		}
+		if (lseek(fd, offset, SEEK_SET) < 0) {
+			return -1;
+		}
+		if (write(fd, buf, count) < 0) {
+			lseek(fd, old_offset, SEEK_SET);
+			return -1;
+		}
+		lseek(fd, old_offset, SEEK_SET);
+		return count;
+	}
+	return real_pwrite(fd, buf, count, offset);
+}
 
 int (*real_dup2)(int oldfd, int newfd);
 
