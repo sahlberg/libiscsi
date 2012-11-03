@@ -275,6 +275,37 @@ int __xstat(int ver, const char *path, struct stat *buf)
 	return __lxstat(ver, path, buf);
 }
 
+off_t (*real_lseek)(int fd, off_t offset, int whence);
+
+off_t lseek(int fd, off_t offset, int whence) {
+	if (iscsi_fd_list[fd].is_iscsi == 1) {
+		off_t new_offset;
+		off_t size = iscsi_fd_list[fd].num_blocks*iscsi_fd_list[fd].block_size;
+		switch (whence) {
+			case SEEK_SET:
+				new_offset = offset;
+				break;
+			case SEEK_CUR:
+				new_offset = iscsi_fd_list[fd].offset+offset;
+				break;
+			case SEEK_END:
+				new_offset = size + offset;
+				break;
+			default:
+				errno = EINVAL;
+				return -1;
+		}
+		if (new_offset < 0 || new_offset > size) {
+			errno = EINVAL;
+			return -1;
+		}
+		iscsi_fd_list[fd].offset=new_offset;
+		return iscsi_fd_list[fd].offset;
+	}
+	
+	return real_lseek(fd, offset, whence);
+}
+
 ssize_t (*real_read)(int fd, void *buf, size_t count);
 
 ssize_t read(int fd, void *buf, size_t count)
@@ -500,6 +531,12 @@ static void __attribute__((constructor)) _init(void)
 	real_xstat = dlsym(RTLD_NEXT, "__xstat");
 	if (real_xstat == NULL) {
 		LD_ISCSI_DPRINTF(0,"Failed to dlsym(__xstat)");
+		exit(10);
+	}
+
+	real_lseek = dlsym(RTLD_NEXT, "lseek");
+	if (real_lseek == NULL) {
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(lseek)");
 		exit(10);
 	}
 
