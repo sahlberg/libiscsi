@@ -122,7 +122,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		return -1;
 	}
 
-	addr = strdup(portal);
+	addr = iscsi_strdup(iscsi, portal);
 	if (addr == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: "
 				"Failed to strdup portal address.");
@@ -151,7 +151,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		host ++;
 		str = strchr(host, ']');
 		if (str == NULL) {
-			free(addr);
+			iscsi_free(iscsi, addr);
 			iscsi_set_error(iscsi, "Invalid target:%s  "
 				"Missing ']' in IPv6 address", portal);
 			return -1;
@@ -161,12 +161,12 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	/* is it a hostname ? */
 	if (getaddrinfo(host, NULL, NULL, &ai) != 0) {
-		free(addr);
+		iscsi_free(iscsi, addr);
 		iscsi_set_error(iscsi, "Invalid target:%s  "
 			"Can not resolv into IPv4/v6.", portal);
 		return -1;
  	}
-	free(addr);
+	iscsi_free(iscsi, addr);
 
 	switch (ai->ai_family) {
 	case AF_INET:
@@ -296,12 +296,11 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 	ssize_t data_size, count;
 
 	if (iscsi->incoming == NULL) {
-		iscsi->incoming = malloc(sizeof(struct iscsi_in_pdu));
+		iscsi->incoming = iscsi_zmalloc(iscsi, sizeof(struct iscsi_in_pdu));
 		if (iscsi->incoming == NULL) {
 			iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu");
 			return -1;
 		}
-		memset(iscsi->incoming, 0, sizeof(struct iscsi_in_pdu));
 	}
 	in = iscsi->incoming;
 
@@ -346,7 +345,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		/* if not, allocate one */
 		if (buf == NULL) {
 			if (in->data == NULL) {
-				in->data = malloc(data_size);
+				in->data = iscsi_malloc(iscsi, data_size);
 				if (in->data == NULL) {
 					iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu->data(%d)", (int)data_size);
 					return -1;
@@ -385,7 +384,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			return -1;
 		}
 		SLIST_REMOVE(&iscsi->inqueue, current);
-		iscsi_free_iscsi_in_pdu(current);
+		iscsi_free_iscsi_in_pdu(iscsi, current);
 	}
 
 
@@ -442,7 +441,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 	return 0;
 }
 
-int inline
+inline int
 iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 {
 	if (iscsi->is_loggedin) {
@@ -553,18 +552,18 @@ iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 }
 
 void
-iscsi_free_iscsi_in_pdu(struct iscsi_in_pdu *in)
+iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 {
-	free(in->data);
-	free(in);
+	iscsi_free(iscsi, in->data);
+	iscsi_free(iscsi, in);
 }
 
 void
-iscsi_free_iscsi_inqueue(struct iscsi_in_pdu *inqueue)
+iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *inqueue)
 {
 	while (inqueue != NULL) {
 	      struct iscsi_in_pdu *next = inqueue->next;
-	      iscsi_free_iscsi_in_pdu(inqueue);
+	      iscsi_free_iscsi_in_pdu(iscsi, inqueue);
 	      inqueue = next;
 	}
 }

@@ -48,8 +48,8 @@ struct iscsi_in_pdu {
 	long long data_pos;
 	unsigned char *data;
 };
-void iscsi_free_iscsi_in_pdu(struct iscsi_in_pdu *in);
-void iscsi_free_iscsi_inqueue(struct iscsi_in_pdu *inqueue);
+void iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
+void iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *inqueue);
 
 enum iscsi_initial_r2t {
 	ISCSI_INITIAL_R2T_NO  = 0,
@@ -128,6 +128,8 @@ struct iscsi_context {
 	int no_auto_reconnect;
 	int reconnect_deferred;
 	int debug;
+	int mallocs;
+	int frees;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40
@@ -208,7 +210,7 @@ struct iscsi_pdu {
 	struct iscsi_scsi_cbdata *scsi_cbdata;
 };
 
-void iscsi_free_scsi_cbdata(struct iscsi_scsi_cbdata *scsi_cbdata);
+void iscsi_free_scsi_cbdata(struct iscsi_context *iscsi, struct iscsi_scsi_cbdata *scsi_cbdata);
 
 struct iscsi_pdu *iscsi_allocate_pdu(struct iscsi_context *iscsi,
 				     enum iscsi_opcode opcode,
@@ -277,6 +279,10 @@ void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
 unsigned char *iscsi_get_user_in_buffer(struct iscsi_context *iscsi, struct iscsi_in_pdu *in, uint32_t pos, ssize_t *count);
 unsigned char *scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *count);
 
+inline void* iscsi_malloc(struct iscsi_context *iscsi, size_t size);
+inline void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);
+inline void iscsi_free(struct iscsi_context *iscsi, void* ptr);
+inline char* iscsi_strdup(struct iscsi_context *iscsi, const char* str);
 
 unsigned long crc32c(char *buf, int len);
 

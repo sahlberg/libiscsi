@@ -43,23 +43,23 @@ iscsi_login_add_initiatorname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return 0;
 	}
 
-	str = malloc(1024);
+	str = iscsi_malloc(iscsi, 1024);
 #if defined(WIN32)
 	if (_snprintf_s(str, 1024, 1024, "InitiatorName=%s", iscsi->initiator_name) == -1) {
 #else
 	if (snprintf(str, 1024, "InitiatorName=%s", iscsi->initiator_name) == -1) {
 #endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
-	free(str);
+	iscsi_free(iscsi, str);
 	return 0;
 }
 
@@ -74,24 +74,24 @@ iscsi_login_add_alias(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return 0;
 	}
 
-	str = malloc(1024);
+	str = iscsi_malloc(iscsi, 1024);
 #if defined(WIN32)
 	if (_snprintf_s(str, 1024, 1024, "InitiatorAlias=%s", iscsi->alias) == -1) {
 #else
 	if (snprintf(str, 1024, "InitiatorAlias=%s", iscsi->alias) == -1) {
 #endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
-	free(str);
+	iscsi_free(iscsi, str);
 	return 0;
 }
 
@@ -112,24 +112,24 @@ iscsi_login_add_targetname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return -1;
 	}
 
-	str = malloc(1024);
+	str = iscsi_malloc(iscsi, 1024);
 #if defined(WIN32)
 	if (_snprintf_s(str, 1024, 1024, "TargetName=%s", iscsi->target_name) == -1) {
 #else
 	if (snprintf(str, 1024, "TargetName=%s", iscsi->target_name) == -1) {
 #endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
-	free(str);
+	iscsi_free(iscsi, str);
 	return 0;
 }
 
@@ -232,7 +232,7 @@ iscsi_login_add_initialr2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return 0;
 	}
 
-	str = malloc(1024);
+	str = iscsi_malloc(iscsi, 1024);
 #if defined(WIN32)
 	if (_snprintf_s(str, 1024, 1024, "InitialR2T=%s", iscsi->want_initial_r2t == ISCSI_INITIAL_R2T_NO ?
 #else
@@ -240,17 +240,17 @@ iscsi_login_add_initialr2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 #endif
 		       "No" : "Yes") == -1) {
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
-	free(str);
+	iscsi_free(iscsi, str);
 
 	return 0;
 }
@@ -265,7 +265,7 @@ iscsi_login_add_immediatedata(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return 0;
 	}
 
-	str = malloc(1024);
+	str = iscsi_malloc(iscsi, 1024);
 #if defined(WIN32)
 	if (_snprintf_s(str, 1024, 1024, "ImmediateData=%s", iscsi->want_immediate_data == ISCSI_IMMEDIATE_DATA_NO ?
 #else
@@ -273,17 +273,17 @@ iscsi_login_add_immediatedata(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 #endif
 		       "No" : "Yes") == -1) {
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
-	free(str);
+	iscsi_free(iscsi, str);
 
 	return 0;
 }
@@ -298,24 +298,24 @@ iscsi_login_add_maxburstlength(struct iscsi_context *iscsi, struct iscsi_pdu *pd
 		return 0;
 	}
 
-	str = malloc(1024);
+	str = iscsi_malloc(iscsi, 1024);
 #if defined(WIN32)
 	if (_snprintf_s(str, 1024, 1024, "MaxBurstLength=%d", iscsi->max_burst_length) == -1) {
 #else
 	if (snprintf(str, 1024, "MaxBurstLength=%d", iscsi->max_burst_length) == -1) {
 #endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
-	free(str);
+	iscsi_free(iscsi, str);
 	return 0;
 }
 
@@ -329,24 +329,24 @@ iscsi_login_add_firstburstlength(struct iscsi_context *iscsi, struct iscsi_pdu *
 		return 0;
 	}
 
-	str = malloc(1024);
+	str = iscsi_malloc(iscsi, 1024);
 #if defined(WIN32)
 	if (_snprintf_s(str, 1024, 1024, "FirstBurstLength=%d", iscsi->first_burst_length) == -1) {
 #else
 	if (snprintf(str, 1024, "FirstBurstLength=%d", iscsi->first_burst_length) == -1) {
 #endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
-	free(str);
+	iscsi_free(iscsi, str);
 	return 0;
 }
 
@@ -360,24 +360,24 @@ iscsi_login_add_maxrecvdatasegmentlength(struct iscsi_context *iscsi, struct isc
 		return 0;
 	}
 
-	str = malloc(1024);
+	str = iscsi_malloc(iscsi, 1024);
 #if defined(WIN32)
 	if (_snprintf_s(str, 1024, 1024, "MaxRecvDataSegmentLength=%d", iscsi->initiator_max_recv_data_segment_length) == -1) {
 #else
 	if (snprintf(str, 1024, "MaxRecvDataSegmentLength=%d", iscsi->initiator_max_recv_data_segment_length) == -1) {
 #endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
+		iscsi_free(iscsi, str);
 		return -1;
 	}
-	free(str);
+	iscsi_free(iscsi, str);
 	return 0;
 }
 

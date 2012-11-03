@@ -77,6 +77,7 @@ struct iscsi_url {
        char user[MAX_STRING_SIZE+1];
        char passwd[MAX_STRING_SIZE+1];
        int lun;
+       struct iscsi_context *iscsi;
 };
 
 /*
