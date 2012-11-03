@@ -331,6 +331,7 @@ try_again:
 	iscsi->frees+=old_iscsi->frees;
 
 	memcpy(old_iscsi, iscsi, sizeof(struct iscsi_context));
+	memset(iscsi, 0, sizeof(struct iscsi_context));
 	free(iscsi);
 
 	old_iscsi->is_reconnecting = 0;

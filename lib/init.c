@@ -267,6 +267,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		DPRINTF(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs and %d frees",iscsi->mallocs,iscsi->frees);
 	}
 	
+	memset(iscsi, 0, sizeof(struct iscsi_context));
 	free(iscsi);
 
 	return 0;
@@ -465,7 +466,9 @@ iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url)
 void
 iscsi_destroy_url(struct iscsi_url *iscsi_url)
 {
-	if (iscsi_url->iscsi != NULL)
+	struct iscsi_context *iscsi = iscsi_url->iscsi;
+	memset(iscsi_url, 0, sizeof(struct iscsi_url));
+	if (iscsi != NULL)
 		iscsi_free(iscsi_url->iscsi, iscsi_url);
 	else
 		free(iscsi_url);
