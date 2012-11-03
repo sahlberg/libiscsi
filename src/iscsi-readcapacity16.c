@@ -177,6 +177,7 @@ int main(int argc, const char *argv[])
 		printf("%" PRIu64 "\n", rc16->block_length * (rc16->returned_lba + 1));
 	}
 	
+	scsi_free_scsi_task(task);
 	iscsi_destroy_url(iscsi_url);
 
 	iscsi_logout_sync(iscsi);
