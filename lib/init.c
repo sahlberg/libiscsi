@@ -469,7 +469,7 @@ iscsi_destroy_url(struct iscsi_url *iscsi_url)
 	struct iscsi_context *iscsi = iscsi_url->iscsi;
 	memset(iscsi_url, 0, sizeof(struct iscsi_url));
 	if (iscsi != NULL)
-		iscsi_free(iscsi_url->iscsi, iscsi_url);
+		iscsi_free(iscsi, iscsi_url);
 	else
 		free(iscsi_url);
 }
