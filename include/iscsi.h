@@ -33,7 +33,6 @@ struct iscsi_context;
 struct sockaddr;
 
 #define MAX_STRING_SIZE (255)
-#define PAGE_SIZE (4096)
 
 /*
  * Syntax for normal and portal/discovery URLs.
@@ -534,7 +533,6 @@ iscsi_task_mgmt_target_cold_reset_async(struct iscsi_context *iscsi,
 
 struct iscsi_data {
        int size;
-       int alloc_size;
        unsigned char *data;
 };
 
