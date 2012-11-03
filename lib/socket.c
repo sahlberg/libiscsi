@@ -471,15 +471,21 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 			iscsi_set_error(iscsi, "iscsi_service: POLLERR, "
 					"Unknown socket error.");
 		}
-		iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR, NULL,
-					iscsi->connect_data);
+		if (iscsi->socket_status_cb) {
+			iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR, NULL,
+						iscsi->connect_data);
+			iscsi->socket_status_cb = NULL;
+		}
 		return iscsi_service_reconnect_if_loggedin(iscsi);
 	}
 	if (revents & POLLHUP) {
 		iscsi_set_error(iscsi, "iscsi_service: POLLHUP, "
 				"socket error.");
-		iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR, NULL,
-					iscsi->connect_data);
+		if (iscsi->socket_status_cb) {
+			iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR, NULL,
+						iscsi->connect_data);
+			iscsi->socket_status_cb = NULL;
+		}
 		return iscsi_service_reconnect_if_loggedin(iscsi);
 	}
 
@@ -494,16 +500,23 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 			iscsi_set_error(iscsi, "iscsi_service: socket error "
 					"%s(%d) while connecting.",
 					strerror(err), err);
-			iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR,
-						NULL, iscsi->connect_data);
+			if (iscsi->socket_status_cb) {
+				iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR,
+							NULL, iscsi->connect_data);
+				iscsi->socket_status_cb = NULL;
+			}
+							
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 
 		DPRINTF(iscsi,2,"connection to %s established",iscsi->connected_portal);
 
 		iscsi->is_connected = 1;
-		iscsi->socket_status_cb(iscsi, SCSI_STATUS_GOOD, NULL,
-					iscsi->connect_data);
+		if (iscsi->socket_status_cb) {
+			iscsi->socket_status_cb(iscsi, SCSI_STATUS_GOOD, NULL,
+						iscsi->connect_data);
+			iscsi->socket_status_cb = NULL;
+		}
 		return 0;
 	}
 

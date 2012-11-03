@@ -139,7 +139,7 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		}
 
 		pdu->callback     = cmd_pdu->callback;
-		pdu->private_data = cmd_pdu->private_data;;
+		pdu->private_data = cmd_pdu->private_data;
 
 		if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 			iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
