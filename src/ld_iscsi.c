@@ -413,6 +413,26 @@ ssize_t read(int fd, void *buf, size_t count)
 	return real_read(fd, buf, count);
 }
 
+ssize_t (*real_pread)(int fd, void *buf, size_t count, off_t offset); 
+ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
+	if ((iscsi_fd_list[fd].is_iscsi == 1 && iscsi_fd_list[fd].in_flight == 0)) {
+		off_t old_offset;
+		if ((old_offset = lseek(fd, 0, SEEK_CUR)) < 0) {
+			errno = EIO;
+			return -1;
+		}
+		if (lseek(fd, offset, SEEK_SET) < 0) {
+			return -1;
+		}
+		if (read(fd, buf, count) < 0) {
+			lseek(fd, old_offset, SEEK_SET);
+			return -1;
+		}
+		lseek(fd, old_offset, SEEK_SET);
+		return count;
+	}
+	return real_pread(fd, buf, count, offset);
+}
 
 int (*real_dup2)(int oldfd, int newfd);
 
@@ -543,6 +563,12 @@ static void __attribute__((constructor)) _init(void)
 	real_read = dlsym(RTLD_NEXT, "read");
 	if (real_read == NULL) {
 		LD_ISCSI_DPRINTF(0,"Failed to dlsym(read)");
+		exit(10);
+	}
+
+	real_pread = dlsym(RTLD_NEXT, "pread");
+	if (real_pread == NULL) {
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(pread)");
 		exit(10);
 	}
 
