@@ -568,7 +568,9 @@ void
 iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 {
 	iscsi_free(iscsi, in->data);
+	in->data=NULL;
 	iscsi_free(iscsi, in);
+	in=NULL;
 }
 
 void

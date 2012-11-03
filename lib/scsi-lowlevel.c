@@ -45,13 +45,21 @@ scsi_free_scsi_task(struct scsi_task *task)
 {
 	struct scsi_allocated_memory *mem;
 
-	while ((mem = task->mem)) {
-		SLIST_REMOVE(&task->mem, mem);
-		iscsi_free(task->iscsi, mem);
+    if (task->iscsi != NULL) {
+		while ((mem = task->mem)) {
+			SLIST_REMOVE(&task->mem, mem);
+			iscsi_free(task->iscsi, mem);
+		}
+		iscsi_free(task->iscsi,task->datain.data);
+		iscsi_free(task->iscsi,task);
+	} else {
+		while ((mem = task->mem)) {
+			SLIST_REMOVE(&task->mem, mem);
+			free(mem);
+		}
+		free(task->datain.data);
+		free(task);
 	}
-
-	iscsi_free(task->iscsi,task->datain.data);
-	iscsi_free(task->iscsi,task);
 }
 
 struct scsi_task *
@@ -68,10 +76,14 @@ void *
 scsi_malloc(struct scsi_task *task, size_t size)
 {
 	struct scsi_allocated_memory *mem;
-	mem = iscsi_zmalloc(task->iscsi,sizeof(struct scsi_allocated_memory) + size);
+	if (task->iscsi != NULL)
+		mem = iscsi_malloc(task->iscsi,sizeof(struct scsi_allocated_memory) + size);
+	else
+		mem = malloc(sizeof(struct scsi_allocated_memory) + size);
 	if (mem == NULL) {
 		return NULL;
 	}
+	memset(mem, 0, sizeof(struct scsi_allocated_memory) + size);
 	mem->ptr = (void *) ((uintptr_t)mem + sizeof(struct scsi_allocated_memory));
 	SLIST_ADD(&task->mem, mem);
 	return mem->ptr;

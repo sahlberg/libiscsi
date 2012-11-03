@@ -140,7 +140,8 @@ iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
 	struct connect_task *ct;
 
 	iscsi->lun = lun;
-	strncpy(iscsi->portal,portal,MAX_STRING_SIZE);
+	if (iscsi->portal != portal)
+	 strncpy(iscsi->portal,portal,MAX_STRING_SIZE);
 
 	ct = iscsi_malloc(iscsi, sizeof(struct connect_task));
 	if (ct == NULL) {
@@ -326,14 +327,13 @@ try_again:
 
 	close(iscsi->fd);
 	iscsi->fd = old_iscsi->fd;
-	int _mallocs = old_iscsi->mallocs;
-	int _frees = old_iscsi->frees;
+	iscsi->mallocs+=old_iscsi->mallocs;
+	iscsi->frees+=old_iscsi->frees;
+
 	memcpy(old_iscsi, iscsi, sizeof(struct iscsi_context));
 	free(iscsi);
 
 	old_iscsi->is_reconnecting = 0;
-	old_iscsi->mallocs+=_mallocs;
-	old_iscsi->frees+=_frees;
 
 	return 0;
 }
