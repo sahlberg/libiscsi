@@ -653,6 +653,12 @@ static void __attribute__((constructor)) _init(void)
 		exit(10);
 	}
 
+	real_pwrite = dlsym(RTLD_NEXT, "pwrite");
+	if (real_pwrite == NULL) {
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(pwrite)");
+		exit(10);
+	}
+
 	real_dup2 = dlsym(RTLD_NEXT, "dup2");
 	if (real_dup2 == NULL) {
 		LD_ISCSI_DPRINTF(0,"Failed to dlsym(dup2)");
