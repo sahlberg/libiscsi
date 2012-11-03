@@ -434,6 +434,61 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
 	return real_pread(fd, buf, count, offset);
 }
 
+ssize_t (*real_write)(int fd, const void *buf, size_t count);
+
+ssize_t write(int fd, const void *buf, size_t count) 
+{
+	if ((iscsi_fd_list[fd].is_iscsi == 1) && (iscsi_fd_list[fd].in_flight == 0)) {
+		uint64_t offset;
+		uint64_t num_blocks, lba;
+		struct scsi_task *task;
+
+		if (iscsi_fd_list[fd].dup2fd >= 0) {
+			return write(iscsi_fd_list[fd].dup2fd, buf, count);
+		}
+		if (iscsi_fd_list[fd].offset%iscsi_fd_list[fd].block_size) {
+			errno = EINVAL;
+			return -1;
+		}
+		if (count%iscsi_fd_list[fd].block_size) {
+			errno = EINVAL;
+			return -1;
+		}
+
+		offset = iscsi_fd_list[fd].offset;
+		num_blocks = count/iscsi_fd_list[fd].block_size;
+		lba = offset / iscsi_fd_list[fd].block_size;
+
+		/* Don't try to read beyond the last LBA */
+		if (lba >= iscsi_fd_list[fd].num_blocks) {
+			return 0;
+		}
+		/* Trim num_blocks requested to last lba */
+		if ((lba + num_blocks) > iscsi_fd_list[fd].num_blocks) {
+			num_blocks = iscsi_fd_list[fd].num_blocks - lba;
+			count = num_blocks * iscsi_fd_list[fd].block_size;
+		}
+
+		iscsi_fd_list[fd].in_flight = 1;
+		LD_ISCSI_DPRINTF(4,"write16_sync: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
+		task = iscsi_write16_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, (unsigned char *) buf, count, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
+		iscsi_fd_list[fd].in_flight = 0;
+		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+			LD_ISCSI_DPRINTF(0,"failed to send write16 command");
+			errno = EIO;
+			return -1;
+		}
+
+		iscsi_fd_list[fd].offset += count;
+		scsi_free_scsi_task(task);
+		
+		return count;
+	}
+
+	return real_write(fd, buf, count);
+}
+
+
 int (*real_dup2)(int oldfd, int newfd);
 
 int dup2(int oldfd, int newfd)
@@ -569,6 +624,12 @@ static void __attribute__((constructor)) _init(void)
 	real_pread = dlsym(RTLD_NEXT, "pread");
 	if (real_pread == NULL) {
 		LD_ISCSI_DPRINTF(0,"Failed to dlsym(pread)");
+		exit(10);
+	}
+
+	real_write = dlsym(RTLD_NEXT, "write");
+	if (real_write == NULL) {
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(write)");
 		exit(10);
 	}
 
