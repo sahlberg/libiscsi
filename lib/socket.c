@@ -61,7 +61,7 @@ static void set_nonblocking(int fd)
 int set_tcp_sockopt(int sockfd, int optname, int value)
 {
 	int level;
-	
+
 	#if defined(__FreeBSD__) || defined(__sun)
 	struct protoent *buf;
 
@@ -71,8 +71,8 @@ int set_tcp_sockopt(int sockfd, int optname, int value)
 		return -1;
 	#else
 		level = SOL_TCP;
-	#endif	
-	
+	#endif
+
 	return setsockopt(sockfd, level, optname, &value, sizeof(value));
 }
 
@@ -156,7 +156,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 				"Missing ']' in IPv6 address", portal);
 			return -1;
 		}
-		*str = 0;		
+		*str = 0;
 	}
 
 	/* is it a hostname ? */
@@ -205,9 +205,9 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	iscsi->connect_data      = private_data;
 
 	set_nonblocking(iscsi->fd);
-	
+
 	iscsi_set_tcp_keepalive(iscsi, iscsi->tcp_keepidle, iscsi->tcp_keepcnt, iscsi->tcp_keepintvl);
-	
+
 	if (iscsi->tcp_user_timeout > 0) {
 		set_tcp_user_timeout(iscsi);
 	}
@@ -227,9 +227,9 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	}
 
 	freeaddrinfo(ai);
-	
+
 	strncpy(iscsi->connected_portal,portal,MAX_STRING_SIZE);
-	
+
 	return 0;
 }
 
@@ -243,7 +243,7 @@ iscsi_disconnect(struct iscsi_context *iscsi)
 	}
 
 	close(iscsi->fd);
-	
+
 	if (iscsi->connected_portal[0])
 		DPRINTF(iscsi,2,"disconnected from portal %s",iscsi->connected_portal);
 
@@ -408,7 +408,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			/* stop sending. maxcmdsn is reached */
 			return 0;
 		}
-	     
+
 		total = iscsi->outqueue->outdata.size;
 		total = (total + 3) & 0xfffffffc;
 
@@ -441,7 +441,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 	return 0;
 }
 
-inline int
+static inline int
 iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 {
 	if (iscsi->is_loggedin) {
@@ -505,7 +505,7 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 							NULL, iscsi->connect_data);
 				iscsi->socket_status_cb = NULL;
 			}
-							
+
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 
@@ -586,31 +586,31 @@ iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *inque
 void iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value)
 {
 	iscsi->tcp_syncnt=value;
-	DPRINTF(iscsi,2,"TCP_SYNCNT will be set to %d on next socket creation",value);    
+	DPRINTF(iscsi,2,"TCP_SYNCNT will be set to %d on next socket creation",value);
 }
 
 void iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int value)
 {
 	iscsi->tcp_user_timeout=value;
-	DPRINTF(iscsi,2,"TCP_USER_TIMEOUT will be set to %dms on next socket creation",value);    
+	DPRINTF(iscsi,2,"TCP_USER_TIMEOUT will be set to %dms on next socket creation",value);
 }
 
 void iscsi_set_tcp_keepidle(struct iscsi_context *iscsi, int value)
 {
 	iscsi->tcp_keepidle=value;
-	DPRINTF(iscsi,2,"TCP_KEEPIDLE will be set to %d on next socket creation",value);    
+	DPRINTF(iscsi,2,"TCP_KEEPIDLE will be set to %d on next socket creation",value);
 }
 
 void iscsi_set_tcp_keepcnt(struct iscsi_context *iscsi, int value)
 {
 	iscsi->tcp_keepcnt=value;
-	DPRINTF(iscsi,2,"TCP_KEEPCNT will be set to %d on next socket creation",value);    
+	DPRINTF(iscsi,2,"TCP_KEEPCNT will be set to %d on next socket creation",value);
 }
 
 void iscsi_set_tcp_keepintvl(struct iscsi_context *iscsi, int value)
 {
 	iscsi->tcp_keepintvl=value;
-	DPRINTF(iscsi,2,"TCP_KEEPINTVL will be set to %d on next socket creation",value);    
+	DPRINTF(iscsi,2,"TCP_KEEPINTVL will be set to %d on next socket creation",value);
 }
 
 int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval)
@@ -647,4 +647,3 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, in
 
 	return 0;
 }
-

@@ -105,7 +105,7 @@ iscsi_create_context(const char *initiator_name)
 	if (getenv("LIBISCSI_DEBUG") != NULL) {
 		iscsi_set_debug(iscsi,atoi(getenv("LIBISCSI_DEBUG")));
 	}
-	
+
 	if (getenv("LIBISCSI_TCP_USER_TIMEOUT") != NULL) {
 		iscsi_set_tcp_user_timeout(iscsi,atoi(getenv("LIBISCSI_TCP_USER_TIMEOUT")));
 	}
@@ -236,7 +236,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 			if (iscsi->is_loggedin) {
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 						pdu->private_data);
-			}		      
+			}
 		}
 		iscsi_free_pdu(iscsi, pdu);
 	}
@@ -284,7 +284,7 @@ iscsi_set_error(struct iscsi_context *iscsi, const char *error_string, ...)
 		strncpy(errstr,"could not format error string!",MAX_STRING_SIZE);
 	}
 	va_end(ap);
-	
+
 	strncpy(iscsi->error_string,errstr,MAX_STRING_SIZE);
 	DPRINTF(iscsi,1,"%s",iscsi->error_string);
 }
@@ -342,10 +342,10 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 	char *portal;
 	char *user = NULL;
 	char *passwd = NULL;
-	char *target;
+	char *target = NULL;
 	char *lun;
 	char *tmp;
-	int l;
+	int l = 0;
 
 	if (strncmp(url, "iscsi://", 8)) {
 		if (full) {
@@ -429,12 +429,13 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 		iscsi_url = iscsi_malloc(iscsi, sizeof(struct iscsi_url));
 	else
 		iscsi_url = malloc(sizeof(struct iscsi_url));
+	
 	if (iscsi_url == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate iscsi_url structure");
 		return NULL;
 	}
 	memset(iscsi_url, 0, sizeof(struct iscsi_url));
-    iscsi_url->iscsi= iscsi;
+	iscsi_url->iscsi= iscsi;
 
 	strncpy(iscsi_url->portal,portal,MAX_STRING_SIZE);
 
@@ -442,12 +443,12 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 		strncpy(iscsi_url->user,user,MAX_STRING_SIZE);
 		strncpy(iscsi_url->passwd,passwd,MAX_STRING_SIZE);
 	}
-	
+
 	if (full) {
 		strncpy(iscsi_url->target,target,MAX_STRING_SIZE);
 		iscsi_url->lun = l;
 	}
-	
+
 	return iscsi_url;
 }
 
