@@ -387,6 +387,10 @@ int (*real_dup2)(int oldfd, int newfd);
 
 int dup2(int oldfd, int newfd)
 {
+	if (iscsi_fd_list[newfd].is_iscsi) {
+		return real_dup2(oldfd, newfd);
+	}
+
 	close(newfd);
 
 	if (iscsi_fd_list[oldfd].is_iscsi == 1) {
