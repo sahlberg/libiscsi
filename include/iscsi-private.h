@@ -86,7 +86,7 @@ struct iscsi_context {
 
 	int fd;
 	int is_connected;
-	
+
 	int tcp_user_timeout;
 	int tcp_keepcnt;
 	int tcp_keepintvl;
@@ -272,7 +272,7 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 int iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt);
 
 void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
-		     ...);
+		     ...) __attribute__((format(printf, 2, 3)));
 
 unsigned char *iscsi_get_user_in_buffer(struct iscsi_context *iscsi, struct iscsi_in_pdu *in, uint32_t pos, ssize_t *count);
 unsigned char *scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *count);
@@ -289,4 +289,3 @@ void iscsi_set_noautoreconnect(struct iscsi_context *iscsi, int state);
 #endif
 
 #endif /* __iscsi_private_h__ */
-

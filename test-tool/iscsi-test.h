@@ -1,24 +1,24 @@
-/* 
+/*
    iscsi-test tool
 
    Copyright (C) 2010 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
-extern const char *initiator;
-extern const char *initiator2;
+extern const char *initiatorname1;
+extern const char *initiatorname2;
 
 struct iscsi_context *iscsi_context_login(const char *initiatorname, const char *url, int *lun);
 
@@ -182,4 +182,3 @@ int T1010_datasn_invalid(const char *initiator, const char *url, int data_loss, 
 int T1020_bufferoffset_invalid(const char *initiator, const char *url, int data_loss, int show_info);
 int T1030_unsolicited_data_overflow(const char *initiator, const char *url, int data_loss, int show_info);
 int T1031_unsolicited_data_out(const char *initiator, const char *url, int data_loss, int show_info);
-

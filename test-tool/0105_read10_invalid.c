@@ -1,16 +1,16 @@
-/* 
+/*
    Copyright (C) 2010 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
@@ -24,7 +24,7 @@
 #include "iscsi-test.h"
 
 int T0105_read10_invalid(const char *initiator, const char *url, int data_loss _U_, int show_info)
-{ 
+{
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct iscsi_data data;
@@ -120,7 +120,8 @@ int T0105_read10_invalid(const char *initiator, const char *url, int data_loss _
 		scsi_free_scsi_task(task);
 		goto test2;
 	}
-	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW || task->residual != block_size) {
+	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
+	    task->residual != (int64_t)block_size) {
 	        printf("[FAILED]\n");
 		printf("Read10 returned incorrect residual overflow.\n");
 		ret = -1;
@@ -166,7 +167,8 @@ test2:
 		scsi_free_scsi_task(task);
 		goto test3;
 	}
-	if (task->residual_status != SCSI_RESIDUAL_UNDERFLOW || task->residual != block_size) {
+	if (task->residual_status != SCSI_RESIDUAL_UNDERFLOW ||
+	    task->residual != (int64_t)block_size) {
 	        printf("[FAILED]\n");
 		printf("Read10 returned incorrect residual underflow.\n");
 		ret = -1;
@@ -209,7 +211,8 @@ test3:
 		scsi_free_scsi_task(task);
 		goto test4;
 	}
-	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW || task->residual != block_size - 200) {
+	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
+	    task->residual != (int64_t)(block_size - 200)) {
 	        printf("[FAILED]\n");
 		printf("Read10 returned incorrect residual overflow.\n");
 		ret = -1;
@@ -251,7 +254,8 @@ test4:
 		scsi_free_scsi_task(task);
 		goto test5;
 	}
-	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW || task->residual != block_size) {
+	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
+	    task->residual != (int64_t)block_size) {
 	        printf("[FAILED]\n");
 		printf("Read10 returned incorrect residual overflow.\n");
 		ret = -1;
