@@ -35,7 +35,7 @@
 static int
 iscsi_login_add_initiatorname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send InitiatorName during opneg or the first leg of secneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
@@ -43,30 +43,26 @@ iscsi_login_add_initiatorname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return 0;
 	}
 
-	str = malloc(1024);
 #if defined(WIN32)
-	if (_snprintf_s(str, 1024, 1024, "InitiatorName=%s", iscsi->initiator_name) == -1) {
+	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "InitiatorName=%s", iscsi->initiator_name) == -1) {
 #else
-	if (snprintf(str, 1024, "InitiatorName=%s", iscsi->initiator_name) == -1) {
+	if (snprintf(str, MAX_STRING_SIZE, "InitiatorName=%s", iscsi->initiator_name) == -1) {
 #endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
 		return -1;
 	}
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
 		return -1;
 	}
-	free(str);
 	return 0;
 }
 
 static int
 iscsi_login_add_alias(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send InitiatorAlias during opneg or the first leg of secneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
@@ -74,31 +70,27 @@ iscsi_login_add_alias(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return 0;
 	}
 
-	str = malloc(1024);
 #if defined(WIN32)
-	if (_snprintf_s(str, 1024, 1024, "InitiatorAlias=%s", iscsi->alias) == -1) {
+	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "InitiatorAlias=%s", iscsi->alias) == -1) {
 #else
-	if (snprintf(str, 1024, "InitiatorAlias=%s", iscsi->alias) == -1) {
+	if (snprintf(str, MAX_STRING_SIZE, "InitiatorAlias=%s", iscsi->alias) == -1) {
 #endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
 		return -1;
 	}
-	free(str);
 	return 0;
 }
 
 static int
 iscsi_login_add_targetname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send TargetName during opneg or the first leg of secneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
@@ -112,31 +104,27 @@ iscsi_login_add_targetname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return -1;
 	}
 
-	str = malloc(1024);
 #if defined(WIN32)
-	if (_snprintf_s(str, 1024, 1024, "TargetName=%s", iscsi->target_name) == -1) {
+	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "TargetName=%s", iscsi->target_name) == -1) {
 #else
-	if (snprintf(str, 1024, "TargetName=%s", iscsi->target_name) == -1) {
+	if (snprintf(str, MAX_STRING_SIZE, "TargetName=%s", iscsi->target_name) == -1) {
 #endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
 		return -1;
 	}
-	free(str);
 	return 0;
 }
 
 static int
 iscsi_login_add_sessiontype(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send TargetName during opneg or the first leg of secneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
@@ -146,10 +134,10 @@ iscsi_login_add_sessiontype(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 
 	switch (iscsi->session_type) {
 	case ISCSI_SESSION_DISCOVERY:
-		str = (char *)"SessionType=Discovery";
+		strncpy(str,"SessionType=Discovery",MAX_STRING_SIZE);
 		break;
 	case ISCSI_SESSION_NORMAL:
-		str = (char *)"SessionType=Normal";
+		strncpy(str,"SessionType=Normal",MAX_STRING_SIZE);
 		break;
 	default:
 		iscsi_set_error(iscsi, "Can not handle sessions %d yet.",
@@ -168,7 +156,7 @@ iscsi_login_add_sessiontype(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 static int
 iscsi_login_add_headerdigest(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send HeaderDigest during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
@@ -177,16 +165,16 @@ iscsi_login_add_headerdigest(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 
 	switch (iscsi->want_header_digest) {
 	case ISCSI_HEADER_DIGEST_NONE:
-		str = (char *)"HeaderDigest=None";
+		strncpy(str,"HeaderDigest=None",MAX_STRING_SIZE);
 		break;
 	case ISCSI_HEADER_DIGEST_NONE_CRC32C:
-		str = (char *)"HeaderDigest=None,CRC32C";
+		strncpy(str,"HeaderDigest=None,CRC32C",MAX_STRING_SIZE);
 		break;
 	case ISCSI_HEADER_DIGEST_CRC32C_NONE:
-		str = (char *)"HeaderDigest=CRC32C,None";
+		strncpy(str,"HeaderDigest=CRC32C,None",MAX_STRING_SIZE);
 		break;
 	case ISCSI_HEADER_DIGEST_CRC32C:
-		str = (char *)"HeaderDigest=CRC32C";
+		strncpy(str,"HeaderDigest=CRC32C",MAX_STRING_SIZE);
 		break;
 	default:
 		iscsi_set_error(iscsi, "invalid header digest value");
@@ -205,14 +193,14 @@ iscsi_login_add_headerdigest(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 static int
 iscsi_login_add_datadigest(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send DataDigest during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = (char *)"DataDigest=None";
+	strncpy(str,"DataDigest=None",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -225,32 +213,28 @@ iscsi_login_add_datadigest(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 static int
 iscsi_login_add_initialr2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send InitialR2T during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = malloc(1024);
 #if defined(WIN32)
-	if (_snprintf_s(str, 1024, 1024, "InitialR2T=%s", iscsi->want_initial_r2t == ISCSI_INITIAL_R2T_NO ?
+	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "InitialR2T=%s", iscsi->want_initial_r2t == ISCSI_INITIAL_R2T_NO ?
 #else
-	if (snprintf(str, 1024, "InitialR2T=%s", iscsi->want_initial_r2t == ISCSI_INITIAL_R2T_NO ?
+	if (snprintf(str, MAX_STRING_SIZE, "InitialR2T=%s", iscsi->want_initial_r2t == ISCSI_INITIAL_R2T_NO ?
 #endif
 		       "No" : "Yes") == -1) {
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
 		return -1;
 	}
-	free(str);
 
 	return 0;
 }
@@ -258,32 +242,28 @@ iscsi_login_add_initialr2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 static int
 iscsi_login_add_immediatedata(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send ImmediateData during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = malloc(1024);
 #if defined(WIN32)
-	if (_snprintf_s(str, 1024, 1024, "ImmediateData=%s", iscsi->want_immediate_data == ISCSI_IMMEDIATE_DATA_NO ?
+	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "ImmediateData=%s", iscsi->want_immediate_data == ISCSI_IMMEDIATE_DATA_NO ?
 #else
-	if (snprintf(str, 1024, "ImmediateData=%s", iscsi->want_immediate_data == ISCSI_IMMEDIATE_DATA_NO ?
+	if (snprintf(str, MAX_STRING_SIZE, "ImmediateData=%s", iscsi->want_immediate_data == ISCSI_IMMEDIATE_DATA_NO ?
 #endif
 		       "No" : "Yes") == -1) {
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
 		return -1;
 	}
-	free(str);
 
 	return 0;
 }
@@ -291,107 +271,95 @@ iscsi_login_add_immediatedata(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 static int
 iscsi_login_add_maxburstlength(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send MaxBurstLength during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = malloc(1024);
 #if defined(WIN32)
-	if (_snprintf_s(str, 1024, 1024, "MaxBurstLength=%d", iscsi->max_burst_length) == -1) {
+	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "MaxBurstLength=%d", iscsi->max_burst_length) == -1) {
 #else
-	if (snprintf(str, 1024, "MaxBurstLength=%d", iscsi->max_burst_length) == -1) {
+	if (snprintf(str, MAX_STRING_SIZE, "MaxBurstLength=%d", iscsi->max_burst_length) == -1) {
 #endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
 		return -1;
 	}
-	free(str);
 	return 0;
 }
 
 static int
 iscsi_login_add_firstburstlength(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send FirstBurstLength during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = malloc(1024);
 #if defined(WIN32)
-	if (_snprintf_s(str, 1024, 1024, "FirstBurstLength=%d", iscsi->first_burst_length) == -1) {
+	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "FirstBurstLength=%d", iscsi->first_burst_length) == -1) {
 #else
-	if (snprintf(str, 1024, "FirstBurstLength=%d", iscsi->first_burst_length) == -1) {
+	if (snprintf(str, MAX_STRING_SIZE, "FirstBurstLength=%d", iscsi->first_burst_length) == -1) {
 #endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
 		return -1;
 	}
-	free(str);
 	return 0;
 }
 
 static int
 iscsi_login_add_maxrecvdatasegmentlength(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send MaxRecvDataSegmentLength during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = malloc(1024);
 #if defined(WIN32)
-	if (_snprintf_s(str, 1024, 1024, "MaxRecvDataSegmentLength=%d", iscsi->initiator_max_recv_data_segment_length) == -1) {
+	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "MaxRecvDataSegmentLength=%d", iscsi->initiator_max_recv_data_segment_length) == -1) {
 #else
-	if (snprintf(str, 1024, "MaxRecvDataSegmentLength=%d", iscsi->initiator_max_recv_data_segment_length) == -1) {
+	if (snprintf(str, MAX_STRING_SIZE, "MaxRecvDataSegmentLength=%d", iscsi->initiator_max_recv_data_segment_length) == -1) {
 #endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
-		free(str);
 		return -1;
 	}
 
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		free(str);
 		return -1;
 	}
-	free(str);
 	return 0;
 }
 
 static int
 iscsi_login_add_datapduinorder(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send DataPduInOrder during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = (char *)"DataPDUInOrder=Yes";
+	strncpy(str,"DataPDUInOrder=Yes",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -404,14 +372,14 @@ iscsi_login_add_datapduinorder(struct iscsi_context *iscsi, struct iscsi_pdu *pd
 static int
 iscsi_login_add_defaulttime2wait(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send DefaultTime2Wait during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = (char *)"DefaultTime2Wait=2";
+	strncpy(str,"DefaultTime2Wait=2",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -424,14 +392,14 @@ iscsi_login_add_defaulttime2wait(struct iscsi_context *iscsi, struct iscsi_pdu *
 static int
 iscsi_login_add_defaulttime2retain(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send DefaultTime2Retain during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = (char *)"DefaultTime2Retain=0";
+	strncpy(str,"DefaultTime2Retain=0",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -444,14 +412,14 @@ iscsi_login_add_defaulttime2retain(struct iscsi_context *iscsi, struct iscsi_pdu
 static int
 iscsi_login_add_ifmarker(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send IFMarker during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = (char *)"IFMarker=No";
+	strncpy(str,"IFMarker=No",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -464,14 +432,14 @@ iscsi_login_add_ifmarker(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 static int
 iscsi_login_add_ofmarker(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send OFMarker during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = (char *)"OFMarker=No";
+	strncpy(str,"OFMarker=No",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -484,14 +452,14 @@ iscsi_login_add_ofmarker(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 static int
 iscsi_login_add_maxconnections(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send MaxConnections during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = (char *)"MaxConnections=1";
+	strncpy(str,"MaxConnections=1",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -504,14 +472,14 @@ iscsi_login_add_maxconnections(struct iscsi_context *iscsi, struct iscsi_pdu *pd
 static int
 iscsi_login_add_maxoutstandingr2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send MaxOutstandingR2T during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = (char *)"MaxOutstandingR2T=1";
+	strncpy(str,"MaxOutstandingR2T=1",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -524,14 +492,14 @@ iscsi_login_add_maxoutstandingr2t(struct iscsi_context *iscsi, struct iscsi_pdu 
 static int
 iscsi_login_add_errorrecoverylevel(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send ErrorRecoveryLevel during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = (char *)"ErrorRecoveryLevel=0";
+	strncpy(str,"ErrorRecoveryLevel=0",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -544,14 +512,14 @@ iscsi_login_add_errorrecoverylevel(struct iscsi_context *iscsi, struct iscsi_pdu
 static int
 iscsi_login_add_datasequenceinorder(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	/* We only send DataSequenceInOrder during opneg */
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
 		return 0;
 	}
 
-	str = (char *)"DataSequenceInOrder=Yes";
+	strncpy(str,"DataSequenceInOrder=Yes",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -564,14 +532,14 @@ iscsi_login_add_datasequenceinorder(struct iscsi_context *iscsi, struct iscsi_pd
 static int
 iscsi_login_add_authmethod(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_SECNEG
 	|| iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
 		return 0;
 	}
 
-	str = (char *)"AuthMethod=CHAP,None";
+	strncpy(str,"AuthMethod=CHAP,None",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -584,14 +552,14 @@ iscsi_login_add_authmethod(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 static int
 iscsi_login_add_authalgorithm(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_SECNEG
 	|| iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_SELECT_ALGORITHM) {
 		return 0;
 	}
 
-	str = (char *)"CHAP_A=5";
+	strncpy(str,"CHAP_A=5",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -604,14 +572,14 @@ iscsi_login_add_authalgorithm(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 static int
 iscsi_login_add_chap_username(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
 
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_SECNEG
 	|| iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE) {
 		return 0;
 	}
 
-	str = (char *)"CHAP_N=";
+	strncpy(str,"CHAP_N=",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str))
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -652,7 +620,8 @@ i2h(int i)
 static int
 iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	char *str;
+	char str[MAX_STRING_SIZE+1];
+	char * strp;
 	unsigned char c, cc[2];
 	unsigned char digest[16];
 	struct MD5Context ctx;
@@ -671,15 +640,16 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 	c = iscsi->chap_i;
 	MD5Update(&ctx, &c, 1);
 	MD5Update(&ctx, (unsigned char *)iscsi->passwd, strlen(iscsi->passwd));
-	str = iscsi->chap_c;
-	while (*str != 0) {
-		c = (h2i(str[0]) << 4) | h2i(str[1]);
-		str += 2;
+	
+	strp = iscsi->chap_c;
+	while (*strp != 0) {
+		c = (h2i(strp[0]) << 4) | h2i(strp[1]);
+		strp += 2;
 		MD5Update(&ctx, &c, 1);
 	}
 	MD5Final(digest, &ctx);
 
-	str = (char *)"CHAP_R=0x";
+	strncpy(str,"CHAP_R=0x",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str))
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
