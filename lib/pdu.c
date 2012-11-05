@@ -149,7 +149,7 @@ iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 	}
 	else
 		if (data->alloc_size != new_alloc_size) {
-			data->data = realloc(data->data, new_alloc_size);
+			data->data = iscsi_realloc(iscsi, data->data, new_alloc_size);
 		}
 	
 	if (data->data == NULL) {

@@ -48,6 +48,14 @@ inline void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size) {
 	return ptr;
 }
 
+inline void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size) {
+	void * _ptr = realloc(ptr, size);
+	if (_ptr != NULL) {
+		iscsi->reallocs++;
+	}
+	return _ptr;
+}
+
 inline void iscsi_free(struct iscsi_context *iscsi, void* ptr) {
 	if (ptr == NULL) return;
 	free(ptr);
@@ -262,9 +270,9 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	iscsi->connect_data = NULL;
 
 	if (iscsi->mallocs != iscsi->frees) {
-		DPRINTF(iscsi,1,"%d memory blocks lost at iscsi_destroy_context() after %d mallocs and %d frees",iscsi->mallocs-iscsi->frees,iscsi->mallocs,iscsi->frees);
+		DPRINTF(iscsi,1,"%d memory blocks lost at iscsi_destroy_context() after %d malloc(s), %d realloc(s) and %d free(s)",iscsi->mallocs-iscsi->frees,iscsi->mallocs,iscsi->reallocs,iscsi->frees);
 	} else {
-		DPRINTF(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs and %d frees",iscsi->mallocs,iscsi->frees);
+		DPRINTF(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs, %d realloc(s) and %d frees",iscsi->mallocs,iscsi->reallocs,iscsi->frees);
 	}
 	
 	memset(iscsi, 0, sizeof(struct iscsi_context));

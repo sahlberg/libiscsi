@@ -129,6 +129,7 @@ struct iscsi_context {
 	int reconnect_deferred;
 	int debug;
 	int mallocs;
+	int reallocs;
 	int frees;
 };
 
@@ -291,6 +292,7 @@ unsigned char *scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos
 
 inline void* iscsi_malloc(struct iscsi_context *iscsi, size_t size);
 inline void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);
+inline void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size);
 inline void iscsi_free(struct iscsi_context *iscsi, void* ptr);
 inline char* iscsi_strdup(struct iscsi_context *iscsi, const char* str);
 
