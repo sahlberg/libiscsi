@@ -455,6 +455,8 @@ ssize_t write(int fd, const void *buf, size_t count)
 			return -1;
 		}
 
+                iscsi_fd_list[fd].lbasd_cache_valid = 0;
+
 		offset = iscsi_fd_list[fd].offset;
 		num_blocks = count/iscsi_fd_list[fd].block_size;
 		lba = offset / iscsi_fd_list[fd].block_size;
