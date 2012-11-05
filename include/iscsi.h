@@ -33,7 +33,6 @@ struct iscsi_context;
 struct sockaddr;
 
 #define MAX_STRING_SIZE (255)
-#define PAGE_SIZE (4096)
 
 /*
  * Syntax for normal and portal/discovery URLs.
