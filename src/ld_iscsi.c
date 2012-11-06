@@ -275,6 +275,37 @@ int __xstat(int ver, const char *path, struct stat *buf)
 	return __lxstat(ver, path, buf);
 }
 
+off_t (*real_lseek)(int fd, off_t offset, int whence);
+
+off_t lseek(int fd, off_t offset, int whence) {
+	if (iscsi_fd_list[fd].is_iscsi == 1) {
+		off_t new_offset;
+		off_t size = iscsi_fd_list[fd].num_blocks*iscsi_fd_list[fd].block_size;
+		switch (whence) {
+			case SEEK_SET:
+				new_offset = offset;
+				break;
+			case SEEK_CUR:
+				new_offset = iscsi_fd_list[fd].offset+offset;
+				break;
+			case SEEK_END:
+				new_offset = size + offset;
+				break;
+			default:
+				errno = EINVAL;
+				return -1;
+		}
+		if (new_offset < 0 || new_offset > size) {
+			errno = EINVAL;
+			return -1;
+		}
+		iscsi_fd_list[fd].offset=new_offset;
+		return iscsi_fd_list[fd].offset;
+	}
+	
+	return real_lseek(fd, offset, whence);
+}
+
 ssize_t (*real_read)(int fd, void *buf, size_t count);
 
 ssize_t read(int fd, void *buf, size_t count)
@@ -382,11 +413,112 @@ ssize_t read(int fd, void *buf, size_t count)
 	return real_read(fd, buf, count);
 }
 
+ssize_t (*real_pread)(int fd, void *buf, size_t count, off_t offset); 
+ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
+	if ((iscsi_fd_list[fd].is_iscsi == 1 && iscsi_fd_list[fd].in_flight == 0)) {
+		off_t old_offset;
+		if ((old_offset = lseek(fd, 0, SEEK_CUR)) < 0) {
+			errno = EIO;
+			return -1;
+		}
+		if (lseek(fd, offset, SEEK_SET) < 0) {
+			return -1;
+		}
+		if (read(fd, buf, count) < 0) {
+			lseek(fd, old_offset, SEEK_SET);
+			return -1;
+		}
+		lseek(fd, old_offset, SEEK_SET);
+		return count;
+	}
+	return real_pread(fd, buf, count, offset);
+}
+
+ssize_t (*real_write)(int fd, const void *buf, size_t count);
+
+ssize_t write(int fd, const void *buf, size_t count) 
+{
+	if ((iscsi_fd_list[fd].is_iscsi == 1) && (iscsi_fd_list[fd].in_flight == 0)) {
+		uint64_t offset;
+		uint64_t num_blocks, lba;
+		struct scsi_task *task;
+
+		if (iscsi_fd_list[fd].dup2fd >= 0) {
+			return write(iscsi_fd_list[fd].dup2fd, buf, count);
+		}
+		if (iscsi_fd_list[fd].offset%iscsi_fd_list[fd].block_size) {
+			errno = EINVAL;
+			return -1;
+		}
+		if (count%iscsi_fd_list[fd].block_size) {
+			errno = EINVAL;
+			return -1;
+		}
+
+                iscsi_fd_list[fd].lbasd_cache_valid = 0;
+
+		offset = iscsi_fd_list[fd].offset;
+		num_blocks = count/iscsi_fd_list[fd].block_size;
+		lba = offset / iscsi_fd_list[fd].block_size;
+
+		/* Don't try to read beyond the last LBA */
+		if (lba >= iscsi_fd_list[fd].num_blocks) {
+			return 0;
+		}
+		/* Trim num_blocks requested to last lba */
+		if ((lba + num_blocks) > iscsi_fd_list[fd].num_blocks) {
+			num_blocks = iscsi_fd_list[fd].num_blocks - lba;
+			count = num_blocks * iscsi_fd_list[fd].block_size;
+		}
+
+		iscsi_fd_list[fd].in_flight = 1;
+		LD_ISCSI_DPRINTF(4,"write16_sync: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
+		task = iscsi_write16_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, (unsigned char *) buf, count, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
+		iscsi_fd_list[fd].in_flight = 0;
+		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+			LD_ISCSI_DPRINTF(0,"failed to send write16 command");
+			errno = EIO;
+			return -1;
+		}
+
+		iscsi_fd_list[fd].offset += count;
+		scsi_free_scsi_task(task);
+		
+		return count;
+	}
+
+	return real_write(fd, buf, count);
+}
+
+ssize_t (*real_pwrite)(int fd, const void *buf, size_t count, off_t offset);
+ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
+	if ((iscsi_fd_list[fd].is_iscsi == 1 && iscsi_fd_list[fd].in_flight == 0)) {
+		off_t old_offset;
+		if ((old_offset = lseek(fd, 0, SEEK_CUR)) < 0) {
+			errno = EIO;
+			return -1;
+		}
+		if (lseek(fd, offset, SEEK_SET) < 0) {
+			return -1;
+		}
+		if (write(fd, buf, count) < 0) {
+			lseek(fd, old_offset, SEEK_SET);
+			return -1;
+		}
+		lseek(fd, old_offset, SEEK_SET);
+		return count;
+	}
+	return real_pwrite(fd, buf, count, offset);
+}
 
 int (*real_dup2)(int oldfd, int newfd);
 
 int dup2(int oldfd, int newfd)
 {
+	if (iscsi_fd_list[newfd].is_iscsi) {
+		return real_dup2(oldfd, newfd);
+	}
+
 	close(newfd);
 
 	if (iscsi_fd_list[oldfd].is_iscsi == 1) {
@@ -499,9 +631,33 @@ static void __attribute__((constructor)) _init(void)
 		exit(10);
 	}
 
+	real_lseek = dlsym(RTLD_NEXT, "lseek");
+	if (real_lseek == NULL) {
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(lseek)");
+		exit(10);
+	}
+
 	real_read = dlsym(RTLD_NEXT, "read");
 	if (real_read == NULL) {
 		LD_ISCSI_DPRINTF(0,"Failed to dlsym(read)");
+		exit(10);
+	}
+
+	real_pread = dlsym(RTLD_NEXT, "pread");
+	if (real_pread == NULL) {
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(pread)");
+		exit(10);
+	}
+
+	real_write = dlsym(RTLD_NEXT, "write");
+	if (real_write == NULL) {
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(write)");
+		exit(10);
+	}
+
+	real_pwrite = dlsym(RTLD_NEXT, "pwrite");
+	if (real_pwrite == NULL) {
+		LD_ISCSI_DPRINTF(0,"Failed to dlsym(pwrite)");
 		exit(10);
 	}
 

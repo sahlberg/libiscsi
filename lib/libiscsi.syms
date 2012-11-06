@@ -77,6 +77,7 @@ iscsi_set_tcp_keepidle
 iscsi_set_tcp_keepcnt
 iscsi_set_tcp_keepintvl
 iscsi_set_tcp_syncnt
+iscsi_set_bind_interface
 iscsi_startstopunit_sync
 iscsi_startstopunit_task
 iscsi_synchronizecache10_sync
