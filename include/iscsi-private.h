@@ -103,7 +103,7 @@ struct iscsi_context {
 	int login_attempts;
 	int is_loggedin;
 	int is_reconnecting;
-	int bind_interface_cnt;
+	int bind_interfaces_cnt;
 
 	int chap_a;
 	int chap_i;
@@ -303,6 +303,8 @@ unsigned long crc32c(char *buf, int len);
 struct scsi_task *iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu);
 
 void iscsi_set_noautoreconnect(struct iscsi_context *iscsi, int state);
+
+void iscsi_decrement_iface_rr();
 
 #ifdef __cplusplus
 }

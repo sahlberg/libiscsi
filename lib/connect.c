@@ -91,6 +91,7 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 
 	if (status == SCSI_STATUS_REDIRECT && iscsi->target_address[0]) {
 		iscsi_disconnect(iscsi);
+		if (iscsi->bind_interfaces[0]) iscsi_decrement_iface_rr();
 		if (iscsi_connect_async(iscsi, iscsi->target_address, iscsi_connect_cb, iscsi->connect_data) != 0) {
 			iscsi_free(iscsi, ct);
 			return;
@@ -237,6 +238,9 @@ try_again:
 	iscsi->lun = old_iscsi->lun;
 
 	strncpy(iscsi->portal,old_iscsi->portal,MAX_STRING_SIZE);
+	
+	strncpy(iscsi->bind_interfaces,old_iscsi->bind_interfaces,MAX_STRING_SIZE);
+	iscsi->bind_interfaces_cnt = old_iscsi->bind_interfaces_cnt;
 	
 	iscsi->debug = old_iscsi->debug;
 	

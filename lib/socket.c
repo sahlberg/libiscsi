@@ -46,6 +46,12 @@
 #include "iscsi-private.h"
 #include "slist.h"
 
+static uint32_t iface_rr = 0;
+
+void iscsi_decrement_iface_rr() {
+	iface_rr--;
+}
+
 static void set_nonblocking(int fd)
 {
 #if defined(WIN32)
@@ -219,7 +225,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 #if __linux
 	if (iscsi->bind_interfaces[0]) {
 		char *pchr = iscsi->bind_interfaces, *pchr2;
-		int iface_n = rand()%iscsi->bind_interface_cnt;
+		int iface_n = iface_rr++%iscsi->bind_interfaces_cnt;
 		int iface_c = 0;
 		do {
 			pchr2 = strchr(pchr,',');
@@ -677,15 +683,16 @@ void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces)
 {
 #if __linux
 	strncpy(iscsi->bind_interfaces,interfaces,MAX_STRING_SIZE);
-	iscsi->bind_interface_cnt=0;
+	iscsi->bind_interfaces_cnt=0;
 	char * pchr = interfaces;
 	char * pchr2 = NULL;
 	do {
 		pchr2 = strchr(pchr,',');
 		if (pchr2) {pchr=pchr2+1;}
-		iscsi->bind_interface_cnt++;
+		iscsi->bind_interfaces_cnt++;
 	} while (pchr2);
-	DPRINTF(iscsi,2,"will bind to one of the following %d interface(s) on next socket creation: %s",iscsi->bind_interface_cnt,interfaces);
+	DPRINTF(iscsi,2,"will bind to one of the following %d interface(s) on next socket creation: %s",iscsi->bind_interfaces_cnt,interfaces);
+	if (!iface_rr) iface_rr=rand()%iscsi->bind_interfaces_cnt+1;
 #else
 	DPRINTF(iscsi,1,"binding to an interface is not supported on your OS");
 #endif
