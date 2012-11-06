@@ -251,8 +251,13 @@ iscsi_set_error(struct iscsi_context *iscsi, const char *error_string, ...)
 	}
 	va_end(ap);
 
-	strncpy(iscsi->error_string,errstr,MAX_STRING_SIZE);
-	DPRINTF(iscsi,1,"%s",iscsi->error_string);
+	if (iscsi != NULL) {
+		strncpy(iscsi->error_string,errstr,MAX_STRING_SIZE);
+		DPRINTF(iscsi,1,"%s",iscsi->error_string);
+	}
+	else {
+		fprintf(stderr,"libiscsi: %s\n", errstr);
+	}
 }
 
 void
