@@ -134,6 +134,10 @@ iscsi_create_context(const char *initiator_name)
 		iscsi_set_tcp_syncnt(iscsi,atoi(getenv("LIBISCSI_TCP_SYNCNT")));
 	}
 
+	if (getenv("LIBISCSI_BIND_INTERFACES") != NULL) {
+		iscsi_set_bind_interfaces(iscsi,getenv("LIBISCSI_BIND_INTERFACES"));
+	}
+
 	return iscsi;
 }
 

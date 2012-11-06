@@ -216,6 +216,30 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		set_tcp_syncnt(iscsi);
 	}
 
+#if __linux
+	if (iscsi->bind_interfaces[0]) {
+		char *pchr = iscsi->bind_interfaces, *pchr2;
+		int iface_n = rand()%iscsi->bind_interface_cnt;
+		int iface_c = 0;
+		do {
+			pchr2 = strchr(pchr,',');
+			if (iface_c == iface_n) {
+			 if (pchr2) pchr2[0]=0x00;
+			 break;
+			}
+			if (pchr2) {pchr=pchr2+1;}
+		} while (pchr2);
+		
+		int res = setsockopt(iscsi->fd, SOL_SOCKET, SO_BINDTODEVICE, pchr, strlen(pchr));
+		if (res < 0) {
+			DPRINTF(iscsi,1,"failed to bind to interface '%s': %s",pchr,strerror(errno));
+		} else {
+			DPRINTF(iscsi,3,"successfully bound to interface '%s'",pchr);
+		}
+		if (pchr2) pchr2[0]=',';
+	}
+#endif
+
 	if (connect(iscsi->fd, ai->ai_addr, socksize) != 0
 	    && errno != EINPROGRESS) {
 		iscsi_set_error(iscsi, "Connect failed with errno : "
@@ -646,4 +670,22 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, in
 #endif
 
 	return 0;
+}
+
+void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces)
+{
+#if __linux
+	strncpy(iscsi->bind_interfaces,interfaces,MAX_STRING_SIZE);
+	iscsi->bind_interface_cnt=0;
+	char * pchr = interfaces;
+	char * pchr2 = NULL;
+	do {
+		pchr2 = strchr(pchr,',');
+		if (pchr2) {pchr=pchr2+1;}
+		iscsi->bind_interface_cnt++;
+	} while (pchr2);
+	DPRINTF(iscsi,2,"will bind to one of the following %d interface(s) on next socket creation: %s",iscsi->bind_interface_cnt,interfaces);
+#else
+	DPRINTF(iscsi,1,"binding to an interface is not supported on your OS");
+#endif
 }

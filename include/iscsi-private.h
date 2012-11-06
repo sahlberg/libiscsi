@@ -68,6 +68,7 @@ struct iscsi_context {
 	char connected_portal[MAX_STRING_SIZE+1];
 	char portal[MAX_STRING_SIZE+1];
 	char alias[MAX_STRING_SIZE+1];
+	char bind_interfaces[MAX_STRING_SIZE+1];
 
 	char user[MAX_STRING_SIZE+1];
 	char passwd[MAX_STRING_SIZE+1];
@@ -102,6 +103,7 @@ struct iscsi_context {
 	int login_attempts;
 	int is_loggedin;
 	int is_reconnecting;
+	int bind_interface_cnt;
 
 	int chap_a;
 	int chap_i;
