@@ -228,6 +228,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 			 break;
 			}
 			if (pchr2) {pchr=pchr2+1;}
+			iface_c++;
 		} while (pchr2);
 		
 		int res = setsockopt(iscsi->fd, SOL_SOCKET, SO_BINDTODEVICE, pchr, strlen(pchr));
