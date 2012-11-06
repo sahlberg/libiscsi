@@ -63,6 +63,7 @@ iscsi_scsi_task_cancel
 iscsi_service
 iscsi_set_alias
 iscsi_set_debug
+iscsi_set_debug_fd
 iscsi_set_header_digest
 iscsi_set_initiator_username_pwd
 iscsi_set_isid_en

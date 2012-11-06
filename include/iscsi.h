@@ -971,12 +971,12 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi);
 #define DPRINTF(iscsi,level,fmt,args...) \
 	do { \
 		if ((iscsi)->debug >= level) { \
-			fprintf(stderr,"libiscsi: "); \
-			fprintf(stderr, (fmt), ##args); \
+			dprintf((iscsi)->debug_fd,"libiscsi: "); \
+			dprintf((iscsi)->debug_fd, (fmt), ##args); \
 			if (iscsi->target_name[0]) { \
-				fprintf(stderr," [%s]",iscsi->target_name); \
+				dprintf((iscsi)->debug_fd," [%s]",iscsi->target_name); \
 			} \
-			fprintf(stderr,"\n"); \
+			dprintf((iscsi)->debug_fd,"\n"); \
 		} \
 	} while (0);
 
@@ -992,6 +992,12 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi);
  */
 EXTERN void
 iscsi_set_debug(struct iscsi_context *iscsi, int level);
+
+/*
+ * This function is to set fd where debugging info is sent to. default is stderr (2)
+ */
+EXTERN void
+iscsi_set_debug_fd(struct iscsi_context *iscsi, int fd);
 
 /*
  * This function is to set the TCP_USER_TIMEOUT option. It has to be called after iscsi
