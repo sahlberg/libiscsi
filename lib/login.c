@@ -1075,7 +1075,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	}
 
 	if (status == SCSI_STATUS_REDIRECT && iscsi->target_address) {
-		DPRINTF(iscsi,2,"target requests redirect to %s",iscsi->target_address);
+		ISCSI_LOG(iscsi, 2, "target requests redirect to %s",iscsi->target_address);
 		pdu->callback(iscsi, SCSI_STATUS_REDIRECT, NULL,
 				  pdu->private_data);
 		return 0;

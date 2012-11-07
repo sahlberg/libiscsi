@@ -76,7 +76,8 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->tcp_keepidle=30;
 
 	if (getenv("LIBISCSI_DEBUG") != NULL) {
-		iscsi_set_debug(iscsi,atoi(getenv("LIBISCSI_DEBUG")));
+		iscsi_set_log_level(iscsi, atoi(getenv("LIBISCSI_DEBUG")));
+		iscsi_set_log_fn(iscsi, iscsi_log_to_stderr);
 	}
 
 	if (getenv("LIBISCSI_TCP_USER_TIMEOUT") != NULL) {
@@ -243,25 +244,25 @@ void
 iscsi_set_error(struct iscsi_context *iscsi, const char *error_string, ...)
 {
 	va_list ap;
-	char errstr[MAX_STRING_SIZE+1] = {0};
+	char errstr[MAX_STRING_SIZE + 1] = {0};
 
 	va_start(ap, error_string);
 	if (vsnprintf(errstr, MAX_STRING_SIZE, error_string, ap) < 0) {
-		strncpy(errstr,"could not format error string!",MAX_STRING_SIZE);
+		strncpy(errstr, "could not format error string!", MAX_STRING_SIZE);
 	}
 	va_end(ap);
 
 	if (iscsi != NULL) {
-		strncpy(iscsi->error_string,errstr,MAX_STRING_SIZE);
-		DPRINTF(iscsi,1,"%s",iscsi->error_string);
+		strncpy(iscsi->error_string, errstr,MAX_STRING_SIZE);
+		ISCSI_LOG(iscsi, 1, "%s",iscsi->error_string);
 	}
 }
 
 void
-iscsi_set_debug(struct iscsi_context *iscsi, int level)
+iscsi_set_log_level(struct iscsi_context *iscsi, int level)
 {
-	iscsi->debug = level;
-	DPRINTF(iscsi,2,"set debug level to %d",level);
+	iscsi->log_level = level;
+	ISCSI_LOG(iscsi, 2, "set log level to %d", level);
 }
 
 const char *

@@ -108,7 +108,8 @@ int main(int argc, const char *argv[])
 	}
 
 	if (debug > 0) {
-		iscsi_set_debug(iscsi, debug);
+		iscsi_set_log_fn(iscsi, iscsi_log_to_stderr);
+		iscsi_set_log_level(iscsi, debug);
 	}
 
 	if (url == NULL) {

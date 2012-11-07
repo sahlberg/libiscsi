@@ -966,18 +966,6 @@ iscsi_scsi_task_cancel(struct iscsi_context *iscsi,
 EXTERN void
 iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi);
 
-#define DPRINTF(iscsi,level,fmt,args...) \
-	do { \
-		if ((iscsi)->debug >= level) { \
-			fprintf(stderr,"libiscsi: "); \
-			fprintf(stderr, (fmt), ##args); \
-			if (iscsi->target_name[0]) { \
-				fprintf(stderr," [%s]",iscsi->target_name); \
-			} \
-			fprintf(stderr,"\n"); \
-		} \
-	} while (0);
-
 /*
  * This function is to set the debugging level where level is
  * 
@@ -987,9 +975,18 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi);
  * 3  = user set variables
  * 4  = function calls
  * 5  = ...
+ * 10 = everything
  */
 EXTERN void
-iscsi_set_debug(struct iscsi_context *iscsi, int level);
+iscsi_set_log_level(struct iscsi_context *iscsi, int level);
+
+typedef void (*iscsi_log_fn)(int level, const char *mesage);
+
+/* Set the logging function to use */
+EXTERN void iscsi_set_log_fn(struct iscsi_context *iscsi, iscsi_log_fn fn);
+
+/* predefined log function that just writes to stderr */
+EXTERN void iscsi_log_to_stderr(int level, const char *message);
 
 /*
  * This function is to set the TCP_USER_TIMEOUT option. It has to be called after iscsi

@@ -265,9 +265,10 @@ int main(int argc, const char *argv[])
 		exit(10);
 	}
 
-    if (debug > 0) {
-        iscsi_set_debug(iscsi, debug);
-    }
+	if (debug > 0) {
+		iscsi_set_log_level(iscsi, debug);
+		iscsi_set_log_fn(iscsi, iscsi_log_to_stderr);
+	}
 
 	if (url == NULL) {
 		fprintf(stderr, "You must specify the URL\n");
