@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.6.0
+Version: 1.7.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -91,6 +91,17 @@ The libiscsi-devel package includes the header files for libiscsi.
 %{_libdir}/libiscsi.so
 
 %changelog
+* Tue Nov 6 2012 : 1.7.0
+ - Lots of additional tests.
+ - ld_iscsi updates and bugfixes.
+ - Fix a protocol bug where we might send > FirstBurstLength amount of data
+   as unsolicited data.
+ - Tcp keepalive improvements.
+ - Debugging framework.
+ - Add support for redirection.
+ - Fix reconnect bug where we would incorrectly re-queue DATA-OUT PDUs after reconnecting.
+ - Add a new iscsi-readcapacity16 command.
+ - Squelch a huge number of compiler warnings.
 * Mon Sep 3 2012 : 1.6.0
  - Lots of test updates.
  - Fix for iscsi-ls for removable media/medium not present
