@@ -87,7 +87,6 @@ iscsi_create_context(const char *initiator_name)
 	strncpy(iscsi->initiator_name,initiator_name,MAX_STRING_SIZE);
 
 	iscsi->fd = -1;
-	iscsi->debug_fd = 2;
 
 	srand(time(NULL) ^ getpid() ^ (u_int32_t) iscsi);
 
@@ -112,10 +111,6 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->tcp_keepcnt=3;
 	iscsi->tcp_keepintvl=30;
 	iscsi->tcp_keepidle=30;
-
-	if (getenv("LIBISCSI_DEBUG_FD") != NULL) {
-		iscsi_set_debug_fd(iscsi,atoi(getenv("LIBISCSI_DEBUG_FD")));
-	}
 
 	if (getenv("LIBISCSI_DEBUG") != NULL) {
 		iscsi_set_debug(iscsi,atoi(getenv("LIBISCSI_DEBUG")));
@@ -318,13 +313,6 @@ iscsi_set_debug(struct iscsi_context *iscsi, int level)
 {
 	iscsi->debug = level;
 	DPRINTF(iscsi,2,"set debug level to %d",level);
-}
-
-void
-iscsi_set_debug_fd(struct iscsi_context *iscsi, int fd)
-{
-	iscsi->debug_fd = fd;
-	DPRINTF(iscsi,2,"set debug fd to %d",fd);
 }
 
 const char *
