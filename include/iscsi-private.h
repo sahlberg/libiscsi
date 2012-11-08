@@ -18,6 +18,7 @@
 #define __iscsi_private_h__
 
 #include <stdint.h>
+#include <time.h>
 
 #if defined(WIN32)
 #include <basetsd.h>
@@ -133,6 +134,8 @@ struct iscsi_context {
 	int mallocs;
 	int reallocs;
 	int frees;
+
+	time_t last_reconnect;	
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40
@@ -304,7 +307,7 @@ struct scsi_task *iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu);
 
 void iscsi_set_noautoreconnect(struct iscsi_context *iscsi, int state);
 
-void iscsi_decrement_iface_rr();
+void iscsi_decrement_iface_rr(void);
 
 #ifdef __cplusplus
 }

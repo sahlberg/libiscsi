@@ -220,6 +220,10 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 
 	int retry = 0;
 
+	if (old_iscsi->last_reconnect) {
+		while (time(NULL) - old_iscsi->last_reconnect < 5) sleep(1);
+	}
+
 try_again:
 
 	iscsi = iscsi_create_context(old_iscsi->initiator_name);
@@ -339,6 +343,7 @@ try_again:
 	free(iscsi);
 
 	old_iscsi->is_reconnecting = 0;
+	old_iscsi->last_reconnect = time(NULL);
 
 	return 0;
 }
