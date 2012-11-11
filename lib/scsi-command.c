@@ -1568,3 +1568,57 @@ iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu)
 {
 	return pdu->scsi_cbdata->task;
 }
+
+int
+iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
+		       struct scsi_task *task)
+{
+	struct iscsi_pdu *pdu;
+
+	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
+		if (pdu->itt == task->itt) {
+			SLIST_REMOVE(&iscsi->waitpdu, pdu);
+			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
+				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
+				      pdu->private_data);
+			}
+			iscsi_free_pdu(iscsi, pdu);
+			return 0;
+		}
+	}
+	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
+		if (pdu->itt == task->itt) {
+			SLIST_REMOVE(&iscsi->outqueue, pdu);
+			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
+				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
+				      pdu->private_data);
+			}
+			iscsi_free_pdu(iscsi, pdu);
+			return 0;
+		}
+	}
+	return -1;
+}
+
+void
+iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
+{
+	struct iscsi_pdu *pdu;
+
+	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
+		SLIST_REMOVE(&iscsi->waitpdu, pdu);
+		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
+			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
+				      pdu->private_data);
+		}
+		iscsi_free_pdu(iscsi, pdu);
+	}
+	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
+		SLIST_REMOVE(&iscsi->outqueue, pdu);
+		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
+			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
+				      pdu->private_data);
+		}
+		iscsi_free_pdu(iscsi, pdu);
+	}
+}

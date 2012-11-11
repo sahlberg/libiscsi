@@ -60,7 +60,7 @@ iscsi_reportluns_task
 iscsi_scsi_cancel_all_tasks
 iscsi_scsi_command_async
 iscsi_scsi_command_sync
-iscsi_scsi_task_cancel
+iscsi_scsi_cancel_task
 iscsi_service
 iscsi_set_alias
 iscsi_set_log_level
