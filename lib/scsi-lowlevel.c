@@ -39,6 +39,10 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-private.h"
 
+struct scsi_allocated_memory {
+	struct scsi_allocated_memory *next;
+	char buf[0];
+};
 
 void
 scsi_free_scsi_task(struct scsi_task *task)
@@ -64,9 +68,8 @@ scsi_malloc(struct scsi_task *task, size_t size)
 		return NULL;
 	}
 	memset(mem, 0, sizeof(struct scsi_allocated_memory) + size);
-	mem->ptr = (void *) ((uintptr_t)mem + sizeof(struct scsi_allocated_memory));
 	SLIST_ADD(&task->mem, mem);
-	return mem->ptr;
+	return &mem->buf[0];
 }
 
 struct value_string {

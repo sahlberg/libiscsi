@@ -299,11 +299,6 @@ struct scsi_data {
 	unsigned char *data;
 };
 
-struct scsi_allocated_memory {
-	struct scsi_allocated_memory *next;
-	void                         *ptr;
-};
-
 enum scsi_residual {
 	SCSI_RESIDUAL_NO_RESIDUAL = 0,
 	SCSI_RESIDUAL_UNDERFLOW,
