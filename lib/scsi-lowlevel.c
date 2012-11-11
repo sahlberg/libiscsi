@@ -2566,10 +2566,6 @@ iscsi_scsi_task_cancel(struct iscsi_context *iscsi,
 
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		if (pdu->itt == task->itt) {
-			while(task->in_buffers != NULL) {
-				struct scsi_data_buffer *ptr = task->in_buffers;
-				SLIST_REMOVE(&task->in_buffers, ptr);
-			}
 			SLIST_REMOVE(&iscsi->waitpdu, pdu);
 			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
@@ -2581,10 +2577,6 @@ iscsi_scsi_task_cancel(struct iscsi_context *iscsi,
 	}
 	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
 		if (pdu->itt == task->itt) {
-			while(task->in_buffers != NULL) {
-				struct scsi_data_buffer *ptr = task->in_buffers;
-				SLIST_REMOVE(&task->in_buffers, ptr);
-			}
 			SLIST_REMOVE(&iscsi->outqueue, pdu);
 			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
@@ -2605,10 +2597,6 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		struct scsi_task *task = iscsi_scsi_get_task_from_pdu(pdu);
 	
-		while(task->in_buffers != NULL) {
-			struct scsi_data_buffer *ptr = task->in_buffers;
-			SLIST_REMOVE(&task->in_buffers, ptr);
-		}
 		SLIST_REMOVE(&iscsi->waitpdu, pdu);
 		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
@@ -2619,10 +2607,6 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
 		struct scsi_task *task = iscsi_scsi_get_task_from_pdu(pdu);
 
-		while(task->in_buffers != NULL) {
-			struct scsi_data_buffer *ptr = task->in_buffers;
-			SLIST_REMOVE(&task->in_buffers, ptr);
-		}
 		SLIST_REMOVE(&iscsi->outqueue, pdu);
 		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
