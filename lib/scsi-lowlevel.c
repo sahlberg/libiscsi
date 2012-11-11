@@ -35,9 +35,7 @@
 #include <string.h>
 #include <stdint.h>
 #include "slist.h"
-#include "iscsi.h"
 #include "scsi-lowlevel.h"
-#include "iscsi-private.h"
 
 struct scsi_allocated_memory {
 	struct scsi_allocated_memory *next;

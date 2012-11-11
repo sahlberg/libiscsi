@@ -17,6 +17,12 @@
 #ifndef __scsi_lowlevel_h__
 #define __scsi_lowlevel_h__
 
+#if defined(WIN32)
+#define EXTERN __declspec( dllexport )
+#else
+#define EXTERN
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -356,7 +362,7 @@ struct scsi_task {
 
 /* This function will free a scsi task structure.
    You may NOT cancel a task until the callback has been invoked
-   and the command has completed on the iscsi layer.
+   and the command has completed on the transport layer.
 */
 EXTERN void scsi_free_scsi_task(struct scsi_task *task);
 
