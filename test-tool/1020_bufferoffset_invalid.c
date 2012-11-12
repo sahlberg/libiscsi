@@ -28,17 +28,20 @@ uint32_t block_size;
 
 static int my_iscsi_queue_pdu(struct iscsi_context *iscsi _U_, struct iscsi_pdu *pdu)
 {
+	uint32_t buffer_offset;
+
 	if (pdu->outdata.data[0] != ISCSI_PDU_DATA_OUT) {
 		return 0;
 	}
+	buffer_offset = ntohl(*(uint32_t *)&pdu->outdata.data[40]);
 	switch (change_bufferoffset) {
 	case 1:
 		/* Add 1M to the buffer offset */
-		*(uint32_t *)&pdu->outdata.data[40] = htonl(ntohl(*(uint32_t *)&pdu->outdata.data[40]) + 1024*1024);
+		*(uint32_t *)&pdu->outdata.data[40] = htonl(buffer_offset + 1024*1024);
 		break;
 	case 2:
 		/* Add -'block_size' to the buffer offset */
-		*(uint32_t *)&pdu->outdata.data[40] = htonl(ntohl(*(uint32_t *)&pdu->outdata.data[40]) - block_size);
+		*(uint32_t *)&pdu->outdata.data[40] = htonl(buffer_offset - block_size);
 		break;
 	}
 	return 0;

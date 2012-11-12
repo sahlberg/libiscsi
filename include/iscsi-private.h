@@ -130,7 +130,10 @@ struct iscsi_context {
 	int lun;
 	int no_auto_reconnect;
 	int reconnect_deferred;
-	int debug;
+	
+	int log_level;
+        iscsi_log_fn log_fn;
+
 	int mallocs;
 	int reallocs;
 	int frees;
@@ -308,6 +311,16 @@ struct scsi_task *iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu);
 void iscsi_set_noautoreconnect(struct iscsi_context *iscsi, int state);
 
 void iscsi_decrement_iface_rr(void);
+
+#define ISCSI_LOG(iscsi, level, format, args...) \
+	do { \
+		if (level <= iscsi->log_level && iscsi->log_fn) { \
+			iscsi_log_message(iscsi, level, format, ## args); \
+		} \
+	} while (0)
+
+void
+iscsi_log_message(struct iscsi_context *iscsi, int level, const char *format, ...);
 
 #ifdef __cplusplus
 }

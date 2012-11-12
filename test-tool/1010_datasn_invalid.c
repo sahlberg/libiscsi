@@ -26,6 +26,8 @@ static int clamp_datasn;
 
 static int my_iscsi_queue_pdu(struct iscsi_context *iscsi _U_, struct iscsi_pdu *pdu)
 {
+	uint32_t datasn;
+
 	if (pdu->outdata.data[0] != ISCSI_PDU_DATA_OUT) {
 		return 0;
 	}
@@ -44,7 +46,8 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi _U_, struct iscsi_pdu 
 		break;
 	case 4:
 		/* change datasn from (0,1) to (1,0) */
-		*(uint32_t *)&pdu->outdata.data[36] = htonl(1 - ntohl(*(uint32_t *)&pdu->outdata.data[36]));
+		datasn = ntohl(*(uint32_t *)&pdu->outdata.data[36]);
+		*(uint32_t *)&pdu->outdata.data[36] = htonl(1 - datasn);
 		break;
 	}
 	return 0;

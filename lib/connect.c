@@ -179,7 +179,7 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
 	struct iscsi_context *iscsi = old_iscsi;
 
-	DPRINTF(iscsi,2,"reconnect initiated");
+	ISCSI_LOG(iscsi, 2, "reconnect initiated");
 
 	/* This is mainly for tests, where we do not want to automatically
 	   reconnect but rather want the commands to fail with an error
@@ -246,8 +246,8 @@ try_again:
 	strncpy(iscsi->bind_interfaces,old_iscsi->bind_interfaces,MAX_STRING_SIZE);
 	iscsi->bind_interfaces_cnt = old_iscsi->bind_interfaces_cnt;
 	
-	iscsi->debug = old_iscsi->debug;
-	
+	iscsi->log_level = old_iscsi->log_level;
+	iscsi->log_fn = old_iscsi->log_fn;
 	iscsi->tcp_user_timeout = old_iscsi->tcp_user_timeout;
 	iscsi->tcp_keepidle = old_iscsi->tcp_keepidle;
 	iscsi->tcp_keepcnt = old_iscsi->tcp_keepcnt;
@@ -263,7 +263,7 @@ try_again:
 		if (backoff > 30) {
 			backoff=30;
 		}
-		DPRINTF(iscsi,1,"reconnect try %d failed, waiting %d seconds",retry,backoff);
+		ISCSI_LOG(iscsi, 1, "reconnect try %d failed, waiting %d seconds",retry,backoff);
 		iscsi_destroy_context(iscsi);
 		sleep(backoff);
 		retry++;

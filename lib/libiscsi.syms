@@ -15,6 +15,7 @@ iscsi_get_target_address
 iscsi_inquiry_sync
 iscsi_inquiry_task
 iscsi_is_logged_in
+iscsi_log_to_stderr
 iscsi_login_async
 iscsi_login_sync
 iscsi_logout_async
@@ -62,7 +63,8 @@ iscsi_scsi_command_sync
 iscsi_scsi_cancel_task
 iscsi_service
 iscsi_set_alias
-iscsi_set_debug
+iscsi_set_log_level
+iscsi_set_log_fn
 iscsi_set_header_digest
 iscsi_set_initiator_username_pwd
 iscsi_set_isid_en

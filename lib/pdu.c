@@ -123,7 +123,7 @@ int
 iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 	       unsigned char *dptr, int dsize, int pdualignment)
 {
-	int len, aligned;
+	size_t len, aligned;
 
 	if (dsize == 0) {
 		iscsi_set_error(iscsi, "Trying to append zero size data to "
@@ -137,7 +137,7 @@ iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 		aligned = (aligned+3)&0xfffffffc;
 	}
 
-	int new_alloc_size = data->alloc_size;
+	size_t new_alloc_size = data->alloc_size;
 	if (new_alloc_size < 64) new_alloc_size=64;
 	
 	while (aligned > new_alloc_size) new_alloc_size<<=1;
@@ -154,7 +154,7 @@ iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 	
 	if (data->data == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate buffer for %d "
-				"bytes", len);
+				"bytes", (int) len);
 		return -1;
 	}
 	

@@ -52,7 +52,7 @@ WSADATA wsaData;
 
 struct client_state {
        int finished;
-       char *message;
+       const char *message;
        int has_discovered_target;
        char *target_name;
        char *target_address;

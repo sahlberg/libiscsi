@@ -48,8 +48,8 @@ scsi_free_scsi_task(struct scsi_task *task)
 	struct scsi_allocated_memory *mem;
 
 	while ((mem = task->mem)) {
-		SLIST_REMOVE(&task->mem, mem);
-		free(mem);
+		   SLIST_REMOVE(&task->mem, mem);
+		   free(mem);
 	}
 
 	free(task->datain.data);
@@ -2555,3 +2555,4 @@ scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *coun
 
 	return &sdb->data[pos];
 }
+

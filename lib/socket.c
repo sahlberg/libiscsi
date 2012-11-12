@@ -92,7 +92,7 @@ int set_tcp_user_timeout(struct iscsi_context *iscsi)
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp user timeout. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
-	DPRINTF(iscsi,3,"TCP_USER_TIMEOUT set to %d",iscsi->tcp_user_timeout);
+	ISCSI_LOG(iscsi, 3, "TCP_USER_TIMEOUT set to %d",iscsi->tcp_user_timeout);
 	return 0;
 }
 
@@ -106,7 +106,7 @@ int set_tcp_syncnt(struct iscsi_context *iscsi)
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp syn retries. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
-	DPRINTF(iscsi,3,"TCP_SYNCNT set to %d",iscsi->tcp_syncnt);
+	ISCSI_LOG(iscsi, 3, "TCP_SYNCNT set to %d",iscsi->tcp_syncnt);
 	return 0;
 }
 
@@ -120,7 +120,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	struct addrinfo *ai = NULL;
 	int socksize;
 
-	DPRINTF(iscsi,2,"connecting to portal %s",portal);
+	ISCSI_LOG(iscsi, 2, "connecting to portal %s",portal);
 
 	if (iscsi->fd != -1) {
 		iscsi_set_error(iscsi,
@@ -239,9 +239,9 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		
 		int res = setsockopt(iscsi->fd, SOL_SOCKET, SO_BINDTODEVICE, pchr, strlen(pchr));
 		if (res < 0) {
-			DPRINTF(iscsi,1,"failed to bind to interface '%s': %s",pchr,strerror(errno));
+			ISCSI_LOG(iscsi,1,"failed to bind to interface '%s': %s",pchr,strerror(errno));
 		} else {
-			DPRINTF(iscsi,3,"successfully bound to interface '%s'",pchr);
+			ISCSI_LOG(iscsi,3,"successfully bound to interface '%s'",pchr);
 		}
 		if (pchr2) pchr2[0]=',';
 	}
@@ -275,8 +275,9 @@ iscsi_disconnect(struct iscsi_context *iscsi)
 
 	close(iscsi->fd);
 
-	if (iscsi->connected_portal[0])
-		DPRINTF(iscsi,2,"disconnected from portal %s",iscsi->connected_portal);
+	if (iscsi->connected_portal[0]) {
+		ISCSI_LOG(iscsi, 2, "disconnected from portal %s",iscsi->connected_portal);
+	}
 
 	iscsi->fd  = -1;
 	iscsi->is_connected = 0;
@@ -540,7 +541,7 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 
-		DPRINTF(iscsi,2,"connection to %s established",iscsi->connected_portal);
+		ISCSI_LOG(iscsi, 2, "connection to %s established",iscsi->connected_portal);
 
 		iscsi->is_connected = 1;
 		if (iscsi->socket_status_cb) {
@@ -617,31 +618,31 @@ iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *inque
 void iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value)
 {
 	iscsi->tcp_syncnt=value;
-	DPRINTF(iscsi,2,"TCP_SYNCNT will be set to %d on next socket creation",value);
+	ISCSI_LOG(iscsi, 2, "TCP_SYNCNT will be set to %d on next socket creation",value);
 }
 
 void iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int value)
 {
 	iscsi->tcp_user_timeout=value;
-	DPRINTF(iscsi,2,"TCP_USER_TIMEOUT will be set to %dms on next socket creation",value);
+	ISCSI_LOG(iscsi, 2, "TCP_USER_TIMEOUT will be set to %dms on next socket creation",value);
 }
 
 void iscsi_set_tcp_keepidle(struct iscsi_context *iscsi, int value)
 {
 	iscsi->tcp_keepidle=value;
-	DPRINTF(iscsi,2,"TCP_KEEPIDLE will be set to %d on next socket creation",value);
+	ISCSI_LOG(iscsi, 2, "TCP_KEEPIDLE will be set to %d on next socket creation",value);
 }
 
 void iscsi_set_tcp_keepcnt(struct iscsi_context *iscsi, int value)
 {
 	iscsi->tcp_keepcnt=value;
-	DPRINTF(iscsi,2,"TCP_KEEPCNT will be set to %d on next socket creation",value);
+	ISCSI_LOG(iscsi, 2, "TCP_KEEPCNT will be set to %d on next socket creation",value);
 }
 
 void iscsi_set_tcp_keepintvl(struct iscsi_context *iscsi, int value)
 {
 	iscsi->tcp_keepintvl=value;
-	DPRINTF(iscsi,2,"TCP_KEEPINTVL will be set to %d on next socket creation",value);
+	ISCSI_LOG(iscsi, 2, "TCP_KEEPINTVL will be set to %d on next socket creation",value);
 }
 
 int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval)
@@ -652,27 +653,27 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, in
 		iscsi_set_error(iscsi, "TCP: Failed to set socket option SO_KEEPALIVE. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
-	DPRINTF(iscsi,3,"SO_KEEPALIVE set to %d",value);
+	ISCSI_LOG(iscsi, 3, "SO_KEEPALIVE set to %d",value);
 #ifdef TCP_KEEPCNT
 	if (set_tcp_sockopt(iscsi->fd, TCP_KEEPCNT, count) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive count. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
-	DPRINTF(iscsi,3,"TCP_KEEPCNT set to %d",count);
+	ISCSI_LOG(iscsi, 3, "TCP_KEEPCNT set to %d",count);
 #endif
 #ifdef TCP_KEEPINTVL
 	if (set_tcp_sockopt(iscsi->fd, TCP_KEEPINTVL, interval) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive interval. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
-	DPRINTF(iscsi,3,"TCP_KEEPINTVL set to %d",interval);
+	ISCSI_LOG(iscsi, 3, "TCP_KEEPINTVL set to %d",interval);
 #endif
 #ifdef TCP_KEEPIDLE
 	if (set_tcp_sockopt(iscsi->fd, TCP_KEEPIDLE, idle) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive idle. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
-	DPRINTF(iscsi,3,"TCP_KEEPIDLE set to %d",idle);
+	ISCSI_LOG(iscsi, 3, "TCP_KEEPIDLE set to %d",idle);
 #endif
 #endif
 
@@ -691,9 +692,9 @@ void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces)
 		if (pchr2) {pchr=pchr2+1;}
 		iscsi->bind_interfaces_cnt++;
 	} while (pchr2);
-	DPRINTF(iscsi,2,"will bind to one of the following %d interface(s) on next socket creation: %s",iscsi->bind_interfaces_cnt,interfaces);
+	ISCSI_LOG(iscsi,2,"will bind to one of the following %d interface(s) on next socket creation: %s",iscsi->bind_interfaces_cnt,interfaces);
 	if (!iface_rr) iface_rr=rand()%iscsi->bind_interfaces_cnt+1;
 #else
-	DPRINTF(iscsi,1,"binding to an interface is not supported on your OS");
+	ISCSI_LOG(iscsi,1,"binding to an interface is not supported on your OS");
 #endif
 }

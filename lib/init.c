@@ -87,8 +87,8 @@ iscsi_create_context(const char *initiator_name)
 	strncpy(iscsi->initiator_name,initiator_name,MAX_STRING_SIZE);
 
 	iscsi->fd = -1;
-
-	srand(time(NULL) ^ getpid() ^ (u_int32_t) iscsi);
+	
+	srand(time(NULL) ^ getpid() ^ (u_int32_t) ((uintptr_t) iscsi));
 
 	/* initialize to a "random" isid */
 	iscsi_set_isid_random(iscsi, rand(), 0);
@@ -113,7 +113,8 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->tcp_keepidle=30;
 
 	if (getenv("LIBISCSI_DEBUG") != NULL) {
-		iscsi_set_debug(iscsi,atoi(getenv("LIBISCSI_DEBUG")));
+		iscsi_set_log_level(iscsi, atoi(getenv("LIBISCSI_DEBUG")));
+		iscsi_set_log_fn(iscsi, iscsi_log_to_stderr);
 	}
 
 	if (getenv("LIBISCSI_TCP_USER_TIMEOUT") != NULL) {
@@ -276,9 +277,9 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	iscsi->connect_data = NULL;
 
 	if (iscsi->mallocs != iscsi->frees) {
-		DPRINTF(iscsi,1,"%d memory blocks lost at iscsi_destroy_context() after %d malloc(s), %d realloc(s) and %d free(s)",iscsi->mallocs-iscsi->frees,iscsi->mallocs,iscsi->reallocs,iscsi->frees);
+		ISCSI_LOG(iscsi,1,"%d memory blocks lost at iscsi_destroy_context() after %d malloc(s), %d realloc(s) and %d free(s)",iscsi->mallocs-iscsi->frees,iscsi->mallocs,iscsi->reallocs,iscsi->frees);
 	} else {
-		DPRINTF(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs, %d realloc(s) and %d frees",iscsi->mallocs,iscsi->reallocs,iscsi->frees);
+		ISCSI_LOG(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs, %d realloc(s) and %d frees",iscsi->mallocs,iscsi->reallocs,iscsi->frees);
 	}
 	
 	memset(iscsi, 0, sizeof(struct iscsi_context));
@@ -291,28 +292,25 @@ void
 iscsi_set_error(struct iscsi_context *iscsi, const char *error_string, ...)
 {
 	va_list ap;
-	char errstr[MAX_STRING_SIZE+1] = {0};
+	char errstr[MAX_STRING_SIZE + 1] = {0};
 
 	va_start(ap, error_string);
 	if (vsnprintf(errstr, MAX_STRING_SIZE, error_string, ap) < 0) {
-		strncpy(errstr,"could not format error string!",MAX_STRING_SIZE);
+		strncpy(errstr, "could not format error string!", MAX_STRING_SIZE);
 	}
 	va_end(ap);
 
 	if (iscsi != NULL) {
-		strncpy(iscsi->error_string,errstr,MAX_STRING_SIZE);
-		DPRINTF(iscsi,1,"%s",iscsi->error_string);
-	}
-	else {
-		fprintf(stderr,"libiscsi: %s\n", errstr);
+		strncpy(iscsi->error_string, errstr,MAX_STRING_SIZE);
+		ISCSI_LOG(iscsi, 1, "%s",iscsi->error_string);
 	}
 }
 
 void
-iscsi_set_debug(struct iscsi_context *iscsi, int level)
+iscsi_set_log_level(struct iscsi_context *iscsi, int level)
 {
-	iscsi->debug = level;
-	DPRINTF(iscsi,2,"set debug level to %d",level);
+	iscsi->log_level = level;
+	ISCSI_LOG(iscsi, 2, "set log level to %d", level);
 }
 
 const char *

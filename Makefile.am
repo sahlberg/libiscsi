@@ -26,7 +26,8 @@ lib_LTLIBRARIES = lib/libiscsi.la
 lib_libiscsi_la_SOURCES = \
 	lib/connect.c lib/crc32c.c lib/discovery.c lib/init.c \
 	lib/login.c lib/md5.c lib/nop.c lib/pdu.c lib/scsi-command.c \
-	lib/scsi-lowlevel.c lib/socket.c lib/sync.c lib/task_mgmt.c
+	lib/scsi-lowlevel.c lib/socket.c lib/sync.c lib/task_mgmt.c \
+	lib/logging.c
 
 SONAME=$(firstword $(subst ., ,$(VERSION)))
 SOREL=$(shell printf "%d%02d%02d" $(subst ., ,$(VERSION)))

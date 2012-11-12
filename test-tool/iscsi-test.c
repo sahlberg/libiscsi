@@ -34,6 +34,10 @@
 #include "iscsi-private.h"
 #include "iscsi-test.h"
 
+#ifndef discard_const
+#define discard_const(ptr) ((void *)((intptr_t)(ptr)))
+#endif
+
 const char *initiatorname1 = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test";
 const char *initiatorname2 = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test-2";
 
@@ -478,7 +482,7 @@ int main(int argc, const char *argv[])
 
 	free(skipname);
 	free(testname);
-	free(url);
+	free(discard_const(url));
 
 	return num_failed ? num_failed : num_skipped ? 77 : 0;
 }
