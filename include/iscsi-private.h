@@ -132,7 +132,7 @@ struct iscsi_context {
 	int reconnect_deferred;
 	
 	int log_level;
-        iscsi_log_fn log_fn;
+	iscsi_log_fn log_fn;
 
 	int mallocs;
 	int reallocs;
