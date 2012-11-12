@@ -37,7 +37,7 @@ struct iscsi_scsi_cbdata {
 };
 
 void
-iscsi_free_scsi_cbdata(struct iscsi_scsi_cbdata *scsi_cbdata)
+iscsi_free_scsi_cbdata(struct iscsi_context *iscsi, struct iscsi_scsi_cbdata *scsi_cbdata)
 {
 	if (scsi_cbdata == NULL) {
 		return;
@@ -45,7 +45,7 @@ iscsi_free_scsi_cbdata(struct iscsi_scsi_cbdata *scsi_cbdata)
 	if (scsi_cbdata->task != NULL) {
 		scsi_cbdata->task = NULL;
 	}
-	free(scsi_cbdata);
+	iscsi_free(iscsi, scsi_cbdata);
 }
 
 static void
@@ -186,13 +186,13 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		return -1;
 	}
 
-	scsi_cbdata = malloc(sizeof(struct iscsi_scsi_cbdata));
+	scsi_cbdata = iscsi_zmalloc(iscsi, sizeof(struct iscsi_scsi_cbdata));
 	if (scsi_cbdata == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to allocate "
 				"scsi cbdata.");
 		return -1;
 	}
-	memset(scsi_cbdata, 0, sizeof(struct iscsi_scsi_cbdata));
+
 	scsi_cbdata->task         = task;
 	scsi_cbdata->callback     = cb;
 	scsi_cbdata->private_data = private_data;
@@ -204,7 +204,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory, Failed to allocate "
 				"scsi pdu.");
-		iscsi_free_scsi_cbdata(scsi_cbdata);
+		iscsi_free_scsi_cbdata(iscsi, scsi_cbdata);
 		return -1;
 	}
 	pdu->scsi_cbdata = scsi_cbdata;

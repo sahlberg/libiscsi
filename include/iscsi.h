@@ -77,6 +77,7 @@ struct iscsi_url {
        char user[MAX_STRING_SIZE+1];
        char passwd[MAX_STRING_SIZE+1];
        int lun;
+       struct iscsi_context *iscsi;
 };
 
 /*
@@ -532,6 +533,7 @@ iscsi_task_mgmt_target_cold_reset_async(struct iscsi_context *iscsi,
 
 struct iscsi_data {
        int size;
+       size_t alloc_size;
        unsigned char *data;
 };
 
@@ -1022,6 +1024,13 @@ iscsi_set_tcp_keepintvl(struct iscsi_context *iscsi, int value);
  */
 EXTERN void 
 iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value);
+
+/*
+ * This function is to set the interface that outbound connections for this socket are bound to. 
+ * You max specify more than one interface here separated by comma.
+ */
+EXTERN void
+iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces);
 
 #ifdef __cplusplus
 }

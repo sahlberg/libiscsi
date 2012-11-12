@@ -31,27 +31,28 @@
 #include "slist.h"
 
 struct iscsi_pdu *
-iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
-				  enum iscsi_opcode response_opcode, uint32_t itt, uint32_t flags)
+iscsi_allocate_pdu_with_itt_flags_size(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
+				  enum iscsi_opcode response_opcode, uint32_t itt, uint32_t flags, size_t payload_size)
 {
 	struct iscsi_pdu *pdu;
 
-	pdu = malloc(sizeof(struct iscsi_pdu));
+	pdu = iscsi_zmalloc(iscsi, sizeof(struct iscsi_pdu));
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate pdu");
 		return NULL;
 	}
-	memset(pdu, 0, sizeof(struct iscsi_pdu));
 
 	pdu->outdata.size = ISCSI_HEADER_SIZE;
-	pdu->outdata.data = malloc(pdu->outdata.size);
+	pdu->outdata.alloc_size = 64;
+	while (pdu->outdata.alloc_size < ISCSI_HEADER_SIZE+payload_size) pdu->outdata.alloc_size<<=1;
+	pdu->outdata.data = iscsi_malloc(iscsi, pdu->outdata.alloc_size);
+	memset(pdu->outdata.data, 0, ISCSI_HEADER_SIZE);
 
 	if (pdu->outdata.data == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate pdu header");
-		free(pdu);
+		iscsi_free(iscsi, pdu);
 		return NULL;
 	}
-	memset(pdu->outdata.data, 0, pdu->outdata.size);
 
 	/* opcode */
 	pdu->outdata.data[0] = opcode;
@@ -73,10 +74,24 @@ iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opcode
 }
 
 struct iscsi_pdu *
+iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
+				  enum iscsi_opcode response_opcode, uint32_t itt, uint32_t flags)
+{
+	return iscsi_allocate_pdu_with_itt_flags_size(iscsi, opcode, response_opcode, itt, flags, 0);
+}
+
+struct iscsi_pdu *
 iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 		   enum iscsi_opcode response_opcode)
 {
 	return iscsi_allocate_pdu_with_itt_flags(iscsi, opcode, response_opcode, iscsi->itt++, 0);
+}	
+
+struct iscsi_pdu *
+iscsi_allocate_pdu_size(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
+		   enum iscsi_opcode response_opcode, size_t payload_size)
+{
+	return iscsi_allocate_pdu_with_itt_flags_size(iscsi, opcode, response_opcode, iscsi->itt++, 0, payload_size);
 }	
 
 
@@ -89,18 +104,18 @@ iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return;
 	}
 
-	free(pdu->outdata.data);
+	iscsi_free(iscsi, pdu->outdata.data);
 	pdu->outdata.data = NULL;
 
-	free(pdu->indata.data);
+	iscsi_free(iscsi, pdu->indata.data);
 	pdu->indata.data = NULL;
 
 	if (pdu->scsi_cbdata) {
-		iscsi_free_scsi_cbdata(pdu->scsi_cbdata);
+		iscsi_free_scsi_cbdata(iscsi, pdu->scsi_cbdata);
 		pdu->scsi_cbdata = NULL;
 	}
 
-	free(pdu);
+	iscsi_free(iscsi, pdu);
 }
 
 
@@ -108,8 +123,7 @@ int
 iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 	       unsigned char *dptr, int dsize, int pdualignment)
 {
-	int len, aligned;
-	unsigned char *buf;
+	size_t len, aligned;
 
 	if (dsize == 0) {
 		iscsi_set_error(iscsi, "Trying to append zero size data to "
@@ -122,25 +136,36 @@ iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 	if (pdualignment) {
 		aligned = (aligned+3)&0xfffffffc;
 	}
-	buf = malloc(aligned);
-	if (buf == NULL) {
+
+	size_t new_alloc_size = data->alloc_size;
+	if (new_alloc_size < 64) new_alloc_size=64;
+	
+	while (aligned > new_alloc_size) new_alloc_size<<=1;
+
+	if (data->data != NULL && data->alloc_size == 0) data->alloc_size=data->size;
+	
+	if (data->alloc_size == 0) {
+		data->data = iscsi_malloc(iscsi, new_alloc_size);
+	}
+	else
+		if (data->alloc_size != new_alloc_size) {
+			data->data = iscsi_realloc(iscsi, data->data, new_alloc_size);
+		}
+	
+	if (data->data == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate buffer for %d "
-				"bytes", len);
+				"bytes", (int) len);
 		return -1;
 	}
+	
+	data->alloc_size = new_alloc_size;
+	memcpy(data->data + data->size, dptr, dsize);
 
-	if (data->size > 0) {
-		memcpy(buf, data->data, data->size);
-	}
-	memcpy(buf + data->size, dptr, dsize);
 	if (len != aligned) {
 		/* zero out any padding at the end */
-	  memset(buf+len, 0, aligned-len);
+		memset(data->data+len, 0, aligned-len);
 	}
 
-	free(data->data);
-
-	data->data  = buf;
 	data->size = len;
 
 	return 0;

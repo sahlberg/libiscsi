@@ -46,6 +46,12 @@
 #include "iscsi-private.h"
 #include "slist.h"
 
+static uint32_t iface_rr = 0;
+
+void iscsi_decrement_iface_rr() {
+	iface_rr--;
+}
+
 static void set_nonblocking(int fd)
 {
 #if defined(WIN32)
@@ -122,7 +128,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		return -1;
 	}
 
-	addr = strdup(portal);
+	addr = iscsi_strdup(iscsi, portal);
 	if (addr == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: "
 				"Failed to strdup portal address.");
@@ -151,7 +157,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		host ++;
 		str = strchr(host, ']');
 		if (str == NULL) {
-			free(addr);
+			iscsi_free(iscsi, addr);
 			iscsi_set_error(iscsi, "Invalid target:%s  "
 				"Missing ']' in IPv6 address", portal);
 			return -1;
@@ -161,12 +167,12 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	/* is it a hostname ? */
 	if (getaddrinfo(host, NULL, NULL, &ai) != 0) {
-		free(addr);
+		iscsi_free(iscsi, addr);
 		iscsi_set_error(iscsi, "Invalid target:%s  "
 			"Can not resolv into IPv4/v6.", portal);
 		return -1;
  	}
-	free(addr);
+	iscsi_free(iscsi, addr);
 
 	switch (ai->ai_family) {
 	case AF_INET:
@@ -215,6 +221,31 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	if (iscsi->tcp_syncnt > 0) {
 		set_tcp_syncnt(iscsi);
 	}
+
+#if __linux
+	if (iscsi->bind_interfaces[0]) {
+		char *pchr = iscsi->bind_interfaces, *pchr2;
+		int iface_n = iface_rr++%iscsi->bind_interfaces_cnt;
+		int iface_c = 0;
+		do {
+			pchr2 = strchr(pchr,',');
+			if (iface_c == iface_n) {
+			 if (pchr2) pchr2[0]=0x00;
+			 break;
+			}
+			if (pchr2) {pchr=pchr2+1;}
+			iface_c++;
+		} while (pchr2);
+		
+		int res = setsockopt(iscsi->fd, SOL_SOCKET, SO_BINDTODEVICE, pchr, strlen(pchr));
+		if (res < 0) {
+			ISCSI_LOG(iscsi,1,"failed to bind to interface '%s': %s",pchr,strerror(errno));
+		} else {
+			ISCSI_LOG(iscsi,3,"successfully bound to interface '%s'",pchr);
+		}
+		if (pchr2) pchr2[0]=',';
+	}
+#endif
 
 	if (connect(iscsi->fd, ai->ai_addr, socksize) != 0
 	    && errno != EINPROGRESS) {
@@ -297,12 +328,11 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 	ssize_t data_size, count;
 
 	if (iscsi->incoming == NULL) {
-		iscsi->incoming = malloc(sizeof(struct iscsi_in_pdu));
+		iscsi->incoming = iscsi_zmalloc(iscsi, sizeof(struct iscsi_in_pdu));
 		if (iscsi->incoming == NULL) {
 			iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu");
 			return -1;
 		}
-		memset(iscsi->incoming, 0, sizeof(struct iscsi_in_pdu));
 	}
 	in = iscsi->incoming;
 
@@ -347,7 +377,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		/* if not, allocate one */
 		if (buf == NULL) {
 			if (in->data == NULL) {
-				in->data = malloc(data_size);
+				in->data = iscsi_malloc(iscsi, data_size);
 				if (in->data == NULL) {
 					iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu->data(%d)", (int)data_size);
 					return -1;
@@ -386,7 +416,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			return -1;
 		}
 		SLIST_REMOVE(&iscsi->inqueue, current);
-		iscsi_free_iscsi_in_pdu(current);
+		iscsi_free_iscsi_in_pdu(iscsi, current);
 	}
 
 
@@ -567,18 +597,20 @@ iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 }
 
 void
-iscsi_free_iscsi_in_pdu(struct iscsi_in_pdu *in)
+iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 {
-	free(in->data);
-	free(in);
+	iscsi_free(iscsi, in->data);
+	in->data=NULL;
+	iscsi_free(iscsi, in);
+	in=NULL;
 }
 
 void
-iscsi_free_iscsi_inqueue(struct iscsi_in_pdu *inqueue)
+iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *inqueue)
 {
 	while (inqueue != NULL) {
 	      struct iscsi_in_pdu *next = inqueue->next;
-	      iscsi_free_iscsi_in_pdu(inqueue);
+	      iscsi_free_iscsi_in_pdu(iscsi, inqueue);
 	      inqueue = next;
 	}
 }
@@ -646,4 +678,23 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, in
 #endif
 
 	return 0;
+}
+
+void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces)
+{
+#if __linux
+	strncpy(iscsi->bind_interfaces,interfaces,MAX_STRING_SIZE);
+	iscsi->bind_interfaces_cnt=0;
+	char * pchr = interfaces;
+	char * pchr2 = NULL;
+	do {
+		pchr2 = strchr(pchr,',');
+		if (pchr2) {pchr=pchr2+1;}
+		iscsi->bind_interfaces_cnt++;
+	} while (pchr2);
+	ISCSI_LOG(iscsi,2,"will bind to one of the following %d interface(s) on next socket creation: %s",iscsi->bind_interfaces_cnt,interfaces);
+	if (!iface_rr) iface_rr=rand()%iscsi->bind_interfaces_cnt+1;
+#else
+	ISCSI_LOG(iscsi,1,"binding to an interface is not supported on your OS");
+#endif
 }
