@@ -955,8 +955,8 @@ EXTERN int scsi_task_add_data_in_buffer(struct scsi_task *task, int len, unsigne
  * To cancel the task also a the target you need to call the task management functions.
  */
 EXTERN int
-iscsi_scsi_task_cancel(struct iscsi_context *iscsi,
-		  struct scsi_task *task);
+iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
+			struct scsi_task *task);
 
 /*
  * This function is used when you want to cancel all scsi tasks.
