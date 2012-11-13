@@ -839,4 +839,3 @@ void *scsi_malloc(struct scsi_task *task, size_t size);
 #endif
 
 #endif /* __scsi_lowlevel_h__ */
-

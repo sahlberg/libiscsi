@@ -61,7 +61,7 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 						"failed.");
 				ct->cb(iscsi, SCSI_STATUS_ERROR, NULL,
 				       ct->private_data);
-				free(ct);
+				iscsi_free(iscsi, ct);
 			}
 			scsi_free_scsi_task(task);
 			return;
@@ -80,7 +80,7 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 	ct->cb(iscsi, status?SCSI_STATUS_ERROR:SCSI_STATUS_GOOD, NULL,
 	       ct->private_data);
 	scsi_free_scsi_task(task);
-	free(ct);
+	iscsi_free(iscsi, ct);
 }
 
 static void
@@ -91,8 +91,9 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 
 	if (status == SCSI_STATUS_REDIRECT && iscsi->target_address[0]) {
 		iscsi_disconnect(iscsi);
+		if (iscsi->bind_interfaces[0]) iscsi_decrement_iface_rr();
 		if (iscsi_connect_async(iscsi, iscsi->target_address, iscsi_connect_cb, iscsi->connect_data) != 0) {
-			free(ct);
+			iscsi_free(iscsi, ct);
 			return;
 		}
 		return;
@@ -100,7 +101,7 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 
 	if (status != 0) {
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
-		free(ct);
+		iscsi_free(iscsi, ct);
 		return;
 	}
 
@@ -121,14 +122,14 @@ iscsi_connect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_
 		iscsi_set_error(iscsi, "Failed to connect to iSCSI socket. "
 				"%s", iscsi_get_error(iscsi));
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
-		free(ct);
+		iscsi_free(iscsi, ct);
 		return;
 	}
 
 	if (iscsi_login_async(iscsi, iscsi_login_cb, ct) != 0) {
 		iscsi_set_error(iscsi, "iscsi_login_async failed.");
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
-		free(ct);
+		iscsi_free(iscsi, ct);
 	}
 }
 
@@ -140,9 +141,10 @@ iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
 	struct connect_task *ct;
 
 	iscsi->lun = lun;
-	strncpy(iscsi->portal,portal,MAX_STRING_SIZE);
+	if (iscsi->portal != portal)
+	 strncpy(iscsi->portal,portal,MAX_STRING_SIZE);
 
-	ct = malloc(sizeof(struct connect_task));
+	ct = iscsi_malloc(iscsi, sizeof(struct connect_task));
 	if (ct == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory. Failed to allocate "
 				"connect_task structure.");
@@ -218,6 +220,10 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 
 	int retry = 0;
 
+	if (old_iscsi->last_reconnect) {
+		while (time(NULL) - old_iscsi->last_reconnect < 5) sleep(1);
+	}
+
 try_again:
 
 	iscsi = iscsi_create_context(old_iscsi->initiator_name);
@@ -235,7 +241,10 @@ try_again:
 
 	iscsi->lun = old_iscsi->lun;
 
-	strncpy(iscsi->portal,old_iscsi->portal, MAX_STRING_SIZE);
+	strncpy(iscsi->portal,old_iscsi->portal,MAX_STRING_SIZE);
+	
+	strncpy(iscsi->bind_interfaces,old_iscsi->bind_interfaces,MAX_STRING_SIZE);
+	iscsi->bind_interfaces_cnt = old_iscsi->bind_interfaces_cnt;
 	
 	iscsi->log_level = old_iscsi->log_level;
 	iscsi->log_fn = old_iscsi->log_fn;
@@ -318,18 +327,23 @@ try_again:
 	}
 	
 	if (old_iscsi->incoming != NULL) {
-		iscsi_free_iscsi_in_pdu(old_iscsi->incoming);
+		iscsi_free_iscsi_in_pdu(old_iscsi, old_iscsi->incoming);
 	}
 	if (old_iscsi->inqueue != NULL) {
-		iscsi_free_iscsi_inqueue(old_iscsi->inqueue);
+		iscsi_free_iscsi_inqueue(old_iscsi, old_iscsi->inqueue);
 	}
 
 	close(iscsi->fd);
 	iscsi->fd = old_iscsi->fd;
+	iscsi->mallocs+=old_iscsi->mallocs;
+	iscsi->frees+=old_iscsi->frees;
+
 	memcpy(old_iscsi, iscsi, sizeof(struct iscsi_context));
+	memset(iscsi, 0, sizeof(struct iscsi_context));
 	free(iscsi);
 
 	old_iscsi->is_reconnecting = 0;
+	old_iscsi->last_reconnect = time(NULL);
 
 	return 0;
 }

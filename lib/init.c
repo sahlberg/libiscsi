@@ -33,25 +33,62 @@
 #include "iscsi-private.h"
 #include "slist.h"
 
+inline void* iscsi_malloc(struct iscsi_context *iscsi, size_t size) {
+	void * ptr = malloc(size);
+	if (ptr != NULL) iscsi->mallocs++;
+	return ptr;
+}
+
+inline void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size) {
+	void * ptr = malloc(size);
+	if (ptr != NULL) {
+		memset(ptr,0x00,size);
+		iscsi->mallocs++;
+	}
+	return ptr;
+}
+
+inline void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size) {
+	void * _ptr = realloc(ptr, size);
+	if (_ptr != NULL) {
+		iscsi->reallocs++;
+	}
+	return _ptr;
+}
+
+inline void iscsi_free(struct iscsi_context *iscsi, void* ptr) {
+	if (ptr == NULL) return;
+	free(ptr);
+	iscsi->frees++;
+}
+
+inline char* iscsi_strdup(struct iscsi_context *iscsi, const char* str) {
+	char *str2 = strdup(str);
+	if (str2 != NULL) iscsi->mallocs++;
+	return str2;
+}
+
 struct iscsi_context *
 iscsi_create_context(const char *initiator_name)
 {
 	struct iscsi_context *iscsi;
 
+	if (!initiator_name[0]) {
+		return NULL;
+	}
+
 	iscsi = malloc(sizeof(struct iscsi_context));
 	if (iscsi == NULL) {
 		return NULL;
 	}
-
+	
 	memset(iscsi, 0, sizeof(struct iscsi_context));
 
 	strncpy(iscsi->initiator_name,initiator_name,MAX_STRING_SIZE);
-	if (!iscsi->initiator_name[0]) {
-		free(iscsi);
-		return NULL;
-	}
 
 	iscsi->fd = -1;
+	
+	srand(time(NULL) ^ getpid() ^ (u_int32_t) ((uintptr_t) iscsi));
 
 	/* initialize to a "random" isid */
 	iscsi_set_isid_random(iscsi, rand(), 0);
@@ -98,6 +135,10 @@ iscsi_create_context(const char *initiator_name)
 
 	if (getenv("LIBISCSI_TCP_SYNCNT") != NULL) {
 		iscsi_set_tcp_syncnt(iscsi,atoi(getenv("LIBISCSI_TCP_SYNCNT")));
+	}
+
+	if (getenv("LIBISCSI_BIND_INTERFACES") != NULL) {
+		iscsi_set_bind_interfaces(iscsi,getenv("LIBISCSI_BIND_INTERFACES"));
 	}
 
 	return iscsi;
@@ -227,14 +268,21 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	}
 
 	if (iscsi->incoming != NULL) {
-		iscsi_free_iscsi_in_pdu(iscsi->incoming);
+		iscsi_free_iscsi_in_pdu(iscsi, iscsi->incoming);
 	}
 	if (iscsi->inqueue != NULL) {
-		iscsi_free_iscsi_inqueue(iscsi->inqueue);
+		iscsi_free_iscsi_inqueue(iscsi, iscsi->inqueue);
 	}
 
 	iscsi->connect_data = NULL;
 
+	if (iscsi->mallocs != iscsi->frees) {
+		ISCSI_LOG(iscsi,1,"%d memory blocks lost at iscsi_destroy_context() after %d malloc(s), %d realloc(s) and %d free(s)",iscsi->mallocs-iscsi->frees,iscsi->mallocs,iscsi->reallocs,iscsi->frees);
+	} else {
+		ISCSI_LOG(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs, %d realloc(s) and %d frees",iscsi->mallocs,iscsi->reallocs,iscsi->frees);
+	}
+	
+	memset(iscsi, 0, sizeof(struct iscsi_context));
 	free(iscsi);
 
 	return 0;
@@ -393,13 +441,18 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 		tmp=strchr(portal,'/');
 		if (tmp) *tmp=0;
 	}
-
-	iscsi_url = malloc(sizeof(struct iscsi_url));
+	
+	if (iscsi != NULL)
+		iscsi_url = iscsi_malloc(iscsi, sizeof(struct iscsi_url));
+	else
+		iscsi_url = malloc(sizeof(struct iscsi_url));
+	
 	if (iscsi_url == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate iscsi_url structure");
 		return NULL;
 	}
 	memset(iscsi_url, 0, sizeof(struct iscsi_url));
+	iscsi_url->iscsi= iscsi;
 
 	strncpy(iscsi_url->portal,portal,MAX_STRING_SIZE);
 
@@ -431,7 +484,12 @@ iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url)
 void
 iscsi_destroy_url(struct iscsi_url *iscsi_url)
 {
-	free(iscsi_url);
+	struct iscsi_context *iscsi = iscsi_url->iscsi;
+	memset(iscsi_url, 0, sizeof(struct iscsi_url));
+	if (iscsi != NULL)
+		iscsi_free(iscsi, iscsi_url);
+	else
+		free(iscsi_url);
 }
 
 

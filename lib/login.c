@@ -705,10 +705,10 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		return -1;
 	}
 
-	pdu = iscsi_allocate_pdu_with_itt_flags(iscsi,
+	pdu = iscsi_allocate_pdu_with_itt_flags_size(iscsi,
 				ISCSI_PDU_LOGIN_REQUEST,
 				ISCSI_PDU_LOGIN_RESPONSE,
-				iscsi->itt, 0);
+				iscsi->itt, 0, 1024);
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate "
 				"login pdu.");
