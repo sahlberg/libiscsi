@@ -23,7 +23,7 @@
 int T0190_writesame16_unmap(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int full_size;
 	struct scsi_inquiry_logical_block_provisioning *inq_lbp;
@@ -60,17 +60,17 @@ int T0190_writesame16_unmap(const char *initiator, const char *url, int data_los
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task);
+	rc16 = scsi_datain_unmarshall(task->scsi_task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall readcapacity16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
 
@@ -78,7 +78,7 @@ int T0190_writesame16_unmap(const char *initiator, const char *url, int data_los
 	lbppb = 1 << rc16->lbppbe;
 	lbpme = rc16->lbpme;
 
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	if (lbpme == 0) {
 		printf("LBPME not set. Skip test for CPD page 0xB2 (logical block provisioning)\n");
@@ -90,15 +90,15 @@ int T0190_writesame16_unmap(const char *initiator, const char *url, int data_los
 
 	/* See how big this inquiry data is */
 	task = iscsi_inquiry_sync(iscsi, lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, 64);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+	if (task == NULL || task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		goto test2;
 	}
-	full_size = scsi_datain_getfullsize(task);
-	if (full_size > task->datain.size) {
-		scsi_free_scsi_task(task);
+	full_size = scsi_datain_getfullsize(task->scsi_task);
+	if (full_size > task->scsi_task->datain.size) {
+		iscsi_free_task(iscsi, task);
 
 		/* we need more data for the full list */
 		if ((task = iscsi_inquiry_sync(iscsi, lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, full_size)) == NULL) {
@@ -109,10 +109,10 @@ int T0190_writesame16_unmap(const char *initiator, const char *url, int data_los
 		}
 	}
 
-	inq_lbp = scsi_datain_unmarshall(task);
+	inq_lbp = scsi_datain_unmarshall(task->scsi_task);
 	if (inq_lbp == NULL) {
 		printf("failed to unmarshall inquiry datain blob\n");
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		ret = -1;
 		goto test2;
 	}
@@ -120,7 +120,7 @@ int T0190_writesame16_unmap(const char *initiator, const char *url, int data_los
 	lbpws = inq_lbp->lbpws;
 	anc_sup = inq_lbp->anc_sup;
 
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 	if (lbpws == 0) {
@@ -157,36 +157,36 @@ test2:
 			ret = -1;
 			goto test3;
 		}
-		if (task->status        == SCSI_STATUS_CHECK_CONDITION
-		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		if (task->scsi_task->status        == SCSI_STATUS_CHECK_CONDITION
+		    && task->scsi_task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && task->scsi_task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 			printf("[SKIPPED]\n");
 			printf("Opcode is not implemented on target\n");
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			ret = -2;
 			goto finished;
 		}
 		if (lbpws) {
-			if (task->status != SCSI_STATUS_GOOD) {
+			if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 			        printf("[FAILED]\n");
 				printf("WRITESAME16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-				scsi_free_scsi_task(task);
+				iscsi_free_task(iscsi, task);
 				ret = -1;
 				goto test3;
 			}
 		} else {
-			if (task->status        != SCSI_STATUS_CHECK_CONDITION
-			    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-			    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+			if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
+			    || task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+			    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 			        printf("[FAILED]\n");
 				printf("WRITESAME16 command should fail since LBPWS is 0 but failed with wrong sense code %s\n", iscsi_get_error(iscsi));
-				scsi_free_scsi_task(task);
+				iscsi_free_task(iscsi, task);
 				ret = -1;
 				goto test3;
 			}
 		}
 
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 	}
 	printf("[OK]\n");
 
@@ -213,25 +213,25 @@ test3:
 			goto test4;
 		}
 		if (lbpws) {
-			if (task->status != SCSI_STATUS_GOOD) {
+			if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 			        printf("[FAILED]\n");
 				printf("WRITESAME16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-				scsi_free_scsi_task(task);
+				iscsi_free_task(iscsi, task);
 				ret = -1;
 				goto test4;
 			}
 		} else {
-			if (task->status        != SCSI_STATUS_CHECK_CONDITION
-			    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-			    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+			if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
+			    || task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+			    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 			        printf("[FAILED]\n");
 				printf("WRITESAME16 command should fail since LBPWS is 0 but failed with wrong sense code %s\n", iscsi_get_error(iscsi));
-				scsi_free_scsi_task(task);
+				iscsi_free_task(iscsi, task);
 				ret = -1;
 				goto test4;
 			}
 		}
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 	}
 	printf("[OK]\n");
 
@@ -249,16 +249,16 @@ test4:
 		ret = -1;
 		goto test5;
 	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-	    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 	        printf("[FAILED]\n");
 		printf("WRITESAME16 with UNMAP=0 ANCHOR=1 failed with wrong sense code %s\n", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		ret = -1;
 		goto test5;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 test5:
@@ -278,25 +278,25 @@ test5:
 		goto test5;
 	}
 	if (anc_sup == 0) {
-		if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 			printf("[FAILED]\n");
 			printf("WRITESAME16 with UNMAP=1 ANCHOR=1 failed with wrong sense code %s\n", iscsi_get_error(iscsi));
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			ret = -1;
 			goto test6;
 		}
 	} else {
-		if (task->status != SCSI_STATUS_GOOD) {
+		if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("WRITESAME16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			ret = -1;
 			goto test6;
 		}
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 test6:

@@ -23,7 +23,7 @@
 int T0170_unmap_simple(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
 	uint32_t num_blocks;
@@ -51,30 +51,30 @@ int T0170_unmap_simple(const char *initiator, const char *url, int data_loss, in
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task);
+	rc16 = scsi_datain_unmarshall(task->scsi_task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall readcapacity16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
 
 	if (rc16->lbpme == 0){
 		printf("Logical unit is fully provisioned. Skipping test\n");
 		ret = -2;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
 
 	num_blocks = rc16->returned_lba;
 
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	if (!data_loss) {
 		printf("data_loss flag is not set. Skipping test\n");
@@ -98,14 +98,14 @@ int T0170_unmap_simple(const char *initiator, const char *url, int data_loss, in
 			ret = -1;
 			goto finished;
 		}
-		if (task->status != SCSI_STATUS_GOOD) {
+		if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("UNMAP command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto finished;
 		}
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 	}
 	printf("[OK]\n");
 
@@ -124,14 +124,14 @@ int T0170_unmap_simple(const char *initiator, const char *url, int data_loss, in
 			ret = -1;
 			goto finished;
 		}
-		if (task->status != SCSI_STATUS_GOOD) {
+		if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("UNMAP command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto finished;
 		}
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 	}
 	printf("[OK]\n");
 

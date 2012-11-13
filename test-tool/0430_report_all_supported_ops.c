@@ -27,7 +27,7 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url,
 				   int data_loss _U_, int show_info)
 {
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct scsi_report_supported_op_codes *rsoc;
 	struct scsi_command_descriptor *desc;
 	int ret, lun;
@@ -62,28 +62,28 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url,
 		ret = -1;
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (task->scsi_task->status == SCSI_STATUS_CHECK_CONDITION
+	    && task->scsi_task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->scsi_task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 		printf("[SKIPPED]\n");
 		printf("REPORT SUPPORTED OPCODES command failed : %s\n",
 		       iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		ret = -2;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("REPORT SUPPORTED OPCODES command failed : %s\n",
 		       iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		ret = -1;
 		goto finished;
 	}
-	full_size = scsi_datain_getfullsize(task);
+	full_size = scsi_datain_getfullsize(task->scsi_task);
 
-	if (full_size > task->datain.size) {
-		scsi_free_scsi_task(task);
+	if (full_size > task->scsi_task->datain.size) {
+		iscsi_free_task(iscsi, task);
 		/* we need more data for the full list */
 		if ((task = iscsi_report_supported_opcodes_sync(iscsi, lun,  0, full_size)) == NULL) {
 			printf("[FAILED]\n");
@@ -92,11 +92,11 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url,
 			goto finished;
 		}
 	}
-	rsoc = scsi_datain_unmarshall(task);
+	rsoc = scsi_datain_unmarshall(task->scsi_task);
 	if (rsoc == NULL) {
 		printf("[FAILED]\n");
 		printf("failed to unmarshall REPORT SUPPORTED OPCODES datain blob\n");
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		ret = -1;
 		goto finished;
 	}
@@ -111,7 +111,7 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url,
 	}
 
 	printf("\n[OK]\n");
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	/*Report All Supported Operations including timeout info.*/
 	printf("See if Report Supported Opcodes with Timeouts is supported... ");
@@ -124,29 +124,29 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url,
 		ret = -1;
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
-	    && (task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE
-		|| task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB)) {
+	if (task->scsi_task->status == SCSI_STATUS_CHECK_CONDITION
+	    && task->scsi_task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
+	    && (task->scsi_task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE
+		|| task->scsi_task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB)) {
 		printf("[SKIPPED]\n");
 		printf("REPORT SUPPORTED OPCODES command failed : %s\n",
 		       iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		ret = -2;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("REPORT SUPPORTED OPCODES command failed : %s\n",
 		       iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		ret = -1;
 		goto finished;
 	}
-	full_size = scsi_datain_getfullsize(task);
+	full_size = scsi_datain_getfullsize(task->scsi_task);
 
-	if (full_size > task->datain.size) {
-		scsi_free_scsi_task(task);
+	if (full_size > task->scsi_task->datain.size) {
+		iscsi_free_task(iscsi, task);
 
 		/* we need more data for the full list */
 		if ((task = iscsi_report_supported_opcodes_sync(iscsi, lun,  1, full_size)) == NULL) {
@@ -156,11 +156,11 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url,
 			goto finished;
 		}
 	}
-	rsoc = scsi_datain_unmarshall(task);
+	rsoc = scsi_datain_unmarshall(task->scsi_task);
 	if (rsoc == NULL) {
 		printf("[FAILED]\n");
 		printf("failed to unmarshall REPORT SUPPORTED OPCODES datain blob\n");
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		ret = -1;
 		goto finished;
 	}
@@ -184,7 +184,7 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url,
 	}
 
 	printf("\n[OK]\n");
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 finished:
 	iscsi_logout_sync(iscsi);

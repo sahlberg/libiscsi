@@ -25,7 +25,7 @@ int T0386_preventallow_2_itl_nexuses(const char *initiator, const char *url, int
 { 
 	struct iscsi_context *iscsi;
 	struct iscsi_context *iscsi2 = NULL;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct scsi_inquiry_standard *inq;
 	int ret, lun, removable;
 	int full_size;
@@ -52,13 +52,13 @@ int T0386_preventallow_2_itl_nexuses(const char *initiator, const char *url, int
 
 	/* See how big this inquiry data is */
 	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+	if (task == NULL || task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 		return -1;
 	}
-	full_size = scsi_datain_getfullsize(task);
-	if (full_size > task->datain.size) {
-		scsi_free_scsi_task(task);
+	full_size = scsi_datain_getfullsize(task->scsi_task);
+	if (full_size > task->scsi_task->datain.size) {
+		iscsi_free_task(iscsi, task);
 
 		/* we need more data for the full list */
 		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
@@ -66,15 +66,15 @@ int T0386_preventallow_2_itl_nexuses(const char *initiator, const char *url, int
 			return -1;
 		}
 	}
-	inq = scsi_datain_unmarshall(task);
+	inq = scsi_datain_unmarshall(task->scsi_task);
 	if (inq == NULL) {
 		printf("failed to unmarshall inquiry datain blob\n");
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		return -1;
 	}
 	removable = inq->rmb;
 
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -106,15 +106,15 @@ int T0386_preventallow_2_itl_nexuses(const char *initiator, const char *url, int
 	 * on a device that does not support medium removals.
 	 */
 	if (removable) {
-		if (task->status != SCSI_STATUS_GOOD) {
+		if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("PREVENTALLOW command: failed with sense %s\n", iscsi_get_error(iscsi));
 			ret++;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test2;
 		}
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	iscsi2 = iscsi_context_login(initiator, url, &lun);
 	if (iscsi == NULL) {
@@ -128,7 +128,7 @@ int T0386_preventallow_2_itl_nexuses(const char *initiator, const char *url, int
 		ret++;
 		goto test2;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	printf("[OK]\n");
 
@@ -141,16 +141,16 @@ test2:
 		ret++;
 		goto test3;
 	}
-	if (task->status     != SCSI_STATUS_CHECK_CONDITION
-	||  task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-	||  task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_REMOVAL_PREVENTED) {
+	if (task->scsi_task->status     != SCSI_STATUS_CHECK_CONDITION
+	||  task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	||  task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_REMOVAL_PREVENTED) {
 	        printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command should have failed with ILLEGAL_REQUEST/MEDIUM_REMOVAL_PREVENTED with : failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret++;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test3;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("Eject failed. [OK]\n");
 
 test3:
@@ -163,7 +163,7 @@ test3:
 		goto test4;
 	}
 
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 test4:
@@ -176,16 +176,16 @@ test4:
 		ret++;
 		goto test5;
 	}
-	if (task->status     != SCSI_STATUS_CHECK_CONDITION
-	||  task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-	||  task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_REMOVAL_PREVENTED) {
+	if (task->scsi_task->status     != SCSI_STATUS_CHECK_CONDITION
+	||  task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	||  task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_REMOVAL_PREVENTED) {
 	        printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command should have failed with ILLEGAL_REQUEST/MEDIUM_REMOVAL_PREVENTED with : failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret++;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test3;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("Eject failed. [OK]\n");
 
 test5:
@@ -202,7 +202,7 @@ test5:
 	/* SBC doesnt really say anything about whether we can LOAD media when the prevent
 	 * flag is set
 	 */
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 test6:
@@ -220,15 +220,15 @@ test6:
 	 * on a device that does not support medium removals.
 	 */
 	if (removable) {
-		if (task->status != SCSI_STATUS_GOOD) {
+		if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("PREVENTALLOW command: failed with sense %s\n", iscsi_get_error(iscsi));
 			ret++;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test7;
 		}
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	task = iscsi_preventallow_sync(iscsi2, lun, 0);
 	if (task == NULL) {
@@ -237,7 +237,7 @@ test6:
 		ret++;
 		goto test7;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	printf("[OK]\n");
 

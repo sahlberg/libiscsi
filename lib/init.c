@@ -276,6 +276,18 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 
 	iscsi->connect_data = NULL;
 
+	if (iscsi->tasks_created != iscsi->tasks_freed) {
+		ISCSI_LOG(iscsi,1,"%d tasks not freed after %d iscsi_tasks have been created and %d freed. i will clean them up",iscsi->tasks_created-iscsi->tasks_freed,iscsi->tasks_created,iscsi->tasks_freed);
+		struct iscsi_task *task = iscsi->tasks;
+		while (task) {
+			struct iscsi_task *next = task->next;
+			iscsi_free_task(task);
+			task=next;
+		}
+	} else {
+		ISCSI_LOG(iscsi,5,"all tasks freed after %d iscsi_tasks have been created and %d freed",iscsi->tasks_created,iscsi->tasks_freed);
+	}
+
 	if (iscsi->mallocs != iscsi->frees) {
 		ISCSI_LOG(iscsi,1,"%d memory blocks lost at iscsi_destroy_context() after %d malloc(s), %d realloc(s) and %d free(s)",iscsi->mallocs-iscsi->frees,iscsi->mallocs,iscsi->reallocs,iscsi->frees);
 	} else {

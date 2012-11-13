@@ -55,17 +55,17 @@ struct write_task {
 void write10_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	struct write_task *wt = (struct write_task *)private_data;
-	struct scsi_task *task = command_data;
+	struct iscsi_task *task = command_data;
 	struct client *client = wt->client;
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
-		printf("Write10 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
-		scsi_free_scsi_task(task);
+		printf("Write10 failed with sense key:%d ascq:%04x\n", task->scsi_task->sense.key, task->scsi_task->sense.ascq);
+		iscsi_free_task(iscsi, task);
 		exit(10);
 	}
 	if (status != SCSI_STATUS_GOOD) {
 		printf("Write10 failed with %s\n", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		exit(10);
 	}
 
@@ -76,18 +76,18 @@ void write10_cb(struct iscsi_context *iscsi, int status, void *command_data, voi
 		client->finished = 1;
 	}
 	scsi_free_scsi_task(wt->rt);
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	free(wt);
 }
 
 void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	struct client *client = (struct client *)private_data;
-	struct scsi_task *task = command_data;
+	struct iscsi_task *task = command_data;
 	struct write_task *wt;
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
-		printf("Read10 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
+		printf("Read10 failed with sense key:%d ascq:%04x\n", task->scsi_task->sense.key, task->scsi_task->sense.ascq);
 		exit(10);
 	}
 
@@ -98,13 +98,13 @@ void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void
 	if (iscsi_write10_task(client->dst_iscsi,
 			client->dst_lun,
 			task->params.read10.lba,
-			task->datain.data,
-			task->datain.size,
+			task->scsi_task->datain.data,
+			task->scsi_task->datain.size,
 			client->dst_blocksize,
 			0, 0, 0, 0, 0,
 			write10_cb, wt) == NULL) {
 		printf("failed to send read10 command\n");
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		exit(10);
 	}
 }
@@ -141,7 +141,7 @@ int main(int argc, const char *argv[])
 	char *src_url = NULL;
 	char *dst_url = NULL;
 	struct iscsi_url *iscsi_url;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct scsi_readcapacity10 *rc10;
 	int extra_argc = 0;
 	int res;
@@ -214,14 +214,14 @@ int main(int argc, const char *argv[])
 		fprintf(stderr, "failed to send readcapacity command\n");
 		exit(10);
 	}
-	rc10 = scsi_datain_unmarshall(task);
+	rc10 = scsi_datain_unmarshall(task->scsi_task);
 	if (rc10 == NULL) {
 		fprintf(stderr, "failed to unmarshall readcapacity10 data\n");
 		exit(10);
 	}
 	client.src_blocksize  = rc10->block_size;
 	client.src_num_blocks  = rc10->lba;
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 
 
@@ -261,14 +261,14 @@ int main(int argc, const char *argv[])
 		fprintf(stderr, "failed to send readcapacity command\n");
 		exit(10);
 	}
-	rc10 = scsi_datain_unmarshall(task);
+	rc10 = scsi_datain_unmarshall(task->scsi_task);
 	if (rc10 == NULL) {
 		fprintf(stderr, "failed to unmarshall readcapacity10 data\n");
 		exit(10);
 	}
 	client.dst_blocksize  = rc10->block_size;
 	client.dst_num_blocks  = rc10->lba;
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	fill_read_queue(&client);
 

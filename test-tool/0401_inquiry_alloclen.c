@@ -26,7 +26,7 @@ int T0401_inquiry_alloclen(const char *initiator, const char *url, int data_loss
 			   int show_info)
 {
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	int ret, lun, i;
 
 	printf("0401_inquiry_alloclen:\n");
@@ -58,14 +58,14 @@ int T0401_inquiry_alloclen(const char *initiator, const char *url, int data_loss
 			ret = -1;
 			goto finished;
 		}
-		if (task->status != SCSI_STATUS_GOOD) {
+		if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("INQUIRY command with alloclen:%d failed : %s\n", i, iscsi_get_error(iscsi));
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			ret = -1;
 			goto finished;
 		}
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 	}
 	printf("[OK]\n");
 

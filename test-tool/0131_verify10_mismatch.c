@@ -24,8 +24,8 @@
 int T0131_verify10_mismatch(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
-	struct scsi_task *vtask;
+	struct iscsi_task *task;
+	struct iscsi_task *vtask;
 	struct scsi_readcapacity10 *rc10;
 	int ret, i, lun;
 	uint32_t block_size;
@@ -52,21 +52,21 @@ int T0131_verify10_mismatch(const char *initiator, const char *url, int data_los
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	rc10 = scsi_datain_unmarshall(task);
+	rc10 = scsi_datain_unmarshall(task->scsi_task);
 	if (rc10 == NULL) {
 		printf("failed to unmarshall readcapacity10 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
 	block_size = rc10->block_size;
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 
 
@@ -84,63 +84,63 @@ int T0131_verify10_mismatch(const char *initiator, const char *url, int data_los
 			ret = -1;
 			goto test2;
 		}
-		if (task->status != SCSI_STATUS_GOOD) {
+		if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("Read10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test2;
 		}
 
-		buf = task->datain.data;
+		buf = task->scsi_task->datain.data;
 		if (buf == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to access DATA-IN buffer %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test2;
 		}
 		/* flip a random byte in the data */
-		buf[random() % task->datain.size] ^= 'X';
+		buf[random() % task->scsi_task->datain.size] ^= 'X';
 
 		vtask = iscsi_verify10_sync(iscsi, lun, buf, i * block_size, 0, 0, 1, 1, block_size);
 		if (vtask == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send verify10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test2;
 		}
-		if (vtask->status        == SCSI_STATUS_CHECK_CONDITION
-		    && vtask->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-		    && vtask->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		if (vtask->scsi_task->status        == SCSI_STATUS_CHECK_CONDITION
+		    && vtask->scsi_task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && vtask->scsi_task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 			printf("[SKIPPED]\n");
 			printf("Opcode is not implemented on target\n");
-			scsi_free_scsi_task(task);
-			scsi_free_scsi_task(vtask);
+			iscsi_free_task(iscsi, task);
+			iscsi_free_task(iscsi, vtask);
 			ret = -2;
 			goto finished;
 		}
-		if (vtask->status == SCSI_STATUS_GOOD) {
+		if (vtask->scsi_task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("Verify10 command returned sense ok but the data is not matching.\n");
 			ret = -1;
-			scsi_free_scsi_task(task);
-			scsi_free_scsi_task(vtask);
+			iscsi_free_task(iscsi, task);
+			iscsi_free_task(iscsi, vtask);
 			goto test2;
 		}
 
-		if (vtask->sense.key != SCSI_SENSE_MISCOMPARE) {
+		if (vtask->scsi_task->sense.key != SCSI_SENSE_MISCOMPARE) {
 		        printf("[FAILED]\n");
-			printf("Verify10 command returned wrong sense key. MISCOMPARE 0x%x expected but got key 0x%x. Sense:%s\n", SCSI_SENSE_MISCOMPARE, vtask->sense.key, iscsi_get_error(iscsi));
+			printf("Verify10 command returned wrong sense key. MISCOMPARE 0x%x expected but got key 0x%x. Sense:%s\n", SCSI_SENSE_MISCOMPARE, vtask->scsi_task->sense.key, iscsi_get_error(iscsi));
 			ret = -1;
-			scsi_free_scsi_task(task);
-			scsi_free_scsi_task(vtask);
+			iscsi_free_task(iscsi, task);
+			iscsi_free_task(iscsi, vtask);
 			goto test2;
 		}
 
-		scsi_free_scsi_task(task);
-		scsi_free_scsi_task(vtask);
+		iscsi_free_task(iscsi, task);
+		iscsi_free_task(iscsi, vtask);
 	}
 	printf("[OK]\n");
 

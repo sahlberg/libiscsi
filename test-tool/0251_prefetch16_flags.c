@@ -23,7 +23,7 @@
 int T0251_prefetch16_flags(const char *initiator, const char *url, int data_loss _U_, int show_info)
 {
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
 
@@ -50,21 +50,21 @@ int T0251_prefetch16_flags(const char *initiator, const char *url, int data_loss
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task);
+	rc16 = scsi_datain_unmarshall(task->scsi_task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
 
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	ret = 0;
 
@@ -77,23 +77,23 @@ int T0251_prefetch16_flags(const char *initiator, const char *url, int data_loss
 		ret = -1;
 		goto test2;
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (task->scsi_task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->scsi_task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->scsi_task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 		printf("[SKIPPED]\n");
 		printf("Opcode is not implemented on target\n");
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		ret = -2;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Prefetch16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test2;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 test2:
@@ -107,14 +107,14 @@ test2:
 			ret = -1;
 			goto test3;
 		}
-		if (task->status != SCSI_STATUS_GOOD) {
+		if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("Prefetch16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test3;
 		}
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 	}
 	printf("[OK]\n");
 

@@ -26,7 +26,7 @@
 int T0161_readcapacity16_alloclen(const char *initiator, const char *url, int data_loss _U_, int show_info)
 {
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	int ret, lun;
 
 	printf("0161_readcapacity16_alloclen:\n");
@@ -57,27 +57,27 @@ int T0161_readcapacity16_alloclen(const char *initiator, const char *url, int da
 	}
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = 0x9e;
-	task->cdb[1] = 0x10;
-	task->cdb_size = 16;
-	task->xfer_dir = SCSI_XFER_NONE;
-	task->expxferlen = 0;
+	task->scsi_task->cdb[0] = 0x9e;
+	task->scsi_task->cdb[1] = 0x10;
+	task->scsi_task->cdb_size = 16;
+	task->scsi_task->xfer_dir = SCSI_XFER_NONE;
+	task->scsi_task->expxferlen = 0;
 
-	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
+	if (iscsi_scsi_command_sync(iscsi, lun, task->scsi_task, NULL) == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 
 		goto test2;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("READCAPACITY16 with AllocationLength==0 should not fail. Sense:%s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test2;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 

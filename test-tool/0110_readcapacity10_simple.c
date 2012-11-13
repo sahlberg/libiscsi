@@ -23,7 +23,7 @@
 int T0110_readcapacity10_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct scsi_readcapacity10 *rc10;
 	int ret, lun;
 
@@ -52,22 +52,22 @@ int T0110_readcapacity10_simple(const char *initiator, const char *url, int data
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
  	        printf("[FAILED]\n");
 		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	rc10 = scsi_datain_unmarshall(task);
+	rc10 = scsi_datain_unmarshall(task->scsi_task);
 	if (rc10 == NULL) {
  	        printf("[FAILED]\n");
 		printf("failed to unmarshall readcapacity10 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 finished:

@@ -23,7 +23,7 @@
 int T0264_get_lba_status_beyondeol(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
 	uint64_t num_blocks;
@@ -50,30 +50,30 @@ int T0264_get_lba_status_beyondeol(const char *initiator, const char *url, int d
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task);
+	rc16 = scsi_datain_unmarshall(task->scsi_task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
 
 	if (rc16->lbpme == 0){
 		printf("Logical unit is fully provisioned. Skipping test\n");
 		ret = -2;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
 
 	num_blocks = rc16->returned_lba;
 
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	ret = 0;
 
@@ -86,23 +86,23 @@ int T0264_get_lba_status_beyondeol(const char *initiator, const char *url, int d
 		ret = -1;
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("GET_LBA_STATUS beyond eol should fail with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE\n");
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-	    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 	        printf("[FAILED]\n");
 		printf("GET_LBA_STATUS failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 finished:

@@ -23,7 +23,7 @@
 int T0201_read16_rdprotect(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret = 0, i, lun;
 	uint32_t block_size;
@@ -50,17 +50,17 @@ int T0201_read16_rdprotect(const char *initiator, const char *url, int data_loss
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task);
+	rc16 = scsi_datain_unmarshall(task->scsi_task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
 
@@ -68,11 +68,11 @@ int T0201_read16_rdprotect(const char *initiator, const char *url, int data_loss
 
 	if(rc16->prot_en != 0) {
 		printf("device is formatted with protection information, skipping test\n");
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		ret = -2;
 		goto finished;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 
 	printf("Read16 with RDPROTECT ");
@@ -84,16 +84,16 @@ int T0201_read16_rdprotect(const char *initiator, const char *url, int data_loss
 			ret = -1;
 			goto finished;
 		}
-		if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 		        printf("[FAILED]\n");
 			printf("Read16 with RDPROTECT!=0 should have failed with CHECK_CONDITION/ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB\n");
 			ret = -1;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto finished;
 		}
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 	}
 	printf("[OK]\n");
 

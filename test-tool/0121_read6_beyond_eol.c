@@ -23,7 +23,7 @@
 int T0121_read6_beyond_eol(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct scsi_readcapacity10 *rc10;
 	int ret, i, lun;
 	uint32_t block_size, num_blocks;
@@ -53,22 +53,22 @@ int T0121_read6_beyond_eol(const char *initiator, const char *url, int data_loss
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("READCAPACITY10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	rc10 = scsi_datain_unmarshall(task);
+	rc10 = scsi_datain_unmarshall(task->scsi_task);
 	if (rc10 == NULL) {
 		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
 	block_size = rc10->block_size;
 	num_blocks = rc10->lba;
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	ret = 0;
 
@@ -90,28 +90,28 @@ int T0121_read6_beyond_eol(const char *initiator, const char *url, int data_loss
 			ret = -1;
 			goto test2;
 		}
-		if (task->status == SCSI_STATUS_GOOD) {
+		if (task->scsi_task->status == SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("READ6 beyond end-of-lun did not fail with sense.\n");
 			ret = -1;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test2;
 		}
-		if (task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST) {
+		if (task->scsi_task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST) {
 			printf("[FAILED]\n");
 			printf("READ6 beyond end-of-lun did not return sense key ILLEGAL_REQUEST. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test2;
 		}
-		if (task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		if (task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
 			printf("READ6 beyond end-of-lun did not return sense ascq LBA OUT OF RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test2;
 		}
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 	}
 	printf("[OK]\n");
 
@@ -127,28 +127,28 @@ test2:
 			ret = -1;
 			goto test3;
 		}
-		if (task->status == SCSI_STATUS_GOOD) {
+		if (task->scsi_task->status == SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("READ6 beyond end-of-lun did not return sense.\n");
 			ret = -1;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test3;
 		}
-		if (task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST) {
+		if (task->scsi_task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST) {
 			printf("[FAILED]\n");
 			printf("READ6 beyond end-of-lun did not return sense key ILLEGAL_REQUEST. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test3;
 		}
-		if (task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		if (task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 			printf("[FAILED]\n");
 			printf("READ6 beyond end-of-lun did not return sense ascq LBA OUT OF RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test3;
 		}
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 	}
 	printf("[OK]\n");
 
@@ -163,28 +163,28 @@ test3:
 		ret = -1;
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("READ6 beyond end-of-lun did not return sense.\n");
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	if (task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST) {
+	if (task->scsi_task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST) {
 		printf("[FAILED]\n");
 		printf("READ6 beyond end-of-lun did not return sense key ILLEGAL_REQUEST. Sense:%s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	if (task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+	if (task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 		printf("[FAILED]\n");
 		printf("READ6 beyond end-of-lun did not return sense ascq LBA OUT OF RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 

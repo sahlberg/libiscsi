@@ -24,7 +24,7 @@
 int T0380_preventallow_simple(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct scsi_inquiry_standard *inq;
 	int ret, lun, removable;
 	int full_size;
@@ -47,13 +47,13 @@ int T0380_preventallow_simple(const char *initiator, const char *url, int data_l
 
 	/* See how big this inquiry data is */
 	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+	if (task == NULL || task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 		return -1;
 	}
-	full_size = scsi_datain_getfullsize(task);
-	if (full_size > task->datain.size) {
-		scsi_free_scsi_task(task);
+	full_size = scsi_datain_getfullsize(task->scsi_task);
+	if (full_size > task->scsi_task->datain.size) {
+		iscsi_free_task(iscsi, task);
 
 		/* we need more data for the full list */
 		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
@@ -61,15 +61,15 @@ int T0380_preventallow_simple(const char *initiator, const char *url, int data_l
 			return -1;
 		}
 	}
-	inq = scsi_datain_unmarshall(task);
+	inq = scsi_datain_unmarshall(task->scsi_task);
 	if (inq == NULL) {
 		printf("failed to unmarshall inquiry datain blob\n");
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		return -1;
 	}
 	removable = inq->rmb;
 
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -99,15 +99,15 @@ int T0380_preventallow_simple(const char *initiator, const char *url, int data_l
 	 * on a device that does not support medium removals.
 	 */
 	if (removable) {
-		if (task->status != SCSI_STATUS_GOOD) {
+		if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("PREVENTALLOW command: failed with sense %s\n", iscsi_get_error(iscsi));
 			ret++;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test2;
 		}
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	printf("[OK]\n");
 
@@ -126,15 +126,15 @@ test2:
 	 * on a device that does not support medium removals.
 	 */
 	if (removable) {
-		if (task->status != SCSI_STATUS_GOOD) {
+		if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("PREVENTALLOW command: failed with sense %s\n", iscsi_get_error(iscsi));
 			ret++;
-			scsi_free_scsi_task(task);
+			iscsi_free_task(iscsi, task);
 			goto test3;
 		}
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 	printf("[OK]\n");
 

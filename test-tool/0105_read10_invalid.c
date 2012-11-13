@@ -26,7 +26,7 @@
 int T0105_read10_invalid(const char *initiator, const char *url, int data_loss _U_, int show_info)
 {
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct iscsi_data data;
 	char buf[4096];
 	struct scsi_readcapacity10 *rc10;
@@ -59,21 +59,21 @@ int T0105_read10_invalid(const char *initiator, const char *url, int data_loss _
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	rc10 = scsi_datain_unmarshall(task);
+	rc10 = scsi_datain_unmarshall(task->scsi_task);
 	if (rc10 == NULL) {
 		printf("failed to unmarshall readcapacity10 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
 	block_size = rc10->block_size;
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 
 
 	ret = 0;
@@ -90,45 +90,45 @@ int T0105_read10_invalid(const char *initiator, const char *url, int data_loss _
 	}
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[8] = 1;
-	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_READ;
-	task->expxferlen = 0;
+	task->scsi_task->cdb[0] = SCSI_OPCODE_READ10;
+	task->scsi_task->cdb[8] = 1;
+	task->scsi_task->cdb_size = 10;
+	task->scsi_task->xfer_dir = SCSI_XFER_READ;
+	task->scsi_task->expxferlen = 0;
 
 	/* we dont want autoreconnect since some targets will drop the session
 	 * on this condition.
 	 */
 	iscsi_set_noautoreconnect(iscsi, 1);
 
-	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
+	if (iscsi_scsi_command_sync(iscsi, lun, task->scsi_task, NULL) == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_CANCELLED) {
-		scsi_free_scsi_task(task);
+	if (task->scsi_task->status == SCSI_STATUS_CANCELLED) {
+		iscsi_free_task(iscsi, task);
 		printf("Target dropped the session [OK]\n");
 		goto test2;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==0 should not fail.\n");
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test2;
 	}
-	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
-	    task->residual != (int64_t)block_size) {
+	if (task->scsi_task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
+	    task->scsi_task->residual != (int64_t)block_size) {
 	        printf("[FAILED]\n");
 		printf("Read10 returned incorrect residual overflow.\n");
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test5;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 
@@ -147,35 +147,35 @@ test2:
 	}
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[8] = 1;
-	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_READ;
-	task->expxferlen = 1024;
+	task->scsi_task->cdb[0] = SCSI_OPCODE_READ10;
+	task->scsi_task->cdb[8] = 1;
+	task->scsi_task->cdb_size = 10;
+	task->scsi_task->xfer_dir = SCSI_XFER_READ;
+	task->scsi_task->expxferlen = 1024;
 
-	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
+	if (iscsi_scsi_command_sync(iscsi, lun, task->scsi_task, NULL) == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==1024 should not fail.\n");
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test3;
 	}
-	if (task->residual_status != SCSI_RESIDUAL_UNDERFLOW ||
-	    task->residual != (int64_t)block_size) {
+	if (task->scsi_task->residual_status != SCSI_RESIDUAL_UNDERFLOW ||
+	    task->scsi_task->residual != (int64_t)block_size) {
 	        printf("[FAILED]\n");
 		printf("Read10 returned incorrect residual underflow.\n");
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test5;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 
@@ -191,35 +191,35 @@ test3:
 	}
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[8] = 1;
-	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_READ;
-	task->expxferlen = 200;
+	task->scsi_task->cdb[0] = SCSI_OPCODE_READ10;
+	task->scsi_task->cdb[8] = 1;
+	task->scsi_task->cdb_size = 10;
+	task->scsi_task->xfer_dir = SCSI_XFER_READ;
+	task->scsi_task->expxferlen = 200;
 
-	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
+	if (iscsi_scsi_command_sync(iscsi, lun, task->scsi_task, NULL) == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Read10 of 1 block with iscsi ExpectedDataTransferLength==200 should not fail.\n");
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test4;
 	}
-	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
-	    task->residual != (int64_t)(block_size - 200)) {
+	if (task->scsi_task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
+	    task->scsi_task->residual != (int64_t)(block_size - 200)) {
 	        printf("[FAILED]\n");
 		printf("Read10 returned incorrect residual overflow.\n");
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test5;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 test4:
@@ -234,36 +234,36 @@ test4:
 	}
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[8] = 2;
-	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_READ;
-	task->expxferlen = block_size;
+	task->scsi_task->cdb[0] = SCSI_OPCODE_READ10;
+	task->scsi_task->cdb[8] = 2;
+	task->scsi_task->cdb_size = 10;
+	task->scsi_task->xfer_dir = SCSI_XFER_READ;
+	task->scsi_task->expxferlen = block_size;
 
-	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
+	if (iscsi_scsi_command_sync(iscsi, lun, task->scsi_task, NULL) == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Read10 of 2 blocks with iscsi ExpectedDataTransferLength==%d should succeed.\n", block_size);
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test5;
 	}
-	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
-	    task->residual != (int64_t)block_size) {
+	if (task->scsi_task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
+	    task->scsi_task->residual != (int64_t)block_size) {
 	        printf("[FAILED]\n");
 		printf("Read10 returned incorrect residual overflow.\n");
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test5;
 	}
 
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 
@@ -279,30 +279,30 @@ test5:
 	}
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[8] = 1;
-	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_WRITE;
-	task->expxferlen = sizeof(buf);
+	task->scsi_task->cdb[0] = SCSI_OPCODE_READ10;
+	task->scsi_task->cdb[8] = 1;
+	task->scsi_task->cdb_size = 10;
+	task->scsi_task->xfer_dir = SCSI_XFER_WRITE;
+	task->scsi_task->expxferlen = sizeof(buf);
 
 	data.size = sizeof(buf);
 	data.data = (unsigned char *)&buf[0];
 
-	if (iscsi_scsi_command_sync(iscsi, lun, task, &data) == NULL) {
+	if (iscsi_scsi_command_sync(iscsi, lun, task->scsi_task, &data) == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Read10 of 1 block but iscsi data-out write should fail.\n");
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 finished:

@@ -41,7 +41,7 @@ int T0424_reserve6_target_reset(const char *initiator, const char *url,
 				int data_loss _U_, int show_info)
 {
 	struct iscsi_context *iscsi, *iscsi2;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	int ret, lun;
 	struct mgmt_task mgmt_task = {0, 0};
 	struct pollfd pfd;
@@ -83,24 +83,24 @@ int T0424_reserve6_target_reset(const char *initiator, const char *url,
 		ret = -1;
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (task->scsi_task->status == SCSI_STATUS_CHECK_CONDITION
+	    && task->scsi_task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->scsi_task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 		printf("[SKIPPED]\n");
 		printf("RESERVE6 Not Supported\n");
 		ret = -2;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("RESERVE6 failed with sense:%s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test2;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 test2:
@@ -113,15 +113,15 @@ test2:
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TEST UNIT READY command: failed with sense %s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test3;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 
@@ -135,14 +135,14 @@ test3:
 		ret = -1;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
+	if (task->scsi_task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
 		printf("[FAILED]\n");
 		printf("Expected RESERVATION CONFLICT\n");
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto finished;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 	printf("Send a Target Cold-Reset ... ");
@@ -180,22 +180,22 @@ test5:
 		ret = -1;
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key ==  SCSI_SENSE_UNIT_ATTENTION
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET) {
+	if (task->scsi_task->status == SCSI_STATUS_CHECK_CONDITION
+	    && task->scsi_task->sense.key ==  SCSI_SENSE_UNIT_ATTENTION
+	    && task->scsi_task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET) {
 		printf("Got BUS RESET. Retry accessing the LUN\n");
 		goto test5;
 
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TEST UNIT READY command: failed with sense %s\n",
 		       iscsi_get_error(iscsi2));
 		ret = -1;
-		scsi_free_scsi_task(task);
+		iscsi_free_task(iscsi, task);
 		goto test3;
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(iscsi, task);
 	printf("[OK]\n");
 
 
