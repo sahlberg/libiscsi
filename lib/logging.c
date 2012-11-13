@@ -58,7 +58,13 @@ iscsi_log_message(struct iscsi_context *iscsi, int level, const char *format, ..
 		return;
 	}
 
-	iscsi->log_fn(level, message);
+	if (iscsi->initiator_name[0]) {
+		static char message2[1024];
+		snprintf(message2, 1024, "%s [%s]", message, iscsi->initiator_name);
+		iscsi->log_fn(level, message2);
+	}
+	else
+		iscsi->log_fn(level, message);
 }
 
 
