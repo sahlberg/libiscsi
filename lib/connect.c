@@ -154,6 +154,7 @@ iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
 	ct->lun          = lun;
 	ct->private_data = private_data;
 	if (iscsi_connect_async(iscsi, portal, iscsi_connect_cb, ct) != 0) {
+		iscsi_free(iscsi, ct);
 		return -ENOMEM;
 	}
 	return 0;
