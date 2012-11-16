@@ -62,66 +62,68 @@ void event_loop(struct iscsi_context *iscsi, struct client_state *state)
 
 void show_lun(struct iscsi_context *iscsi, int lun)
 {
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct scsi_inquiry_standard *inq;
 	int type, no_media;
 	long long size = 0;
 	int size_pf = 0;
 	static const char sf[] = {' ', 'k', 'M', 'G', 'T' };
+	int ret;
 
+	task = iscsi_create_task(iscsi);
 	/* check we can talk to the lun */
 tur_try_again:
-	if ((task = iscsi_testunitready_sync(iscsi, lun)) == NULL) {
+	if ((iscsi_testunitready_sync(task, lun)) != 0) {
 		fprintf(stderr, "testunitready failed\n");
 		exit(10);
 	}
-	if (task->status == SCSI_STATUS_CHECK_CONDITION) {
-		if (task->sense.key == SCSI_SENSE_UNIT_ATTENTION && task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET) {
-			scsi_free_scsi_task(task);
+	if (task->scsi.status == SCSI_STATUS_CHECK_CONDITION) {
+		if (task->scsi.sense.key == SCSI_SENSE_UNIT_ATTENTION && task->scsi.sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET) {
+			iscsi_clear_task(task);
 			goto tur_try_again;
 		}
 	}
 
 	no_media = 0;
-	if (task->status     == SCSI_STATUS_CHECK_CONDITION
-	&&  task->sense.key  == SCSI_SENSE_NOT_READY
-	&&  task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT) {
+	if (task->scsi.status     == SCSI_STATUS_CHECK_CONDITION
+	&&  task->scsi.sense.key  == SCSI_SENSE_NOT_READY
+	&&  task->scsi.sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT) {
 	    	/* not an error, just a cdrom without a disk most likely */
 		no_media = 1;
-	} else if (task->status != SCSI_STATUS_GOOD) {
+	} else if (task->scsi.status != SCSI_STATUS_GOOD) {
 		fprintf(stderr, "TESTUNITREADY failed with %s\n", iscsi_get_error(iscsi));
 		exit(10);
 	}
-	scsi_free_scsi_task(task);
+	iscsi_free_task(task);
 
 
 
 	/* check what type of lun we have */
-	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+	ret = iscsi_inquiry_sync(task, lun, 0, 0, 64);
+	if (ret != 0 || task->scsi.status != SCSI_STATUS_GOOD) {
 		fprintf(stderr, "failed to send inquiry command : %s\n", iscsi_get_error(iscsi));
 		exit(10);
 	}
-	inq = scsi_datain_unmarshall(task);
+	inq = scsi_datain_unmarshall(&task->scsi);
 	if (inq == NULL) {
 		fprintf(stderr, "failed to unmarshall inquiry datain blob\n");
 		exit(10);
 	}
 	type = inq->device_type;
-	scsi_free_scsi_task(task);
+	iscsi_free_task(task);
 
 
 
 	if (type == SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 		struct scsi_readcapacity10 *rc10;
 
-		task = iscsi_readcapacity10_sync(iscsi, lun, 0, 0);
-		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+		ret = iscsi_readcapacity10_sync(task, lun, 0, 0);
+		if (ret != 0 || task->scsi.status != SCSI_STATUS_GOOD) {
 			fprintf(stderr, "failed to send readcapacity command\n");
 			exit(10);
 		}
 
-		rc10 = scsi_datain_unmarshall(task);
+		rc10 = scsi_datain_unmarshall(&task->scsi);
 		if (rc10 == NULL) {
 			fprintf(stderr, "failed to unmarshall readcapacity10 data\n");
 			exit(10);
@@ -134,7 +136,7 @@ tur_try_again:
 			size /= 1024;
 		}
 
-		scsi_free_scsi_task(task);
+		iscsi_free_task(task);
 	}
 
 
@@ -151,7 +153,7 @@ tur_try_again:
 void list_luns(struct client_state *clnt, const char *target, const char *portal)
 {
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
+	struct iscsi_task *task;
 	struct scsi_reportluns_list *list;
 	int full_report_size;
 	int i;
@@ -187,22 +189,23 @@ void list_luns(struct client_state *clnt, const char *target, const char *portal
 	/* get initial reportluns data, all targets can report 16 bytes but some
 	 * fail if we ask for too much.
 	 */
-	if ((task = iscsi_reportluns_sync(iscsi, 0, 16)) == NULL) {
+	task = iscsi_create_task(iscsi);
+	if (iscsi_reportluns_sync(task, 0, 16) != 0) {
 		fprintf(stderr, "reportluns failed : %s\n", iscsi_get_error(iscsi));
 		exit(10);
 	}
-	full_report_size = scsi_datain_getfullsize(task);
-	if (full_report_size > task->datain.size) {
-		scsi_free_scsi_task(task);
+	full_report_size = scsi_datain_getfullsize(&task->scsi);
+	if (full_report_size > task->scsi.datain.size) {
+		iscsi_clear_task(task);
 
 		/* we need more data for the full list */
-		if ((task = iscsi_reportluns_sync(iscsi, 0, full_report_size)) == NULL) {
+		if (iscsi_reportluns_sync(task, 0, full_report_size) != 0) {
 			fprintf(stderr, "reportluns failed : %s\n", iscsi_get_error(iscsi));
 			exit(10);
 		}
 	}
 
-	list = scsi_datain_unmarshall(task);
+	list = scsi_datain_unmarshall(&task->scsi);
 	if (list == NULL) {
 		fprintf(stderr, "failed to unmarshall reportluns datain blob\n");
 		exit(10);
@@ -211,7 +214,7 @@ void list_luns(struct client_state *clnt, const char *target, const char *portal
 		show_lun(iscsi, list->luns[i]);
 	}
 
-	scsi_free_scsi_task(task);
+	iscsi_free_task(task);
 	iscsi_destroy_context(iscsi);
 }
 

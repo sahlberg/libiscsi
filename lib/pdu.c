@@ -110,9 +110,9 @@ iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	iscsi_free(iscsi, pdu->indata.data);
 	pdu->indata.data = NULL;
 
-	if (pdu->scsi_cbdata) {
-		iscsi_free_scsi_cbdata(iscsi, pdu->scsi_cbdata);
-		pdu->scsi_cbdata = NULL;
+	if (pdu->iscsi_cbdata) {
+		iscsi_free_cbdata(iscsi, pdu->iscsi_cbdata);
+		pdu->iscsi_cbdata = NULL;
 	}
 
 	iscsi_free(iscsi, pdu);
@@ -532,10 +532,10 @@ iscsi_pdu_set_bufferoffset(struct iscsi_pdu *pdu, uint32_t bufferoffset)
 }
 
 void
-iscsi_pdu_set_cdb(struct iscsi_pdu *pdu, struct scsi_task *task)
+iscsi_pdu_set_cdb(struct iscsi_pdu *pdu, struct iscsi_task *task)
 {
-  memset(&pdu->outdata.data[32], 0, 16);
-	memcpy(&pdu->outdata.data[32], task->cdb, task->cdb_size);
+	memset(&pdu->outdata.data[32], 0, 16);
+	memcpy(&pdu->outdata.data[32], task->scsi.cdb, task->scsi.cdb_size);
 }
 
 void

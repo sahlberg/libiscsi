@@ -32,7 +32,7 @@
 struct iscsi_sync_state {
    int finished;
    int status;
-   struct scsi_task *task;
+   struct iscsi_task *task;
 };
 
 static void
@@ -169,96 +169,96 @@ static void
 scsi_sync_cb(struct iscsi_context *iscsi _U_, int status, void *command_data,
 	     void *private_data)
 {
-	struct scsi_task *task = command_data;
+	struct iscsi_task *task = command_data;
 	struct iscsi_sync_state *state = private_data;
 
-	task->status    = status;
+	task->scsi.status    = status;
 
 	state->status   = status;
 	state->finished = 1;
 	state->task     = task;
 }
 
-struct scsi_task *
-iscsi_reportluns_sync(struct iscsi_context *iscsi, int report_type,
+int
+iscsi_reportluns_sync(struct iscsi_task *task, int report_type,
 		      int alloc_len)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_reportluns_task(iscsi, report_type, alloc_len,
-				   scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi, "Failed to send ReportLuns command");
-		return NULL;
+	if (iscsi_reportluns_task(task, report_type, alloc_len,
+				   scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi, "Failed to send ReportLuns command");
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
 
-struct scsi_task *
-iscsi_testunitready_sync(struct iscsi_context *iscsi, int lun)
+int
+iscsi_testunitready_sync(struct iscsi_task *task, int lun)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_testunitready_task(iscsi, lun,
-				      scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+	if (iscsi_testunitready_task(task, lun,
+				      scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send TestUnitReady command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_inquiry_sync(struct iscsi_context *iscsi, int lun, int evpd,
+int
+iscsi_inquiry_sync(struct iscsi_task *task, int lun, int evpd,
 		   int page_code, int maxsize)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_inquiry_task(iscsi, lun, evpd, page_code, maxsize,
-				scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi, "Failed to send Inquiry command");
-		return NULL;
+	if (iscsi_inquiry_task(task, lun, evpd, page_code, maxsize,
+				scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi, "Failed to send Inquiry command");
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_read6_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
+int
+iscsi_read6_sync(struct iscsi_task *task, int lun, uint32_t lba,
 		  uint32_t datalen, int blocksize)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_read6_task(iscsi, lun, lba, datalen, blocksize,
-				       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+	if (iscsi_read6_task(task, lun, lba, datalen, blocksize,
+				       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Read6 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_read10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
+int
+iscsi_read10_sync(struct iscsi_task *task, int lun, uint32_t lba,
 		  uint32_t datalen, int blocksize,
 		  int rdprotect, int dpo, int fua, int fua_nv, int group_number)
 {
@@ -266,21 +266,21 @@ iscsi_read10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_read10_task(iscsi, lun, lba, datalen, blocksize, rdprotect, 
+	if (iscsi_read10_task(task, lun, lba, datalen, blocksize, rdprotect, 
 			      dpo, fua, fua_nv, group_number,
-			      scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+			      scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Read10 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_read12_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
+int
+iscsi_read12_sync(struct iscsi_task *task, int lun, uint32_t lba,
 		  uint32_t datalen, int blocksize,
 		  int rdprotect, int dpo, int fua, int fua_nv, int group_number)
 {
@@ -288,21 +288,21 @@ iscsi_read12_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_read12_task(iscsi, lun, lba, datalen, blocksize, rdprotect, 
+	if (iscsi_read12_task(task, lun, lba, datalen, blocksize, rdprotect, 
 			      dpo, fua, fua_nv, group_number,
-			      scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+			      scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Read12 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_read16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
+int
+iscsi_read16_sync(struct iscsi_task *task, int lun, uint64_t lba,
 		  uint32_t datalen, int blocksize,
 		  int rdprotect, int dpo, int fua, int fua_nv, int group_number)
 {
@@ -310,100 +310,100 @@ iscsi_read16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_read16_task(iscsi, lun, lba, datalen, blocksize, rdprotect, 
+	if (iscsi_read16_task(task, lun, lba, datalen, blocksize, rdprotect, 
 			      dpo, fua, fua_nv, group_number,
-			      scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+			      scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Read16 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_readcapacity10_sync(struct iscsi_context *iscsi, int lun, int lba,
+int
+iscsi_readcapacity10_sync(struct iscsi_task *task, int lun, int lba,
 			  int pmi)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_readcapacity10_task(iscsi, lun, lba, pmi,
-				       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+	if (iscsi_readcapacity10_task(task, lun, lba, pmi,
+				       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send ReadCapacity10 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_readcapacity16_sync(struct iscsi_context *iscsi, int lun)
+int
+iscsi_readcapacity16_sync(struct iscsi_task *task, int lun)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_readcapacity16_task(iscsi, lun,
-				       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+	if (iscsi_readcapacity16_task(task, lun,
+				       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send ReadCapacity16 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_get_lba_status_sync(struct iscsi_context *iscsi, int lun, uint64_t starting_lba, uint32_t alloc_len)
+int
+iscsi_get_lba_status_sync(struct iscsi_task *task, int lun, uint64_t starting_lba, uint32_t alloc_len)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_get_lba_status_task(iscsi, lun, starting_lba, alloc_len,
-				       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+	if (iscsi_get_lba_status_task(task, lun, starting_lba, alloc_len,
+				       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send GetLbaStatus command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
+int
+iscsi_synchronizecache10_sync(struct iscsi_task *task, int lun, int lba,
 			      int num_blocks, int syncnv, int immed)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_synchronizecache10_task(iscsi, lun, lba, num_blocks,
+	if (iscsi_synchronizecache10_task(task, lun, lba, num_blocks,
 					   syncnv, immed,
-					   scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+					   scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send SynchronizeCache10 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_startstopunit_sync(struct iscsi_context *iscsi, int lun,
+int
+iscsi_startstopunit_sync(struct iscsi_task *task, int lun,
 			 int immed, int pcm, int pc,
 			 int no_flush, int loej, int start)
 {
@@ -411,104 +411,104 @@ iscsi_startstopunit_sync(struct iscsi_context *iscsi, int lun,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_startstopunit_task(iscsi, lun, immed, pcm, pc,
+	if (iscsi_startstopunit_task(task, lun, immed, pcm, pc,
 				     no_flush, loej, start,
-				     scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+				     scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send StartStopUnit command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_preventallow_sync(struct iscsi_context *iscsi, int lun,
+int
+iscsi_preventallow_sync(struct iscsi_task *task, int lun,
 			int prevent)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_preventallow_task(iscsi, lun, prevent,
-				    scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+	if (iscsi_preventallow_task(task, lun, prevent,
+				    scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send PreventAllowMediumRemoval command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_synchronizecache16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
+int
+iscsi_synchronizecache16_sync(struct iscsi_task *task, int lun, uint64_t lba,
 			      uint32_t num_blocks, int syncnv, int immed)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_synchronizecache16_task(iscsi, lun, lba, num_blocks,
+	if (iscsi_synchronizecache16_task(task, lun, lba, num_blocks,
 					   syncnv, immed,
-					   scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+					   scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send SynchronizeCache16 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_prefetch10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
+int
+iscsi_prefetch10_sync(struct iscsi_task *task, int lun, uint32_t lba,
 		      int num_blocks, int immed, int group)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_prefetch10_task(iscsi, lun, lba, num_blocks,
+	if (iscsi_prefetch10_task(task, lun, lba, num_blocks,
 				  immed, group,
-				  scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+				  scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send PreFetch10 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_prefetch16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
+int
+iscsi_prefetch16_sync(struct iscsi_task *task, int lun, uint64_t lba,
 		      int num_blocks, int immed, int group)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_prefetch16_task(iscsi, lun, lba, num_blocks,
+	if (iscsi_prefetch16_task(task, lun, lba, num_blocks,
 				  immed, group,
-				  scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+				  scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send PreFetch16 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_write10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
+int
+iscsi_write10_sync(struct iscsi_task *task, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number)
 {
@@ -516,21 +516,21 @@ iscsi_write10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_write10_task(iscsi, lun, lba, data, datalen, blocksize,
+	if (iscsi_write10_task(task, lun, lba, data, datalen, blocksize,
 			       wrprotect, dpo, fua, fua_nv, group_number,
-			       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+			       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Write10 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_write12_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
+int
+iscsi_write12_sync(struct iscsi_task *task, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number)
 {
@@ -538,22 +538,22 @@ iscsi_write12_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_write12_task(iscsi, lun, lba, 
+	if (iscsi_write12_task(task, lun, lba, 
 			       data, datalen, blocksize, wrprotect, 
 			       dpo, fua, fua_nv, group_number,
-			       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+			       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Write12 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_write16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
+int
+iscsi_write16_sync(struct iscsi_task *task, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number)
 {
@@ -561,22 +561,22 @@ iscsi_write16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_write16_task(iscsi, lun, lba,
+	if (iscsi_write16_task(task, lun, lba,
 			       data, datalen, blocksize, wrprotect, 
 			       dpo, fua, fua_nv, group_number,
-			       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+			       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Write16 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_orwrite_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
+int
+iscsi_orwrite_sync(struct iscsi_task *task, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number)
 {
@@ -584,22 +584,22 @@ iscsi_orwrite_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_orwrite_task(iscsi, lun, lba,
+	if (iscsi_orwrite_task(task, lun, lba,
 			       data, datalen, blocksize, wrprotect, 
 			       dpo, fua, fua_nv, group_number,
-			       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+			       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Orwrite command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_compareandwrite_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
+int
+iscsi_compareandwrite_sync(struct iscsi_task *task, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number)
 {
@@ -607,22 +607,22 @@ iscsi_compareandwrite_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_compareandwrite_task(iscsi, lun, lba,
+	if (iscsi_compareandwrite_task(task, lun, lba,
 			       data, datalen, blocksize, wrprotect, 
 			       dpo, fua, fua_nv, group_number,
-			       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+			       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send CompareAndWrite command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_writeverify10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
+int
+iscsi_writeverify10_sync(struct iscsi_task *task, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int bytchk, int group_number)
 {
@@ -630,21 +630,21 @@ iscsi_writeverify10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_writeverify10_task(iscsi, lun, lba, data, datalen, blocksize,
+	if (iscsi_writeverify10_task(task, lun, lba, data, datalen, blocksize,
 			       wrprotect, dpo, bytchk, group_number,
-			       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+			       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Writeverify10 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_writeverify12_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
+int
+iscsi_writeverify12_sync(struct iscsi_task *task, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int bytchk, int group_number)
 {
@@ -652,22 +652,22 @@ iscsi_writeverify12_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_writeverify12_task(iscsi, lun, lba, 
+	if (iscsi_writeverify12_task(task, lun, lba, 
 			       data, datalen, blocksize, wrprotect, 
 			       dpo, bytchk, group_number,
-			       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+			       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Writeverify12 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_writeverify16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
+int
+iscsi_writeverify16_sync(struct iscsi_task *task, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int bytchk, int group_number)
 {
@@ -675,82 +675,82 @@ iscsi_writeverify16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_writeverify16_task(iscsi, lun, lba,
+	if (iscsi_writeverify16_task(task, lun, lba,
 			       data, datalen, blocksize, wrprotect, 
 			       dpo, bytchk, group_number,
-			       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+			       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Writeverify16 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_verify10_sync(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba,
+int
+iscsi_verify10_sync(struct iscsi_task *task, int lun, unsigned char *data, uint32_t datalen, uint32_t lba,
 		    int vprotect, int dpo, int bytchk, int blocksize)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_verify10_task(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize,
-				       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+	if (iscsi_verify10_task(task, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize,
+				       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Verify10 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_verify12_sync(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba,
+int
+iscsi_verify12_sync(struct iscsi_task *task, int lun, unsigned char *data, uint32_t datalen, uint32_t lba,
 		    int vprotect, int dpo, int bytchk, int blocksize)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_verify12_task(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize,
-				       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+	if (iscsi_verify12_task(task, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize,
+				       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Verify12 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_verify16_sync(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba,
+int
+iscsi_verify16_sync(struct iscsi_task *task, int lun, unsigned char *data, uint32_t datalen, uint64_t lba,
 		    int vprotect, int dpo, int bytchk, int blocksize)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_verify16_task(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize,
-				       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+	if (iscsi_verify16_task(task, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize,
+				       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send Verify16 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_writesame10_sync(struct iscsi_context *iscsi, int lun,
+int
+iscsi_writesame10_sync(struct iscsi_task *task, int lun,
 		       unsigned char *data, uint32_t datalen,
 		       uint32_t lba, uint16_t num_blocks,
 		       int anchor, int unmap, int pbdata, int lbdata,
@@ -760,23 +760,23 @@ iscsi_writesame10_sync(struct iscsi_context *iscsi, int lun,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_writesame10_task(iscsi, lun, data, datalen,
+	if (iscsi_writesame10_task(task, lun, data, datalen,
 	   			 lba, num_blocks,
 	   			 anchor, unmap, pbdata, lbdata,
 				 wrprotect, group,
-				 scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+				 scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send WRITESAME10 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_writesame16_sync(struct iscsi_context *iscsi, int lun,
+int
+iscsi_writesame16_sync(struct iscsi_task *task, int lun,
 		       unsigned char *data, uint32_t datalen,
 		       uint64_t lba, uint32_t num_blocks,
 		       int anchor, int unmap, int pbdata, int lbdata,
@@ -786,134 +786,133 @@ iscsi_writesame16_sync(struct iscsi_context *iscsi, int lun,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_writesame16_task(iscsi, lun, data, datalen,
+	if (iscsi_writesame16_task(task, lun, data, datalen,
 	   			 lba, num_blocks,
 	   			 anchor, unmap, pbdata, lbdata,
 				 wrprotect, group,
-				 scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+				 scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send WRITESAME16 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_unmap_sync(struct iscsi_context *iscsi, int lun, int anchor, int group,
+int
+iscsi_unmap_sync(struct iscsi_task *task, int lun, int anchor, int group,
 		 struct unmap_list *list, int list_len)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_unmap_task(iscsi, lun, anchor, group, list, list_len,
-				       scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+	if (iscsi_unmap_task(task, lun, anchor, group, list, list_len,
+				       scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send UNMAP command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_readtoc_sync(struct iscsi_context *iscsi, int lun, int msf, int format, 
+int
+iscsi_readtoc_sync(struct iscsi_task *task, int lun, int msf, int format, 
 		   int track_session, int maxsize)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_readtoc_task(iscsi, lun, msf, format, track_session, 
-			       maxsize, scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi, "Failed to send Read TOC command");
-		return NULL;
+	if (iscsi_readtoc_task(task, lun, msf, format, track_session, 
+			       maxsize, scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi, "Failed to send Read TOC command");
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_reserve6_sync(struct iscsi_context *iscsi, int lun)
+int
+iscsi_reserve6_sync(struct iscsi_task *task, int lun)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_reserve6_task(iscsi, lun, scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi, "Failed to send RESERVE6 command");
-		return NULL;
+	if (iscsi_reserve6_task(task, lun, scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi, "Failed to send RESERVE6 command");
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_release6_sync(struct iscsi_context *iscsi, int lun)
+int
+iscsi_release6_sync(struct iscsi_task *task, int lun)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_release6_task(iscsi, lun, scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi, "Failed to send RELEASE6 command");
-		return NULL;
+	if (iscsi_release6_task(task, lun, scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi, "Failed to send RELEASE6 command");
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_report_supported_opcodes_sync(struct iscsi_context *iscsi, int lun, int return_timeouts, int maxsize)
+int
+iscsi_report_supported_opcodes_sync(struct iscsi_task *task, int lun, int return_timeouts, int maxsize)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_report_supported_opcodes_task(iscsi, lun, return_timeouts, maxsize, scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi, "Failed to send MaintenanceIn:"
+	if (iscsi_report_supported_opcodes_task(task, lun, return_timeouts, maxsize, scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi, "Failed to send MaintenanceIn:"
 				"Report Supported Opcodes command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
-struct scsi_task *
-iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
-			struct scsi_task *task, struct iscsi_data *data)
+int
+iscsi_scsi_command_sync(struct iscsi_task *task, int lun, struct iscsi_data *data)
 {
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_scsi_command_async(iscsi, lun, task,
+	if (iscsi_scsi_command_async(task, lun, 
 				     scsi_sync_cb, data, &state) != 0) {
-		iscsi_set_error(iscsi, "Failed to send SCSI command");
-		return NULL;
+		iscsi_set_error(task->iscsi, "Failed to send SCSI command");
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
 
 
-struct scsi_task *
-iscsi_modesense6_sync(struct iscsi_context *iscsi, int lun, int dbd,
+int
+iscsi_modesense6_sync(struct iscsi_task *task, int lun, int dbd,
 		      int pc, int page_code, int sub_page_code,
 		      unsigned char alloc_len)
 {
@@ -921,14 +920,14 @@ iscsi_modesense6_sync(struct iscsi_context *iscsi, int lun, int dbd,
 
 	memset(&state, 0, sizeof(state));
 
-	if (iscsi_modesense6_task(iscsi, lun, dbd, pc, page_code, sub_page_code, alloc_len,
-				  scsi_sync_cb, &state) == NULL) {
-		iscsi_set_error(iscsi,
+	if (iscsi_modesense6_task(task, lun, dbd, pc, page_code, sub_page_code, alloc_len,
+				  scsi_sync_cb, &state) != 0) {
+		iscsi_set_error(task->iscsi,
 				"Failed to send MODE_SENSE6 command");
-		return NULL;
+		return -1;
 	}
 
-	event_loop(iscsi, &state);
+	event_loop(task->iscsi, &state);
 
-	return state.task;
+	return 0;
 }
