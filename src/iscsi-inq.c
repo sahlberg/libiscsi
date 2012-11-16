@@ -129,31 +129,29 @@ void inquiry_standard(struct scsi_inquiry_standard *inq)
 
 void do_inquiry(struct iscsi_context *iscsi, int lun, int evpd, int pc)
 {
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	int full_size;
 	void *inq;
-	int ret;
 
 	/* See how big this inquiry data is */
-	task = iscsi_create_task(iscsi);
-	ret = iscsi_inquiry_sync(task, lun, evpd, pc, 64);
-	if (ret != 0 || task->scsi.status != SCSI_STATUS_GOOD) {
+	task = iscsi_inquiry_sync(iscsi, lun, evpd, pc, 64);
+	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 		fprintf(stderr, "Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 		exit(10);
 	}
 
-	full_size = scsi_datain_getfullsize(&task->scsi);
-	if (full_size > task->scsi.datain.size) {
-		iscsi_clear_task(task);
+	full_size = scsi_datain_getfullsize(task);
+	if (full_size > task->datain.size) {
+		scsi_free_scsi_task(task);
 
 		/* we need more data for the full list */
-		if ((iscsi_inquiry_sync(task, lun, evpd, pc, full_size)) != 0) {
+		if ((task = iscsi_inquiry_sync(iscsi, lun, evpd, pc, full_size)) == NULL) {
 			fprintf(stderr, "Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 			exit(10);
 		}
 	}
 
-	inq = scsi_datain_unmarshall(&task->scsi);
+	inq = scsi_datain_unmarshall(task);
 	if (inq == NULL) {
 		fprintf(stderr, "failed to unmarshall inquiry datain blob\n");
 		exit(10);
@@ -185,7 +183,7 @@ void do_inquiry(struct iscsi_context *iscsi, int lun, int evpd, int pc)
 			fprintf(stderr, "Usupported pagecode:0x%02x\n", pc);
 		}
 	}
-	iscsi_free_task(task);
+	scsi_free_scsi_task(task);
 }
 
 

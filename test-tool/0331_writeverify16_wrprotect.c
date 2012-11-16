@@ -23,7 +23,7 @@
 int T0331_writeverify16_wrprotect(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret = 0, i, lun;
 	uint32_t block_size;
@@ -51,17 +51,17 @@ int T0331_writeverify16_wrprotect(const char *initiator, const char *url, int da
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task->scsi_task);
+	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 
@@ -69,11 +69,11 @@ int T0331_writeverify16_wrprotect(const char *initiator, const char *url, int da
 
 	if(rc16->prot_en != 0) {
 		printf("device is formatted with protection information, skipping test\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -2;
 		goto finished;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -90,16 +90,16 @@ int T0331_writeverify16_wrprotect(const char *initiator, const char *url, int da
 			ret++;
 			goto test2;
 		}
-		if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-		    || task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 		        printf("[FAILED]\n");
 			printf("WRITEVERIFY16 with WRPROTECT!=0 should have failed with CHECK_CONDITION/ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB\n");
 			ret++;
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			goto test2;
 		}
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 

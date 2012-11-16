@@ -45,43 +45,41 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 		       void *command_data, void *private_data)
 {
 	struct connect_task *ct = private_data;
-	struct iscsi_task *task = command_data;
+	struct scsi_task *task = command_data;
 
 	if (status != 0) {
-		if (task->scsi.sense.key == SCSI_SENSE_UNIT_ATTENTION
-		    && task->scsi.sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET) {
+		if (task->sense.key == SCSI_SENSE_UNIT_ATTENTION
+		    && task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET) {
 			/* This is just the normal unitattention/busreset
 			 * you always get just after a fresh login. Try
 			 * again.
 			 */
-			struct iscsi_task *newtask = iscsi_create_task(iscsi);
-			if (iscsi_testunitready_task(newtask, ct->lun,
+			if (iscsi_testunitready_task(iscsi, ct->lun,
 						      iscsi_testunitready_cb,
-						      ct) != 0) {
+						      ct) == NULL) {
 				iscsi_set_error(iscsi, "iscsi_testunitready "
 						"failed.");
 				ct->cb(iscsi, SCSI_STATUS_ERROR, NULL,
 				       ct->private_data);
 				iscsi_free(iscsi, ct);
-				iscsi_free_task(newtask);
 			}
-			iscsi_free_task(task);
+			scsi_free_scsi_task(task);
 			return;
 		}
 	}
 
 	/* Dont fail the login just because there is no medium in the device */
 	if (status != 0
-	&& task->scsi.sense.key == SCSI_SENSE_NOT_READY
-	&& (task->scsi.sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	 || task->scsi.sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED
-	 || task->scsi.sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN)) {
+	&& task->sense.key == SCSI_SENSE_NOT_READY
+	&& (task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	 || task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED
+	 || task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN)) {
 		status = 0;
 	}
 
 	ct->cb(iscsi, status?SCSI_STATUS_ERROR:SCSI_STATUS_GOOD, NULL,
 	       ct->private_data);
-	iscsi_free_task(task);
+	scsi_free_scsi_task(task);
 	iscsi_free(iscsi, ct);
 }
 
@@ -107,12 +105,10 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 		return;
 	}
 
-	struct iscsi_task *task = iscsi_create_task(iscsi);
-	if (iscsi_testunitready_task(task, ct->lun,
-				      iscsi_testunitready_cb, ct) != 0) {
+	if (iscsi_testunitready_task(iscsi, ct->lun,
+				      iscsi_testunitready_cb, ct) == NULL) {
 		iscsi_set_error(iscsi, "iscsi_testunitready_async failed.");
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
-		iscsi_free_task(task);
 	}
 }
 
@@ -342,7 +338,6 @@ try_again:
 	iscsi->fd = old_iscsi->fd;
 	iscsi->mallocs+=old_iscsi->mallocs;
 	iscsi->frees+=old_iscsi->frees;
-	iscsi->tasks=old_iscsi->tasks;
 
 	memcpy(old_iscsi, iscsi, sizeof(struct iscsi_context));
 	memset(iscsi, 0, sizeof(struct iscsi_context));

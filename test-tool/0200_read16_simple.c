@@ -23,7 +23,7 @@
 int T0200_read16_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_readcapacity10 *rc10;
 	int ret, i, lun;
 	uint32_t block_size, num_blocks;
@@ -51,22 +51,22 @@ int T0200_read16_simple(const char *initiator, const char *url, int data_loss _U
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc10 = scsi_datain_unmarshall(task->scsi_task);
+	rc10 = scsi_datain_unmarshall(task);
 	if (rc10 == NULL) {
 		printf("failed to unmarshall readcapacity10 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	block_size = rc10->block_size;
 	num_blocks = rc10->lba;
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 
 
@@ -82,14 +82,14 @@ int T0200_read16_simple(const char *initiator, const char *url, int data_loss _U
 			ret = -1;
 			goto finished;
 		}
-		if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("Read16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			goto finished;
 		}
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 
@@ -104,14 +104,14 @@ int T0200_read16_simple(const char *initiator, const char *url, int data_loss _U
 			ret = -1;
 			goto finished;
 		}
-		if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("Read16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			goto finished;
 		}
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 

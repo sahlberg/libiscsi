@@ -66,9 +66,8 @@ int main(int argc, const char *argv[])
 	struct iscsi_url *iscsi_url = NULL;
 	int show_help = 0, show_usage = 0, debug = 0, size_only=0;
 	int res;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
-	int ret;
 
 	struct poptOption popt_options[] = {
 		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
@@ -152,19 +151,18 @@ int main(int argc, const char *argv[])
 		exit(10);
 	}
 
-	task = iscsi_create_task(iscsi);
-	ret = iscsi_readcapacity16_sync(task, iscsi_url->lun);
-	if (ret != 0 || task->scsi.status != SCSI_STATUS_GOOD) {
+	task = iscsi_readcapacity16_sync(iscsi, iscsi_url->lun);
+	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 		fprintf(stderr,"failed to send readcapacity command\n");
 		iscsi_destroy_url(iscsi_url);
 		iscsi_destroy_context(iscsi);
 		exit(10);
 	}
 
-	rc16 = scsi_datain_unmarshall(&task->scsi);
+	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
 		fprintf(stderr,"failed to unmarshall readcapacity16 data\n");
-		iscsi_free_task(task);
+		scsi_free_scsi_task(task);
 		iscsi_destroy_url(iscsi_url);
 		iscsi_destroy_context(iscsi);
 		exit(10);
@@ -185,7 +183,7 @@ int main(int argc, const char *argv[])
 		printf("%" PRIu64 "\n", rc16->block_length * (rc16->returned_lba + 1));
 	}
 	
-	iscsi_free_task(task);
+	scsi_free_scsi_task(task);
 	iscsi_destroy_url(iscsi_url);
 
 	iscsi_logout_sync(iscsi);

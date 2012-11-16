@@ -26,7 +26,7 @@ int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss _U
 			int show_info)
 {
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task, *task1;
+	struct scsi_task *task, *task1;
 	struct scsi_inquiry_standard *inq;
 	struct scsi_readcapacity10 *rc10;
 	struct scsi_readtoc_list *list, *list1;
@@ -67,16 +67,16 @@ int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss _U
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("INQUIRY command failed : %s\n", iscsi_get_error(iscsi));
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
-	full_size = scsi_datain_getfullsize(task->scsi_task);
-	if (full_size > task->scsi_task->datain.size) {
-		iscsi_free_task(iscsi, task);
+	full_size = scsi_datain_getfullsize(task);
+	if (full_size > task->datain.size) {
+		scsi_free_scsi_task(task);
 
 		/* we need more data for the full list */
 		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
@@ -86,11 +86,11 @@ int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss _U
 			goto finished;
 		}
 	}
-	inq = scsi_datain_unmarshall(task->scsi_task);
+	inq = scsi_datain_unmarshall(task);
 	if (inq == NULL) {
 		printf("[FAILED]\n");
 		printf("failed to unmarshall inquiry datain blob\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
@@ -112,7 +112,7 @@ int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss _U
 		ret = -2;
 		goto finished;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -124,37 +124,37 @@ int T0410_readtoc_basic(const char *initiator, const char *url, int data_loss _U
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
-		rc10 = scsi_datain_unmarshall(task->scsi_task);
+	if (task->status == SCSI_STATUS_GOOD) {
+		rc10 = scsi_datain_unmarshall(task);
 		if (rc10 == NULL) {
  		        printf("[FAILED]\n");
 			printf("failed to unmarshall readcapacity10 data. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			goto finished;
 		}
 		/* LBA will return 0, if the medium is blank. */
 		is_blank = rc10->lba ? 0 : 1;
 	}
 	/* If we get 'medium not present' there is no medium in the drive */
-	if (task->scsi_task->status == SCSI_STATUS_CHECK_CONDITION
-	   && task->scsi_task->sense.key == SCSI_SENSE_NOT_READY
-	   && (task->scsi_task->sense.ascq    == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	       || task->scsi_task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	       || task->scsi_task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+	if (task->status == SCSI_STATUS_CHECK_CONDITION
+	   && task->sense.key == SCSI_SENSE_NOT_READY
+	   && (task->sense.ascq    == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	       || task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	       || task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		no_medium = 1;
 		printf("[OK]\n");
 		printf("No medium in drive. Medium access commands should fail\n");
 		goto test1;
-	} else if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	} else if (task->status != SCSI_STATUS_GOOD) {
  	        printf("[FAILED]\n");
 		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	printf("[OK]\n");
 	if (is_blank) {
@@ -181,30 +181,30 @@ test1:
 
 	/* If no medium, just check if we have appropriate error and bail. */
 	if (no_medium) {
-		if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+		if (task->status == SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("READTOC Should have failed since no medium is loaded.\n");
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			ret = -1;
 			goto finished;
 		}
 
-		if (task->scsi_task->status != SCSI_STATUS_CHECK_CONDITION
-		   || task->scsi_task->sense.key != SCSI_SENSE_NOT_READY
-		   || (task->scsi_task->sense.ascq    != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT 		       && task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-		       && task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		if (task->status != SCSI_STATUS_CHECK_CONDITION
+		   || task->sense.key != SCSI_SENSE_NOT_READY
+		   || (task->sense.ascq    != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT 		       && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+		       && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 			printf("[FAILED]\n");
 			printf("READTOC failed but ascq was wrong. Should "
 			       "have failed with MEDIUM_NOT_PRESENT. "
 			       "Sense:%s\n", iscsi_get_error(iscsi));
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			ret = -1;
 			goto finished;
 		}
 
 		printf("[OK]\n");
 		printf("No disk, we got the correct sense code that medium is not present. Skipping the remainder of the test\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 
@@ -212,13 +212,13 @@ test1:
 	/* If this is a non-MMC device, just verify that that comand failed
 	   as expected and then bail */
 	if (!toc_device) {
-		if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+		if (task->status == SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("READTOC Should have failed\n");
 			ret = -1;
-		} else if (task->scsi_task->status != SCSI_STATUS_CHECK_CONDITION
-			   || task->scsi_task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST
-			   || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		} else if (task->status != SCSI_STATUS_CHECK_CONDITION
+			   || task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST
+			   || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 			printf("[FAILED]\n");
 			printf("READTOC failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/INVALID OPERATION_CODE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
@@ -226,14 +226,14 @@ test1:
 			printf("[OK]\n");
 			printf("Not an MMC device so READTOC failed as it should. Skipping rest of test\n");
 		}
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("READTOC command failed : %s\n", iscsi_get_error(iscsi));
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
@@ -241,19 +241,19 @@ test1:
 
 	/* If we get here, there is a disk loaded and it contains data */
 	printf("Verify we got at least 4 bytes of data for track 0 ... ");
-	full_size = scsi_datain_getfullsize(task->scsi_task);
+	full_size = scsi_datain_getfullsize(task);
 	if (full_size < 4) {
 		printf("[FAILED]\n");
 		printf("TOC Data Length %d < 4\n", full_size);
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
-	list = scsi_datain_unmarshall(task->scsi_task);
+	list = scsi_datain_unmarshall(task);
 	if (list == NULL) {
 		printf("[FAILED]\n");
 		printf("Read TOC Unmarshall failed\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
@@ -264,37 +264,37 @@ test1:
 	if (task1 == NULL) {
 		printf("[FAILED]\n");
 		printf("Failed to send READTOC command : %s\n", iscsi_get_error(iscsi));
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
 
-	if (task1->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task1->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("READTOC command failed : %s\n", iscsi_get_error(iscsi));
-		iscsi_free_task(iscsi, task);
-		iscsi_free_task(iscsi, task1);
+		scsi_free_scsi_task(task);
+		scsi_free_scsi_task(task1);
 		ret = -1;
 		goto finished;
 	}
 	printf("[OK]\n");
 
 	printf("Verify we got at least 4 bytes of data for track 1 ... ");
-	full_size = scsi_datain_getfullsize(task1->scsi_task);
+	full_size = scsi_datain_getfullsize(task1);
 	if (full_size < 4) {
 		printf("[FAILED]\n");
 		printf("TOC Data Length %d < 4\n", full_size);
-		iscsi_free_task(iscsi, task);
-		iscsi_free_task(iscsi, task1);
+		scsi_free_scsi_task(task);
+		scsi_free_scsi_task(task1);
 		ret = -1;
 		goto finished;
 	}
-	list1 = scsi_datain_unmarshall(task1->scsi_task);
+	list1 = scsi_datain_unmarshall(task1);
 	if (list1 == NULL) {
 		printf("[FAILED]\n");
 		printf("Read TOC Unmarshall failed\n");
-		iscsi_free_task(iscsi, task);
-		iscsi_free_task(iscsi, task1);
+		scsi_free_scsi_task(task);
+		scsi_free_scsi_task(task1);
 		ret = -1;
 		goto finished;
 	}
@@ -307,8 +307,8 @@ test1:
 		printf("[FAILED]\n");
 		printf("Read TOC header of lba 0 != TOC of lba 1.\n");
 		ret = -1;
-		iscsi_free_task(iscsi, task);
-		iscsi_free_task(iscsi, task1);
+		scsi_free_scsi_task(task);
+		scsi_free_scsi_task(task1);
 		goto finished;
 	}
 
@@ -320,14 +320,14 @@ test1:
 			printf("[FAILED]\n");
 			printf("Read TOC descriptors of lba 0 != TOC of lba 1.\n");
 			ret = -1;
-			iscsi_free_task(iscsi, task);
-			iscsi_free_task(iscsi, task1);
+			scsi_free_scsi_task(task);
+			scsi_free_scsi_task(task1);
 			goto finished;
 		}
 	}
 	printf("[OK]\n");
-	iscsi_free_task(iscsi, task);
-	iscsi_free_task(iscsi, task1);
+	scsi_free_scsi_task(task);
+	scsi_free_scsi_task(task1);
 
 
 finished:

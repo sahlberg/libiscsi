@@ -23,7 +23,7 @@
 int T0233_write12_0blocks(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret = 0, lun;
 	uint32_t block_size;
@@ -54,23 +54,23 @@ int T0233_write12_0blocks(const char *initiator, const char *url, int data_loss,
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task->scsi_task);
+	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 
 	block_size = rc16->block_length;
 	num_blocks = rc16->returned_lba;
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -87,14 +87,14 @@ int T0233_write12_0blocks(const char *initiator, const char *url, int data_loss,
 		ret = -1;
 		goto test2;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITE12 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test2;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -112,23 +112,23 @@ test2:
 		ret = -1;
 		goto test3;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITE12 command: Should fail when writing 0blocks beyond end\n");
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test3;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 	        printf("[FAILED]\n");
 		printf("WRITE12 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test3;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 test3:
@@ -145,23 +145,23 @@ test3:
 		ret = -1;
 		goto test4;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITE12 command: Should fail when writing 0blocks at 2^31\n");
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test4;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 	        printf("[FAILED]\n");
 		printf("WRITE12 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test4;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -179,23 +179,23 @@ test4:
 		ret = -1;
 		goto test5;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITE12 command: Should fail when writing 0blocks at -1\n");
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test5;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
 	        printf("[FAILED]\n");
 		printf("WRITE12 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test5;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 

@@ -24,7 +24,7 @@
 int T0362_startstopunit_noloej(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_inquiry_standard *inq;
 	int ret, lun, removable;
 	int full_size;
@@ -53,13 +53,13 @@ int T0362_startstopunit_noloej(const char *initiator, const char *url, int data_
 
 	/* See how big this inquiry data is */
 	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 		return -1;
 	}
-	full_size = scsi_datain_getfullsize(task->scsi_task);
-	if (full_size > task->scsi_task->datain.size) {
-		iscsi_free_task(iscsi, task);
+	full_size = scsi_datain_getfullsize(task);
+	if (full_size > task->datain.size) {
+		scsi_free_scsi_task(task);
 
 		/* we need more data for the full list */
 		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
@@ -67,15 +67,15 @@ int T0362_startstopunit_noloej(const char *initiator, const char *url, int data_
 			return -1;
 		}
 	}
-	inq = scsi_datain_unmarshall(task->scsi_task);
+	inq = scsi_datain_unmarshall(task);
 	if (inq == NULL) {
 		printf("failed to unmarshall inquiry datain blob\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		return -1;
 	}
 	removable = inq->rmb;
 
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -103,14 +103,14 @@ int T0362_startstopunit_noloej(const char *initiator, const char *url, int data_
 		ret = -1;
 		goto test2;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test2;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
@@ -119,14 +119,14 @@ int T0362_startstopunit_noloej(const char *initiator, const char *url, int data_
 		ret = -1;
 		goto test2;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test2;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -142,14 +142,14 @@ test2:
 		ret = -1;
 		goto test3;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test3;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
@@ -158,14 +158,14 @@ test2:
 		ret = -1;
 		goto test3;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test3;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -181,14 +181,14 @@ test3:
 		ret = -1;
 		goto test4;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test4;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
@@ -197,14 +197,14 @@ test3:
 		ret = -1;
 		goto test4;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test4;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -220,14 +220,14 @@ test4:
 		ret = -1;
 		goto test5;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test5;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
@@ -236,14 +236,14 @@ test4:
 		ret = -1;
 		goto test5;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test5;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -259,14 +259,14 @@ test5:
 		ret = -1;
 		goto test6;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test6;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
@@ -275,14 +275,14 @@ test5:
 		ret = -1;
 		goto test6;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test6;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -298,14 +298,14 @@ test6:
 		ret = -1;
 		goto test7;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test7;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
@@ -314,14 +314,14 @@ test6:
 		ret = -1;
 		goto test7;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test7;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -337,14 +337,14 @@ test7:
 		ret = -1;
 		goto test8;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test8;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
@@ -353,14 +353,14 @@ test7:
 		ret = -1;
 		goto test8;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test8;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -376,14 +376,14 @@ test8:
 		ret = -1;
 		goto test9;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test9;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
@@ -392,14 +392,14 @@ test8:
 		ret = -1;
 		goto test9;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test9;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 

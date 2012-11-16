@@ -25,7 +25,7 @@
 int T0104_read10_flags(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_inquiry_standard *inq;
 	struct scsi_readcapacity10 *rc10;
 	uint32_t block_size;
@@ -52,19 +52,19 @@ int T0104_read10_flags(const char *initiator, const char *url, int data_loss _U_
 
 	/* This test is only valid for SBC devices */
 	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 		return -1;
 	}
-	inq = scsi_datain_unmarshall(task->scsi_task);
+	inq = scsi_datain_unmarshall(task);
 	if (inq == NULL) {
 		printf("failed to unmarshall inquiry datain blob\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		return -1;
 	}
 	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 		printf("LUN is not SBC device. Skipping test\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		return -2;
 	}
 
@@ -75,21 +75,21 @@ int T0104_read10_flags(const char *initiator, const char *url, int data_loss _U_
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc10 = scsi_datain_unmarshall(task->scsi_task);
+	rc10 = scsi_datain_unmarshall(task);
 	if (rc10 == NULL) {
 		printf("failed to unmarshall readcapacity10 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	block_size = rc10->block_size;
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 
 	ret = 0;
@@ -106,28 +106,28 @@ int T0104_read10_flags(const char *initiator, const char *url, int data_loss _U_
 	}
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->scsi_task->cdb[0] = SCSI_OPCODE_READ10;
-	task->scsi_task->cdb[1] = 0x10;
-	task->scsi_task->cdb[8] = 1;
-	task->scsi_task->cdb_size = 10;
-	task->scsi_task->xfer_dir = SCSI_XFER_READ;
-	task->scsi_task->expxferlen = block_size;
+	task->cdb[0] = SCSI_OPCODE_READ10;
+	task->cdb[1] = 0x10;
+	task->cdb[8] = 1;
+	task->cdb_size = 10;
+	task->xfer_dir = SCSI_XFER_READ;
+	task->expxferlen = block_size;
 
-	if (iscsi_scsi_command_sync(iscsi, lun, task->scsi_task, NULL) == NULL) {
+	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Read10 with DPO==1 Failed. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -143,28 +143,28 @@ int T0104_read10_flags(const char *initiator, const char *url, int data_loss _U_
 	}
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->scsi_task->cdb[0] = SCSI_OPCODE_READ10;
-	task->scsi_task->cdb[1] = 0x08;
-	task->scsi_task->cdb[8] = 1;
-	task->scsi_task->cdb_size = 10;
-	task->scsi_task->xfer_dir = SCSI_XFER_READ;
-	task->scsi_task->expxferlen = block_size;
+	task->cdb[0] = SCSI_OPCODE_READ10;
+	task->cdb[1] = 0x08;
+	task->cdb[8] = 1;
+	task->cdb_size = 10;
+	task->xfer_dir = SCSI_XFER_READ;
+	task->expxferlen = block_size;
 
-	if (iscsi_scsi_command_sync(iscsi, lun, task->scsi_task, NULL) == NULL) {
+	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Read10 with FUA==1 FUA_NV==0 Failed. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -179,28 +179,28 @@ int T0104_read10_flags(const char *initiator, const char *url, int data_loss _U_
 	}
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->scsi_task->cdb[0] = SCSI_OPCODE_READ10;
-	task->scsi_task->cdb[1] = 0x0a;
-	task->scsi_task->cdb[8] = 1;
-	task->scsi_task->cdb_size = 10;
-	task->scsi_task->xfer_dir = SCSI_XFER_READ;
-	task->scsi_task->expxferlen = block_size;
+	task->cdb[0] = SCSI_OPCODE_READ10;
+	task->cdb[1] = 0x0a;
+	task->cdb[8] = 1;
+	task->cdb_size = 10;
+	task->xfer_dir = SCSI_XFER_READ;
+	task->expxferlen = block_size;
 
-	if (iscsi_scsi_command_sync(iscsi, lun, task->scsi_task, NULL) == NULL) {
+	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Read10 with FUA==1 FUA_NV==1 Failed. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -215,28 +215,28 @@ int T0104_read10_flags(const char *initiator, const char *url, int data_loss _U_
 	}
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->scsi_task->cdb[0] = SCSI_OPCODE_READ10;
-	task->scsi_task->cdb[1] = 0x02;
-	task->scsi_task->cdb[8] = 1;
-	task->scsi_task->cdb_size = 10;
-	task->scsi_task->xfer_dir = SCSI_XFER_READ;
-	task->scsi_task->expxferlen = block_size;
+	task->cdb[0] = SCSI_OPCODE_READ10;
+	task->cdb[1] = 0x02;
+	task->cdb[8] = 1;
+	task->cdb_size = 10;
+	task->xfer_dir = SCSI_XFER_READ;
+	task->expxferlen = block_size;
 
-	if (iscsi_scsi_command_sync(iscsi, lun, task->scsi_task, NULL) == NULL) {
+	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Read10 with FUA==0 FUA_NV==1 Failed. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -251,28 +251,28 @@ int T0104_read10_flags(const char *initiator, const char *url, int data_loss _U_
 	}
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->scsi_task->cdb[0] = SCSI_OPCODE_READ10;
-	task->scsi_task->cdb[1] = 0x18;
-	task->scsi_task->cdb[8] = 1;
-	task->scsi_task->cdb_size = 10;
-	task->scsi_task->xfer_dir = SCSI_XFER_READ;
-	task->scsi_task->expxferlen = block_size;
+	task->cdb[0] = SCSI_OPCODE_READ10;
+	task->cdb[1] = 0x18;
+	task->cdb[8] = 1;
+	task->cdb_size = 10;
+	task->xfer_dir = SCSI_XFER_READ;
+	task->expxferlen = block_size;
 
-	if (iscsi_scsi_command_sync(iscsi, lun, task->scsi_task, NULL) == NULL) {
+	if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Read10 with DPO==1 FUA==1 FUA_NV==0Failed. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 

@@ -26,7 +26,7 @@ int T0402_inquiry_evpd(const char *initiator, const char *url, int data_loss _U_
 		       int show_info)
 {
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	int ret, lun, i;
 
 	printf("0402_inquiry_evpd:\n");
@@ -58,23 +58,23 @@ int T0402_inquiry_evpd(const char *initiator, const char *url, int data_loss _U_
 			ret = -1;
 			goto finished;
 		}
-		if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+		if (task->status == SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("INQUIRY should have failed with CHECK_CONDITION/ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB %s\n", iscsi_get_error(iscsi));
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			ret = -1;
 			goto finished;
 		}
-		if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-		    || task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 			printf("[FAILED]\n");
 			printf("INQUIRY should have failed with wrong sense code. It failed with %s but should have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB\n", iscsi_get_error(iscsi));
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			ret = -1;
 			goto finished;
 		}
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 

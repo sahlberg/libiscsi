@@ -24,7 +24,7 @@
 int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	struct scsi_inquiry_standard *inq;
 	int ret = 0, lun, sccs, encserv, lbpme;
@@ -73,32 +73,32 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task->scsi_task);
+	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	block_size = rc16->block_length;
 	lbpme      = rc16->lbpme;
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	/* See how big this inquiry data is */
 	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 		return -1;
 	}
-	full_size = scsi_datain_getfullsize(task->scsi_task);
-	if (full_size > task->scsi_task->datain.size) {
-		iscsi_free_task(iscsi, task);
+	full_size = scsi_datain_getfullsize(task);
+	if (full_size > task->datain.size) {
+		scsi_free_scsi_task(task);
 
 		/* we need more data for the full list */
 		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
@@ -106,22 +106,22 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data
 			return -1;
 		}
 	}
-	inq = scsi_datain_unmarshall(task->scsi_task);
+	inq = scsi_datain_unmarshall(task);
 	if (inq == NULL) {
 		printf("failed to unmarshall inquiry datain blob\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		return -1;
 	}
 	sccs    = inq->sccs;
 	encserv = inq->encserv;
 	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 		printf("Not a SBC device. Skipping test\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -2;
 		goto finished;
 	}
 
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -145,14 +145,14 @@ test2:
 		ret++;
 		goto test3;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("INQUIRY command: failed with sense %s\n", iscsi_get_error(iscsi));
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test3;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	printf("[OK]\n");
 
@@ -184,14 +184,14 @@ test5:
 		ret++;
 		goto test6;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("READ CAPACITY10 command: failed with sense %s\n", iscsi_get_error(iscsi));
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test6;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	printf("[OK]\n");
 
@@ -204,14 +204,14 @@ test6:
 		ret++;
 		goto test7;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("READ CAPACITY16 command: failed with sense %s\n", iscsi_get_error(iscsi));
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test7;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	printf("[OK]\n");
 
@@ -253,14 +253,14 @@ test10:
 		ret++;
 		goto test11;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("REPORT LUNS command: failed with sense %s\n", iscsi_get_error(iscsi));
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test11;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	printf("[OK]\n");
 
@@ -303,14 +303,14 @@ test15:
 		ret++;
 		goto test11;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TEST UNIT READY command: failed with sense %s\n", iscsi_get_error(iscsi));
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test16;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	printf("[OK]\n");
 
@@ -327,14 +327,14 @@ test16:
 		ret++;
 		goto test17;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("UNMAP command: failed with sense %s\n", iscsi_get_error(iscsi));
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test17;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	printf("[OK]\n");
 
@@ -370,14 +370,14 @@ test19:
 		ret++;
 		goto test20;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("WRITE SAME16 command: failed with sense %s\n", iscsi_get_error(iscsi));
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test20;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	printf("[OK]\n");
 

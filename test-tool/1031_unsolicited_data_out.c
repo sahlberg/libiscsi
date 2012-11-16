@@ -154,7 +154,7 @@ int T1031_unsolicited_data_out(const char *initiator, const char *url,
 {
 	struct iscsi_context *iscsi = NULL;
 	struct iscsi_context *iscsi2 = NULL;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int i, ret, lun;
 	unsigned char buf[1024];
@@ -182,21 +182,21 @@ int T1031_unsolicited_data_out(const char *initiator, const char *url,
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task->scsi_task);
+	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	block_size = rc16->block_length;
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 
 	ret = 0;
@@ -241,14 +241,14 @@ int T1031_unsolicited_data_out(const char *initiator, const char *url,
 		ret++;
 		goto test2;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TEST UNIT READY command: failed with sense %s\n", iscsi_get_error(iscsi));
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test2;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 

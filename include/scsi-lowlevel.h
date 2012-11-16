@@ -126,6 +126,56 @@ enum scsi_xfer_dir {
 	SCSI_XFER_WRITE = 2
 };
 
+/*
+ * READTOC
+ */
+EXTERN struct scsi_task *scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len);
+
+enum scsi_readtoc_fmt {
+	SCSI_READ_TOC          = 0,
+	SCSI_READ_SESSION_INFO = 1,
+	SCSI_READ_FULL_TOC     = 2,
+	SCSI_READ_PMA          = 3,
+	SCSI_READ_ATIP         = 4
+};
+struct scsi_readtoc_desc{
+	union {
+		struct scsi_toc_desc {
+			int adr;
+			int control;
+			int track;
+			uint32_t lba;
+		} toc;
+		struct scsi_session_desc {
+			int adr;
+			int control;
+			int first_in_last;
+			uint32_t lba;
+		} ses;
+		struct scsi_fulltoc_desc {
+			int session;
+			int adr;
+			int control;
+			int tno;
+			int point;
+			int min;
+			int sec;
+			int frame;
+			int zero;
+			int pmin;
+			int psec;
+			int pframe;
+		} full;
+	} desc;
+};
+
+struct scsi_readtoc_list {
+	int num;
+	int first;
+	int last;
+	struct scsi_readtoc_desc desc[0];
+};
+
 struct scsi_reportluns_params {
 	int report_type;
 };
@@ -310,63 +360,11 @@ struct scsi_task {
 	struct scsi_data_buffer *in_buffers;
 };
 
-/*
- * READTOC
- */
-EXTERN void scsi_cdb_readtoc(struct scsi_task *task, int msf, int format, int track_session, uint16_t alloc_len);
-
-enum scsi_readtoc_fmt {
-	SCSI_READ_TOC          = 0,
-	SCSI_READ_SESSION_INFO = 1,
-	SCSI_READ_FULL_TOC     = 2,
-	SCSI_READ_PMA          = 3,
-	SCSI_READ_ATIP         = 4
-};
-struct scsi_readtoc_desc{
-	union {
-		struct scsi_toc_desc {
-			int adr;
-			int control;
-			int track;
-			uint32_t lba;
-		} toc;
-		struct scsi_session_desc {
-			int adr;
-			int control;
-			int first_in_last;
-			uint32_t lba;
-		} ses;
-		struct scsi_fulltoc_desc {
-			int session;
-			int adr;
-			int control;
-			int tno;
-			int point;
-			int min;
-			int sec;
-			int frame;
-			int zero;
-			int pmin;
-			int psec;
-			int pframe;
-		} full;
-	} desc;
-};
-
-struct scsi_readtoc_list {
-	int num;
-	int first;
-	int last;
-	struct scsi_readtoc_desc desc[0];
-};
-
 /* This function will free a scsi task structure.
    You may NOT cancel a task until the callback has been invoked
    and the command has completed on the transport layer.
 */
-EXTERN struct scsi_task* scsi_create_task(void);
-EXTERN void scsi_clear_task(struct scsi_task *task);
-EXTERN void scsi_free_task(struct scsi_task *task);
+EXTERN void scsi_free_scsi_task(struct scsi_task *task);
 
 EXTERN void scsi_set_task_private_ptr(struct scsi_task *task, void *ptr);
 EXTERN void *scsi_get_task_private_ptr(struct scsi_task *task);
@@ -374,7 +372,7 @@ EXTERN void *scsi_get_task_private_ptr(struct scsi_task *task);
 /*
  * TESTUNITREADY
  */
-EXTERN void scsi_cdb_testunitready(struct scsi_task *task);
+EXTERN struct scsi_task *scsi_cdb_testunitready(void);
 
 
 /*
@@ -389,16 +387,16 @@ struct scsi_reportluns_list {
 	uint16_t luns[0];
 };
 
-EXTERN void scsi_reportluns_cdb(struct scsi_task *task, int report_type, int alloc_len);
+EXTERN struct scsi_task *scsi_reportluns_cdb(int report_type, int alloc_len);
 
 /*
  * RESERVE6
  */
-EXTERN void scsi_cdb_reserve6(struct scsi_task *task);
+EXTERN struct scsi_task *scsi_cdb_reserve6(void);
 /*
  * RELEASE6
  */
-EXTERN void scsi_cdb_release6(struct scsi_task *task);
+EXTERN struct scsi_task *scsi_cdb_release6(void);
 
 /*
  * READCAPACITY10
@@ -407,7 +405,7 @@ struct scsi_readcapacity10 {
 	uint32_t lba;
 	uint32_t block_size;
 };
-EXTERN void scsi_cdb_readcapacity10(struct scsi_task *task, int lba, int pmi);
+EXTERN struct scsi_task *scsi_cdb_readcapacity10(int lba, int pmi);
 
 
 /*
@@ -567,7 +565,7 @@ struct scsi_inquiry_logical_block_provisioning {
        enum scsi_inquiry_provisioning_type provisioning_type;
 };
 
-EXTERN void scsi_cdb_inquiry(struct scsi_task *task, int evpd, int page_code, int alloc_len);
+EXTERN struct scsi_task *scsi_cdb_inquiry(int evpd, int page_code, int alloc_len);
 
 struct scsi_inquiry_unit_serial_number {
 	enum scsi_inquiry_peripheral_qualifier qualifier;
@@ -737,7 +735,7 @@ struct scsi_mode_sense {
        struct scsi_mode_page *pages;
 };
 
-EXTERN void scsi_cdb_modesense6(struct scsi_task *task, int dbd,
+EXTERN struct scsi_task *scsi_cdb_modesense6(int dbd,
 			enum scsi_modesense_page_control pc,
 			enum scsi_modesense_page_code page_code,
 			int sub_page_code,
@@ -802,37 +800,37 @@ struct scsi_report_supported_op_codes {
 EXTERN int scsi_datain_getfullsize(struct scsi_task *task);
 EXTERN void *scsi_datain_unmarshall(struct scsi_task *task);
 
-EXTERN void scsi_cdb_read6(struct scsi_task *task, uint32_t lba, uint32_t xferlen, int blocksize);
-EXTERN void scsi_cdb_read10(struct scsi_task *task, uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);
-EXTERN void scsi_cdb_read12(struct scsi_task *task, uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);
-EXTERN void scsi_cdb_read16(struct scsi_task *task, uint64_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);
-EXTERN void scsi_cdb_write10(struct scsi_task *task, uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
-EXTERN void scsi_cdb_write12(struct scsi_task *task, uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
-EXTERN void scsi_cdb_write16(struct scsi_task *task, uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
-EXTERN void scsi_cdb_startstopunit(struct scsi_task *task, int immed, int pcm, int pc, int no_flush, int loej, int start);
-EXTERN void scsi_cdb_preventallow(struct scsi_task *task, int prevent);
-EXTERN void scsi_cdb_orwrite(struct scsi_task *task, uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
-EXTERN void scsi_cdb_compareandwrite(struct scsi_task *task, uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
-EXTERN void scsi_cdb_writeverify10(struct scsi_task *task, uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number);
-EXTERN void scsi_cdb_writeverify12(struct scsi_task *task, uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number);
-EXTERN void scsi_cdb_writeverify16(struct scsi_task *task, uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number);
-EXTERN void scsi_cdb_verify10(struct scsi_task *task, uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize);
-EXTERN void scsi_cdb_verify12(struct scsi_task *task, uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize);
-EXTERN void scsi_cdb_verify16(struct scsi_task *task, uint64_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize);
+EXTERN struct scsi_task *scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize);
+EXTERN struct scsi_task *scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);
+EXTERN struct scsi_task *scsi_cdb_read12(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);
+EXTERN struct scsi_task *scsi_cdb_read16(uint64_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);
+EXTERN struct scsi_task *scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
+EXTERN struct scsi_task *scsi_cdb_write12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
+EXTERN struct scsi_task *scsi_cdb_write16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
+EXTERN struct scsi_task *scsi_cdb_startstopunit(int immed, int pcm, int pc, int no_flush, int loej, int start);
+EXTERN struct scsi_task *scsi_cdb_preventallow(int prevent);
+EXTERN struct scsi_task *scsi_cdb_orwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
+EXTERN struct scsi_task *scsi_cdb_compareandwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
+EXTERN struct scsi_task *scsi_cdb_writeverify10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number);
+EXTERN struct scsi_task *scsi_cdb_writeverify12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number);
+EXTERN struct scsi_task *scsi_cdb_writeverify16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number);
+EXTERN struct scsi_task *scsi_cdb_verify10(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize);
+EXTERN struct scsi_task *scsi_cdb_verify12(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize);
+EXTERN struct scsi_task *scsi_cdb_verify16(uint64_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize);
 
-EXTERN void scsi_cdb_synchronizecache10(struct scsi_task *task, int lba, int num_blocks,
+EXTERN struct scsi_task *scsi_cdb_synchronizecache10(int lba, int num_blocks,
 			int syncnv, int immed);
-EXTERN void scsi_cdb_synchronizecache16(struct scsi_task *task, uint64_t lba, uint32_t num_blocks,
+EXTERN struct scsi_task *scsi_cdb_synchronizecache16(uint64_t lba, uint32_t num_blocks,
 			int syncnv, int immed);
-EXTERN void scsi_cdb_serviceactionin16(struct scsi_task *task, enum scsi_service_action_in sa, uint32_t xferlen);
-EXTERN void scsi_cdb_readcapacity16(struct scsi_task *task);
-EXTERN void scsi_cdb_get_lba_status(struct scsi_task *task, uint64_t starting_lba, uint32_t alloc_len);
-EXTERN void scsi_cdb_unmap(struct scsi_task *task, int anchor, int group, uint16_t xferlen);
-EXTERN void scsi_cdb_writesame10(struct scsi_task *task, int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint32_t lba, int group, uint16_t num_blocks);
-EXTERN void scsi_cdb_writesame16(struct scsi_task *task, int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint64_t lba, int group, uint32_t num_blocks);
-EXTERN void scsi_cdb_prefetch10(struct scsi_task *task, uint32_t lba, int num_blocks, int immed, int group);
-EXTERN void scsi_cdb_prefetch16(struct scsi_task *task, uint64_t lba, int num_blocks, int immed, int group);
-EXTERN void scsi_cdb_report_supported_opcodes(struct scsi_task *task, int report_timeouts, uint32_t alloc_len);
+EXTERN struct scsi_task *scsi_cdb_serviceactionin16(enum scsi_service_action_in sa, uint32_t xferlen);
+EXTERN struct scsi_task *scsi_cdb_readcapacity16(void);
+EXTERN struct scsi_task *scsi_cdb_get_lba_status(uint64_t starting_lba, uint32_t alloc_len);
+EXTERN struct scsi_task *scsi_cdb_unmap(int anchor, int group, uint16_t xferlen);
+EXTERN struct scsi_task *scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint32_t lba, int group, uint16_t num_blocks);
+EXTERN struct scsi_task *scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint64_t lba, int group, uint32_t num_blocks);
+EXTERN struct scsi_task *scsi_cdb_prefetch10(uint32_t lba, int num_blocks, int immed, int group);
+EXTERN struct scsi_task *scsi_cdb_prefetch16(uint64_t lba, int num_blocks, int immed, int group);
+EXTERN struct scsi_task *scsi_cdb_report_supported_opcodes(int report_timeouts, uint32_t alloc_len);
 
 void *scsi_malloc(struct scsi_task *task, size_t size);
 

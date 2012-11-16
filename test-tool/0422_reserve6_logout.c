@@ -26,7 +26,7 @@ int T0422_reserve6_logout(const char *initiator, const char *url, int data_loss 
 			  int show_info)
 {
 	struct iscsi_context *iscsi, *iscsi2;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	int ret, lun;
 
 	printf("0422_reserve6_logout:\n");
@@ -69,24 +69,24 @@ int T0422_reserve6_logout(const char *initiator, const char *url, int data_loss 
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_CHECK_CONDITION
-	    && task->scsi_task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->scsi_task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (task->status == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 		printf("[SKIPPED]\n");
 		printf("RESERVE6 Not Supported\n");
 		ret = -2;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("RESERVE6 failed with sense:%s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test2;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -100,15 +100,15 @@ test2:
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TEST UNIT READY command: failed with sense %s\n",
 		       iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test3;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -122,14 +122,14 @@ test3:
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
+	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
 		printf("[FAILED]\n");
 		printf("Expected RESERVATION CONFLICT\n");
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 	printf("Logout the first initiator ... ");
@@ -146,15 +146,15 @@ test3:
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("TEST UNIT READY command: failed with sense %s\n",
 		       iscsi_get_error(iscsi2));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 

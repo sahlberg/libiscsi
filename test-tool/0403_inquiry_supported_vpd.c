@@ -26,7 +26,7 @@ int T0403_inquiry_supported_vpd(const char *initiator, const char *url,
 				int data_loss _U_, int show_info)
 {
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_inquiry_supported_pages *inq;
 	size_t i;
 	int ret, lun, j;
@@ -65,16 +65,16 @@ int T0403_inquiry_supported_vpd(const char *initiator, const char *url,
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("INQUIRY command failed : %s\n", iscsi_get_error(iscsi));
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
-	full_size = scsi_datain_getfullsize(task->scsi_task);
-	if (full_size > task->scsi_task->datain.size) {
-		iscsi_free_task(iscsi, task);
+	full_size = scsi_datain_getfullsize(task);
+	if (full_size > task->datain.size) {
+		scsi_free_scsi_task(task);
 
 		/* we need more data for the full list */
 		if ((task = iscsi_inquiry_sync(iscsi, lun, 1, page_code, full_size)) == NULL) {
@@ -84,11 +84,11 @@ int T0403_inquiry_supported_vpd(const char *initiator, const char *url,
 			goto finished;
 		}
 	}
-	inq = scsi_datain_unmarshall(task->scsi_task);
+	inq = scsi_datain_unmarshall(task);
 	if (inq == NULL) {
 		printf("[FAILED]\n");
 		printf("failed to unmarshall inquiry datain blob\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
@@ -111,7 +111,7 @@ int T0403_inquiry_supported_vpd(const char *initiator, const char *url,
 		}
 	}
 
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 finished:
 	iscsi_logout_sync(iscsi);

@@ -23,7 +23,7 @@
 int T0294_write10_beyondeol(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
 	uint32_t block_size;
@@ -53,22 +53,22 @@ int T0294_write10_beyondeol(const char *initiator, const char *url, int data_los
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task->scsi_task);
+	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	block_size = rc16->block_length;
 	num_blocks = rc16->returned_lba;
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -96,14 +96,14 @@ int T0294_write10_beyondeol(const char *initiator, const char *url, int data_los
 			ret = -1;
 			goto finished;
 		}
-		if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("WRITE10 command should fail when writing beyond end of device\n");
 			ret = -1;
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			goto finished;
 		}
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 

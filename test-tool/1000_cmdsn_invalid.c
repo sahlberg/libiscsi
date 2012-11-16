@@ -44,14 +44,14 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 static void test_cb(struct iscsi_context *iscsi _U_, int status,
 			void *command_data _U_, void *private_data)
 {
-	struct iscsi_task *task = command_data;
+	struct scsi_task *task = command_data;
 	struct iscsi_async_state *state = private_data;
 
 	state->finished = 1;
 	state->status = status;
 
 	if (status) {
-		task->scsi_task->status = status;
+		task->status = status;
 	}
 }
 
@@ -59,7 +59,7 @@ static void test_cb(struct iscsi_context *iscsi _U_, int status,
 int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
 	uint32_t block_size;
@@ -90,21 +90,21 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task->scsi_task);
+	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	block_size = rc16->block_length;
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 
 	if (!data_loss) {
@@ -136,18 +136,18 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 		ret++;
 		goto test2;
 	}
-	test_state.task     = task->scsi_task;
+	test_state.task     = task;
 	test_state.finished = 0;
 	test_state.status   = 0;
 	wait_until_test_finished(iscsi, &test_state);
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITE10 command successful. Should have failed with error\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test2;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -173,18 +173,18 @@ test2:
 		ret++;
 		goto test3;
 	}
-	test_state.task     = task->scsi_task;
+	test_state.task     = task;
 	test_state.finished = 0;
 	test_state.status   = 0;
 	wait_until_test_finished(iscsi, &test_state);
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITE10 command successful. Should have failed with error\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test3;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 

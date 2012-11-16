@@ -25,7 +25,7 @@
 int T0103_read10_rdprotect(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	int full_size;
 	struct scsi_inquiry_standard *inq;
 	struct scsi_readcapacity10 *rc10;
@@ -49,13 +49,13 @@ int T0103_read10_rdprotect(const char *initiator, const char *url, int data_loss
 
 	/* See how big this inquiry data is */
 	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 		return -1;
 	}
-	full_size = scsi_datain_getfullsize(task->scsi_task);
-	if (full_size > task->scsi_task->datain.size) {
-		iscsi_free_task(iscsi, task);
+	full_size = scsi_datain_getfullsize(task);
+	if (full_size > task->datain.size) {
+		scsi_free_scsi_task(task);
 
 		/* we need more data for the full list */
 		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
@@ -64,26 +64,26 @@ int T0103_read10_rdprotect(const char *initiator, const char *url, int data_loss
 		}
 	}
 
-	inq = scsi_datain_unmarshall(task->scsi_task);
+	inq = scsi_datain_unmarshall(task);
 	if (inq == NULL) {
 		printf("failed to unmarshall inquiry datain blob\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		return -1;
 	}
 
 	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 		printf("LUN is not SBC device. Skipping test\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		return -2;
 	}
 
 	if (inq->protect) {
 		printf("LUN is formatted with protection information. Skipping test\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		return -2;
 	}
 
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	/* find the size of the LUN */
 	task = iscsi_readcapacity10_sync(iscsi, lun, 0, 0);
@@ -92,21 +92,21 @@ int T0103_read10_rdprotect(const char *initiator, const char *url, int data_loss
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc10 = scsi_datain_unmarshall(task->scsi_task);
+	rc10 = scsi_datain_unmarshall(task);
 	if (rc10 == NULL) {
 		printf("failed to unmarshall readcapacity10 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	block_size = rc10->block_size;
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 
 	ret = 0;
@@ -124,30 +124,30 @@ int T0103_read10_rdprotect(const char *initiator, const char *url, int data_loss
 		}
 
 		memset(task, 0, sizeof(struct scsi_task));
-		task->scsi_task->cdb[0] = SCSI_OPCODE_READ10;
-		task->scsi_task->cdb[1] = (i<<5)&0xe0;
-		task->scsi_task->cdb[8] = 1;
-		task->scsi_task->cdb_size = 10;
-		task->scsi_task->xfer_dir = SCSI_XFER_READ;
-		task->scsi_task->expxferlen = block_size;
+		task->cdb[0] = SCSI_OPCODE_READ10;
+		task->cdb[1] = (i<<5)&0xe0;
+		task->cdb[8] = 1;
+		task->cdb_size = 10;
+		task->xfer_dir = SCSI_XFER_READ;
+		task->expxferlen = block_size;
 
-		if (iscsi_scsi_command_sync(iscsi, lun, task->scsi_task, NULL) == NULL) {
+		if (iscsi_scsi_command_sync(iscsi, lun, task, NULL) == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send read10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			goto finished;
 		}
-		if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-		    || task->scsi_task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 		        printf("[FAILED]\n");
 			printf("READ10 with rdprotect should fail with ILLEGAL REQUEST/INVALID_FIELD_IN_CDB\n");
 			ret = -1;
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			goto finished;
 		}
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 

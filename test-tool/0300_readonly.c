@@ -23,7 +23,7 @@
 int T0300_readonly(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	struct scsi_inquiry_standard *inq;
 	struct scsi_mode_sense *ms;
@@ -69,21 +69,21 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task->scsi_task);
+	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	block_size = rc16->block_length;
 	lbpme = rc16->lbpme;
 
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -93,19 +93,19 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 
 	/* This test is only valid for SBC devices */
 	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 		return -1;
 	}
-	inq = scsi_datain_unmarshall(task->scsi_task);
+	inq = scsi_datain_unmarshall(task);
 	if (inq == NULL) {
 		printf("failed to unmarshall inquiry datain blob\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		return -1;
 	}
 	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 		printf("LUN is not SBC device. Skipping test\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		return -1;
 	}
 
@@ -117,9 +117,9 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 		printf("Failed to send modesense6 command: %s\n", iscsi_get_error(iscsi));
 		goto finished;
 	}
-	full_size = scsi_datain_getfullsize(task->scsi_task);
-	if (full_size > task->scsi_task->datain.size) {
-		iscsi_free_task(iscsi, task);
+	full_size = scsi_datain_getfullsize(task);
+	if (full_size > task->datain.size) {
+		scsi_free_scsi_task(task);
 		task = iscsi_modesense6_sync(iscsi, lun, 0, SCSI_MODESENSE_PC_CURRENT,
 					     SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES, 0,
 					     full_size);
@@ -128,10 +128,10 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 			goto finished;
 		}
 	}
-	ms = scsi_datain_unmarshall(task->scsi_task);
+	ms = scsi_datain_unmarshall(task);
 	if (ms == NULL) {
 		printf("failed to unmarshall mode sense datain blob\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	if (!(ms->device_specific_parameter & 0x80)) {
@@ -139,7 +139,7 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 		ret = -2;
 		goto finished;
 	}
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 
 	ret = 0;
@@ -154,23 +154,23 @@ int T0300_readonly(const char *initiator, const char *url, int data_loss, int sh
 		ret++;
 		goto test2;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITE10 command should fail when writing to readonly devices\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test2;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
 		printf("[FAILED]\n");
 		printf("WRITE10 failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test2;
 	}	
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -185,23 +185,23 @@ test2:
 		ret++;
 		goto test3;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITE12 command should fail when writing to readonly devices\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test3;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
 		printf("[FAILED]\n");
 		printf("WRITE12 failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test3;
 	}	
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -216,23 +216,23 @@ test3:
 		ret++;
 		goto test4;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITE16 command should fail when writing to readonly devices\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test4;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
 		printf("[FAILED]\n");
 		printf("WRITE16 failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test4;
 	}	
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -247,23 +247,23 @@ test4:
 		ret++;
 		goto test5;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITESAME10 command should fail when writing to readonly devices\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test5;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
 		printf("[FAILED]\n");
 		printf("WRITESAME10 failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test5;
 	}	
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -278,23 +278,23 @@ test5:
 		ret++;
 		goto test6;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITESAME16 command should fail when writing to readonly devices\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test6;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
 		printf("[FAILED]\n");
 		printf("WRITESAME16 failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test6;
 	}	
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -314,23 +314,23 @@ test6:
 		ret++;
 		goto test7;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITESAME10 command should fail when writing to readonly devices\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test7;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
 		printf("[FAILED]\n");
 		printf("WRITESAME10 failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test7;
 	}	
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -349,23 +349,23 @@ test7:
 		ret++;
 		goto test8;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITESAME16 command should fail when writing to readonly devices\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test8;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
 		printf("[FAILED]\n");
 		printf("WRITESAME16 failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test8;
 	}	
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -386,23 +386,23 @@ test8:
 		ret++;
 		goto test9;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("UNMAP command should fail when writing to readonly devices\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test9;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
 		printf("[FAILED]\n");
 		printf("UNMAP failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test9;
 	}	
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
@@ -417,23 +417,23 @@ test9:
 		ret++;
 		goto test10;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITEVERIFY10 command should fail when writing to readonly devices\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test10;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
 		printf("[FAILED]\n");
 		printf("WRITEVERIFY10 failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test10;
 	}	
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 test10:
@@ -447,23 +447,23 @@ test10:
 		ret++;
 		goto test11;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITEVERIFY12 command should fail when writing to readonly devices\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test11;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
 		printf("[FAILED]\n");
 		printf("WRITEVERIFY12 failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test11;
 	}	
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 test11:
@@ -477,23 +477,23 @@ test11:
 		ret++;
 		goto test12;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITEVERIFY16 command should fail when writing to readonly devices\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test12;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
 		printf("[FAILED]\n");
 		printf("WRITEVERIFY16 failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test12;
 	}	
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 test12:
@@ -506,23 +506,23 @@ test12:
 		ret++;
 		goto test13;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("COMPAREANDWRITE command should fail when writing to readonly devices\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test13;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
 		printf("[FAILED]\n");
 		printf("COMPAREANDWRITE failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test13;
 	}	
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 test13:
@@ -536,23 +536,23 @@ test13:
 		ret++;
 		goto test14;
 	}
-	if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("ORWRITE command should fail when writing to readonly devices\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test14;
 	}
-	if (task->scsi_task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->scsi_task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->scsi_task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
 		printf("[FAILED]\n");
 		printf("ORWRITE failed with the wrong sense code. Should fail with DATA_PROTECTION/WRITE_PROTECTED\n");
 		ret++;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto test14;
 	}	
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 test14:

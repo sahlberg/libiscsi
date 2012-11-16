@@ -49,7 +49,6 @@ struct iscsi_in_pdu {
 	long long data_pos;
 	unsigned char *data;
 };
-
 void iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 void iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *inqueue);
 
@@ -118,8 +117,6 @@ struct iscsi_context {
 
 	struct iscsi_in_pdu *incoming;
 	struct iscsi_in_pdu *inqueue;
-	
-	struct iscsi_task *tasks;
 
 	uint32_t max_burst_length;
 	uint32_t first_burst_length;
@@ -140,9 +137,6 @@ struct iscsi_context {
 	int mallocs;
 	int reallocs;
 	int frees;
-	
-	int tasks_created;
-	int tasks_freed;
 
 	time_t last_reconnect;	
 };
@@ -222,10 +216,10 @@ struct iscsi_pdu {
 
 	struct iscsi_data nidata; /* Non-Immediate Data */
 
-	struct iscsi_cbdata *iscsi_cbdata;
+	struct iscsi_scsi_cbdata *scsi_cbdata;
 };
 
-void iscsi_free_cbdata(struct iscsi_context *iscsi, struct iscsi_cbdata *iscsi_cbdata);
+void iscsi_free_scsi_cbdata(struct iscsi_context *iscsi, struct iscsi_scsi_cbdata *scsi_cbdata);
 
 struct iscsi_pdu *iscsi_allocate_pdu(struct iscsi_context *iscsi,
 				     enum iscsi_opcode opcode,
@@ -266,7 +260,7 @@ int iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 		   unsigned char *dptr, int dsize, int pdualignment);
 
 struct scsi_task;
-void iscsi_pdu_set_cdb(struct iscsi_pdu *pdu, struct iscsi_task *task);
+void iscsi_pdu_set_cdb(struct iscsi_pdu *pdu, struct scsi_task *task);
 
 int iscsi_get_pdu_data_size(const unsigned char *hdr);
 int iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);

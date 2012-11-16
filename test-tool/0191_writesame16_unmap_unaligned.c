@@ -23,7 +23,7 @@
 int T0191_writesame16_unmap_unaligned(const char *initiator, const char *url, int data_loss, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
 	int lbppb;
@@ -50,30 +50,30 @@ int T0191_writesame16_unmap_unaligned(const char *initiator, const char *url, in
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task->scsi_task);
+	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall readcapacity16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 
 	if (rc16->lbpme == 0){
 		printf("Logical unit is fully provisioned. Skipping test\n");
 		ret = -2;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 
 	lbppb = 1 << rc16->lbppbe;
 
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 	if (lbppb < 2) {
 		printf("LBPPB==%d  Can not unmap fractional physical block\n", lbppb);
@@ -101,23 +101,23 @@ int T0191_writesame16_unmap_unaligned(const char *initiator, const char *url, in
 			ret = -1;
 			goto finished;
 		}
-		if (task->scsi_task->status        == SCSI_STATUS_CHECK_CONDITION
-		    && task->scsi_task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-		    && task->scsi_task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		if (task->status        == SCSI_STATUS_CHECK_CONDITION
+		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 			printf("[SKIPPED]\n");
 			printf("Opcode is not implemented on target\n");
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			ret = -2;
 			goto finished;
 		}
-		if (task->scsi_task->status == SCSI_STATUS_GOOD) {
+		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("WRITESAME16 command to unmap a fractional physical block should fail\n");
 			ret = -1;
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			goto finished;
 		}
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 

@@ -54,7 +54,6 @@ struct iscsi_fd_list {
        int get_lba_status;
        struct scsi_lba_status_descriptor lbasd_cached;
        int lbasd_cache_valid;
-       struct iscsi_task *task;
 };
 
 static struct iscsi_fd_list iscsi_fd_list[ISCSI_MAX_FD];
@@ -68,8 +67,8 @@ int open(const char *path, int flags, mode_t mode)
 	if (!strncmp(path, "iscsi:", 6)) {
 		struct iscsi_context *iscsi;
 		struct iscsi_url *iscsi_url;
+		struct scsi_task *task;
 		struct scsi_readcapacity16 *rc16;
-		int ret;
 
 		if (mode & O_NONBLOCK) {
 			LD_ISCSI_DPRINTF(0,"Non-blocking I/O is currently not supported");
@@ -113,6 +112,27 @@ int open(const char *path, int flags, mode_t mode)
 			return -1;
 		}
 
+		task = iscsi_readcapacity16_sync(iscsi, iscsi_url->lun);
+		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+			LD_ISCSI_DPRINTF(0,"failed to send readcapacity command");
+			iscsi_destroy_url(iscsi_url);
+			iscsi_destroy_context(iscsi);
+			errno = EIO;
+			return -1;
+		}
+
+		rc16 = scsi_datain_unmarshall(task);
+		if (rc16 == NULL) {
+			LD_ISCSI_DPRINTF(0,"failed to unmarshall readcapacity10 data");
+			scsi_free_scsi_task(task);
+			iscsi_destroy_url(iscsi_url);
+			iscsi_destroy_context(iscsi);
+			errno = EIO;
+			return -1;
+		}
+      
+        LD_ISCSI_DPRINTF(4,"readcapacity16_sync: block_size: %d, num_blocks: %lu",rc16->block_length,rc16->returned_lba + 1);
+
 		fd = iscsi_get_fd(iscsi);
 		if (fd >= ISCSI_MAX_FD) {
 			LD_ISCSI_DPRINTF(0,"Too many files open");
@@ -120,31 +140,7 @@ int open(const char *path, int flags, mode_t mode)
 			iscsi_destroy_context(iscsi);
 			errno = ENFILE;
 			return -1;
-		}
-
-		iscsi_fd_list[fd].task = iscsi_create_task(iscsi);
-
-		ret = iscsi_readcapacity16_sync(iscsi_fd_list[fd].task, iscsi_url->lun);
-		if (ret != 0 || iscsi_fd_list[fd].task->scsi.status != SCSI_STATUS_GOOD) {
-			LD_ISCSI_DPRINTF(0,"failed to send readcapacity command");
-			iscsi_free_task(iscsi_fd_list[fd].task);
-			iscsi_destroy_url(iscsi_url);
-			iscsi_destroy_context(iscsi);
-			errno = EIO;
-			return -1;
-		}
-
-		rc16 = scsi_datain_unmarshall(&iscsi_fd_list[fd].task->scsi);
-		if (rc16 == NULL) {
-			LD_ISCSI_DPRINTF(0,"failed to unmarshall readcapacity10 data");
-			iscsi_free_task(iscsi_fd_list[fd].task);
-			iscsi_destroy_url(iscsi_url);
-			iscsi_destroy_context(iscsi);
-			errno = EIO;
-			return -1;
-		}
-
-		LD_ISCSI_DPRINTF(4,"readcapacity16_sync: block_size: %d, num_blocks: %lu",rc16->block_length,rc16->returned_lba + 1);
+		}		
 
 		iscsi_fd_list[fd].is_iscsi   = 1;
 		iscsi_fd_list[fd].dup2fd     = -1;
@@ -155,8 +151,6 @@ int open(const char *path, int flags, mode_t mode)
 		iscsi_fd_list[fd].lun        = iscsi_url->lun;
 		iscsi_fd_list[fd].mode       = mode;
 
-		iscsi_clear_task(iscsi_fd_list[fd].task);
-
 		if (getenv("LD_ISCSI_GET_LBA_STATUS") != NULL) {
 			iscsi_fd_list[fd].get_lba_status = atoi(getenv("LD_ISCSI_GET_LBA_STATUS"));
 			if (rc16->lbpme == 0){
@@ -165,6 +159,7 @@ int open(const char *path, int flags, mode_t mode)
 			}
 		}
 
+		scsi_free_scsi_task(task);
 		iscsi_destroy_url(iscsi_url);
 
 		return fd;
@@ -224,7 +219,6 @@ int close(int fd)
 
 		iscsi_fd_list[fd].is_iscsi = 0;
 		iscsi_fd_list[fd].dup2fd   = -1;
-		iscsi_free_task(iscsi_fd_list[fd].task);
 		iscsi_destroy_context(iscsi_fd_list[fd].iscsi);
 		iscsi_fd_list[fd].iscsi    = NULL;
 
@@ -319,8 +313,8 @@ ssize_t read(int fd, void *buf, size_t count)
 	if ((iscsi_fd_list[fd].is_iscsi == 1) && (iscsi_fd_list[fd].in_flight == 0)) {
 		uint64_t offset;
 		uint64_t num_blocks, lba;
+		struct scsi_task *task;
 		struct scsi_get_lba_status *lbas;
-		int ret;
 
 		if (iscsi_fd_list[fd].dup2fd >= 0) {
 			return read(iscsi_fd_list[fd].dup2fd, buf, count);
@@ -353,18 +347,17 @@ ssize_t read(int fd, void *buf, size_t count)
 				}
 			}
 			LD_ISCSI_DPRINTF(4,"get_lba_status_sync: lun %d, lba %lu, num_blocks: %lu",iscsi_fd_list[fd].lun,lba,num_blocks);
-			ret = iscsi_get_lba_status_sync(iscsi_fd_list[fd].task, iscsi_fd_list[fd].lun, lba, 8+16);
-			if (ret != 0 || iscsi_fd_list[fd].task->scsi.status != SCSI_STATUS_GOOD) {
+			task = iscsi_get_lba_status_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, 8+16);
+			if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 				LD_ISCSI_DPRINTF(0,"failed to send get_lba_status command");
-				iscsi_clear_task(iscsi_fd_list[fd].task);
 				iscsi_fd_list[fd].in_flight = 0;
 				errno = EIO;
 				return -1;
 			}
-			lbas = scsi_datain_unmarshall(&iscsi_fd_list[fd].task->scsi);
+			lbas = scsi_datain_unmarshall(task);
 			if (lbas == NULL) {
 				LD_ISCSI_DPRINTF(0,"failed to unmarshall get_lba_status data");
-				iscsi_clear_task(iscsi_fd_list[fd].task);
+				scsi_free_scsi_task(task);
 				iscsi_fd_list[fd].in_flight = 0;
 				errno = EIO;
 				return -1;
@@ -379,7 +372,7 @@ ssize_t read(int fd, void *buf, size_t count)
 				LD_ISCSI_DPRINTF(5,"get_lba_status_descriptor %d, lba %lu, num_blocks %d, provisioning %d",i,lbasd->lba,lbasd->num_blocks,lbasd->provisioning);
 				if (lbasd->lba != _num_blocks+lba) {
 					LD_ISCSI_DPRINTF(0,"get_lba_status response is non-continuous");
-					iscsi_clear_task(iscsi_fd_list[fd].task);
+					scsi_free_scsi_task(task);
 					iscsi_fd_list[fd].in_flight = 0;
 					errno = EIO;
 					return -1;
@@ -389,7 +382,7 @@ ssize_t read(int fd, void *buf, size_t count)
 				iscsi_fd_list[fd].lbasd_cached=lbas->descriptors[i];
 				iscsi_fd_list[fd].lbasd_cache_valid=1;
 			}
-			iscsi_clear_task(iscsi_fd_list[fd].task);
+			scsi_free_scsi_task(task);
             if (_num_allocated == 0 && _num_blocks >= num_blocks) {
 		        LD_ISCSI_DPRINTF(4,"skipped read16_sync for non-allocated blocks: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
 				memset(buf, 0x00, count);
@@ -401,18 +394,18 @@ ssize_t read(int fd, void *buf, size_t count)
 
 		LD_ISCSI_DPRINTF(4,"read16_sync: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
 
-		ret = iscsi_read16_sync(iscsi_fd_list[fd].task, iscsi_fd_list[fd].lun, lba, num_blocks * iscsi_fd_list[fd].block_size, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
+		task = iscsi_read16_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, num_blocks * iscsi_fd_list[fd].block_size, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
 		iscsi_fd_list[fd].in_flight = 0;
-		if (ret != 0 || iscsi_fd_list[fd].task->scsi.status != SCSI_STATUS_GOOD) {
+		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 			LD_ISCSI_DPRINTF(0,"failed to send read16 command");
 			errno = EIO;
 			return -1;
 		}
 
-		memcpy(buf, &iscsi_fd_list[fd].task->scsi.datain.data[iscsi_fd_list[fd].offset - offset], count);
+		memcpy(buf, &task->datain.data[iscsi_fd_list[fd].offset - offset], count);
 		iscsi_fd_list[fd].offset += count;
 
-		iscsi_clear_task(iscsi_fd_list[fd].task);
+		scsi_free_scsi_task(task);
 
 		return count;
 	}
@@ -448,7 +441,7 @@ ssize_t write(int fd, const void *buf, size_t count)
 	if ((iscsi_fd_list[fd].is_iscsi == 1) && (iscsi_fd_list[fd].in_flight == 0)) {
 		uint64_t offset;
 		uint64_t num_blocks, lba;
-		int ret;
+		struct scsi_task *task;
 
 		if (iscsi_fd_list[fd].dup2fd >= 0) {
 			return write(iscsi_fd_list[fd].dup2fd, buf, count);
@@ -462,7 +455,7 @@ ssize_t write(int fd, const void *buf, size_t count)
 			return -1;
 		}
 
-		iscsi_fd_list[fd].lbasd_cache_valid = 0;
+                iscsi_fd_list[fd].lbasd_cache_valid = 0;
 
 		offset = iscsi_fd_list[fd].offset;
 		num_blocks = count/iscsi_fd_list[fd].block_size;
@@ -480,16 +473,16 @@ ssize_t write(int fd, const void *buf, size_t count)
 
 		iscsi_fd_list[fd].in_flight = 1;
 		LD_ISCSI_DPRINTF(4,"write16_sync: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
-		ret = iscsi_write16_sync(iscsi_fd_list[fd].task, iscsi_fd_list[fd].lun, lba, (unsigned char *) buf, count, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
+		task = iscsi_write16_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, (unsigned char *) buf, count, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
 		iscsi_fd_list[fd].in_flight = 0;
-		if (ret != 0 || iscsi_fd_list[fd].task->scsi.status != SCSI_STATUS_GOOD) {
+		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 			LD_ISCSI_DPRINTF(0,"failed to send write16 command");
 			errno = EIO;
 			return -1;
 		}
 
 		iscsi_fd_list[fd].offset += count;
-		iscsi_clear_task(iscsi_fd_list[fd].task);
+		scsi_free_scsi_task(task);
 		
 		return count;
 	}
@@ -566,6 +559,7 @@ int __fxstat64(int ver, int fd, struct stat64 *buf)
 
 	return real_fxstat64(ver, fd, buf);
 }
+
 
 int (*real_lxstat64)(int ver, __const char *path, struct stat64 *buf);
 

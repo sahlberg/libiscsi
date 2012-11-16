@@ -23,8 +23,8 @@
 int T0270_verify16_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
-	struct iscsi_task *vtask;
+	struct scsi_task *task;
+	struct scsi_task *vtask;
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
 	uint32_t block_size;
@@ -51,21 +51,21 @@ int T0270_verify16_simple(const char *initiator, const char *url, int data_loss 
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("Readcapacity16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task->scsi_task);
+	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
 		printf("failed to unmarshall readcapacity16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	block_size = rc16->block_length;
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 
 
@@ -83,20 +83,20 @@ int T0270_verify16_simple(const char *initiator, const char *url, int data_loss 
 			ret = -1;
 			goto test2;
 		}
-		if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("Read16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			goto test2;
 		}
 
-		buf = task->scsi_task->datain.data;
+		buf = task->datain.data;
 		if (buf == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to access DATA-IN buffer %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			goto test2;
 		}
 
@@ -105,30 +105,30 @@ int T0270_verify16_simple(const char *initiator, const char *url, int data_loss 
 		        printf("[FAILED]\n");
 			printf("Failed to send verify16 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			iscsi_free_task(iscsi, task);
+			scsi_free_scsi_task(task);
 			goto test2;
 		}
-		if (vtask->scsi_task->status        == SCSI_STATUS_CHECK_CONDITION
-		    && vtask->scsi_task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-		    && vtask->scsi_task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		if (vtask->status        == SCSI_STATUS_CHECK_CONDITION
+		    && vtask->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && vtask->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 			printf("[SKIPPED]\n");
 			printf("Opcode is not implemented on target\n");
-			iscsi_free_task(iscsi, task);
-			iscsi_free_task(iscsi, vtask);
+			scsi_free_scsi_task(task);
+			scsi_free_scsi_task(vtask);
 			ret = -2;
 			goto finished;
 		}
-		if (vtask->scsi_task->status != SCSI_STATUS_GOOD) {
+		if (vtask->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("Verify16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			iscsi_free_task(iscsi, task);
-			iscsi_free_task(iscsi, vtask);
+			scsi_free_scsi_task(task);
+			scsi_free_scsi_task(vtask);
 			goto test2;
 		}
 
-		iscsi_free_task(iscsi, task);
-		iscsi_free_task(iscsi, vtask);
+		scsi_free_scsi_task(task);
+		scsi_free_scsi_task(vtask);
 	}
 	printf("[OK]\n");
 

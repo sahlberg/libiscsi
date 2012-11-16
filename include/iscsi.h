@@ -18,7 +18,6 @@
 #define __iscsi_h__
 
 #include <stdint.h>
-#include "scsi-lowlevel.h"
 
 #if defined(WIN32)
 #define EXTERN __declspec( dllexport )
@@ -29,8 +28,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define LIBISCSI_ABI_VERSION (2)
 
 struct iscsi_context;
 struct sockaddr;
@@ -81,12 +78,6 @@ struct iscsi_url {
        char passwd[MAX_STRING_SIZE+1];
        int lun;
        struct iscsi_context *iscsi;
-};
-
-struct iscsi_task {
-	struct scsi_task scsi;
-	struct iscsi_context *iscsi;
-	struct iscsi_task *next;
 };
 
 /*
@@ -499,7 +490,7 @@ iscsi_task_mgmt_async(struct iscsi_context *iscsi,
 
 EXTERN int
 iscsi_task_mgmt_abort_task_async(struct iscsi_context *iscsi,
-		      struct iscsi_task *task,
+		      struct scsi_task *task,
 		      iscsi_command_cb cb, void *private_data);
 EXTERN int
 iscsi_task_mgmt_abort_task_set_async(struct iscsi_context *iscsi,
@@ -564,14 +555,8 @@ iscsi_set_isid_random(struct iscsi_context *iscsi, uint32_t rnd, uint32_t qualif
 EXTERN int
 iscsi_set_isid_reserved(struct iscsi_context *iscsi);
 
-EXTERN struct iscsi_task*
-iscsi_create_task(struct iscsi_context *iscsi);
 
-EXTERN void
-iscsi_clear_task(struct iscsi_task *task);
 
-EXTERN void
-iscsi_free_task(struct iscsi_task *task);
 
 /*
  * The scsi commands use/return a scsi_task structure when invoked
@@ -583,8 +568,9 @@ iscsi_free_task(struct iscsi_task *task);
  * from the callback.
  */
 
-EXTERN int iscsi_scsi_command_async(struct iscsi_task *task, int lun,
-			     iscsi_command_cb cb, struct iscsi_data *data, void *private_data);
+EXTERN int iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
+			     struct scsi_task *task, iscsi_command_cb cb,
+			     struct iscsi_data *data, void *private_data);
 
 /*
  * Async commands for SCSI
@@ -592,153 +578,153 @@ EXTERN int iscsi_scsi_command_async(struct iscsi_task *task, int lun,
  * These async functions return a scsi_task structure, or NULL if the command failed.
  * This structure can be used by task management functions to abort the task or a whole task set.
  */
-EXTERN int
-iscsi_reportluns_task(struct iscsi_task *task, int report_type,
+EXTERN struct scsi_task *
+iscsi_reportluns_task(struct iscsi_context *iscsi, int report_type,
 			   int alloc_len, iscsi_command_cb cb,
 			   void *private_data);
-EXTERN int
-iscsi_testunitready_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_testunitready_task(struct iscsi_context *iscsi, int lun,
 			      iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_inquiry_task(struct iscsi_task *task, int lun, int evpd,
+EXTERN struct scsi_task *
+iscsi_inquiry_task(struct iscsi_context *iscsi, int lun, int evpd,
 			int page_code, int maxsize, iscsi_command_cb cb,
 			void *private_data);
-EXTERN int
-iscsi_readcapacity10_task(struct iscsi_task *task, int lun, int lba,
+EXTERN struct scsi_task *
+iscsi_readcapacity10_task(struct iscsi_context *iscsi, int lun, int lba,
 			       int pmi, iscsi_command_cb cb,
 			       void *private_data);
-EXTERN int
-iscsi_readcapacity16_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_readcapacity16_task(struct iscsi_context *iscsi, int lun,
 			  iscsi_command_cb cb,
 			  void *private_data);
-EXTERN int
-iscsi_get_lba_status_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_get_lba_status_task(struct iscsi_context *iscsi, int lun,
 			  uint64_t starting_lba, uint32_t alloc_len,
 			  iscsi_command_cb cb,
 			  void *private_data);
-EXTERN int
-iscsi_synchronizecache10_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_synchronizecache10_task(struct iscsi_context *iscsi, int lun,
 				   int lba, int num_blocks, int syncnv,
 				   int immed, iscsi_command_cb cb,
 				   void *private_data);
-EXTERN int
-iscsi_synchronizecache16_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_synchronizecache16_task(struct iscsi_context *iscsi, int lun,
 				   uint64_t lba, uint32_t num_blocks, int syncnv,
 				   int immed, iscsi_command_cb cb,
 				   void *private_data);
-EXTERN int
-iscsi_prefetch10_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_prefetch10_task(struct iscsi_context *iscsi, int lun,
 		      uint32_t lba, int num_blocks,
 		      int immed, int group,
 		      iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_prefetch16_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_prefetch16_task(struct iscsi_context *iscsi, int lun,
 		      uint64_t lba, int num_blocks,
 		      int immed, int group,
 		      iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_read6_task(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_read6_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       uint32_t datalen, int blocksize, iscsi_command_cb cb,
 		       void *private_data);
 
-EXTERN int
-iscsi_read10_task(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_read10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		  uint32_t datalen, int blocksize,
 		  int rdprotect, int dpo, int fua, int fua_nv, int group_number,
 		  iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_write10_task(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_write10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
 		   iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_writeverify10_task(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_writeverify10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int bytchk, int group_number,
 		   iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_read12_task(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_read12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   uint32_t datalen, int blocksize,
 		   int rdprotect, int dpo, int fua, int fua_nv, int group_number,
 		   iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_write12_task(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_write12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
 		   iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_writeverify12_task(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_writeverify12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int bytchk, int group_number,
 		   iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_read16_task(struct iscsi_task *task, int lun, uint64_t lba,
+EXTERN struct scsi_task *
+iscsi_read16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   uint32_t datalen, int blocksize,
 		   int rdprotect, int dpo, int fua, int fua_nv, int group_number,
 		   iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_write16_task(struct iscsi_task *task, int lun, uint64_t lba,
+EXTERN struct scsi_task *
+iscsi_write16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
 		   iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_orwrite_task(struct iscsi_task *task, int lun, uint64_t lba,
+EXTERN struct scsi_task *
+iscsi_orwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
 		   iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_startstopunit_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_startstopunit_task(struct iscsi_context *iscsi, int lun,
 			 int immed, int pcm, int pc,
 			 int no_flush, int loej, int start,
 			 iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_preventallow_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_preventallow_task(struct iscsi_context *iscsi, int lun,
 			int prevent,
 			iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_compareandwrite_task(struct iscsi_task *task, int lun, uint64_t lba,
+EXTERN struct scsi_task *
+iscsi_compareandwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
 		   iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_writeverify16_task(struct iscsi_task *task, int lun, uint64_t lba,
+EXTERN struct scsi_task *
+iscsi_writeverify16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int bytchk, int group_number,
 		   iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_verify10_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_verify10_task(struct iscsi_context *iscsi, int lun,
 		    unsigned char *data, uint32_t datalen, uint32_t lba,
 		    int vprotect, int dpo, int bytchk,
 		    int blocksize, iscsi_command_cb cb,
 		    void *private_data);
-EXTERN int
-iscsi_verify12_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_verify12_task(struct iscsi_context *iscsi, int lun,
 		    unsigned char *data, uint32_t datalen, uint32_t lba,
 		    int vprotect, int dpo, int bytchk,
 		    int blocksize, iscsi_command_cb cb,
 		    void *private_data);
-EXTERN int
-iscsi_verify16_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_verify16_task(struct iscsi_context *iscsi, int lun,
 		    unsigned char *data, uint32_t datalen, uint64_t lba,
 		    int vprotect, int dpo, int bytchk,
 		    int blocksize, iscsi_command_cb cb,
 		    void *private_data);
-EXTERN int
-iscsi_writesame10_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_writesame10_task(struct iscsi_context *iscsi, int lun,
 		       unsigned char *data, uint32_t datalen,
 		       uint32_t lba, uint16_t num_blocks,
 		       int anchor, int unmap, int pbdata, int lbdata,
 		       int wrprotect, int group,
 		       iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_writesame16_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_writesame16_task(struct iscsi_context *iscsi, int lun,
 		       unsigned char *data, uint32_t datalen,
 		       uint64_t lba, uint32_t num_blocks,
 		       int anchor, int unmap, int pbdata, int lbdata,
 		       int wrprotect, int group,
 		       iscsi_command_cb cb, void *private_data);
-EXTERN int
-iscsi_modesense6_task(struct iscsi_task *task, int lun, int dbd,
+EXTERN struct scsi_task *
+iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd,
 			   int pc, int page_code, int sub_page_code,
 			   unsigned char alloc_len, iscsi_command_cb cb,
 			   void *private_data);
@@ -748,193 +734,194 @@ struct unmap_list {
        uint32_t	  num;
 };
 
-EXTERN int
-iscsi_unmap_task(struct iscsi_task *task, int lun, int anchor, int group,
+EXTERN struct scsi_task *
+iscsi_unmap_task(struct iscsi_context *iscsi, int lun, int anchor, int group,
 		 struct unmap_list *list, int list_len,
 		 iscsi_command_cb cb, void *private_data);
 
-EXTERN int
-iscsi_readtoc_task(struct iscsi_task *task, int lun, int msf, int format, 
+EXTERN struct scsi_task *
+iscsi_readtoc_task(struct iscsi_context *iscsi, int lun, int msf, int format, 
 		   int track_session, int maxsize, 
 		   iscsi_command_cb cb, void *private_data);
 
-EXTERN int
-iscsi_reserve6_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_reserve6_task(struct iscsi_context *iscsi, int lun,
 		    iscsi_command_cb cb, void *private_data);
 
-EXTERN int
-iscsi_release6_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_release6_task(struct iscsi_context *iscsi, int lun,
 		    iscsi_command_cb cb, void *private_data);
 
-EXTERN int
-iscsi_report_supported_opcodes_task(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi, int lun,
 				    int return_timeouts, int maxsize, 
 				    iscsi_command_cb cb, void *private_data);
 
 /*
  * Sync commands for SCSI
  */
-EXTERN int
-iscsi_scsi_command_sync(struct iscsi_task *task, int lun, struct iscsi_data *data);
+EXTERN struct scsi_task *
+iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
+			struct scsi_task *task, struct iscsi_data *data);
 
-EXTERN int
-iscsi_modesense6_sync(struct iscsi_task *task, int lun, int dbd,
+EXTERN struct scsi_task *
+iscsi_modesense6_sync(struct iscsi_context *iscsi, int lun, int dbd,
 		      int pc, int page_code, int sub_page_code,
 		      unsigned char alloc_len);
 
-EXTERN int
-iscsi_reportluns_sync(struct iscsi_task *task, int report_type,
+EXTERN struct scsi_task *
+iscsi_reportluns_sync(struct iscsi_context *iscsi, int report_type,
 		      int alloc_len);
 
-EXTERN int
-iscsi_testunitready_sync(struct iscsi_task *task, int lun);
+EXTERN struct scsi_task *
+iscsi_testunitready_sync(struct iscsi_context *iscsi, int lun);
 
-EXTERN int
-iscsi_inquiry_sync(struct iscsi_task *task, int lun, int evpd,
+EXTERN struct scsi_task *
+iscsi_inquiry_sync(struct iscsi_context *iscsi, int lun, int evpd,
 		   int page_code, int maxsize);
 
-EXTERN int
-iscsi_read6_sync(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_read6_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		  uint32_t datalen, int blocksize);
 
-EXTERN int
-iscsi_read10_sync(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_read10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		  uint32_t datalen, int blocksize,
 		  int rdprotect, int dpo, int fua, int fua_nv, int group_number);
 
-EXTERN int
-iscsi_write10_sync(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_write10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 
-EXTERN int
-iscsi_writeverify10_sync(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_writeverify10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int bytchk, int group_number);
 
-EXTERN int
-iscsi_read12_sync(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_read12_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		  uint32_t datalen, int blocksize,
 		  int rdprotect, int dpo, int fua, int fua_nv, int group_number);
 
-EXTERN int
-iscsi_write12_sync(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_write12_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 
-EXTERN int
-iscsi_writeverify12_sync(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_writeverify12_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int bytchk, int group_number);
 
-EXTERN int
-iscsi_read16_sync(struct iscsi_task *task, int lun, uint64_t lba,
+EXTERN struct scsi_task *
+iscsi_read16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		  uint32_t datalen, int blocksize,
 		  int rdprotect, int dpo, int fua, int fua_nv, int group_number);
 
-EXTERN int
-iscsi_write16_sync(struct iscsi_task *task, int lun, uint64_t lba,
+EXTERN struct scsi_task *
+iscsi_write16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 
-EXTERN int
-iscsi_orwrite_sync(struct iscsi_task *task, int lun, uint64_t lba,
+EXTERN struct scsi_task *
+iscsi_orwrite_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 
-EXTERN int
-iscsi_startstopunit_sync(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_startstopunit_sync(struct iscsi_context *iscsi, int lun,
 			 int immed, int pcm, int pc,
 			 int no_flush, int loej, int start);
 
-EXTERN int
-iscsi_preventallow_sync(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_preventallow_sync(struct iscsi_context *iscsi, int lun,
 			int prevent);
 
-EXTERN int
-iscsi_compareandwrite_sync(struct iscsi_task *task, int lun, uint64_t lba,
+EXTERN struct scsi_task *
+iscsi_compareandwrite_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 
-EXTERN int
-iscsi_writeverify16_sync(struct iscsi_task *task, int lun, uint64_t lba,
+EXTERN struct scsi_task *
+iscsi_writeverify16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int bytchk, int group_number);
 
-EXTERN int
-iscsi_readcapacity10_sync(struct iscsi_task *task, int lun, int lba,
+EXTERN struct scsi_task *
+iscsi_readcapacity10_sync(struct iscsi_context *iscsi, int lun, int lba,
 			  int pmi);
 
-EXTERN int
-iscsi_readcapacity16_sync(struct iscsi_task *task, int lun);
+EXTERN struct scsi_task *
+iscsi_readcapacity16_sync(struct iscsi_context *iscsi, int lun);
 
-EXTERN int
-iscsi_get_lba_status_sync(struct iscsi_task *task, int lun, uint64_t starting_lba, uint32_t alloc_len);
+EXTERN struct scsi_task *
+iscsi_get_lba_status_sync(struct iscsi_context *iscsi, int lun, uint64_t starting_lba, uint32_t alloc_len);
 
-EXTERN int
-iscsi_synchronizecache10_sync(struct iscsi_task *task, int lun, int lba,
+EXTERN struct scsi_task *
+iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
 			      int num_blocks, int syncnv, int immed);
 
-EXTERN int
-iscsi_synchronizecache16_sync(struct iscsi_task *task, int lun, uint64_t lba,
+EXTERN struct scsi_task *
+iscsi_synchronizecache16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 			      uint32_t num_blocks, int syncnv, int immed);
 
-EXTERN int
-iscsi_prefetch10_sync(struct iscsi_task *task, int lun, uint32_t lba,
+EXTERN struct scsi_task *
+iscsi_prefetch10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		      int num_blocks, int immed, int group);
 
-EXTERN int
-iscsi_prefetch16_sync(struct iscsi_task *task, int lun, uint64_t lba,
+EXTERN struct scsi_task *
+iscsi_prefetch16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		      int num_blocks, int immed, int group);
 
-EXTERN int
-iscsi_verify10_sync(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_verify10_sync(struct iscsi_context *iscsi, int lun,
 		    unsigned char *data, uint32_t datalen, uint32_t lba,
 		    int vprotect, int dpo, int bytchk,
 		    int blocksize);
 
-EXTERN int
-iscsi_verify12_sync(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_verify12_sync(struct iscsi_context *iscsi, int lun,
 		    unsigned char *data, uint32_t datalen, uint32_t lba,
 		    int vprotect, int dpo, int bytchk,
 		    int blocksize);
 
-EXTERN int
-iscsi_verify16_sync(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_verify16_sync(struct iscsi_context *iscsi, int lun,
 		    unsigned char *data, uint32_t datalen, uint64_t lba,
 		    int vprotect, int dpo, int bytchk,
 		    int blocksize);
 
-EXTERN int
-iscsi_writesame10_sync(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_writesame10_sync(struct iscsi_context *iscsi, int lun,
 		       unsigned char *data, uint32_t datalen,
 		       uint32_t lba, uint16_t num_blocks,
 		       int anchor, int unmap, int pbdata, int lbdata,
 		       int wrprotect, int group);
 
-EXTERN int
-iscsi_writesame16_sync(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_writesame16_sync(struct iscsi_context *iscsi, int lun,
 		       unsigned char *data, uint32_t datalen,
 		       uint64_t lba, uint32_t num_blocks,
 		       int anchor, int unmap, int pbdata, int lbdata,
 		       int wrprotect, int group);
 
-EXTERN int
-iscsi_unmap_sync(struct iscsi_task *task, int lun, int anchor, int group,
+EXTERN struct scsi_task *
+iscsi_unmap_sync(struct iscsi_context *iscsi, int lun, int anchor, int group,
 		 struct unmap_list *list, int list_len);
 
-EXTERN int
-iscsi_readtoc_sync(struct iscsi_task *task, int lun, int msf,
+EXTERN struct scsi_task *
+iscsi_readtoc_sync(struct iscsi_context *iscsi, int lun, int msf,
 		   int format, int track_session, int maxsize);
 
-EXTERN int
-iscsi_reserve6_sync(struct iscsi_task *task, int lun);
+EXTERN struct scsi_task *
+iscsi_reserve6_sync(struct iscsi_context *iscsi, int lun);
 
-EXTERN int
-iscsi_release6_sync(struct iscsi_task *task, int lun);
+EXTERN struct scsi_task *
+iscsi_release6_sync(struct iscsi_context *iscsi, int lun);
 
-EXTERN int
-iscsi_report_supported_opcodes_sync(struct iscsi_task *task, int lun,
+EXTERN struct scsi_task *
+iscsi_report_supported_opcodes_sync(struct iscsi_context *iscsi, int lun,
 				    int return_timeouts, int maxsize);
 
 /*
@@ -968,7 +955,8 @@ EXTERN int scsi_task_add_data_in_buffer(struct scsi_task *task, int len, unsigne
  * To cancel the task also a the target you need to call the task management functions.
  */
 EXTERN int
-iscsi_cancel_task(struct iscsi_task *task);
+iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
+		       struct scsi_task *task);
 
 /*
  * This function is used when you want to cancel all scsi tasks.
@@ -978,7 +966,7 @@ iscsi_cancel_task(struct iscsi_task *task);
  * To cancel the tasks also a the target you need to call the task management functions.
  */
 EXTERN void
-iscsi_cancel_all_tasks(struct iscsi_context *iscsi);
+iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi);
 
 /*
  * This function is to set the debugging level where level is

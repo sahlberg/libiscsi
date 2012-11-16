@@ -26,7 +26,7 @@ int T0400_inquiry_basic(const char *initiator, const char *url, int data_loss _U
 			int show_info)
 {
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_inquiry_standard *inq;
 	int ret, lun, i;
 	int full_size;
@@ -72,16 +72,16 @@ int T0400_inquiry_basic(const char *initiator, const char *url, int data_loss _U
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("INQUIRY command failed : %s\n", iscsi_get_error(iscsi));
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
-	full_size = scsi_datain_getfullsize(task->scsi_task);
-	if (full_size > task->scsi_task->datain.size) {
-		iscsi_free_task(iscsi, task);
+	full_size = scsi_datain_getfullsize(task);
+	if (full_size > task->datain.size) {
+		scsi_free_scsi_task(task);
 
 		/* we need more data for the full list */
 		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
@@ -91,11 +91,11 @@ int T0400_inquiry_basic(const char *initiator, const char *url, int data_loss _U
 			goto finished;
 		}
 	}
-	inq = scsi_datain_unmarshall(task->scsi_task);
+	inq = scsi_datain_unmarshall(task);
 	if (inq == NULL) {
 		printf("[FAILED]\n");
 		printf("failed to unmarshall inquiry datain blob\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
@@ -105,7 +105,7 @@ int T0400_inquiry_basic(const char *initiator, const char *url, int data_loss _U
 	if (full_size < 36) {
 		printf("[FAILED]\n");
 		printf("Standard INQUIRY data is less than 36 bytes.\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
@@ -185,10 +185,10 @@ test9:
 	printf("Verify VENDOR_IDENTIFICATION is in ASCII ... ");
 	for (i = 8; i < 16; i++) {
 		/* SPC-4 4.4.1 only characters 0x00 and 0x20-0x7E allowed */
-		if (task->scsi_task->datain.data[i] == 0) {
+		if (task->datain.data[i] == 0) {
 			continue;
 		}
-		if (task->scsi_task->datain.data[i] >= 0x20 && task->scsi_task->datain.data[i] <= 0x7e) {
+		if (task->datain.data[i] >= 0x20 && task->datain.data[i] <= 0x7e) {
 			continue;
 		}
 
@@ -203,10 +203,10 @@ test10:
 	printf("Verify PRODUCT_IDENTIFICATION is in ASCII ... ");
 	for (i = 16; i < 32; i++) {
 		/* SPC-4 4.4.1 only characters 0x00 and 0x20-0x7E allowed */
-		if (task->scsi_task->datain.data[i] == 0) {
+		if (task->datain.data[i] == 0) {
 			continue;
 		}
-		if (task->scsi_task->datain.data[i] >= 0x20 && task->scsi_task->datain.data[i] <= 0x7e) {
+		if (task->datain.data[i] >= 0x20 && task->datain.data[i] <= 0x7e) {
 			continue;
 		}
 
@@ -221,10 +221,10 @@ test11:
 	printf("Verify PRODUCT_REVISION_LEVEL is in ASCII ... ");
 	for (i = 32; i < 36; i++) {
 		/* SPC-4 4.4.1 only characters 0x00 and 0x20-0x7E allowed */
-		if (task->scsi_task->datain.data[i] == 0) {
+		if (task->datain.data[i] == 0) {
 			continue;
 		}
-		if (task->scsi_task->datain.data[i] >= 0x20 && task->scsi_task->datain.data[i] <= 0x7e) {
+		if (task->datain.data[i] >= 0x20 && task->datain.data[i] <= 0x7e) {
 			continue;
 		}
 
@@ -237,7 +237,7 @@ test11:
 
 test12:
 	printf("Verify AERC is clear in SPC-3 and later ... ");
-	if (task->scsi_task->datain.data[3] & 0x80 && inq->version >= 5) {
+	if (task->datain.data[3] & 0x80 && inq->version >= 5) {
 		printf("[FAILED]\n");
 		printf("AERC is set but this device reports SPC-3 or later\n");
 		ret = -1;
@@ -247,7 +247,7 @@ test12:
 
 test13:
 	printf("Verify TrmTsk is clear in SPC-2 and later ... ");
-	if (task->scsi_task->datain.data[3] & 0x40 && inq->version >= 4) {
+	if (task->datain.data[3] & 0x40 && inq->version >= 4) {
 		printf("[FAILED]\n");
 		printf("TrmTsk is set but this device reports SPC-2 or later\n");
 		ret = -1;
@@ -259,7 +259,7 @@ test14:
 
 
 
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 
 finished:

@@ -1,4 +1,3 @@
-iscsi_free_task
 iscsi_connect_async
 iscsi_connect_sync
 iscsi_create_context
@@ -58,13 +57,10 @@ iscsi_reconnect
 iscsi_set_noautoreconnect
 iscsi_reportluns_sync
 iscsi_reportluns_task
-iscsi_cancel_all_tasks
+iscsi_scsi_cancel_all_tasks
 iscsi_scsi_command_async
 iscsi_scsi_command_sync
-iscsi_cancel_task
-iscsi_create_task
-iscsi_clear_task
-iscsi_free_task
+iscsi_scsi_cancel_task
 iscsi_service
 iscsi_set_alias
 iscsi_set_log_level
@@ -168,9 +164,7 @@ scsi_datain_unmarshall
 scsi_designator_type_to_str
 scsi_devqualifier_to_str
 scsi_devtype_to_str
-scsi_create_task
-scsi_clear_task
-scsi_free_task
+scsi_free_scsi_task
 scsi_get_task_private_ptr
 scsi_inquiry_pagecode_to_str
 scsi_protocol_identifier_to_str

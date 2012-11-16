@@ -26,7 +26,7 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url,
 				   int data_loss _U_, int show_info)
 {
 	struct iscsi_context *iscsi;
-	struct iscsi_task *task;
+	struct scsi_task *task;
 	struct scsi_inquiry_supported_pages *inq;
 	int ret, lun, i;
 	int full_size;
@@ -63,16 +63,16 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url,
 		ret = -1;
 		goto finished;
 	}
-	if (task->scsi_task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("INQUIRY command failed : %s\n", iscsi_get_error(iscsi));
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
-	full_size = scsi_datain_getfullsize(task->scsi_task);
-	if (full_size > task->scsi_task->datain.size) {
-		iscsi_free_task(iscsi, task);
+	full_size = scsi_datain_getfullsize(task);
+	if (full_size > task->datain.size) {
+		scsi_free_scsi_task(task);
 
 		/* we need more data for the full list */
 		if ((task = iscsi_inquiry_sync(iscsi, lun, 1, page_code, full_size)) == NULL) {
@@ -82,11 +82,11 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url,
 			goto finished;
 		}
 	}
-	inq = scsi_datain_unmarshall(task->scsi_task);
+	inq = scsi_datain_unmarshall(task);
 	if (inq == NULL) {
 		printf("[FAILED]\n");
 		printf("failed to unmarshall inquiry datain blob\n");
-		iscsi_free_task(iscsi, task);
+		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
@@ -94,7 +94,7 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url,
 
 	printf("Read each page and verify qualifier, type and page code:\n");
 	for (i = 0; i < inq->num_pages; i++) {
-		struct iscsi_task *pc_task;
+		struct scsi_task *pc_task;
 
 		printf("Verify page 0x%02x can be read ... ", inq->pages[i]);
 		pc_task = iscsi_inquiry_sync(iscsi, lun, 1, inq->pages[i], 255);
@@ -104,55 +104,55 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url,
 			ret = -1;
 			continue;
 		}
-		if (pc_task->scsi_task->status != SCSI_STATUS_GOOD) {
+		if (pc_task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("Failed to read VPD page : %s\n", iscsi_get_error(iscsi));
-			iscsi_free_task(iscsi, pc_task);
+			scsi_free_scsi_task(pc_task);
 			ret = -1;
 			continue;
 		}
 		printf("[OK]\n");
 
 		printf("Verify page 0x%02x qualifier   ... ", inq->pages[i]);
-		if ((pc_task->scsi_task->datain.data[0] & 0xe0) >> 5 != inq->qualifier) {
+		if ((pc_task->datain.data[0] & 0xe0) >> 5 != inq->qualifier) {
 			printf("[FAILED]\n");
 			printf("Qualifier differs between VPD pages: %x != %x\n",
-			       pc_task->scsi_task->datain.data[0] & 0xe0, inq->qualifier);
+			       pc_task->datain.data[0] & 0xe0, inq->qualifier);
 			ret = -1;
-			iscsi_free_task(iscsi, pc_task);
+			scsi_free_scsi_task(pc_task);
 			continue;
 		} else {
 			printf("[OK]\n");
  		}
 
 		printf("Verify page 0x%02x device type ... ", inq->pages[i]);
-		if ((pc_task->scsi_task->datain.data[0] & 0x1f) != inq->device_type) {
+		if ((pc_task->datain.data[0] & 0x1f) != inq->device_type) {
 			printf("[FAILED]\n");
 			printf("Device Type differs between VPD pages: %x != %x\n",
-			       pc_task->scsi_task->datain.data[0] & 0x1f, inq->device_type);
+			       pc_task->datain.data[0] & 0x1f, inq->device_type);
 			ret = -1;
-			iscsi_free_task(iscsi, pc_task);
+			scsi_free_scsi_task(pc_task);
 			continue;
 		} else {
 			printf("[OK]\n");
  		}
 
 		printf("Verify page 0x%02x page code   ... ", inq->pages[i]);
-		if (pc_task->scsi_task->datain.data[1] != inq->pages[i]) {
+		if (pc_task->datain.data[1] != inq->pages[i]) {
 			printf("[FAILED]\n");
 			printf("Page code is wrong: %x != %x\n",
-			       pc_task->scsi_task->datain.data[1], inq->pages[i]);
+			       pc_task->datain.data[1], inq->pages[i]);
 			ret = -1;
-			iscsi_free_task(iscsi, pc_task);
+			scsi_free_scsi_task(pc_task);
 			continue;
 		} else {
 			printf("[OK]\n");
  		}
 
-		iscsi_free_task(iscsi, pc_task);
+		scsi_free_scsi_task(pc_task);
 	}
 
-	iscsi_free_task(iscsi, task);
+	scsi_free_scsi_task(task);
 
 finished:
 	iscsi_logout_sync(iscsi);
