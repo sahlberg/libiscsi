@@ -47,6 +47,7 @@ event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 
 		if ((ret = poll(&pfd, 1, 1000)) < 0) {
 			iscsi_set_error(iscsi, "Poll failed");
+			state->status = -1;
 			return;
 		}
 		if (ret == 0) {
@@ -57,6 +58,7 @@ event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 			iscsi_set_error(iscsi,
 				"iscsi_service failed with : %s",
 				iscsi_get_error(iscsi));
+			state->status = -1;
 			return;
 		}
 	}
