@@ -1068,6 +1068,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		iscsi->is_loggedin = 1;
 		iscsi->itt++;
 		iscsi->header_digest  = iscsi->want_header_digest;
+		ISCSI_LOG(iscsi, 2, "login successful");
 		pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
 	} else {
 		if (iscsi_login_async(iscsi, pdu->callback, pdu->private_data) != 0) {
