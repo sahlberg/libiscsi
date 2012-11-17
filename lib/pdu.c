@@ -44,6 +44,11 @@ iscsi_allocate_pdu_with_itt_flags_size(struct iscsi_context *iscsi, enum iscsi_o
 
 	pdu->outdata.size = ISCSI_HEADER_SIZE;
 	pdu->outdata.alloc_size = 64;
+	
+	/* payload_size is limited by negotiated max_recv_data_segment_length */
+	if (payload_size > iscsi->target_max_recv_data_segment_length)
+		payload_size = iscsi->target_max_recv_data_segment_length;
+		
 	while (pdu->outdata.alloc_size < ISCSI_HEADER_SIZE+payload_size) pdu->outdata.alloc_size<<=1;
 	pdu->outdata.data = iscsi_malloc(iscsi, pdu->outdata.alloc_size);
 	memset(pdu->outdata.data, 0, ISCSI_HEADER_SIZE);
