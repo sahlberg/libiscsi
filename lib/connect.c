@@ -222,7 +222,7 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 	int retry = 0;
 
 	if (old_iscsi->last_reconnect) {
-		while (time(NULL) - old_iscsi->last_reconnect < 5) sleep(1);
+		if (time(NULL) - old_iscsi->last_reconnect < 5) sleep(5);
 	}
 
 try_again:
