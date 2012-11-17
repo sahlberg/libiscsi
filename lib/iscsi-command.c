@@ -85,10 +85,11 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 			len = iscsi->target_max_recv_data_segment_length;
 		}
 
-		pdu = iscsi_allocate_pdu_with_itt_flags(iscsi, ISCSI_PDU_DATA_OUT,
+		pdu = iscsi_allocate_pdu_with_itt_flags_size(iscsi, ISCSI_PDU_DATA_OUT,
 				 ISCSI_PDU_NO_PDU,
 				 cmd_pdu->itt,
-				 ISCSI_PDU_DELETE_WHEN_SENT|ISCSI_PDU_NO_CALLBACK);
+				 ISCSI_PDU_DELETE_WHEN_SENT|ISCSI_PDU_NO_CALLBACK,
+				 len);
 		if (pdu == NULL) {
 			iscsi_set_error(iscsi, "Out-of-memory, Failed to allocate "
 				"scsi data out pdu.");
@@ -199,8 +200,8 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 
 	scsi_set_task_private_ptr(task, scsi_cbdata);
 
-	pdu = iscsi_allocate_pdu(iscsi, ISCSI_PDU_SCSI_REQUEST,
-				 ISCSI_PDU_SCSI_RESPONSE);
+	pdu = iscsi_allocate_pdu_size(iscsi, ISCSI_PDU_SCSI_REQUEST,
+				 ISCSI_PDU_SCSI_RESPONSE, data.size);
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory, Failed to allocate "
 				"scsi pdu.");
@@ -451,15 +452,20 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 	/* Dont add to reassembly buffer if we already have a user buffer */
 	if (scsi_task_get_data_in_buffer(task, 0, NULL) == NULL) {
-		if (iscsi_add_data(iscsi, &pdu->indata,
-				   in->data, dsl, 0)
-		    != 0) {
-		    	iscsi_set_error(iscsi, "Out-of-memory: failed to add data "
+		if (task->expxferlen > dsl && pdu->indata.data == NULL) {
+			pdu->indata.alloc_size = task->expxferlen;
+			pdu->indata.data = iscsi_malloc(iscsi, task->expxferlen);
+			if (pdu->indata.data == NULL) {
+				iscsi_set_error(iscsi, "Out-of-memory: failed to allocate pdu indata buffer");
+				return -1;
+			}
+		}
+		if (iscsi_add_data(iscsi, &pdu->indata, in->data, dsl, 0) != 0) {
+		    iscsi_set_error(iscsi, "Out-of-memory: failed to add data "
 				"to pdu in buffer.");
 			return -1;
 		}
 	}
-
 
 	if ((flags&ISCSI_PDU_DATA_FINAL) == 0) {
 		*is_finished = 0;
