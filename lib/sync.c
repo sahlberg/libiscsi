@@ -54,11 +54,6 @@ event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 			continue;
 		}
 		if (iscsi_service(iscsi, pfd.revents) < 0) {
-			/* if we are reconnecting we just try and try again */
-			if (iscsi->is_reconnecting) {
-				continue;
-			}
-
 			iscsi_set_error(iscsi,
 				"iscsi_service failed with : %s",
 				iscsi_get_error(iscsi));
