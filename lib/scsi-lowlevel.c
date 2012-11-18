@@ -488,6 +488,11 @@ scsi_cdb_release6(void)
 	return task;
 }
 
+static inline uint8_t
+scsi_serviceactionin_sa(const struct scsi_task *task)
+{
+	return task->cdb[1];
+}
 
 /*
  * service_action_in unmarshall
@@ -495,14 +500,10 @@ scsi_cdb_release6(void)
 static void *
 scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 {
-	struct scsi_readcapacity16 *rc16;
-	struct scsi_get_lba_status *gls;
-	int32_t len;
-	int i;
-
-	switch (task->params.serviceactionin.sa) {
-	case SCSI_READCAPACITY16:
-		rc16 = scsi_malloc(task, sizeof(struct scsi_readcapacity16));
+	switch (scsi_serviceactionin_sa(task)) {
+	case SCSI_READCAPACITY16: {
+		struct scsi_readcapacity16 *rc16 = scsi_malloc(task,
+							       sizeof(*rc16));
 		if (rc16 == NULL) {
 			return NULL;
 		}
@@ -517,20 +518,27 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 		rc16->lbprz        = !!(task->datain.data[14] & 0x40);
 		rc16->lalba        = ntohs(*(uint16_t *)&(task->datain.data[14])) & 0x3fff;
 		return rc16;
-	case SCSI_GET_LBA_STATUS:
-		len = ntohl(*(uint32_t *)&(task->datain.data[0]));
+	}
+	case SCSI_GET_LBA_STATUS: {
+		struct scsi_get_lba_status *gls = scsi_malloc(task,
+							      sizeof(*gls));
+		int32_t len = ntohl(*(uint32_t *)&(task->datain.data[0]));
+		int i;
+
+		if (gls == NULL) {
+			return NULL;
+		}
+
 		if (len > task->datain.size - 4) {
 			len = task->datain.size - 4;
 		}
 		len = len / 16;
 
-		gls = scsi_malloc(task, sizeof(struct scsi_get_lba_status));
-		if (gls == NULL) {
-			return NULL;
-		}
 		gls->num_descriptors = len;
-		gls->descriptors = scsi_malloc(task, sizeof(struct scsi_lba_status_descriptor) * gls->num_descriptors);
+		gls->descriptors = scsi_malloc(task,
+					       sizeof(*gls->descriptors) * len);
 		if (gls->descriptors == NULL) {
+			free(gls);
 			return NULL;
 		}
 
@@ -546,8 +554,9 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 
 		return gls;
 	}
-
-	return NULL;
+	default:
+		return NULL;
+	}
 }
 
 
@@ -2056,8 +2065,6 @@ scsi_cdb_serviceactionin16(enum scsi_service_action_in sa, uint32_t xferlen)
 	}
 	task->expxferlen = xferlen;
 
-	task->params.serviceactionin.sa = sa;
-
 	return task;
 }
 
@@ -2099,8 +2106,6 @@ scsi_cdb_get_lba_status(uint64_t starting_lba, uint32_t alloc_len)
 		task->xfer_dir = SCSI_XFER_NONE;
 	}
 	task->expxferlen = alloc_len;
-
-	task->params.serviceactionin.sa = SCSI_GET_LBA_STATUS;
 
 	return task;
 }

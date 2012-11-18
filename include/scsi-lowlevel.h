@@ -176,9 +176,6 @@ struct scsi_readtoc_list {
 	struct scsi_readtoc_desc desc[0];
 };
 
-struct scsi_serviceactionin_params {
-	enum scsi_service_action_in sa;
-};
 struct scsi_readtoc_params {
 	int msf;
 	int format;
@@ -222,7 +219,6 @@ struct scsi_task {
 	int expxferlen;
 	unsigned char cdb[SCSI_CDB_MAX_SIZE];
 	union {
-		struct scsi_serviceactionin_params serviceactionin;
 		struct scsi_readtoc_params         readtoc;
 		struct scsi_maintenancein_params   maintenancein;
 	} params;
