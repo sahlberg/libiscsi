@@ -1451,12 +1451,6 @@ scsi_cdb_verify12(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
 	}
 	task->expxferlen = xferlen;
 
-	task->params.verify12.lba        = lba;
-	task->params.verify12.num_blocks = xferlen/blocksize;
-	task->params.verify12.vprotect   = vprotect;
-	task->params.verify12.dpo        = dpo;
-	task->params.verify12.bytchk     = bytchk;
-
 	return task;
 }
 
