@@ -176,13 +176,6 @@ struct scsi_readtoc_list {
 	struct scsi_readtoc_desc desc[0];
 };
 
-struct scsi_verify10_params {
-	uint32_t lba;
-	uint32_t num_blocks;
-	int vprotect;
-	int dpo;
-	int bytchk;
-};
 struct scsi_verify12_params {
 	uint32_t lba;
 	uint32_t num_blocks;
@@ -257,7 +250,6 @@ struct scsi_task {
 	int expxferlen;
 	unsigned char cdb[SCSI_CDB_MAX_SIZE];
 	union {
-		struct scsi_verify10_params        verify10;
 		struct scsi_verify12_params        verify12;
 		struct scsi_verify16_params        verify16;
 		struct scsi_readcapacity10_params  readcapacity10;
