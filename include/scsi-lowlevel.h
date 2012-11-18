@@ -176,10 +176,6 @@ struct scsi_readtoc_list {
 	struct scsi_readtoc_desc desc[0];
 };
 
-struct scsi_orwrite_params {
-	uint64_t lba;
-	uint32_t num_blocks;
-};
 struct scsi_compareandwrite_params {
 	uint64_t lba;
 	uint32_t num_blocks;
@@ -277,7 +273,6 @@ struct scsi_task {
 	int expxferlen;
 	unsigned char cdb[SCSI_CDB_MAX_SIZE];
 	union {
-		struct scsi_orwrite_params         orwrite;
 		struct scsi_compareandwrite_params compareandwrite;
 		struct scsi_writeverify10_params   writeverify10;
 		struct scsi_writeverify12_params   writeverify12;

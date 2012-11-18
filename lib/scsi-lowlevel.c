@@ -1328,9 +1328,6 @@ scsi_cdb_orwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
 	}
 	task->expxferlen = xferlen;
 
-	task->params.orwrite.lba        = lba;
-	task->params.orwrite.num_blocks = xferlen/blocksize;
-
 	return task;
 }
 
