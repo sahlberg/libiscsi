@@ -1492,12 +1492,6 @@ scsi_cdb_verify16(uint64_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
 	}
 	task->expxferlen = xferlen;
 
-	task->params.verify16.lba        = lba;
-	task->params.verify16.num_blocks = xferlen/blocksize;
-	task->params.verify16.vprotect   = vprotect;
-	task->params.verify16.dpo        = dpo;
-	task->params.verify16.bytchk     = bytchk;
-
 	return task;
 }
 
