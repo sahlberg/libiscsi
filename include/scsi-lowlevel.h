@@ -176,13 +176,6 @@ struct scsi_readtoc_list {
 	struct scsi_readtoc_desc desc[0];
 };
 
-struct scsi_readtoc_params {
-	int msf;
-	int format;
-	int track_session;
-};
-
-
 struct scsi_report_supported_params {
 	int return_timeouts;
 };
@@ -219,7 +212,6 @@ struct scsi_task {
 	int expxferlen;
 	unsigned char cdb[SCSI_CDB_MAX_SIZE];
 	union {
-		struct scsi_readtoc_params         readtoc;
 		struct scsi_maintenancein_params   maintenancein;
 	} params;
 

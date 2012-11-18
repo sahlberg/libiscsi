@@ -317,6 +317,8 @@ scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len)
 		task->cdb[1] |= 0x02;
 	}
 
+	task->cdb[2] = format & 0xf;
+
 	/* Prevent invalid setting of Track/Session Number */
 	if (format == SCSI_READ_TOC || format == SCSI_READ_FULL_TOC) {
 		task->cdb[6] = 0xff & track_session;
@@ -331,10 +333,6 @@ scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len)
 		task->xfer_dir = SCSI_XFER_NONE;
 	}
 	task->expxferlen = alloc_len;
-
-	task->params.readtoc.msf = msf;
-	task->params.readtoc.format = format;
-	task->params.readtoc.track_session = track_session;
 
 	return task;
 }
@@ -353,10 +351,16 @@ scsi_readtoc_datain_getfullsize(struct scsi_task *task)
 	return toc_data_len;
 }
 
+static inline enum scsi_readtoc_fmt
+scsi_readtoc_format(const struct scsi_task *task)
+{
+	return task->cdb[2] & 0xf;
+}
+
 static void
 scsi_readtoc_desc_unmarshall(struct scsi_task *task, struct scsi_readtoc_list *list, int i)
 {
-	switch(task->params.readtoc.format){
+	switch(scsi_readtoc_format(task)) {
 	case SCSI_READ_TOC:
 		list->desc[i].desc.toc.adr
 			= task->datain.data[4+8*i+1] & 0xf0;
@@ -403,8 +407,11 @@ scsi_readtoc_desc_unmarshall(struct scsi_task *task, struct scsi_readtoc_list *l
 		list->desc[i].desc.full.pframe
 			= task->datain.data[4+11*i+10];
 		break;
+	default:
+		break;
 	}
 }
+
 /*
  * unmarshall the data in blob for read TOC into a structure
  */
