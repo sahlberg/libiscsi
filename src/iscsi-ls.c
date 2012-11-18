@@ -340,7 +340,7 @@ int main(int argc, const char *argv[])
 	}
 	extra_argv = poptGetArgs(pc);
 	if (extra_argv) {
-		url = *extra_argv;
+		url = strdup(*extra_argv);
 		extra_argv++;
 		while (extra_argv[extra_argc]) {
 			extra_argc++;
