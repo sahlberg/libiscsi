@@ -1894,8 +1894,6 @@ scsi_cdb_preventallow(int prevent)
 	task->xfer_dir   = SCSI_XFER_NONE;
 	task->expxferlen = 0;
 
-	task->params.preventallow.prevent = prevent;
-
 	return task;
 }
 
