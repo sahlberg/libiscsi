@@ -1684,11 +1684,6 @@ scsi_cdb_modesense6(int dbd, enum scsi_modesense_page_control pc,
 	}
 	task->expxferlen = alloc_len;
 
-	task->params.modesense6.dbd           = dbd;
-	task->params.modesense6.pc            = pc;
-	task->params.modesense6.page_code     = page_code;
-	task->params.modesense6.sub_page_code = sub_page_code;
-
 	return task;
 }
 
