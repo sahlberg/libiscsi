@@ -1197,9 +1197,6 @@ scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
 	}
 	task->expxferlen = xferlen;
 
-	task->params.write10.lba        = lba;
-	task->params.write10.num_blocks = xferlen/blocksize;
-
 	return task;
 }
 
