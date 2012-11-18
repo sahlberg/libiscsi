@@ -262,7 +262,6 @@ scsi_reportluns_datain_unmarshall(struct scsi_task *task)
 	return list;
 }
 
-
 /*
  * READCAPACITY10
  */
@@ -289,13 +288,8 @@ scsi_cdb_readcapacity10(int lba, int pmi)
 	task->xfer_dir = SCSI_XFER_READ;
 	task->expxferlen = 8;
 
-	task->params.readcapacity10.lba = lba;
-	task->params.readcapacity10.pmi = pmi;
-
 	return task;
 }
-
-
 
 /*
  * READTOC
@@ -701,10 +695,6 @@ scsi_readcapacity10_datain_unmarshall(struct scsi_task *task)
 
 	return rc10;
 }
-
-
-
-
 
 /*
  * INQUIRY

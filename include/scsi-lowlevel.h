@@ -176,10 +176,6 @@ struct scsi_readtoc_list {
 	struct scsi_readtoc_desc desc[0];
 };
 
-struct scsi_readcapacity10_params {
-	int lba;
-	int pmi;
-};
 struct scsi_inquiry_params {
 	int evpd;
 	int page_code;
@@ -236,7 +232,6 @@ struct scsi_task {
 	int expxferlen;
 	unsigned char cdb[SCSI_CDB_MAX_SIZE];
 	union {
-		struct scsi_readcapacity10_params  readcapacity10;
 		struct scsi_inquiry_params         inquiry;
 		struct scsi_modesense6_params      modesense6;
 		struct scsi_serviceactionin_params serviceactionin;
