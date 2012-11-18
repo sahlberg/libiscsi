@@ -210,8 +210,6 @@ scsi_reportluns_cdb(int report_type, int alloc_len)
 	}
 	task->expxferlen = alloc_len;
 
-	task->params.reportluns.report_type = report_type;
-
 	return task;
 }
 
@@ -307,7 +305,7 @@ scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len)
 {
 	struct scsi_task *task;
 
-	if (format != SCSI_READ_TOC && format != SCSI_READ_SESSION_INFO 
+	if (format != SCSI_READ_TOC && format != SCSI_READ_SESSION_INFO
 	    && format != SCSI_READ_FULL_TOC){
 		fprintf(stderr, "Read TOC format %d not fully supported yet\n", format);
 		return NULL;
@@ -366,35 +364,35 @@ scsi_readtoc_desc_unmarshall(struct scsi_task *task, struct scsi_readtoc_list *l
 {
 	switch(task->params.readtoc.format){
 	case SCSI_READ_TOC:
-		list->desc[i].desc.toc.adr 
+		list->desc[i].desc.toc.adr
 			= task->datain.data[4+8*i+1] & 0xf0;
-		list->desc[i].desc.toc.control 
+		list->desc[i].desc.toc.control
 			= task->datain.data[4+8*i+1] & 0x0f;
-		list->desc[i].desc.toc.track 
+		list->desc[i].desc.toc.track
 			= task->datain.data[4+8*i+2];
-		list->desc[i].desc.toc.lba 
+		list->desc[i].desc.toc.lba
 			= ntohl(*(uint32_t *)&task->datain.data[4+8*i+4]);
 		break;
 	case SCSI_READ_SESSION_INFO:
-		list->desc[i].desc.ses.adr 
+		list->desc[i].desc.ses.adr
 			= task->datain.data[4+8*i+1] & 0xf0;
-		list->desc[i].desc.ses.control 
+		list->desc[i].desc.ses.control
 			= task->datain.data[4+8*i+1] & 0x0f;
-		list->desc[i].desc.ses.first_in_last 
+		list->desc[i].desc.ses.first_in_last
 			= task->datain.data[4+8*i+2];
-		list->desc[i].desc.ses.lba 
+		list->desc[i].desc.ses.lba
 			= ntohl(*(uint32_t *)&task->datain.data[4+8*i+4]);
 		break;
 	case SCSI_READ_FULL_TOC:
-		list->desc[i].desc.full.session 
+		list->desc[i].desc.full.session
 			= task->datain.data[4+11*i+0] & 0xf0;
-		list->desc[i].desc.full.adr 
+		list->desc[i].desc.full.adr
 			= task->datain.data[4+11*i+1] & 0xf0;
-		list->desc[i].desc.full.control 
+		list->desc[i].desc.full.control
 			= task->datain.data[4+11*i+1] & 0x0f;
-		list->desc[i].desc.full.tno 
+		list->desc[i].desc.full.tno
 			= task->datain.data[4+11*i+2];
-		list->desc[i].desc.full.point 
+		list->desc[i].desc.full.point
 			= task->datain.data[4+11*i+3];
 		list->desc[i].desc.full.min
 			= task->datain.data[4+11*i+4];
@@ -404,7 +402,7 @@ scsi_readtoc_desc_unmarshall(struct scsi_task *task, struct scsi_readtoc_list *l
 			= task->datain.data[4+11*i+6];
 		list->desc[i].desc.full.zero
 			= task->datain.data[4+11*i+7];
-		list->desc[i].desc.full.pmin 
+		list->desc[i].desc.full.pmin
 			= task->datain.data[4+11*i+8];
 		list->desc[i].desc.full.psec
 			= task->datain.data[4+11*i+9];
@@ -426,7 +424,7 @@ scsi_readtoc_datain_unmarshall(struct scsi_task *task)
 	if (task->datain.size < 4) {
 		return NULL;
 	}
-	
+
 	/* Do we have all data? */
 	data_len = scsi_readtoc_datain_getfullsize(task) - 2;
 	if(task->datain.size < data_len) {
@@ -434,7 +432,7 @@ scsi_readtoc_datain_unmarshall(struct scsi_task *task)
 	}
 
 	/* Remove header size (4) to get bytes in descriptor list */
-	num_desc = (data_len - 4) / 8; 
+	num_desc = (data_len - 4) / 8;
 
 	list = scsi_malloc(task, offsetof(struct scsi_readtoc_list, desc)
 			   + sizeof(struct scsi_readtoc_desc) * num_desc);
@@ -445,11 +443,11 @@ scsi_readtoc_datain_unmarshall(struct scsi_task *task)
 	list->num = num_desc;
 	list->first = task->datain.data[2];
 	list->last = task->datain.data[3];
-	
+
 	for (i = 0; i < num_desc; i++) {
 		scsi_readtoc_desc_unmarshall(task, list, i);
 	}
-		
+
 	return list;
 }
 
@@ -468,10 +466,10 @@ scsi_cdb_reserve6(void)
 
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_RESERVE6;
-		
+
 	task->cdb_size = 6;
 	task->xfer_dir = SCSI_XFER_NONE;
-	
+
 	return task;
 }
 /*
@@ -489,7 +487,7 @@ scsi_cdb_release6(void)
 
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_RELEASE6;
-		
+
 	task->cdb_size = 6;
 	task->xfer_dir = SCSI_XFER_NONE;
 
@@ -568,7 +566,7 @@ scsi_maintenancein_datain_getfullsize(struct scsi_task *task)
 {
 
 	switch (task->params.maintenancein.sa) {
-	case SCSI_REPORT_SUPPORTED_OP_CODES:	
+	case SCSI_REPORT_SUPPORTED_OP_CODES:
 		return ntohl(*(uint32_t *)&(task->datain.data[0])) + 4;
 	default:
 		return -1;
@@ -600,7 +598,7 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 			return NULL;
 		}
 		/* Does the descriptor include command timeout info? */
-		return_timeouts = task->params.maintenancein.params.reportsupported.return_timeouts; 
+		return_timeouts = task->params.maintenancein.params.reportsupported.return_timeouts;
 
 		/* Size of descriptor depends on whether timeout included. */
 		desc_size = sizeof (struct scsi_command_descriptor);
@@ -608,7 +606,7 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 			desc_size += sizeof (struct scsi_op_timeout_descriptor);
 		}
 		rsoc->num_descriptors = len / desc_size;
-		
+
 		desc = &rsoc->descriptors[0];
 		datain = (struct scsi_command_descriptor *)&task->datain.data[4];
 
@@ -619,9 +617,9 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 			if (return_timeouts) {
 				desc->to[0].descriptor_length = ntohs(datain->to[0].descriptor_length);
 				desc->to[0].command_specific = datain->to[0].command_specific;
-				desc->to[0].nominal_processing_timeout 
+				desc->to[0].nominal_processing_timeout
 					= ntohl(datain->to[0].nominal_processing_timeout);
-				desc->to[0].recommended_timeout 
+				desc->to[0].recommended_timeout
 					= ntohl(datain->to[0].recommended_timeout);
 			}
 			desc = (struct scsi_command_descriptor *)((char *)desc + desc_size);
@@ -1812,7 +1810,7 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
 	pos = 4 + ms->block_descriptor_length;
 	while (pos < task->datain.size) {
 		struct scsi_mode_page *mp;
-	
+
 		mp = scsi_malloc(task, sizeof(struct scsi_mode_page));
 		if (mp == NULL) {
 			return ms;
@@ -1875,7 +1873,7 @@ scsi_cdb_startstopunit(int immed, int pcm, int pc, int no_flush, int loej, int s
 	if (immed) {
 		task->cdb[1] |= 0x01;
 	}
-	task->cdb[3] |= pcm & 0x0f; 
+	task->cdb[3] |= pcm & 0x0f;
 	task->cdb[4] |= (pc << 4) & 0xf0;
 	if (no_flush) {
 		task->cdb[4] |= 0x04;
@@ -2545,7 +2543,7 @@ scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *coun
 			/* someone issued a read but did not provide enough user buffers for all the data.
 			 * maybe someone tried to read just 512 bytes off a MMC device?
 			 */
-			return NULL;			
+			return NULL;
 		}
 	}
 
@@ -2555,4 +2553,3 @@ scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *coun
 
 	return &sdb->data[pos];
 }
-

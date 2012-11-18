@@ -176,9 +176,6 @@ struct scsi_readtoc_list {
 	struct scsi_readtoc_desc desc[0];
 };
 
-struct scsi_reportluns_params {
-	int report_type;
-};
 struct scsi_read6_params {
 	uint32_t lba;
 	uint32_t num_blocks;
@@ -337,7 +334,6 @@ struct scsi_task {
 		struct scsi_verify12_params        verify12;
 		struct scsi_verify16_params        verify16;
 		struct scsi_readcapacity10_params  readcapacity10;
-		struct scsi_reportluns_params      reportluns;
 		struct scsi_inquiry_params         inquiry;
 		struct scsi_modesense6_params      modesense6;
 		struct scsi_serviceactionin_params serviceactionin;
@@ -780,7 +776,7 @@ struct scsi_op_timeout_descriptor {
 	uint8_t command_specific;
 	uint32_t nominal_processing_timeout;
 	uint32_t recommended_timeout;
-	
+
 };
 struct scsi_command_descriptor {
 	uint8_t op_code;
