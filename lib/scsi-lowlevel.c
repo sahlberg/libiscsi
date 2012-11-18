@@ -728,10 +728,19 @@ scsi_cdb_inquiry(int evpd, int page_code, int alloc_len)
 	}
 	task->expxferlen = alloc_len;
 
-	task->params.inquiry.evpd      = evpd;
-	task->params.inquiry.page_code = page_code;
-
 	return task;
+}
+
+static inline int
+scsi_inquiry_evpd_set(const struct scsi_task *task)
+{
+	return task->cdb[1] & 0x1;
+}
+
+static inline uint8_t
+scsi_inquiry_page_code(const struct scsi_task *task)
+{
+	return task->cdb[2];
 }
 
 /*
@@ -741,11 +750,11 @@ scsi_cdb_inquiry(int evpd, int page_code, int alloc_len)
 static int
 scsi_inquiry_datain_getfullsize(struct scsi_task *task)
 {
-	if (task->params.inquiry.evpd == 0) {
+	if (scsi_inquiry_evpd_set(task) == 0) {
 		return task->datain.data[4] + 5;
 	}
 
-	switch (task->params.inquiry.page_code) {
+	switch (scsi_inquiry_page_code(task)) {
 	case SCSI_INQUIRY_PAGECODE_SUPPORTED_VPD_PAGES:
 	case SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS:
 	case SCSI_INQUIRY_PAGECODE_UNIT_SERIAL_NUMBER:
@@ -759,217 +768,251 @@ scsi_inquiry_datain_getfullsize(struct scsi_task *task)
 	}
 }
 
+static struct scsi_inquiry_standard *
+scsi_inquiry_unmarshall_standard(struct scsi_task *task)
+{
+	struct scsi_inquiry_standard *inq = scsi_malloc(task, sizeof(*inq));
+	if (inq == NULL) {
+		return NULL;
+	}
+
+	inq->qualifier              = (task->datain.data[0]>>5)&0x07;
+	inq->device_type            = task->datain.data[0]&0x1f;
+	inq->rmb                    = !!(task->datain.data[1]&0x80);
+	inq->version                = task->datain.data[2];
+	inq->normaca                = !!(task->datain.data[3]&0x20);
+	inq->hisup                  = !!(task->datain.data[3]&0x10);
+	inq->response_data_format   = task->datain.data[3]&0x0f;
+
+	inq->additional_length      = task->datain.data[4];
+
+	inq->sccs                   = !!(task->datain.data[5]&0x80);
+	inq->acc                    = !!(task->datain.data[5]&0x40);
+	inq->tpgs                   = (task->datain.data[5]>>4)&0x03;
+	inq->threepc                = !!(task->datain.data[5]&0x08);
+	inq->protect                = !!(task->datain.data[5]&0x01);
+
+	inq->encserv                = !!(task->datain.data[6]&0x40);
+	inq->multip                 = !!(task->datain.data[6]&0x10);
+	inq->addr16                 = !!(task->datain.data[6]&0x01);
+	inq->wbus16                 = !!(task->datain.data[7]&0x20);
+	inq->sync                   = !!(task->datain.data[7]&0x10);
+	inq->cmdque                 = !!(task->datain.data[7]&0x02);
+
+	memcpy(&inq->vendor_identification[0],
+	       &task->datain.data[8], 8);
+	memcpy(&inq->product_identification[0],
+	       &task->datain.data[16], 16);
+	memcpy(&inq->product_revision_level[0],
+	       &task->datain.data[32], 4);
+
+	inq->clocking               = (task->datain.data[56]>>2)&0x03;
+	inq->qas                    = !!(task->datain.data[56]&0x02);
+	inq->ius                    = !!(task->datain.data[56]&0x01);
+
+	return inq;
+}
+
+static struct scsi_inquiry_supported_pages *
+scsi_inquiry_unmarshall_supported_pages(struct scsi_task *task)
+{
+	struct scsi_inquiry_supported_pages *inq = scsi_malloc(task,
+							       sizeof(*inq));
+	if (inq == NULL) {
+		return NULL;
+	}
+	inq->qualifier = (task->datain.data[0]>>5)&0x07;
+	inq->device_type = task->datain.data[0]&0x1f;
+	inq->pagecode = task->datain.data[1];
+
+	inq->num_pages = task->datain.data[3];
+	inq->pages = scsi_malloc(task, inq->num_pages);
+	if (inq->pages == NULL) {
+		free (inq);
+		return NULL;
+	}
+	memcpy(inq->pages, &task->datain.data[4], inq->num_pages);
+	return inq;
+}
+
+static struct scsi_inquiry_unit_serial_number *
+scsi_inquiry_unmarshall_unit_serial_number(struct scsi_task* task)
+{
+	struct scsi_inquiry_unit_serial_number *inq = scsi_malloc(task,
+								  sizeof(*inq));
+	if (inq == NULL) {
+		return NULL;
+	}
+	inq->qualifier = (task->datain.data[0]>>5)&0x07;
+	inq->device_type = task->datain.data[0]&0x1f;
+	inq->pagecode = task->datain.data[1];
+
+	inq->usn = scsi_malloc(task, task->datain.data[3]+1);
+	if (inq->usn == NULL) {
+		free(inq);
+		return NULL;
+	}
+	memcpy(inq->usn, &task->datain.data[4], task->datain.data[3]);
+	inq->usn[task->datain.data[3]] = 0;
+	return inq;
+}
+
+static struct scsi_inquiry_device_identification *
+scsi_inquiry_unmarshall_device_identification(struct scsi_task *task)
+{
+	struct scsi_inquiry_device_identification *inq = scsi_malloc(task,
+								     sizeof(*inq));
+	int remaining = ntohs(*(uint16_t *)&task->datain.data[2]);
+	unsigned char *dptr;
+
+	if (inq == NULL) {
+		return NULL;
+	}
+	inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+	inq->device_type           = task->datain.data[0]&0x1f;
+	inq->pagecode              = task->datain.data[1];
+
+	dptr = &task->datain.data[4];
+	while (remaining > 0) {
+		struct scsi_inquiry_device_designator *dev =
+			scsi_malloc(task, sizeof(*dev));
+		if (dev == NULL) {
+			goto err;
+		}
+
+		dev->next = inq->designators;
+		inq->designators = dev;
+
+		dev->protocol_identifier = (dptr[0]>>4) & 0x0f;
+		dev->code_set            = dptr[0] & 0x0f;
+		dev->piv                 = !!(dptr[1]&0x80);
+		dev->association         = (dptr[1]>>4)&0x03;
+		dev->designator_type     = dptr[1]&0x0f;
+
+		dev->designator_length   = dptr[3];
+		dev->designator = scsi_malloc(task, dev->designator_length + 1);
+		if (dev->designator == NULL) {
+			goto err;
+		}
+		dev->designator[dev->designator_length] = 0;
+		memcpy(dev->designator, &dptr[4],
+		       dev->designator_length);
+
+		remaining -= 4;
+		remaining -= dev->designator_length;
+
+		dptr += dev->designator_length + 4;
+	}
+	return inq;
+
+ err:
+	while (inq->designators) {
+		struct scsi_inquiry_device_designator *dev = inq->designators;
+		inq->designators = dev->next;
+		free(dev->designator);
+		free(dev);
+	}
+
+	free(inq);
+	return NULL;
+}
+
+static struct scsi_inquiry_block_limits *
+scsi_inquiry_unmarshall_block_limits(struct scsi_task *task)
+{
+	struct scsi_inquiry_block_limits *inq = scsi_malloc(task,
+							    sizeof(*inq));
+	if (inq == NULL) {
+		return NULL;
+	}
+	inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+	inq->device_type           = task->datain.data[0]&0x1f;
+	inq->pagecode              = task->datain.data[1];
+
+	inq->wsnz                  = task->datain.data[4] & 0x01;
+	inq->max_cmp               = task->datain.data[5];
+	inq->opt_gran              = ntohs(*(uint16_t *)&task->datain.data[6]);
+	inq->max_xfer_len          = ntohl(*(uint32_t *)&task->datain.data[8]);
+	inq->opt_xfer_len          = ntohl(*(uint32_t *)&task->datain.data[12]);
+	inq->max_prefetch          = ntohl(*(uint32_t *)&task->datain.data[16]);
+	inq->max_unmap             = ntohl(*(uint32_t *)&task->datain.data[20]);
+	inq->max_unmap_bdc         = ntohl(*(uint32_t *)&task->datain.data[24]);
+	inq->opt_unmap_gran        = ntohl(*(uint32_t *)&task->datain.data[28]);
+	inq->ugavalid              = !!(task->datain.data[32]&0x80);
+	inq->unmap_gran_align      = ntohl(*(uint32_t *)&task->datain.data[32]) & 0x7fffffff;
+	inq->max_ws_len            = ntohl(*(uint32_t *)&task->datain.data[36]);
+	inq->max_ws_len            = (inq->max_ws_len << 32) | ntohl(*(uint32_t *)&task->datain.data[40]);
+
+	return inq;
+}
+
+static struct scsi_inquiry_block_device_characteristics *
+scsi_inquiry_unmarshall_block_device_characteristics(struct scsi_task *task)
+{
+	struct scsi_inquiry_block_device_characteristics *inq =
+		scsi_malloc(task, sizeof(*inq));
+	if (inq == NULL) {
+		return NULL;
+	}
+	inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+	inq->device_type           = task->datain.data[0]&0x1f;
+	inq->pagecode              = task->datain.data[1];
+
+	inq->medium_rotation_rate  = ntohs(*(uint16_t *)&task->datain.data[4]);
+	return inq;
+}
+
+struct scsi_inquiry_logical_block_provisioning *
+scsi_inquiry_unmarshall_logical_block_provisioning(struct scsi_task *task)
+{
+	struct scsi_inquiry_logical_block_provisioning *inq =
+		scsi_malloc(task, sizeof(*inq));
+	if (inq == NULL) {
+		return NULL;
+	}
+	inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+	inq->device_type           = task->datain.data[0]&0x1f;
+	inq->pagecode              = task->datain.data[1];
+
+	inq->threshold_exponent = task->datain.data[4];
+	inq->lbpu               = !!(task->datain.data[5] & 0x80);
+	inq->lbpws              = !!(task->datain.data[5] & 0x40);
+	inq->lbpws10            = !!(task->datain.data[5] & 0x20);
+	inq->lbprz              = !!(task->datain.data[5] & 0x04);
+	inq->anc_sup            = !!(task->datain.data[5] & 0x02);
+	inq->dp	                = !!(task->datain.data[5] & 0x01);
+	inq->provisioning_type  = task->datain.data[6] & 0x07;
+
+	return inq;
+}
+
 /*
  * unmarshall the data in blob for inquiry into a structure
  */
 static void *
 scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 {
-	if (task->params.inquiry.evpd == 0) {
-		struct scsi_inquiry_standard *inq;
-
-		/* standard inquiry */
-		inq = scsi_malloc(task, sizeof(struct scsi_inquiry_standard));
-		if (inq == NULL) {
-			return NULL;
-		}
-
-		inq->qualifier              = (task->datain.data[0]>>5)&0x07;
-		inq->device_type            = task->datain.data[0]&0x1f;
-		inq->rmb                    = !!(task->datain.data[1]&0x80);
-		inq->version                = task->datain.data[2];
-		inq->normaca                = !!(task->datain.data[3]&0x20);
-		inq->hisup                  = !!(task->datain.data[3]&0x10);
-		inq->response_data_format   = task->datain.data[3]&0x0f;
-
-		inq->additional_length      = task->datain.data[4];
-
-		inq->sccs                   = !!(task->datain.data[5]&0x80);
-		inq->acc                    = !!(task->datain.data[5]&0x40);
-		inq->tpgs                   = (task->datain.data[5]>>4)&0x03;
-		inq->threepc                = !!(task->datain.data[5]&0x08);
-		inq->protect                = !!(task->datain.data[5]&0x01);
-
-		inq->encserv                = !!(task->datain.data[6]&0x40);
-		inq->multip                 = !!(task->datain.data[6]&0x10);
-		inq->addr16                 = !!(task->datain.data[6]&0x01);
-		inq->wbus16                 = !!(task->datain.data[7]&0x20);
-		inq->sync                   = !!(task->datain.data[7]&0x10);
-		inq->cmdque                 = !!(task->datain.data[7]&0x02);
-
-		memcpy(&inq->vendor_identification[0],
-		       &task->datain.data[8], 8);
-		memcpy(&inq->product_identification[0],
-		       &task->datain.data[16], 16);
-		memcpy(&inq->product_revision_level[0],
-		       &task->datain.data[32], 4);
-
-		inq->clocking               = (task->datain.data[56]>>2)&0x03;
-		inq->qas                    = !!(task->datain.data[56]&0x02);
-		inq->ius                    = !!(task->datain.data[56]&0x01);
-
-		return inq;
+	if (scsi_inquiry_evpd_set(task) == 0) {
+		return scsi_inquiry_unmarshall_standard(task);
 	}
 
-	if (task->params.inquiry.page_code
-	    == SCSI_INQUIRY_PAGECODE_SUPPORTED_VPD_PAGES) {
-		struct scsi_inquiry_supported_pages *inq;
-
-		inq = scsi_malloc(task,
-			   sizeof(struct scsi_inquiry_supported_pages));
-		if (inq == NULL) {
-			return NULL;
-		}
-		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
-		inq->device_type           = task->datain.data[0]&0x1f;
-		inq->pagecode              = task->datain.data[1];
-
-		inq->num_pages = task->datain.data[3];
-		inq->pages = scsi_malloc(task, inq->num_pages);
-		if (inq->pages == NULL) {
-			return NULL;
-		}
-		memcpy(inq->pages, &task->datain.data[4], inq->num_pages);
-		return inq;
-	} else if (task->params.inquiry.page_code
-		   == SCSI_INQUIRY_PAGECODE_UNIT_SERIAL_NUMBER) {
-		struct scsi_inquiry_unit_serial_number *inq;
-
-		inq = scsi_malloc(task,
-			   sizeof(struct scsi_inquiry_unit_serial_number));
-		if (inq == NULL) {
-			return NULL;
-		}
-		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
-		inq->device_type           = task->datain.data[0]&0x1f;
-		inq->pagecode              = task->datain.data[1];
-
-		inq->usn = scsi_malloc(task, task->datain.data[3]+1);
-		if (inq->usn == NULL) {
-			return NULL;
-		}
-		memcpy(inq->usn, &task->datain.data[4], task->datain.data[3]);
-		inq->usn[task->datain.data[3]] = 0;
-		return inq;
-	} else if (task->params.inquiry.page_code
-		   == SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION) {
-		struct scsi_inquiry_device_identification *inq;
-		int remaining = ntohs(*(uint16_t *)&task->datain.data[2]);
-		unsigned char *dptr;
-
-		inq = scsi_malloc(task,
-			   sizeof(struct scsi_inquiry_device_identification));
-		if (inq == NULL) {
-			return NULL;
-		}
-		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
-		inq->device_type           = task->datain.data[0]&0x1f;
-		inq->pagecode              = task->datain.data[1];
-
-		dptr = &task->datain.data[4];
-		while (remaining > 0) {
-			struct scsi_inquiry_device_designator *dev;
-
-			dev = scsi_malloc(task,
-			      sizeof(struct scsi_inquiry_device_designator));
-			if (dev == NULL) {
-				return NULL;
-			}
-
-			dev->next = inq->designators;
-			inq->designators = dev;
-
-			dev->protocol_identifier = (dptr[0]>>4) & 0x0f;
-			dev->code_set            = dptr[0] & 0x0f;
-			dev->piv                 = !!(dptr[1]&0x80);
-			dev->association         = (dptr[1]>>4)&0x03;
-			dev->designator_type     = dptr[1]&0x0f;
-
-			dev->designator_length   = dptr[3];
-			dev->designator          = scsi_malloc(task,
-						   dev->designator_length+1);
-			if (dev->designator == NULL) {
-				return NULL;
-			}
-			dev->designator[dev->designator_length] = 0;
-			memcpy(dev->designator, &dptr[4],
-			       dev->designator_length);
-
-			remaining -= 4;
-			remaining -= dev->designator_length;
-
-			dptr += dev->designator_length + 4;
-		}
-		return inq;
-	} else if (task->params.inquiry.page_code
-		   == SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS) {
-		struct scsi_inquiry_block_limits *inq;
-
-		inq = scsi_malloc(task,
-		      sizeof(struct scsi_inquiry_block_limits));
-		if (inq == NULL) {
-			return NULL;
-		}
-		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
-		inq->device_type           = task->datain.data[0]&0x1f;
-		inq->pagecode              = task->datain.data[1];
-
-		inq->wsnz                  = task->datain.data[4] & 0x01;
-		inq->max_cmp               = task->datain.data[5];
-		inq->opt_gran              = ntohs(*(uint16_t *)&task->datain.data[6]);
-		inq->max_xfer_len          = ntohl(*(uint32_t *)&task->datain.data[8]);
-		inq->opt_xfer_len          = ntohl(*(uint32_t *)&task->datain.data[12]);
-		inq->max_prefetch          = ntohl(*(uint32_t *)&task->datain.data[16]);
-		inq->max_unmap             = ntohl(*(uint32_t *)&task->datain.data[20]);
-		inq->max_unmap_bdc         = ntohl(*(uint32_t *)&task->datain.data[24]);
-		inq->opt_unmap_gran        = ntohl(*(uint32_t *)&task->datain.data[28]);
-		inq->ugavalid              = !!(task->datain.data[32]&0x80);
-		inq->unmap_gran_align      = ntohl(*(uint32_t *)&task->datain.data[32]) & 0x7fffffff;
-		inq->max_ws_len            = ntohl(*(uint32_t *)&task->datain.data[36]);
-		inq->max_ws_len            = (inq->max_ws_len << 32) | ntohl(*(uint32_t *)&task->datain.data[40]);
-
-		return inq;
-	} else if (task->params.inquiry.page_code
-		   == SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS) {
-		struct scsi_inquiry_block_device_characteristics *inq;
-
-		inq = scsi_malloc(task,
-		      sizeof(struct scsi_inquiry_block_device_characteristics));
-		if (inq == NULL) {
-			return NULL;
-		}
-		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
-		inq->device_type           = task->datain.data[0]&0x1f;
-		inq->pagecode              = task->datain.data[1];
-
-		inq->medium_rotation_rate  = ntohs(*(uint16_t *)&task->datain.data[4]);
-		return inq;
-	} else if (task->params.inquiry.page_code
-		   == SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING) {
-		struct scsi_inquiry_logical_block_provisioning *inq;
-
-		inq = scsi_malloc(task,
-			   sizeof(struct scsi_inquiry_logical_block_provisioning));
-		if (inq == NULL) {
-			return NULL;
-		}
-		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
-		inq->device_type           = task->datain.data[0]&0x1f;
-		inq->pagecode              = task->datain.data[1];
-
-		inq->threshold_exponent = task->datain.data[4];
-		inq->lbpu               = !!(task->datain.data[5] & 0x80);
-		inq->lbpws              = !!(task->datain.data[5] & 0x40);
-		inq->lbpws10            = !!(task->datain.data[5] & 0x20);
-		inq->lbprz              = !!(task->datain.data[5] & 0x04);
-		inq->anc_sup            = !!(task->datain.data[5] & 0x02);
-		inq->dp	                = !!(task->datain.data[5] & 0x01);
-		inq->provisioning_type  = task->datain.data[6] & 0x07;
-
-		return inq;
+	switch (scsi_inquiry_page_code(task))
+	{
+	case SCSI_INQUIRY_PAGECODE_SUPPORTED_VPD_PAGES:
+		return scsi_inquiry_unmarshall_supported_pages(task);
+	case SCSI_INQUIRY_PAGECODE_UNIT_SERIAL_NUMBER:
+		return scsi_inquiry_unmarshall_unit_serial_number(task);
+	case SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION:
+		return scsi_inquiry_unmarshall_device_identification(task);
+	case SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS:
+		return scsi_inquiry_unmarshall_block_limits(task);
+	case SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS:
+		return scsi_inquiry_unmarshall_block_device_characteristics(task);
+	case  SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING:
+		return scsi_inquiry_unmarshall_logical_block_provisioning(task);
+	default:
+		return NULL;
 	}
-
-	return NULL;
 }
 
 /*
