@@ -1371,9 +1371,6 @@ scsi_cdb_compareandwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrpr
 	}
 	task->expxferlen = xferlen;
 
-	task->params.compareandwrite.lba        = lba;
-	task->params.compareandwrite.num_blocks = xferlen/blocksize;
-
 	return task;
 }
 
