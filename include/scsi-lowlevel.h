@@ -180,13 +180,6 @@ struct scsi_report_supported_params {
 	int return_timeouts;
 };
 
-struct scsi_maintenancein_params {
-	enum scsi_maintenance_in sa;
-	union {
-		struct scsi_report_supported_params reportsupported;
-	} params;
-};
-
 struct scsi_sense {
 	unsigned char       error_type;
 	enum scsi_sense_key key;
@@ -211,9 +204,6 @@ struct scsi_task {
 	int xfer_dir;
 	int expxferlen;
 	unsigned char cdb[SCSI_CDB_MAX_SIZE];
-	union {
-		struct scsi_maintenancein_params   maintenancein;
-	} params;
 
 	enum scsi_residual residual_status;
 	int residual;

@@ -566,6 +566,17 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 	}
 }
 
+static inline int
+scsi_maintenancein_return_timeouts(const struct scsi_task *task)
+{
+	return task->cdb[2] & 0x80;
+}
+
+static inline uint8_t
+scsi_maintenancein_sa(const struct scsi_task *task)
+{
+	return task->cdb[1];
+}
 
 /*
  * parse the data in blob and calculate the size of a full maintenancein
@@ -575,15 +586,13 @@ static int
 scsi_maintenancein_datain_getfullsize(struct scsi_task *task)
 {
 
-	switch (task->params.maintenancein.sa) {
+	switch (scsi_maintenancein_sa(task)) {
 	case SCSI_REPORT_SUPPORTED_OP_CODES:
 		return ntohl(*(uint32_t *)&(task->datain.data[0])) + 4;
 	default:
 		return -1;
 	}
-
 }
-
 
 /*
  * maintenance_in unmarshall
@@ -596,7 +605,7 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 	uint32_t len, i;
 	int return_timeouts, desc_size;
 
-	switch (task->params.maintenancein.sa) {
+	switch (scsi_maintenancein_sa(task)) {
 	case SCSI_REPORT_SUPPORTED_OP_CODES:
 		if (task->datain.size < 4) {
 			return NULL;
@@ -608,7 +617,7 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 			return NULL;
 		}
 		/* Does the descriptor include command timeout info? */
-		return_timeouts = task->params.maintenancein.params.reportsupported.return_timeouts;
+		return_timeouts = scsi_maintenancein_return_timeouts(task);
 
 		/* Size of descriptor depends on whether timeout included. */
 		desc_size = sizeof (struct scsi_command_descriptor);
@@ -673,9 +682,6 @@ scsi_cdb_report_supported_opcodes(int return_timeouts, uint32_t alloc_len)
 		task->xfer_dir = SCSI_XFER_NONE;
 	}
 	task->expxferlen = alloc_len;
-
-	task->params.maintenancein.sa = SCSI_REPORT_SUPPORTED_OP_CODES;
-	task->params.maintenancein.params.reportsupported.return_timeouts = return_timeouts;
 
 	return task;
 }
