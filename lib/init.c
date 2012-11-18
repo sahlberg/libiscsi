@@ -316,8 +316,7 @@ iscsi_set_log_level(struct iscsi_context *iscsi, int level)
 const char *
 iscsi_get_error(struct iscsi_context *iscsi)
 {
-	if (iscsi==NULL) return "";
-	return iscsi->error_string;
+	return iscsi ? iscsi->error_string : "";
 }
 
 const char *
