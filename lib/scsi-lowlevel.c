@@ -1024,9 +1024,6 @@ scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize)
 	}
 	task->expxferlen = xferlen;
 
-	task->params.read6.lba        = lba;
-	task->params.read6.num_blocks = num_blocks;
-
 	return task;
 }
 
