@@ -176,10 +176,6 @@ struct scsi_readtoc_list {
 	struct scsi_readtoc_desc desc[0];
 };
 
-struct scsi_write16_params {
-	uint64_t lba;
-	uint32_t num_blocks;
-};
 struct scsi_startstopunit_params {
 	int immed;
 	int pcm;
@@ -292,7 +288,6 @@ struct scsi_task {
 	int expxferlen;
 	unsigned char cdb[SCSI_CDB_MAX_SIZE];
 	union {
-		struct scsi_write16_params         write16;
 		struct scsi_startstopunit_params   startstopunit;
 		struct scsi_preventallow_params    preventallow;
 		struct scsi_orwrite_params         orwrite;
