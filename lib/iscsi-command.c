@@ -1082,8 +1082,9 @@ iscsi_verify10_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		return NULL;
 	}
 
-	outdata.data = data;
-	outdata.size = datalen;
+	/* We only transfer data if BYTCHK is true */
+	outdata.data = bytchk ? data    : NULL;
+	outdata.size = bytchk ? datalen : 0;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb, &outdata,
 				       private_data) != 0) {
@@ -1115,8 +1116,9 @@ iscsi_verify12_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		return NULL;
 	}
 
-	outdata.data = data;
-	outdata.size = datalen;
+	/* We only transfer data if BYTCHK is true */
+	outdata.data = bytchk ? data    : NULL;
+	outdata.size = bytchk ? datalen : 0;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb, &outdata,
 				       private_data) != 0) {
@@ -1148,8 +1150,9 @@ iscsi_verify16_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		return NULL;
 	}
 
-	outdata.data = data;
-	outdata.size = datalen;
+	/* We only transfer data if BYTCHK is true */
+	outdata.data = bytchk ? data    : NULL;
+	outdata.size = bytchk ? datalen : 0;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb, &outdata,
 				       private_data) != 0) {
