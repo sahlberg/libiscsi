@@ -1154,9 +1154,6 @@ scsi_cdb_read16(uint64_t lba, uint32_t xferlen, int blocksize, int rdprotect, in
 	}
 	task->expxferlen = xferlen;
 
-	task->params.read16.lba        = lba;
-	task->params.read16.num_blocks = xferlen/blocksize;
-
 	return task;
 }
 
