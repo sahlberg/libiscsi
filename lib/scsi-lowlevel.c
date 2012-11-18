@@ -1869,13 +1869,6 @@ scsi_cdb_startstopunit(int immed, int pcm, int pc, int no_flush, int loej, int s
 	task->xfer_dir   = SCSI_XFER_NONE;
 	task->expxferlen = 0;
 
-	task->params.startstopunit.immed    = immed;
-	task->params.startstopunit.pcm      = pcm;
-	task->params.startstopunit.pc       = pc;
-	task->params.startstopunit.no_flush = no_flush;
-	task->params.startstopunit.loej     = loej;
-	task->params.startstopunit.start    = start;
-
 	return task;
 }
 
