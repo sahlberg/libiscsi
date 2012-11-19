@@ -25,16 +25,16 @@ int T0272_verify16_mismatch_no_cmp(const char *initiator, const char *url, int d
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_task *vtask;
-	struct scsi_readcapacity16 *rc16;
+	struct scsi_readcapacity10 *rc10;
 	int ret, i, lun;
 	uint32_t block_size;
 
 	printf("0272_verify16_mismatch_no_cmp:\n");
 	printf("==============================\n");
 	if (show_info) {
-		printf("Test VERIFY16 BYTCHK:0 should not detect mismatches.\n");
-		printf("1, Verify the first 1-256 blocks does nto detect a mismatch if BYTCHK is 0\n");
+		printf("Test VERIFY16 BYTCHK:0 only checks medium and should never fail unless the medium is bad.\n");
+		printf("1, Read the first 256 blocks and verify the medium is good.\n");
+		printf("2, Verify the first 1-256 blocks retruns SUCCESS if BYTCHK is 0\n");
 		printf("\n");
 		return 0;
 	}
@@ -46,99 +46,86 @@ int T0272_verify16_mismatch_no_cmp(const char *initiator, const char *url, int d
 	}
 
 	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
+	task = iscsi_readcapacity10_sync(iscsi, lun, 0, 0);
 	if (task == NULL) {
-		printf("Failed to send readcapacity16 command: %s\n", iscsi_get_error(iscsi));
+		printf("Failed to send READCAPACITY10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
-		printf("Readcapacity16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		printf("READCAPACITY10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall readcapacity16 data. %s\n", iscsi_get_error(iscsi));
+	rc10 = scsi_datain_unmarshall(task);
+	if (rc10 == NULL) {
+		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	block_size = rc16->block_length;
+	block_size = rc10->block_size;
 	scsi_free_scsi_task(task);
-
 
 
 	ret = 0;
 
 	/* read and verify the first 1 - 256 blocks at the start of the LUN */
-	printf("Read+verify first 1-256 blocks ... ");
-	for (i = 1; i <= 256; i++) {
-		unsigned char *buf;
+	printf("Read 256 blocks and verify they are good ... ");
+	task = iscsi_read16_sync(iscsi, lun, 0, 256 * block_size, block_size, 0, 0, 0, 0, 0);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send READ16 command: %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		goto test2;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("READ16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
 
-		task = iscsi_read16_sync(iscsi, lun, 0, i * block_size, block_size, 0, 0, 0, 0, 0);
+
+
+test2:
+	printf("Verify first 1-256 ... ");
+	for (i = 1; i <= 256; i++) {
+		task = iscsi_verify16_sync(iscsi, lun, NULL, i * block_size, 0, 0, 1, 0, block_size);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
-			printf("Failed to send read16 command: %s\n", iscsi_get_error(iscsi));
+			printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test2;
+			goto test3;
 		}
-		if (task->status != SCSI_STATUS_GOOD) {
-		        printf("[FAILED]\n");
-			printf("Read16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test2;
-		}
-
-		buf = task->datain.data;
-		if (buf == NULL) {
-		        printf("[FAILED]\n");
-			printf("Failed to access DATA-IN buffer %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test2;
-		}
-		/* flip a random byte in the data */
-		buf[random() % task->datain.size] ^= 'X';
-
-		/* bytechk == 0 ==> target should NOT compate the data so should
-		   not detect the mismatch.
-		*/
-		vtask = iscsi_verify16_sync(iscsi, lun, buf, i * block_size, 0, 0, 1, 0, block_size);
-		if (vtask == NULL) {
-		        printf("[FAILED]\n");
-			printf("Failed to send verify16 command: %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test2;
-		}
-		if (vtask->status        == SCSI_STATUS_CHECK_CONDITION
-		    && vtask->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-		    && vtask->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		if (task->status        == SCSI_STATUS_CHECK_CONDITION
+		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 			printf("[SKIPPED]\n");
 			printf("Opcode is not implemented on target\n");
 			scsi_free_scsi_task(task);
-			scsi_free_scsi_task(vtask);
 			ret = -2;
 			goto finished;
 		}
-		if (vtask->status != SCSI_STATUS_GOOD) {
+		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
-			printf("Verify16 returned sense but BYTCHK==1 means it should not check/compare the data.\n");
+			printf("VERIFY16 returned sense but BYTCHK==1 means it should not check/compare the data. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			scsi_free_scsi_task(vtask);
 			goto test2;
 		}
 
 		scsi_free_scsi_task(task);
-		scsi_free_scsi_task(vtask);
 	}
 	printf("[OK]\n");
 
-test2:
+
+test3:
+
 
 finished:
 	iscsi_logout_sync(iscsi);

@@ -1433,12 +1433,13 @@ scsi_cdb_verify10(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
 	*(uint16_t *)&task->cdb[7] = htons(xferlen/blocksize);
 
 	task->cdb_size = 10;
-	if (xferlen != 0) {
+	if (xferlen != 0 && bytchk) {
 		task->xfer_dir = SCSI_XFER_WRITE;
+		task->expxferlen = xferlen;
 	} else {
 		task->xfer_dir = SCSI_XFER_NONE;
+		task->expxferlen = 0;
 	}
-	task->expxferlen = xferlen;
 
 	task->params.verify10.lba        = lba;
 	task->params.verify10.num_blocks = xferlen/blocksize;
@@ -1479,12 +1480,13 @@ scsi_cdb_verify12(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
 	*(uint32_t *)&task->cdb[6] = htonl(xferlen/blocksize);
 
 	task->cdb_size = 12;
-	if (xferlen != 0) {
+	if (xferlen != 0 && bytchk) {
 		task->xfer_dir = SCSI_XFER_WRITE;
+		task->expxferlen = xferlen;
 	} else {
 		task->xfer_dir = SCSI_XFER_NONE;
+		task->expxferlen = 0;
 	}
-	task->expxferlen = xferlen;
 
 	task->params.verify12.lba        = lba;
 	task->params.verify12.num_blocks = xferlen/blocksize;
@@ -1526,12 +1528,13 @@ scsi_cdb_verify16(uint64_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
 	*(uint32_t *)&task->cdb[10] = htonl(xferlen/blocksize);
 
 	task->cdb_size = 16;
-	if (xferlen != 0) {
+	if (xferlen != 0 && bytchk) {
 		task->xfer_dir = SCSI_XFER_WRITE;
+		task->expxferlen = xferlen;
 	} else {
 		task->xfer_dir = SCSI_XFER_NONE;
+		task->expxferlen = 0;
 	}
-	task->expxferlen = xferlen;
 
 	task->params.verify16.lba        = lba;
 	task->params.verify16.num_blocks = xferlen/blocksize;
