@@ -176,122 +176,8 @@ struct scsi_readtoc_list {
 	struct scsi_readtoc_desc desc[0];
 };
 
-struct scsi_reportluns_params {
-	int report_type;
-};
-struct scsi_read6_params {
-	uint32_t lba;
-	uint32_t num_blocks;
-};
-struct scsi_read10_params {
-	uint32_t lba;
-	uint32_t num_blocks;
-};
-struct scsi_read12_params {
-	uint32_t lba;
-	uint32_t num_blocks;
-};
-struct scsi_read16_params {
-	uint64_t lba;
-	uint32_t num_blocks;
-};
-struct scsi_write10_params {
-	uint32_t lba;
-	uint32_t num_blocks;
-};
-struct scsi_write12_params {
-	uint32_t lba;
-	uint32_t num_blocks;
-};
-struct scsi_write16_params {
-	uint64_t lba;
-	uint32_t num_blocks;
-};
-struct scsi_startstopunit_params {
-	int immed;
-	int pcm;
-	int pc;
-	int no_flush;
-	int loej;
-	int start;
-};
-struct scsi_preventallow_params {
-	int prevent;
-};
-struct scsi_orwrite_params {
-	uint64_t lba;
-	uint32_t num_blocks;
-};
-struct scsi_compareandwrite_params {
-	uint64_t lba;
-	uint32_t num_blocks;
-};
-struct scsi_writeverify10_params {
-	uint32_t lba;
-	uint32_t num_blocks;
-};
-struct scsi_writeverify12_params {
-	uint32_t lba;
-	uint32_t num_blocks;
-};
-struct scsi_writeverify16_params {
-	uint64_t lba;
-	uint32_t num_blocks;
-};
-struct scsi_verify10_params {
-	uint32_t lba;
-	uint32_t num_blocks;
-	int vprotect;
-	int dpo;
-	int bytchk;
-};
-struct scsi_verify12_params {
-	uint32_t lba;
-	uint32_t num_blocks;
-	int vprotect;
-	int dpo;
-	int bytchk;
-};
-struct scsi_verify16_params {
-	uint64_t lba;
-	uint32_t num_blocks;
-	int vprotect;
-	int dpo;
-	int bytchk;
-};
-struct scsi_readcapacity10_params {
-	int lba;
-	int pmi;
-};
-struct scsi_inquiry_params {
-	int evpd;
-	int page_code;
-};
-struct scsi_modesense6_params {
-	int dbd;
-	int pc;
-	int page_code;
-	int sub_page_code;
-};
-struct scsi_serviceactionin_params {
-	enum scsi_service_action_in sa;
-};
-struct scsi_readtoc_params {
-	int msf;
-	int format;
-	int track_session;
-};
-
-
 struct scsi_report_supported_params {
 	int return_timeouts;
-};
-
-struct scsi_maintenancein_params {
-	enum scsi_maintenance_in sa;
-	union {
-		struct scsi_report_supported_params reportsupported;
-	} params;
 };
 
 struct scsi_sense {
@@ -318,32 +204,6 @@ struct scsi_task {
 	int xfer_dir;
 	int expxferlen;
 	unsigned char cdb[SCSI_CDB_MAX_SIZE];
-	union {
-		struct scsi_read6_params           read6;
-		struct scsi_read10_params          read10;
-		struct scsi_read12_params          read12;
-		struct scsi_read16_params          read16;
-		struct scsi_write10_params         write10;
-		struct scsi_write12_params         write12;
-		struct scsi_write16_params         write16;
-		struct scsi_startstopunit_params   startstopunit;
-		struct scsi_preventallow_params    preventallow;
-		struct scsi_orwrite_params         orwrite;
-		struct scsi_compareandwrite_params compareandwrite;
-		struct scsi_writeverify10_params   writeverify10;
-		struct scsi_writeverify12_params   writeverify12;
-		struct scsi_writeverify16_params   writeverify16;
-		struct scsi_verify10_params        verify10;
-		struct scsi_verify12_params        verify12;
-		struct scsi_verify16_params        verify16;
-		struct scsi_readcapacity10_params  readcapacity10;
-		struct scsi_reportluns_params      reportluns;
-		struct scsi_inquiry_params         inquiry;
-		struct scsi_modesense6_params      modesense6;
-		struct scsi_serviceactionin_params serviceactionin;
-		struct scsi_readtoc_params         readtoc;
-		struct scsi_maintenancein_params   maintenancein;
-	} params;
 
 	enum scsi_residual residual_status;
 	int residual;
@@ -780,7 +640,7 @@ struct scsi_op_timeout_descriptor {
 	uint8_t command_specific;
 	uint32_t nominal_processing_timeout;
 	uint32_t recommended_timeout;
-	
+
 };
 struct scsi_command_descriptor {
 	uint8_t op_code;
