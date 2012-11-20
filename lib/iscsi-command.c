@@ -393,10 +393,20 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		memcpy(task->datain.data, in->data, task->datain.size);
 
 		task->sense.error_type = task->datain.data[2] & 0x7f;
-		task->sense.key        = task->datain.data[4] & 0x0f;
-		task->sense.ascq       = ntohs(*(uint16_t *)
-					       &(task->datain.data[14]));
-
+		switch (task->sense.error_type) {
+		case 0x70:
+		case 0x71:
+		  task->sense.key        = task->datain.data[4] & 0x0f;
+		  task->sense.ascq       = ntohs(*(uint16_t *)
+						 &(task->datain.data[14]));
+		  break;
+		case 0x72:
+		case 0x73:
+		  task->sense.key        = task->datain.data[3] & 0x0f;
+		  task->sense.ascq       = ntohs(*(uint16_t *)
+						 &(task->datain.data[4]));
+		  break;
+		}
 		iscsi_set_error(iscsi, "SENSE KEY:%s(%d) ASCQ:%s(0x%04x)",
 				scsi_sense_key_str(task->sense.key),
 				task->sense.key,
