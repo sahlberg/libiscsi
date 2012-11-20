@@ -18,6 +18,7 @@
 #define __iscsi_h__
 
 #include <stdint.h>
+#include <sys/types.h>
 
 #if defined(WIN32)
 #define EXTERN __declspec( dllexport )
@@ -740,8 +741,8 @@ iscsi_unmap_task(struct iscsi_context *iscsi, int lun, int anchor, int group,
 		 iscsi_command_cb cb, void *private_data);
 
 EXTERN struct scsi_task *
-iscsi_readtoc_task(struct iscsi_context *iscsi, int lun, int msf, int format, 
-		   int track_session, int maxsize, 
+iscsi_readtoc_task(struct iscsi_context *iscsi, int lun, int msf, int format,
+		   int track_session, int maxsize,
 		   iscsi_command_cb cb, void *private_data);
 
 EXTERN struct scsi_task *
@@ -754,7 +755,7 @@ iscsi_release6_task(struct iscsi_context *iscsi, int lun,
 
 EXTERN struct scsi_task *
 iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi, int lun,
-				    int return_timeouts, int maxsize, 
+				    int return_timeouts, int maxsize,
 				    iscsi_command_cb cb, void *private_data);
 
 /*
@@ -970,7 +971,7 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi);
 
 /*
  * This function is to set the debugging level where level is
- * 
+ *
  * 0  = disabled (default)
  * 1  = errors only
  * 2  = connection related info
@@ -994,39 +995,39 @@ EXTERN void iscsi_log_to_stderr(int level, const char *message);
  * This function is to set the TCP_USER_TIMEOUT option. It has to be called after iscsi
  * context creation. The value given in ms is then applied each time a new socket is created.
  */
-EXTERN void 
+EXTERN void
 iscsi_set_tcp_user_timeout(struct iscsi_context *iscsi, int timeout_ms);
 
 /*
  * This function is to set the TCP_KEEPIDLE option. It has to be called after iscsi
- * context creation. 
+ * context creation.
  */
-EXTERN void 
+EXTERN void
 iscsi_set_tcp_keepidle(struct iscsi_context *iscsi, int value);
 
 /*
  * This function is to set the TCP_KEEPCNT option. It has to be called after iscsi
- * context creation. 
+ * context creation.
  */
-EXTERN void 
+EXTERN void
 iscsi_set_tcp_keepcnt(struct iscsi_context *iscsi, int value);
 
 /*
  * This function is to set the TCP_KEEPINTVL option. It has to be called after iscsi
- * context creation. 
+ * context creation.
  */
-EXTERN void 
+EXTERN void
 iscsi_set_tcp_keepintvl(struct iscsi_context *iscsi, int value);
 
 /*
  * This function is to set the TCP_SYNCNT option. It has to be called after iscsi
- * context creation. 
+ * context creation.
  */
-EXTERN void 
+EXTERN void
 iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value);
 
 /*
- * This function is to set the interface that outbound connections for this socket are bound to. 
+ * This function is to set the interface that outbound connections for this socket are bound to.
  * You max specify more than one interface here separated by comma.
  */
 EXTERN void
