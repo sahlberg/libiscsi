@@ -24,7 +24,7 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
-char *initiator = "iqn.2010-11.ronnie:iscsi-inq";
+const char *initiator = "iqn.2010-11.ronnie:iscsi-inq";
 int max_in_flight = 50;
 int blocks_per_io = 200;
 
@@ -80,7 +80,7 @@ void write10_cb(struct iscsi_context *iscsi, int status, void *command_data, voi
 	free(wt);
 }
 
-void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
+void read10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *private_data)
 {
 	struct client *client = (struct client *)private_data;
 	struct scsi_task *task = command_data;
@@ -163,16 +163,22 @@ int main(int argc, const char *argv[])
 		exit(10);
 	}
 	extra_argv = poptGetArgs(pc);
+	if (extra_argv) {
+		extra_argv++;
+		while (extra_argv[extra_argc]) {
+			extra_argc++;
+		}
+	}
 	poptFreeContext(pc);
 
 	if (src_url == NULL) {
 		fprintf(stderr, "You must specify source url\n");
-		fprintf(stderr, "  --src iscsi://<host>[:<port>]/<target-iqn>/<lun>\n", argv[0]);
+		fprintf(stderr, "  --src iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
 		exit(10);
 	}
 	if (dst_url == NULL) {
 		fprintf(stderr, "You must specify destination url\n");
-		fprintf(stderr, "  --dst iscsi://<host>[:<port>]/<target-iqn>/<lun>\n", argv[0]);
+		fprintf(stderr, "  --dst iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
 		exit(10);
 	}
 
