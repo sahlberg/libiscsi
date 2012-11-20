@@ -210,8 +210,6 @@ scsi_reportluns_cdb(int report_type, int alloc_len)
 	}
 	task->expxferlen = alloc_len;
 
-	task->params.reportluns.report_type = report_type;
-
 	return task;
 }
 
@@ -264,7 +262,6 @@ scsi_reportluns_datain_unmarshall(struct scsi_task *task)
 	return list;
 }
 
-
 /*
  * READCAPACITY10
  */
@@ -291,13 +288,8 @@ scsi_cdb_readcapacity10(int lba, int pmi)
 	task->xfer_dir = SCSI_XFER_READ;
 	task->expxferlen = 8;
 
-	task->params.readcapacity10.lba = lba;
-	task->params.readcapacity10.pmi = pmi;
-
 	return task;
 }
-
-
 
 /*
  * READTOC
@@ -307,7 +299,7 @@ scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len)
 {
 	struct scsi_task *task;
 
-	if (format != SCSI_READ_TOC && format != SCSI_READ_SESSION_INFO 
+	if (format != SCSI_READ_TOC && format != SCSI_READ_SESSION_INFO
 	    && format != SCSI_READ_FULL_TOC){
 		fprintf(stderr, "Read TOC format %d not fully supported yet\n", format);
 		return NULL;
@@ -325,6 +317,8 @@ scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len)
 		task->cdb[1] |= 0x02;
 	}
 
+	task->cdb[2] = format & 0xf;
+
 	/* Prevent invalid setting of Track/Session Number */
 	if (format == SCSI_READ_TOC || format == SCSI_READ_FULL_TOC) {
 		task->cdb[6] = 0xff & track_session;
@@ -339,10 +333,6 @@ scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len)
 		task->xfer_dir = SCSI_XFER_NONE;
 	}
 	task->expxferlen = alloc_len;
-
-	task->params.readtoc.msf = msf;
-	task->params.readtoc.format = format;
-	task->params.readtoc.track_session = track_session;
 
 	return task;
 }
@@ -361,40 +351,46 @@ scsi_readtoc_datain_getfullsize(struct scsi_task *task)
 	return toc_data_len;
 }
 
+static inline enum scsi_readtoc_fmt
+scsi_readtoc_format(const struct scsi_task *task)
+{
+	return task->cdb[2] & 0xf;
+}
+
 static void
 scsi_readtoc_desc_unmarshall(struct scsi_task *task, struct scsi_readtoc_list *list, int i)
 {
-	switch(task->params.readtoc.format){
+	switch(scsi_readtoc_format(task)) {
 	case SCSI_READ_TOC:
-		list->desc[i].desc.toc.adr 
+		list->desc[i].desc.toc.adr
 			= task->datain.data[4+8*i+1] & 0xf0;
-		list->desc[i].desc.toc.control 
+		list->desc[i].desc.toc.control
 			= task->datain.data[4+8*i+1] & 0x0f;
-		list->desc[i].desc.toc.track 
+		list->desc[i].desc.toc.track
 			= task->datain.data[4+8*i+2];
-		list->desc[i].desc.toc.lba 
+		list->desc[i].desc.toc.lba
 			= ntohl(*(uint32_t *)&task->datain.data[4+8*i+4]);
 		break;
 	case SCSI_READ_SESSION_INFO:
-		list->desc[i].desc.ses.adr 
+		list->desc[i].desc.ses.adr
 			= task->datain.data[4+8*i+1] & 0xf0;
-		list->desc[i].desc.ses.control 
+		list->desc[i].desc.ses.control
 			= task->datain.data[4+8*i+1] & 0x0f;
-		list->desc[i].desc.ses.first_in_last 
+		list->desc[i].desc.ses.first_in_last
 			= task->datain.data[4+8*i+2];
-		list->desc[i].desc.ses.lba 
+		list->desc[i].desc.ses.lba
 			= ntohl(*(uint32_t *)&task->datain.data[4+8*i+4]);
 		break;
 	case SCSI_READ_FULL_TOC:
-		list->desc[i].desc.full.session 
+		list->desc[i].desc.full.session
 			= task->datain.data[4+11*i+0] & 0xf0;
-		list->desc[i].desc.full.adr 
+		list->desc[i].desc.full.adr
 			= task->datain.data[4+11*i+1] & 0xf0;
-		list->desc[i].desc.full.control 
+		list->desc[i].desc.full.control
 			= task->datain.data[4+11*i+1] & 0x0f;
-		list->desc[i].desc.full.tno 
+		list->desc[i].desc.full.tno
 			= task->datain.data[4+11*i+2];
-		list->desc[i].desc.full.point 
+		list->desc[i].desc.full.point
 			= task->datain.data[4+11*i+3];
 		list->desc[i].desc.full.min
 			= task->datain.data[4+11*i+4];
@@ -404,15 +400,18 @@ scsi_readtoc_desc_unmarshall(struct scsi_task *task, struct scsi_readtoc_list *l
 			= task->datain.data[4+11*i+6];
 		list->desc[i].desc.full.zero
 			= task->datain.data[4+11*i+7];
-		list->desc[i].desc.full.pmin 
+		list->desc[i].desc.full.pmin
 			= task->datain.data[4+11*i+8];
 		list->desc[i].desc.full.psec
 			= task->datain.data[4+11*i+9];
 		list->desc[i].desc.full.pframe
 			= task->datain.data[4+11*i+10];
 		break;
+	default:
+		break;
 	}
 }
+
 /*
  * unmarshall the data in blob for read TOC into a structure
  */
@@ -426,7 +425,7 @@ scsi_readtoc_datain_unmarshall(struct scsi_task *task)
 	if (task->datain.size < 4) {
 		return NULL;
 	}
-	
+
 	/* Do we have all data? */
 	data_len = scsi_readtoc_datain_getfullsize(task) - 2;
 	if(task->datain.size < data_len) {
@@ -434,7 +433,7 @@ scsi_readtoc_datain_unmarshall(struct scsi_task *task)
 	}
 
 	/* Remove header size (4) to get bytes in descriptor list */
-	num_desc = (data_len - 4) / 8; 
+	num_desc = (data_len - 4) / 8;
 
 	list = scsi_malloc(task, offsetof(struct scsi_readtoc_list, desc)
 			   + sizeof(struct scsi_readtoc_desc) * num_desc);
@@ -445,11 +444,11 @@ scsi_readtoc_datain_unmarshall(struct scsi_task *task)
 	list->num = num_desc;
 	list->first = task->datain.data[2];
 	list->last = task->datain.data[3];
-	
+
 	for (i = 0; i < num_desc; i++) {
 		scsi_readtoc_desc_unmarshall(task, list, i);
 	}
-		
+
 	return list;
 }
 
@@ -468,10 +467,10 @@ scsi_cdb_reserve6(void)
 
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_RESERVE6;
-		
+
 	task->cdb_size = 6;
 	task->xfer_dir = SCSI_XFER_NONE;
-	
+
 	return task;
 }
 /*
@@ -489,13 +488,18 @@ scsi_cdb_release6(void)
 
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_RELEASE6;
-		
+
 	task->cdb_size = 6;
 	task->xfer_dir = SCSI_XFER_NONE;
 
 	return task;
 }
 
+static inline uint8_t
+scsi_serviceactionin_sa(const struct scsi_task *task)
+{
+	return task->cdb[1];
+}
 
 /*
  * service_action_in unmarshall
@@ -503,14 +507,10 @@ scsi_cdb_release6(void)
 static void *
 scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 {
-	struct scsi_readcapacity16 *rc16;
-	struct scsi_get_lba_status *gls;
-	int32_t len;
-	int i;
-
-	switch (task->params.serviceactionin.sa) {
-	case SCSI_READCAPACITY16:
-		rc16 = scsi_malloc(task, sizeof(struct scsi_readcapacity16));
+	switch (scsi_serviceactionin_sa(task)) {
+	case SCSI_READCAPACITY16: {
+		struct scsi_readcapacity16 *rc16 = scsi_malloc(task,
+							       sizeof(*rc16));
 		if (rc16 == NULL) {
 			return NULL;
 		}
@@ -525,20 +525,27 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 		rc16->lbprz        = !!(task->datain.data[14] & 0x40);
 		rc16->lalba        = ntohs(*(uint16_t *)&(task->datain.data[14])) & 0x3fff;
 		return rc16;
-	case SCSI_GET_LBA_STATUS:
-		len = ntohl(*(uint32_t *)&(task->datain.data[0]));
+	}
+	case SCSI_GET_LBA_STATUS: {
+		struct scsi_get_lba_status *gls = scsi_malloc(task,
+							      sizeof(*gls));
+		int32_t len = ntohl(*(uint32_t *)&(task->datain.data[0]));
+		int i;
+
+		if (gls == NULL) {
+			return NULL;
+		}
+
 		if (len > task->datain.size - 4) {
 			len = task->datain.size - 4;
 		}
 		len = len / 16;
 
-		gls = scsi_malloc(task, sizeof(struct scsi_get_lba_status));
-		if (gls == NULL) {
-			return NULL;
-		}
 		gls->num_descriptors = len;
-		gls->descriptors = scsi_malloc(task, sizeof(struct scsi_lba_status_descriptor) * gls->num_descriptors);
+		gls->descriptors = scsi_malloc(task,
+					       sizeof(*gls->descriptors) * len);
 		if (gls->descriptors == NULL) {
+			free(gls);
 			return NULL;
 		}
 
@@ -554,10 +561,22 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 
 		return gls;
 	}
-
-	return NULL;
+	default:
+		return NULL;
+	}
 }
 
+static inline int
+scsi_maintenancein_return_timeouts(const struct scsi_task *task)
+{
+	return task->cdb[2] & 0x80;
+}
+
+static inline uint8_t
+scsi_maintenancein_sa(const struct scsi_task *task)
+{
+	return task->cdb[1];
+}
 
 /*
  * parse the data in blob and calculate the size of a full maintenancein
@@ -567,15 +586,13 @@ static int
 scsi_maintenancein_datain_getfullsize(struct scsi_task *task)
 {
 
-	switch (task->params.maintenancein.sa) {
-	case SCSI_REPORT_SUPPORTED_OP_CODES:	
+	switch (scsi_maintenancein_sa(task)) {
+	case SCSI_REPORT_SUPPORTED_OP_CODES:
 		return ntohl(*(uint32_t *)&(task->datain.data[0])) + 4;
 	default:
 		return -1;
 	}
-
 }
-
 
 /*
  * maintenance_in unmarshall
@@ -588,7 +605,7 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 	uint32_t len, i;
 	int return_timeouts, desc_size;
 
-	switch (task->params.maintenancein.sa) {
+	switch (scsi_maintenancein_sa(task)) {
 	case SCSI_REPORT_SUPPORTED_OP_CODES:
 		if (task->datain.size < 4) {
 			return NULL;
@@ -600,7 +617,7 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 			return NULL;
 		}
 		/* Does the descriptor include command timeout info? */
-		return_timeouts = task->params.maintenancein.params.reportsupported.return_timeouts; 
+		return_timeouts = scsi_maintenancein_return_timeouts(task);
 
 		/* Size of descriptor depends on whether timeout included. */
 		desc_size = sizeof (struct scsi_command_descriptor);
@@ -608,7 +625,7 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 			desc_size += sizeof (struct scsi_op_timeout_descriptor);
 		}
 		rsoc->num_descriptors = len / desc_size;
-		
+
 		desc = &rsoc->descriptors[0];
 		datain = (struct scsi_command_descriptor *)&task->datain.data[4];
 
@@ -619,9 +636,9 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 			if (return_timeouts) {
 				desc->to[0].descriptor_length = ntohs(datain->to[0].descriptor_length);
 				desc->to[0].command_specific = datain->to[0].command_specific;
-				desc->to[0].nominal_processing_timeout 
+				desc->to[0].nominal_processing_timeout
 					= ntohl(datain->to[0].nominal_processing_timeout);
-				desc->to[0].recommended_timeout 
+				desc->to[0].recommended_timeout
 					= ntohl(datain->to[0].recommended_timeout);
 			}
 			desc = (struct scsi_command_descriptor *)((char *)desc + desc_size);
@@ -666,9 +683,6 @@ scsi_cdb_report_supported_opcodes(int return_timeouts, uint32_t alloc_len)
 	}
 	task->expxferlen = alloc_len;
 
-	task->params.maintenancein.sa = SCSI_REPORT_SUPPORTED_OP_CODES;
-	task->params.maintenancein.params.reportsupported.return_timeouts = return_timeouts;
-
 	return task;
 }
 
@@ -704,10 +718,6 @@ scsi_readcapacity10_datain_unmarshall(struct scsi_task *task)
 	return rc10;
 }
 
-
-
-
-
 /*
  * INQUIRY
  */
@@ -740,10 +750,19 @@ scsi_cdb_inquiry(int evpd, int page_code, int alloc_len)
 	}
 	task->expxferlen = alloc_len;
 
-	task->params.inquiry.evpd      = evpd;
-	task->params.inquiry.page_code = page_code;
-
 	return task;
+}
+
+static inline int
+scsi_inquiry_evpd_set(const struct scsi_task *task)
+{
+	return task->cdb[1] & 0x1;
+}
+
+static inline uint8_t
+scsi_inquiry_page_code(const struct scsi_task *task)
+{
+	return task->cdb[2];
 }
 
 /*
@@ -753,11 +772,11 @@ scsi_cdb_inquiry(int evpd, int page_code, int alloc_len)
 static int
 scsi_inquiry_datain_getfullsize(struct scsi_task *task)
 {
-	if (task->params.inquiry.evpd == 0) {
+	if (scsi_inquiry_evpd_set(task) == 0) {
 		return task->datain.data[4] + 5;
 	}
 
-	switch (task->params.inquiry.page_code) {
+	switch (scsi_inquiry_page_code(task)) {
 	case SCSI_INQUIRY_PAGECODE_SUPPORTED_VPD_PAGES:
 	case SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS:
 	case SCSI_INQUIRY_PAGECODE_UNIT_SERIAL_NUMBER:
@@ -771,217 +790,251 @@ scsi_inquiry_datain_getfullsize(struct scsi_task *task)
 	}
 }
 
+static struct scsi_inquiry_standard *
+scsi_inquiry_unmarshall_standard(struct scsi_task *task)
+{
+	struct scsi_inquiry_standard *inq = scsi_malloc(task, sizeof(*inq));
+	if (inq == NULL) {
+		return NULL;
+	}
+
+	inq->qualifier              = (task->datain.data[0]>>5)&0x07;
+	inq->device_type            = task->datain.data[0]&0x1f;
+	inq->rmb                    = !!(task->datain.data[1]&0x80);
+	inq->version                = task->datain.data[2];
+	inq->normaca                = !!(task->datain.data[3]&0x20);
+	inq->hisup                  = !!(task->datain.data[3]&0x10);
+	inq->response_data_format   = task->datain.data[3]&0x0f;
+
+	inq->additional_length      = task->datain.data[4];
+
+	inq->sccs                   = !!(task->datain.data[5]&0x80);
+	inq->acc                    = !!(task->datain.data[5]&0x40);
+	inq->tpgs                   = (task->datain.data[5]>>4)&0x03;
+	inq->threepc                = !!(task->datain.data[5]&0x08);
+	inq->protect                = !!(task->datain.data[5]&0x01);
+
+	inq->encserv                = !!(task->datain.data[6]&0x40);
+	inq->multip                 = !!(task->datain.data[6]&0x10);
+	inq->addr16                 = !!(task->datain.data[6]&0x01);
+	inq->wbus16                 = !!(task->datain.data[7]&0x20);
+	inq->sync                   = !!(task->datain.data[7]&0x10);
+	inq->cmdque                 = !!(task->datain.data[7]&0x02);
+
+	memcpy(&inq->vendor_identification[0],
+	       &task->datain.data[8], 8);
+	memcpy(&inq->product_identification[0],
+	       &task->datain.data[16], 16);
+	memcpy(&inq->product_revision_level[0],
+	       &task->datain.data[32], 4);
+
+	inq->clocking               = (task->datain.data[56]>>2)&0x03;
+	inq->qas                    = !!(task->datain.data[56]&0x02);
+	inq->ius                    = !!(task->datain.data[56]&0x01);
+
+	return inq;
+}
+
+static struct scsi_inquiry_supported_pages *
+scsi_inquiry_unmarshall_supported_pages(struct scsi_task *task)
+{
+	struct scsi_inquiry_supported_pages *inq = scsi_malloc(task,
+							       sizeof(*inq));
+	if (inq == NULL) {
+		return NULL;
+	}
+	inq->qualifier = (task->datain.data[0]>>5)&0x07;
+	inq->device_type = task->datain.data[0]&0x1f;
+	inq->pagecode = task->datain.data[1];
+
+	inq->num_pages = task->datain.data[3];
+	inq->pages = scsi_malloc(task, inq->num_pages);
+	if (inq->pages == NULL) {
+		free (inq);
+		return NULL;
+	}
+	memcpy(inq->pages, &task->datain.data[4], inq->num_pages);
+	return inq;
+}
+
+static struct scsi_inquiry_unit_serial_number *
+scsi_inquiry_unmarshall_unit_serial_number(struct scsi_task* task)
+{
+	struct scsi_inquiry_unit_serial_number *inq = scsi_malloc(task,
+								  sizeof(*inq));
+	if (inq == NULL) {
+		return NULL;
+	}
+	inq->qualifier = (task->datain.data[0]>>5)&0x07;
+	inq->device_type = task->datain.data[0]&0x1f;
+	inq->pagecode = task->datain.data[1];
+
+	inq->usn = scsi_malloc(task, task->datain.data[3]+1);
+	if (inq->usn == NULL) {
+		free(inq);
+		return NULL;
+	}
+	memcpy(inq->usn, &task->datain.data[4], task->datain.data[3]);
+	inq->usn[task->datain.data[3]] = 0;
+	return inq;
+}
+
+static struct scsi_inquiry_device_identification *
+scsi_inquiry_unmarshall_device_identification(struct scsi_task *task)
+{
+	struct scsi_inquiry_device_identification *inq = scsi_malloc(task,
+								     sizeof(*inq));
+	int remaining = ntohs(*(uint16_t *)&task->datain.data[2]);
+	unsigned char *dptr;
+
+	if (inq == NULL) {
+		return NULL;
+	}
+	inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+	inq->device_type           = task->datain.data[0]&0x1f;
+	inq->pagecode              = task->datain.data[1];
+
+	dptr = &task->datain.data[4];
+	while (remaining > 0) {
+		struct scsi_inquiry_device_designator *dev =
+			scsi_malloc(task, sizeof(*dev));
+		if (dev == NULL) {
+			goto err;
+		}
+
+		dev->next = inq->designators;
+		inq->designators = dev;
+
+		dev->protocol_identifier = (dptr[0]>>4) & 0x0f;
+		dev->code_set            = dptr[0] & 0x0f;
+		dev->piv                 = !!(dptr[1]&0x80);
+		dev->association         = (dptr[1]>>4)&0x03;
+		dev->designator_type     = dptr[1]&0x0f;
+
+		dev->designator_length   = dptr[3];
+		dev->designator = scsi_malloc(task, dev->designator_length + 1);
+		if (dev->designator == NULL) {
+			goto err;
+		}
+		dev->designator[dev->designator_length] = 0;
+		memcpy(dev->designator, &dptr[4],
+		       dev->designator_length);
+
+		remaining -= 4;
+		remaining -= dev->designator_length;
+
+		dptr += dev->designator_length + 4;
+	}
+	return inq;
+
+ err:
+	while (inq->designators) {
+		struct scsi_inquiry_device_designator *dev = inq->designators;
+		inq->designators = dev->next;
+		free(dev->designator);
+		free(dev);
+	}
+
+	free(inq);
+	return NULL;
+}
+
+static struct scsi_inquiry_block_limits *
+scsi_inquiry_unmarshall_block_limits(struct scsi_task *task)
+{
+	struct scsi_inquiry_block_limits *inq = scsi_malloc(task,
+							    sizeof(*inq));
+	if (inq == NULL) {
+		return NULL;
+	}
+	inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+	inq->device_type           = task->datain.data[0]&0x1f;
+	inq->pagecode              = task->datain.data[1];
+
+	inq->wsnz                  = task->datain.data[4] & 0x01;
+	inq->max_cmp               = task->datain.data[5];
+	inq->opt_gran              = ntohs(*(uint16_t *)&task->datain.data[6]);
+	inq->max_xfer_len          = ntohl(*(uint32_t *)&task->datain.data[8]);
+	inq->opt_xfer_len          = ntohl(*(uint32_t *)&task->datain.data[12]);
+	inq->max_prefetch          = ntohl(*(uint32_t *)&task->datain.data[16]);
+	inq->max_unmap             = ntohl(*(uint32_t *)&task->datain.data[20]);
+	inq->max_unmap_bdc         = ntohl(*(uint32_t *)&task->datain.data[24]);
+	inq->opt_unmap_gran        = ntohl(*(uint32_t *)&task->datain.data[28]);
+	inq->ugavalid              = !!(task->datain.data[32]&0x80);
+	inq->unmap_gran_align      = ntohl(*(uint32_t *)&task->datain.data[32]) & 0x7fffffff;
+	inq->max_ws_len            = ntohl(*(uint32_t *)&task->datain.data[36]);
+	inq->max_ws_len            = (inq->max_ws_len << 32) | ntohl(*(uint32_t *)&task->datain.data[40]);
+
+	return inq;
+}
+
+static struct scsi_inquiry_block_device_characteristics *
+scsi_inquiry_unmarshall_block_device_characteristics(struct scsi_task *task)
+{
+	struct scsi_inquiry_block_device_characteristics *inq =
+		scsi_malloc(task, sizeof(*inq));
+	if (inq == NULL) {
+		return NULL;
+	}
+	inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+	inq->device_type           = task->datain.data[0]&0x1f;
+	inq->pagecode              = task->datain.data[1];
+
+	inq->medium_rotation_rate  = ntohs(*(uint16_t *)&task->datain.data[4]);
+	return inq;
+}
+
+struct scsi_inquiry_logical_block_provisioning *
+scsi_inquiry_unmarshall_logical_block_provisioning(struct scsi_task *task)
+{
+	struct scsi_inquiry_logical_block_provisioning *inq =
+		scsi_malloc(task, sizeof(*inq));
+	if (inq == NULL) {
+		return NULL;
+	}
+	inq->qualifier             = (task->datain.data[0]>>5)&0x07;
+	inq->device_type           = task->datain.data[0]&0x1f;
+	inq->pagecode              = task->datain.data[1];
+
+	inq->threshold_exponent = task->datain.data[4];
+	inq->lbpu               = !!(task->datain.data[5] & 0x80);
+	inq->lbpws              = !!(task->datain.data[5] & 0x40);
+	inq->lbpws10            = !!(task->datain.data[5] & 0x20);
+	inq->lbprz              = !!(task->datain.data[5] & 0x04);
+	inq->anc_sup            = !!(task->datain.data[5] & 0x02);
+	inq->dp	                = !!(task->datain.data[5] & 0x01);
+	inq->provisioning_type  = task->datain.data[6] & 0x07;
+
+	return inq;
+}
+
 /*
  * unmarshall the data in blob for inquiry into a structure
  */
 static void *
 scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 {
-	if (task->params.inquiry.evpd == 0) {
-		struct scsi_inquiry_standard *inq;
-
-		/* standard inquiry */
-		inq = scsi_malloc(task, sizeof(struct scsi_inquiry_standard));
-		if (inq == NULL) {
-			return NULL;
-		}
-
-		inq->qualifier              = (task->datain.data[0]>>5)&0x07;
-		inq->device_type            = task->datain.data[0]&0x1f;
-		inq->rmb                    = !!(task->datain.data[1]&0x80);
-		inq->version                = task->datain.data[2];
-		inq->normaca                = !!(task->datain.data[3]&0x20);
-		inq->hisup                  = !!(task->datain.data[3]&0x10);
-		inq->response_data_format   = task->datain.data[3]&0x0f;
-
-		inq->additional_length      = task->datain.data[4];
-
-		inq->sccs                   = !!(task->datain.data[5]&0x80);
-		inq->acc                    = !!(task->datain.data[5]&0x40);
-		inq->tpgs                   = (task->datain.data[5]>>4)&0x03;
-		inq->threepc                = !!(task->datain.data[5]&0x08);
-		inq->protect                = !!(task->datain.data[5]&0x01);
-
-		inq->encserv                = !!(task->datain.data[6]&0x40);
-		inq->multip                 = !!(task->datain.data[6]&0x10);
-		inq->addr16                 = !!(task->datain.data[6]&0x01);
-		inq->wbus16                 = !!(task->datain.data[7]&0x20);
-		inq->sync                   = !!(task->datain.data[7]&0x10);
-		inq->cmdque                 = !!(task->datain.data[7]&0x02);
-
-		memcpy(&inq->vendor_identification[0],
-		       &task->datain.data[8], 8);
-		memcpy(&inq->product_identification[0],
-		       &task->datain.data[16], 16);
-		memcpy(&inq->product_revision_level[0],
-		       &task->datain.data[32], 4);
-
-		inq->clocking               = (task->datain.data[56]>>2)&0x03;
-		inq->qas                    = !!(task->datain.data[56]&0x02);
-		inq->ius                    = !!(task->datain.data[56]&0x01);
-
-		return inq;
+	if (scsi_inquiry_evpd_set(task) == 0) {
+		return scsi_inquiry_unmarshall_standard(task);
 	}
 
-	if (task->params.inquiry.page_code
-	    == SCSI_INQUIRY_PAGECODE_SUPPORTED_VPD_PAGES) {
-		struct scsi_inquiry_supported_pages *inq;
-
-		inq = scsi_malloc(task,
-			   sizeof(struct scsi_inquiry_supported_pages));
-		if (inq == NULL) {
-			return NULL;
-		}
-		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
-		inq->device_type           = task->datain.data[0]&0x1f;
-		inq->pagecode              = task->datain.data[1];
-
-		inq->num_pages = task->datain.data[3];
-		inq->pages = scsi_malloc(task, inq->num_pages);
-		if (inq->pages == NULL) {
-			return NULL;
-		}
-		memcpy(inq->pages, &task->datain.data[4], inq->num_pages);
-		return inq;
-	} else if (task->params.inquiry.page_code
-		   == SCSI_INQUIRY_PAGECODE_UNIT_SERIAL_NUMBER) {
-		struct scsi_inquiry_unit_serial_number *inq;
-
-		inq = scsi_malloc(task,
-			   sizeof(struct scsi_inquiry_unit_serial_number));
-		if (inq == NULL) {
-			return NULL;
-		}
-		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
-		inq->device_type           = task->datain.data[0]&0x1f;
-		inq->pagecode              = task->datain.data[1];
-
-		inq->usn = scsi_malloc(task, task->datain.data[3]+1);
-		if (inq->usn == NULL) {
-			return NULL;
-		}
-		memcpy(inq->usn, &task->datain.data[4], task->datain.data[3]);
-		inq->usn[task->datain.data[3]] = 0;
-		return inq;
-	} else if (task->params.inquiry.page_code
-		   == SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION) {
-		struct scsi_inquiry_device_identification *inq;
-		int remaining = ntohs(*(uint16_t *)&task->datain.data[2]);
-		unsigned char *dptr;
-
-		inq = scsi_malloc(task,
-			   sizeof(struct scsi_inquiry_device_identification));
-		if (inq == NULL) {
-			return NULL;
-		}
-		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
-		inq->device_type           = task->datain.data[0]&0x1f;
-		inq->pagecode              = task->datain.data[1];
-
-		dptr = &task->datain.data[4];
-		while (remaining > 0) {
-			struct scsi_inquiry_device_designator *dev;
-
-			dev = scsi_malloc(task,
-			      sizeof(struct scsi_inquiry_device_designator));
-			if (dev == NULL) {
-				return NULL;
-			}
-
-			dev->next = inq->designators;
-			inq->designators = dev;
-
-			dev->protocol_identifier = (dptr[0]>>4) & 0x0f;
-			dev->code_set            = dptr[0] & 0x0f;
-			dev->piv                 = !!(dptr[1]&0x80);
-			dev->association         = (dptr[1]>>4)&0x03;
-			dev->designator_type     = dptr[1]&0x0f;
-
-			dev->designator_length   = dptr[3];
-			dev->designator          = scsi_malloc(task,
-						   dev->designator_length+1);
-			if (dev->designator == NULL) {
-				return NULL;
-			}
-			dev->designator[dev->designator_length] = 0;
-			memcpy(dev->designator, &dptr[4],
-			       dev->designator_length);
-
-			remaining -= 4;
-			remaining -= dev->designator_length;
-
-			dptr += dev->designator_length + 4;
-		}
-		return inq;
-	} else if (task->params.inquiry.page_code
-		   == SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS) {
-		struct scsi_inquiry_block_limits *inq;
-
-		inq = scsi_malloc(task,
-		      sizeof(struct scsi_inquiry_block_limits));
-		if (inq == NULL) {
-			return NULL;
-		}
-		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
-		inq->device_type           = task->datain.data[0]&0x1f;
-		inq->pagecode              = task->datain.data[1];
-
-		inq->wsnz                  = task->datain.data[4] & 0x01;
-		inq->max_cmp               = task->datain.data[5];
-		inq->opt_gran              = ntohs(*(uint16_t *)&task->datain.data[6]);
-		inq->max_xfer_len          = ntohl(*(uint32_t *)&task->datain.data[8]);
-		inq->opt_xfer_len          = ntohl(*(uint32_t *)&task->datain.data[12]);
-		inq->max_prefetch          = ntohl(*(uint32_t *)&task->datain.data[16]);
-		inq->max_unmap             = ntohl(*(uint32_t *)&task->datain.data[20]);
-		inq->max_unmap_bdc         = ntohl(*(uint32_t *)&task->datain.data[24]);
-		inq->opt_unmap_gran        = ntohl(*(uint32_t *)&task->datain.data[28]);
-		inq->ugavalid              = !!(task->datain.data[32]&0x80);
-		inq->unmap_gran_align      = ntohl(*(uint32_t *)&task->datain.data[32]) & 0x7fffffff;
-		inq->max_ws_len            = ntohl(*(uint32_t *)&task->datain.data[36]);
-		inq->max_ws_len            = (inq->max_ws_len << 32) | ntohl(*(uint32_t *)&task->datain.data[40]);
-
-		return inq;
-	} else if (task->params.inquiry.page_code
-		   == SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS) {
-		struct scsi_inquiry_block_device_characteristics *inq;
-
-		inq = scsi_malloc(task,
-		      sizeof(struct scsi_inquiry_block_device_characteristics));
-		if (inq == NULL) {
-			return NULL;
-		}
-		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
-		inq->device_type           = task->datain.data[0]&0x1f;
-		inq->pagecode              = task->datain.data[1];
-
-		inq->medium_rotation_rate  = ntohs(*(uint16_t *)&task->datain.data[4]);
-		return inq;
-	} else if (task->params.inquiry.page_code
-		   == SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING) {
-		struct scsi_inquiry_logical_block_provisioning *inq;
-
-		inq = scsi_malloc(task,
-			   sizeof(struct scsi_inquiry_logical_block_provisioning));
-		if (inq == NULL) {
-			return NULL;
-		}
-		inq->qualifier             = (task->datain.data[0]>>5)&0x07;
-		inq->device_type           = task->datain.data[0]&0x1f;
-		inq->pagecode              = task->datain.data[1];
-
-		inq->threshold_exponent = task->datain.data[4];
-		inq->lbpu               = !!(task->datain.data[5] & 0x80);
-		inq->lbpws              = !!(task->datain.data[5] & 0x40);
-		inq->lbpws10            = !!(task->datain.data[5] & 0x20);
-		inq->lbprz              = !!(task->datain.data[5] & 0x04);
-		inq->anc_sup            = !!(task->datain.data[5] & 0x02);
-		inq->dp	                = !!(task->datain.data[5] & 0x01);
-		inq->provisioning_type  = task->datain.data[6] & 0x07;
-
-		return inq;
+	switch (scsi_inquiry_page_code(task))
+	{
+	case SCSI_INQUIRY_PAGECODE_SUPPORTED_VPD_PAGES:
+		return scsi_inquiry_unmarshall_supported_pages(task);
+	case SCSI_INQUIRY_PAGECODE_UNIT_SERIAL_NUMBER:
+		return scsi_inquiry_unmarshall_unit_serial_number(task);
+	case SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION:
+		return scsi_inquiry_unmarshall_device_identification(task);
+	case SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS:
+		return scsi_inquiry_unmarshall_block_limits(task);
+	case SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS:
+		return scsi_inquiry_unmarshall_block_device_characteristics(task);
+	case  SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING:
+		return scsi_inquiry_unmarshall_logical_block_provisioning(task);
+	default:
+		return NULL;
 	}
-
-	return NULL;
 }
 
 /*
@@ -1026,9 +1079,6 @@ scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize)
 	}
 	task->expxferlen = xferlen;
 
-	task->params.read6.lba        = lba;
-	task->params.read6.num_blocks = num_blocks;
-
 	return task;
 }
 
@@ -1072,9 +1122,6 @@ scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, in
 	}
 	task->expxferlen = xferlen;
 
-	task->params.read10.lba        = lba;
-	task->params.read10.num_blocks = xferlen/blocksize;
-
 	return task;
 }
 
@@ -1117,9 +1164,6 @@ scsi_cdb_read12(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, in
 		task->xfer_dir = SCSI_XFER_NONE;
 	}
 	task->expxferlen = xferlen;
-
-	task->params.read12.lba        = lba;
-	task->params.read12.num_blocks = xferlen/blocksize;
 
 	return task;
 }
@@ -1165,9 +1209,6 @@ scsi_cdb_read16(uint64_t lba, uint32_t xferlen, int blocksize, int rdprotect, in
 	}
 	task->expxferlen = xferlen;
 
-	task->params.read16.lba        = lba;
-	task->params.read16.num_blocks = xferlen/blocksize;
-
 	return task;
 }
 
@@ -1211,9 +1252,6 @@ scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
 	}
 	task->expxferlen = xferlen;
 
-	task->params.write10.lba        = lba;
-	task->params.write10.num_blocks = xferlen/blocksize;
-
 	return task;
 }
 
@@ -1256,9 +1294,6 @@ scsi_cdb_write12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
 		task->xfer_dir = SCSI_XFER_NONE;
 	}
 	task->expxferlen = xferlen;
-
-	task->params.write12.lba        = lba;
-	task->params.write12.num_blocks = xferlen/blocksize;
 
 	return task;
 }
@@ -1304,9 +1339,6 @@ scsi_cdb_write16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
 	}
 	task->expxferlen = xferlen;
 
-	task->params.write16.lba        = lba;
-	task->params.write16.num_blocks = xferlen/blocksize;
-
 	return task;
 }
 
@@ -1351,9 +1383,6 @@ scsi_cdb_orwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
 	}
 	task->expxferlen = xferlen;
 
-	task->params.orwrite.lba        = lba;
-	task->params.orwrite.num_blocks = xferlen/blocksize;
-
 	return task;
 }
 
@@ -1397,9 +1426,6 @@ scsi_cdb_compareandwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrpr
 	}
 	task->expxferlen = xferlen;
 
-	task->params.compareandwrite.lba        = lba;
-	task->params.compareandwrite.num_blocks = xferlen/blocksize;
-
 	return task;
 }
 
@@ -1440,12 +1466,6 @@ scsi_cdb_verify10(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
 		task->xfer_dir = SCSI_XFER_NONE;
 		task->expxferlen = 0;
 	}
-
-	task->params.verify10.lba        = lba;
-	task->params.verify10.num_blocks = xferlen/blocksize;
-	task->params.verify10.vprotect   = vprotect;
-	task->params.verify10.dpo        = dpo;
-	task->params.verify10.bytchk     = bytchk;
 
 	return task;
 }
@@ -1488,12 +1508,6 @@ scsi_cdb_verify12(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
 		task->expxferlen = 0;
 	}
 
-	task->params.verify12.lba        = lba;
-	task->params.verify12.num_blocks = xferlen/blocksize;
-	task->params.verify12.vprotect   = vprotect;
-	task->params.verify12.dpo        = dpo;
-	task->params.verify12.bytchk     = bytchk;
-
 	return task;
 }
 
@@ -1535,12 +1549,6 @@ scsi_cdb_verify16(uint64_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
 		task->xfer_dir = SCSI_XFER_NONE;
 		task->expxferlen = 0;
 	}
-
-	task->params.verify16.lba        = lba;
-	task->params.verify16.num_blocks = xferlen/blocksize;
-	task->params.verify16.vprotect   = vprotect;
-	task->params.verify16.dpo        = dpo;
-	task->params.verify16.bytchk     = bytchk;
 
 	return task;
 }
@@ -1701,11 +1709,6 @@ scsi_cdb_modesense6(int dbd, enum scsi_modesense_page_control pc,
 	}
 	task->expxferlen = alloc_len;
 
-	task->params.modesense6.dbd           = dbd;
-	task->params.modesense6.pc            = pc;
-	task->params.modesense6.page_code     = page_code;
-	task->params.modesense6.sub_page_code = sub_page_code;
-
 	return task;
 }
 
@@ -1815,7 +1818,7 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
 	pos = 4 + ms->block_descriptor_length;
 	while (pos < task->datain.size) {
 		struct scsi_mode_page *mp;
-	
+
 		mp = scsi_malloc(task, sizeof(struct scsi_mode_page));
 		if (mp == NULL) {
 			return ms;
@@ -1878,7 +1881,7 @@ scsi_cdb_startstopunit(int immed, int pcm, int pc, int no_flush, int loej, int s
 	if (immed) {
 		task->cdb[1] |= 0x01;
 	}
-	task->cdb[3] |= pcm & 0x0f; 
+	task->cdb[3] |= pcm & 0x0f;
 	task->cdb[4] |= (pc << 4) & 0xf0;
 	if (no_flush) {
 		task->cdb[4] |= 0x04;
@@ -1894,13 +1897,6 @@ scsi_cdb_startstopunit(int immed, int pcm, int pc, int no_flush, int loej, int s
 	task->cdb_size   = 6;
 	task->xfer_dir   = SCSI_XFER_NONE;
 	task->expxferlen = 0;
-
-	task->params.startstopunit.immed    = immed;
-	task->params.startstopunit.pcm      = pcm;
-	task->params.startstopunit.pc       = pc;
-	task->params.startstopunit.no_flush = no_flush;
-	task->params.startstopunit.loej     = loej;
-	task->params.startstopunit.start    = start;
 
 	return task;
 }
@@ -1926,8 +1922,6 @@ scsi_cdb_preventallow(int prevent)
 	task->cdb_size   = 6;
 	task->xfer_dir   = SCSI_XFER_NONE;
 	task->expxferlen = 0;
-
-	task->params.preventallow.prevent = prevent;
 
 	return task;
 }
@@ -2087,8 +2081,6 @@ scsi_cdb_serviceactionin16(enum scsi_service_action_in sa, uint32_t xferlen)
 	}
 	task->expxferlen = xferlen;
 
-	task->params.serviceactionin.sa = sa;
-
 	return task;
 }
 
@@ -2131,8 +2123,6 @@ scsi_cdb_get_lba_status(uint64_t starting_lba, uint32_t alloc_len)
 	}
 	task->expxferlen = alloc_len;
 
-	task->params.serviceactionin.sa = SCSI_GET_LBA_STATUS;
-
 	return task;
 }
 
@@ -2172,9 +2162,6 @@ scsi_cdb_writeverify10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprot
 		task->xfer_dir = SCSI_XFER_NONE;
 	}
 	task->expxferlen = xferlen;
-
-	task->params.writeverify10.lba        = lba;
-	task->params.writeverify10.num_blocks = xferlen/blocksize;
 
 	return task;
 }
@@ -2216,9 +2203,6 @@ scsi_cdb_writeverify12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprot
 	}
 	task->expxferlen = xferlen;
 
-	task->params.writeverify12.lba        = lba;
-	task->params.writeverify12.num_blocks = xferlen/blocksize;
-
 	return task;
 }
 
@@ -2259,9 +2243,6 @@ scsi_cdb_writeverify16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprot
 		task->xfer_dir = SCSI_XFER_NONE;
 	}
 	task->expxferlen = xferlen;
-
-	task->params.writeverify16.lba        = lba;
-	task->params.writeverify16.num_blocks = xferlen/blocksize;
 
 	return task;
 }
@@ -2548,7 +2529,7 @@ scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *coun
 			/* someone issued a read but did not provide enough user buffers for all the data.
 			 * maybe someone tried to read just 512 bytes off a MMC device?
 			 */
-			return NULL;			
+			return NULL;
 		}
 	}
 
@@ -2558,4 +2539,3 @@ scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *coun
 
 	return &sdb->data[pos];
 }
-
