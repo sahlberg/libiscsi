@@ -661,17 +661,9 @@ EXTERN int scsi_datain_getfullsize(struct scsi_task *task);
 EXTERN void *scsi_datain_unmarshall(struct scsi_task *task);
 
 EXTERN struct scsi_task *scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize);
-
-EXTERN u_int32_t scsi_read10_lba(const struct scsi_task * task);
-EXTERN u_int16_t scsi_read10_num_blocks(const struct scsi_task * task);
 EXTERN struct scsi_task *scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);
-
 EXTERN struct scsi_task *scsi_cdb_read12(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);
-
-EXTERN u_int64_t scsi_read16_lba(const struct scsi_task * task);
-EXTERN u_int32_t scsi_read16_num_blocks(const struct scsi_task * task);
 EXTERN struct scsi_task *scsi_cdb_read16(uint64_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);
-
 EXTERN struct scsi_task *scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 EXTERN struct scsi_task *scsi_cdb_write12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);
 EXTERN struct scsi_task *scsi_cdb_write16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number);

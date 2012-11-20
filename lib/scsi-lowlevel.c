@@ -1085,15 +1085,6 @@ scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize)
 /*
  * READ10
  */
- 
-u_int32_t scsi_read10_lba(const struct scsi_task * task) {
-	return (u_int32_t) ntohl(*((u_int32_t *) &task->cdb[2]));
-} 
-
-u_int16_t scsi_read10_num_blocks(const struct scsi_task * task) {
-	return (u_int16_t) ntohs(*((u_int16_t *) &task->cdb[7]));
-}  
- 
 struct scsi_task *
 scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number)
 {
@@ -1180,15 +1171,6 @@ scsi_cdb_read12(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, in
 /*
  * READ16
  */
-
-u_int64_t scsi_read16_lba(const struct scsi_task * task) {
-	return (u_int64_t) ntohl(*((u_int32_t *) &task->cdb[2])) << 32 | ntohl(*((u_int32_t *) &task->cdb[6]));
-} 
-
-u_int32_t scsi_read16_num_blocks(const struct scsi_task * task) {
-	return (u_int32_t) ntohl(*((u_int32_t *) &task->cdb[10]));
-} 
- 
 struct scsi_task *
 scsi_cdb_read16(uint64_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number)
 {
