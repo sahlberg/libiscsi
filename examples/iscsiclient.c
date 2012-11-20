@@ -32,7 +32,7 @@
  */
 
 /* This is the host/port we connect to.*/
-#define TARGET "10.1.1.116:3260"
+#define TARGET "127.0.0.1:3260"
 
 #if defined(WIN32)
 #include <winsock2.h>
@@ -124,8 +124,10 @@ void write10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data,
 
 void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
+	struct client_state *clnt = (struct client_state *)private_data;
 	struct scsi_task *task = command_data;
 	int i;
+	unsigned char wb[512];
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
 		printf("Read10 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
@@ -142,7 +144,9 @@ void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void
 			break;
 	}
 	printf("...\n");
+	scsi_free_scsi_task(task);
 
+#if 0
 	printf("Finished,   wont try to write data since that will likely destroy your LUN :-(\n");
 	printf("Send NOP-OUT\n");
 	if (iscsi_nop_out_async(iscsi, nop_out_cb, (unsigned char *)"Ping!", 6, private_data) != 0) {
@@ -150,13 +154,19 @@ void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void
 		scsi_free_scsi_task(task);
 		exit(10);
 	}
-//	printf("write the block back\n");
-//	if (iscsi_write10_async(iscsi, clnt->lun, task->data.datain, task->datain.size, 0, 0, 0, clnt->block_size, write10_cb, private_data) != 0) {
-//		printf("failed to send write10 command\n");
-//		scsi_free_scsi_task(task);
-//		exit(10);
-//	}
-	scsi_free_scsi_task(task);
+#else
+	printf("write the block\n");
+	for (i = 0;i < 512; i++) {
+		wb[i] = i;
+	}
+	task = iscsi_write10_task(iscsi, clnt->lun, 0, wb, 512, 512,
+			0, 0, 0, 0, 0,
+			write10_cb, private_data);
+	if (task == NULL) {
+		printf("failed to send write10 command\n");
+		exit(10);
+	}
+#endif
 }
 
 void read6_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
