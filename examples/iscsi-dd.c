@@ -97,7 +97,7 @@ void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void
 
 	if (iscsi_write10_task(client->dst_iscsi,
 			client->dst_lun,
-			task->params.read10.lba,
+			scsi_read10_lba(task),
 			task->datain.data,
 			task->datain.size,
 			client->dst_blocksize,
