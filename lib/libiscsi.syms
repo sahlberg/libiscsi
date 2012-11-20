@@ -130,8 +130,12 @@ scsi_cdb_modesense6
 scsi_cdb_prefetch10
 scsi_cdb_prefetch16
 scsi_cdb_preventallow
+scsi_read10_lba
+scsi_read10_num_blocks
 scsi_cdb_read10
 scsi_cdb_read12
+scsi_read16_lba
+scsi_read16_num_blocks
 scsi_cdb_read16
 scsi_cdb_read6
 scsi_cdb_readcapacity10
