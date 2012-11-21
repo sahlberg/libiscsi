@@ -657,8 +657,21 @@ struct scsi_report_supported_op_codes {
 	struct scsi_command_descriptor descriptors[0];
 };
 
+struct scsi_read10_cdb {
+	enum scsi_opcode opcode;
+	uint8_t  rdprotect;
+	uint8_t  dpo;
+	uint8_t  fua;
+	uint8_t  fua_nv;
+	uint32_t lba;
+	uint8_t  group;
+	uint16_t transfer_length;
+	uint8_t  control;
+};
+
 EXTERN int scsi_datain_getfullsize(struct scsi_task *task);
 EXTERN void *scsi_datain_unmarshall(struct scsi_task *task);
+EXTERN void *scsi_cdb_unmarshall(struct scsi_task *task);
 
 EXTERN struct scsi_task *scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize);
 EXTERN struct scsi_task *scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);

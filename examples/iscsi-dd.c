@@ -85,6 +85,7 @@ void read10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, 
 	struct client *client = (struct client *)private_data;
 	struct scsi_task *task = command_data;
 	struct write_task *wt;
+	struct scsi_read10_cdb *read10_cdb;
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
 		printf("Read10 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
@@ -95,9 +96,14 @@ void read10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, 
 	wt->rt = task;
 	wt->client = client;
 
+	read10_cdb = scsi_cdb_unmarshall(task);
+	if (read10_cdb == NULL) {
+		printf("Failed to unmarshall READ10 CDB.\n");
+		exit(10);
+	}
 	if (iscsi_write10_task(client->dst_iscsi,
 			client->dst_lun,
-			task->params.read10.lba,
+			read10_cdb->lba,
 			task->datain.data,
 			task->datain.size,
 			client->dst_blocksize,

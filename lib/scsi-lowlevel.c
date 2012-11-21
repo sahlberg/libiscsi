@@ -15,8 +15,8 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 /*
- * would be nice if this could grow into a full blown library for scsi to
- * 1, build a CDB
+ * would be nice if this could grow into a full blown library to
+ * 1, build and unmarshall a CDB
  * 2, check how big a complete data-in structure needs to be
  * 3, unmarshall data-in into a real structure
  * 4, marshall a real structure into a data-out blob
@@ -158,6 +158,18 @@ scsi_sense_ascq_str(int ascq)
 	};
 
 	return value_string_find(ascqs, ascq);
+}
+
+static uint32_t
+scsi_get_uint32(unsigned char *c)
+{
+	return ntohl(*(uint32_t *)c);
+}
+
+static uint16_t
+scsi_get_uint16(unsigned char *c)
+{
+	return ntohs(*(uint16_t *)c);
 }
 
 /*
@@ -2297,6 +2309,39 @@ scsi_datain_unmarshall(struct scsi_task *task)
 	return NULL;
 }
 
+
+static struct scsi_read10_cdb *
+scsi_read10_cdb_unmarshall(struct scsi_task *task)
+{
+	struct scsi_read10_cdb *read10;
+
+	read10 = scsi_malloc(task, sizeof(struct scsi_read10_cdb));
+	if (read10 == NULL) {
+		return NULL;
+	}
+
+	read10->opcode          = SCSI_OPCODE_READ10;
+	read10->rdprotect       = (task->cdb[1] >> 5) & 0x7;
+	read10->dpo             = !!(task->cdb[1] & 0x10);
+	read10->fua             = !!(task->cdb[1] & 0x08);
+	read10->fua_nv          = !!(task->cdb[1] & 0x02);
+	read10->lba             = scsi_get_uint32(&task->cdb[2]);
+	read10->group           = task->cdb[6] & 0x1f;
+	read10->transfer_length = scsi_get_uint16(&task->cdb[7]);
+	read10->control         = task->cdb[9];
+
+        return read10;
+}
+
+void *
+scsi_cdb_unmarshall(struct scsi_task *task)
+{
+	switch (task->cdb[0]) {
+	case SCSI_OPCODE_READ10:
+		return scsi_read10_cdb_unmarshall(task);
+	}
+	return NULL;
+}
 
 const char *
 scsi_devtype_to_str(enum scsi_inquiry_peripheral_device_type type)

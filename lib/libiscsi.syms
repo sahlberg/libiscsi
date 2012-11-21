@@ -161,6 +161,7 @@ scsi_cdb_writesame16
 scsi_codeset_to_str
 scsi_datain_getfullsize
 scsi_datain_unmarshall
+scsi_cdb_unmarshall
 scsi_designator_type_to_str
 scsi_devqualifier_to_str
 scsi_devtype_to_str
