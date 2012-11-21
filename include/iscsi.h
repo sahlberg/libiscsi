@@ -33,6 +33,9 @@ extern "C" {
 struct iscsi_context;
 struct sockaddr;
 
+/* FEATURES */
+#define LIBISCSI_FEATURE_IOVECTOR (1)
+
 #define MAX_STRING_SIZE (255)
 
 /*
