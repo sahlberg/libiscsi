@@ -96,7 +96,7 @@ void read10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, 
 	wt->rt = task;
 	wt->client = client;
 
-	read10_cdb = scsi_cdb_unmarshall(task);
+	read10_cdb = scsi_cdb_unmarshall(task, SCSI_OPCODE_READ10);
 	if (read10_cdb == NULL) {
 		printf("Failed to unmarshall READ10 CDB.\n");
 		exit(10);

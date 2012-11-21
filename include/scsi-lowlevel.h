@@ -671,7 +671,7 @@ struct scsi_read10_cdb {
 
 EXTERN int scsi_datain_getfullsize(struct scsi_task *task);
 EXTERN void *scsi_datain_unmarshall(struct scsi_task *task);
-EXTERN void *scsi_cdb_unmarshall(struct scsi_task *task);
+EXTERN void *scsi_cdb_unmarshall(struct scsi_task *task, enum scsi_opcode opcode);
 
 EXTERN struct scsi_task *scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize);
 EXTERN struct scsi_task *scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);

@@ -2334,8 +2334,12 @@ scsi_read10_cdb_unmarshall(struct scsi_task *task)
 }
 
 void *
-scsi_cdb_unmarshall(struct scsi_task *task)
+scsi_cdb_unmarshall(struct scsi_task *task, enum scsi_opcode opcode)
 {
+	if (task->cdb[0] != opcode) {
+		return NULL;
+	}
+
 	switch (task->cdb[0]) {
 	case SCSI_OPCODE_READ10:
 		return scsi_read10_cdb_unmarshall(task);
