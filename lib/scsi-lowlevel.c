@@ -160,16 +160,28 @@ scsi_sense_ascq_str(int ascq)
 	return value_string_find(ascqs, ascq);
 }
 
-static uint32_t
-scsi_get_uint32(unsigned char *c)
+inline uint32_t
+scsi_get_uint32(const unsigned char *c)
 {
 	return ntohl(*(uint32_t *)c);
 }
 
-static uint16_t
-scsi_get_uint16(unsigned char *c)
+inline uint16_t
+scsi_get_uint16(const unsigned char *c)
 {
 	return ntohs(*(uint16_t *)c);
+}
+
+inline void
+scsi_set_uint32(unsigned char *c, uint32_t val)
+{
+	*(uint32_t *)c = htonl(val);
+}
+
+inline void
+scsi_set_uint16(unsigned char *c, uint16_t val)
+{
+	*(uint16_t *)c = htons(val);
 }
 
 /*
