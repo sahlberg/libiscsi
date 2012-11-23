@@ -2533,58 +2533,119 @@ scsi_get_task_private_ptr(struct scsi_task *task)
 	return task->ptr;
 }
 
+void
+scsi_task_set_iov_out(struct scsi_task *task, struct scsi_iovec *iov, int niov) 
+{
+	task->iovector_out.iov = iov;
+	task->iovector_out.niov = niov;
+}
 
+void
+scsi_task_set_iov_in(struct scsi_task *task, struct scsi_iovec *iov, int niov) 
+{
+	task->iovector_in.iov = iov;
+	task->iovector_in.niov = niov;
+}
 
-struct scsi_data_buffer {
-   struct scsi_data_buffer *next;
-   uint32_t len;
-   unsigned char *data;
-};
+#define IOVECTOR_INITAL_ALLOC (16)
+
+int
+scsi_iovector_add(struct scsi_task *task, struct scsi_iovector *iovector, int len, unsigned char *buf)
+{
+	if (len < 0) {
+		return -1;
+	}
+	
+	if (iovector->iov == NULL) {
+		iovector->iov = scsi_malloc(task, IOVECTOR_INITAL_ALLOC*sizeof(struct iovec));
+		if (iovector->iov == NULL) {
+			return -1;
+		}
+		iovector->nalloc = IOVECTOR_INITAL_ALLOC;
+	}
+
+	/* iovec allocation is too small */
+	if (iovector->nalloc < iovector->niov + 1) {
+		struct scsi_iovec *old_iov = iovector->iov;
+		iovector->iov = scsi_malloc(task, 2 * iovector->nalloc * sizeof(struct iovec));
+		if (iovector->iov == NULL) {
+			return -1;
+		}
+		memcpy(iovector->iov, old_iov, iovector->niov * sizeof(struct iovec));
+		iovector->nalloc <<= 1;
+	}
+
+	iovector->iov[iovector->niov].iov_len = len;
+	iovector->iov[iovector->niov].iov_base = buf;
+	iovector->niov++;
+	iovector->size += len;
+
+	return 0;
+}
+
+unsigned char *
+scsi_iovector_get_buffer(struct scsi_iovector *iovector, uint32_t pos, ssize_t *count)
+{
+	if (iovector->iov == NULL) {
+		return NULL;
+	}
+
+	if (pos == 0 && count == NULL) return iovector->iov[0].iov_base;
+
+	if (pos < iovector->offset) {
+		/* start over in case we are going backwards */
+		iovector->offset = 0;
+		iovector->consumed = 0;
+	}
+
+	if (iovector->niov <= iovector->consumed) {
+		/* someone issued a read but did not provide enough user buffers for all the data.
+		 * maybe someone tried to read just 512 bytes off a MMC device?
+		 */
+		return NULL;
+	}
+
+	struct scsi_iovec *iov = &iovector->iov[iovector->consumed];
+
+	pos-= iovector->offset;
+
+	while (pos >= iov->iov_len) {
+		iovector->offset += iov->iov_len;
+		iovector->consumed++;
+		pos -= iov->iov_len;
+		if (iovector->niov <= iovector->consumed) {
+			return NULL;
+		}
+		iov = &iovector->iov[iovector->consumed];
+	}
+
+	if (count && *count >= (ssize_t)(iov->iov_len - pos)) {
+		*count = iov->iov_len - pos;
+	}
+
+	return (unsigned char *) iov->iov_base + pos;
+}
 
 int
 scsi_task_add_data_in_buffer(struct scsi_task *task, int len, unsigned char *buf)
 {
-	struct scsi_data_buffer *data_buf;
-
-	if (len < 0) {
-		return -1;
-	}
-	data_buf = scsi_malloc(task, sizeof(struct scsi_data_buffer));
-	if (data_buf == NULL) {
-		return -1;
-	}
-
-	data_buf->len  = len;
-	data_buf->data = buf;
-
-	SLIST_ADD_END(&task->in_buffers, data_buf);
-	return 0;
+	return scsi_iovector_add(task, &task->iovector_in, len, buf);
 }
 
 unsigned char *
 scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *count)
 {
-	struct scsi_data_buffer *sdb;
+	return scsi_iovector_get_buffer(&task->iovector_in, pos, count);
+}
 
-	sdb = task->in_buffers;
-	if (sdb == NULL) {
-		return NULL;
-	}
+int
+scsi_task_add_data_out_buffer(struct scsi_task *task, int len, unsigned char *buf)
+{
+	return scsi_iovector_add(task, &task->iovector_out, len, buf);
+}
 
-	while (pos >= sdb->len) {
-		pos -= sdb->len;
-		sdb  = sdb->next;
-		if (sdb == NULL) {
-			/* someone issued a read but did not provide enough user buffers for all the data.
-			 * maybe someone tried to read just 512 bytes off a MMC device?
-			 */
-			return NULL;
-		}
-	}
-
-	if (count && *count > (ssize_t)(sdb->len - pos)) {
-		*count = sdb->len - pos;
-	}
-
-	return &sdb->data[pos];
+unsigned char *
+scsi_task_get_data_out_buffer(struct scsi_task *task, uint32_t pos, ssize_t *count)
+{
+	return scsi_iovector_get_buffer(&task->iovector_out, pos, count);
 }

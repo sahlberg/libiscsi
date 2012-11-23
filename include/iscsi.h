@@ -33,6 +33,9 @@ extern "C" {
 struct iscsi_context;
 struct sockaddr;
 
+/* FEATURES */
+#define LIBISCSI_FEATURE_IOVECTOR (1)
+
 #define MAX_STRING_SIZE (255)
 
 /*
@@ -947,6 +950,11 @@ iscsi_report_supported_opcodes_sync(struct iscsi_context *iscsi, int lun,
  * task->datain.data will be NULL
  */
 EXTERN int scsi_task_add_data_in_buffer(struct scsi_task *task, int len, unsigned char *buf);
+EXTERN int scsi_task_add_data_out_buffer(struct scsi_task *task, int len, unsigned char *buf);
+
+struct scsi_iovec;
+EXTERN void scsi_task_set_iov_out(struct scsi_task *task, struct scsi_iovec *iov, int niov);
+EXTERN void scsi_task_set_iov_in(struct scsi_task *task, struct scsi_iovec *iov, int niov);
 
 /*
  * This function is used when you want to cancel a scsi task.
