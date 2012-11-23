@@ -87,7 +87,7 @@ iscsi_process_task_mgmt_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 
 	response = in->hdr[2];
 
-	maxcmdsn = ntohl(*(uint32_t *)&in->hdr[32]);
+	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
 	if (maxcmdsn > iscsi->maxcmdsn) {
 		iscsi->maxcmdsn = maxcmdsn;
 	}

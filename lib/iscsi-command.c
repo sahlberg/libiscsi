@@ -329,12 +329,12 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	struct iscsi_scsi_cbdata *scsi_cbdata = pdu->scsi_cbdata;
 	struct scsi_task *task = scsi_cbdata->task;
 
-	statsn = ntohl(*(uint32_t *)&in->hdr[24]);
+	statsn = scsi_get_uint32(&in->hdr[24]);
 	if (statsn > iscsi->statsn) {
 		iscsi->statsn = statsn;
 	}
 
-	maxcmdsn = ntohl(*(uint32_t *)&in->hdr[32]);
+	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
 	if (maxcmdsn > iscsi->maxcmdsn) {
 		iscsi->maxcmdsn = maxcmdsn;
 	}
@@ -369,7 +369,7 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		 * These flags should only be set if the S flag is also set
 		 */
 		if (flags & (ISCSI_PDU_DATA_RESIDUAL_OVERFLOW|ISCSI_PDU_DATA_RESIDUAL_UNDERFLOW)) {
-			task->residual = ntohl(*((uint32_t *)&in->hdr[44]));
+			task->residual = scsi_get_uint32(&in->hdr[44]);
 			if (flags & ISCSI_PDU_DATA_RESIDUAL_UNDERFLOW) {
 				task->residual_status = SCSI_RESIDUAL_UNDERFLOW;
 			} else {
@@ -397,14 +397,14 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		case 0x70:
 		case 0x71:
 		  task->sense.key        = task->datain.data[4] & 0x0f;
-		  task->sense.ascq       = ntohs(*(uint16_t *)
-						 &(task->datain.data[14]));
+		  task->sense.ascq       = scsi_get_uint16(
+						&(task->datain.data[14]));
 		  break;
 		case 0x72:
 		case 0x73:
 		  task->sense.key        = task->datain.data[3] & 0x0f;
-		  task->sense.ascq       = ntohs(*(uint16_t *)
-						 &(task->datain.data[4]));
+		  task->sense.ascq       = scsi_get_uint16(
+						&(task->datain.data[4]));
 		  break;
 		}
 		iscsi_set_error(iscsi, "SENSE KEY:%s(%d) ASCQ:%s(0x%04x)",
@@ -440,12 +440,12 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	struct scsi_task *task = scsi_cbdata->task;
 	int dsl;
 
-	statsn = ntohl(*(uint32_t *)&in->hdr[24]);
+	statsn = scsi_get_uint32(&in->hdr[24]);
 	if (statsn > iscsi->statsn) {
 		iscsi->statsn = statsn;
 	}
 
-	maxcmdsn = ntohl(*(uint32_t *)&in->hdr[32]);
+	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
 	if (maxcmdsn > iscsi->maxcmdsn) {
 		iscsi->maxcmdsn = maxcmdsn;
 	}
@@ -458,7 +458,7 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			      pdu->private_data);
 		return -1;
 	}
-	dsl = ntohl(*(uint32_t *)&in->hdr[4])&0x00ffffff;
+	dsl = scsi_get_uint32(&in->hdr[4]) & 0x00ffffff;
 
 	/* Dont add to reassembly buffer if we already have a user buffer */
 	if (scsi_task_get_data_in_buffer(task, 0, NULL) == NULL) {
@@ -495,7 +495,7 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	 * These flags should only be set if the S flag is also set
 	 */
 	if (flags & (ISCSI_PDU_DATA_RESIDUAL_OVERFLOW|ISCSI_PDU_DATA_RESIDUAL_UNDERFLOW)) {
-		task->residual = ntohl(*((uint32_t *)&in->hdr[44]));
+		task->residual = scsi_get_uint32(&in->hdr[44]);
 		if (flags & ISCSI_PDU_DATA_RESIDUAL_UNDERFLOW) {
 			task->residual_status = SCSI_RESIDUAL_UNDERFLOW;
 		} else {
@@ -525,11 +525,11 @@ iscsi_process_r2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 {
 	uint32_t ttt, offset, len, maxcmdsn;
 
-	ttt    = ntohl(*(uint32_t *)&in->hdr[20]);
-	offset = ntohl(*(uint32_t *)&in->hdr[40]);
-	len    = ntohl(*(uint32_t *)&in->hdr[44]);
+	ttt    = scsi_get_uint32(&in->hdr[20]);
+	offset = scsi_get_uint32(&in->hdr[40]);
+	len    = scsi_get_uint32(&in->hdr[44]);
 
-	maxcmdsn = ntohl(*(uint32_t *)&in->hdr[32]);
+	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
 	if (maxcmdsn > iscsi->maxcmdsn) {
 		iscsi->maxcmdsn = maxcmdsn;
 	}
@@ -1450,12 +1450,12 @@ iscsi_unmap_task(struct iscsi_context *iscsi, int lun, int anchor, int group,
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
-	*((uint16_t *)&data[0]) = htons(xferlen - 2);
-	*((uint16_t *)&data[2]) = htons(xferlen - 8);
+	scsi_set_uint16(&data[0], xferlen - 2);
+	scsi_set_uint16(&data[2], xferlen - 8);
 	for (i = 0; i < list_len; i++) {
-		*((uint32_t *)&data[8 + 16 * i])     = htonl(list[0].lba >> 32);
-		*((uint32_t *)&data[8 + 16 * i + 4]) = htonl(list[0].lba & 0xffffffff);
-		*((uint32_t *)&data[8 + 16 * i + 8]) = htonl(list[0].num);
+		scsi_set_uint32(&data[8 + 16 * i], list[0].lba >> 32);
+		scsi_set_uint32(&data[8 + 16 * i + 4], list[0].lba & 0xffffffff);
+		scsi_set_uint32(&data[8 + 16 * i + 8], list[0].num);
 	}
 
 	outdata.data = data;
@@ -1481,9 +1481,9 @@ iscsi_get_user_in_buffer(struct iscsi_context *iscsi, struct iscsi_in_pdu *in, u
 		return NULL;
 	}
 
-	offset = ntohl(*(uint32_t *)&in->hdr[40]);
+	offset = scsi_get_uint32(&in->hdr[40]);
 
-	itt = ntohl(*(uint32_t *)&in->hdr[16]);
+	itt = scsi_get_uint32(&in->hdr[16]);
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		if (pdu->itt == itt) {
 			break;

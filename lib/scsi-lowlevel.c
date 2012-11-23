@@ -224,7 +224,7 @@ scsi_reportluns_cdb(int report_type, int alloc_len)
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_REPORTLUNS;
 	task->cdb[2]   = report_type;
-	*(uint32_t *)&task->cdb[6] = htonl(alloc_len);
+	scsi_set_uint32(&task->cdb[6], alloc_len);
 
 	task->cdb_size = 12;
 	if (alloc_len != 0) {
@@ -246,7 +246,7 @@ scsi_reportluns_datain_getfullsize(struct scsi_task *task)
 {
 	uint32_t list_size;
 
-	list_size = htonl(*(uint32_t *)&(task->datain.data[0])) + 8;
+	list_size = scsi_get_uint32(&task->datain.data[0]) + 8;
 
 	return list_size;
 }
@@ -265,7 +265,7 @@ scsi_reportluns_datain_unmarshall(struct scsi_task *task)
 		return NULL;
 	}
 
-	list_size = htonl(*(uint32_t *)&(task->datain.data[0])) + 8;
+	list_size = scsi_get_uint32(&task->datain.data[0]) + 8;
 	if (list_size < task->datain.size) {
 		return NULL;
 	}
@@ -279,8 +279,7 @@ scsi_reportluns_datain_unmarshall(struct scsi_task *task)
 
 	list->num = num_luns;
 	for (i = 0; i < num_luns; i++) {
-		list->luns[i] = htons(*(uint16_t *)
-				      &(task->datain.data[i*8+8]));
+		list->luns[i] = scsi_get_uint16(&task->datain.data[i*8+8]);
 	}
 
 	return list;
@@ -302,7 +301,7 @@ scsi_cdb_readcapacity10(int lba, int pmi)
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_READCAPACITY10;
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba);
+	scsi_set_uint32(&task->cdb[2], lba);
 
 	if (pmi) {
 		task->cdb[8] |= 0x01;
@@ -348,7 +347,7 @@ scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len)
 		task->cdb[6] = 0xff & track_session;
 	}
 
-	*(uint16_t *)&task->cdb[7] = htons(alloc_len);
+	scsi_set_uint16(&task->cdb[7], alloc_len);
 
 	task->cdb_size = 10;
 	if (alloc_len != 0) {
@@ -370,7 +369,7 @@ scsi_readtoc_datain_getfullsize(struct scsi_task *task)
 {
 	uint16_t toc_data_len;
 
-	toc_data_len = ntohs(*((uint16_t *)&task->datain.data[0])) + 2;
+	toc_data_len = scsi_get_uint16(&task->datain.data[0]) + 2;
 
 	return toc_data_len;
 }
@@ -393,7 +392,7 @@ scsi_readtoc_desc_unmarshall(struct scsi_task *task, struct scsi_readtoc_list *l
 		list->desc[i].desc.toc.track
 			= task->datain.data[4+8*i+2];
 		list->desc[i].desc.toc.lba
-			= ntohl(*(uint32_t *)&task->datain.data[4+8*i+4]);
+			= scsi_get_uint32(&task->datain.data[4+8*i+4]);
 		break;
 	case SCSI_READ_SESSION_INFO:
 		list->desc[i].desc.ses.adr
@@ -403,7 +402,7 @@ scsi_readtoc_desc_unmarshall(struct scsi_task *task, struct scsi_readtoc_list *l
 		list->desc[i].desc.ses.first_in_last
 			= task->datain.data[4+8*i+2];
 		list->desc[i].desc.ses.lba
-			= ntohl(*(uint32_t *)&task->datain.data[4+8*i+4]);
+			= scsi_get_uint32(&task->datain.data[4+8*i+4]);
 		break;
 	case SCSI_READ_FULL_TOC:
 		list->desc[i].desc.full.session
@@ -538,22 +537,22 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 		if (rc16 == NULL) {
 			return NULL;
 		}
-		rc16->returned_lba = ntohl(*(uint32_t *)&(task->datain.data[0]));
-		rc16->returned_lba = (rc16->returned_lba << 32) | ntohl(*(uint32_t *)&(task->datain.data[4]));
-		rc16->block_length = ntohl(*(uint32_t *)&(task->datain.data[8]));
+		rc16->returned_lba = scsi_get_uint32(&task->datain.data[0]);
+		rc16->returned_lba = (rc16->returned_lba << 32) | scsi_get_uint32(&task->datain.data[4]);
+		rc16->block_length = scsi_get_uint32(&task->datain.data[8]);
 		rc16->p_type       = (task->datain.data[12] >> 1) & 0x07;
 		rc16->prot_en      = task->datain.data[12] & 0x01;
 		rc16->p_i_exp      = (task->datain.data[13] >> 4) & 0x0f;
 		rc16->lbppbe       = task->datain.data[13] & 0x0f;
 		rc16->lbpme        = !!(task->datain.data[14] & 0x80);
 		rc16->lbprz        = !!(task->datain.data[14] & 0x40);
-		rc16->lalba        = ntohs(*(uint16_t *)&(task->datain.data[14])) & 0x3fff;
+		rc16->lalba        = scsi_get_uint16(&task->datain.data[14]) & 0x3fff;
 		return rc16;
 	}
 	case SCSI_GET_LBA_STATUS: {
 		struct scsi_get_lba_status *gls = scsi_malloc(task,
 							      sizeof(*gls));
-		int32_t len = ntohl(*(uint32_t *)&(task->datain.data[0]));
+		int32_t len = scsi_get_uint32(&task->datain.data[0]);
 		int i;
 
 		if (gls == NULL) {
@@ -574,11 +573,11 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 		}
 
 		for (i = 0; i < (int)gls->num_descriptors; i++) {
-			gls->descriptors[i].lba  = ntohl(*(uint32_t *)&(task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 0]));
+			gls->descriptors[i].lba  = scsi_get_uint32(&task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 0]);
 			gls->descriptors[i].lba <<= 32;
- 			gls->descriptors[i].lba |= ntohl(*(uint32_t *)&(task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 4]));
+ 			gls->descriptors[i].lba |= scsi_get_uint32(&task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 4]);
 
-			gls->descriptors[i].num_blocks = ntohl(*(uint32_t *)&(task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 8]));
+			gls->descriptors[i].num_blocks = scsi_get_uint32(&task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 8]);
 
 			gls->descriptors[i].provisioning = task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 12] & 0x0f;
 		}
@@ -612,7 +611,7 @@ scsi_maintenancein_datain_getfullsize(struct scsi_task *task)
 
 	switch (scsi_maintenancein_sa(task)) {
 	case SCSI_REPORT_SUPPORTED_OP_CODES:
-		return ntohl(*(uint32_t *)&(task->datain.data[0])) + 4;
+		return scsi_get_uint32(&task->datain.data[0]) + 4;
 	default:
 		return -1;
 	}
@@ -635,7 +634,7 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 			return NULL;
 		}
 
-		len = ntohl(*(uint32_t *)&(task->datain.data[0]));
+		len = scsi_get_uint32(&task->datain.data[0]);
 		rsoc = scsi_malloc(task, sizeof(struct scsi_report_supported_op_codes) + len);
 		if (rsoc == NULL) {
 			return NULL;
@@ -697,7 +696,7 @@ scsi_cdb_report_supported_opcodes(int return_timeouts, uint32_t alloc_len)
 		task->cdb[2] |= 0x80;
 	}
 
-	*(uint32_t *)&task->cdb[6] = htonl(alloc_len);
+	scsi_set_uint32(&task->cdb[6], alloc_len);
 
 	task->cdb_size = 12;
 	if (alloc_len != 0) {
@@ -736,8 +735,8 @@ scsi_readcapacity10_datain_unmarshall(struct scsi_task *task)
 		return NULL;
 	}
 
-	rc10->lba        = htonl(*(uint32_t *)&(task->datain.data[0]));
-	rc10->block_size = htonl(*(uint32_t *)&(task->datain.data[4]));
+	rc10->lba        = scsi_get_uint32(&task->datain.data[0]);
+	rc10->block_size = scsi_get_uint32(&task->datain.data[4]);
 
 	return rc10;
 }
@@ -764,7 +763,7 @@ scsi_cdb_inquiry(int evpd, int page_code, int alloc_len)
 
 	task->cdb[2] = page_code;
 
-	*(uint16_t *)&task->cdb[3] = htons(alloc_len);
+	scsi_set_uint16(&task->cdb[3], alloc_len);
 
 	task->cdb_size = 6;
 	if (alloc_len != 0) {
@@ -808,7 +807,7 @@ scsi_inquiry_datain_getfullsize(struct scsi_task *task)
 	case SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION:
 	case SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS:
 	case SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING:
-		return ntohs(*(uint16_t *)&task->datain.data[2]) + 4;
+		return scsi_get_uint16(&task->datain.data[2]) + 4;
 	default:
 		return -1;
 	}
@@ -908,7 +907,7 @@ scsi_inquiry_unmarshall_device_identification(struct scsi_task *task)
 {
 	struct scsi_inquiry_device_identification *inq = scsi_malloc(task,
 								     sizeof(*inq));
-	int remaining = ntohs(*(uint16_t *)&task->datain.data[2]);
+	int remaining = scsi_get_uint16(&task->datain.data[2]);
 	unsigned char *dptr;
 
 	if (inq == NULL) {
@@ -977,17 +976,17 @@ scsi_inquiry_unmarshall_block_limits(struct scsi_task *task)
 
 	inq->wsnz                  = task->datain.data[4] & 0x01;
 	inq->max_cmp               = task->datain.data[5];
-	inq->opt_gran              = ntohs(*(uint16_t *)&task->datain.data[6]);
-	inq->max_xfer_len          = ntohl(*(uint32_t *)&task->datain.data[8]);
-	inq->opt_xfer_len          = ntohl(*(uint32_t *)&task->datain.data[12]);
-	inq->max_prefetch          = ntohl(*(uint32_t *)&task->datain.data[16]);
-	inq->max_unmap             = ntohl(*(uint32_t *)&task->datain.data[20]);
-	inq->max_unmap_bdc         = ntohl(*(uint32_t *)&task->datain.data[24]);
-	inq->opt_unmap_gran        = ntohl(*(uint32_t *)&task->datain.data[28]);
+	inq->opt_gran              = scsi_get_uint16(&task->datain.data[6]);
+	inq->max_xfer_len          = scsi_get_uint32(&task->datain.data[8]);
+	inq->opt_xfer_len          = scsi_get_uint32(&task->datain.data[12]);
+	inq->max_prefetch          = scsi_get_uint32(&task->datain.data[16]);
+	inq->max_unmap             = scsi_get_uint32(&task->datain.data[20]);
+	inq->max_unmap_bdc         = scsi_get_uint32(&task->datain.data[24]);
+	inq->opt_unmap_gran        = scsi_get_uint32(&task->datain.data[28]);
 	inq->ugavalid              = !!(task->datain.data[32]&0x80);
-	inq->unmap_gran_align      = ntohl(*(uint32_t *)&task->datain.data[32]) & 0x7fffffff;
-	inq->max_ws_len            = ntohl(*(uint32_t *)&task->datain.data[36]);
-	inq->max_ws_len            = (inq->max_ws_len << 32) | ntohl(*(uint32_t *)&task->datain.data[40]);
+	inq->unmap_gran_align      = scsi_get_uint32(&task->datain.data[32]) & 0x7fffffff;
+	inq->max_ws_len            = scsi_get_uint32(&task->datain.data[36]);
+	inq->max_ws_len            = (inq->max_ws_len << 32) | scsi_get_uint32(&task->datain.data[40]);
 
 	return inq;
 }
@@ -1004,7 +1003,7 @@ scsi_inquiry_unmarshall_block_device_characteristics(struct scsi_task *task)
 	inq->device_type           = task->datain.data[0]&0x1f;
 	inq->pagecode              = task->datain.data[1];
 
-	inq->medium_rotation_rate  = ntohs(*(uint16_t *)&task->datain.data[4]);
+	inq->medium_rotation_rate  = scsi_get_uint16(&task->datain.data[4]);
 	return inq;
 }
 
@@ -1133,8 +1132,8 @@ scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, in
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba);
-	*(uint16_t *)&task->cdb[7] = htons(xferlen/blocksize);
+	scsi_set_uint32(&task->cdb[2], lba);
+	scsi_set_uint16(&task->cdb[7], xferlen/blocksize);
 
 	task->cdb[6] |= (group_number & 0x1f);
 
@@ -1176,8 +1175,8 @@ scsi_cdb_read12(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, in
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba);
-	*(uint32_t *)&task->cdb[6] = htonl(xferlen/blocksize);
+	scsi_set_uint32(&task->cdb[2], lba);
+	scsi_set_uint32(&task->cdb[6], xferlen/blocksize);
 
 	task->cdb[10] |= (group_number & 0x1f);
 
@@ -1219,9 +1218,9 @@ scsi_cdb_read16(uint64_t lba, uint32_t xferlen, int blocksize, int rdprotect, in
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba >> 32);
-	*(uint32_t *)&task->cdb[6] = htonl(lba & 0xffffffff);
-	*(uint32_t *)&task->cdb[10] = htonl(xferlen/blocksize);
+	scsi_set_uint32(&task->cdb[2], lba >> 32);
+	scsi_set_uint32(&task->cdb[6], lba & 0xffffffff);
+	scsi_set_uint32(&task->cdb[10], xferlen/blocksize);
 
 	task->cdb[14] |= (group_number & 0x1f);
 
@@ -1263,8 +1262,8 @@ scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba);
-	*(uint16_t *)&task->cdb[7] = htons(xferlen/blocksize);
+	scsi_set_uint32(&task->cdb[2], lba);
+	scsi_set_uint16(&task->cdb[7], xferlen/blocksize);
 
 	task->cdb[6] |= (group_number & 0x1f);
 
@@ -1306,8 +1305,8 @@ scsi_cdb_write12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba);
-	*(uint32_t *)&task->cdb[6] = htonl(xferlen/blocksize);
+	scsi_set_uint32(&task->cdb[2], lba);
+	scsi_set_uint32(&task->cdb[6], xferlen/blocksize);
 
 	task->cdb[10] |= (group_number & 0x1f);
 
@@ -1349,9 +1348,9 @@ scsi_cdb_write16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba >> 32);
-	*(uint32_t *)&task->cdb[6] = htonl(lba & 0xffffffff);
-	*(uint32_t *)&task->cdb[10] = htonl(xferlen/blocksize);
+	scsi_set_uint32(&task->cdb[2], lba >> 32);
+	scsi_set_uint32(&task->cdb[6], lba & 0xffffffff);
+	scsi_set_uint32(&task->cdb[10], xferlen/blocksize);
 
 	task->cdb[14] |= (group_number & 0x1f);
 
@@ -1393,9 +1392,9 @@ scsi_cdb_orwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba >> 32);
-	*(uint32_t *)&task->cdb[6] = htonl(lba & 0xffffffff);
-	*(uint32_t *)&task->cdb[10] = htonl(xferlen/blocksize);
+	scsi_set_uint32(&task->cdb[2], lba >> 32);
+	scsi_set_uint32(&task->cdb[6], lba & 0xffffffff);
+	scsi_set_uint32(&task->cdb[10], xferlen/blocksize);
 
 	task->cdb[14] |= (group_number & 0x1f);
 
@@ -1437,8 +1436,8 @@ scsi_cdb_compareandwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrpr
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba >> 32);
-	*(uint32_t *)&task->cdb[6] = htonl(lba & 0xffffffff);
+	scsi_set_uint32(&task->cdb[2], lba >> 32);
+	scsi_set_uint32(&task->cdb[6], lba & 0xffffffff);
 	task->cdb[13] = xferlen/blocksize;
 
 	task->cdb[14] |= (group_number & 0x1f);
@@ -1479,8 +1478,8 @@ scsi_cdb_verify10(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba);
-	*(uint16_t *)&task->cdb[7] = htons(xferlen/blocksize);
+	scsi_set_uint32(&task->cdb[2], lba);
+	scsi_set_uint16(&task->cdb[7], xferlen/blocksize);
 
 	task->cdb_size = 10;
 	if (xferlen != 0 && bytchk) {
@@ -1520,8 +1519,8 @@ scsi_cdb_verify12(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba);
-	*(uint32_t *)&task->cdb[6] = htonl(xferlen/blocksize);
+	scsi_set_uint32(&task->cdb[2], lba);
+	scsi_set_uint32(&task->cdb[6], xferlen/blocksize);
 
 	task->cdb_size = 12;
 	if (xferlen != 0 && bytchk) {
@@ -1561,9 +1560,9 @@ scsi_cdb_verify16(uint64_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba >> 32);
-	*(uint32_t *)&task->cdb[6] = htonl(lba & 0xffffffff);
-	*(uint32_t *)&task->cdb[10] = htonl(xferlen/blocksize);
+	scsi_set_uint32(&task->cdb[2], lba >> 32);
+	scsi_set_uint32(&task->cdb[6], lba & 0xffffffff);
+	scsi_set_uint32(&task->cdb[10], xferlen/blocksize);
 
 	task->cdb_size = 16;
 	if (xferlen != 0 && bytchk) {
@@ -1598,7 +1597,7 @@ scsi_cdb_unmap(int anchor, int group, uint16_t xferlen)
 	}
 	task->cdb[6] |= group & 0x1f;
 
-	*(uint16_t *)&task->cdb[7] = htons(xferlen);
+	scsi_set_uint16(&task->cdb[7], xferlen);
 
 	task->cdb_size = 10;
 	if (xferlen != 0) {
@@ -1642,11 +1641,11 @@ scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, int pbdata, int lbdat
 	if (lbdata) {
 		task->cdb[1] |= 0x02;
 	}
-	*(uint32_t *)&task->cdb[2] = htonl(lba);
+	scsi_set_uint32(&task->cdb[2], lba);
 	if (group) {
 		task->cdb[6] |= (group & 0x1f);
 	}
-	*(uint16_t *)&task->cdb[7] = htons(num_blocks);
+	scsi_set_uint16(&task->cdb[7], num_blocks);
 
 	task->cdb_size = 10;
 	task->xfer_dir = SCSI_XFER_WRITE;
@@ -1686,9 +1685,9 @@ scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, int pbdata, int lbdat
 	if (lbdata) {
 		task->cdb[1] |= 0x02;
 	}
-	*(uint32_t *)&task->cdb[2]  = htonl(lba >> 32);
-	*(uint32_t *)&task->cdb[6]  = htonl(lba & 0xffffffff);
-	*(uint32_t *)&task->cdb[10] = htonl(num_blocks);
+	scsi_set_uint32(&task->cdb[2], lba >> 32);
+	scsi_set_uint32(&task->cdb[6], lba & 0xffffffff);
+	scsi_set_uint32(&task->cdb[10], num_blocks);
 	if (group) {
 		task->cdb[14] |= (group & 0x1f);
 	}
@@ -1765,10 +1764,10 @@ scsi_parse_mode_caching(struct scsi_task *task, int pos, struct scsi_mode_page *
 	mp->caching.demand_read_retention_priority = (task->datain.data[pos+1] >> 4) & 0x0f;
 	mp->caching.write_retention_priority       = task->datain.data[pos+1] & 0x0f;
 
-	mp->caching.disable_prefetch_transfer_length = htons(*(uint16_t *)&(task->datain.data[pos+2]));
-	mp->caching.minimum_prefetch = htons(*(uint16_t *)&(task->datain.data[pos+4]));
-	mp->caching.maximum_prefetch = htons(*(uint16_t *)&(task->datain.data[pos+6]));
-	mp->caching.maximum_prefetch_ceiling = htons(*(uint16_t *)&(task->datain.data[pos+8]));
+	mp->caching.disable_prefetch_transfer_length = scsi_get_uint16(&task->datain.data[pos+2]);
+	mp->caching.minimum_prefetch = scsi_get_uint16(&task->datain.data[pos+4]);
+	mp->caching.maximum_prefetch = scsi_get_uint16(&task->datain.data[pos+6]);
+	mp->caching.maximum_prefetch_ceiling = scsi_get_uint16(&task->datain.data[pos+8]);
 
 	mp->caching.fsw    = task->datain.data[pos+10] & 0x80;
 	mp->caching.lbcss  = task->datain.data[pos+10] & 0x40;
@@ -1776,7 +1775,7 @@ scsi_parse_mode_caching(struct scsi_task *task, int pos, struct scsi_mode_page *
 	mp->caching.nv_dis = task->datain.data[pos+10] & 0x01;
 
 	mp->caching.number_of_cache_segments = task->datain.data[pos+11];
-	mp->caching.cache_segment_size = htons(*(uint16_t *)&(task->datain.data[pos+12]));
+	mp->caching.cache_segment_size = scsi_get_uint16(&task->datain.data[pos+12]);
 }
 
 static void
@@ -1784,15 +1783,15 @@ scsi_parse_mode_disconnect_reconnect(struct scsi_task *task, int pos, struct scs
 {
 	mp->disconnect_reconnect.buffer_full_ratio = task->datain.data[pos];
 	mp->disconnect_reconnect.buffer_empty_ratio = task->datain.data[pos+1];
-	mp->disconnect_reconnect.bus_inactivity_limit = htons(*(uint16_t *)&(task->datain.data[pos+2]));
-	mp->disconnect_reconnect.disconnect_time_limit = htons(*(uint16_t *)&(task->datain.data[pos+4]));
-	mp->disconnect_reconnect.connect_time_limit = htons(*(uint16_t *)&(task->datain.data[pos+6]));
-	mp->disconnect_reconnect.maximum_burst_size = htons(*(uint16_t *)&(task->datain.data[pos+8]));
+	mp->disconnect_reconnect.bus_inactivity_limit = scsi_get_uint16(&task->datain.data[pos+2]);
+	mp->disconnect_reconnect.disconnect_time_limit = scsi_get_uint16(&task->datain.data[pos+4]);
+	mp->disconnect_reconnect.connect_time_limit = scsi_get_uint16(&task->datain.data[pos+6]);
+	mp->disconnect_reconnect.maximum_burst_size = scsi_get_uint16(&task->datain.data[pos+8]);
 	mp->disconnect_reconnect.emdp = task->datain.data[pos+10] & 0x80;
 	mp->disconnect_reconnect.fair_arbitration = (task->datain.data[pos+10]>>4) & 0x0f;
 	mp->disconnect_reconnect.dimm = task->datain.data[pos+10] & 0x08;
 	mp->disconnect_reconnect.dtdc = task->datain.data[pos+10] & 0x07;
-	mp->disconnect_reconnect.first_burst_size = htons(*(uint16_t *)&(task->datain.data[pos+12]));
+	mp->disconnect_reconnect.first_burst_size = scsi_get_uint16(&task->datain.data[pos+12]);
 }
 
 static void
@@ -1806,8 +1805,8 @@ scsi_parse_mode_informational_exceptions_control(struct scsi_task *task, int pos
 	mp->iec.ebackerr       = task->datain.data[pos] & 0x02;
 	mp->iec.logerr         = task->datain.data[pos] & 0x01;
 	mp->iec.mrie           = task->datain.data[pos+1] & 0x0f;
-	mp->iec.interval_timer = htonl(*(uint32_t *)&(task->datain.data[pos+2]));
-	mp->iec.report_count   = htonl(*(uint32_t *)&(task->datain.data[pos+6]));
+	mp->iec.interval_timer = scsi_get_uint32(&task->datain.data[pos+2]);
+	mp->iec.report_count   = scsi_get_uint32(&task->datain.data[pos+6]);
 }
 
 
@@ -1854,7 +1853,7 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
 
 		if (mp->spf) {
 			mp->subpage_code = task->datain.data[pos++];
-			mp->len = ntohs(*(uint16_t *)&task->datain.data[pos]);
+			mp->len = scsi_get_uint16(&task->datain.data[pos]);
 			pos += 2;
 		} else {
 			mp->subpage_code = 0;
@@ -1972,8 +1971,8 @@ scsi_cdb_synchronizecache10(int lba, int num_blocks, int syncnv, int immed)
 	if (immed) {
 		task->cdb[1] |= 0x02;
 	}
-	*(uint32_t *)&task->cdb[2] = htonl(lba);
-	*(uint16_t *)&task->cdb[7] = htons(num_blocks);
+	scsi_set_uint32(&task->cdb[2], lba);
+	scsi_set_uint16(&task->cdb[7], num_blocks);
 
 	task->cdb_size   = 10;
 	task->xfer_dir   = SCSI_XFER_NONE;
@@ -2004,9 +2003,9 @@ scsi_cdb_synchronizecache16(uint64_t lba, uint32_t num_blocks, int syncnv, int i
 	if (immed) {
 		task->cdb[1] |= 0x02;
 	}
-	*(uint32_t *)&task->cdb[2]  = htonl(lba >> 32);
-	*(uint32_t *)&task->cdb[6]  = htonl(lba & 0xffffffff);
-	*(uint32_t *)&task->cdb[10] = htonl(num_blocks);
+	scsi_set_uint32(&task->cdb[2], lba >> 32);
+	scsi_set_uint32(&task->cdb[6], lba & 0xffffffff);
+	scsi_set_uint32(&task->cdb[10], num_blocks);
 
 	task->cdb_size   = 16;
 	task->xfer_dir   = SCSI_XFER_NONE;
@@ -2034,9 +2033,9 @@ scsi_cdb_prefetch10(uint32_t lba, int num_blocks, int immed, int group)
 	if (immed) {
 		task->cdb[1] |= 0x02;
 	}
-	*(uint32_t *)&task->cdb[2] = htonl(lba);
+	scsi_set_uint32(&task->cdb[2], lba);
 	task->cdb[6] |= group & 0x1f;
-	*(uint16_t *)&task->cdb[7] = htons(num_blocks);
+	scsi_set_uint16(&task->cdb[7], num_blocks);
 
 	task->cdb_size   = 10;
 	task->xfer_dir   = SCSI_XFER_NONE;
@@ -2064,9 +2063,9 @@ scsi_cdb_prefetch16(uint64_t lba, int num_blocks, int immed, int group)
 	if (immed) {
 		task->cdb[1] |= 0x02;
 	}
-	*(uint32_t *)&task->cdb[2]  = htonl(lba >> 32);
-	*(uint32_t *)&task->cdb[6]  = htonl(lba & 0xffffffff);
-	*(uint32_t *)&task->cdb[10] = htonl(num_blocks);
+	scsi_set_uint32(&task->cdb[2], lba >> 32);
+	scsi_set_uint32(&task->cdb[6], lba & 0xffffffff);
+	scsi_set_uint32(&task->cdb[10], num_blocks);
 
 	task->cdb[14] |= group & 0x1f;
 
@@ -2095,7 +2094,7 @@ scsi_cdb_serviceactionin16(enum scsi_service_action_in sa, uint32_t xferlen)
 
 	task->cdb[1] = sa;
 
-	*(uint32_t *)&task->cdb[10] = htonl(xferlen);
+	scsi_set_uint32(&task->cdb[10], xferlen);
 
 	task->cdb_size   = 16;
 	if (xferlen != 0) {
@@ -2135,9 +2134,9 @@ scsi_cdb_get_lba_status(uint64_t starting_lba, uint32_t alloc_len)
 
 	task->cdb[1] = SCSI_GET_LBA_STATUS;
 
-	*(uint32_t *)&task->cdb[2] = htonl(starting_lba >> 32);
-	*(uint32_t *)&task->cdb[6] = htonl(starting_lba & 0xffffffff);
-	*(uint32_t *)&task->cdb[10] = htonl(alloc_len);
+	scsi_set_uint32(&task->cdb[2], starting_lba >> 32);
+	scsi_set_uint32(&task->cdb[6], starting_lba & 0xffffffff);
+	scsi_set_uint32(&task->cdb[10], alloc_len);
 
 	task->cdb_size   = 16;
 	if (alloc_len != 0) {
@@ -2174,8 +2173,8 @@ scsi_cdb_writeverify10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprot
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba);
-	*(uint16_t *)&task->cdb[7] = htons(xferlen/blocksize);
+	scsi_set_uint32(&task->cdb[2], lba);
+	scsi_set_uint16(&task->cdb[7], xferlen/blocksize);
 
 	task->cdb[6] |= (group_number & 0x1f);
 
@@ -2214,8 +2213,8 @@ scsi_cdb_writeverify12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprot
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba);
-	*(uint32_t *)&task->cdb[6] = htonl(xferlen/blocksize);
+	scsi_set_uint32(&task->cdb[2], lba);
+	scsi_set_uint32(&task->cdb[6], xferlen/blocksize);
 
 	task->cdb[10] |= (group_number & 0x1f);
 
@@ -2254,9 +2253,9 @@ scsi_cdb_writeverify16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprot
 		task->cdb[1] |= 0x02;
 	}
 
-	*(uint32_t *)&task->cdb[2] = htonl(lba >> 32);
-	*(uint32_t *)&task->cdb[6] = htonl(lba & 0xffffffff);
-	*(uint32_t *)&task->cdb[10] = htonl(xferlen/blocksize);
+	scsi_set_uint32(&task->cdb[2], lba >> 32);
+	scsi_set_uint32(&task->cdb[6], lba & 0xffffffff);
+	scsi_set_uint32(&task->cdb[10], xferlen/blocksize);
 
 	task->cdb[14] |= (group_number & 0x1f);
 

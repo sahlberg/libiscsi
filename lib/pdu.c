@@ -196,8 +196,8 @@ iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	}
 
 	/* update data segment length */
-	*(uint32_t *)&pdu->outdata.data[4] = htonl(pdu->outdata.size
-						   - ISCSI_HEADER_SIZE);
+	scsi_set_uint32(&pdu->outdata.data[4], pdu->outdata.size
+					       - ISCSI_HEADER_SIZE);
 
 	return 0;
 }
@@ -207,8 +207,8 @@ iscsi_get_pdu_data_size(const unsigned char *hdr)
 {
 	int size;
 
-	size = (ntohl(*(uint32_t *)&hdr[4])&0x00ffffff);
-	size = (size+3)&0xfffffffc;
+	size = scsi_get_uint32(&hdr[4]) & 0x00ffffff;
+	size = (size+3) & 0xfffffffc;
 
 	return size;
 }
@@ -266,9 +266,9 @@ int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
 	uint32_t ttt;
 	uint32_t statsn;
 
-	ttt = ntohl(*(uint32_t *)&in->hdr[20]);
+	ttt = scsi_get_uint32(&in->hdr[20]);
 
-	statsn = ntohl(*(uint32_t *)&in->hdr[24]);
+	statsn = scsi_get_uint32(&in->hdr[24]);
 	if (statsn > iscsi->statsn) {
 		iscsi->statsn = statsn;
 	}
@@ -298,7 +298,7 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 		return -1;
 	}
 
-	itt = ntohl(*(uint32_t *)&in->data[16]);
+	itt = scsi_get_uint32(&in->data[16]);
 
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		if (pdu->itt == itt) {
@@ -332,7 +332,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 
 	opcode = in->hdr[0] & 0x3f;
 	ahslen = in->hdr[4];
-	itt = ntohl(*(uint32_t *)&in->hdr[16]);
+	itt = scsi_get_uint32(&in->hdr[16]);
 
 	if (ahslen != 0) {
 		iscsi_set_error(iscsi, "cant handle expanded headers yet");
@@ -479,13 +479,13 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 void
 iscsi_pdu_set_itt(struct iscsi_pdu *pdu, uint32_t itt)
 {
-	*(uint32_t *)&pdu->outdata.data[16] = htonl(itt);
+	scsi_set_uint32(&pdu->outdata.data[16], itt);
 }
 
 void
 iscsi_pdu_set_ritt(struct iscsi_pdu *pdu, uint32_t ritt)
 {
-	*(uint32_t *)&pdu->outdata.data[20] = htonl(ritt);
+	scsi_set_uint32(&pdu->outdata.data[20], ritt);
 }
 
 void
@@ -503,43 +503,43 @@ iscsi_pdu_set_immediate(struct iscsi_pdu *pdu)
 void
 iscsi_pdu_set_ttt(struct iscsi_pdu *pdu, uint32_t ttt)
 {
-	*(uint32_t *)&pdu->outdata.data[20] = htonl(ttt);
+	scsi_set_uint32(&pdu->outdata.data[20], ttt);
 }
 
 void
 iscsi_pdu_set_cmdsn(struct iscsi_pdu *pdu, uint32_t cmdsn)
 {
-	*(uint32_t *)&pdu->outdata.data[24] = htonl(cmdsn);
+	scsi_set_uint32(&pdu->outdata.data[24], cmdsn);
 }
 
 void
 iscsi_pdu_set_rcmdsn(struct iscsi_pdu *pdu, uint32_t rcmdsn)
 {
-	*(uint32_t *)&pdu->outdata.data[32] = htonl(rcmdsn);
+	scsi_set_uint32(&pdu->outdata.data[32], rcmdsn);
 }
 
 void
 iscsi_pdu_set_datasn(struct iscsi_pdu *pdu, uint32_t datasn)
 {
-	*(uint32_t *)&pdu->outdata.data[36] = htonl(datasn);
+	scsi_set_uint32(&pdu->outdata.data[36], datasn);
 }
 
 void
 iscsi_pdu_set_expstatsn(struct iscsi_pdu *pdu, uint32_t expstatsnsn)
 {
-	*(uint32_t *)&pdu->outdata.data[28] = htonl(expstatsnsn);
+	scsi_set_uint32(&pdu->outdata.data[28], expstatsnsn);
 }
 
 void
 iscsi_pdu_set_bufferoffset(struct iscsi_pdu *pdu, uint32_t bufferoffset)
 {
-	*(uint32_t *)&pdu->outdata.data[40] = htonl(bufferoffset);
+	scsi_set_uint32(&pdu->outdata.data[40], bufferoffset);
 }
 
 void
 iscsi_pdu_set_cdb(struct iscsi_pdu *pdu, struct scsi_task *task)
 {
-  memset(&pdu->outdata.data[32], 0, 16);
+	memset(&pdu->outdata.data[32], 0, 16);
 	memcpy(&pdu->outdata.data[32], task->cdb, task->cdb_size);
 }
 
@@ -553,5 +553,5 @@ iscsi_pdu_set_lun(struct iscsi_pdu *pdu, uint32_t lun)
 void
 iscsi_pdu_set_expxferlen(struct iscsi_pdu *pdu, uint32_t expxferlen)
 {
-	*(uint32_t *)&pdu->outdata.data[20] = htonl(expxferlen);
+	scsi_set_uint32(&pdu->outdata.data[20], expxferlen);
 }

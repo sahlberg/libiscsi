@@ -30,6 +30,7 @@
 #include <string.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
+#include "scsi-lowlevel.h"
 #include "md5.h"
 
 static int
@@ -944,11 +945,11 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	char *ptr = (char *)in->data;
 	int size = in->data_pos;
 
-	status = ntohs(*(uint16_t *)&in->hdr[36]);
+	status = scsi_get_uint16(&in->hdr[36]);
 
-	iscsi->statsn = ntohs(*(uint16_t *)&in->hdr[24]);
+	iscsi->statsn = scsi_get_uint16(&in->hdr[24]);
 
-	maxcmdsn = ntohl(*(uint32_t *)&in->hdr[32]);
+	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
 	if (maxcmdsn > iscsi->maxcmdsn) {
 		iscsi->maxcmdsn = maxcmdsn;
 	}
@@ -1134,7 +1135,7 @@ struct iscsi_in_pdu *in)
 {
 	uint32_t maxcmdsn;
 
-	maxcmdsn = ntohl(*(uint32_t *)&in->hdr[32]);
+	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
 	if (maxcmdsn > iscsi->maxcmdsn) {
 		iscsi->maxcmdsn = maxcmdsn;
 	}
