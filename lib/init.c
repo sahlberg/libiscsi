@@ -32,7 +32,6 @@
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "slist.h"
-#include "scsi-lowlevel.h"
 
 
 inline void* iscsi_malloc(struct iscsi_context *iscsi, size_t size) {

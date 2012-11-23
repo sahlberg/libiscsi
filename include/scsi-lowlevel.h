@@ -197,18 +197,20 @@ enum scsi_residual {
 	SCSI_RESIDUAL_OVERFLOW
 };
 
-#if !defined(_SYS_UIO_H) && !defined(CONFIG_IOVEC)
-struct iovec {
+/* struct scsi_iovec follows the POSIX struct iovec
+   definition and *MUST* never change. */
+struct scsi_iovec {
     void *iov_base;
     size_t iov_len;
 };
-#endif
 
 struct scsi_iovector {
-    struct iovec *iov;
+    struct scsi_iovec *iov;
     int niov;
     int nalloc;
     size_t size;
+	size_t offset;
+	int consumed;
 };
 
 struct scsi_task {
@@ -231,9 +233,8 @@ struct scsi_task {
 	uint32_t cmdsn;
 	uint32_t lun;
 
-	size_t buffers_offset;
-	int buffers_consumed;
-	struct scsi_iovector *buffers;
+	struct scsi_iovector iovector_in;
+	struct scsi_iovector iovector_out;
 };
 
 /* This function will free a scsi task structure.
@@ -722,8 +723,6 @@ EXTERN struct scsi_task *scsi_cdb_prefetch16(uint64_t lba, int num_blocks, int i
 EXTERN struct scsi_task *scsi_cdb_report_supported_opcodes(int report_timeouts, uint32_t alloc_len);
 
 void *scsi_malloc(struct scsi_task *task, size_t size);
-
-EXTERN void scsi_iovector_assign(struct scsi_task *task, struct scsi_iovector *iov);
 
 #ifdef __cplusplus
 }
