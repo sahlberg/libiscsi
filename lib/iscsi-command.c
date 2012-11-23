@@ -377,6 +377,12 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			}
 		}
 
+		/* the pdu->datain.data was malloc'ed by iscsi_malloc,
+		   as long as we have no struct iscsi_task we cannot track
+		   the free'ing of this buffer which is currently
+		   done in scsi_free_scsi_task() */
+		if (pdu->indata.data != NULL) iscsi->frees++;
+
 		pdu->indata.data = NULL;
 		pdu->indata.size = 0;
 
@@ -511,6 +517,12 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	task->datain.data = pdu->indata.data;
 	task->datain.size = pdu->indata.size;
 
+	/* the pdu->indata.data was malloc'ed by iscsi_malloc,
+	   as long as we have no struct iscsi_task we cannot track
+	   the free'ing of this buffer which is currently
+	   done in scsi_free_scsi_task() */
+	if (pdu->indata.data != NULL) iscsi->frees++;
+	
 	pdu->indata.data = NULL;
 	pdu->indata.size = 0;
 
