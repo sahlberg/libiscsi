@@ -174,4 +174,7 @@ scsi_sense_ascq_str
 scsi_sense_key_str
 scsi_set_task_private_ptr
 scsi_task_add_data_in_buffer
+scsi_task_add_data_out_buffer
+scsi_task_set_iov_in
+scsi_task_set_iov_out
 scsi_version_to_str

@@ -33,6 +33,7 @@
 #include "iscsi-private.h"
 #include "slist.h"
 
+
 inline void* iscsi_malloc(struct iscsi_context *iscsi, size_t size) {
 	void * ptr = malloc(size);
 	if (ptr != NULL) iscsi->mallocs++;

@@ -197,6 +197,22 @@ enum scsi_residual {
 	SCSI_RESIDUAL_OVERFLOW
 };
 
+/* struct scsi_iovec follows the POSIX struct iovec
+   definition and *MUST* never change. */
+struct scsi_iovec {
+    void *iov_base;
+    size_t iov_len;
+};
+
+struct scsi_iovector {
+    struct scsi_iovec *iov;
+    int niov;
+    int nalloc;
+    size_t size;
+	size_t offset;
+	int consumed;
+};
+
 struct scsi_task {
 	int status;
 
@@ -217,7 +233,8 @@ struct scsi_task {
 	uint32_t cmdsn;
 	uint32_t lun;
 
-	struct scsi_data_buffer *in_buffers;
+	struct scsi_iovector iovector_in;
+	struct scsi_iovector iovector_out;
 };
 
 /* This function will free a scsi task structure.
