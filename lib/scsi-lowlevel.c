@@ -2560,7 +2560,7 @@ scsi_task_set_iov_in(struct scsi_task *task, struct scsi_iovec *iov, int niov)
 
 #define IOVECTOR_INITAL_ALLOC (16)
 
-int
+static int
 scsi_iovector_add(struct scsi_task *task, struct scsi_iovector *iovector, int len, unsigned char *buf)
 {
 	if (len < 0) {
