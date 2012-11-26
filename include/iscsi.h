@@ -537,7 +537,6 @@ iscsi_task_mgmt_target_cold_reset_async(struct iscsi_context *iscsi,
 
 struct iscsi_data {
        int size;
-       size_t alloc_size;
        unsigned char *data;
 };
 

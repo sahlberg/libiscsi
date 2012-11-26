@@ -43,9 +43,7 @@ iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opcode
 	}
 
 	pdu->outdata.size = ISCSI_HEADER_SIZE;
-	pdu->outdata.alloc_size = 64;
-	
-	pdu->outdata.data = iscsi_malloc(iscsi, pdu->outdata.alloc_size);
+       	pdu->outdata.data = iscsi_malloc(iscsi, pdu->outdata.size);
 	memset(pdu->outdata.data, 0, ISCSI_HEADER_SIZE);
 
 	if (pdu->outdata.data == NULL) {
@@ -117,41 +115,30 @@ iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 	}
 
 	len = data->size + dsize;
+
 	aligned = len;
 	if (pdualignment) {
 		aligned = (aligned+3)&0xfffffffc;
 	}
 
-	size_t new_alloc_size = data->alloc_size;
-	if (new_alloc_size < 64) new_alloc_size=64;
-	
-	while (aligned > new_alloc_size) new_alloc_size<<=1;
-
-	if (data->data != NULL && data->alloc_size == 0) data->alloc_size=data->size;
-	
-	if (data->alloc_size == 0) {
-		data->data = iscsi_malloc(iscsi, new_alloc_size);
+	if (data->size == 0) {
+		data->data = iscsi_malloc(iscsi, aligned);
+	} else {
+		data->data = iscsi_realloc(iscsi, data->data, aligned);
 	}
-	else
-		if (data->alloc_size != new_alloc_size) {
-			data->data = iscsi_realloc(iscsi, data->data, new_alloc_size);
-		}
-	
 	if (data->data == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate buffer for %d "
 				"bytes", (int) len);
 		return -1;
 	}
-	
-	data->alloc_size = new_alloc_size;
+
 	memcpy(data->data + data->size, dptr, dsize);
+	data->size += dsize;
 
 	if (len != aligned) {
 		/* zero out any padding at the end */
-		memset(data->data+len, 0, aligned-len);
+		memset(data->data + len, 0, aligned - len);
 	}
-
-	data->size = len;
 
 	return 0;
 }
