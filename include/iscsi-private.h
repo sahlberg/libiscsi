@@ -218,8 +218,6 @@ struct iscsi_pdu {
 
 	struct iscsi_data indata;
 
-	struct iscsi_data nidata; /* Non-Immediate Data */
-
 	struct iscsi_scsi_cbdata *scsi_cbdata;
 };
 
