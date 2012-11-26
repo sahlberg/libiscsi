@@ -92,14 +92,6 @@ iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 	return iscsi_allocate_pdu_with_itt_flags(iscsi, opcode, response_opcode, iscsi->itt++, 0);
 }	
 
-struct iscsi_pdu *
-iscsi_allocate_pdu_size(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
-		   enum iscsi_opcode response_opcode, size_t payload_size)
-{
-	return iscsi_allocate_pdu_with_itt_flags_size(iscsi, opcode, response_opcode, iscsi->itt++, 0, payload_size);
-}	
-
-
 
 void
 iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)

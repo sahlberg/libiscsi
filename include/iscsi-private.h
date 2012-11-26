@@ -226,10 +226,6 @@ void iscsi_free_scsi_cbdata(struct iscsi_context *iscsi, struct iscsi_scsi_cbdat
 struct iscsi_pdu *iscsi_allocate_pdu(struct iscsi_context *iscsi,
 				     enum iscsi_opcode opcode,
 				     enum iscsi_opcode response_opcode);
-struct iscsi_pdu *iscsi_allocate_pdu_size(struct iscsi_context *iscsi,
-				     enum iscsi_opcode opcode,
-				     enum iscsi_opcode response_opcode,
-				     size_t payload_size);
 struct iscsi_pdu *iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi,
        		 		enum iscsi_opcode opcode,
 				enum iscsi_opcode response_opcode,
