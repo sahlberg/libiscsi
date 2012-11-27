@@ -115,11 +115,6 @@ iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	iscsi_free(iscsi, pdu->indata.data);
 	pdu->indata.data = NULL;
 
-	if (pdu->scsi_cbdata) {
-		iscsi_free_scsi_cbdata(iscsi, pdu->scsi_cbdata);
-		pdu->scsi_cbdata = NULL;
-	}
-
 	iscsi_free(iscsi, pdu);
 }
 

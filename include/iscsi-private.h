@@ -192,6 +192,13 @@ enum iscsi_opcode {
 	ISCSI_PDU_NO_PDU	                 = 0xff
 };
 
+struct iscsi_scsi_cbdata {
+	struct iscsi_scsi_cbdata *prev, *next;
+	iscsi_command_cb          callback;
+	void                     *private_data;
+	struct scsi_task         *task;
+};
+
 struct iscsi_pdu {
 	struct iscsi_pdu *next;
 
@@ -216,7 +223,7 @@ struct iscsi_pdu {
 
 	struct iscsi_data nidata; /* Non-Immediate Data */
 
-	struct iscsi_scsi_cbdata *scsi_cbdata;
+	struct iscsi_scsi_cbdata scsi_cbdata;
 };
 
 void iscsi_free_scsi_cbdata(struct iscsi_context *iscsi, struct iscsi_scsi_cbdata *scsi_cbdata);

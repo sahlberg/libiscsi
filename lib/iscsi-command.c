@@ -29,25 +29,6 @@
 #include "scsi-lowlevel.h"
 #include "slist.h"
 
-struct iscsi_scsi_cbdata {
-	struct iscsi_scsi_cbdata *prev, *next;
-	iscsi_command_cb          callback;
-	void                     *private_data;
-	struct scsi_task         *task;
-};
-
-void
-iscsi_free_scsi_cbdata(struct iscsi_context *iscsi, struct iscsi_scsi_cbdata *scsi_cbdata)
-{
-	if (scsi_cbdata == NULL) {
-		return;
-	}
-	if (scsi_cbdata->task != NULL) {
-		scsi_cbdata->task = NULL;
-	}
-	iscsi_free(iscsi, scsi_cbdata);
-}
-
 static void
 iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 		       void *command_data _U_, void *private_data)
@@ -187,28 +168,21 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		return -1;
 	}
 
-	scsi_cbdata = iscsi_zmalloc(iscsi, sizeof(struct iscsi_scsi_cbdata));
-	if (scsi_cbdata == NULL) {
-		iscsi_set_error(iscsi, "Out-of-memory: failed to allocate "
-				"scsi cbdata.");
-		return -1;
-	}
-
-	scsi_cbdata->task         = task;
-	scsi_cbdata->callback     = cb;
-	scsi_cbdata->private_data = private_data;
-
-	scsi_set_task_private_ptr(task, scsi_cbdata);
-
 	pdu = iscsi_allocate_pdu_size(iscsi, ISCSI_PDU_SCSI_REQUEST,
 				 ISCSI_PDU_SCSI_RESPONSE, data.size);
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory, Failed to allocate "
 				"scsi pdu.");
-		iscsi_free_scsi_cbdata(iscsi, scsi_cbdata);
 		return -1;
 	}
-	pdu->scsi_cbdata = scsi_cbdata;
+	
+	scsi_cbdata = &pdu->scsi_cbdata;
+	
+	scsi_cbdata->task         = task;
+	scsi_cbdata->callback     = cb;
+	scsi_cbdata->private_data = private_data;
+
+	scsi_set_task_private_ptr(task, scsi_cbdata);
 
 	/* flags */
 	flags = ISCSI_PDU_SCSI_FINAL|ISCSI_PDU_SCSI_ATTR_SIMPLE;
@@ -326,7 +300,7 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			 struct iscsi_in_pdu *in)
 {
 	uint32_t statsn, maxcmdsn, flags, status;
-	struct iscsi_scsi_cbdata *scsi_cbdata = pdu->scsi_cbdata;
+	struct iscsi_scsi_cbdata *scsi_cbdata = &pdu->scsi_cbdata;
 	struct scsi_task *task = scsi_cbdata->task;
 
 	statsn = scsi_get_uint32(&in->hdr[24]);
@@ -436,7 +410,7 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			   struct iscsi_in_pdu *in, int *is_finished)
 {
 	uint32_t statsn, maxcmdsn, flags, status;
-	struct iscsi_scsi_cbdata *scsi_cbdata = pdu->scsi_cbdata;
+	struct iscsi_scsi_cbdata *scsi_cbdata = &pdu->scsi_cbdata;
 	struct scsi_task *task = scsi_cbdata->task;
 	int dsl;
 
@@ -1493,7 +1467,7 @@ iscsi_get_user_in_buffer(struct iscsi_context *iscsi, struct iscsi_in_pdu *in, u
 		return NULL;
 	}
 
-	return scsi_task_get_data_in_buffer(pdu->scsi_cbdata->task, offset + pos, count);
+	return scsi_task_get_data_in_buffer(pdu->scsi_cbdata.task, offset + pos, count);
 }
 
 struct scsi_task *
@@ -1585,7 +1559,7 @@ iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi,
 struct scsi_task *
 iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu)
 {
-	return pdu->scsi_cbdata->task;
+	return pdu->scsi_cbdata.task;
 }
 
 int
