@@ -19,6 +19,8 @@
 
 #include <stdint.h>
 #include <time.h>
+/* We need this until we have an iscsi_task to get access to the iovector_out */
+#include "scsi-lowlevel.h"
 
 #if defined(WIN32)
 #include <basetsd.h>
@@ -218,6 +220,8 @@ struct iscsi_pdu {
 	void *private_data;
 
 	int written;
+
+	struct scsi_task *task;     /* Reference to scsi_task to get iov with output data */
 
 	struct iscsi_data outdata; /* Header for PDU to send */
 	uint32_t out_offset;       /* Offset into data-out iovector */
