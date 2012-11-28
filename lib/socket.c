@@ -52,6 +52,7 @@ void
 iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	SLIST_ADD_END(&iscsi->outqueue, pdu);
+	return;
 }
 
 void iscsi_decrement_iface_rr() {
