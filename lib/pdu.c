@@ -30,6 +30,36 @@
 #include "scsi-lowlevel.h"
 #include "slist.h"
 
+/* This adds 32-bit serial comparision as defined in RFC1982.
+ * It returns 0 for equality, 1 if s1 is greater than s2 and
+ * -1 if s1 is less than s2. According to RFC1982 section 3.2
+ * there are rare cases where the result of the comparision is
+ * undefined e.g. when s1 = 0 and s2=2^31. This cases should
+ * not happen in iSCSI protocol.
+ */
+int
+iscsi_serial32_compare(u_int32_t s1, u_int32_t s2) {
+	if (s1 == s2) return 0;
+	if (s1 < s2 && s2-s1 < (u_int32_t)1<<31) return -1;
+	if (s1 > s2 && s1-s2 < (u_int32_t)1<<31) return 1;
+	if (s1 > s2 && s1-s2 > (u_int32_t)1<<31) return -1;
+	if (s1 < s2 && s2-s1 > (u_int32_t)1<<31) return 1;
+	/* undefined result */
+	return -1;
+}
+
+u_int32_t
+iscsi_itt_post_increment(struct iscsi_context *iscsi) {
+	u_int32_t old_itt = iscsi->itt;
+	iscsi->itt++;
+	/* 0xffffffff is a reserved value */
+	if (iscsi->itt == 0xffffffff) {
+		iscsi->itt = 0;
+	}
+	return old_itt;
+}
+
+
 struct iscsi_pdu *
 iscsi_allocate_pdu_with_itt_flags_size(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 				  enum iscsi_opcode response_opcode, uint32_t itt, uint32_t flags, size_t payload_size)
@@ -89,14 +119,14 @@ struct iscsi_pdu *
 iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 		   enum iscsi_opcode response_opcode)
 {
-	return iscsi_allocate_pdu_with_itt_flags(iscsi, opcode, response_opcode, iscsi->itt++, 0);
+	return iscsi_allocate_pdu_with_itt_flags(iscsi, opcode, response_opcode, iscsi_itt_post_increment(iscsi), 0);
 }	
 
 struct iscsi_pdu *
 iscsi_allocate_pdu_size(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 		   enum iscsi_opcode response_opcode, size_t payload_size)
 {
-	return iscsi_allocate_pdu_with_itt_flags_size(iscsi, opcode, response_opcode, iscsi->itt++, 0, payload_size);
+	return iscsi_allocate_pdu_with_itt_flags_size(iscsi, opcode, response_opcode, iscsi_itt_post_increment(iscsi), 0, payload_size);
 }	
 
 

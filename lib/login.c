@@ -950,10 +950,10 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	iscsi->statsn = scsi_get_uint16(&in->hdr[24]);
 
 	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (maxcmdsn > iscsi->maxcmdsn) {
+	if (iscsi_serial32_compare(maxcmdsn,iscsi->maxcmdsn) > 0) {
 		iscsi->maxcmdsn = maxcmdsn;
 	}
-
+	
 	/* XXX here we should parse the data returned in case the target
 	 * renegotiated some some parameters.
 	 *  we should also do proper handshaking if the target is not yet
@@ -1067,7 +1067,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	if ((in->hdr[1] & ISCSI_PDU_LOGIN_TRANSIT)
 	&& (in->hdr[1] & ISCSI_PDU_LOGIN_NSG_FF) == ISCSI_PDU_LOGIN_NSG_FF) {
 		iscsi->is_loggedin = 1;
-		iscsi->itt++;
+		iscsi_itt_post_increment(iscsi);
 		iscsi->header_digest  = iscsi->want_header_digest;
 		ISCSI_LOG(iscsi, 2, "login successful");
 		pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
@@ -1136,7 +1136,7 @@ struct iscsi_in_pdu *in)
 	uint32_t maxcmdsn;
 
 	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (maxcmdsn > iscsi->maxcmdsn) {
+	if (iscsi_serial32_compare(maxcmdsn,iscsi->maxcmdsn) > 0) {
 		iscsi->maxcmdsn = maxcmdsn;
 	}
 

@@ -21,19 +21,25 @@
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
+#include <stdlib.h>
 
 static int num_cmds_in_flight;
 
-static void test_cb(struct iscsi_context *iscsi _U_, int status _U_,
+static void test_cb(struct iscsi_context *iscsi _U_, int status,
 			void *command_data _U_, void *private_data)
 {
 	struct iscsi_async_state *state = private_data;
+
+	if (status != SCSI_STATUS_GOOD) {
+		state->status = status;
+	}
 
 	if (--num_cmds_in_flight == 0) {
 		state->finished = 1;
 	}
 }
 
+#define T1040_NO_OF_WRITES (1024)
 
 int T1040_saturate_maxcmdsn(const char *initiator, const char *url, int data_loss, int show_info)
 { 
@@ -42,7 +48,7 @@ int T1040_saturate_maxcmdsn(const char *initiator, const char *url, int data_los
 	struct scsi_readcapacity16 *rc16;
 	int i, ret, lun;
 	uint32_t block_size;
-	unsigned char data[4096 * 2];
+	unsigned char *data;
 	struct iscsi_async_state test_state;
 
 	printf("1040_saturate_maxcmdsn:\n");
@@ -81,6 +87,13 @@ int T1040_saturate_maxcmdsn(const char *initiator, const char *url, int data_los
 		goto finished;
 	}
 	block_size = rc16->block_length;
+
+	if (T1040_NO_OF_WRITES*2*iscsi->first_burst_length > rc16->block_length*(rc16->returned_lba +1)) {
+		printf("target is too small for this test. at least %u bytes are required\n",T1040_NO_OF_WRITES*2*iscsi->first_burst_length);
+		ret = -1;
+		scsi_free_scsi_task(task);
+		goto finished;
+	}
 	scsi_free_scsi_task(task);
 
 
@@ -93,41 +106,63 @@ int T1040_saturate_maxcmdsn(const char *initiator, const char *url, int data_los
 
 	ret = 0;
 
-	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsi->target_max_recv_data_segment_length = block_size;
-
-	printf("Send 1024 Writes each needing a R2T so that we saturate the maxcmdsn queue ... ");
 	/* we dont want autoreconnect since some targets will drop the
 	 * on this condition.
 	 */
 	iscsi_set_noautoreconnect(iscsi, 1);
 
-	for (i = 0; i < 1024; i++) {
-		num_cmds_in_flight++;
-		task = iscsi_write10_task(iscsi, lun, 0, data, 2 * block_size, block_size,
-				0, 0, 0, 0, 0,
-				test_cb, &test_state);
-		if (task == NULL) {
-		        printf("[FAILED]\n");
-			printf("Failed to send WRITE10 command: %s\n", iscsi_get_error(iscsi));
+	data = malloc(2*iscsi->first_burst_length);
+	if (data == NULL) {
+		printf("failed to malloc data buffer\n");
+		ret = -1;
+		goto finished;
+	}
+
+	int run=0;
+
+	do {
+		if (run || iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) {
+			iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+			printf("Send %d Writes w/ ISCSI_IMMEDIATE_DATA_NO each needing a R2T so that we saturate the maxcmdsn queue ... ",T1040_NO_OF_WRITES);
+		} else {
+			printf("Send %d Writes w/ ISCSI_IMMEDIATE_DATA_YES each needing a R2T so that we saturate the maxcmdsn queue ... ",T1040_NO_OF_WRITES);
+		}
+
+		for (i = 0; i < T1040_NO_OF_WRITES; i++) {
+			num_cmds_in_flight++;
+			task = iscsi_write10_task(iscsi, lun, 2 * iscsi->first_burst_length * i / block_size, data, 2 * iscsi->first_burst_length, block_size,
+					0, 0, 0, 0, 0,
+					test_cb, &test_state);
+			if (task == NULL) {
+					printf("[FAILED]\n");
+				printf("Failed to send WRITE10 command: %s\n", iscsi_get_error(iscsi));
+				ret++;
+				goto test2;
+			}
+		}
+	
+		test_state.task     = task;
+		test_state.finished = 0;
+		test_state.status   = 0;
+		wait_until_test_finished(iscsi, &test_state);
+		if (num_cmds_in_flight != 0) {
+	        printf("[FAILED]\n");
+			printf("Did not complete all I/O before deadline.\n");
+			ret++;
+			goto test2;
+		} else if (test_state.status != 0) {
+	        printf("[FAILED]\n");
+			printf("Not all I/O commands succeeded.\n");
 			ret++;
 			goto test2;
 		}
-	}
-	test_state.task     = task;
-	test_state.finished = 0;
-	test_state.status   = 0;
-	wait_until_test_finished(iscsi, &test_state);
-	if (num_cmds_in_flight != 0) {
-	        printf("[FAILED]\n");
-		printf("Did not complete all I/O before deadline.\n");
-		ret++;
-		goto test2;
-	}
-	printf("[OK]\n");
-
+		printf("[OK]\n");
+		run++;
+	} while (iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_YES);
+	
 
 test2:
+	free(data);
 
 finished:
 	iscsi_destroy_context(iscsi);
