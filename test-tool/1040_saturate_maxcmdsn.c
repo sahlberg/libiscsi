@@ -93,8 +93,7 @@ int T1040_saturate_maxcmdsn(const char *initiator, const char *url, int data_los
 
 	ret = 0;
 
-	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsi->target_max_recv_data_segment_length = block_size;
+	iscsi->first_burst_length = block_size;
 
 	printf("Send 1024 Writes each needing a R2T so that we saturate the maxcmdsn queue ... ");
 	/* we dont want autoreconnect since some targets will drop the
