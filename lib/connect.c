@@ -289,7 +289,7 @@ try_again:
 		iscsi->statsn++;
 
 		pdu->written = 0;
-		SLIST_ADD_END(&iscsi->outqueue, pdu);
+		iscsi_add_to_outqueue(iscsi, pdu);
 	}
 
 	while (old_iscsi->outqueue) {
@@ -319,7 +319,7 @@ try_again:
 		iscsi->statsn++;
 
 		pdu->written = 0;
-		SLIST_ADD_END(&iscsi->outqueue, pdu);
+		iscsi_add_to_outqueue(iscsi, pdu);
 	}
 
 	if (dup2(iscsi->fd, old_iscsi->fd) == -1) {

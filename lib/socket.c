@@ -48,6 +48,12 @@
 
 static uint32_t iface_rr = 0;
 
+void
+iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	SLIST_ADD_END(&iscsi->outqueue, pdu);
+}
+
 void iscsi_decrement_iface_rr() {
 	iface_rr--;
 }
@@ -596,7 +602,7 @@ iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+0] = (crc)      &0xff;
 	}
 
-	SLIST_ADD_END(&iscsi->outqueue, pdu);
+	iscsi_add_to_outqueue(iscsi, pdu);
 
 	return 0;
 }

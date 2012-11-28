@@ -322,6 +322,9 @@ void iscsi_decrement_iface_rr(void);
 void
 iscsi_log_message(struct iscsi_context *iscsi, int level, const char *format, ...);
 
+void
+iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+
 #ifdef __cplusplus
 }
 #endif
