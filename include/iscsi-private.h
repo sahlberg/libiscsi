@@ -325,6 +325,9 @@ iscsi_log_message(struct iscsi_context *iscsi, int level, const char *format, ..
 void
 iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
+int
+iscsi_serial32_compare(u_int32_t s1, u_int32_t s2);
+
 #ifdef __cplusplus
 }
 #endif
