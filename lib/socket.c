@@ -51,14 +51,14 @@ static uint32_t iface_rr = 0;
 void
 iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
+	struct iscsi_pdu *current = iscsi->outqueue;
+	struct iscsi_pdu *last = NULL;
+	
 	if (iscsi->outqueue == NULL) {
 		iscsi->outqueue = pdu;
 		pdu->next = NULL;
 		return;
 	}
-	
-	struct iscsi_pdu *current = iscsi->outqueue;
-	struct iscsi_pdu *last = NULL;
 	
 	/* queue pdus in ascending order of itt. 
 	 * ensure that pakets with the same itt are kept in order.
@@ -332,7 +332,7 @@ iscsi_which_events(struct iscsi_context *iscsi)
 {
 	int events = iscsi->is_connected ? POLLIN : POLLOUT;
 
-	if (iscsi->outqueue && iscsi_serial32_compare(iscsi->outqueue->cmdsn,iscsi->maxcmdsn) <= 0) {
+	if (iscsi->outqueue && iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0) {
 	 	events |= POLLOUT;
 	}
 	return events;
@@ -472,7 +472,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 	while (iscsi->outqueue) {
 		ssize_t total;
 
-		if (iscsi_serial32_compare(iscsi->outqueue->cmdsn,iscsi->maxcmdsn) > 0) {
+		if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0) {
 			/* stop sending. maxcmdsn is reached */
 			return 0;
 		}
