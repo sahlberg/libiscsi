@@ -335,7 +335,7 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	}
 
 	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (maxcmdsn > iscsi->maxcmdsn) {
+	if (iscsi_serial32_compare(maxcmdsn,iscsi->maxcmdsn) > 0) {
 		iscsi->maxcmdsn = maxcmdsn;
 	}
 
@@ -452,7 +452,7 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	}
 
 	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (maxcmdsn > iscsi->maxcmdsn) {
+	if (iscsi_serial32_compare(maxcmdsn,iscsi->maxcmdsn) > 0) {
 		iscsi->maxcmdsn = maxcmdsn;
 	}
 
@@ -542,7 +542,7 @@ iscsi_process_r2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	len    = scsi_get_uint32(&in->hdr[44]);
 
 	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (maxcmdsn > iscsi->maxcmdsn) {
+	if (iscsi_serial32_compare(maxcmdsn,iscsi->maxcmdsn) > 0) {
 		iscsi->maxcmdsn = maxcmdsn;
 	}
 
