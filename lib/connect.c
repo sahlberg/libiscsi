@@ -279,7 +279,7 @@ try_again:
 			continue;
 		}
 
-		pdu->itt   = iscsi->itt++;
+		pdu->itt   = iscsi_itt_post_increment(iscsi);
 		iscsi_pdu_set_itt(pdu, pdu->itt);
 
 		pdu->cmdsn = iscsi->cmdsn++;
@@ -309,7 +309,7 @@ try_again:
 			continue;
 		}
 
-		pdu->itt   = iscsi->itt++;
+		pdu->itt   = iscsi_itt_post_increment(iscsi);
 		iscsi_pdu_set_itt(pdu, pdu->itt);
 
 		pdu->cmdsn = iscsi->cmdsn++;

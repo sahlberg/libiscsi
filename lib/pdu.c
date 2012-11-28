@@ -48,6 +48,18 @@ iscsi_serial32_compare(u_int32_t s1, u_int32_t s2) {
 	return -1;
 }
 
+u_int32_t
+iscsi_itt_post_increment(struct iscsi_context *iscsi) {
+	u_int32_t old_itt = iscsi->itt;
+	iscsi->itt++;
+	/* 0xffffffff is a reserved value */
+	if (iscsi->itt == 0xffffffff) {
+		iscsi->itt = 0;
+	}
+	return old_itt;
+}
+
+
 struct iscsi_pdu *
 iscsi_allocate_pdu_with_itt_flags_size(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 				  enum iscsi_opcode response_opcode, uint32_t itt, uint32_t flags, size_t payload_size)
@@ -107,14 +119,14 @@ struct iscsi_pdu *
 iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 		   enum iscsi_opcode response_opcode)
 {
-	return iscsi_allocate_pdu_with_itt_flags(iscsi, opcode, response_opcode, iscsi->itt++, 0);
+	return iscsi_allocate_pdu_with_itt_flags(iscsi, opcode, response_opcode, iscsi_itt_post_increment(iscsi), 0);
 }	
 
 struct iscsi_pdu *
 iscsi_allocate_pdu_size(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 		   enum iscsi_opcode response_opcode, size_t payload_size)
 {
-	return iscsi_allocate_pdu_with_itt_flags_size(iscsi, opcode, response_opcode, iscsi->itt++, 0, payload_size);
+	return iscsi_allocate_pdu_with_itt_flags_size(iscsi, opcode, response_opcode, iscsi_itt_post_increment(iscsi), 0, payload_size);
 }	
 
 
