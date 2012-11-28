@@ -245,6 +245,11 @@ struct scsi_test tests[] = {
 { "T1030_unsolicited_data_overflow",	T1030_unsolicited_data_overflow },
 { "T1031_unsolicited_data_out",		T1031_unsolicited_data_out },
 
+/* Test that if we start blocking new I/O due to saturating maxcmdsn
+   that we eventualld do recover and finish
+*/
+{ "T1040_saturate_maxcmdsn",		T1040_saturate_maxcmdsn },
+
 { NULL, NULL }
 };
 
