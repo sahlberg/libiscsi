@@ -51,8 +51,37 @@ static uint32_t iface_rr = 0;
 void
 iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	SLIST_ADD_END(&iscsi->outqueue, pdu);
-	return;
+	if (iscsi->outqueue == NULL) {
+		iscsi->outqueue = pdu;
+		pdu->next = NULL;
+		return;
+	}
+	
+	struct iscsi_pdu *current = iscsi->outqueue;
+	struct iscsi_pdu *last = NULL;
+	
+	/* queue pdus in ascending order of itt. 
+	 * ensure that pakets with the same itt are kept in order.
+	 * queue pdus with itt = 0xffffffff (SNACK / DataACK) in order but at head of queue.
+	 */
+	do {
+		if (current->written == 0 && (iscsi_serial32_compare(pdu->itt, current->itt) < 0 
+			|| (pdu->itt == 0xffffffff && current->itt != 0xffffffff))) {
+			/* insert PDU before the current */
+			if (last != NULL) {
+				last->next=pdu;
+			} else {
+				iscsi->outqueue=pdu;
+			}
+			pdu->next = current;
+			return;
+		}
+		last=current;
+		current=current->next;
+	} while (current != NULL);
+	
+	last->next = pdu;
+	pdu->next = NULL;
 }
 
 void iscsi_decrement_iface_rr() {
