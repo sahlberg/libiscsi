@@ -541,7 +541,12 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 
-		ISCSI_LOG(iscsi, 2, "connection to %s established",iscsi->connected_portal);
+		struct sockaddr_in local;
+		socklen_t local_l = sizeof(local);
+		if (getsockname(iscsi->fd, (struct sockaddr *) &local, &local_l) == 0) {
+			ISCSI_LOG(iscsi, 2, "connection established (%s:%u -> %s)", inet_ntoa(local.sin_addr),
+						(unsigned)ntohs(local.sin_port),iscsi->connected_portal);
+		}
 
 		iscsi->is_connected = 1;
 		if (iscsi->socket_status_cb) {
