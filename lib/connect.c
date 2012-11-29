@@ -282,7 +282,9 @@ try_again:
 		pdu->itt   = iscsi_itt_post_increment(iscsi);
 		iscsi_pdu_set_itt(pdu, pdu->itt);
 
-		pdu->cmdsn = iscsi->cmdsn++;
+		/* do not increase cmdsn for PDUs marked for immediate delivery
+		 * this will result in a protocol error */
+		pdu->cmdsn = (pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE)?iscsi->cmdsn:iscsi->cmdsn++;
 		iscsi_pdu_set_cmdsn(pdu, pdu->cmdsn);
 
 		iscsi_pdu_set_expstatsn(pdu, iscsi->statsn);
@@ -312,7 +314,9 @@ try_again:
 		pdu->itt   = iscsi_itt_post_increment(iscsi);
 		iscsi_pdu_set_itt(pdu, pdu->itt);
 
-		pdu->cmdsn = iscsi->cmdsn++;
+		/* do not increase cmdsn for PDUs marked for immediate delivery
+		 * this will result in a protocol error */
+		pdu->cmdsn = (pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE)?iscsi->cmdsn:iscsi->cmdsn++;
 		iscsi_pdu_set_cmdsn(pdu, pdu->cmdsn);
 
 		iscsi_pdu_set_expstatsn(pdu, iscsi->statsn);
