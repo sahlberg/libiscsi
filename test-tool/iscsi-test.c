@@ -339,7 +339,7 @@ struct iscsi_context *iscsi_context_login(const char *initiatorname, const char 
 	
 	if (regression_test) {
 		iscsi->use_initial_r2t=initial_r2t;
-		iscsi->use_immediate_data=initial_r2t;
+		iscsi->use_immediate_data=immediate_data;
 		fprintf (stderr,"REGRESSION TESTING: ");
 		if (iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_YES) fprintf(stderr," ISCSI_IMMEDIATE_DATA_YES ");
 		if (iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) fprintf(stderr," ISCSI_IMMEDIATE_DATA_NO ");
