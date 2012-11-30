@@ -228,8 +228,6 @@ struct iscsi_pdu {
 	struct iscsi_scsi_cbdata scsi_cbdata;
 };
 
-void iscsi_free_scsi_cbdata(struct iscsi_context *iscsi, struct iscsi_scsi_cbdata *scsi_cbdata);
-
 struct iscsi_pdu *iscsi_allocate_pdu(struct iscsi_context *iscsi,
 				     enum iscsi_opcode opcode,
 				     enum iscsi_opcode response_opcode);
