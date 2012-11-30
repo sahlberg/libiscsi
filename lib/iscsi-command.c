@@ -81,7 +81,11 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 			return -1;
 
 		}
-	      	pdu->scsi_cbdata.task         = cmd_pdu->scsi_cbdata.task;
+		pdu->scsi_cbdata.task         = cmd_pdu->scsi_cbdata.task;
+		/* set the cmdsn in the pdu struct so we can compare with
+		 * maxcmdsn when sending to socket even if data-out pdus
+		 * do not carry a cmdsn on the wire */
+		pdu->cmdsn                    = cmd_pdu->cmdsn;
 
 		if (tot_len == len) {
 			flags = ISCSI_PDU_SCSI_FINAL;
