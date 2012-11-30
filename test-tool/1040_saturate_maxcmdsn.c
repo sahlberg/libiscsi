@@ -120,6 +120,8 @@ int T1040_saturate_maxcmdsn(const char *initiator, const char *url, int data_los
 
 	printf("Send %d Writes each needing a R2T so that we saturate the maxcmdsn queue ... ",T1040_NO_OF_WRITES);
 
+	num_cmds_in_flight = 0;
+
 	for (i = 0; i < T1040_NO_OF_WRITES; i++) {
 		num_cmds_in_flight++;
 		task = iscsi_write10_task(iscsi, lun, 2 * iscsi->first_burst_length * i / block_size, data, 2 * iscsi->first_burst_length, block_size,
