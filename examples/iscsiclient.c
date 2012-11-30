@@ -32,7 +32,7 @@
  */
 
 /* This is the host/port we connect to.*/
-#define TARGET "10.1.1.116:3260"
+#define TARGET "127.0.0.1:3260"
 
 #if defined(WIN32)
 #include <winsock2.h>
@@ -101,7 +101,7 @@ void nop_out_cb(struct iscsi_context *iscsi, int status, void *command_data, voi
 }
 
 
-void write10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *private_data _U_)
+void write10_1_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *private_data _U_)
 {
 	struct scsi_task *task = command_data;
 
@@ -121,11 +121,56 @@ void write10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data,
 	exit(10);
 }
 
-
-void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
+void write10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *private_data _U_)
 {
+	struct client_state *clnt = (struct client_state *)private_data;
 	struct scsi_task *task = command_data;
 	int i;
+	static unsigned char wb[512];
+	static struct scsi_iovec iov[3];
+
+	if (status == SCSI_STATUS_CHECK_CONDITION) {
+		printf("Write10 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
+		scsi_free_scsi_task(task);
+		exit(10);
+	}
+	if (status != SCSI_STATUS_GOOD) {
+		printf("Write10 failed with %s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		exit(10);
+	}
+
+	printf("Write successful :%d\n", status);
+	scsi_free_scsi_task(task);
+
+	printf("write the block using an iovector\n");
+	for (i = 0;i < 512; i++) {
+		wb[i] = (511 - i) & 0xff;
+	}
+	task = iscsi_write10_task(iscsi, clnt->lun, 0, NULL, 512, 512,
+			0, 0, 0, 0, 0,
+			write10_1_cb, private_data);
+	if (task == NULL) {
+		printf("failed to send write10 command\n");
+		exit(10);
+	}
+	/* provide iovectors where to read the data.
+	 */
+	iov[0].iov_base = &wb[0];
+	iov[0].iov_len  = 4;
+	iov[1].iov_base = &wb[4];
+	iov[1].iov_len  = 11;
+	iov[2].iov_base = &wb[15];
+	iov[2].iov_len  = 512 - 15;
+	scsi_task_set_iov_out(task, &iov[0], 3);
+}
+
+void read10_1_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
+{
+	struct client_state *clnt = (struct client_state *)private_data;
+	struct scsi_task *task = command_data;
+	int i;
+	static unsigned char wb[512];
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
 		printf("Read10 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
@@ -133,7 +178,7 @@ void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void
 		exit(10);
 	}
 
-	printf("READ10 successful. Block content:\n");
+	printf("READ10 using scsi_task_set_iov_in() successful. Block content:\n");
 	for (i=0;i<512;i++) {
 		printf("%02x ", small_buffer[i]);
 		if (i%16==15)
@@ -142,7 +187,9 @@ void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void
 			break;
 	}
 	printf("...\n");
+	scsi_free_scsi_task(task);
 
+#if 0
 	printf("Finished,   wont try to write data since that will likely destroy your LUN :-(\n");
 	printf("Send NOP-OUT\n");
 	if (iscsi_nop_out_async(iscsi, nop_out_cb, (unsigned char *)"Ping!", 6, private_data) != 0) {
@@ -150,13 +197,60 @@ void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void
 		scsi_free_scsi_task(task);
 		exit(10);
 	}
-//	printf("write the block back\n");
-//	if (iscsi_write10_async(iscsi, clnt->lun, task->data.datain, task->datain.size, 0, 0, 0, clnt->block_size, write10_cb, private_data) != 0) {
-//		printf("failed to send write10 command\n");
-//		scsi_free_scsi_task(task);
-//		exit(10);
-//	}
+#else
+	printf("write the block normally\n");
+	for (i = 0;i < 512; i++) {
+		wb[i] = i & 0xff;
+	}
+	task = iscsi_write10_task(iscsi, clnt->lun, 0, wb, 512, 512,
+			0, 0, 0, 0, 0,
+			write10_cb, private_data);
+	if (task == NULL) {
+		printf("failed to send write10 command\n");
+		exit(10);
+	}
+#endif
+}
+
+void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
+{
+	struct client_state *clnt = (struct client_state *)private_data;
+	struct scsi_task *task = command_data;
+	int i;
+	static struct scsi_iovec iov[3];
+
+	if (status == SCSI_STATUS_CHECK_CONDITION) {
+		printf("Read10 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
+		scsi_free_scsi_task(task);
+		exit(10);
+	}
+
+	printf("READ10 using scsi_task_add_data_in_buffer() successful. Block content:\n");
+	for (i=0;i<512;i++) {
+		printf("%02x ", small_buffer[i]);
+		if (i%16==15)
+			printf("\n");
+		if (i==69)
+			break;
+	}
+	printf("...\n");
 	scsi_free_scsi_task(task);
+
+	memset(&small_buffer[0], 0, 512);
+
+	if ((task = iscsi_read10_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, 0, 0, 0, 0, 0, read10_1_cb, private_data)) == NULL) {
+		printf("failed to send read10 command\n");
+		exit(10);
+	}
+	/* provide iovectors where to read the data.
+	 */
+	iov[0].iov_base = &small_buffer[0];
+	iov[0].iov_len  = 7;
+	iov[1].iov_base = &small_buffer[7];
+	iov[1].iov_len  = 8;
+	iov[2].iov_base = &small_buffer[15];
+	iov[2].iov_len  = 512 - 15;
+	scsi_task_set_iov_in(task, &iov[0], 3);
 }
 
 void read6_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
@@ -192,8 +286,9 @@ void read6_cb(struct iscsi_context *iscsi, int status, void *command_data, void 
 	 * of the data. One in libiscsi and one in the application
 	 * callback.
 	 */
-	scsi_task_add_data_in_buffer(task, 128, &small_buffer[0]);
-	scsi_task_add_data_in_buffer(task, 512-128, &small_buffer[128]);
+	scsi_task_add_data_in_buffer(task, 7, &small_buffer[0]);
+	scsi_task_add_data_in_buffer(task, 8, &small_buffer[7]);
+	scsi_task_add_data_in_buffer(task, 512-15, &small_buffer[15]);
 }
 
 void readcapacity10_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)

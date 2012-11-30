@@ -537,7 +537,6 @@ iscsi_task_mgmt_target_cold_reset_async(struct iscsi_context *iscsi,
 
 struct iscsi_data {
        int size;
-       size_t alloc_size;
        unsigned char *data;
 };
 
@@ -929,25 +928,33 @@ iscsi_report_supported_opcodes_sync(struct iscsi_context *iscsi, int lun,
 				    int return_timeouts, int maxsize);
 
 /*
- * This function is used when  the application wants to specify its own buffers to read the data
- * from the DATA-IN PDUs into.
- * The main use is for SCSI read operations to have them write directly into the application buffers to
- * avoid the two copies that would occur otherwise.
- * First copy from the individual DATA-IN blobs to linearize the buffer and the second in the callback
- * to copy the data from the linearized buffer into the application buffer.
+ * These functions are used when the application wants to specify its own buffers to read the data
+ * from the DATA-IN PDUs into, or write the data to DATA-OUT PDUs from.
+ * The main use is for SCSI READ10/12/16 WRITE10/12/16 operations to have them read/write directly from
+ * the applications buffer, avoiding coying the data.
  *
  * This also supports reading into a vector of buffers by calling this function multiple times.
  * The individual buffers will be filled in the same order as they were created.
  *
- * Example:
+ * Example READ10:
  *     task = iscsi_read10_task(    ( 2 512byte blocks into two buffers)
  *     scsi_task_add_data_in_buffer(task, first_buffer, 512
  *     scsi_task_add_data_in_buffer(task, second_buffer, 512
  *
  *
- * If you use this function you can not use task->datain in the callback.
+ * If you use this function you can not use task->datain in the READ callback.
  * task->datain.size will be 0 and
  * task->datain.data will be NULL
+ *
+ * Example WRITE10: (write 2 blocks)
+ *     static struct scsi_iovec iov[2];
+ *
+ *     task = iscsi_write10_task(iscsi, lun, 0, NULL, 512, 512, 0, 0, 0, 0, 0, callback, private_data);
+ *     iov[0].iov_base = first_buffer;
+ *     iov[0].iov_len  = 512;
+ *     iov[1].iov_base = second_buffer;
+ *     iov[1].iov_len  = 512;
+ *     scsi_task_set_iov_out(task, &iov[0], 2);
  */
 EXTERN int scsi_task_add_data_in_buffer(struct scsi_task *task, int len, unsigned char *buf);
 EXTERN int scsi_task_add_data_out_buffer(struct scsi_task *task, int len, unsigned char *buf);

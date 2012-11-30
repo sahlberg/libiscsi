@@ -218,10 +218,12 @@ struct iscsi_pdu {
 	void *private_data;
 
 	int written;
-	struct iscsi_data outdata; /* Header and Immediate Data */
-	struct iscsi_data indata;
 
-	struct iscsi_data nidata; /* Non-Immediate Data */
+	struct iscsi_data outdata; /* Header for PDU to send */
+	uint32_t out_offset;       /* Offset into data-out iovector */
+	uint32_t out_len;          /* Amount of data to sent */
+
+	struct iscsi_data indata;
 
 	struct iscsi_scsi_cbdata scsi_cbdata;
 };
@@ -231,21 +233,11 @@ void iscsi_free_scsi_cbdata(struct iscsi_context *iscsi, struct iscsi_scsi_cbdat
 struct iscsi_pdu *iscsi_allocate_pdu(struct iscsi_context *iscsi,
 				     enum iscsi_opcode opcode,
 				     enum iscsi_opcode response_opcode);
-struct iscsi_pdu *iscsi_allocate_pdu_size(struct iscsi_context *iscsi,
-				     enum iscsi_opcode opcode,
-				     enum iscsi_opcode response_opcode,
-				     size_t payload_size);
 struct iscsi_pdu *iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi,
        		 		enum iscsi_opcode opcode,
 				enum iscsi_opcode response_opcode,
 				uint32_t itt,
 				uint32_t flags);
-struct iscsi_pdu *iscsi_allocate_pdu_with_itt_flags_size(struct iscsi_context *iscsi,
-       		 		enum iscsi_opcode opcode,
-				enum iscsi_opcode response_opcode,
-				uint32_t itt,
-				uint32_t flags,
-				size_t payload_size);
 void iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 void iscsi_pdu_set_pduflags(struct iscsi_pdu *pdu, unsigned char flags);
 void iscsi_pdu_set_immediate(struct iscsi_pdu *pdu);
@@ -303,7 +295,8 @@ void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
 		     ...) __attribute__((format(printf, 2, 3)));
 
 unsigned char *iscsi_get_user_in_buffer(struct iscsi_context *iscsi, struct iscsi_in_pdu *in, uint32_t pos, ssize_t *count);
-unsigned char *scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *count);
+unsigned char *iscsi_get_user_out_buffer(struct iscsi_context *iscsi, struct iscsi_pdu *pdu, uint32_t pos, ssize_t *count);
+
 
 inline void* iscsi_malloc(struct iscsi_context *iscsi, size_t size);
 inline void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);

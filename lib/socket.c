@@ -463,13 +463,14 @@ static int
 iscsi_write_to_socket(struct iscsi_context *iscsi)
 {
 	ssize_t count;
+	struct iscsi_pdu *pdu;
 
 	if (iscsi->fd == -1) {
 		iscsi_set_error(iscsi, "trying to write but not connected");
 		return -1;
 	}
 
-	while (iscsi->outqueue) {
+	while ((pdu = iscsi->outqueue) != NULL) {
 		ssize_t total;
 
 		if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0) {
@@ -477,27 +478,58 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			return 0;
 		}
 
-		total = iscsi->outqueue->outdata.size;
+		total = pdu->outdata.size;
 		total = (total + 3) & 0xfffffffc;
 
-		count = send(iscsi->fd,
-			      iscsi->outqueue->outdata.data
-			      + iscsi->outqueue->written,
-			      total - iscsi->outqueue->written,
-			      0);
-		if (count == -1) {
-			if (errno == EAGAIN || errno == EWOULDBLOCK) {
-				return 0;
+		/* Write header and any immediate data */
+		if (pdu->written < total) {
+			count = send(iscsi->fd,
+				     pdu->outdata.data + pdu->written,
+				     total - pdu->written,
+				     0);
+			if (count == -1) {
+				if (errno == EAGAIN || errno == EWOULDBLOCK) {
+					return 0;
+				}
+				iscsi_set_error(iscsi, "Error when writing to "
+						"socket :%d", errno);
+				return -1;
 			}
-			iscsi_set_error(iscsi, "Error when writing to "
-					"socket :%d", errno);
-			return -1;
+			pdu->written += count;
+		}
+		/* if we havent written the full header yet. */
+		if (pdu->written != total) {
+			return 0;
 		}
 
-		iscsi->outqueue->written += count;
-		if (iscsi->outqueue->written == total) {
-			struct iscsi_pdu *pdu = iscsi->outqueue;
+		/* Write any iovectors that might have been passed to us */
+		while (pdu->out_len > 0) {
+			unsigned char *buf;
 
+			count = pdu->out_len;
+			buf = iscsi_get_user_out_buffer(iscsi, pdu, pdu->out_offset, &count);
+			if (buf == NULL) {
+				iscsi_set_error(iscsi, "Can't find iovector data for DATA-OUT");
+				return -1;
+			}
+
+			count = send(iscsi->fd,
+				     buf,
+				     count,
+				     0);
+			if (count == -1) {
+				if (errno == EAGAIN || errno == EWOULDBLOCK) {
+					return 0;
+				}
+				iscsi_set_error(iscsi, "Error when writing to "
+						"socket :%d", errno);
+				return -1;
+			}
+			pdu->out_offset += count;
+			pdu->out_len    -= count;
+		}
+
+		if (pdu->written == total) {
 			SLIST_REMOVE(&iscsi->outqueue, pdu);
 			if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
 				iscsi_free_pdu(iscsi, pdu);

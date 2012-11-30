@@ -205,10 +205,10 @@ struct scsi_iovec {
 };
 
 struct scsi_iovector {
-    struct scsi_iovec *iov;
-    int niov;
-    int nalloc;
-    size_t size;
+	struct scsi_iovec *iov;
+	int niov;
+	int nalloc;
+	size_t size;
 	size_t offset;
 	int consumed;
 };
@@ -689,6 +689,9 @@ struct scsi_read10_cdb {
 EXTERN int scsi_datain_getfullsize(struct scsi_task *task);
 EXTERN void *scsi_datain_unmarshall(struct scsi_task *task);
 EXTERN void *scsi_cdb_unmarshall(struct scsi_task *task, enum scsi_opcode opcode);
+
+unsigned char *scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *count);
+unsigned char *scsi_task_get_data_out_buffer(struct scsi_task *task, uint32_t pos, ssize_t *count);
 
 EXTERN struct scsi_task *scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize);
 EXTERN struct scsi_task *scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);
