@@ -44,6 +44,12 @@ const char *initiatorname2 = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-tes
 static int data_loss = 0;
 static int show_info = 0;
 
+static int regression_test = 0;
+static enum iscsi_initial_r2t initial_r2t;
+static enum iscsi_immediate_data immediate_data;
+static enum iscsi_initial_r2t use_initial_r2t;
+static enum iscsi_immediate_data use_immediate_data;
+
 struct scsi_test {
        const char *name;
        int (*test)(const char *initiator, const char *url, int data_loss, int show_info);
@@ -256,7 +262,7 @@ struct scsi_test tests[] = {
 void print_usage(void)
 {
 	fprintf(stderr, "Usage: iscsi-test [-?] [-?|--help] [--usage] [-t|--test=<test>] [-s|--skip=<test>]\n"
-			"\t\t[-l|--list] [--info] [-i|--initiator-name=<iqn-name>]\n"
+			"\t\t[-l|--list] [-r|--regression-test] [--info] [-i|--initiator-name=<iqn-name>]\n"
 			"\t\t<iscsi-url>\n");
 }
 
@@ -270,6 +276,9 @@ void print_help(void)
 	fprintf(stderr, "  -l, --list                        List all tests.\n");
 	fprintf(stderr, "  --info,                           Print extra info about a test.\n");
 	fprintf(stderr, "  --dataloss                        Allow destructive tests.\n");
+	fprintf(stderr, "  -r, --regression-test             Try with different options of various values,\n");
+	fprintf(stderr, "                                    for now this means any supported combinations\n");
+	fprintf(stderr, "                                    of INITIAL_R2T and IMMEDIATE_DATA.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Help options:\n");
 	fprintf(stderr, "  -?, --help                        Show this help message\n");
@@ -327,6 +336,18 @@ struct iscsi_context *iscsi_context_login(const char *initiatorname, const char 
 	}
 
 	iscsi_destroy_url(iscsi_url);
+	
+	if (regression_test) {
+		iscsi->use_initial_r2t=initial_r2t;
+		iscsi->use_immediate_data=immediate_data;
+		fprintf (stderr,"REGRESSION TESTING: ");
+		if (iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_YES) fprintf(stderr," ISCSI_IMMEDIATE_DATA_YES ");
+		if (iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) fprintf(stderr," ISCSI_IMMEDIATE_DATA_NO ");
+		if (iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_YES) fprintf(stderr,"ISCSI_INITIAL_R2T_YES ");
+		if (iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO) fprintf(stderr,"ISCSI_INITIAL_R2T_NO ");
+		fprintf (stderr,"\n");
+	}
+	
 	return iscsi;
 }
 
@@ -391,6 +412,7 @@ int main(int argc, const char *argv[])
 	struct scsi_test *test;
 	char *testname = NULL;
 	char *skipname = NULL;
+	int runs;
 
 	struct poptOption popt_options[] = {
 		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
@@ -399,6 +421,7 @@ int main(int argc, const char *argv[])
 		{ "initiator-name", 'i', POPT_ARG_STRING, &initiatorname1, 0, "Initiatorname to use", "iqn-name" },
 		{ "initiator-name-2", 'I', POPT_ARG_STRING, &initiatorname2, 0, "Second initiatorname to use for tests using more than one session", "iqn-name" },
 		{ "test", 't', POPT_ARG_STRING, &testname, 0, "Which test to run", "testname" },
+		{ "regression-test", 'r', POPT_ARG_NONE, &regression_test, 0, "Regression-Testing", "regression_test" },
 		{ "skip", 's', POPT_ARG_STRING, &skipname, 0, "Which test to skip", "skipname" },
 		{ "info", 0, POPT_ARG_NONE, &show_info, 0, "Show information about the test", "testname" },
 		{ "dataloss", 0, POPT_ARG_NONE, &data_loss, 0, "Allow destructuve tests", NULL },
@@ -451,6 +474,18 @@ int main(int argc, const char *argv[])
 		exit(10);
 	}
 
+	if (regression_test) {
+		struct iscsi_context *iscsi;
+		int lun;
+		regression_test=0;
+		iscsi = iscsi_context_login(initiatorname1, url, &lun);
+		if (iscsi == NULL) return 1;
+		use_initial_r2t = iscsi->use_initial_r2t;
+		use_immediate_data = iscsi->use_immediate_data;
+		iscsi_destroy_context(iscsi);
+		regression_test=1;
+	}
+
 	num_failed = num_skipped = 0;
 	for (test = &tests[0]; test->name; test++) {
 		if (testname != NULL && fnmatch(testname, test->name, 0)) {
@@ -471,18 +506,29 @@ int main(int argc, const char *argv[])
 			} while (pchr2);
 			if (skip) continue;
 		}
+		
+		runs=regression_test?4:1;
 
-		res = test->test(initiatorname1, url, data_loss, show_info);
-		if (res == 0) {
-			printf("TEST %s [OK]\n", test->name);
-		} else if (res == -2) {
-			printf("TEST %s [SKIPPED]\n", test->name);
-			num_skipped++;
-		} else {
-			printf("TEST %s [FAILED]\n", test->name);
-			num_failed++;
-		}
-		printf("\n");
+		do {
+			runs--;
+			if (regression_test) {
+				initial_r2t = (runs & 1)?ISCSI_INITIAL_R2T_YES:ISCSI_INITIAL_R2T_NO;
+				immediate_data = (runs & 2)?ISCSI_IMMEDIATE_DATA_YES:ISCSI_IMMEDIATE_DATA_NO;
+				if (initial_r2t == ISCSI_INITIAL_R2T_NO && use_initial_r2t == ISCSI_INITIAL_R2T_YES) continue;
+				if (immediate_data == ISCSI_IMMEDIATE_DATA_YES && use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) continue;
+			}
+			res = test->test(initiatorname1, url, data_loss, show_info);
+			if (res == 0) {
+				printf("TEST %s [OK]\n", test->name);
+			} else if (res == -2) {
+				printf("TEST %s [SKIPPED]\n", test->name);
+				num_skipped++;
+			} else {
+				printf("TEST %s [FAILED]\n", test->name);
+				num_failed++;
+			}
+			printf("\n");
+		} while (runs > 0);
 	}
 
 	free(skipname);
@@ -491,3 +537,4 @@ int main(int argc, const char *argv[])
 
 	return num_failed ? num_failed : num_skipped ? 77 : 0;
 }
+
