@@ -134,9 +134,8 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 	return 0;
 }
 
-/* Using 'struct iscsi_data *d' for data-out is depreciated.
- * Instead the task should have a data-out iovector attached to it.
- * See iscsi_write10_task for an example.
+/* Using 'struct iscsi_data *d' for data-out is optional
+ * and will be converted into a one element data-out iovector.
  */
 int
 iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
@@ -158,8 +157,8 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		return -1;
 	}
 
-	/* Convert old-style callers to the new 'iovector assigned to the task structure'
-	 * model.
+	/* We got an actual buffer from the application. Convert it to
+	 * a data-out iovector.
 	 */
 	if (d != NULL && d->data != NULL) {
 		struct scsi_iovec *iov;
@@ -763,6 +762,7 @@ iscsi_write10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 
 	if (datalen % blocksize != 0) {
 		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
@@ -777,21 +777,11 @@ iscsi_write10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 				"write10 cdb.");
 		return NULL;
 	}
-	if (data != NULL) {
-		struct scsi_iovec *iov;
-
-		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-		if (iov == NULL) {
-			scsi_free_scsi_task(task);
-			return NULL;
-		}
-		iov->iov_base = data;
-		iov->iov_len  = datalen;
-		scsi_task_set_iov_out(task, iov, 1);
-	}
+	d.data = data;
+	d.size = datalen;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
-				     NULL, private_data) != 0) {
+				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
@@ -806,6 +796,7 @@ iscsi_write12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 
 	if (datalen % blocksize != 0) {
 		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
@@ -820,21 +811,11 @@ iscsi_write12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 				"write12 cdb.");
 		return NULL;
 	}
-	if (data != NULL) {
-		struct scsi_iovec *iov;
-
-		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-		if (iov == NULL) {
-			scsi_free_scsi_task(task);
-			return NULL;
-		}
-		iov->iov_base = data;
-		iov->iov_len  = datalen;
-		scsi_task_set_iov_out(task, iov, 1);
-	}
+	d.data = data;
+	d.size = datalen;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
-				     NULL, private_data) != 0) {
+				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
@@ -849,6 +830,7 @@ iscsi_write16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 
 	if (datalen % blocksize != 0) {
 		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
@@ -863,21 +845,11 @@ iscsi_write16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 				"write16 cdb.");
 		return NULL;
 	}
-	if (data != NULL) {
-		struct scsi_iovec *iov;
-
-		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-		if (iov == NULL) {
-			scsi_free_scsi_task(task);
-			return NULL;
-		}
-		iov->iov_base = data;
-		iov->iov_len  = datalen;
-		scsi_task_set_iov_out(task, iov, 1);
-	}
+	d.data = data;
+	d.size = datalen;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
-				     NULL, private_data) != 0) {
+				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
@@ -892,6 +864,7 @@ iscsi_orwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 
 	if (datalen % blocksize != 0) {
 		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
@@ -906,21 +879,11 @@ iscsi_orwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 				"orwrite cdb.");
 		return NULL;
 	}
-	if (data != NULL) {
-		struct scsi_iovec *iov;
-
-		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-		if (iov == NULL) {
-			scsi_free_scsi_task(task);
-			return NULL;
-		}
-		iov->iov_base = data;
-		iov->iov_len  = datalen;
-		scsi_task_set_iov_out(task, iov, 1);
-	}
+	d.data = data;
+	d.size = datalen;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
-				     NULL, private_data) != 0) {
+				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
@@ -935,6 +898,7 @@ iscsi_compareandwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 
 	if (datalen % blocksize != 0) {
 		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
@@ -949,21 +913,11 @@ iscsi_compareandwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 				"compareandwrite cdb.");
 		return NULL;
 	}
-	if (data != NULL) {
-		struct scsi_iovec *iov;
-
-		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-		if (iov == NULL) {
-			scsi_free_scsi_task(task);
-			return NULL;
-		}
-		iov->iov_base = data;
-		iov->iov_len  = datalen;
-		scsi_task_set_iov_out(task, iov, 1);
-	}
+	d.data = data;
+	d.size = datalen;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
-				     NULL, private_data) != 0) {
+				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
@@ -978,6 +932,7 @@ iscsi_writeverify10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 
 	if (datalen % blocksize != 0) {
 		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
@@ -992,21 +947,11 @@ iscsi_writeverify10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 				"writeverify10 cdb.");
 		return NULL;
 	}
-	if (data != NULL) {
-		struct scsi_iovec *iov;
-
-		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-		if (iov == NULL) {
-			scsi_free_scsi_task(task);
-			return NULL;
-		}
-		iov->iov_base = data;
-		iov->iov_len  = datalen;
-		scsi_task_set_iov_out(task, iov, 1);
-	}
+	d.data = data;
+	d.size = datalen;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
-				     NULL, private_data) != 0) {
+				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
@@ -1021,6 +966,7 @@ iscsi_writeverify12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 
 	if (datalen % blocksize != 0) {
 		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
@@ -1035,21 +981,11 @@ iscsi_writeverify12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 				"writeverify12 cdb.");
 		return NULL;
 	}
-	if (data != NULL) {
-		struct scsi_iovec *iov;
-
-		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-		if (iov == NULL) {
-			scsi_free_scsi_task(task);
-			return NULL;
-		}
-		iov->iov_base = data;
-		iov->iov_len  = datalen;
-		scsi_task_set_iov_out(task, iov, 1);
-	}
+	d.data = data;
+	d.size = datalen;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
-				     NULL, private_data) != 0) {
+				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
@@ -1064,6 +1000,7 @@ iscsi_writeverify16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 
 	if (datalen % blocksize != 0) {
 		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
@@ -1078,21 +1015,11 @@ iscsi_writeverify16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 				"writeverify16 cdb.");
 		return NULL;
 	}
-	if (data != NULL) {
-		struct scsi_iovec *iov;
-
-		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-		if (iov == NULL) {
-			scsi_free_scsi_task(task);
-			return NULL;
-		}
-		iov->iov_base = data;
-		iov->iov_len  = datalen;
-		scsi_task_set_iov_out(task, iov, 1);
-	}
+	d.data = data;
+	d.size = datalen;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
-				     NULL, private_data) != 0) {
+				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
@@ -1106,6 +1033,7 @@ iscsi_verify10_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		    iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 
 	if (datalen % blocksize != 0) {
 		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
@@ -1119,21 +1047,11 @@ iscsi_verify10_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 				"verify10 cdb.");
 		return NULL;
 	}
-	if (data != NULL) {
-		struct scsi_iovec *iov;
-
-		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-		if (iov == NULL) {
-			scsi_free_scsi_task(task);
-			return NULL;
-		}
-		iov->iov_base = data;
-		iov->iov_len  = datalen;
-		scsi_task_set_iov_out(task, iov, 1);
-	}
+	d.data = data;
+	d.size = datalen;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
-				     NULL, private_data) != 0) {
+				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
@@ -1147,6 +1065,7 @@ iscsi_verify12_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		    iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 
 	if (datalen % blocksize != 0) {
 		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
@@ -1160,21 +1079,11 @@ iscsi_verify12_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 				"verify12 cdb.");
 		return NULL;
 	}
-	if (data != NULL) {
-		struct scsi_iovec *iov;
-
-		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-		if (iov == NULL) {
-			scsi_free_scsi_task(task);
-			return NULL;
-		}
-		iov->iov_base = data;
-		iov->iov_len  = datalen;
-		scsi_task_set_iov_out(task, iov, 1);
-	}
+	d.data = data;
+	d.size = datalen;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
-				     NULL, private_data) != 0) {
+				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
@@ -1188,6 +1097,7 @@ iscsi_verify16_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		    iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 
 	if (datalen % blocksize != 0) {
 		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
@@ -1201,21 +1111,11 @@ iscsi_verify16_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 				"verify16 cdb.");
 		return NULL;
 	}
-	if (data != NULL) {
-		struct scsi_iovec *iov;
-
-		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-		if (iov == NULL) {
-			scsi_free_scsi_task(task);
-			return NULL;
-		}
-		iov->iov_base = data;
-		iov->iov_len  = datalen;
-		scsi_task_set_iov_out(task, iov, 1);
-	}
+	d.data = data;
+	d.size = datalen;
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
-				     NULL, private_data) != 0) {
+				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
@@ -1392,6 +1292,7 @@ iscsi_writesame10_task(struct iscsi_context *iscsi, int lun,
 		       iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 
 	task = scsi_cdb_writesame10(wrprotect, anchor, unmap, pbdata, lbdata, lba, group, num_blocks);
 	if (task == NULL) {
@@ -1399,27 +1300,17 @@ iscsi_writesame10_task(struct iscsi_context *iscsi, int lun,
 				"writesame10 cdb.");
 		return NULL;
 	}
+	d.data = data;
+	d.size = datalen;
 
 	if (data != NULL) {
-		struct scsi_iovec *iov;
-
-		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-		if (iov == NULL) {
-			scsi_free_scsi_task(task);
-			return NULL;
-		}
-		iov->iov_base = data;
-		iov->iov_len  = datalen;
-		scsi_task_set_iov_out(task, iov, 1);
-
 		task->expxferlen = datalen;
-
 	} else {
 		task->expxferlen = 0;
 		task->xfer_dir = SCSI_XFER_NONE;
 	}
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
-				     NULL, private_data) != 0) {
+				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
@@ -1436,6 +1327,7 @@ iscsi_writesame16_task(struct iscsi_context *iscsi, int lun,
 		       iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 
 	task = scsi_cdb_writesame16(wrprotect, anchor, unmap, pbdata, lbdata, lba, group, num_blocks);
 	if (task == NULL) {
@@ -1443,28 +1335,18 @@ iscsi_writesame16_task(struct iscsi_context *iscsi, int lun,
 				"writesame16 cdb.");
 		return NULL;
 	}
+	d.data = data;
+	d.size = datalen;
 
 	if (data != NULL) {
-		struct scsi_iovec *iov;
-
-		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-		if (iov == NULL) {
-			scsi_free_scsi_task(task);
-			return NULL;
-		}
-		iov->iov_base = data;
-		iov->iov_len  = datalen;
-		scsi_task_set_iov_out(task, iov, 1);
-
 		task->expxferlen = datalen;
-
 	} else {
 		task->expxferlen = 0;
 		task->xfer_dir = SCSI_XFER_NONE;
 	}
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
-				     NULL, private_data) != 0) {
+				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
