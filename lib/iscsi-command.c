@@ -115,6 +115,7 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 
 		pdu->callback     = cmd_pdu->callback;
 		pdu->private_data = cmd_pdu->private_data;
+		pdu->task         = cmd_pdu->task;
 
 		if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 			iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
@@ -180,6 +181,8 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		return -1;
 	}
 
+	pdu->task = task;
+
 	pdu->scsi_cbdata.task         = task;
 	pdu->scsi_cbdata.callback     = cb;
 	pdu->scsi_cbdata.private_data = private_data;
@@ -203,6 +206,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 
 			if (len > iscsi->first_burst_length) {
 				len = iscsi->first_burst_length;
+				flags &= ~ISCSI_PDU_SCSI_FINAL;
 			}
 
 			pdu->out_offset = 0;
@@ -210,7 +214,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 
 			/* update data segment length */
 			scsi_set_uint32(&pdu->outdata.data[4], pdu->out_len);
-		} else if (iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO) {
+		} else if (task->iovector_out.niov > 0 && iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO) {
 			/* We have more data to send, and we are allowed to send
 			 * unsolicited data, so dont flag this PDU as final.
 			 */
@@ -249,7 +253,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	}
 
 	/* Can we send some unsolicited data ? */
-	if (pdu->out_len != 0 && iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO && iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) {
+	if (task->iovector_out.niov > 0 && iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO && iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) {
 		uint32_t len = task->expxferlen - pdu->out_len;
 
 		if (len > iscsi->first_burst_length) {
@@ -1582,6 +1586,6 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 unsigned char *
 iscsi_get_user_out_buffer(struct iscsi_context *iscsi _U_, struct iscsi_pdu *pdu, uint32_t pos, ssize_t *count)
 {
-	return scsi_task_get_data_out_buffer(pdu->scsi_cbdata.task, pos, count);
+	return scsi_task_get_data_out_buffer(pdu->task, pos, count);
 }
 

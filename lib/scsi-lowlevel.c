@@ -2589,7 +2589,6 @@ scsi_iovector_add(struct scsi_task *task, struct scsi_iovector *iovector, int le
 	iovector->iov[iovector->niov].iov_len = len;
 	iovector->iov[iovector->niov].iov_base = buf;
 	iovector->niov++;
-	iovector->size += len;
 
 	return 0;
 }
