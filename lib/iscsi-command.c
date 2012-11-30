@@ -81,7 +81,11 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 			return -1;
 
 		}
-	      	pdu->scsi_cbdata.task         = cmd_pdu->scsi_cbdata.task;
+		pdu->scsi_cbdata.task         = cmd_pdu->scsi_cbdata.task;
+		/* set the cmdsn in the pdu struct so we can compare with
+		 * maxcmdsn when sending to socket even if data-out pdus
+		 * do not carry a cmdsn on the wire */
+		pdu->cmdsn                    = cmd_pdu->cmdsn;
 
 		if (tot_len == len) {
 			flags = ISCSI_PDU_SCSI_FINAL;
@@ -203,6 +207,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 
 			if (len > iscsi->first_burst_length) {
 				len = iscsi->first_burst_length;
+				flags &= ~ISCSI_PDU_SCSI_FINAL;
 			}
 
 			pdu->out_offset = 0;
@@ -249,8 +254,11 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	}
 
 	/* Can we send some unsolicited data ? */
-	if (pdu->out_len != 0 && iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO && iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) {
-		uint32_t len = task->expxferlen - pdu->out_len;
+	if (task->xfer_dir == SCSI_XFER_WRITE 
+			&& iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO 
+			&& iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) {
+		
+		uint32_t len = task->expxferlen;
 
 		if (len > iscsi->first_burst_length) {
 			len = iscsi->first_burst_length;
