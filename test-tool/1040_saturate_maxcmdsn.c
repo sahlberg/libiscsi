@@ -118,48 +118,37 @@ int T1040_saturate_maxcmdsn(const char *initiator, const char *url, int data_los
 		goto finished;
 	}
 
-	int run=0;
+	printf("Send %d Writes each needing a R2T so that we saturate the maxcmdsn queue ... ",T1040_NO_OF_WRITES);
 
-	do {
-		if (run || iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) {
-			iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-			printf("Send %d Writes w/ ISCSI_IMMEDIATE_DATA_NO each needing a R2T so that we saturate the maxcmdsn queue ... ",T1040_NO_OF_WRITES);
-		} else {
-			printf("Send %d Writes w/ ISCSI_IMMEDIATE_DATA_YES each needing a R2T so that we saturate the maxcmdsn queue ... ",T1040_NO_OF_WRITES);
-		}
-
-		for (i = 0; i < T1040_NO_OF_WRITES; i++) {
-			num_cmds_in_flight++;
-			task = iscsi_write10_task(iscsi, lun, 2 * iscsi->first_burst_length * i / block_size, data, 2 * iscsi->first_burst_length, block_size,
-					0, 0, 0, 0, 0,
-					test_cb, &test_state);
-			if (task == NULL) {
-					printf("[FAILED]\n");
-				printf("Failed to send WRITE10 command: %s\n", iscsi_get_error(iscsi));
-				ret++;
-				goto test2;
-			}
-		}
-	
-		test_state.task     = task;
-		test_state.finished = 0;
-		test_state.status   = 0;
-		wait_until_test_finished(iscsi, &test_state);
-		if (num_cmds_in_flight != 0) {
-	        printf("[FAILED]\n");
-			printf("Did not complete all I/O before deadline.\n");
-			ret++;
-			goto test2;
-		} else if (test_state.status != 0) {
-	        printf("[FAILED]\n");
-			printf("Not all I/O commands succeeded.\n");
+	for (i = 0; i < T1040_NO_OF_WRITES; i++) {
+		num_cmds_in_flight++;
+		task = iscsi_write10_task(iscsi, lun, 2 * iscsi->first_burst_length * i / block_size, data, 2 * iscsi->first_burst_length, block_size,
+				0, 0, 0, 0, 0,
+				test_cb, &test_state);
+		if (task == NULL) {
+				printf("[FAILED]\n");
+			printf("Failed to send WRITE10 command: %s\n", iscsi_get_error(iscsi));
 			ret++;
 			goto test2;
 		}
-		printf("[OK]\n");
-		run++;
-	} while (iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_YES);
+	}
 	
+	test_state.task     = task;
+	test_state.finished = 0;
+	test_state.status   = 0;
+	wait_until_test_finished(iscsi, &test_state);
+	if (num_cmds_in_flight != 0) {
+	printf("[FAILED]\n");
+		printf("Did not complete all I/O before deadline.\n");
+		ret++;
+		goto test2;
+	} else if (test_state.status != 0) {
+		printf("[FAILED]\n");
+		printf("Not all I/O commands succeeded.\n");
+		ret++;
+		goto test2;
+	}
+	printf("[OK]\n");
 
 test2:
 	free(data);
