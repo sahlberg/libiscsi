@@ -38,19 +38,19 @@
  * not happen in iSCSI protocol.
  */
 int
-iscsi_serial32_compare(u_int32_t s1, u_int32_t s2) {
+iscsi_serial32_compare(uint32_t s1, uint32_t s2) {
 	if (s1 == s2) return 0;
-	if (s1 < s2 && s2-s1 < (u_int32_t)1<<31) return -1;
-	if (s1 > s2 && s1-s2 < (u_int32_t)1<<31) return 1;
-	if (s1 > s2 && s1-s2 > (u_int32_t)1<<31) return -1;
-	if (s1 < s2 && s2-s1 > (u_int32_t)1<<31) return 1;
+	if (s1 < s2 && s2-s1 < (uint32_t)1<<31) return -1;
+	if (s1 > s2 && s1-s2 < (uint32_t)1<<31) return 1;
+	if (s1 > s2 && s1-s2 > (uint32_t)1<<31) return -1;
+	if (s1 < s2 && s2-s1 > (uint32_t)1<<31) return 1;
 	/* undefined result */
 	return -1;
 }
 
-u_int32_t
+uint32_t
 iscsi_itt_post_increment(struct iscsi_context *iscsi) {
-	u_int32_t old_itt = iscsi->itt;
+	uint32_t old_itt = iscsi->itt;
 	iscsi->itt++;
 	/* 0xffffffff is a reserved value */
 	if (iscsi->itt == 0xffffffff) {

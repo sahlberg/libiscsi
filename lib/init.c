@@ -89,7 +89,7 @@ iscsi_create_context(const char *initiator_name)
 
 	iscsi->fd = -1;
 	
-	srand(time(NULL) ^ getpid() ^ (u_int32_t) ((uintptr_t) iscsi));
+	srand(time(NULL) ^ getpid() ^ (uint32_t) ((uintptr_t) iscsi));
 
 	/* initialize to a "random" isid */
 	iscsi_set_isid_random(iscsi, rand(), 0);

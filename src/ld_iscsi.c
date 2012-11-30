@@ -335,6 +335,10 @@ ssize_t read(int fd, void *buf, size_t count)
 
 		iscsi_fd_list[fd].in_flight = 1;
         if (iscsi_fd_list[fd].get_lba_status != 0) {
+			uint32_t i;
+			uint32_t _num_allocated=0;
+			uint32_t _num_blocks=0;
+
 			if (iscsi_fd_list[fd].lbasd_cache_valid==1) {
 				LD_ISCSI_DPRINTF(5,"cached get_lba_status_descriptor is lba %lu, num_blocks %d, provisioning %d",iscsi_fd_list[fd].lbasd_cached.lba,iscsi_fd_list[fd].lbasd_cached.num_blocks,iscsi_fd_list[fd].lbasd_cached.provisioning);
 			    if (iscsi_fd_list[fd].lbasd_cached.provisioning != 0x00 && lba >= iscsi_fd_list[fd].lbasd_cached.lba && lba+num_blocks < iscsi_fd_list[fd].lbasd_cached.lba+iscsi_fd_list[fd].lbasd_cached.num_blocks)
@@ -363,10 +367,7 @@ ssize_t read(int fd, void *buf, size_t count)
 				return -1;
 			}
 
-			u_int32_t i;
 			LD_ISCSI_DPRINTF(5,"get_lba_status: num_descriptors: %d",lbas->num_descriptors);
-			u_int32_t _num_allocated=0;
-			u_int32_t _num_blocks=0;
 			for (i=0;i<lbas->num_descriptors;i++) {
 				struct scsi_lba_status_descriptor *lbasd = &lbas->descriptors[i];
 				LD_ISCSI_DPRINTF(5,"get_lba_status_descriptor %d, lba %lu, num_blocks %d, provisioning %d",i,lbasd->lba,lbasd->num_blocks,lbasd->provisioning);
