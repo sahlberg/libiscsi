@@ -193,7 +193,6 @@ enum iscsi_opcode {
 };
 
 struct iscsi_scsi_cbdata {
-	struct iscsi_scsi_cbdata *prev, *next;
 	iscsi_command_cb          callback;
 	void                     *private_data;
 	struct scsi_task         *task;
