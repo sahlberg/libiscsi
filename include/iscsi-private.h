@@ -52,16 +52,6 @@ struct iscsi_in_pdu {
 void iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 void iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *inqueue);
 
-enum iscsi_initial_r2t {
-	ISCSI_INITIAL_R2T_NO  = 0,
-	ISCSI_INITIAL_R2T_YES = 1
-};
-
-enum iscsi_immediate_data {
-	ISCSI_IMMEDIATE_DATA_NO  = 0,
-	ISCSI_IMMEDIATE_DATA_YES = 1
-};
-
 struct iscsi_context {
 	char initiator_name[MAX_STRING_SIZE+1];
 	char target_name[MAX_STRING_SIZE+1];

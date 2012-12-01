@@ -63,6 +63,8 @@ iscsi_scsi_command_sync
 iscsi_scsi_cancel_task
 iscsi_service
 iscsi_set_alias
+iscsi_set_immediate_data
+iscsi_set_initial_r2t
 iscsi_set_log_level
 iscsi_set_log_fn
 iscsi_set_header_digest

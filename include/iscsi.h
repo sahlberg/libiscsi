@@ -85,6 +85,34 @@ struct iscsi_url {
 };
 
 /*
+ * This function is used to set the desired mode for immediate data.
+ * This can be set on a context before it has been logged in to the target
+ * and controls how the initiator will try to negotiate the immediate data.
+ *
+ * Default is for libiscsi to try to negotiate ISCSI_IMMEDIATE_DATA_YES
+ */
+enum iscsi_immediate_data {
+	ISCSI_IMMEDIATE_DATA_NO  = 0,
+	ISCSI_IMMEDIATE_DATA_YES = 1
+};
+int iscsi_set_immediate_data(struct iscsi_context *iscsi, enum iscsi_immediate_data immediate_data);
+
+/*
+ * This function is used to set the desired mode for initial_r2t
+ * This can be set on a context before it has been logged in to the target
+ * and controls how the initiator will try to negotiate the initial r2t.
+ *
+ * Default is for libiscsi to try to negotiate ISCSI_INITIAL_R2T_YES
+ */
+enum iscsi_initial_r2t {
+	ISCSI_INITIAL_R2T_NO  = 0,
+	ISCSI_INITIAL_R2T_YES = 1
+};
+int
+iscsi_set_initial_r2t(struct iscsi_context *iscsi, enum iscsi_initial_r2t initial_r2t);
+
+
+/*
  * This function is used to parse an iSCSI URL into a iscsi_url structure.
  * iSCSI URL format :
  * iscsi://[<username>[%<password>]@]<host>[:<port>]/<target-iqn>/<lun>

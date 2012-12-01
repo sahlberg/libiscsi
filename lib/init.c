@@ -502,3 +502,28 @@ iscsi_set_initiator_username_pwd(struct iscsi_context *iscsi,
 	strncpy(iscsi->passwd,passwd,MAX_STRING_SIZE);
 	return 0;
 }
+
+int
+iscsi_set_immediate_data(struct iscsi_context *iscsi, enum iscsi_immediate_data immediate_data)
+{
+	if (iscsi->is_loggedin != 0) {
+		iscsi_set_error(iscsi, "Already logged in when trying to set immediate_data");
+		return -1;
+	}
+
+	iscsi->want_immediate_data = immediate_data;
+	return 0;
+}
+
+int
+iscsi_set_initial_r2t(struct iscsi_context *iscsi, enum iscsi_initial_r2t initial_r2t)
+{
+	if (iscsi->is_loggedin != 0) {
+		iscsi_set_error(iscsi, "Already logged in when trying to set initial_r2t");
+		return -1;
+	}
+
+	iscsi->want_initial_r2t = initial_r2t;
+	return 0;
+}
+
