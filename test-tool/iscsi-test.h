@@ -184,3 +184,4 @@ int T1030_unsolicited_data_overflow(const char *initiator, const char *url, int 
 int T1031_unsolicited_data_out(const char *initiator, const char *url, int data_loss, int show_info);
 int T1040_saturate_maxcmdsn(const char *initiator, const char *url, int data_loss, int show_info);
 int T1041_unsolicited_immediate_data(const char *initiator, const char *url, int data_loss, int show_info);
+int T1042_unsolicited_nonimmediate_data(const char *initiator, const char *url, int data_loss, int show_info);
