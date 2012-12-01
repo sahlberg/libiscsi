@@ -512,6 +512,7 @@ iscsi_set_immediate_data(struct iscsi_context *iscsi, enum iscsi_immediate_data 
 	}
 
 	iscsi->want_immediate_data = immediate_data;
+	iscsi->use_immediate_data  = immediate_data;
 	return 0;
 }
 

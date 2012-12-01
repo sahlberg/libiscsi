@@ -1007,6 +1007,12 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		if (!strncmp(ptr, "ImmediateData=", 14)) {
 			if (!strcmp(ptr + 14, "No")) {
 				iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+			} else if (iscsi->want_immediate_data == ISCSI_IMMEDIATE_DATA_NO) {
+				/* If we negotiated NO, it doesnt matter what
+				 * the target said. ImmediateData is NO.
+				 */
+				iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+
 			} else {
 				iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_YES;
 			}
