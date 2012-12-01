@@ -250,6 +250,8 @@ struct scsi_test tests[] = {
 */
 { "T1040_saturate_maxcmdsn",		T1040_saturate_maxcmdsn },
 
+{ "T1041_unsolicited__immediate_data",	T1041_unsolicited_immediate_data },
+
 { NULL, NULL }
 };
 

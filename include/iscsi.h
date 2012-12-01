@@ -102,7 +102,7 @@ int iscsi_set_immediate_data(struct iscsi_context *iscsi, enum iscsi_immediate_d
  * This can be set on a context before it has been logged in to the target
  * and controls how the initiator will try to negotiate the initial r2t.
  *
- * Default is for libiscsi to try to negotiate ISCSI_INITIAL_R2T_YES
+ * Default is for libiscsi to try to negotiate ISCSI_INITIAL_R2T_NO
  */
 enum iscsi_initial_r2t {
 	ISCSI_INITIAL_R2T_NO  = 0,
