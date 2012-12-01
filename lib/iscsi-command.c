@@ -207,7 +207,6 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 
 			if (len > iscsi->first_burst_length) {
 				len = iscsi->first_burst_length;
-				flags &= ~ISCSI_PDU_SCSI_FINAL;
 			}
 
 			pdu->out_offset = 0;
