@@ -276,7 +276,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 			len = iscsi->first_burst_length - pdu->out_len;
 		}
 		iscsi_send_data_out(iscsi, pdu, 0xffffffff,
-				    pdu->out_offset, len);
+				    pdu->out_len, len);
 	}
 
 	/* remember cmdsn and itt so we can use task management */
