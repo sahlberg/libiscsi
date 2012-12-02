@@ -188,6 +188,9 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	pdu->scsi_cbdata.callback     = cb;
 	pdu->scsi_cbdata.private_data = private_data;
 
+	pdu->out_offset = 0;
+	pdu->out_len    = 0;
+
 	scsi_set_task_private_ptr(task, &pdu->scsi_cbdata);
 	
 	/* flags */
@@ -201,7 +204,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	case SCSI_XFER_WRITE:
 		flags |= ISCSI_PDU_SCSI_WRITE;
 
-		/* Are we allowed to send immediate data ? */
+		/* If we can send immediate data, send as much as we can */
 		if (iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_YES) {
 			uint32_t len = task->expxferlen;
 
@@ -209,12 +212,22 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 				len = iscsi->first_burst_length;
 			}
 
+			if (len > iscsi->target_max_recv_data_segment_length) {
+				len = iscsi->target_max_recv_data_segment_length;
+			}
+
 			pdu->out_offset = 0;
 			pdu->out_len    = len;
 
 			/* update data segment length */
 			scsi_set_uint32(&pdu->outdata.data[4], pdu->out_len);
-		} else if (iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO) {
+		}
+		/* We are allowed to send unsolicited data-out. And
+		 * we couldnt send all data yet as immediate data
+		 * so drop the F-flag, and generate a DATA-OUT train below.
+		 */
+		if (iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO
+		&&  pdu->out_len < iscsi->first_burst_length) {
 			/* We have more data to send, and we are allowed to send
 			 * unsolicited data, so dont flag this PDU as final.
 			 */
@@ -254,9 +267,8 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 
 	/* Can we send some unsolicited data ? */
 	if (task->xfer_dir == SCSI_XFER_WRITE 
-			&& iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO 
-			&& iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) {
-		
+	&& iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO 
+	&& iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) {
 		uint32_t len = task->expxferlen;
 
 		if (len > iscsi->first_burst_length) {
