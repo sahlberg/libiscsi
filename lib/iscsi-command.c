@@ -222,9 +222,10 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 			/* update data segment length */
 			scsi_set_uint32(&pdu->outdata.data[4], pdu->out_len);
 		}
-		/* We are allowed to send unsolicited data-out. And
-		 * we couldnt send all data yet as immediate data
-		 * so drop the F-flag, and generate a DATA-OUT train below.
+		/* We have (more) data to send and we are allowed to send
+		 * it as unsolicited data-out segments.
+		 * Drop the F-flag from the pdu and start sending a train
+		 * of data-out further below.
 		 */
 		if (iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO
 		    && pdu->out_len < (uint32_t)task->expxferlen
@@ -266,8 +267,10 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		return -1;
 	}
 
-	/* If this is not the final pdu, then we must send some DATA-OUT PDUs
-	 * as unsolicited data.
+	/* The F flag is not set. This means we haven't sent all the unsolicited
+	 * data yet. Sent as much as we are allowed as a train of DATA-OUT PDUs.
+	 * We might already have sent some data as immediate data, which we must
+	 * subtract from first_burst_length.
 	 */
 	if (!(flags & ISCSI_PDU_SCSI_FINAL)) {
 		uint32_t len = task->expxferlen;
