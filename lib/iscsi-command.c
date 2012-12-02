@@ -265,14 +265,15 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		return -1;
 	}
 
-	/* Can we send some unsolicited data ? */
+	/* Can we send more data that did not fit as immediate data ? */
 	if (task->xfer_dir == SCSI_XFER_WRITE 
 	&& iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO 
-	&& iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_NO) {
+	&& pdu->out_len < (uint32_t)task->expxferlen
+	&& pdu->out_len < iscsi->first_burst_length) {
 		uint32_t len = task->expxferlen;
 
-		if (len > iscsi->first_burst_length) {
-			len = iscsi->first_burst_length;
+		if (len + pdu->out_len > iscsi->first_burst_length) {
+			len = iscsi->first_burst_length - pdu->out_len;
 		}
 		iscsi_send_data_out(iscsi, pdu, 0xffffffff,
 				    pdu->out_offset, len);
