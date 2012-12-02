@@ -227,7 +227,8 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		 * so drop the F-flag, and generate a DATA-OUT train below.
 		 */
 		if (iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO
-		&&  pdu->out_len < iscsi->first_burst_length) {
+		    && pdu->out_len < (uint32_t)task->expxferlen
+		    && pdu->out_len < iscsi->first_burst_length) {
 			/* We have more data to send, and we are allowed to send
 			 * unsolicited data, so dont flag this PDU as final.
 			 */
@@ -265,11 +266,10 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		return -1;
 	}
 
-	/* Can we send more data that did not fit as immediate data ? */
-	if (task->xfer_dir == SCSI_XFER_WRITE 
-	&& iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO 
-	&& pdu->out_len < (uint32_t)task->expxferlen
-	&& pdu->out_len < iscsi->first_burst_length) {
+	/* If this is not the final pdu, then we must send some DATA-OUT PDUs
+	 * as unsolicited data.
+	 */
+	if (!(flags & ISCSI_PDU_SCSI_FINAL)) {
 		uint32_t len = task->expxferlen;
 
 		if (len + pdu->out_len > iscsi->first_burst_length) {
