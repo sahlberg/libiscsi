@@ -369,7 +369,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 		 */
 		if (opcode == ISCSI_PDU_R2T) {
 			expected_response = ISCSI_PDU_R2T;
-	        }
+		}
 
 		if (opcode != expected_response) {
 			iscsi_set_error(iscsi, "Got wrong opcode back for "
