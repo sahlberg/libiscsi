@@ -65,8 +65,8 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	 * queue pdus with itt = 0xffffffff (SNACK / DataACK) in order but at head of queue.
 	 */
 	do {
-		if (current->written == 0 && (iscsi_serial32_compare(pdu->itt, current->itt) < 0 
-			|| (pdu->itt == 0xffffffff && current->itt != 0xffffffff))) {
+		if (iscsi_serial32_compare(pdu->itt, current->itt) < 0 
+			|| (pdu->itt == 0xffffffff && current->itt != 0xffffffff)) {
 			/* insert PDU before the current */
 			if (last != NULL) {
 				last->next=pdu;
@@ -332,7 +332,7 @@ iscsi_which_events(struct iscsi_context *iscsi)
 {
 	int events = iscsi->is_connected ? POLLIN : POLLOUT;
 
-	if (iscsi->outqueue && iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0) {
+	if (iscsi->outqueue_current != NULL || (iscsi->outqueue != NULL && iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0)) {
 	 	events |= POLLOUT;
 	}
 	return events;
@@ -470,13 +470,27 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		return -1;
 	}
 
-	while ((pdu = iscsi->outqueue) != NULL) {
+	while (iscsi->outqueue != NULL || iscsi->outqueue_current != NULL) {
 		ssize_t total;
 
-		if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0) {
-			/* stop sending. maxcmdsn is reached */
-			return 0;
+		if (iscsi->outqueue_current == NULL) {
+			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0) {
+				/* stop sending. maxcmdsn is reached */
+				return 0;
+			}
+			/* pop first element of the outqueue */
+			iscsi->outqueue_current = iscsi->outqueue;
+			SLIST_REMOVE(&iscsi->outqueue, iscsi->outqueue_current);
+			if (!(iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT)) {
+				/* we have to add the pdu to the waitqueue already here
+				   since the storage might sent a R2T as soon as it has
+				   received the header. if we sent immediate data in a
+				   cmd PDU the R2T might get lost otherwise. */
+				SLIST_ADD_END(&iscsi->waitpdu, iscsi->outqueue_current);
+			}
 		}
+
+		pdu = iscsi->outqueue_current;
 
 		total = pdu->outdata.size;
 		total = (total + 3) & 0xfffffffc;
@@ -530,12 +544,10 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		}
 
 		if (pdu->written == total) {
-			SLIST_REMOVE(&iscsi->outqueue, pdu);
 			if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
 				iscsi_free_pdu(iscsi, pdu);
-			} else {
-				SLIST_ADD_END(&iscsi->waitpdu, pdu);
 			}
+			iscsi->outqueue_current = NULL;
 		}
 	}
 	return 0;
@@ -625,7 +637,7 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 		return 0;
 	}
 
-	if (revents & POLLOUT && iscsi->outqueue != NULL) {
+	if (revents & POLLOUT && (iscsi->outqueue != NULL || iscsi->outqueue_current != NULL)) {
 		if (iscsi_write_to_socket(iscsi) != 0) {
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
