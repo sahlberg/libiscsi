@@ -268,6 +268,10 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		iscsi_free_pdu(iscsi, pdu);
 	}
 
+	if (iscsi->outqueue_current != NULL && iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
+		iscsi_free_pdu(iscsi, iscsi->outqueue_current);
+	}
+
 	if (iscsi->incoming != NULL) {
 		iscsi_free_iscsi_in_pdu(iscsi, iscsi->incoming);
 	}

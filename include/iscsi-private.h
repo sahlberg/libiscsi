@@ -103,6 +103,7 @@ struct iscsi_context {
 	void *connect_data;
 
 	struct iscsi_pdu *outqueue;
+	struct iscsi_pdu *outqueue_current;
 	struct iscsi_pdu *waitpdu;
 
 	struct iscsi_in_pdu *incoming;
