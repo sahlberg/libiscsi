@@ -1076,6 +1076,16 @@ iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value);
 EXTERN void
 iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces);
 
+/* This function is to set if we should retry a failed reconnect
+   
+   count is defined as follows:
+    -1 -> retry forever (default)
+    0  -> never retry
+    n  -> retry n times
+*/
+EXTERN void
+iscsi_set_reconnect_max_retries(struct iscsi_context *iscsi, int count);
+
 #ifdef __cplusplus
 }
 #endif
