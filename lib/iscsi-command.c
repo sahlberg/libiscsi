@@ -437,14 +437,6 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 	/* Dont add to reassembly buffer if we already have a user buffer */
 	if (scsi_task_get_data_in_buffer(task, 0, NULL) == NULL) {
-		if (task->expxferlen > dsl && pdu->indata.data == NULL) {
-			pdu->indata.size = task->expxferlen;
-			pdu->indata.data = iscsi_malloc(iscsi, task->expxferlen);
-			if (pdu->indata.data == NULL) {
-				iscsi_set_error(iscsi, "Out-of-memory: failed to allocate pdu indata buffer");
-				return -1;
-			}
-		}
 		if (iscsi_add_data(iscsi, &pdu->indata, in->data, dsl, 0) != 0) {
 		    iscsi_set_error(iscsi, "Out-of-memory: failed to add data "
 				"to pdu in buffer.");
