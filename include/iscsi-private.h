@@ -195,7 +195,12 @@ struct iscsi_pdu {
 /* There will not be a response to this pdu, so delete it once it is sent on the wire. Dont put it on the wait-queue */
 #define ISCSI_PDU_DELETE_WHEN_SENT	0x00000001
 /* Dont call the CANCEL callback when the context is destroyed */
-#define ISCSI_PDU_NO_CALLBACK	 	0x00000002
+#define ISCSI_PDU_NO_CALLBACK		0x00000002
+/* When reconnecting, just drop all these PDUs. Dont re-queue them.
+ * This includes any DATA-OUT PDU as well as all NOPs.
+ */
+#define ISCSI_PDU_DROP_ON_RECONNECT	0x00000004
+
 	uint32_t flags;
 
 	uint32_t lun;

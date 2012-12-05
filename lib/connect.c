@@ -302,10 +302,11 @@ try_again:
 			continue;
 		}
 
-		if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
+		if (pdu->flags & ISCSI_PDU_DROP_ON_RECONNECT) {
 			/* We dont want to requeue things like DATA-OUT since these guys
 			 * will be reissued automatically anyway once the corresponding
 			 * write command is replayed.
+			 * Similarly we dont want to requeue NOPs. 
 		 	 */
 			iscsi_free_pdu(old_iscsi, pdu);
 			continue;
