@@ -121,6 +121,7 @@ struct iscsi_context {
 	int lun;
 	int no_auto_reconnect;
 	int reconnect_deferred;
+	int reconnect_max_retries;
 	
 	int log_level;
 	iscsi_log_fn log_fn;

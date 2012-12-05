@@ -176,6 +176,45 @@ void iscsi_set_noautoreconnect(struct iscsi_context *iscsi, int state)
 	}
 }
 
+void iscsi_set_reconnect_max_retries(struct iscsi_context *iscsi, int count)
+{
+	iscsi->reconnect_max_retries = count;
+}
+
+void iscsi_defer_reconnect(struct iscsi_context *iscsi)
+{
+	struct iscsi_pdu *pdu;
+
+	iscsi->reconnect_deferred = 1;
+
+	ISCSI_LOG(iscsi, 2, "reconnect deferred, cancelling all tasks");
+
+	while ((pdu = iscsi->outqueue)) {
+		SLIST_REMOVE(&iscsi->outqueue, pdu);
+		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
+			/* If an error happened during connect/login,
+			   we dont want to call any of the callbacks.
+			 */
+			if (iscsi->is_loggedin) {
+				pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
+					      NULL, pdu->private_data);
+			}		      
+		}
+		iscsi_free_pdu(iscsi, pdu);
+	}
+	while ((pdu = iscsi->waitpdu)) {
+		SLIST_REMOVE(&iscsi->waitpdu, pdu);
+		/* If an error happened during connect/login,
+		   we dont want to call any of the callbacks.
+		 */
+		if (iscsi->is_loggedin) {
+			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
+				      NULL, pdu->private_data);
+		}
+		iscsi_free_pdu(iscsi, pdu);
+	}
+}
+
 int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
 	struct iscsi_context *iscsi = old_iscsi;
@@ -187,35 +226,7 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 	   if the target drops the session.
 	 */
 	if (iscsi->no_auto_reconnect) {
-		struct iscsi_pdu *pdu;
-
-		iscsi->reconnect_deferred = 1;
-
-		while ((pdu = iscsi->outqueue)) {
-			SLIST_REMOVE(&iscsi->outqueue, pdu);
-			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
-				/* If an error happened during connect/login,
-				   we dont want to call any of the callbacks.
-				 */
-				if (iscsi->is_loggedin) {
-					pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
-						      NULL, pdu->private_data);
-				}		      
-			}
-			iscsi_free_pdu(iscsi, pdu);
-		}
-		while ((pdu = iscsi->waitpdu)) {
-			SLIST_REMOVE(&iscsi->waitpdu, pdu);
-			/* If an error happened during connect/login,
-			   we dont want to call any of the callbacks.
-			 */
-			if (iscsi->is_loggedin) {
-				pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
-					      NULL, pdu->private_data);
-			}
-			iscsi_free_pdu(iscsi, pdu);
-		}
-
+		iscsi_defer_reconnect(iscsi);
 		return 0;
 	}
 
@@ -255,7 +266,13 @@ try_again:
 	iscsi->tcp_keepintvl = old_iscsi->tcp_keepintvl;
 	iscsi->tcp_syncnt = old_iscsi->tcp_syncnt;
 
+	iscsi->reconnect_max_retries = old_iscsi->reconnect_max_retries;
+
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
+		if (iscsi->reconnect_max_retries != -1 && retry >= iscsi->reconnect_max_retries) {
+			iscsi_defer_reconnect(old_iscsi);
+			return -1;
+		}
 		int backoff=retry;
 		if (backoff > 10) {
 			backoff+=rand()%10;
