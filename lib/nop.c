@@ -81,6 +81,8 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		return -1;
 	}
 
+	iscsi->nops_in_flight++;
+
 	return 0;
 }
 
@@ -130,6 +132,12 @@ iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 {
 	struct iscsi_data data;
 
+	iscsi->nops_in_flight = 0;
+
+	if (pdu->callback == NULL) {
+		return 0;
+	}
+
 	data.data = NULL;
 	data.size = 0;
 
@@ -137,7 +145,13 @@ iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		data.data = in->data;
 		data.size = in->data_pos;
 	}
+	
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, &data, pdu->private_data);
 
 	return 0;
+}
+
+int iscsi_get_nops_in_flight(struct iscsi_context *iscsi)
+{
+	return iscsi->nops_in_flight;
 }

@@ -517,11 +517,11 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		}
 
 		/* Write any iovectors that might have been passed to us */
-		while (pdu->out_len > 0) {
+		while (pdu->out_written < pdu->out_len) {
 			unsigned char *buf;
 
-			count = pdu->out_len;
-			buf = iscsi_get_user_out_buffer(iscsi, pdu, pdu->out_offset, &count);
+			count = pdu->out_len - pdu->out_written;
+			buf = iscsi_get_user_out_buffer(iscsi, pdu, pdu->out_offset + pdu->out_written, &count);
 			if (buf == NULL) {
 				iscsi_set_error(iscsi, "Can't find iovector data for DATA-OUT");
 				return -1;
@@ -539,16 +539,13 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 						"socket :%d", errno);
 				return -1;
 			}
-			pdu->out_offset += count;
-			pdu->out_len    -= count;
+			pdu->out_written += count;
 		}
 
-		if (pdu->written == total) {
-			if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
-				iscsi_free_pdu(iscsi, pdu);
-			}
-			iscsi->outqueue_current = NULL;
+		if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
+			iscsi_free_pdu(iscsi, pdu);
 		}
+		iscsi->outqueue_current = NULL;
 	}
 	return 0;
 }
