@@ -35,6 +35,7 @@ struct sockaddr;
 
 /* FEATURES */
 #define LIBISCSI_FEATURE_IOVECTOR (1)
+#define LIBISCSI_FEATURE_NOP_COUNTER (1)
 
 #define MAX_STRING_SIZE (255)
 
@@ -474,9 +475,16 @@ struct iscsi_discovery_address {
  *                            structure containing the data returned from
  *                            the server.
  *    ISCSI_STATUS_CANCELLED: Discovery was aborted. Command_data is NULL.
+ * 
+ * The callback may be NULL if you only want to let libiscsi count the in-flight
+ * NOPs.
  */
 EXTERN int iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 			unsigned char *data, int len, void *private_data);
+
+
+/* read out the number of consecutive nop outs that did not receive an answer */
+EXTERN int iscsi_get_nops_in_flight(struct iscsi_context *iscsi);
 
 struct scsi_task;
 

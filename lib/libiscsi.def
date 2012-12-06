@@ -14,6 +14,7 @@ iscsi_get_fd
 iscsi_get_lba_status_sync
 iscsi_get_lba_status_task
 iscsi_get_target_address
+iscsi_get_nops_in_flight
 iscsi_inquiry_sync
 iscsi_inquiry_task
 iscsi_is_logged_in

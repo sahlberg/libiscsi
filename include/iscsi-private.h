@@ -95,6 +95,7 @@ struct iscsi_context {
 	int is_loggedin;
 	int is_reconnecting;
 	int bind_interfaces_cnt;
+	int nops_in_flight;
 
 	int chap_a;
 	int chap_i;
@@ -122,7 +123,7 @@ struct iscsi_context {
 	int no_auto_reconnect;
 	int reconnect_deferred;
 	int reconnect_max_retries;
-	
+
 	int log_level;
 	iscsi_log_fn log_fn;
 
