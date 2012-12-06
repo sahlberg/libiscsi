@@ -308,6 +308,7 @@ try_again:
 		iscsi->statsn++;
 
 		pdu->written = 0;
+		pdu->out_written = 0;
 		iscsi_add_to_outqueue(iscsi, pdu);
 	}
 
@@ -341,6 +342,7 @@ try_again:
 		iscsi->statsn++;
 
 		pdu->written = 0;
+		pdu->out_written = 0;
 		iscsi_add_to_outqueue(iscsi, pdu);
 	}
 
