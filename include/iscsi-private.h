@@ -95,6 +95,7 @@ struct iscsi_context {
 	int is_loggedin;
 	int is_reconnecting;
 	int bind_interfaces_cnt;
+	int nops_in_flight;
 
 	int chap_a;
 	int chap_i;
@@ -122,7 +123,7 @@ struct iscsi_context {
 	int no_auto_reconnect;
 	int reconnect_deferred;
 	int reconnect_max_retries;
-	
+
 	int log_level;
 	iscsi_log_fn log_fn;
 
@@ -217,7 +218,8 @@ struct iscsi_pdu {
 
 	struct iscsi_data outdata; /* Header for PDU to send */
 	uint32_t out_offset;       /* Offset into data-out iovector */
-	uint32_t out_len;          /* Amount of data to sent */
+	uint32_t out_len;          /* Amount of data to sent starting at out_offset */
+	uint32_t out_written;      /* Number of bytes written to socket */
 
 	struct iscsi_data indata;
 
