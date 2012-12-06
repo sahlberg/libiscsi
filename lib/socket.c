@@ -542,12 +542,10 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			pdu->out_written += count;
 		}
 
-		if (pdu->written == total) {
-			if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
-				iscsi_free_pdu(iscsi, pdu);
-			}
-			iscsi->outqueue_current = NULL;
+		if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
+			iscsi_free_pdu(iscsi, pdu);
 		}
+		iscsi->outqueue_current = NULL;
 	}
 	return 0;
 }
