@@ -283,6 +283,12 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	}
 #endif
 
+	if (set_tcp_sockopt(iscsi->fd, TCP_NODELAY, 1) != 0) {
+		ISCSI_LOG(iscsi,1,"failed to set TCP_NODELAY sockopt: %s",strerror(errno));
+	} else {
+		ISCSI_LOG(iscsi,3,"TCP_NODELAY set to 1");
+	}
+
 	if (connect(iscsi->fd, ai->ai_addr, socksize) != 0
 	    && errno != EINPROGRESS) {
 		iscsi_set_error(iscsi, "Connect failed with errno : "
