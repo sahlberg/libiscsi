@@ -436,7 +436,7 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	dsl = scsi_get_uint32(&in->hdr[4]) & 0x00ffffff;
 
 	/* Dont add to reassembly buffer if we already have a user buffer */
-	if (scsi_task_get_data_in_buffer(task, 0, NULL) == NULL) {
+	if (task->iovector_in.iov == NULL) {
 		if (iscsi_add_data(iscsi, &pdu->indata, in->data, dsl, 0) != 0) {
 		    iscsi_set_error(iscsi, "Out-of-memory: failed to add data "
 				"to pdu in buffer.");
@@ -1422,18 +1422,15 @@ iscsi_unmap_task(struct iscsi_context *iscsi, int lun, int anchor, int group,
 	return task;
 }
 
-unsigned char *
-iscsi_get_user_in_buffer(struct iscsi_context *iscsi, struct iscsi_in_pdu *in, uint32_t pos, ssize_t *count)
+struct scsi_iovector *
+iscsi_get_scsi_task_iovector_in(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 {
 	struct iscsi_pdu *pdu;
-	uint32_t offset;
 	uint32_t itt;
 
 	if ((in->hdr[0] & 0x3f) != ISCSI_PDU_DATA_IN) {
 		return NULL;
 	}
-
-	offset = scsi_get_uint32(&in->hdr[40]);
 
 	itt = scsi_get_uint32(&in->hdr[16]);
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
@@ -1441,11 +1438,26 @@ iscsi_get_user_in_buffer(struct iscsi_context *iscsi, struct iscsi_in_pdu *in, u
 			break;
 		}
 	}
+
 	if (pdu == NULL) {
 		return NULL;
 	}
 
-	return scsi_task_get_data_in_buffer(pdu->scsi_cbdata.task, offset + pos, count);
+	if (pdu->scsi_cbdata.task->iovector_in.iov == NULL) {
+		return NULL;
+	}
+
+	return &pdu->scsi_cbdata.task->iovector_in;
+}
+
+struct scsi_iovector *
+iscsi_get_scsi_task_iovector_out(struct iscsi_context *iscsi _U_, struct iscsi_pdu *pdu)
+{
+	if (pdu->scsi_cbdata.task->iovector_out.iov == NULL) {
+		return NULL;
+	}
+
+	return &pdu->scsi_cbdata.task->iovector_out;
 }
 
 struct scsi_task *
@@ -1593,10 +1605,3 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 		iscsi_free_pdu(iscsi, pdu);
 	}
 }
-
-unsigned char *
-iscsi_get_user_out_buffer(struct iscsi_context *iscsi _U_, struct iscsi_pdu *pdu, uint32_t pos, ssize_t *count)
-{
-	return scsi_task_get_data_out_buffer(pdu->scsi_cbdata.task, pos, count);
-}
-
