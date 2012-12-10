@@ -34,6 +34,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdint.h>
+#include <errno.h>
 #include "slist.h"
 #include "scsi-lowlevel.h"
 
@@ -2593,69 +2594,14 @@ scsi_iovector_add(struct scsi_task *task, struct scsi_iovector *iovector, int le
 	return 0;
 }
 
-unsigned char *
-scsi_iovector_get_buffer(struct scsi_iovector *iovector, uint32_t pos, ssize_t *count)
-{
-	if (iovector->iov == NULL) {
-		return NULL;
-	}
-
-	if (pos == 0 && count == NULL) return iovector->iov[0].iov_base;
-
-	if (pos < iovector->offset) {
-		/* start over in case we are going backwards */
-		iovector->offset = 0;
-		iovector->consumed = 0;
-	}
-
-	if (iovector->niov <= iovector->consumed) {
-		/* someone issued a read but did not provide enough user buffers for all the data.
-		 * maybe someone tried to read just 512 bytes off a MMC device?
-		 */
-		return NULL;
-	}
-
-	struct scsi_iovec *iov = &iovector->iov[iovector->consumed];
-
-	pos-= iovector->offset;
-
-	while (pos >= iov->iov_len) {
-		iovector->offset += iov->iov_len;
-		iovector->consumed++;
-		pos -= iov->iov_len;
-		if (iovector->niov <= iovector->consumed) {
-			return NULL;
-		}
-		iov = &iovector->iov[iovector->consumed];
-	}
-
-	if (count && *count >= (ssize_t)(iov->iov_len - pos)) {
-		*count = iov->iov_len - pos;
-	}
-
-	return (unsigned char *) iov->iov_base + pos;
-}
-
 int
 scsi_task_add_data_in_buffer(struct scsi_task *task, int len, unsigned char *buf)
 {
 	return scsi_iovector_add(task, &task->iovector_in, len, buf);
 }
 
-unsigned char *
-scsi_task_get_data_in_buffer(struct scsi_task *task, uint32_t pos, ssize_t *count)
-{
-	return scsi_iovector_get_buffer(&task->iovector_in, pos, count);
-}
-
 int
 scsi_task_add_data_out_buffer(struct scsi_task *task, int len, unsigned char *buf)
 {
 	return scsi_iovector_add(task, &task->iovector_out, len, buf);
-}
-
-unsigned char *
-scsi_task_get_data_out_buffer(struct scsi_task *task, uint32_t pos, ssize_t *count)
-{
-	return scsi_iovector_get_buffer(&task->iovector_out, pos, count);
 }

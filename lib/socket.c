@@ -42,6 +42,7 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include "scsi-lowlevel.h"
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "slist.h"
@@ -363,6 +364,91 @@ iscsi_queue_length(struct iscsi_context *iscsi)
 	return i;
 }
 
+ssize_t
+iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *iovector, uint32_t pos, ssize_t max_read, int do_write)
+{
+	if (iovector->iov == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (pos < iovector->offset) {
+		/* start over in case we are going backwards */
+		iovector->offset = 0;
+		iovector->consumed = 0;
+	}
+
+	if (iovector->niov <= iovector->consumed) {
+		/* someone issued a read/write but did not provide enough user buffers for all the data.
+		 * maybe someone tried to read just 512 bytes off a MMC device?
+		 */
+		errno = EINVAL;
+		return -1;
+	}
+
+	/* iov is a pointer to the first iovec to pass */
+	struct scsi_iovec *iov = &iovector->iov[iovector->consumed];
+	pos -= iovector->offset;
+
+	/* forward until iov points to the first iov to pass */
+	while (pos >= iov->iov_len) {
+		iovector->offset += iov->iov_len;
+		iovector->consumed++;
+		pos -= iov->iov_len;
+		if (iovector->niov <= iovector->consumed) {
+			errno = EINVAL;
+			return -1;
+		}
+		iov = &iovector->iov[iovector->consumed];
+	}
+
+	/* iov2 is a pointer to the last iovec to pass */
+	struct scsi_iovec *iov2 = iov;
+
+	int niov=1; /* number of iovectors to pass */
+	uint32_t len2 = pos + max_read; /* adjust length of iov2 */
+	
+	/* forward until iov2 points to the last iovec we pass later. it might
+	   happen that we have a lot of iovectors but are limited by max_read */
+	while (len2 > iov2->iov_len) {
+		if (iovector->niov <= iovector->consumed+niov-1) {
+			errno = EINVAL;
+			return -1;
+		}
+		niov++;
+		len2 -= iov2->iov_len;
+		iov2 = &iovector->iov[iovector->consumed+niov-1];
+	}
+
+	/* we might limit the length of the last iovec we pass to readv/writev
+	   store its orignal length to restore it later */
+	size_t _len2 = iov2->iov_len;
+
+	/* adjust base+len of start iovec and len of last iovec */
+	iov2->iov_len = len2;
+	iov->iov_base = (void*) ((uintptr_t)iov->iov_base + pos);
+	iov->iov_len -= pos;
+
+	ssize_t n;
+	if (do_write) {
+		n = writev(iscsi->fd, (struct iovec*) iov, niov);
+	} else {
+		n = readv(iscsi->fd, (struct iovec*) iov, niov);
+	}
+
+	/* restore original values */
+	iov->iov_base = (void*) ((uintptr_t)iov->iov_base - pos);
+	iov->iov_len += pos;
+	iov2->iov_len = _len2;
+
+	if (n > max_read) {
+		/* we read/write more bytes than expected, this MUST not happen */
+		errno = EINVAL;
+		return -1;
+	}
+	return n;
+}
+
 static int
 iscsi_read_from_socket(struct iscsi_context *iscsi)
 {
@@ -411,13 +497,16 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 	}
 	if (data_size != 0) {
 		unsigned char *buf = NULL;
+		struct scsi_iovector * iovector_in;
 
 		count = data_size - in->data_pos;
 
 		/* first try to see if we already have a user buffer */
-		buf = iscsi_get_user_in_buffer(iscsi, in, in->data_pos, &count);
-		/* if not, allocate one */
-		if (buf == NULL) {
+		iovector_in = iscsi_get_scsi_task_iovector_in(iscsi, in);
+		if (iovector_in != NULL) {
+			uint32_t offset = scsi_get_uint32(&in->hdr[40]);
+			count = iscsi_iovector_readv_writev(iscsi, iovector_in, in->data_pos + offset, count, 0);
+		} else {
 			if (in->data == NULL) {
 				in->data = iscsi_malloc(iscsi, data_size);
 				if (in->data == NULL) {
@@ -426,9 +515,9 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 				}
 			}
 			buf = &in->data[in->data_pos];
+			count = recv(iscsi->fd, buf, count, 0);
 		}
-
-		count = recv(iscsi->fd, buf, count, 0);
+		
 		if (count == 0) {
 			return -1;
 		}
@@ -440,6 +529,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 				"errno:%d", errno);
 			return -1;
 		}
+
 		in->data_pos += count;
 	}
 
@@ -524,19 +614,17 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 
 		/* Write any iovectors that might have been passed to us */
 		while (pdu->out_written < pdu->out_len) {
-			unsigned char *buf;
+			struct scsi_iovector* iovector_out;
 
-			count = pdu->out_len - pdu->out_written;
-			buf = iscsi_get_user_out_buffer(iscsi, pdu, pdu->out_offset + pdu->out_written, &count);
-			if (buf == NULL) {
+			iovector_out = iscsi_get_scsi_task_iovector_out(iscsi, pdu);
+
+			if (iovector_out == NULL) {
 				iscsi_set_error(iscsi, "Can't find iovector data for DATA-OUT");
 				return -1;
 			}
 
-			count = send(iscsi->fd,
-				     buf,
-				     count,
-				     0);
+			count = iscsi_iovector_readv_writev(iscsi, iovector_out, pdu->out_offset + pdu->out_written, pdu->out_len - pdu->out_written, 1);
+
 			if (count == -1) {
 				if (errno == EAGAIN || errno == EWOULDBLOCK) {
 					return 0;
@@ -545,6 +633,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 						"socket :%d", errno);
 				return -1;
 			}
+
 			pdu->out_written += count;
 		}
 
