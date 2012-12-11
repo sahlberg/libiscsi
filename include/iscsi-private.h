@@ -290,9 +290,8 @@ int iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt);
 void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
 		     ...) __attribute__((format(printf, 2, 3)));
 
-unsigned char *iscsi_get_user_in_buffer(struct iscsi_context *iscsi, struct iscsi_in_pdu *in, uint32_t pos, ssize_t *count);
-unsigned char *iscsi_get_user_out_buffer(struct iscsi_context *iscsi, struct iscsi_pdu *pdu, uint32_t pos, ssize_t *count);
-
+struct scsi_iovector *iscsi_get_scsi_task_iovector_in(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
+struct scsi_iovector *iscsi_get_scsi_task_iovector_out(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 inline void* iscsi_malloc(struct iscsi_context *iscsi, size_t size);
 inline void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);
