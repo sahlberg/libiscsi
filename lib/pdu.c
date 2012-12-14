@@ -59,6 +59,14 @@ iscsi_itt_post_increment(struct iscsi_context *iscsi) {
 	return old_itt;
 }
 
+void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data) {
+	char dump[ISCSI_RAW_HEADER_SIZE*3+1]={0};
+	int i;
+	for (i=0;i<ISCSI_RAW_HEADER_SIZE;i++) {
+		snprintf(&dump[i*3], 4," %02x",data[i]);
+	}
+	ISCSI_LOG(iscsi, 0, "PDU header:%s",dump);
+}
 
 struct iscsi_pdu *
 iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
@@ -290,6 +298,10 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 	}
 
 	itt = scsi_get_uint32(&in->data[16]);
+
+	if (iscsi->log_level > 1) {
+		iscsi_dump_pdu_header(iscsi, in->data);
+	}
 
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		if (pdu->itt == itt) {
