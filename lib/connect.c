@@ -217,6 +217,7 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 
 int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
+	int i;
 	struct iscsi_context *iscsi = old_iscsi;
 
 	ISCSI_LOG(iscsi, 2, "reconnect initiated");
@@ -338,6 +339,14 @@ try_again:
 	}
 	if (old_iscsi->inqueue != NULL) {
 		iscsi_free_iscsi_inqueue(old_iscsi, old_iscsi->inqueue);
+	}
+
+	if (old_iscsi->outqueue_current != NULL && old_iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
+		iscsi_free_pdu(old_iscsi, old_iscsi->outqueue_current);
+	}
+
+	for (i=0;i<old_iscsi->smalloc_free;i++) {
+		iscsi_free(old_iscsi, old_iscsi->smalloc_ptrs[i]);
 	}
 
 	close(iscsi->fd);
