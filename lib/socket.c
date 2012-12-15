@@ -63,11 +63,9 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	
 	/* queue pdus in ascending order of itt. 
 	 * ensure that pakets with the same itt are kept in order.
-	 * queue pdus with itt = 0xffffffff (SNACK / DataACK) in order but at head of queue.
 	 */
 	do {
-		if (iscsi_serial32_compare(pdu->itt, current->itt) < 0 
-			|| (pdu->itt == 0xffffffff && current->itt != 0xffffffff)) {
+		if (iscsi_serial32_compare(pdu->itt, current->itt) < 0) {
 			/* insert PDU before the current */
 			if (last != NULL) {
 				last->next=pdu;
