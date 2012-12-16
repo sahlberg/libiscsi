@@ -61,11 +61,11 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return;
 	}
 	
-	/* queue pdus in ascending order of itt. 
-	 * ensure that pakets with the same itt are kept in order.
+	/* queue pdus in ascending order of CmdSN. 
+	 * ensure that pakets with the same CmdSN are kept in FIFO order.
 	 */
 	do {
-		if (iscsi_serial32_compare(pdu->itt, current->itt) < 0) {
+		if (iscsi_serial32_compare(pdu->cmdsn, current->cmdsn) < 0) {
 			/* insert PDU before the current */
 			if (last != NULL) {
 				last->next=pdu;
