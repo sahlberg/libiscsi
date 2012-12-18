@@ -161,6 +161,19 @@ scsi_sense_ascq_str(int ascq)
 	return value_string_find(ascqs, ascq);
 }
 
+inline uint64_t
+scsi_get_uint64(const unsigned char *c)
+{
+	uint64_t val;
+
+	val = ntohl(*(uint32_t *)c);
+	val <<= 32;
+	c += 4;
+	val |= ntohl(*(uint32_t *)c);
+
+	return val;
+}
+
 inline uint32_t
 scsi_get_uint32(const unsigned char *c)
 {
@@ -585,6 +598,53 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 
 		return gls;
 	}
+	default:
+		return NULL;
+	}
+}
+
+/*
+ * persistent_reserve_in unmarshall
+ */
+static inline uint8_t
+scsi_persistentreservein_sa(const struct scsi_task *task)
+{
+	return task->cdb[1] & 0x1f;
+}
+
+static int
+scsi_persistentreservein_datain_getfullsize(struct scsi_task *task)
+{
+	switch (scsi_persistentreservein_sa(task)) {
+	case SCSI_PERSISTENT_RESERVE_READ_KEYS:
+		return scsi_get_uint32(&task->datain.data[4]) + 8;
+	default:
+		return -1;
+	}
+}
+
+static void *
+scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
+{
+	struct scsi_persistent_reserve_in_read_keys *rk;
+	int i;
+
+	switch (scsi_persistentreservein_sa(task)) {
+	case SCSI_PERSISTENT_RESERVE_READ_KEYS:
+		i = scsi_get_uint32(&task->datain.data[4]);
+
+		rk = scsi_malloc(task, offsetof(struct scsi_persistent_reserve_in_read_keys, keys) + i);
+		if (rk == NULL) {
+			return NULL;
+		}
+		rk->prgeneration      = scsi_get_uint32(&task->datain.data[0]);
+		rk->additional_length = scsi_get_uint32(&task->datain.data[4]);
+
+		rk->num_keys = rk->additional_length / 8;
+		for (i = 0; i < (int)rk->num_keys; i++) {
+			rk->keys[i] = scsi_get_uint64(&task->datain.data[8 + i * 8]);
+		}
+		return rk;
 	default:
 		return NULL;
 	}
@@ -2320,6 +2380,8 @@ scsi_datain_getfullsize(struct scsi_task *task)
 		return scsi_readtoc_datain_getfullsize(task);
 	case SCSI_OPCODE_REPORTLUNS:
 		return scsi_reportluns_datain_getfullsize(task);
+	case SCSI_OPCODE_PERSISTENT_RESERVE_IN:
+		return scsi_persistentreservein_datain_getfullsize(task);
 	case SCSI_OPCODE_MAINTENANCE_IN:
 		return scsi_maintenancein_datain_getfullsize(task);
 	}
@@ -2346,6 +2408,8 @@ scsi_datain_unmarshall(struct scsi_task *task)
 		return scsi_reportluns_datain_unmarshall(task);
 	case SCSI_OPCODE_SERVICE_ACTION_IN:
 		return scsi_serviceactionin_datain_unmarshall(task);
+	case SCSI_OPCODE_PERSISTENT_RESERVE_IN:
+		return scsi_persistentreservein_datain_unmarshall(task);
 	case SCSI_OPCODE_MAINTENANCE_IN:
 		return scsi_maintenancein_datain_unmarshall(task);
 	}

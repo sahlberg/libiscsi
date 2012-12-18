@@ -681,6 +681,14 @@ struct scsi_report_supported_op_codes {
 	struct scsi_command_descriptor descriptors[0];
 };
 
+struct scsi_persistent_reserve_in_read_keys {
+       uint32_t prgeneration;
+       uint32_t additional_length;
+
+       uint32_t num_keys;
+       uint64_t keys[0];
+};
+
 struct scsi_read10_cdb {
 	enum scsi_opcode opcode;
 	uint8_t  rdprotect;
