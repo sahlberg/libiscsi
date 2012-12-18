@@ -38,6 +38,8 @@
 #include "slist.h"
 #include "scsi-lowlevel.h"
 
+void scsi_task_set_iov_out(struct scsi_task *task, struct scsi_iovec *iov, int niov);
+
 struct scsi_allocated_memory {
 	struct scsi_allocated_memory *next;
 	char buf[0];
@@ -184,6 +186,19 @@ inline uint16_t
 scsi_get_uint16(const unsigned char *c)
 {
 	return ntohs(*(uint16_t *)c);
+}
+
+inline void
+scsi_set_uint64(unsigned char *c, uint64_t v)
+{
+	uint32_t val;
+
+	val = (v >> 32) & 0xffffffff;
+	*(uint32_t *)c = htonl(val);
+
+	c += 4;
+	val = v & 0xffffffff;
+	*(uint32_t *)c = htonl(val);
 }
 
 inline void
@@ -1698,6 +1713,91 @@ scsi_cdb_persistent_reserve_in(enum scsi_persistent_in_sa sa, uint16_t xferlen)
 		task->xfer_dir = SCSI_XFER_NONE;
 	}
 	task->expxferlen = xferlen;
+
+	return task;
+}
+
+/*
+ * PERSISTENT_RESERVE_OUT
+ */
+struct scsi_task *
+scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persistent_out_scope scope, enum scsi_persistent_out_type type, void *param)
+{
+	struct scsi_task *task;
+	struct scsi_persistent_reserve_out_basic *basic;
+	struct scsi_iovec *iov;
+	unsigned char *buf;
+	int xferlen;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	iov = scsi_malloc(task, sizeof(struct scsi_iovec));
+	if (iov == NULL) {
+		free(task);
+		return NULL;
+	}
+
+	switch(sa) {
+	case SCSI_PERSISTENT_RESERVE_REGISTER:
+	case SCSI_PERSISTENT_RESERVE_RESERVE:
+	case SCSI_PERSISTENT_RESERVE_RELEASE:
+	case SCSI_PERSISTENT_RESERVE_CLEAR:
+	case SCSI_PERSISTENT_RESERVE_PREEMPT:
+	case SCSI_PERSISTENT_RESERVE_PREEMPT_AND_ABORT:
+	case SCSI_PERSISTENT_RESERVE_REGISTER_AND_IGNORE_EXISTING_KEY:
+		basic = param;
+
+		xferlen = 24;
+		buf = scsi_malloc(task, xferlen);
+		if (buf == NULL) {
+			free(task);
+			free(iov);
+			return NULL;
+		}
+		
+		memset(buf, 0, xferlen);
+		scsi_set_uint64(&buf[0], basic->reservation_key);
+		scsi_set_uint64(&buf[8], basic->service_action_reservation_key);
+		if (basic->spec_i_pt) {
+			buf[20] |= 0x08;
+		}
+		if (basic->all_tg_pt) {
+			buf[20] |= 0x04;
+		}
+		if (basic->aptpl) {
+			buf[20] |= 0x01;
+		}
+		break;
+	case SCSI_PERSISTENT_RESERVE_REGISTER_AND_MOVE:
+		/* XXX FIXME */
+		free(task);
+		free(iov);
+		return NULL;
+	default:
+		free(task);
+		free(iov);
+		return NULL;
+	}
+
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_PERSISTENT_RESERVE_OUT;
+
+	task->cdb[1] |= sa & 0x1f;
+	task->cdb[2] = ((scope << 4) & 0xf0) | (type & 0x0f);
+	
+	scsi_set_uint32(&task->cdb[5], xferlen);
+
+	task->cdb_size = 10;
+	task->xfer_dir = SCSI_XFER_WRITE;
+	task->expxferlen = xferlen;
+
+	iov->iov_base = buf;
+	iov->iov_len  = xferlen;
+	scsi_task_set_iov_out(task, iov, 1);
 
 	return task;
 }

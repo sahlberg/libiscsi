@@ -256,6 +256,7 @@ struct scsi_test tests[] = {
 /* PERSISTENT_RESERVE_IN */
 { "T1100_persistent_reserve_in_read_keys_simple", T1100_persistent_reserve_in_read_keys_simple },
 { "T1110_persistent_reserve_in_serviceaction_range", T1110_persistent_reserve_in_serviceaction_range },
+{ "T1120_persistent_reserve_out_clear_simple", T1120_persistent_reserve_out_clear_simple },
 
 { NULL, NULL }
 };

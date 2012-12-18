@@ -48,7 +48,8 @@ enum scsi_opcode {
 	SCSI_OPCODE_WRITE_SAME10       = 0x41,
 	SCSI_OPCODE_UNMAP              = 0x42,
 	SCSI_OPCODE_READTOC            = 0x43,
-	SCSI_OPCODE_PERSISTENT_RESERVE_IN = 0x5E,
+	SCSI_OPCODE_PERSISTENT_RESERVE_IN  = 0x5E,
+	SCSI_OPCODE_PERSISTENT_RESERVE_OUT = 0x5F,
 	SCSI_OPCODE_READ16             = 0x88,
 	SCSI_OPCODE_COMPARE_AND_WRITE  = 0x89,
 	SCSI_OPCODE_WRITE16            = 0x8A,
@@ -77,6 +78,38 @@ enum scsi_persistent_in_sa {
 enum scsi_service_action_in {
 	SCSI_READCAPACITY16            = 0x10,
 	SCSI_GET_LBA_STATUS            = 0x12
+};
+
+enum scsi_persistent_out_sa {
+	SCSI_PERSISTENT_RESERVE_REGISTER		= 0,
+	SCSI_PERSISTENT_RESERVE_RESERVE			= 1,
+	SCSI_PERSISTENT_RESERVE_RELEASE			= 2,
+	SCSI_PERSISTENT_RESERVE_CLEAR			= 3,
+	SCSI_PERSISTENT_RESERVE_PREEMPT			= 4,
+	SCSI_PERSISTENT_RESERVE_PREEMPT_AND_ABORT	= 5,
+	SCSI_PERSISTENT_RESERVE_REGISTER_AND_IGNORE_EXISTING_KEY = 6,
+	SCSI_PERSISTENT_RESERVE_REGISTER_AND_MOVE	= 7
+};
+
+enum scsi_persistent_out_scope {
+	SCSI_PERSISTENT_RESERVE_SCOPE_LU		= 0
+};
+
+enum scsi_persistent_out_type {
+	SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE			= 1,
+	SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS			= 3,
+	SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY	= 5,
+	SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY	= 6,
+	SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS	= 7,
+	SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS	= 8
+};
+
+struct scsi_persistent_reserve_out_basic {
+       uint64_t	reservation_key;
+       uint64_t	service_action_reservation_key;
+       uint8_t  spec_i_pt;
+       uint8_t  all_tg_pt;
+       uint8_t  aptpl;
 };
 
 enum scsi_maintenance_in {
@@ -146,7 +179,7 @@ enum scsi_readtoc_fmt {
 	SCSI_READ_PMA          = 3,
 	SCSI_READ_ATIP         = 4
 };
-struct scsi_readtoc_desc{
+struct scsi_readtoc_desc {
 	union {
 		struct scsi_toc_desc {
 			int adr;
@@ -735,6 +768,7 @@ EXTERN struct scsi_task *scsi_cdb_readcapacity16(void);
 EXTERN struct scsi_task *scsi_cdb_get_lba_status(uint64_t starting_lba, uint32_t alloc_len);
 EXTERN struct scsi_task *scsi_cdb_unmap(int anchor, int group, uint16_t xferlen);
 EXTERN struct scsi_task *scsi_cdb_persistent_reserve_in(enum scsi_persistent_in_sa sa, uint16_t xferlen);
+EXTERN struct scsi_task *scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persistent_out_scope scope, enum scsi_persistent_out_type type, void *params);
 EXTERN struct scsi_task *scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint32_t lba, int group, uint16_t num_blocks);
 EXTERN struct scsi_task *scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint64_t lba, int group, uint32_t num_blocks);
 EXTERN struct scsi_task *scsi_cdb_prefetch10(uint32_t lba, int num_blocks, int immed, int group);

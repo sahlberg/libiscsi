@@ -819,6 +819,27 @@ iscsi_persistent_reserve_in_sync(struct iscsi_context *iscsi, int lun,
 }
 
 struct scsi_task *
+iscsi_persistent_reserve_out_sync(struct iscsi_context *iscsi, int lun,
+				  int sa, int scope, int type, void *param)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_persistent_reserve_out_task(iscsi, lun,
+					      sa, scope, type, param,
+					      scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi,
+				"Failed to send PERSISTENT_RESERVE_OUT command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
 iscsi_unmap_sync(struct iscsi_context *iscsi, int lun, int anchor, int group,
 		 struct unmap_list *list, int list_len)
 {

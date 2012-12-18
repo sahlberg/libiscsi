@@ -152,7 +152,8 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/1041_unsolicited_immediate_data.c \
 	test-tool/1042_unsolicited_nonimmediate_data.c \
 	test-tool/1100_persistent_reserve_in_read_keys_simple.c \
-	test-tool/1110_persistent_reserve_in_serviceaction_range.c
+	test-tool/1110_persistent_reserve_in_serviceaction_range.c \
+	test-tool/1120_persistent_reserve_out_clear_simple.c
 
 endif
 

@@ -779,6 +779,11 @@ iscsi_persistent_reserve_in_task(struct iscsi_context *iscsi, int lun,
 				 iscsi_command_cb cb, void *private_data);
 
 EXTERN struct scsi_task *
+iscsi_persistent_reserve_out_task(struct iscsi_context *iscsi, int lun,
+				  int sa, int scope, int type, void *params,
+				  iscsi_command_cb cb, void *private_data);
+
+EXTERN struct scsi_task *
 iscsi_unmap_task(struct iscsi_context *iscsi, int lun, int anchor, int group,
 		 struct unmap_list *list, int list_len,
 		 iscsi_command_cb cb, void *private_data);
@@ -953,6 +958,11 @@ iscsi_writesame16_sync(struct iscsi_context *iscsi, int lun,
 EXTERN struct scsi_task *
 iscsi_persistent_reserve_in_sync(struct iscsi_context *iscsi, int lun,
 				 int sa, uint16_t xferlen);
+
+EXTERN struct scsi_task *
+iscsi_persistent_reserve_out_sync(struct iscsi_context *iscsi, int lun,
+				  int sa, int scope, int type, void *params);
+
 EXTERN struct scsi_task *
 iscsi_unmap_sync(struct iscsi_context *iscsi, int lun, int anchor, int group,
 		 struct unmap_list *list, int list_len);
