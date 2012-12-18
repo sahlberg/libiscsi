@@ -253,6 +253,9 @@ struct scsi_test tests[] = {
 { "T1041_unsolicited_immediate_data",	T1041_unsolicited_immediate_data },
 { "T1042_unsolicited_nonimmediate_data",T1042_unsolicited_nonimmediate_data },
 
+/* PERSISTENT_RESERVE_IN */
+{ "T1100_persistent_reserve_in_read_keys_simple", T1100_persistent_reserve_in_read_keys_simple },
+
 { NULL, NULL }
 };
 

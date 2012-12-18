@@ -48,6 +48,7 @@ enum scsi_opcode {
 	SCSI_OPCODE_WRITE_SAME10       = 0x41,
 	SCSI_OPCODE_UNMAP              = 0x42,
 	SCSI_OPCODE_READTOC            = 0x43,
+	SCSI_OPCODE_PERSISTENT_RESERVE_IN = 0x5E,
 	SCSI_OPCODE_READ16             = 0x88,
 	SCSI_OPCODE_COMPARE_AND_WRITE  = 0x89,
 	SCSI_OPCODE_WRITE16            = 0x8A,
@@ -64,6 +65,13 @@ enum scsi_opcode {
 	SCSI_OPCODE_WRITE12            = 0xAA,
 	SCSI_OPCODE_WRITE_VERIFY12     = 0xAE,
 	SCSI_OPCODE_VERIFY12           = 0xAF
+};
+
+enum scsi_persistent_in_sa {
+	SCSI_PERSISTENT_RESERVE_READ_KEYS		= 0,
+	SCSI_PERSISTENT_RESERVE_READ_RESERVATION	= 1,
+	SCSI_PERSISTENT_RESERVE_REPORT_CAPABILITIES	= 2,
+	SCSI_PERSISTENT_RESERVE_READ_FULL_STATUS	= 3
 };
 
 enum scsi_service_action_in {
@@ -718,6 +726,7 @@ EXTERN struct scsi_task *scsi_cdb_serviceactionin16(enum scsi_service_action_in 
 EXTERN struct scsi_task *scsi_cdb_readcapacity16(void);
 EXTERN struct scsi_task *scsi_cdb_get_lba_status(uint64_t starting_lba, uint32_t alloc_len);
 EXTERN struct scsi_task *scsi_cdb_unmap(int anchor, int group, uint16_t xferlen);
+EXTERN struct scsi_task *scsi_cdb_persistent_reserve_in(enum scsi_persistent_in_sa sa, uint16_t xferlen);
 EXTERN struct scsi_task *scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint32_t lba, int group, uint16_t num_blocks);
 EXTERN struct scsi_task *scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint64_t lba, int group, uint32_t num_blocks);
 EXTERN struct scsi_task *scsi_cdb_prefetch10(uint32_t lba, int num_blocks, int immed, int group);

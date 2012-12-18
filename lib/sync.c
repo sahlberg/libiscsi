@@ -799,6 +799,26 @@ iscsi_writesame16_sync(struct iscsi_context *iscsi, int lun,
 }
 
 struct scsi_task *
+iscsi_persistent_reserve_in_sync(struct iscsi_context *iscsi, int lun,
+				 int sa, uint16_t xferlen)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_persistent_reserve_in_task(iscsi, lun, sa, xferlen,
+				       scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi,
+				"Failed to send PERSISTENT_RESERVE_IN command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
 iscsi_unmap_sync(struct iscsi_context *iscsi, int lun, int anchor, int group,
 		 struct unmap_list *list, int list_len)
 {

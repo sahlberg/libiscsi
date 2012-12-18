@@ -774,6 +774,11 @@ struct unmap_list {
 };
 
 EXTERN struct scsi_task *
+iscsi_persistent_reserve_in_task(struct iscsi_context *iscsi, int lun,
+				 int sa, uint16_t xferlen,
+				 iscsi_command_cb cb, void *private_data);
+
+EXTERN struct scsi_task *
 iscsi_unmap_task(struct iscsi_context *iscsi, int lun, int anchor, int group,
 		 struct unmap_list *list, int list_len,
 		 iscsi_command_cb cb, void *private_data);
@@ -945,6 +950,9 @@ iscsi_writesame16_sync(struct iscsi_context *iscsi, int lun,
 		       int anchor, int unmap, int pbdata, int lbdata,
 		       int wrprotect, int group);
 
+EXTERN struct scsi_task *
+iscsi_persistent_reserve_in_sync(struct iscsi_context *iscsi, int lun,
+				 int sa, uint16_t xferlen);
 EXTERN struct scsi_task *
 iscsi_unmap_sync(struct iscsi_context *iscsi, int lun, int anchor, int group,
 		 struct unmap_list *list, int list_len);

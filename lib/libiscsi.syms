@@ -26,6 +26,8 @@ iscsi_modesense6_task
 iscsi_nop_out_async
 iscsi_parse_full_url
 iscsi_parse_portal_url
+iscsi_persistent_reserve_in_task
+iscsi_persistent_reserve_in_sync
 iscsi_prefetch10_sync
 iscsi_prefetch10_task
 iscsi_prefetch16_sync
@@ -131,6 +133,7 @@ scsi_association_to_str
 scsi_cdb_inquiry
 scsi_cdb_get_lba_status
 scsi_cdb_modesense6
+scsi_cdb_persistent_reserve_in
 scsi_cdb_prefetch10
 scsi_cdb_prefetch16
 scsi_cdb_preventallow

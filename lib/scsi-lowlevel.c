@@ -1612,6 +1612,37 @@ scsi_cdb_unmap(int anchor, int group, uint16_t xferlen)
 }
 
 /*
+ * PERSISTENT_RESEERVE_IN
+ */
+struct scsi_task *
+scsi_cdb_persistent_reserve_in(enum scsi_persistent_in_sa sa, uint16_t xferlen)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_PERSISTENT_RESERVE_IN;
+
+	task->cdb[1] |= sa & 0x1f;
+
+	scsi_set_uint16(&task->cdb[7], xferlen);
+
+	task->cdb_size = 10;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = xferlen;
+
+	return task;
+}
+
+/*
  * WRITE_SAME10
  */
 struct scsi_task *
