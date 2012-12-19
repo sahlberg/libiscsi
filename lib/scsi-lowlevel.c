@@ -635,6 +635,8 @@ scsi_persistentreservein_datain_getfullsize(struct scsi_task *task)
 		return scsi_get_uint32(&task->datain.data[4]) + 8;
 	case SCSI_PERSISTENT_RESERVE_READ_RESERVATION:
 		return 8;
+	case SCSI_PERSISTENT_RESERVE_REPORT_CAPABILITIES:
+		return 8;
 	default:
 		return -1;
 	}
@@ -645,6 +647,7 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 {
 	struct scsi_persistent_reserve_in_read_keys *rk;
 	struct scsi_persistent_reserve_in_read_reservation *rr;
+	struct scsi_persistent_reserve_in_report_capabilities *rc;
 	int i;
 
 	switch (scsi_persistentreservein_sa(task)) {
@@ -672,6 +675,21 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 		rr->additional_length = scsi_get_uint32(&task->datain.data[4]);
 
 		return rr;
+	case SCSI_PERSISTENT_RESERVE_REPORT_CAPABILITIES:
+		rc = scsi_malloc(task, sizeof(struct scsi_persistent_reserve_in_report_capabilities));
+		if (rc == NULL) {
+			return NULL;
+		}
+		rc->length         = scsi_get_uint16(&task->datain.data[0]);
+		rc->crh            = !!(task->datain.data[2] & 0x10);
+		rc->sip_c          = !!(task->datain.data[2] & 0x08);
+		rc->atp_c          = !!(task->datain.data[2] & 0x04);
+		rc->ptpl_c         = !!(task->datain.data[2] & 0x01);
+		rc->tmv            = !!(task->datain.data[3] & 0x80);
+		rc->allow_commands = task->datain.data[3] >> 4;
+		rc->persistent_reservation_type_mask = scsi_get_uint16(&task->datain.data[4]);
+
+		return rc;
 	default:
 		return NULL;
 	}

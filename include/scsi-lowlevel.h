@@ -727,6 +727,18 @@ struct scsi_persistent_reserve_in_read_reservation {
        uint32_t additional_length;
 };
 
+struct scsi_persistent_reserve_in_report_capabilities {
+       uint16_t length;
+       uint8_t  crh;
+       uint8_t  sip_c;
+       uint8_t  atp_c;
+       uint8_t  ptpl_c;
+       uint8_t  tmv;
+       uint8_t  allow_commands;
+       uint8_t  ptpl_a;
+       uint16_t persistent_reservation_type_mask;
+};
+
 struct scsi_read10_cdb {
 	enum scsi_opcode opcode;
 	uint8_t  rdprotect;
