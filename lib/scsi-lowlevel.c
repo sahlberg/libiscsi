@@ -633,6 +633,8 @@ scsi_persistentreservein_datain_getfullsize(struct scsi_task *task)
 	switch (scsi_persistentreservein_sa(task)) {
 	case SCSI_PERSISTENT_RESERVE_READ_KEYS:
 		return scsi_get_uint32(&task->datain.data[4]) + 8;
+	case SCSI_PERSISTENT_RESERVE_READ_RESERVATION:
+		return 8;
 	default:
 		return -1;
 	}
@@ -642,6 +644,7 @@ static void *
 scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 {
 	struct scsi_persistent_reserve_in_read_keys *rk;
+	struct scsi_persistent_reserve_in_read_reservation *rr;
 	int i;
 
 	switch (scsi_persistentreservein_sa(task)) {
@@ -660,6 +663,15 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 			rk->keys[i] = scsi_get_uint64(&task->datain.data[8 + i * 8]);
 		}
 		return rk;
+	case SCSI_PERSISTENT_RESERVE_READ_RESERVATION:
+		rr = scsi_malloc(task, sizeof(struct scsi_persistent_reserve_in_read_reservation));
+		if (rr == NULL) {
+			return NULL;
+		}
+		rr->prgeneration      = scsi_get_uint32(&task->datain.data[0]);
+		rr->additional_length = scsi_get_uint32(&task->datain.data[4]);
+
+		return rr;
 	default:
 		return NULL;
 	}

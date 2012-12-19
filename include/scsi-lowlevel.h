@@ -722,6 +722,11 @@ struct scsi_persistent_reserve_in_read_keys {
        uint64_t keys[0];
 };
 
+struct scsi_persistent_reserve_in_read_reservation {
+       uint32_t prgeneration;
+       uint32_t additional_length;
+};
+
 struct scsi_read10_cdb {
 	enum scsi_opcode opcode;
 	uint8_t  rdprotect;
