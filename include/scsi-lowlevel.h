@@ -718,7 +718,7 @@ struct scsi_persistent_reserve_in_read_keys {
        uint32_t prgeneration;
        uint32_t additional_length;
 
-       uint32_t num_keys;
+       int      num_keys;
        uint64_t keys[0];
 };
 

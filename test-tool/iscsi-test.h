@@ -187,4 +187,4 @@ int T1041_unsolicited_immediate_data(const char *initiator, const char *url, int
 int T1042_unsolicited_nonimmediate_data(const char *initiator, const char *url, int data_loss, int show_info);
 int T1100_persistent_reserve_in_read_keys_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T1110_persistent_reserve_in_serviceaction_range(const char *initiator, const char *url, int data_loss, int show_info);
-int T1120_persistent_reserve_out_clear_simple(const char *initiator, const char *url, int data_loss, int show_info);
+int T1120_persistent_register_simple(const char *initiator, const char *url, int data_loss, int show_info);
