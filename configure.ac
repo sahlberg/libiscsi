@@ -22,7 +22,7 @@ AM_CONDITIONAL(LD_ISCSI,
                [expr "$host_os" : linux > /dev/null 2>&1])
 
 if test "$ac_cv_prog_gcc" = yes; then
-   WARN_CFLAGS="-Wall -W -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-align -Wwrite-strings -Werror"
+   WARN_CFLAGS="-Wall -W -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-align -Wwrite-strings -Werror -Wno-strict-aliasing"
 fi
 AC_SUBST(WARN_CFLAGS)
 
