@@ -725,6 +725,11 @@ struct scsi_persistent_reserve_in_read_keys {
 struct scsi_persistent_reserve_in_read_reservation {
        uint32_t prgeneration;
        uint32_t additional_length;
+
+       int reserved;
+
+       uint64_t reservation_key;
+       unsigned char pr_type;
 };
 
 struct scsi_persistent_reserve_in_report_capabilities {

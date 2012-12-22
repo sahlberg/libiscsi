@@ -24,3 +24,4 @@ bin
 /libtool
 /ltmain.sh
 libiscsi-*.tar.gz
+TAGS

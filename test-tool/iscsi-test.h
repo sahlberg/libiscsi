@@ -17,6 +17,14 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef	_ISCSI_TEST_H_
+#define	_ISCSI_TEST_H_
+
+#include <time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdlib.h>
+
 extern const char *initiatorname1;
 extern const char *initiatorname2;
 
@@ -188,3 +196,54 @@ int T1042_unsolicited_nonimmediate_data(const char *initiator, const char *url, 
 int T1100_persistent_reserve_in_read_keys_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T1110_persistent_reserve_in_serviceaction_range(const char *initiator, const char *url, int data_loss, int show_info);
 int T1120_persistent_register_simple(const char *initiator, const char *url, int data_loss, int show_info);
+int T1130_persistent_reserve_simple(const char *initiator, const char *url,
+    int data_loss, int show_info);
+
+
+/*
+ * PGR support
+ */
+
+static inline long rand_key(void)
+{
+	time_t t;
+	pid_t p;
+	unsigned int s;
+	long l;
+
+	(void)time(&t);
+	p = getpid();
+	s = ((int)p * (t & 0xffff));
+	srandom(s);
+	l = random();
+	return l;
+}
+
+static inline int pr_type_is_all_registrants(
+	enum scsi_persistent_out_type pr_type)
+{
+	switch (pr_type) {
+	case SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS:
+	case SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+int register_and_ignore(struct iscsi_context *iscsi, int lun,
+    unsigned long long key);
+int register_key(struct iscsi_context *iscsi, int lun,
+    unsigned long long sark, unsigned long long rk);
+int verify_key_presence(struct iscsi_context *iscsi, int lun,
+    unsigned long long key, int present);
+int reregister_key_fails(struct iscsi_context *iscsi, int lun,
+    unsigned long long sark);
+int reserve(struct iscsi_context *iscsi, int lun,
+    unsigned long long key, enum scsi_persistent_out_type pr_type);
+int release(struct iscsi_context *iscsi, int lun,
+    unsigned long long key, enum scsi_persistent_out_type pr_type);
+int verify_reserved_as(struct iscsi_context *iscsi, int lun,
+    unsigned long long key, enum scsi_persistent_out_type pr_type);
+
+#endif	/* _ISCSI_TEST_H_ */

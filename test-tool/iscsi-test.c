@@ -257,6 +257,7 @@ struct scsi_test tests[] = {
 { "T1100_persistent_reserve_in_read_keys_simple", T1100_persistent_reserve_in_read_keys_simple },
 { "T1110_persistent_reserve_in_serviceaction_range", T1110_persistent_reserve_in_serviceaction_range },
 { "T1120_persistent_register_simple", T1120_persistent_register_simple },
+{ "T1130_persistent_reserve_simple", T1130_persistent_reserve_simple },
 
 { NULL, NULL }
 };
@@ -387,6 +388,320 @@ int iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	}
 	return real_iscsi_queue_pdu(iscsi, pdu);
 }
+
+int register_and_ignore(struct iscsi_context *iscsi, int lun,
+    unsigned long long sark)
+{
+	struct scsi_persistent_reserve_out_basic poc;
+	struct scsi_task *task;
+
+
+	/* register our reservation key with the target */
+	printf("Send PROUT/REGISTER_AND_IGNORE to register ... ");
+	memset(&poc, 0, sizeof (poc));
+	poc.service_action_reservation_key = sark;
+	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
+	    SCSI_PERSISTENT_RESERVE_REGISTER_AND_IGNORE_EXISTING_KEY,
+	    SCSI_PERSISTENT_RESERVE_SCOPE_LU, 0, &poc);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send PROUT command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_CHECK_CONDITION &&
+	    task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST &&
+	    task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[SKIPPED]\n");
+		printf("PROUT Not Supported\n");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("PROUT command: failed with sense. %s\n",
+		    iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+	return 0;
+}
+
+
+int register_key(struct iscsi_context *iscsi, int lun,
+    unsigned long long sark, unsigned long long rk)
+{
+	struct scsi_persistent_reserve_out_basic poc;
+	struct scsi_task *task;
+
+
+	/* register our reservation key with the target */
+	printf("Send PROUT/REGISTER to register ... ");
+	memset(&poc, 0, sizeof (poc));
+	poc.service_action_reservation_key = sark;
+	poc.reservation_key = rk;
+	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
+	    SCSI_PERSISTENT_RESERVE_REGISTER,
+	    SCSI_PERSISTENT_RESERVE_SCOPE_LU, 0, &poc);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send PROUT command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("PROUT command: failed with sense. %s\n",
+		    iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+	return 0;
+}
+
+
+int verify_key_presence(struct iscsi_context *iscsi, int lun,
+    unsigned long long key, int present)
+{
+	struct scsi_task *task;
+	const int buf_sz = 16384;
+	int i;
+	int key_found;
+	struct scsi_persistent_reserve_in_read_keys *rk = NULL;
+
+
+	printf("Send PRIN/READ_KEYS to verify key %s ... ",
+	    present ? "present" : "absent");
+	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
+	    SCSI_PERSISTENT_RESERVE_READ_KEYS, buf_sz);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send PRIN command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("PRIN command: failed with sense. %s\n",
+		    iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	rk = scsi_datain_unmarshall(task);
+	if (rk == NULL) {
+		printf("failed to unmarshall PRIN/READ_KEYS data. %s\n",
+		    iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+
+	key_found = 0;
+	for (i = 0; i < rk->num_keys; i++) {
+		if (rk->keys[i] == key)
+			key_found = 1;
+	}
+
+	if ((present && key_found) ||
+	    (!present && !key_found)) {
+		printf("[OK]\n");
+		return 0;
+	} else {
+	        printf("[FAILED]\n");
+		if (present)
+			printf("Key found when none expected\n");
+		else
+			printf("Key not found when expected\n");
+		return -1;
+	}
+}
+
+
+int reregister_key_fails(struct iscsi_context *iscsi, int lun,
+    unsigned long long sark)
+{
+	struct scsi_persistent_reserve_out_basic poc;
+	struct scsi_task *task;
+
+
+	printf("Send PROUT/REGISTER to ensure reregister fails ... ");
+	memset(&poc, 0, sizeof (poc));
+	poc.service_action_reservation_key = sark;
+	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
+	    SCSI_PERSISTENT_RESERVE_REGISTER,
+	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
+	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
+	    &poc);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send PROUT command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	
+	if (task->status != SCSI_STATUS_CHECK_CONDITION ||
+	    task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST ||
+	    task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[FAILED]\n");
+		printf("PROUT/REGISTER when already registered should fail\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("PROUT/REGISTER command: succeeded when it should not have!\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+	return 0;
+}
+
+
+int reserve(struct iscsi_context *iscsi, int lun,
+    unsigned long long key, enum scsi_persistent_out_type pr_type)
+{
+	struct scsi_persistent_reserve_out_basic poc;
+	struct scsi_task *task;
+
+
+	/* reserve the target using specified reservation type */
+	printf("Send PROUT/RESERVE to reserve, type=%d ... ", pr_type);
+
+	memset(&poc, 0, sizeof (poc));
+	poc.reservation_key = key;
+	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
+	    SCSI_PERSISTENT_RESERVE_RESERVE,
+	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
+	    pr_type, &poc);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send PROUT command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("PROUT command: failed with sense. %s\n",
+		    iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+	return 0;
+}
+
+
+int release(struct iscsi_context *iscsi, int lun,
+    unsigned long long key, enum scsi_persistent_out_type pr_type)
+{
+	struct scsi_persistent_reserve_out_basic poc;
+	struct scsi_task *task;
+
+
+	/* release the target using specified reservation type */
+	printf("Send PROUT/RELEASE to release reservation, type=%d ... ",
+	    pr_type);
+
+	memset(&poc, 0, sizeof (poc));
+	poc.reservation_key = key;
+	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
+	    SCSI_PERSISTENT_RESERVE_RELEASE,
+	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
+	    pr_type, &poc);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send PROUT command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("PROUT command: failed with sense. %s\n",
+		    iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+	return 0;
+}
+
+int verify_reserved_as(struct iscsi_context *iscsi, int lun,
+    unsigned long long key, enum scsi_persistent_out_type pr_type)
+{
+	struct scsi_task *task;
+	const int buf_sz = 16384;
+	struct scsi_persistent_reserve_in_read_reservation *rr = NULL;
+
+
+	printf("Send PRIN/READ_RESERVATION to verify type=%d ... ",
+	    pr_type);
+	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
+	    SCSI_PERSISTENT_RESERVE_READ_RESERVATION, buf_sz);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send PRIN command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("PRIN command: failed with sense. %s\n",
+		    iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	rr = scsi_datain_unmarshall(task);
+	if (rr == NULL) {
+		printf("failed to unmarshall PRIN/READ_RESERVATION data. %s\n",
+		    iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+
+	/*
+	 * XXX check reservation (in rr) ...
+	 */
+
+	if (!rr->reserved) {
+		printf("Failed to find Target reserved as expected.\n");
+		return -1;
+	}
+	if (rr->reservation_key != key) {
+		printf("Failed to find reservation key 0x%llx: found 0x%lx.\n",
+		    key, rr->reservation_key);
+		return -1;
+	}
+	if (rr->pr_type != pr_type) {
+		printf("Failed to find reservation type %d: found %d.\n",
+		    pr_type, rr->pr_type);
+		return -1;
+	}
+
+	printf("[OK]\n");
+	return 0;
+}
+
 
 int main(int argc, const char *argv[])
 {
