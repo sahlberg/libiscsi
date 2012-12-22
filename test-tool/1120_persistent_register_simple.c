@@ -17,26 +17,231 @@
 
 #include <stdio.h>
 #include <arpa/inet.h>
+#include <string.h>
+#include <time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdlib.h>
+
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T1120_persistent_register_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
+
+static inline long rand_key(void)
+{
+	time_t t;
+	pid_t p;
+	unsigned int s;
+	long l;
+
+	(void)time(&t);
+	p = getpid();
+	s = ((int)p * (t & 0xffff));
+	srandom(s);
+	l = random();
+	return l;
+}
+
+int register_and_ignore(struct iscsi_context *iscsi, int lun,
+    unsigned long long sark)
+{
+	struct scsi_persistent_reserve_out_basic poc;
+	struct scsi_task *task;
+
+
+	/* register our reservation key with the target */
+	printf("Send PROUT/REGISTER_AND_IGNORE to register ... ");
+	memset(&poc, 0, sizeof (poc));
+	poc.service_action_reservation_key = sark;
+	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
+	    SCSI_PERSISTENT_RESERVE_REGISTER_AND_IGNORE_EXISTING_KEY,
+	    SCSI_PERSISTENT_RESERVE_SCOPE_LU, 0, &poc);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send PERSISTENT_RESERVE_OUT command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_CHECK_CONDITION &&
+	    task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST &&
+	    task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[SKIPPED]\n");
+		printf("PERSISTENT_RESERVE_OUT Not Supported\n");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("PERSISTENT_RESERVE_OUT command: failed with sense. %s\n",
+		    iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+	return 0;
+}
+
+
+int register_key(struct iscsi_context *iscsi, int lun,
+    unsigned long long sark, unsigned long long rk)
+{
+	struct scsi_persistent_reserve_out_basic poc;
+	struct scsi_task *task;
+
+
+	/* register our reservation key with the target */
+	printf("Send PROUT/REGISTER to register ... ");
+	memset(&poc, 0, sizeof (poc));
+	poc.service_action_reservation_key = sark;
+	poc.reservation_key = rk;
+	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
+	    SCSI_PERSISTENT_RESERVE_REGISTER,
+	    SCSI_PERSISTENT_RESERVE_SCOPE_LU, 0, &poc);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send PERSISTENT_RESERVE_OUT command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("PERSISTENT_RESERVE_OUT command: failed with sense. %s\n",
+		    iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+	return 0;
+}
+
+static int verify_key_presence(struct iscsi_context *iscsi, int lun,
+    unsigned long long key, int present)
+{
+	struct scsi_task *task;
+	const int buf_sz = 16384;
+	int i;
+	int key_found;
+	struct scsi_persistent_reserve_in_read_keys *rk = NULL;
+
+
+	printf("Send PRIN/READ_KEYS to verify key %s ... ",
+	    present ? "present" : "absent");
+	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
+	    SCSI_PERSISTENT_RESERVE_READ_KEYS, buf_sz);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send PERSISTENT_RESERVE_IN command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("PERSISTENT_RESERVE_IN command: failed with sense. %s\n",
+		    iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	rk = scsi_datain_unmarshall(task);
+	if (rk == NULL) {
+		printf("failed to unmarshall PERSISTENT_RESERVE_IN/READ_KEYS data. %s\n",
+		    iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+
+	key_found = 0;
+	for (i = 0; i < rk->num_keys; i++) {
+		if (rk->keys[i] == key) {
+			key_found = 1;
+		}
+	}
+
+	if ((present && key_found) ||
+	    (!present && !key_found)) {
+		printf("[OK]\n");
+		return 0;
+	} else {
+	        printf("[FAILED]\n");
+		if (present) {
+			printf("Key found when none expected\n");
+		} else {
+			printf("Key not found when expected\n");
+		}
+		return -1;
+	}
+}
+
+
+int reregister_fails(struct iscsi_context *iscsi, int lun,
+    unsigned long long sark)
+{
+	struct scsi_persistent_reserve_out_basic poc;
+	struct scsi_task *task;
+
+
+	printf("Send PROUT/REGISTER to ensure reregister fails ... ");
+	memset(&poc, 0, sizeof (poc));
+	poc.service_action_reservation_key = sark;
+	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
+	    SCSI_PERSISTENT_RESERVE_REGISTER,
+	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
+	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
+	    &poc);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send PERSISTENT_RESERVE_OUT command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	
+	if (task->status != SCSI_STATUS_CHECK_CONDITION ||
+	    task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST ||
+	    task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[FAILED]\n");
+		printf("PRIN/REGISTER when already registered should fail\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("PROUT/REGISTER command: succeeded when it should not have!\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
+	return 0;
+}
+
+
+int T1120_persistent_register_simple(const char *initiator, const char *url,
+    int data_loss _U_, int show_info)
 { 
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
-	struct scsi_persistent_reserve_out_basic poc;
-	struct scsi_persistent_reserve_in_read_keys *rk;
-	int ret, lun, i;
+	int ret, lun;
+	const unsigned long long key = rand_key();
+
 
 	printf("1120_persistent_register_simple:\n");
 	printf("============================================\n");
 	if (show_info) {
 		printf("Test basic PERSISTENT_RESERVE_OUT/REGISTER functionality.\n");
-		printf("1, REGISTER with the target.\n");
-		printf("2, Check READ_KEYS that the registration exists.\n");
-		printf("3, Remove the registraion using REGISTER_AND_IGNORE_EXISTING_KEY\n");
-		printf("4, Check READ_KEYS that the registration is gone.\n");
+		printf("1, Register with a target using REGISTER_AND_IGNORE.\n");
+		printf("2, Make sure READ_KEYS sees the registration.\n");
+		printf("3, Make sure we cannot REGISTER again\n");
+		printf("4, Remove the registraion using REGISTER\n");
+		printf("5, Make sure READ_KEYS shows the registration is gone.\n");
 		printf("\n");
 		return 0;
 	}
@@ -55,169 +260,36 @@ int T1120_persistent_register_simple(const char *initiator, const char *url, int
 	
 	ret = 0;
 
-	/* Register at the target */
-	printf("Send PERSISTENT_RESERVE_OUT/REGISTER ... ");
-	poc.reservation_key			= 0;
-	poc.service_action_reservation_key	= 0x6C69626953435349LL;
-	poc.spec_i_pt				= 0;
-	poc.all_tg_pt				= 0;
-	poc.aptpl				= 0;
-	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
-			SCSI_PERSISTENT_RESERVE_REGISTER,
-			SCSI_PERSISTENT_RESERVE_SCOPE_LU,
-			SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
-			&poc);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send PERSISTENT_RESERVE_OUT command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
+	/* register our reservation key with the target */
+	ret = register_and_ignore(iscsi, lun, key);
+	if (ret != 0) {
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("PERSISTENT_RESERVE_OUT Not Supported\n");
-		ret = -2;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("PERSISTENT_RESERVE_OUT command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
 
-
-
-	/* Verify we can read the registration */
-	printf("Check READ_KEYS that the registration exists ... ");
-	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
-			SCSI_PERSISTENT_RESERVE_READ_KEYS,
-			16384);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send PERSISTENT_RESERVE_IN command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
+	/* verify we can read the registration */
+	ret = verify_key_presence(iscsi, lun, key, 1);
+	if (ret != 0) {
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("PERSISTENT_RESERVE_IN command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rk = scsi_datain_unmarshall(task);
-	if (rk == NULL) {
-		printf("failed to unmarshall PERSISTENT_RESERVE_IN/READ_KEYS data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	/* verify we can see the key */
-	for (i = 0; i < rk->num_keys; i++) {
-		if (rk->keys[i] == 0x6C69626953435349LL) {
-			break;
-		}
-	}
-	if (i == rk->num_keys) {
-		printf("[FAILED]\n");
-		printf("Did not find registration in READ_KEYS data\n");
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
 
-
-
-	/* Release from the target */
-	printf("Remove the registration using REGISTER_AND_IGNORE_EXISTING_KEY ... ");
-	poc.reservation_key			= 0;
-	poc.service_action_reservation_key	= 0;
-	poc.spec_i_pt				= 0;
-	poc.all_tg_pt				= 0;
-	poc.aptpl				= 0;
-	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
-			SCSI_PERSISTENT_RESERVE_REGISTER_AND_IGNORE_EXISTING_KEY,
-			SCSI_PERSISTENT_RESERVE_SCOPE_LU,
-			SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
-			&poc);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send PERSISTENT_RESERVE_OUT command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
+	/* try to reregister, which should fail */
+	ret = reregister_fails(iscsi, lun, key+1);
+	if (ret != 0) {
 		goto finished;
 	}
-	if (task->status == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("PERSISTENT_RESERVE_OUT Not Supported\n");
-		ret = -2;
-		scsi_free_scsi_task(task);
+
+	/* release from the target */
+	ret = register_key(iscsi, lun, 0, key);
+	if (ret != 0) {
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("PERSISTENT_RESERVE_OUT command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
-
-
 
 	/* Verify the registration is gone */
-	printf("Check READ_KEYS that the registration is gone... ");
-	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
-			SCSI_PERSISTENT_RESERVE_READ_KEYS,
-			16384);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send PERSISTENT_RESERVE_IN command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
+	/* verify we can read the registration */
+	ret = verify_key_presence(iscsi, lun, key, 0);
+	if (ret != 0) {
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("PERSISTENT_RESERVE_IN command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rk = scsi_datain_unmarshall(task);
-	if (rk == NULL) {
-		printf("failed to unmarshall PERSISTENT_RESERVE_IN/READ_KEYS data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	/* verify we can see the key */
-	for (i = 0; i < rk->num_keys; i++) {
-		if (rk->keys[i] == 0x6C69626953435349LL) {
-			break;
-		}
-	}
-	if (i != rk->num_keys) {
-		printf("[FAILED]\n");
-		printf("Registration still remains in the READ_KEYS data\n");
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
-
-
 
 finished:
 	iscsi_logout_sync(iscsi);
