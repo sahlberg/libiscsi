@@ -231,6 +231,13 @@ static inline int pr_type_is_all_registrants(
 	}
 }
 
+struct resvn_type_info {
+	const char *pr_type_str;
+	enum scsi_persistent_out_type pr_type;
+};
+
+extern struct resvn_type_info reservation_types[];
+
 int register_and_ignore(struct iscsi_context *iscsi, int lun,
     unsigned long long key);
 int register_key(struct iscsi_context *iscsi, int lun,
@@ -240,10 +247,10 @@ int verify_key_presence(struct iscsi_context *iscsi, int lun,
 int reregister_key_fails(struct iscsi_context *iscsi, int lun,
     unsigned long long sark);
 int reserve(struct iscsi_context *iscsi, int lun,
-    unsigned long long key, enum scsi_persistent_out_type pr_type);
+    unsigned long long key, struct resvn_type_info *rtip);
 int release(struct iscsi_context *iscsi, int lun,
-    unsigned long long key, enum scsi_persistent_out_type pr_type);
+    unsigned long long key, struct resvn_type_info *rtip);
 int verify_reserved_as(struct iscsi_context *iscsi, int lun,
-    unsigned long long key, enum scsi_persistent_out_type pr_type);
+    unsigned long long key, struct resvn_type_info *rtip);
 
 #endif	/* _ISCSI_TEST_H_ */

@@ -24,27 +24,6 @@
 #include "iscsi-test.h"
 
 
-struct resvn_test_info {
-	const char *resvn_str;
-	enum scsi_persistent_out_type resvn_type;
-};
-
-static struct resvn_test_info rti[] = {
-	{"Write Exclusive",
-	 SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE},
-	{"Exclusive Access",
-	 SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS},
-	{"Write Exclusive, Registrants Only",
-	 SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY},
-	{"Exclusive Access, Registrants Only",
-	 SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY},
-	{"Write Exclusive, All Registrants",
-	 SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS},
-	{"Exclusive Access, All Registrants",
-	 SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS},
-	{NULL, 0}
-};
-	
 
 int T1130_persistent_reserve_simple(const char *initiator,
     const char *url, int data_loss, int show_info)
@@ -53,7 +32,7 @@ int T1130_persistent_reserve_simple(const char *initiator,
 	int ret;
 	int lun;
 	const unsigned long long key = rand_key();
-	struct resvn_test_info *rtip;
+	struct resvn_type_info *rtip;
 
 
 	printf("1130_persistent_reserve_simple:\n");
@@ -64,8 +43,11 @@ int T1130_persistent_reserve_simple(const char *initiator,
 		printf("Test that we can using each type of Persistent Reservation,\n");
 		printf(" and that we can release each type, as well\n");
 		printf("%d, We can register a key\n", idx++);
-		for (rtip = rti; rtip->resvn_str != NULL; rtip++) {
-			printf("%d, Can register %s\n", idx++, rtip->resvn_str);
+		for (rtip = reservation_types;
+		     rtip->pr_type_str != NULL;
+		     rtip++) {
+			printf("%d, Can register %s\n", idx++,
+			    rtip->pr_type_str);
 			printf("%d, Can read reservation\n", idx++);
 			printf("%d, Can release reservation\n", idx++);
 		}
@@ -93,18 +75,23 @@ int T1130_persistent_reserve_simple(const char *initiator,
 		goto finished;
 
 	/* test each reservatoin type */
-	for (rtip = rti; rtip->resvn_str != NULL; rtip++) {
+	for (rtip = reservation_types;
+	     rtip->pr_type_str != NULL;
+	     rtip++) {
 		/* reserve the target */
-		ret = reserve(iscsi, lun, key, rtip->resvn_type);
+		ret = reserve(iscsi, lun, key, rtip);
 		if (ret != 0)
 			goto finished;
+
 		/* verify target reservation */
 		ret = verify_reserved_as(iscsi, lun,
-		    pr_type_is_all_registrants(rtip->resvn_type) ? 0 : key,
-		    rtip->resvn_type);
+		    pr_type_is_all_registrants(rtip->pr_type) ? 0 : key,
+		    rtip);
+		if (ret != 0)
+			goto finished;
 
 		/* release our reservation */
-		ret = release(iscsi, lun, key, rtip->resvn_type);
+		ret = release(iscsi, lun, key, rtip);
 		if (ret != 0)
 			goto finished;
 	}
