@@ -295,26 +295,13 @@ test14:
 	goto test15;
 
 test15:
-	printf("Test TEST UNIT READY ... ");
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TEST UNIT READY command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test11;
+	printf("Test TEST UNIT READY.\n");
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
+		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TEST UNIT READY command: failed with sense %s\n", iscsi_get_error(iscsi));
-		ret++;
-		scsi_free_scsi_task(task);
-		goto test16;
-	}
-	scsi_free_scsi_task(task);
 
-	printf("[OK]\n");
 
-test16:
 	printf("Test UNMAP ... ");
 	if (lbpme == 0) {
 		printf("[LBPME == 0, SKIPPING TEST]\n");

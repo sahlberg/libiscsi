@@ -772,6 +772,28 @@ int testunitready_nomedium(struct iscsi_context *iscsi, int lun)
 	return 0;
 }
 
+int testunitready_conflict(struct iscsi_context *iscsi, int lun)
+{
+	struct scsi_task *task;
+
+	printf("Send TESTUNITREADY expecting it to fail with RESERVATION_CONFLICT ... ");
+	task = iscsi_testunitready_sync(iscsi, lun);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send TESTUNITREADY command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
+		printf("[FAILED]\n");
+		printf("Expected RESERVATION CONFLICT\n");
+		return -1;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+	return 0;
+}
+
 int main(int argc, const char *argv[])
 {
 	poptContext pc;

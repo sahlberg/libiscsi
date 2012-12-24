@@ -140,81 +140,38 @@ int T0370_nomedia(const char *initiator, const char *url, int data_loss, int sho
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test2;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test2;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
-
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test2;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		printf("[FAILED]\n");
-		printf("TESTUNITREADY after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
-		scsi_free_scsi_task(task);
-		goto test2;
-	}	
-	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
-
 
 
 
 /*
  * TESTS THAT READ FROM THE MEDIUM
  */
-
-test2:
-
-	printf("Test TESTUNITREADY ... ");
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test3;
+	printf("Test TESTUNITREADY.\n");
+	ret = testunitready_nomedium(iscsi, lun);
+	if (ret != 0) {
+		goto finished;
 	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		printf("[FAILED]\n");
-		printf("TESTUNITREADY after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
-		scsi_free_scsi_task(task);
-		goto test3;
-	}	
-	scsi_free_scsi_task(task);
 
-	printf("[OK]\n");
-
-test3:
 
 	printf("Test SYNCHRONIZECACHE10 ... ");
 	task = iscsi_synchronizecache10_sync(iscsi, lun, 0, 1, 1, 1);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send SYNCHRONIZECACHE10 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test4;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -223,23 +180,21 @@ test3:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("SYNCHRONIZECACHE10 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test4;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test4:
 
 	printf("Test SYNCHRONIZECACHE16 ... ");
 	task = iscsi_synchronizecache16_sync(iscsi, lun, 0, 1, 1, 1);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send SYNCHRONIZECACHE16 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test5;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -248,23 +203,21 @@ test4:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("SYNCHRONIZECACHE16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test5;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test5:
 
 	printf("Test READ10 ... ");
 	task = iscsi_read10_sync(iscsi, lun, 0, block_size, block_size, 0, 0, 1, 1, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send READ10 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test6;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -273,23 +226,21 @@ test5:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("READ10 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test6;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test6:
 
 	printf("Test READ12 ... ");
 	task = iscsi_read12_sync(iscsi, lun, 0, block_size, block_size, 0, 0, 1, 1, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send READ12 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test7;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -298,15 +249,12 @@ test6:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("READ12 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test7;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
-
-test7:
 
 
 	printf("Test READ16 ... ");
@@ -314,8 +262,8 @@ test7:
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send READ16 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test8;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -324,23 +272,21 @@ test7:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("READ16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test8;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test8:
 
 	printf("Test READCAPACITY10 ... ");
 	task = iscsi_readcapacity10_sync(iscsi, lun, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send READCAPACITY10 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test9;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -349,23 +295,21 @@ test8:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("READCAPACITY10 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test9;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test9:
 
 	printf("Test READCAPACITY16 ... ");
 	task = iscsi_readcapacity16_sync(iscsi, lun);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test10;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -374,23 +318,21 @@ test9:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("READCAPACITY16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test10;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test10:
 
 	printf("Test GETLBASTATUS ... ");
 	task = iscsi_get_lba_status_sync(iscsi, lun, 0, 64);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send GETLBASTATUS command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test11;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -399,23 +341,21 @@ test10:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("GETLBASTATUS after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test11;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test11:
 
 	printf("Test PREFETCH10 ... ");
 	task = iscsi_prefetch10_sync(iscsi, lun, 0, 1, 1, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PREFETCH10 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test12;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -424,15 +364,12 @@ test11:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("PREFETCH10 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test12;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
-
-test12:
 
 
 	printf("Test PREFETCH16 ... ");
@@ -440,8 +377,8 @@ test12:
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PREFETCH16 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test13;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -450,23 +387,21 @@ test12:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("PREFETCH16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test13;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test13:
 
 	printf("Test VERIFY10 ... ");
 	task = iscsi_verify10_sync(iscsi, lun, buf, block_size, 0, 0, 0, 1, block_size);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send VERIFY10 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test14;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -475,23 +410,21 @@ test13:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("VERIFY10 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test14;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test14:
 
 	printf("Test VERIFY12 ... ");
 	task = iscsi_verify12_sync(iscsi, lun, buf, block_size, 0, 0, 0, 1, block_size);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send VERIFY12 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test15;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -500,23 +433,21 @@ test14:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("VERIFY12 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test15;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test15:
 
 	printf("Test VERIFY16 ... ");
 	task = iscsi_verify16_sync(iscsi, lun, buf, block_size, 0, 0, 0, 1, block_size);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test16;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -525,20 +456,18 @@ test15:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("VERIFY16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test16;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test16:
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping all WRITE tests\n");
 		ret = -2;
-		goto cleanup;
+		goto finished;
 	}
 
 
@@ -551,8 +480,8 @@ test16:
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITE10 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test17;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -561,23 +490,21 @@ test16:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("WRITE10 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test17;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test17:
 
 	printf("Test WRITE12 ... ");
 	task = iscsi_write12_sync(iscsi, lun, 0, buf, block_size, block_size, 0, 0, 1, 1, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITE12 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test18;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -586,23 +513,21 @@ test17:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("WRITE12 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test18;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test18:
 
 	printf("Test WRITE16 ... ");
 	task = iscsi_write16_sync(iscsi, lun, 0, buf, block_size, block_size, 0, 0, 1, 1, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITE16 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test19;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -611,23 +536,21 @@ test18:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("WRITE16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test19;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test19:
 
 	printf("Test WRITEVERIFY10 ... ");
 	task = iscsi_writeverify10_sync(iscsi, lun, 0, buf, block_size, block_size, 0, 0, 1, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITEVERIFY10 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test20;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -636,23 +559,21 @@ test19:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("WRITEVERIFY10 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test20;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test20:
 
 	printf("Test WRITEVERIFY12 ... ");
 	task = iscsi_writeverify12_sync(iscsi, lun, 0, buf, block_size, block_size, 0, 0, 1, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITEVERIFY12 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test21;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -661,23 +582,21 @@ test20:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("WRITEVERIFY12 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test21;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test21:
 
 	printf("Test WRITEVERIFY16 ... ");
 	task = iscsi_writeverify16_sync(iscsi, lun, 0, buf, block_size, block_size, 0, 0, 1, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITEVERIFY16 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test22;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -686,22 +605,21 @@ test21:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("WRITEVERIFY16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test22;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test22:
+
 	printf("Test ORWRITE ... ");
 	task = iscsi_orwrite_sync(iscsi, lun, 0, buf, block_size, block_size, 0, 0, 1, 1, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send ORWRITE command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test23;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -710,22 +628,21 @@ test22:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("ORWRITE after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test23;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test23:
+
 	printf("Test COMPAREWRITE ... ");
 	task = iscsi_compareandwrite_sync(iscsi, lun, 0, buf, block_size, block_size, 0, 0, 1, 1, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send COMPAREWRITE command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test24;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -734,23 +651,21 @@ test23:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("COMPAREWRITE after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test24;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test24:
 
 	printf("Test WRITESAME10 ... ");
 	task = iscsi_writesame10_sync(iscsi, lun, buf, block_size, 0, 1, 0, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test25;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -759,22 +674,21 @@ test24:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("WRITESAME10 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test25;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test25:
+
 	printf("Test WRITESAME16 ... ");
 	task = iscsi_writesame16_sync(iscsi, lun, buf, block_size, 0, 1, 0, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test26;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -783,23 +697,21 @@ test25:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("WRITESAME16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test26;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test26:
 
 	printf("Test UNMAP ... ");
 	task = iscsi_unmap_sync(iscsi, lun, 0, 0, NULL, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send UNMAP command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test27;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
@@ -808,54 +720,51 @@ test26:
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		printf("[FAILED]\n");
 		printf("UNMAP after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test27;
+		goto finished;
 	}	
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test27:
 
 
-cleanup:
 	printf("Try to mount the media again ... ");
 	task = iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 1);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	scsi_free_scsi_task(task);
-
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
-		ret++;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
+	printf("Check with TESTUNITREADY that the medium is present again.\n");
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
+		goto finished;
+	}
+
+
 finished:
+	printf("Make sure the media is mounted again before the next test ... ");
+	task = iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 1);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+
 	iscsi_logout_sync(iscsi);
 	iscsi_destroy_context(iscsi);
 	return ret;

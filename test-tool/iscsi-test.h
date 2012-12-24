@@ -254,5 +254,6 @@ int verify_reserved_as(struct iscsi_context *iscsi, int lun,
     unsigned long long key, struct resvn_type_info *rtip);
 int testunitready(struct iscsi_context *iscsi, int lun);
 int testunitready_nomedium(struct iscsi_context *iscsi, int lun);
+int testunitready_conflict(struct iscsi_context *iscsi, int lun);
 
 #endif	/* _ISCSI_TEST_H_ */

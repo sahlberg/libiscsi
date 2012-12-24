@@ -230,30 +230,18 @@ int T1031_unsolicited_data_out(const char *initiator, const char *url,
 			goto finished;
 		}
 	}
+	printf("[OK]\n");
 
 	/* Send a TUR to drive the eventsystem and make sure the
 	 * DATA-OUT PDUs are flushed
 	 */
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TEST UNIT READY command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test2;
+	printf("Send a TESTUNITREADY and flush tx queue.\n");
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
+		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TEST UNIT READY command: failed with sense %s\n", iscsi_get_error(iscsi));
-		ret++;
-		scsi_free_scsi_task(task);
-		goto test2;
-	}
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
 
 
-
-test2:
 	printf("Verify the target is still alive ... ");
 	iscsi2 = iscsi_context_login(initiator, url, &lun);
 	if (iscsi2 == NULL) {

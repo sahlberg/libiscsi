@@ -114,8 +114,8 @@ int T0384_preventallow_target_cold_reset(const char *initiator, const char *url,
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PREVENTALLOW command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test2;
+		ret = -1;
+		goto finished;
 	}
 
 	/* SPC doesnt really say anything about what should happen if using PREVENTALLOW 
@@ -125,37 +125,36 @@ int T0384_preventallow_target_cold_reset(const char *initiator, const char *url,
 		if (task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("PREVENTALLOW command: failed with sense %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 	}
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test2:
+
 	printf("Try to eject the media ... ");
 	task = iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test3;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status     != SCSI_STATUS_CHECK_CONDITION
 	||  task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 	||  task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_REMOVAL_PREVENTED) {
 	        printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command should have failed with ILLEGAL_REQUEST/MEDIUM_REMOVAL_PREVENTED with : failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test3;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("Eject failed. [OK]\n");
 
-test3:
+
 	printf("Send a Cold Reset to the target ... ");
 	iscsi_task_mgmt_target_cold_reset_async(iscsi, mgmt_cb, &mgmt_task);
 	while (mgmt_task.finished == 0) {
@@ -164,7 +163,7 @@ test3:
 
 		if (poll(&pfd, 1, -1) < 0) {
 			printf("Poll failed");
-			goto test4;
+			goto finished;
 		}
 		if (iscsi_service(iscsi, pfd.revents) < 0) {
 			printf("iscsi_service failed with : %s\n", iscsi_get_error(iscsi));
@@ -174,45 +173,35 @@ test3:
 	if (mgmt_task.status != 0) {
 		printf("[FAILED]\n");
 		printf("Failed to reset the target\n");
-		goto test4;
+		goto finished;
 	}
 	printf("[OK]\n");
 
 again:
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		scsi_free_scsi_task(task);
+	printf("Use TESTUNITREADY and clear any unit attentions.\n");
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
 		goto again;
 	}
-	scsi_free_scsi_task(task);
 
-test4:
 
 	printf("Try to eject the media ... ");
 	task = iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test5;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command should have worked but it failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test5;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
-
-test5:
 
 
 	printf("Load the media again in case it was ejected ... ");
@@ -220,8 +209,8 @@ test5:
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test6;
+		ret = -1;
+		goto finished;
 	}
 	/* SBC doesnt really say anything about whether we can LOAD media when the prevent
 	 * flag is set
@@ -229,16 +218,14 @@ test5:
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-test6:
-
 
 	printf("Clear the PREVENTALLOW again ... ");
 	task = iscsi_preventallow_sync(iscsi, lun, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PREVENTALLOW command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test7;
+		ret = -1;
+		goto finished;
 	}
 	/* SPC doesnt really say anything about what should happen if using PREVENTALLOW 
 	 * on a device that does not support medium removals.
@@ -247,16 +234,14 @@ test6:
 		if (task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("PREVENTALLOW command: failed with sense %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test7;
+			goto finished;
 		}
 	}
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-test7:
 
 finished:
 	iscsi_logout_sync(iscsi);

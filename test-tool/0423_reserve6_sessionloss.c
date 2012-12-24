@@ -25,7 +25,7 @@
 int T0423_reserve6_sessionloss(const char *initiator, const char *url,
 			       int data_loss _U_, int show_info)
 {
-	struct iscsi_context *iscsi, *iscsi2;
+	struct iscsi_context *iscsi = NULL, *iscsi2 = NULL;
 	struct scsi_task *task;
 	int ret, lun;
 
@@ -84,81 +84,46 @@ int T0423_reserve6_sessionloss(const char *initiator, const char *url,
 		       iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test2;
-	}
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
-
-
-test2:
-	printf("Verify we can access the LUN from the first initiator ... ");
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TEST UNIT READY command: %s\n",
-		       iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TEST UNIT READY command: failed with sense %s\n",
-		       iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto test3;
-	}
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
-
-
-test3:
-	printf("Verify we can NOT access the LUN from the second initiator ... ");
-	task = iscsi_testunitready_sync(iscsi2, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TEST UNIT READY command: %s\n",
-		       iscsi_get_error(iscsi2));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
-		printf("[FAILED]\n");
-		printf("Expected RESERVATION CONFLICT\n");
-		ret = -1;
-		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
+
+
+	printf("Verify we can access the LUN from the first initiator.\n");
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
+		goto finished;
+	}
+
+
+	printf("Verify we can NOT access the LUN from the second initiator.\n");
+	ret = testunitready_conflict(iscsi2, lun);
+	if (ret != 0) {
+		goto finished;
+	}
+
 
 	printf("Drop the session to the first initiator ... ");
 	iscsi_destroy_context(iscsi);
+	iscsi = NULL;
 	printf("[OK]\n");
 
-	printf("Verify we can access the LUN from the second initiator ... ");
-	task = iscsi_testunitready_sync(iscsi2, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TEST UNIT READY command: %s\n",
-		       iscsi_get_error(iscsi2));
-		ret = -1;
+	printf("Verify we can access the LUN from the second initiator.\n");
+	ret = testunitready(iscsi2, lun);
+	if (ret != 0) {
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TEST UNIT READY command: failed with sense %s\n",
-		       iscsi_get_error(iscsi2));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
 
 
 finished:
-	iscsi_logout_sync(iscsi2);
-	iscsi_destroy_context(iscsi2);
+	if (iscsi2 != NULL) {
+		iscsi_logout_sync(iscsi2);
+		iscsi_destroy_context(iscsi2);
+	}
+	if (iscsi != NULL) {
+		iscsi_logout_sync(iscsi);
+		iscsi_destroy_context(iscsi);
+	}
 	return ret;
 }
