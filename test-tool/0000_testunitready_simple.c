@@ -23,7 +23,6 @@
 int T0000_testunitready_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
 {
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
 	int ret, lun;
 
 	printf("0000_testunitready_simple:\n");
@@ -43,23 +42,10 @@ int T0000_testunitready_simple(const char *initiator, const char *url, int data_
 
 	ret=0;
 
-	printf("Test TESTUNITREADY ... ");
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TEST UNIT READY command: %s\n", iscsi_get_error(iscsi));
-		ret++;
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TEST UNIT READY command: failed with sense %s\n", iscsi_get_error(iscsi));
-		ret++;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
 
 finished:
 	iscsi_logout_sync(iscsi);

@@ -721,6 +721,56 @@ int verify_reserved_as(struct iscsi_context *iscsi, int lun,
 	return 0;
 }
 
+int testunitready(struct iscsi_context *iscsi, int lun)
+{
+	struct scsi_task *task;
+
+	printf("Send TESTUNITREADY ... ");
+	task = iscsi_testunitready_sync(iscsi, lun);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send TESTUNITREADY command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("TESTUNITREADY command: failed with sense. %s\n",
+		    iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+	return 0;
+}
+
+int testunitready_nomedium(struct iscsi_context *iscsi, int lun)
+{
+	struct scsi_task *task;
+
+	printf("Send TESTUNITREADY expecting it to fail with CHECK_CONDITION/NOT_READY/MEDIUM_NOT_PRESENT ... ");
+	task = iscsi_testunitready_sync(iscsi, lun);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send TESTUNITREADY command: %s\n",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		printf("[FAILED]\n");
+		printf("TESTUNITREADY Should have failed with NOT_READY/MEDIUM_NOT_PRESENT*\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+	return 0;
+}
 
 int main(int argc, const char *argv[])
 {
