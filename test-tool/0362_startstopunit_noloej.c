@@ -111,23 +111,13 @@ int T0362_startstopunit_noloej(const char *initiator, const char *url, int data_
 		goto test2;
 	}
 	scsi_free_scsi_task(task);
-
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto test2;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto test2;
-	}
-	scsi_free_scsi_task(task);
 	printf("[OK]\n");
+
+	printf("Check with TESTUNITREADY that the medium is still present.\n");
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
+		goto finished;
+	}
 
 
 test2:
@@ -150,23 +140,13 @@ test2:
 		goto test3;
 	}
 	scsi_free_scsi_task(task);
-
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto test3;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto test3;
-	}
-	scsi_free_scsi_task(task);
 	printf("[OK]\n");
+
+	printf("Check with TESTUNITREADY that the medium is still present.\n");
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
+		goto finished;
+	}
 
 
 test3:
@@ -189,23 +169,14 @@ test3:
 		goto test4;
 	}
 	scsi_free_scsi_task(task);
-
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto test4;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto test4;
-	}
-	scsi_free_scsi_task(task);
 	printf("[OK]\n");
+
+	printf("Check with TESTUNITREADY that the medium is still present.\n");
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
+		goto finished;
+	}
+
 
 
 test4:
@@ -228,23 +199,13 @@ test4:
 		goto test5;
 	}
 	scsi_free_scsi_task(task);
-
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto test5;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto test5;
-	}
-	scsi_free_scsi_task(task);
 	printf("[OK]\n");
+
+	printf("Check with TESTUNITREADY that the medium is still present.\n");
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
+		goto finished;
+	}
 
 
 test5:
@@ -267,23 +228,13 @@ test5:
 		goto test6;
 	}
 	scsi_free_scsi_task(task);
-
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto test6;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto test6;
-	}
-	scsi_free_scsi_task(task);
 	printf("[OK]\n");
+
+	printf("Check with TESTUNITREADY that the medium is still present.\n");
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
+		goto finished;
+	}
 
 
 test6:
@@ -306,23 +257,13 @@ test6:
 		goto test7;
 	}
 	scsi_free_scsi_task(task);
-
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto test7;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto test7;
-	}
-	scsi_free_scsi_task(task);
 	printf("[OK]\n");
+
+	printf("Check with TESTUNITREADY that the medium is still present.\n");
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
+		goto finished;
+	}
 
 
 test7:
@@ -345,23 +286,13 @@ test7:
 		goto test8;
 	}
 	scsi_free_scsi_task(task);
-
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto test8;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto test8;
-	}
-	scsi_free_scsi_task(task);
 	printf("[OK]\n");
+
+	printf("Check with TESTUNITREADY that the medium is still present.\n");
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
+		goto finished;
+	}
 
 
 test8:
@@ -384,23 +315,13 @@ test8:
 		goto test9;
 	}
 	scsi_free_scsi_task(task);
-
-	task = iscsi_testunitready_sync(iscsi, lun);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto test9;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("TESTUNITREADY command: failed with sense after STARTSTOPUNIT %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto test9;
-	}
-	scsi_free_scsi_task(task);
 	printf("[OK]\n");
+
+	printf("Check with TESTUNITREADY that the medium is still present.\n");
+	ret = testunitready(iscsi, lun);
+	if (ret != 0) {
+		goto finished;
+	}
 
 
 test9:
