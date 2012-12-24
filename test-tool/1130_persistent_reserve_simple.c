@@ -24,6 +24,15 @@
 #include "iscsi-test.h"
 
 
+static enum scsi_persistent_out_type pr_types_to_test[] = {
+	SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
+	SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS,
+	SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY,
+	SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY,
+	SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS,
+	SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS,
+	0
+};
 
 int T1130_persistent_reserve_simple(const char *initiator,
     const char *url, int data_loss, int show_info)
@@ -32,22 +41,21 @@ int T1130_persistent_reserve_simple(const char *initiator,
 	int ret;
 	int lun;
 	const unsigned long long key = rand_key();
-	struct resvn_type_info *rtip;
+	int i;
+
 
 
 	printf("1130_persistent_reserve_simple:\n");
 	printf("=========================================\n");
 	if (show_info) {
-		int	idx = 1;
+		int idx = 1;
 
-		printf("Test that we can using each type of Persistent Reservation,\n");
+		printf("Test that we can use each type of Persistent Reservation,\n");
 		printf(" and that we can release each type, as well\n");
 		printf("%d, We can register a key\n", idx++);
-		for (rtip = reservation_types;
-		     rtip->pr_type_str != NULL;
-		     rtip++) {
+		for (i = 0; pr_types_to_test[i] != 0; i++) {
 			printf("%d, Can register %s\n", idx++,
-			    rtip->pr_type_str);
+			    scsi_pr_type_str(pr_types_to_test[i]));
 			printf("%d, Can read reservation\n", idx++);
 			printf("%d, Can release reservation\n", idx++);
 		}
@@ -75,23 +83,23 @@ int T1130_persistent_reserve_simple(const char *initiator,
 		goto finished;
 
 	/* test each reservatoin type */
-	for (rtip = reservation_types;
-	     rtip->pr_type_str != NULL;
-	     rtip++) {
+	for (i = 0; pr_types_to_test[i] != 0; i++) {
+		enum scsi_persistent_out_type pr_type = pr_types_to_test[i];
+
 		/* reserve the target */
-		ret = reserve(iscsi, lun, key, rtip);
+		ret = reserve(iscsi, lun, key, pr_type);
 		if (ret != 0)
 			goto finished;
 
 		/* verify target reservation */
 		ret = verify_reserved_as(iscsi, lun,
-		    pr_type_is_all_registrants(rtip->pr_type) ? 0 : key,
-		    rtip);
+		    pr_type_is_all_registrants(pr_type) ? 0 : key,
+		    pr_type);
 		if (ret != 0)
 			goto finished;
 
 		/* release our reservation */
-		ret = release(iscsi, lun, key, rtip);
+		ret = release(iscsi, lun, key, pr_type);
 		if (ret != 0)
 			goto finished;
 	}

@@ -163,6 +163,28 @@ scsi_sense_ascq_str(int ascq)
 	return value_string_find(ascqs, ascq);
 }
 
+const char *
+scsi_pr_type_str(enum scsi_persistent_out_type pr_type)
+{
+	struct value_string pr_type_strings[] = {
+		{SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
+		 "Write Exclusive"},
+		{SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS,
+		 "Exclusive Access"},
+		{SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY,
+		 "Write Exclusive, Registrants Only"},
+		{SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY,
+		 "Exclusive Access Registrants Only"},
+		{SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS,
+		 "Write Exclusive, All Registrants"},
+		{SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS,
+		 "Exclusive Access, All Registrants"},
+		{0, NULL}
+	};
+
+	return value_string_find(pr_type_strings, pr_type);
+}
+
 inline uint64_t
 scsi_get_uint64(const unsigned char *c)
 {
