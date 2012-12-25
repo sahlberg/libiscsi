@@ -255,5 +255,8 @@ int verify_reserved_as(struct iscsi_context *iscsi, int lun,
 int testunitready(struct iscsi_context *iscsi, int lun);
 int testunitready_nomedium(struct iscsi_context *iscsi, int lun);
 int testunitready_conflict(struct iscsi_context *iscsi, int lun);
+int prefetch10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group);
+int prefetch10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group);
+int prefetch10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group);
 
 #endif	/* _ISCSI_TEST_H_ */

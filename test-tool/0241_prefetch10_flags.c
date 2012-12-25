@@ -69,56 +69,22 @@ int T0241_prefetch10_flags(const char *initiator, const char *url, int data_loss
 	ret = 0;
 
 	/* prefetch with IMMED==1 */
-	printf("Prefetch with IMMED==1 ... ");
-	task = iscsi_prefetch10_sync(iscsi, lun, 0, 1, 1, 0);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send prefetch10 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto test2;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("Opcode is not implemented on target\n");
-		scsi_free_scsi_task(task);
-		ret = -2;
+	printf("Check PREFETCH10 with IMMED==1.\n");
+	ret = prefetch10(iscsi, lun, 0, 1, 1, 0);
+	if (ret != 0) {
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("Prefetch10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto test2;
-	}
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
 
-test2:
+
 	/* Prefetch with GROUPNUMBER==0..31 */
-	printf("Prefetching with GROUPNEMBER==0..31 ... ");
+	printf("Check PREFETCH10 with GROUPNEMBER 0-31.\n");
 	for (i = 0; i < 32; i++) {
-		task = iscsi_prefetch10_sync(iscsi, lun, 0, 1, 0, i);
-		if (task == NULL) {
-		        printf("[FAILED]\n");
-			printf("Failed to send prefetch10 command: %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			goto test3;
+		ret = prefetch10(iscsi, lun, 0, 1, 0, i);
+		if (ret != 0) {
+			goto finished;
 		}
-		if (task->status != SCSI_STATUS_GOOD) {
-		        printf("[FAILED]\n");
-			printf("Prefetch10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test3;
-		}
-		scsi_free_scsi_task(task);
 	}
-	printf("[OK]\n");
 
-test3:
 
 finished:
 	iscsi_logout_sync(iscsi);

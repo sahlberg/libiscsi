@@ -749,7 +749,7 @@ int testunitready_nomedium(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
 
-	printf("Send TESTUNITREADY expecting it to fail with CHECK_CONDITION/NOT_READY/MEDIUM_NOT_PRESENT ... ");
+	printf("Send TESTUNITREADY (expecting NOT_READY/MEDIUM_NOT_PRESENT) ... ");
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
@@ -776,7 +776,7 @@ int testunitready_conflict(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
 
-	printf("Send TESTUNITREADY expecting it to fail with RESERVATION_CONFLICT ... ");
+	printf("Send TESTUNITREADY (expecting RESERVATION_CONFLICT) ... ");
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
@@ -793,6 +793,105 @@ int testunitready_conflict(struct iscsi_context *iscsi, int lun)
 	printf("[OK]\n");
 	return 0;
 }
+
+int prefetch10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group)
+{
+	struct scsi_task *task;
+
+	printf("Send PREFETCH10 LBA:%d Count:%d IMEMD:%d GROUP:%d ... ", lba, num_blocks, immed, group);
+	task = iscsi_prefetch10_sync(iscsi, lun, lba, num_blocks, immed, group);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send prefetch10 command: %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[SKIPPED]\n");
+		printf("PREFETCH10 is not implemented on target\n");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("PREFETCH10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	scsi_free_scsi_task(task);
+	printf("[OK]\n");
+	return 0;
+}
+
+int prefetch10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group)
+{
+	struct scsi_task *task;
+
+	printf("Send PREFETCH10 LBA:%d Count:%d IMEMD:%d GROUP:%d (expecting ILLEGAL_REQUEST/LBA_OUT_OF_RANGE) ... ", lba, num_blocks, immed, group);
+	task = iscsi_prefetch10_sync(iscsi, lun, lba, num_blocks, immed, group);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send prefetch10 command: %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[SKIPPED]\n");
+		printf("PREFETCH10 is not implemented on target\n");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		printf("[FAILED]\n");
+		printf("PREFETCH10 should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	printf("[OK]\n");
+	scsi_free_scsi_task(task);
+	return 0;
+}
+
+int prefetch10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group)
+{
+	struct scsi_task *task;
+
+	printf("Send PREFETCH10 LBA:%d Count:%d IMEMD:%d GROUP:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT) ... ", lba, num_blocks, immed, group);
+	task = iscsi_prefetch10_sync(iscsi, lun, lba, num_blocks, immed, group);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send prefetch10 command: %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[SKIPPED]\n");
+		printf("PREFETCH10 is not implemented on target\n");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		printf("[FAILED]\n");
+		printf("PREFETCH10 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	printf("[OK]\n");
+	scsi_free_scsi_task(task);
+	return 0;
+}
+
 
 int main(int argc, const char *argv[])
 {

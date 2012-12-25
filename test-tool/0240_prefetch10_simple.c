@@ -32,10 +32,8 @@ int T0240_prefetch10_simple(const char *initiator, const char *url, int data_los
 	printf("===================\n");
 	if (show_info) {
 		printf("Test basic PREFETCH10 functionality.\n");
-		printf("1, Verify we can prefetch the first 1-256 blocks of the LUN.\n");
-		printf("2, Verify we can prefetch the last 1-256 blocks of the LUN.\n");
-		printf("3, Verify we can prefetch the last 256 blocks of the LUN by setting LEN==0.\n");
-		printf("\n");
+		printf("1, Verify we can prefetch the first 0-256 blocks of the LUN.\n");
+		printf("2, Verify we can prefetch the last 0-256 blocks of the LUN.\n");
 		return 0;
 	}
 
@@ -70,78 +68,25 @@ int T0240_prefetch10_simple(const char *initiator, const char *url, int data_los
 
 	ret = 0;
 
-	/* prefetch the first 1 - 256 blocks at the start of the LUN */
-	printf("Prefetching first 1-256 blocks ... ");
-	for (i = 1; i <= 256; i++) {
-		task = iscsi_prefetch10_sync(iscsi, lun, 0, i, 0, 0);
-		if (task == NULL) {
-		        printf("[FAILED]\n");
-			printf("Failed to send prefetch10 command: %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			goto test2;
-		}
-		if (task->status        == SCSI_STATUS_CHECK_CONDITION
-		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-			printf("[SKIPPED]\n");
-			printf("Opcode is not implemented on target\n");
-			scsi_free_scsi_task(task);
-			ret = -2;
+	/* prefetch the first 0 - 256 blocks at the start of the LUN */
+	printf("Prefetching first 0-256 blocks.\n");
+	for (i = 0; i <= 256; i++) {
+		ret = prefetch10(iscsi, lun, 0, i, 0, 0);
+		if (ret != 0) {
 			goto finished;
 		}
-		if (task->status != SCSI_STATUS_GOOD) {
-		        printf("[FAILED]\n");
-			printf("Prefetch10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test2;
+	}
+
+
+	/* Prefetch the last 0 - 256 blocks at the end of the LUN */
+	printf("Prefetching last 0-256 blocks.\n");
+	for (i = 0; i <= 256; i++) {
+		ret = prefetch10(iscsi, lun, num_blocks - i, i, 0, 0);
+		if (ret != 0) {
+			goto finished;
 		}
-		scsi_free_scsi_task(task);
 	}
-	printf("[OK]\n");
 
-test2:
-
-	/* Prefetch the last 0 - 255 blocks at the end of the LUN */
-	printf("Prefetching last 1-255 blocks ... ");
-	for (i = 1; i < 256; i++) {
-		task = iscsi_prefetch10_sync(iscsi, lun, num_blocks - i, i, 0, 0);
-		if (task == NULL) {
-		        printf("[FAILED]\n");
-			printf("Failed to send prefetch10 command: %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			goto test3;
-		}
-		if (task->status != SCSI_STATUS_GOOD) {
-		        printf("[FAILED]\n");
-			printf("Prefetch10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test3;
-		}
-		scsi_free_scsi_task(task);
-	}
-	printf("[OK]\n");
-
-test3:
-	task = iscsi_prefetch10_sync(iscsi, lun, num_blocks - 256, 0, 0, 0);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send prefetch10 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto test4;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("Prefetch10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto test4;
-	}
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
-
-test4:
 
 finished:
 	iscsi_logout_sync(iscsi);
