@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
@@ -28,6 +29,7 @@ int T0132_verify10_mismatch_no_cmp(const char *initiator, const char *url, int d
 	struct scsi_readcapacity10 *rc10;
 	int ret, i, lun;
 	uint32_t block_size;
+	unsigned char *buf = NULL;
 
 	printf("0132_verify10_mismatch_no_cmp:\n");
 	printf("==============================\n");
@@ -69,16 +71,20 @@ int T0132_verify10_mismatch_no_cmp(const char *initiator, const char *url, int d
 	scsi_free_scsi_task(task);
 
 
-	ret = 0;
+	buf = malloc(256 * block_size);
+	if (buf == NULL) {
+		printf("Failed to allocate buffer.\n");
+		ret = -1;
+		goto finished;
+	}
 
-	/* read and verify the first 1 - 256 blocks at the start of the LUN */
-	printf("Read 256 blocks and verify they are good ... ");
+	printf("Read first 256 blocks.\n");
 	task = iscsi_read10_sync(iscsi, lun, 0, 256 * block_size, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send READ10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test2;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
@@ -87,47 +93,32 @@ int T0132_verify10_mismatch_no_cmp(const char *initiator, const char *url, int d
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
+	memcpy(buf, task->datain.data, task->datain.size);
 	scsi_free_scsi_task(task);
-	printf("[OK]\n");
 
 
+	ret = 0;
 
-test2:
-	printf("Verify first 1-256 ... ");
+	/* read and verify the first 1 - 256 blocks at the start of the LUN */
+	printf("Verify first 1-256 blocks with a miscompare but BYTCHK==0.\n");
 	for (i = 1; i <= 256; i++) {
-		task = iscsi_verify10_sync(iscsi, lun, NULL, i * block_size, 0, 0, 1, 0, block_size);
-		if (task == NULL) {
-		        printf("[FAILED]\n");
-			printf("Failed to send VERIFY10 command: %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			goto test3;
-		}
-		if (task->status        == SCSI_STATUS_CHECK_CONDITION
-		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-			printf("[SKIPPED]\n");
-			printf("Opcode is not implemented on target\n");
-			scsi_free_scsi_task(task);
-			ret = -2;
+		int offset = random() % (i * block_size);
+
+		/* flip a random byte in the data */
+		buf[offset] ^= 'X';
+
+		ret = verify10(iscsi, lun, buf, i * block_size, 0, 0, 1, 0, block_size);
+		if (ret != 0) {
 			goto finished;
 		}
-		if (task->status != SCSI_STATUS_GOOD) {
-		        printf("[FAILED]\n");
-			printf("VERIFY10 returned sense but BYTCHK==1 means it should not check/compare the data. Sense:%s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test2;
-		}
 
-		scsi_free_scsi_task(task);
+		/* flip the byte back */
+		buf[offset] ^= 'X';
 	}
-	printf("[OK]\n");
-
-
-test3:
 
 
 finished:
+	free(buf);
 	iscsi_logout_sync(iscsi);
 	iscsi_destroy_context(iscsi);
 	return ret;
