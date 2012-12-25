@@ -72,135 +72,45 @@ int T0252_prefetch16_beyondeol(const char *initiator, const char *url, int data_
 	ret = 0;
 
 
-
 	/* prefetch 1-256 blocks, one block beyond the end-of-lun */
-	printf("Prefetch last 1-256 blocks one block beyond eol ... ");
+	printf("Prefetch last 1-256 blocks one block beyond eol.\n");
 	for (i = 1; i <= 256; i++) {
-		task = iscsi_prefetch16_sync(iscsi, lun, num_blocks + 2 - i, i, 0, 0);
-		if (task == NULL) {
-		        printf("[FAILED]\n");
-			printf("Failed to send prefetch16 command: %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			goto test2;
-		}
-		if (task->status    == SCSI_STATUS_CHECK_CONDITION
-		&& task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-		&& task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-			printf("[SKIPPED]\n");
-			printf("Opcode is not implemented on target\n");
-			scsi_free_scsi_task(task);
-			ret = -2;
+		ret = prefetch16_lbaoutofrange(iscsi, lun, num_blocks + 2 - i, i, 0, 0);
+		if (ret != 0) {
 			goto finished;
 		}
-		if (task->status        != SCSI_STATUS_CHECK_CONDITION
-			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-			printf("[FAILED]\n");
-			printf("PREFETCH16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test2;
-		}
-		scsi_free_scsi_task(task);
 	}
-	printf("[OK]\n");
 
-test2:
+
 	/* Prefetch 1 - 256 blocks at LBA 2^63 */
-	printf("Prefetch 1-256 blocks at LBA 2^63 ... ");
+	printf("Prefetch 1-256 blocks at LBA 2^63.\n");
 	for (i = 1; i <= 256; i++) {
-		task = iscsi_prefetch16_sync(iscsi, lun, 0x8000000000000000, i, 0, 0);
-		if (task == NULL) {
-		        printf("[FAILED]\n");
-			printf("Failed to send PREFETCH16 command: %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			goto test3;
+		ret = prefetch16_lbaoutofrange(iscsi, lun, 0x8000000000000000, i, 0, 0);
+		if (ret != 0) {
+			goto finished;
 		}
-		if (task->status == SCSI_STATUS_GOOD) {
-		        printf("[FAILED]\n");
-			printf("PREFETCH16 command should fail for LBA 2^31\n");
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test3;
-		}
-		if (task->status        != SCSI_STATUS_CHECK_CONDITION
-			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-			printf("[FAILED]\n");
-			printf("PREFETCH16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test3;
-		}
-		scsi_free_scsi_task(task);
 	}
-	printf("[OK]\n");
 
 
-test3:
 	/* prefetch 1 - 256 blocks at LBA -1 */
+	printf("Prefetch 1-256 blocks at LBA -1.\n");
 	for (i = 1; i <= 256; i++) {
-		task = iscsi_prefetch16_sync(iscsi, lun, -1, i, 0, 0);
-		if (task == NULL) {
-		        printf("[FAILED]\n");
-			printf("Failed to send PREFETCH16 command: %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			goto test4;
+		ret = prefetch16_lbaoutofrange(iscsi, lun, -1, i, 0, 0);
+		if (ret != 0) {
+			goto finished;
 		}
-		if (task->status == SCSI_STATUS_GOOD) {
-		        printf("[FAILED]\n");
-			printf("PREFETCH16 command should fail for LBA -1\n");
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test4;
-		}
-		if (task->status        != SCSI_STATUS_CHECK_CONDITION
-			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-			printf("[FAILED]\n");
-			printf("PREFETCH16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test4;
-		}
-		scsi_free_scsi_task(task);
 	}
-	printf("[OK]\n");
 
 
- test4:
 	/* prefetch 2-256 blocks, all but one block beyond the eol */
-	printf("Prefetch 1-255 blocks beyond eol starting at last block ... ");
+	printf("Prefetch 1-255 blocks beyond eol starting at last block.\n");
 	for (i=2; i<=256; i++) {
-		task = iscsi_prefetch16_sync(iscsi, lun, num_blocks, i, 0, 0);
-		if (task == NULL) {
-			printf("[FAILED]\n");
-			printf("Failed to send PREFETCH16 command: %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			goto test5;
+		ret = prefetch16_lbaoutofrange(iscsi, lun, num_blocks, i, 0, 0);
+		if (ret != 0) {
+			goto finished;
 		}
-		if (task->status == SCSI_STATUS_GOOD) {
-			printf("[FAILED]\n");
-			printf("PREFETCH16 beyond end-of-lun did not return sense.\n");
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test5;
-		}
-		if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		    || task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-		        printf("[FAILED]\n");
-			printf("PREFETCH16 failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test5;
-		}
-		scsi_free_scsi_task(task);
 	}
-	printf("[OK]\n");
 
-
-test5:
 
 finished:
 	iscsi_logout_sync(iscsi);

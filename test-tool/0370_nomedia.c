@@ -353,27 +353,8 @@ int T0370_nomedia(const char *initiator, const char *url, int data_loss, int sho
 	prefetch10_nomedium(iscsi, lun, 0, 1, 1, 0);
 
 
-	printf("Test PREFETCH16 ... ");
-	task = iscsi_prefetch16_sync(iscsi, lun, 0, 1, 1, 0);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send PREFETCH16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		printf("[FAILED]\n");
-		printf("PREFETCH16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}	
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
+	printf("Test PREFETCH16.\n");
+	prefetch16_nomedium(iscsi, lun, 0, 1, 1, 0);
 
 
 	printf("Test VERIFY10 ... ");

@@ -34,6 +34,7 @@ int T0240_prefetch10_simple(const char *initiator, const char *url, int data_los
 		printf("Test basic PREFETCH10 functionality.\n");
 		printf("1, Verify we can prefetch the first 0-256 blocks of the LUN.\n");
 		printf("2, Verify we can prefetch the last 0-256 blocks of the LUN.\n");
+		printf("\n");
 		return 0;
 	}
 
