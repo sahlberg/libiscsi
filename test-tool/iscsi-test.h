@@ -231,13 +231,6 @@ static inline int pr_type_is_all_registrants(
 	}
 }
 
-struct resvn_type_info {
-	const char *pr_type_str;
-	enum scsi_persistent_out_type pr_type;
-};
-
-extern struct resvn_type_info reservation_types[];
-
 int register_and_ignore(struct iscsi_context *iscsi, int lun,
     unsigned long long key);
 int register_key(struct iscsi_context *iscsi, int lun,
@@ -247,11 +240,11 @@ int verify_key_presence(struct iscsi_context *iscsi, int lun,
 int reregister_key_fails(struct iscsi_context *iscsi, int lun,
     unsigned long long sark);
 int reserve(struct iscsi_context *iscsi, int lun,
-    unsigned long long key, struct resvn_type_info *rtip);
+    unsigned long long key, enum scsi_persistent_out_type pr_type);
 int release(struct iscsi_context *iscsi, int lun,
-    unsigned long long key, struct resvn_type_info *rtip);
+    unsigned long long key, enum scsi_persistent_out_type pr_type);
 int verify_reserved_as(struct iscsi_context *iscsi, int lun,
-    unsigned long long key, struct resvn_type_info *rtip);
+    unsigned long long key, enum scsi_persistent_out_type pr_type);
 int testunitready(struct iscsi_context *iscsi, int lun);
 int testunitready_nomedium(struct iscsi_context *iscsi, int lun);
 int testunitready_conflict(struct iscsi_context *iscsi, int lun);
@@ -269,6 +262,5 @@ int verify12(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t
 int verify12_nomedium(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize);
 int verify12_miscompare(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize);
 int verify12_lbaoutofrange(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize);
-
 
 #endif	/* _ISCSI_TEST_H_ */

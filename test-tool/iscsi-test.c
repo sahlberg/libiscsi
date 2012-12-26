@@ -263,22 +263,6 @@ struct scsi_test tests[] = {
 { NULL, NULL }
 };
 
-struct resvn_type_info reservation_types[] = {
-	{"Write Exclusive",
-	 SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE},
-	{"Exclusive Access",
-	 SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS},
-	{"Write Exclusive, Registrants Only",
-	 SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY},
-	{"Exclusive Access, Registrants Only",
-	 SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY},
-	{"Write Exclusive, All Registrants",
-	 SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS},
-	{"Exclusive Access, All Registrants",
-	 SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS},
-	{NULL, 0}
-};
-
 	
 void print_usage(void)
 {
@@ -590,7 +574,7 @@ int reregister_key_fails(struct iscsi_context *iscsi, int lun,
 
 
 int reserve(struct iscsi_context *iscsi, int lun,
-    unsigned long long key, struct resvn_type_info *rtip)
+    unsigned long long key, enum scsi_persistent_out_type pr_type)
 {
 	struct scsi_persistent_reserve_out_basic poc;
 	struct scsi_task *task;
@@ -598,14 +582,14 @@ int reserve(struct iscsi_context *iscsi, int lun,
 
 	/* reserve the target using specified reservation type */
 	printf("Send PROUT/RESERVE to reserve, type=%d (%s) ... ",
-	    rtip->pr_type, rtip->pr_type_str);
+	    pr_type, scsi_pr_type_str(pr_type));
 
 	memset(&poc, 0, sizeof (poc));
 	poc.reservation_key = key;
 	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
 	    SCSI_PERSISTENT_RESERVE_RESERVE,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
-	    rtip->pr_type, &poc);
+	    pr_type, &poc);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PROUT command: %s\n",
@@ -628,7 +612,7 @@ int reserve(struct iscsi_context *iscsi, int lun,
 
 
 int release(struct iscsi_context *iscsi, int lun,
-    unsigned long long key, struct resvn_type_info *rtip)
+    unsigned long long key, enum scsi_persistent_out_type pr_type)
 {
 	struct scsi_persistent_reserve_out_basic poc;
 	struct scsi_task *task;
@@ -636,14 +620,14 @@ int release(struct iscsi_context *iscsi, int lun,
 
 	/* release the target using specified reservation type */
 	printf("Send PROUT/RELEASE to release reservation, type=%d ... ",
-	    rtip->pr_type);
+	    pr_type);
 
 	memset(&poc, 0, sizeof (poc));
 	poc.reservation_key = key;
 	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
 	    SCSI_PERSISTENT_RESERVE_RELEASE,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
-	    rtip->pr_type, &poc);
+	    pr_type, &poc);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PROUT command: %s\n",
@@ -665,7 +649,7 @@ int release(struct iscsi_context *iscsi, int lun,
 }
 
 int verify_reserved_as(struct iscsi_context *iscsi, int lun,
-    unsigned long long key, struct resvn_type_info *rtip)
+    unsigned long long key, enum scsi_persistent_out_type pr_type)
 {
 	struct scsi_task *task;
 	const int buf_sz = 16384;
@@ -673,7 +657,7 @@ int verify_reserved_as(struct iscsi_context *iscsi, int lun,
 
 
 	printf("Send PRIN/READ_RESERVATION to verify type=%d ... ",
-	    rtip->pr_type);
+	    pr_type);
 	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
 	    SCSI_PERSISTENT_RESERVE_READ_RESERVATION, buf_sz);
 	if (task == NULL) {
@@ -699,9 +683,6 @@ int verify_reserved_as(struct iscsi_context *iscsi, int lun,
 
 	scsi_free_scsi_task(task);
 
-	/*
-	 * XXX check reservation (in rr) ...
-	 */
 
 	if (!rr->reserved) {
 		printf("Failed to find Target reserved as expected.\n");
@@ -712,9 +693,9 @@ int verify_reserved_as(struct iscsi_context *iscsi, int lun,
 		    key, rr->reservation_key);
 		return -1;
 	}
-	if (rr->pr_type != rtip->pr_type) {
+	if (rr->pr_type != pr_type) {
 		printf("Failed to find reservation type %d: found %d.\n",
-		    rtip->pr_type, rr->pr_type);
+		    pr_type, rr->pr_type);
 		return -1;
 	}
 

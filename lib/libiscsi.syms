@@ -181,6 +181,7 @@ scsi_inquiry_pagecode_to_str
 scsi_protocol_identifier_to_str
 scsi_reportluns_cdb
 scsi_sense_ascq_str
+scsi_pr_type_str
 scsi_sense_key_str
 scsi_set_task_private_ptr
 scsi_task_add_data_in_buffer
