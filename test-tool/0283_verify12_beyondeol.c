@@ -16,6 +16,7 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
@@ -28,7 +29,7 @@ int T0283_verify12_beyondeol(const char *initiator, const char *url, int data_lo
 	int ret, i, lun;
 	uint32_t block_size;
 	uint64_t num_blocks;
-	unsigned char buf[4096 * 256];
+	unsigned char *buf = NULL;
 
 	printf("0283_verify12_beyond_eol:\n");
 	printf("========================\n");
@@ -81,48 +82,20 @@ int T0283_verify12_beyondeol(const char *initiator, const char *url, int data_lo
 		goto finished;
 	}
 
+	buf = malloc(256 * block_size);
+
 	/* verify 2 - 256 blocks beyond the end of the device */
-	printf("Verifying 2-256 blocks beyond end-of-device ... ");
+	printf("Verifying 2-256 blocks beyond end-of-device.\n");
 	for (i = 2; i <= 256; i++) {
-		task = iscsi_verify12_sync(iscsi, lun, buf, i * block_size, num_blocks, 0, 1, 1, block_size);
-		if (task == NULL) {
-		        printf("[FAILED]\n");
-			printf("Failed to send verify12 command: %s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			goto test2;
-		}
-		if (task->status        == SCSI_STATUS_CHECK_CONDITION
-		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-			printf("[SKIPPED]\n");
-			printf("Opcode is not implemented on target\n");
-			scsi_free_scsi_task(task);
-			ret = -2;
+		ret = verify12_lbaoutofrange(iscsi, lun, buf, i * block_size, num_blocks, 0, 1, 1, block_size);
+		if (ret != 0) {
 			goto finished;
 		}
-		if (task->status == SCSI_STATUS_GOOD) {
-		        printf("[FAILED]\n");
-			printf("VERIFY12 command should fail when reading beyond end of device\n");
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test2;
-		}
-		if (task->status        != SCSI_STATUS_CHECK_CONDITION
-			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-			|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-			printf("[FAILED]\n");
-			printf("VERIFY12 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
-			ret = -1;
-			scsi_free_scsi_task(task);
-			goto test2;
-		}
-		scsi_free_scsi_task(task);
 	}
-	printf("[OK]\n");
 
-test2:
 
 finished:
+	free(buf);
 	iscsi_logout_sync(iscsi);
 	iscsi_destroy_context(iscsi);
 	return ret;
