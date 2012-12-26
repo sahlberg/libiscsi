@@ -376,28 +376,12 @@ int T0370_nomedia(const char *initiator, const char *url, int data_loss, int sho
 		goto finished;
 	}
 
-
-	printf("Test VERIFY16 ... ");
-	task = iscsi_verify16_sync(iscsi, lun, buf, block_size, 0, 0, 0, 1, block_size);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
+	printf("Test VERIFY16.\n");
+	ret = verify16_nomedium(iscsi, lun, buf, block_size, 0, 0, 0, 1, block_size);
+	if (ret != 0) {
 		goto finished;
 	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		printf("[FAILED]\n");
-		printf("VERIFY16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}	
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
+
 
 
 	if (!data_loss) {
