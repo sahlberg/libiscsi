@@ -24,7 +24,6 @@ int T0264_get_lba_status_beyondeol(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
 
 	printf("0264_get_lba_status_beyondeol:\n");
@@ -42,34 +41,11 @@ int T0264_get_lba_status_beyondeol(const char *initiator, const char *url)
 		return -1;
 	}
 
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-
-	if (rc16->lbpme == 0){
+	if (lbpme == 0){
 		printf("Logical unit is fully provisioned. Skipping test\n");
 		ret = -2;
-		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	scsi_free_scsi_task(task);
 
 	ret = 0;
 

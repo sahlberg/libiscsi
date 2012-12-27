@@ -30,6 +30,9 @@ extern const char *initiatorname2;
 
 extern uint32_t block_size;
 extern uint64_t num_blocks;
+extern int lbpme;
+extern int lbppb;
+extern int lbpme;
 extern int data_loss;
 extern int show_info;
 

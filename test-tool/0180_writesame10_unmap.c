@@ -24,12 +24,9 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	int full_size;
 	struct scsi_inquiry_logical_block_provisioning *inq_lbp;
 	int ret, i, lun;
-	int lbppb;
-	int lbpme;
 	int lbpws10 = 0;
 	int anc_sup = 0;
 
@@ -54,34 +51,8 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 
 	ret = 0;
 
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send readcapacity16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall readcapacity16 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	lbppb = 1 << rc16->lbppbe;
-	lbpme = rc16->lbpme;
-
-	scsi_free_scsi_task(task);
-
 	if (lbpme == 0){
 		printf("Logical unit is fully provisioned. All commands should fail with check condition.\n");
-		goto finished;
 	}
 
 	/* Check that id we have logical block provisioning we also have the VPD page for it */

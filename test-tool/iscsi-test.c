@@ -44,6 +44,9 @@ const char *initiatorname2 = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-tes
 
 uint32_t block_size;
 uint64_t num_blocks;
+int lbpme;
+int lbppb;
+int lbpme;
 
 int data_loss;
 int show_info;
@@ -1484,7 +1487,10 @@ int main(int argc, const char *argv[])
 		return -1;
 	}
 
-	/* find the size of the LUN */
+	/* find the size of the LUN
+	   All devices support readcapacity10 but only some support
+	   readcapacity16
+	*/
 	task = iscsi_readcapacity10_sync(iscsi, lun, 0, 0);
 	if (task == NULL) {
 		printf("Failed to send READCAPACITY10 command: %s\n", iscsi_get_error(iscsi));
@@ -1507,19 +1513,14 @@ int main(int argc, const char *argv[])
 	block_size = rc10->block_size;
 	num_blocks = rc10->lba;
 	scsi_free_scsi_task(task);
-	if (num_blocks == 0xffffffff) {
-		task = iscsi_readcapacity16_sync(iscsi, lun);
-		if (task == NULL) {
-			printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-			iscsi_destroy_context(iscsi);
-			return -1;
-		}
-		if (task->status != SCSI_STATUS_GOOD) {
-			printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-			scsi_free_scsi_task(task);
-			iscsi_destroy_context(iscsi);
-			return -1;
-		}
+
+	task = iscsi_readcapacity16_sync(iscsi, lun);
+	if (task == NULL) {
+		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
+		iscsi_destroy_context(iscsi);
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
 		rc16 = scsi_datain_unmarshall(task);
 		if (rc16 == NULL) {
 			printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
@@ -1529,6 +1530,10 @@ int main(int argc, const char *argv[])
 		}
 		block_size = rc16->block_length;
 		num_blocks = rc16->returned_lba;
+		lbpme      = rc16->lbpme;
+		lbppb      = 1 << rc16->lbppbe;
+		lbpme      = rc16->lbpme;
+
 		scsi_free_scsi_task(task);
 	}
 	iscsi_destroy_context(iscsi);

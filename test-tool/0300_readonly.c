@@ -24,13 +24,11 @@ int T0300_readonly(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	struct scsi_inquiry_standard *inq;
 	struct scsi_mode_sense *ms;
 	int ret, lun;
 	unsigned char data[4096];
 	int full_size;
-	int lbpme;
 	struct unmap_list list[1];
 
 	ret = -1;
@@ -61,27 +59,6 @@ int T0300_readonly(const char *initiator, const char *url)
 		printf("Failed to login to target\n");
 		return -1;
 	}
-
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	lbpme = rc16->lbpme;
-
-	scsi_free_scsi_task(task);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
