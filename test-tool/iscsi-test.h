@@ -198,6 +198,8 @@ int T1110_persistent_reserve_in_serviceaction_range(const char *initiator, const
 int T1120_persistent_register_simple(const char *initiator, const char *url, int data_loss, int show_info);
 int T1130_persistent_reserve_simple(const char *initiator, const char *url,
     int data_loss, int show_info);
+int T1140_persistent_reserve_access_check_ea(const char *initiator,
+    const char *url, int data_loss, int show_info);
 
 
 /*
@@ -245,6 +247,10 @@ int release(struct iscsi_context *iscsi, int lun,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
 int verify_reserved_as(struct iscsi_context *iscsi, int lun,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
+int verify_read_works(struct iscsi_context *iscsi, int lun, unsigned char *buf);
+int verify_write_works(struct iscsi_context *iscsi, int lun, unsigned char *buf);
+int verify_read_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf);
+int verify_write_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf);
 int testunitready(struct iscsi_context *iscsi, int lun);
 int testunitready_nomedium(struct iscsi_context *iscsi, int lun);
 int testunitready_conflict(struct iscsi_context *iscsi, int lun);

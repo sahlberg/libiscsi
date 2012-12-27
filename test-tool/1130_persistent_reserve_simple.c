@@ -24,6 +24,9 @@
 #include "iscsi-test.h"
 
 
+/*
+ * list of persistent reservation types to test, in order
+ */
 static enum scsi_persistent_out_type pr_types_to_test[] = {
 	SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
 	SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS,
@@ -33,6 +36,7 @@ static enum scsi_persistent_out_type pr_types_to_test[] = {
 	SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS,
 	0
 };
+
 
 int T1130_persistent_reserve_simple(const char *initiator,
     const char *url, int data_loss, int show_info)
@@ -54,7 +58,7 @@ int T1130_persistent_reserve_simple(const char *initiator,
 		printf(" and that we can release each type, as well\n");
 		printf("%d, We can register a key\n", idx++);
 		for (i = 0; pr_types_to_test[i] != 0; i++) {
-			printf("%d, Can register %s\n", idx++,
+			printf("%d, Can reserve %s\n", idx++,
 			    scsi_pr_type_str(pr_types_to_test[i]));
 			printf("%d, Can read reservation\n", idx++);
 			printf("%d, Can release reservation\n", idx++);
