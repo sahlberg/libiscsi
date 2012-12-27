@@ -20,13 +20,11 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0183_writesame10_wrprotect(const char *initiator, const char *url, int data_loss _U_, int show_info)
+int T0183_writesame10_wrprotect(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
-	uint32_t block_size;
 	unsigned char buf[4096];
 
 	printf("0183_writesame10_wrptotect:\n");
@@ -44,28 +42,6 @@ int T0183_writesame10_wrprotect(const char *initiator, const char *url, int data
 		return -1;
 	}
 
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	block_size = rc16->block_length;
-	scsi_free_scsi_task(task);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -86,7 +62,7 @@ int T0183_writesame10_wrprotect(const char *initiator, const char *url, int data
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test2;
+			goto finished;
 		}
 		if (task->status        == SCSI_STATUS_CHECK_CONDITION
 		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
@@ -102,7 +78,7 @@ int T0183_writesame10_wrprotect(const char *initiator, const char *url, int data
 			printf("WRITESAME10 command should fail when WRPROTECT is set\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 		if (task->status        != SCSI_STATUS_CHECK_CONDITION
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
@@ -111,15 +87,12 @@ int T0183_writesame10_wrprotect(const char *initiator, const char *url, int data
 			printf("WRITESAME10 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB.\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 
-
-
-test2:
 
 finished:
 	iscsi_logout_sync(iscsi);

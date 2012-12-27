@@ -37,7 +37,7 @@ static void mgmt_cb(struct iscsi_context *iscsi _U_, int status _U_,
 }
 
 
-int T0385_preventallow_lun_reset(const char *initiator, const char *url, int data_loss, int show_info)
+int T0385_preventallow_lun_reset(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;

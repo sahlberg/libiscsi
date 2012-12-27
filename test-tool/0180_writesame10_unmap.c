@@ -20,7 +20,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0180_writesame10_unmap(const char *initiator, const char *url, int data_loss, int show_info)
+int T0180_writesame10_unmap(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -28,7 +28,6 @@ int T0180_writesame10_unmap(const char *initiator, const char *url, int data_los
 	int full_size;
 	struct scsi_inquiry_logical_block_provisioning *inq_lbp;
 	int ret, i, lun;
-	uint32_t num_blocks;
 	int lbppb;
 	int lbpme;
 	int lbpws10 = 0;
@@ -53,6 +52,8 @@ int T0180_writesame10_unmap(const char *initiator, const char *url, int data_los
 		return -1;
 	}
 
+	ret = 0;
+
 	/* find the size of the LUN */
 	task = iscsi_readcapacity16_sync(iscsi, lun);
 	if (task == NULL) {
@@ -73,7 +74,6 @@ int T0180_writesame10_unmap(const char *initiator, const char *url, int data_los
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	num_blocks = rc16->returned_lba;
 	lbppb = 1 << rc16->lbppbe;
 	lbpme = rc16->lbpme;
 
@@ -81,7 +81,7 @@ int T0180_writesame10_unmap(const char *initiator, const char *url, int data_los
 
 	if (lbpme == 0){
 		printf("Logical unit is fully provisioned. All commands should fail with check condition.\n");
-		goto test2;
+		goto finished;
 	}
 
 	/* Check that id we have logical block provisioning we also have the VPD page for it */
@@ -93,7 +93,7 @@ int T0180_writesame10_unmap(const char *initiator, const char *url, int data_los
 		printf("[FAILED]\n");
 		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test2;
+		goto finished;
 	}
 	full_size = scsi_datain_getfullsize(task);
 	if (full_size > task->datain.size) {
@@ -104,7 +104,7 @@ int T0180_writesame10_unmap(const char *initiator, const char *url, int data_los
 			printf("[FAILED]\n");
 			printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test2;
+			goto finished;
 		}
 	}
 
@@ -113,7 +113,7 @@ int T0180_writesame10_unmap(const char *initiator, const char *url, int data_los
 		printf("failed to unmarshall inquiry datain blob\n");
 		scsi_free_scsi_task(task);
 		ret = -1;
-		goto test2;
+		goto finished;
 	}
 
 	lbpws10 = inq_lbp->lbpws10;
@@ -126,8 +126,6 @@ int T0180_writesame10_unmap(const char *initiator, const char *url, int data_los
 		printf("Device does not support WRITE_SAME10 for UNMAP. All WRITE_SAME10 commands to unmap should fail.\n");
 	}
 
-test2:
-	
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
 		ret = -2;
@@ -154,7 +152,7 @@ test2:
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test3;
+			goto finished;
 		}
 		if (task->status        == SCSI_STATUS_CHECK_CONDITION
 		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
@@ -171,7 +169,7 @@ test2:
 				printf("WRITESAME10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 				scsi_free_scsi_task(task);
 				ret = -1;
-				goto test3;
+				goto finished;
 			}
 		} else {
 			if (task->status        != SCSI_STATUS_CHECK_CONDITION
@@ -181,7 +179,7 @@ test2:
 				printf("WRITESAME10 command should fail since LBPWS10 is 0 but failed with wrong sense code %s\n", iscsi_get_error(iscsi));
 				scsi_free_scsi_task(task);
 				ret = -1;
-				goto test3;
+				goto finished;
 			}
 		}
 
@@ -189,7 +187,7 @@ test2:
 	}
 	printf("[OK]\n");
 
-test3:
+
 	/* unmap the last 1 - 256 blocks at the end of the LUN */
 	printf("Unmapping last 1-256 blocks ... ");
 	if (lbpws10 == 0) {
@@ -209,7 +207,7 @@ test3:
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test4;
+			goto finished;
 		}
 		if (lbpws10) {
 			if (task->status != SCSI_STATUS_GOOD) {
@@ -217,7 +215,7 @@ test3:
 				printf("WRITESAME10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 				scsi_free_scsi_task(task);
 				ret = -1;
-				goto test4;
+				goto finished;
 			}
 		} else {
 			if (task->status        != SCSI_STATUS_CHECK_CONDITION
@@ -227,14 +225,12 @@ test3:
 				printf("WRITESAME10 command should fail since LBPWS10 is 0 but failed with wrong sense code %s\n", iscsi_get_error(iscsi));
 				scsi_free_scsi_task(task);
 				ret = -1;
-				goto test4;
+				goto finished;
 			}
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
-
-test4:
 
 
 	/* Test that UNMAP=0 and ANCHOR==1 fails with check condition */
@@ -246,7 +242,7 @@ test4:
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test5;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
@@ -258,12 +254,11 @@ test4:
 			scsi_sense_ascq_str(task->sense.ascq), task->sense.ascq);
 		scsi_free_scsi_task(task);
 		ret = -1;
-		goto test5;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-test5:
 
 	/* Test UNMAP=1 and ANCHOR==1 */
 	printf("Try UNMAP==1 and ANCHOR==1 ... ");
@@ -277,7 +272,7 @@ test5:
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test5;
+		goto finished;
 	}
 	if (anc_sup == 0) {
 		if (task->status        != SCSI_STATUS_CHECK_CONDITION
@@ -290,7 +285,7 @@ test5:
 				scsi_sense_ascq_str(task->sense.ascq), task->sense.ascq);
 			scsi_free_scsi_task(task);
 			ret = -1;
-			goto test6;
+			goto finished;
 		}
 	} else {
 		if (task->status != SCSI_STATUS_GOOD) {
@@ -298,14 +293,11 @@ test5:
 			printf("WRITESAME10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			scsi_free_scsi_task(task);
 			ret = -1;
-			goto test6;
+			goto finished;
 		}
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
-
-test6:
-
 
 
 finished:

@@ -34,16 +34,13 @@ static enum scsi_persistent_out_type pr_types_to_test[] = {
 	0
 };
 
-int T1130_persistent_reserve_simple(const char *initiator,
-    const char *url, int data_loss, int show_info)
+int T1130_persistent_reserve_simple(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	int ret;
 	int lun;
 	const unsigned long long key = rand_key();
 	int i;
-
-
 
 	printf("1130_persistent_reserve_simple:\n");
 	printf("=========================================\n");

@@ -20,18 +20,18 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0160_readcapacity16_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
+int T0160_readcapacity16_simple(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
+	struct scsi_task *task;
 	int ret, lun;
 
 	printf("0160_readcapacity16_simple:\n");
 	printf("===========================\n");
 	if (show_info) {
 		printf("Test that basic READCAPACITY16 works\n");
-		printf("1, Readcapacity16 should work.\n");
+		printf("1, READCAPACITY16 should work.\n");
 		printf("\n");
 		return 0;
 	}
@@ -44,17 +44,17 @@ int T0160_readcapacity16_simple(const char *initiator, const char *url, int data
 		return -1;
 	}
 
-	printf("Test that Readcapacity10 is supported ... ");
+	printf("Test that READCAPACITY16 is supported ... ");
 	task = iscsi_readcapacity16_sync(iscsi, lun);
 	if (task == NULL) {
  	        printf("[FAILED]\n");
-		printf("Failed to send readcapacity16 command: %s\n", iscsi_get_error(iscsi));
+		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
  	        printf("[FAILED]\n");
-		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
@@ -62,7 +62,7 @@ int T0160_readcapacity16_simple(const char *initiator, const char *url, int data
 	rc16 = scsi_datain_unmarshall(task);
 	if (rc16 == NULL) {
  	        printf("[FAILED]\n");
-		printf("failed to unmarshall readcapacity16 data. %s\n", iscsi_get_error(iscsi));
+		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;

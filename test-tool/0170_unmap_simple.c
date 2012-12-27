@@ -20,13 +20,12 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0170_unmap_simple(const char *initiator, const char *url, int data_loss, int show_info)
+int T0170_unmap_simple(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
-	uint32_t num_blocks;
 
 	printf("0170_unmap_simple:\n");
 	printf("==================\n");
@@ -71,8 +70,6 @@ int T0170_unmap_simple(const char *initiator, const char *url, int data_loss, in
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
-
-	num_blocks = rc16->returned_lba;
 
 	scsi_free_scsi_task(task);
 

@@ -20,7 +20,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0181_writesame10_unmap_unaligned(const char *initiator, const char *url, int data_loss, int show_info)
+int T0181_writesame10_unmap_unaligned(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -99,7 +99,7 @@ int T0181_writesame10_unmap_unaligned(const char *initiator, const char *url, in
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test2;
+			goto finished;
 		}
 		if (task->status        == SCSI_STATUS_CHECK_CONDITION
 		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
@@ -115,13 +115,12 @@ int T0181_writesame10_unmap_unaligned(const char *initiator, const char *url, in
 			printf("WRITESAME10 command to unmap a fractional physical block should fail\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 
-test2:
 
 finished:
 	iscsi_logout_sync(iscsi);

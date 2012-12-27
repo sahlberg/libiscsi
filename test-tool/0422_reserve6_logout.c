@@ -22,8 +22,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0422_reserve6_logout(const char *initiator, const char *url, int data_loss _U_,
-			  int show_info)
+int T0422_reserve6_logout(const char *initiator, const char *url)
 {
 	struct iscsi_context *iscsi = NULL, *iscsi2 = NULL;
 	struct scsi_task *task;

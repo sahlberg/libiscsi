@@ -23,8 +23,6 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-uint32_t block_size;
-
 static void test_cb(struct iscsi_context *iscsi _U_, int status,
 			void *command_data _U_, void *private_data)
 {
@@ -39,12 +37,11 @@ static void test_cb(struct iscsi_context *iscsi _U_, int status,
 	}
 }
 
-int T1030_unsolicited_data_overflow(const char *initiator, const char *url, int data_loss, int show_info)
+int T1030_unsolicited_data_overflow(const char *initiator, const char *url)
 {
 	struct iscsi_context *iscsi = NULL;
 	struct iscsi_context *iscsi2 = NULL;
 	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
 	unsigned char *buf = NULL;
 	struct iscsi_async_state test_state;
@@ -64,30 +61,6 @@ int T1030_unsolicited_data_overflow(const char *initiator, const char *url, int 
 		printf("Failed to login to target\n");
 		return -1;
 	}
-
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	block_size = rc16->block_length;
-	scsi_free_scsi_task(task);
-
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -118,8 +91,8 @@ int T1030_unsolicited_data_overflow(const char *initiator, const char *url, int 
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITE16 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test2;
+		ret = -1;
+		goto finished;
 	}
 
 	test_state.task     = task;
@@ -129,7 +102,6 @@ int T1030_unsolicited_data_overflow(const char *initiator, const char *url, int 
 	printf("[OK]\n");
 
 
-test2:
 	printf("Verify the target is still alive ... ");
 	iscsi2 = iscsi_context_login(initiator, url, &lun);
 	if (iscsi2 == NULL) {

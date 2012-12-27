@@ -21,7 +21,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T1110_persistent_reserve_in_serviceaction_range(const char *initiator, const char *url, int data_loss _U_, int show_info)
+int T1110_persistent_reserve_in_serviceaction_range(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;

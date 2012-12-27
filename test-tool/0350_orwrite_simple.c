@@ -21,14 +21,11 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0350_orwrite_simple(const char *initiator, const char *url, int data_loss, int show_info)
+int T0350_orwrite_simple(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	int ret, i, j, lun;
-	uint32_t block_size;
-	uint64_t num_blocks;
 	unsigned char r1data[4096 * 256];
 	unsigned char r2data[4096 * 256];
 	unsigned char ordata[4096 * 256];
@@ -49,30 +46,6 @@ int T0350_orwrite_simple(const char *initiator, const char *url, int data_loss, 
 		return -1;
 	}
 
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
-	scsi_free_scsi_task(task);
-
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -91,23 +64,23 @@ int T0350_orwrite_simple(const char *initiator, const char *url, int data_loss, 
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send READ16 command: %s\n", iscsi_get_error(iscsi));
-			ret++;
-			goto test2;
+			ret = -1;
+			goto finished;
 		}
 		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("READ16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 
 		if (task->datain.data == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to access DATA-IN buffer %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 		memcpy(r1data, task->datain.data, i * block_size);
 		memset(ordata, 0x5a, i * block_size);
@@ -120,15 +93,15 @@ int T0350_orwrite_simple(const char *initiator, const char *url, int data_loss, 
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send ORWRITE command: %s\n", iscsi_get_error(iscsi));
-			ret++;
-			goto test2;
+			ret = -1;
+			goto finished;
 		}
 		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("ORWRITE command: failed with sense. %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 		scsi_free_scsi_task(task);
 
@@ -136,31 +109,31 @@ int T0350_orwrite_simple(const char *initiator, const char *url, int data_loss, 
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send READ16 command: %s\n", iscsi_get_error(iscsi));
-			ret++;
-			goto test2;
+			ret = -1;
+			goto finished;
 		}
 		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("READ16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 
 		if (task->datain.data == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to access DATA-IN buffer %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 
 		if (memcmp(r2data, task->datain.data, i * block_size)) {
 		        printf("[FAILED]\n");
 			printf("Blocks were not updated as expected.\n");
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 
 		scsi_free_scsi_task(task);
@@ -168,7 +141,6 @@ int T0350_orwrite_simple(const char *initiator, const char *url, int data_loss, 
 	printf("[OK]\n");
 
 
-test2:
 	/* write the last 1 - 255 blocks at the end of the LUN */
 	printf("Orwrite last 1-255 blocks ... ");
 	for (i = 1; i < 256; i++) {
@@ -176,23 +148,23 @@ test2:
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send READ16 command: %s\n", iscsi_get_error(iscsi));
-			ret++;
-			goto test3;
+			ret = -1;
+			goto finished;
 		}
 		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("READ16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test3;
+			goto finished;
 		}
 
 		if (task->datain.data == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to access DATA-IN buffer %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test3;
+			goto finished;
 		}
 		memcpy(r1data, task->datain.data, i * block_size);
 		memcpy(r1data, task->datain.data, i * block_size);
@@ -206,53 +178,52 @@ test2:
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send ORWRITE command: %s\n", iscsi_get_error(iscsi));
-			ret++;
-			goto test3;
+			ret = -1;
+			goto finished;
 		}
 		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("ORWRITE command: failed with sense. %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test3;
+			goto finished;
 		}
 		scsi_free_scsi_task(task);
 		task = iscsi_read16_sync(iscsi, lun, num_blocks + 1 - i, i * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send READ16 command: %s\n", iscsi_get_error(iscsi));
-			ret++;
-			goto test3;
+			ret = -1;
+			goto finished;
 		}
 		if (task->status != SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("READ16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test3;
+			goto finished;
 		}
 
 		if (task->datain.data == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to access DATA-IN buffer %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test3;
+			goto finished;
 		}
 
 		if (memcmp(r2data, task->datain.data, i * block_size)) {
 		        printf("[FAILED]\n");
 			printf("Blocks were not updated as expected.\n");
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test3;
+			goto finished;
 		}
 
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 
-test3:
 
 finished:
 	iscsi_logout_sync(iscsi);

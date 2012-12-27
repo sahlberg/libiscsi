@@ -20,13 +20,12 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0264_get_lba_status_beyondeol(const char *initiator, const char *url, int data_loss _U_, int show_info)
+int T0264_get_lba_status_beyondeol(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
-	uint64_t num_blocks;
 
 	printf("0264_get_lba_status_beyondeol:\n");
 	printf("==============================\n");
@@ -70,9 +69,6 @@ int T0264_get_lba_status_beyondeol(const char *initiator, const char *url, int d
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
-
-	num_blocks = rc16->returned_lba;
-
 	scsi_free_scsi_task(task);
 
 	ret = 0;

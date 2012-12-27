@@ -21,7 +21,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data_loss, int show_info)
+int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -29,7 +29,6 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data
 	struct scsi_inquiry_standard *inq;
 	int ret = 0, lun, sccs, encserv, lbpme;
 	unsigned char data[4096]; 
-	uint32_t block_size;
 	int full_size;
 
 	printf("0390_mandatory_opcodes_sbc:\n");
@@ -86,7 +85,6 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	block_size = rc16->block_length;
 	lbpme      = rc16->lbpme;
 	scsi_free_scsi_task(task);
 
@@ -133,247 +131,212 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url, int data
 
 	printf("Test FORMAT UNIT ... ");
 	printf("[TEST NOT IMPLEMENTED YET]\n");
-	goto test2;
 
 
-test2:
 	printf("Test INQUIRY ... ");
 	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send INQUIRY command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test3;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("INQUIRY command: failed with sense %s\n", iscsi_get_error(iscsi));
-		ret++;
-		scsi_free_scsi_task(task);
-		goto test3;
+		ret = -1;
+	} else {
+		printf("[OK]\n");
 	}
 	scsi_free_scsi_task(task);
 
-	printf("[OK]\n");
 
-test3:
 	printf("Test MAINTENANCE IN ... ");
 	if (sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
-		goto test4;
+	} else {
+		printf("[TEST NOT IMPLEMENTED YET]\n");
 	}
-	printf("[TEST NOT IMPLEMENTED YET]\n");
-	goto test4;
 
 
-test4:
 	printf("Test MAINTENANCE OUT ... ");
 	if (sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
-		goto test5;
+	} else {
+		printf("[TEST NOT IMPLEMENTED YET]\n");
 	}
-	printf("[TEST NOT IMPLEMENTED YET]\n");
-	goto test5;
 
-test5:
+
 	printf("Test READ CAPACITY10 ... ");
 	task = iscsi_readcapacity10_sync(iscsi, lun,0 ,0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send READ CAPACITY10 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test6;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("READ CAPACITY10 command: failed with sense %s\n", iscsi_get_error(iscsi));
-		ret++;
-		scsi_free_scsi_task(task);
-		goto test6;
+		ret = -1;
+	} else {
+		printf("[OK]\n");
 	}
 	scsi_free_scsi_task(task);
 
-	printf("[OK]\n");
 
-test6:
 	printf("Test READ CAPACITY16 ... ");
 	task = iscsi_readcapacity16_sync(iscsi, lun);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send READ CAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test7;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("READ CAPACITY16 command: failed with sense %s\n", iscsi_get_error(iscsi));
-		ret++;
-		scsi_free_scsi_task(task);
-		goto test7;
+		ret = -1;
+	} else {
+		printf("[OK]\n");
 	}
 	scsi_free_scsi_task(task);
 
-	printf("[OK]\n");
 
-test7:
 	printf("Test RECEIVE DIAGNOSTIC RESULT ... ");
 	if (encserv == 0) {
 		printf("[ENCSERV == 0, SKIPPING TEST]\n");
-		goto test8;
+	} else {
+		printf("[TEST NOT IMPLEMENTED YET]\n");
 	}
-	printf("[TEST NOT IMPLEMENTED YET]\n");
-	goto test8;
 
 
-test8:
 	printf("Test REDUNDANCY GROUP IN ... ");
 	if (sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
-		goto test9;
+	} else {
+		printf("[TEST NOT IMPLEMENTED YET]\n");
 	}
-	printf("[TEST NOT IMPLEMENTED YET]\n");
-	goto test9;
 
 
-test9:
 	printf("Test REDUNDANCY GROUP OUT ... ");
 	if (sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
-		goto test10;
+	} else {
+		printf("[TEST NOT IMPLEMENTED YET]\n");
 	}
-	printf("[TEST NOT IMPLEMENTED YET]\n");
-	goto test10;
 
-test10:
+
 	printf("Test REPORT LUNS ... ");
 	task = iscsi_reportluns_sync(iscsi, 0, 64);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send REPORT LUNS command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test11;
+		ret = -1;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("REPORT LUNS command: failed with sense %s\n", iscsi_get_error(iscsi));
-		ret++;
-		scsi_free_scsi_task(task);
-		goto test11;
+		ret = -1;
+	} else {
+		printf("[OK]\n");
 	}
 	scsi_free_scsi_task(task);
 
-	printf("[OK]\n");
 
-test11:
 	printf("Test REQUEST SENSE ... ");
 	printf("[TEST NOT IMPLEMENTED YET]\n");
-	goto test12;
 
-test12:
 
 	printf("Test SEND DIAGNOSTIC ... ");
 	printf("[TEST NOT IMPLEMENTED YET]\n");
-	goto test13;
 
-test13:
+
 	printf("Test SPARE IN ... ");
 	if (sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
-		goto test14;
+		goto finished;
 	}
 	printf("[TEST NOT IMPLEMENTED YET]\n");
-	goto test14;
 
 
-test14:
 	printf("Test SPARE OUT ... ");
 	if (sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
-		goto test15;
+	} else {
+		printf("[TEST NOT IMPLEMENTED YET]\n");
 	}
-	printf("[TEST NOT IMPLEMENTED YET]\n");
-	goto test15;
 
-test15:
+
 	printf("Test TEST UNIT READY.\n");
-	ret = testunitready(iscsi, lun);
-	if (ret != 0) {
-		goto finished;
+	if (testunitready(iscsi, lun) == -1) {
+		ret = -1;
 	}
 
 
 	printf("Test UNMAP ... ");
 	if (lbpme == 0) {
 		printf("[LBPME == 0, SKIPPING TEST]\n");
-		goto test17;
-	}
-	task = iscsi_unmap_sync(iscsi, lun, 0, 0, NULL, 0);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send UNMAP command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test17;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("UNMAP command: failed with sense %s\n", iscsi_get_error(iscsi));
-		ret++;
+	} else {
+		task = iscsi_unmap_sync(iscsi, lun, 0, 0, NULL, 0);
+		if (task == NULL) {
+		        printf("[FAILED]\n");
+			printf("Failed to send UNMAP command: %s\n", iscsi_get_error(iscsi));
+			ret = -1;
+			goto finished;
+		}
+		if (task->status != SCSI_STATUS_GOOD) {
+			printf("[FAILED]\n");
+			printf("UNMAP command: failed with sense %s\n", iscsi_get_error(iscsi));
+			ret = -1;
+		} else {
+			printf("[OK]\n");
+		}
 		scsi_free_scsi_task(task);
-		goto test17;
 	}
-	scsi_free_scsi_task(task);
 
-	printf("[OK]\n");
 
-test17:
 	printf("Test VOLUME SET IN ... ");
 	if (sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
-		goto test18;
+	} else {
+		printf("[TEST NOT IMPLEMENTED YET]\n");
 	}
-	printf("[TEST NOT IMPLEMENTED YET]\n");
-	goto test18;
 
 
-test18:
 	printf("Test VOLUME SET OUT ... ");
 	if (sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
-		goto test19;
+	} else {
+		printf("[TEST NOT IMPLEMENTED YET]\n");
 	}
-	printf("[TEST NOT IMPLEMENTED YET]\n");
-	goto test19;
 
-test19:
+
 	printf("Test WRITE SAME16 ... ");
 	if (lbpme == 0) {
 		printf("[LBPME == 0, SKIPPING TEST]\n");
-		goto test20;
-	}
-	task = iscsi_writesame16_sync(iscsi, lun, data, block_size, 0, 1, 0, 1, 0, 0, 0, 0);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send WRITE SAME16 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test20;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("WRITE SAME16 command: failed with sense %s\n", iscsi_get_error(iscsi));
-		ret++;
+	} else {
+		task = iscsi_writesame16_sync(iscsi, lun, data, block_size, 0, 1, 0, 1, 0, 0, 0, 0);
+		if (task == NULL) {
+			printf("[FAILED]\n");
+			printf("Failed to send WRITE SAME16 command: %s\n", iscsi_get_error(iscsi));
+			ret = -1;
+			goto finished;
+		}
+		if (task->status != SCSI_STATUS_GOOD) {
+			printf("[FAILED]\n");
+			printf("WRITE SAME16 command: failed with sense %s\n", iscsi_get_error(iscsi));
+			ret = -1;
+		} else {
+			printf("[OK]\n");
+		}
 		scsi_free_scsi_task(task);
-		goto test20;
 	}
-	scsi_free_scsi_task(task);
 
-	printf("[OK]\n");
-
-test20:
 	printf("Test WRITE SAME32 ... ");
 	printf("[TEST NOT IMPLEMENTED YET]\n");
-	goto test21;
 
-test21:
 
 finished:
 	iscsi_logout_sync(iscsi);

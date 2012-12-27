@@ -20,7 +20,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0191_writesame16_unmap_unaligned(const char *initiator, const char *url, int data_loss, int show_info)
+int T0191_writesame16_unmap_unaligned(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;

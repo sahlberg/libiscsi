@@ -21,7 +21,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0380_preventallow_simple(const char *initiator, const char *url, int data_loss, int show_info)
+int T0380_preventallow_simple(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -91,8 +91,8 @@ int T0380_preventallow_simple(const char *initiator, const char *url, int data_l
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PREVENTALLOW command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test2;
+		ret = -1;
+		goto finished;
 	}
 
 	/* SPC doesnt really say anything about what should happen if using PREVENTALLOW 
@@ -102,25 +102,22 @@ int T0380_preventallow_simple(const char *initiator, const char *url, int data_l
 		if (task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("PREVENTALLOW command: failed with sense %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 	}
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
 
-
-test2:
 
 	printf("Clear the PREVENTALLOW again ... ");
 	task = iscsi_preventallow_sync(iscsi, lun, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PREVENTALLOW command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test3;
+		ret = -1;
+		goto finished;
 	}
 	/* SPC doesnt really say anything about what should happen if using PREVENTALLOW 
 	 * on a device that does not support medium removals.
@@ -129,17 +126,13 @@ test2:
 		if (task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("PREVENTALLOW command: failed with sense %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test3;
+			goto finished;
 		}
 	}
 	scsi_free_scsi_task(task);
-
 	printf("[OK]\n");
-
-
-test3:
 
 
 finished:

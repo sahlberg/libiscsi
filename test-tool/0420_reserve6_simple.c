@@ -22,8 +22,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0420_reserve6_simple(const char *initiator, const char *url, int data_loss _U_,
-			  int show_info)
+int T0420_reserve6_simple(const char *initiator, const char *url)
 {
 	struct iscsi_context *iscsi = NULL, *iscsi2 = NULL;
 	struct scsi_task *task;
