@@ -25,10 +25,8 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_inquiry_standard *inq;
-	int ret = 0, lun, sccs, encserv;
+	int ret = 0, lun;
 	unsigned char data[4096]; 
-	int full_size;
 
 	printf("0390_mandatory_opcodes_sbc:\n");
 	printf("===========================\n");
@@ -64,38 +62,11 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 		return -1;
 	}
 
-	/* See how big this inquiry data is */
-	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
-		return -1;
-	}
-	full_size = scsi_datain_getfullsize(task);
-	if (full_size > task->datain.size) {
-		scsi_free_scsi_task(task);
-
-		/* we need more data for the full list */
-		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
-			printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
-			return -1;
-		}
-	}
-	inq = scsi_datain_unmarshall(task);
-	if (inq == NULL) {
-		printf("failed to unmarshall inquiry datain blob\n");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	sccs    = inq->sccs;
-	encserv = inq->encserv;
-	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 		printf("Not a SBC device. Skipping test\n");
-		scsi_free_scsi_task(task);
 		ret = -2;
 		goto finished;
 	}
-
-	scsi_free_scsi_task(task);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -104,27 +75,14 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 	}
 	
 
-
 	printf("Test FORMAT UNIT ... ");
 	printf("[TEST NOT IMPLEMENTED YET]\n");
 
 
-	printf("Test INQUIRY ... ");
-	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send INQUIRY command: %s\n", iscsi_get_error(iscsi));
+	printf("Test INQUIRY.\n");
+	if (inquiry(iscsi, lun, 0, 0, 64) == -1) {
 		ret = -1;
-		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("[FAILED]\n");
-		printf("INQUIRY command: failed with sense %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-	} else {
-		printf("[OK]\n");
-	}
-	scsi_free_scsi_task(task);
 
 
 	printf("Test MAINTENANCE IN ... ");

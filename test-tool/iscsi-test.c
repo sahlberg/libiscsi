@@ -47,6 +47,10 @@ uint64_t num_blocks;
 int lbpme;
 int lbppb;
 int lbpme;
+int removable;
+enum scsi_inquiry_peripheral_device_type device_type;
+int sccs;
+int encserv;
 
 int data_loss;
 int show_info;
@@ -1404,6 +1408,30 @@ int verify16_lbaoutofrange(struct iscsi_context *iscsi, int lun, unsigned char *
 	return 0;
 }
 
+int inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize)
+{
+	struct scsi_task *task;
+
+	printf("Send INQUIRY evpd:%d page_code:%d ... ", evpd, page_code);
+	task = iscsi_inquiry_sync(iscsi, lun, evpd, page_code, maxsize);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send INQUIRY command: %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("INQUIRY command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	printf("[OK]\n");
+	scsi_free_scsi_task(task);
+	return 0;
+}
+
+
 int main(int argc, const char *argv[])
 {
 	poptContext pc;
@@ -1420,6 +1448,8 @@ int main(int argc, const char *argv[])
 	struct scsi_task *task;
 	struct scsi_readcapacity10 *rc10;
 	struct scsi_readcapacity16 *rc16;
+	struct scsi_inquiry_standard *inq;
+	int full_size;
 
 	struct poptOption popt_options[] = {
 		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
@@ -1536,6 +1566,37 @@ int main(int argc, const char *argv[])
 
 		scsi_free_scsi_task(task);
 	}
+
+
+	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
+	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	full_size = scsi_datain_getfullsize(task);
+	if (full_size > task->datain.size) {
+		scsi_free_scsi_task(task);
+
+		/* we need more data for the full list */
+		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
+			printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
+			return -1;
+		}
+	}
+	inq = scsi_datain_unmarshall(task);
+	if (inq == NULL) {
+		printf("failed to unmarshall inquiry datain blob\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	removable   = inq->rmb;
+	device_type = inq->device_type;
+	sccs        = inq->sccs;
+	encserv     = inq->encserv;
+	scsi_free_scsi_task(task);
+
+
+	iscsi_logout_sync(iscsi);
 	iscsi_destroy_context(iscsi);
 
 

@@ -35,6 +35,10 @@ extern int lbppb;
 extern int lbpme;
 extern int data_loss;
 extern int show_info;
+extern int removable;
+extern enum scsi_inquiry_peripheral_device_type device_type;
+extern int sccs;
+extern int encserv;
 
 struct iscsi_context *iscsi_context_login(const char *initiatorname, const char *url, int *lun);
 
@@ -274,5 +278,6 @@ int verify16(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t
 int verify16_nomedium(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize);
 int verify16_miscompare(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize);
 int verify16_lbaoutofrange(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize);
+int inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize);
 
 #endif	/* _ISCSI_TEST_H_ */

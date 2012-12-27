@@ -25,9 +25,7 @@ int T0370_nomedia(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_inquiry_standard *inq;
-	int ret, lun, removable;
-	int full_size;
+	int ret, lun;
 	unsigned char buf[4096];
 
 	printf("0370_nomedia:\n");
@@ -73,42 +71,13 @@ int T0370_nomedia(const char *initiator, const char *url)
 		return -1;
 	}
 
-	/* See how big this inquiry data is */
-	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
-		return -1;
-	}
-	full_size = scsi_datain_getfullsize(task);
-	if (full_size > task->datain.size) {
-		scsi_free_scsi_task(task);
-
-		/* we need more data for the full list */
-		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
-			printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
-			return -1;
-		}
-	}
-	inq = scsi_datain_unmarshall(task);
-	if (inq == NULL) {
-		printf("failed to unmarshall inquiry datain blob\n");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	removable = inq->rmb;
-
-	scsi_free_scsi_task(task);
-
-	ret = 0;
-
-
 	if (!removable) {
 		printf("Media is not removable. Skipping test.\n");
 		ret = -2;
 		goto finished;
 	}
 
-
+	ret = 0;
 
 	printf("Try to eject the media ... ");
 	task = iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 0);
