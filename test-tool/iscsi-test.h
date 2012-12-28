@@ -210,6 +210,11 @@ int T1110_persistent_reserve_in_serviceaction_range(const char *initiator, const
 int T1120_persistent_register_simple(const char *initiator, const char *url);
 int T1130_persistent_reserve_simple(const char *initiator, const char *url);
 int T1140_persistent_reserve_access_check_ea(const char *initiator, const char *url);
+int T1141_persistent_reserve_access_check_we(const char *initiator, const char *url);
+int T1142_persistent_reserve_access_check_earo(const char *initiator, const char *url);
+int T1143_persistent_reserve_access_check_wero(const char *initiator, const char *url);
+int T1144_persistent_reserve_access_check_eaar(const char *initiator, const char *url);
+int T1145_persistent_reserve_access_check_wear(const char *initiator, const char *url);
 
 
 /*

@@ -270,6 +270,11 @@ struct scsi_test tests[] = {
 { "T1120_persistent_register_simple", T1120_persistent_register_simple },
 { "T1130_persistent_reserve_simple", T1130_persistent_reserve_simple },
 { "T1140_persistent_reserve_access_check_ea", T1140_persistent_reserve_access_check_ea },
+{ "T1141_persistent_reserve_access_check_we", T1141_persistent_reserve_access_check_we },
+{ "T1142_persistent_reserve_access_check_earo", T1142_persistent_reserve_access_check_earo },
+{ "T1143_persistent_reserve_access_check_wero", T1143_persistent_reserve_access_check_wero },
+{ "T1144_persistent_reserve_access_check_eaar", T1144_persistent_reserve_access_check_eaar },
+{ "T1145_persistent_reserve_access_check_wear", T1145_persistent_reserve_access_check_wear },
 
 { NULL, NULL }
 };

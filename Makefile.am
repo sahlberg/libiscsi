@@ -155,7 +155,12 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/1110_persistent_reserve_in_serviceaction_range.c \
 	test-tool/1120_persistent_register_simple.c \
 	test-tool/1130_persistent_reserve_simple.c \
-	test-tool/1140_persistent_reserve_access_check_ea.c
+	test-tool/1140_persistent_reserve_access_check_ea.c \
+	test-tool/1141_persistent_reserve_access_check_we.c \
+	test-tool/1142_persistent_reserve_access_check_earo.c \
+	test-tool/1143_persistent_reserve_access_check_wero.c \
+	test-tool/1144_persistent_reserve_access_check_eaar.c \
+	test-tool/1145_persistent_reserve_access_check_wear.c
 
 endif
 
