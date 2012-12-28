@@ -42,12 +42,22 @@
 const char *initiatorname1 = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test";
 const char *initiatorname2 = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test-2";
 
-static int data_loss = 0;
-static int show_info = 0;
+uint32_t block_size;
+uint64_t num_blocks;
+int lbpme;
+int lbppb;
+int lbpme;
+int removable;
+enum scsi_inquiry_peripheral_device_type device_type;
+int sccs;
+int encserv;
+
+int data_loss;
+int show_info;
 
 struct scsi_test {
        const char *name;
-       int (*test)(const char *initiator, const char *url, int data_loss, int show_info);
+       int (*test)(const char *initiator, const char *url);
 };
 
 struct scsi_test tests[] = {
@@ -933,12 +943,12 @@ int testunitready_conflict(struct iscsi_context *iscsi, int lun)
 	return 0;
 }
 
-int prefetch10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group)
+int prefetch10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, int immed, int group)
 {
 	struct scsi_task *task;
 
-	printf("Send PREFETCH10 LBA:%d Count:%d IMEMD:%d GROUP:%d ... ", lba, num_blocks, immed, group);
-	task = iscsi_prefetch10_sync(iscsi, lun, lba, num_blocks, immed, group);
+	printf("Send PREFETCH10 LBA:%d Count:%d IMEMD:%d GROUP:%d ... ", lba, num, immed, group);
+	task = iscsi_prefetch10_sync(iscsi, lun, lba, num, immed, group);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PREFETCH10 command: %s\n", iscsi_get_error(iscsi));
@@ -963,12 +973,12 @@ int prefetch10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_block
 	return 0;
 }
 
-int prefetch10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group)
+int prefetch10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, int immed, int group)
 {
 	struct scsi_task *task;
 
-	printf("Send PREFETCH10 LBA:%d Count:%d IMEMD:%d GROUP:%d (expecting ILLEGAL_REQUEST/LBA_OUT_OF_RANGE) ... ", lba, num_blocks, immed, group);
-	task = iscsi_prefetch10_sync(iscsi, lun, lba, num_blocks, immed, group);
+	printf("Send PREFETCH10 LBA:%d Count:%d IMEMD:%d GROUP:%d (expecting ILLEGAL_REQUEST/LBA_OUT_OF_RANGE) ... ", lba, num, immed, group);
+	task = iscsi_prefetch10_sync(iscsi, lun, lba, num, immed, group);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PREFETCH10 command: %s\n", iscsi_get_error(iscsi));
@@ -996,12 +1006,12 @@ int prefetch10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
 	return 0;
 }
 
-int prefetch10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group)
+int prefetch10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, int immed, int group)
 {
 	struct scsi_task *task;
 
-	printf("Send PREFETCH10 LBA:%d Count:%d IMEMD:%d GROUP:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT) ... ", lba, num_blocks, immed, group);
-	task = iscsi_prefetch10_sync(iscsi, lun, lba, num_blocks, immed, group);
+	printf("Send PREFETCH10 LBA:%d Count:%d IMEMD:%d GROUP:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT) ... ", lba, num, immed, group);
+	task = iscsi_prefetch10_sync(iscsi, lun, lba, num, immed, group);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PREFETCH10 command: %s\n", iscsi_get_error(iscsi));
@@ -1031,12 +1041,12 @@ int prefetch10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int 
 	return 0;
 }
 
-int prefetch16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num_blocks, int immed, int group)
+int prefetch16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num, int immed, int group)
 {
 	struct scsi_task *task;
 
-	printf("Send PREFETCH16 LBA:%" PRIu64 " Count:%d IMEMD:%d GROUP:%d ... ", lba, num_blocks, immed, group);
-	task = iscsi_prefetch16_sync(iscsi, lun, lba, num_blocks, immed, group);
+	printf("Send PREFETCH16 LBA:%" PRIu64 " Count:%d IMEMD:%d GROUP:%d ... ", lba, num, immed, group);
+	task = iscsi_prefetch16_sync(iscsi, lun, lba, num, immed, group);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PREFETCH16 command: %s\n", iscsi_get_error(iscsi));
@@ -1061,12 +1071,12 @@ int prefetch16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num_block
 	return 0;
 }
 
-int prefetch16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, int num_blocks, int immed, int group)
+int prefetch16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, int num, int immed, int group)
 {
 	struct scsi_task *task;
 
-	printf("Send PREFETCH16 LBA:%" PRIu64 " Count:%d IMEMD:%d GROUP:%d (expecting ILLEGAL_REQUEST/LBA_OUT_OF_RANGE) ... ", lba, num_blocks, immed, group);
-	task = iscsi_prefetch16_sync(iscsi, lun, lba, num_blocks, immed, group);
+	printf("Send PREFETCH16 LBA:%" PRIu64 " Count:%d IMEMD:%d GROUP:%d (expecting ILLEGAL_REQUEST/LBA_OUT_OF_RANGE) ... ", lba, num, immed, group);
+	task = iscsi_prefetch16_sync(iscsi, lun, lba, num, immed, group);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PREFETCH16 command: %s\n", iscsi_get_error(iscsi));
@@ -1094,12 +1104,12 @@ int prefetch16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba,
 	return 0;
 }
 
-int prefetch16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, int num_blocks, int immed, int group)
+int prefetch16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, int num, int immed, int group)
 {
 	struct scsi_task *task;
 
-	printf("Send PREFETCH16 LBA:%" PRIu64 " Count:%d IMEMD:%d GROUP:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT) ... ", lba, num_blocks, immed, group);
-	task = iscsi_prefetch16_sync(iscsi, lun, lba, num_blocks, immed, group);
+	printf("Send PREFETCH16 LBA:%" PRIu64 " Count:%d IMEMD:%d GROUP:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT) ... ", lba, num, immed, group);
+	task = iscsi_prefetch16_sync(iscsi, lun, lba, num, immed, group);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send PREFETCH16 command: %s\n", iscsi_get_error(iscsi));
@@ -1413,6 +1423,172 @@ int verify12_lbaoutofrange(struct iscsi_context *iscsi, int lun, unsigned char *
 	return 0;
 }
 
+int verify16(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+{
+	struct scsi_task *task;
+
+	printf("Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	task = iscsi_verify16_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[SKIPPED]\n");
+		printf("VERIFY16 is not implemented on target\n");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("VERIFY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	printf("[OK]\n");
+	scsi_free_scsi_task(task);
+	return 0;
+}
+
+int verify16_nomedium(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+{
+	struct scsi_task *task;
+
+	printf("Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT) ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	task = iscsi_verify16_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[SKIPPED]\n");
+		printf("VERIFY16 is not implemented on target\n");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		printf("[FAILED]\n");
+		printf("VERIFY16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	printf("[OK]\n");
+	scsi_free_scsi_task(task);
+	return 0;
+}
+
+int verify16_miscompare(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+{
+	struct scsi_task *task;
+
+	printf("Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting MISCOMPARE) ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	task = iscsi_verify16_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[SKIPPED]\n");
+		printf("VERIFY16 is not implemented on target\n");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("VERIFY16 command successful but should have failed with MISCOMPARE\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->sense.key != SCSI_SENSE_MISCOMPARE) {
+		printf("[FAILED]\n");
+		printf("VERIFY16 command returned wrong sense key. MISCOMPARE MISCOMPARE 0x%x expected but got key 0x%x. Sense:%s\n", SCSI_SENSE_MISCOMPARE, task->sense.key, iscsi_get_error(iscsi)); 
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	printf("[OK]\n");
+	scsi_free_scsi_task(task);
+	return 0;
+}
+
+int verify16_lbaoutofrange(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+{
+	struct scsi_task *task;
+
+	printf("Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting LBA_OUT_OF_RANGE) ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	task = iscsi_verify16_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		printf("[SKIPPED]\n");
+		printf("VERIFY16 is not implemented on target\n");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("VERIFY16 command successful but should have failed with LBA_OUT_OF_RANGE\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		printf("[FAILED]\n");
+		printf("VERIFY16 should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	printf("[OK]\n");
+	scsi_free_scsi_task(task);
+	return 0;
+}
+
+int inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize)
+{
+	struct scsi_task *task;
+
+	printf("Send INQUIRY evpd:%d page_code:%d ... ", evpd, page_code);
+	task = iscsi_inquiry_sync(iscsi, lun, evpd, page_code, maxsize);
+	if (task == NULL) {
+	        printf("[FAILED]\n");
+		printf("Failed to send INQUIRY command: %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+	        printf("[FAILED]\n");
+		printf("INQUIRY command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	printf("[OK]\n");
+	scsi_free_scsi_task(task);
+	return 0;
+}
+
+
 int main(int argc, const char *argv[])
 {
 	poptContext pc;
@@ -1424,6 +1600,13 @@ int main(int argc, const char *argv[])
 	struct scsi_test *test;
 	char *testname = NULL;
 	char *skipname = NULL;
+	int lun;
+	struct iscsi_context *iscsi;
+	struct scsi_task *task;
+	struct scsi_readcapacity10 *rc10;
+	struct scsi_readcapacity16 *rc16;
+	struct scsi_inquiry_standard *inq;
+	int full_size;
 
 	struct poptOption popt_options[] = {
 		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
@@ -1469,7 +1652,7 @@ int main(int argc, const char *argv[])
 		for (test = &tests[0]; test->name; test++) {
 			printf("%s\n", test->name);
 			if (show_info) {
-				test->test(initiatorname1, url, data_loss, show_info);
+				test->test(initiatorname1, url);
 			}
 		}
 		exit(0);
@@ -1483,6 +1666,96 @@ int main(int argc, const char *argv[])
 		free(testname);
 		exit(10);
 	}
+
+
+	iscsi = iscsi_context_login(initiatorname1, url, &lun);
+	if (iscsi == NULL) {
+		printf("Failed to login to target\n");
+		return -1;
+	}
+
+	/* find the size of the LUN
+	   All devices support readcapacity10 but only some support
+	   readcapacity16
+	*/
+	task = iscsi_readcapacity10_sync(iscsi, lun, 0, 0);
+	if (task == NULL) {
+		printf("Failed to send READCAPACITY10 command: %s\n", iscsi_get_error(iscsi));
+		iscsi_destroy_context(iscsi);
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		printf("READCAPACITY10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		iscsi_destroy_context(iscsi);
+		return -1;
+	}
+	rc10 = scsi_datain_unmarshall(task);
+	if (rc10 == NULL) {
+		printf("failed to unmarshall READCAPACITY10 data. %s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		iscsi_destroy_context(iscsi);
+		return -1;
+	}
+	block_size = rc10->block_size;
+	num_blocks = rc10->lba;
+	scsi_free_scsi_task(task);
+
+	task = iscsi_readcapacity16_sync(iscsi, lun);
+	if (task == NULL) {
+		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
+		iscsi_destroy_context(iscsi);
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		rc16 = scsi_datain_unmarshall(task);
+		if (rc16 == NULL) {
+			printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
+			scsi_free_scsi_task(task);
+			iscsi_destroy_context(iscsi);
+			return -1;
+		}
+		block_size = rc16->block_length;
+		num_blocks = rc16->returned_lba;
+		lbpme      = rc16->lbpme;
+		lbppb      = 1 << rc16->lbppbe;
+		lbpme      = rc16->lbpme;
+
+		scsi_free_scsi_task(task);
+	}
+
+
+	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
+	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
+		return -1;
+	}
+	full_size = scsi_datain_getfullsize(task);
+	if (full_size > task->datain.size) {
+		scsi_free_scsi_task(task);
+
+		/* we need more data for the full list */
+		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
+			printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
+			return -1;
+		}
+	}
+	inq = scsi_datain_unmarshall(task);
+	if (inq == NULL) {
+		printf("failed to unmarshall inquiry datain blob\n");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	removable   = inq->rmb;
+	device_type = inq->device_type;
+	sccs        = inq->sccs;
+	encserv     = inq->encserv;
+	scsi_free_scsi_task(task);
+
+
+	iscsi_logout_sync(iscsi);
+	iscsi_destroy_context(iscsi);
+
 
 	num_failed = num_skipped = 0;
 	for (test = &tests[0]; test->name; test++) {
@@ -1505,7 +1778,7 @@ int main(int argc, const char *argv[])
 			if (skip) continue;
 		}
 
-		res = test->test(initiatorname1, url, data_loss, show_info);
+		res = test->test(initiatorname1, url);
 		if (res == 0) {
 			printf("TEST %s [OK]\n", test->name);
 		} else if (res == -2) {

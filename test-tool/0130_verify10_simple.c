@@ -21,13 +21,11 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0130_verify10_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
+int T0130_verify10_simple(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_readcapacity10 *rc10;
 	int ret, i, lun;
-	uint32_t block_size;
 	unsigned char *buf = NULL;
 
 	printf("0130_verify10_simple:\n");
@@ -44,29 +42,6 @@ int T0130_verify10_simple(const char *initiator, const char *url, int data_loss 
 		printf("Failed to login to target\n");
 		return -1;
 	}
-
-	/* find the size of the LUN */
-	task = iscsi_readcapacity10_sync(iscsi, lun, 0, 0);
-	if (task == NULL) {
-		printf("Failed to send readcapacity10 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc10 = scsi_datain_unmarshall(task);
-	if (rc10 == NULL) {
-		printf("failed to unmarshall readcapacity10 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	block_size = rc10->block_size;
-	scsi_free_scsi_task(task);
 
 
 	buf = malloc(256 * block_size);

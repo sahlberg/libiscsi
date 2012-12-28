@@ -21,15 +21,11 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0370_nomedia(const char *initiator, const char *url, int data_loss, int show_info)
+int T0370_nomedia(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
-	struct scsi_inquiry_standard *inq;
-	int ret, lun, removable;
-	uint32_t block_size;
-	int full_size;
+	int ret, lun;
 	unsigned char buf[4096];
 
 	printf("0370_nomedia:\n");
@@ -75,65 +71,13 @@ int T0370_nomedia(const char *initiator, const char *url, int data_loss, int sho
 		return -1;
 	}
 
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	block_size = rc16->block_length;
-	scsi_free_scsi_task(task);
-
-	/* See how big this inquiry data is */
-	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
-		return -1;
-	}
-	full_size = scsi_datain_getfullsize(task);
-	if (full_size > task->datain.size) {
-		scsi_free_scsi_task(task);
-
-		/* we need more data for the full list */
-		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
-			printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
-			return -1;
-		}
-	}
-	inq = scsi_datain_unmarshall(task);
-	if (inq == NULL) {
-		printf("failed to unmarshall inquiry datain blob\n");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	removable = inq->rmb;
-
-	scsi_free_scsi_task(task);
-
-	ret = 0;
-
-
 	if (!removable) {
 		printf("Media is not removable. Skipping test.\n");
 		ret = -2;
 		goto finished;
 	}
 
-
+	ret = 0;
 
 	printf("Try to eject the media ... ");
 	task = iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 0);
@@ -376,28 +320,12 @@ int T0370_nomedia(const char *initiator, const char *url, int data_loss, int sho
 		goto finished;
 	}
 
-
-	printf("Test VERIFY16 ... ");
-	task = iscsi_verify16_sync(iscsi, lun, buf, block_size, 0, 0, 0, 1, block_size);
-	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
+	printf("Test VERIFY16.\n");
+	ret = verify16_nomedium(iscsi, lun, buf, block_size, 0, 0, 0, 1, block_size);
+	if (ret != 0) {
 		goto finished;
 	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		printf("[FAILED]\n");
-		printf("VERIFY16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}	
-	scsi_free_scsi_task(task);
-	printf("[OK]\n");
+
 
 
 	if (!data_loss) {

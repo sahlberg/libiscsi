@@ -21,13 +21,11 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0361_startstopunit_pwrcnd(const char *initiator, const char *url, int data_loss, int show_info)
+int T0361_startstopunit_pwrcnd(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_inquiry_standard *inq;
-	int ret, i, lun, removable;
-	int full_size;
+	int ret, i, lun;
 
 	printf("0361_startstopunit_pwrcnd:\n");
 	printf("===================\n");
@@ -44,32 +42,6 @@ int T0361_startstopunit_pwrcnd(const char *initiator, const char *url, int data_
 		printf("Failed to login to target\n");
 		return -1;
 	}
-
-	/* See how big this inquiry data is */
-	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
-		return -1;
-	}
-	full_size = scsi_datain_getfullsize(task);
-	if (full_size > task->datain.size) {
-		scsi_free_scsi_task(task);
-
-		/* we need more data for the full list */
-		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
-			printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
-			return -1;
-		}
-	}
-	inq = scsi_datain_unmarshall(task);
-	if (inq == NULL) {
-		printf("failed to unmarshall inquiry datain blob\n");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	removable = inq->rmb;
-
-	scsi_free_scsi_task(task);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -92,13 +64,13 @@ int T0361_startstopunit_pwrcnd(const char *initiator, const char *url, int data_
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			goto finished;
 		}
 		if (task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
 			goto finished;
 		}
@@ -119,13 +91,13 @@ int T0361_startstopunit_pwrcnd(const char *initiator, const char *url, int data_
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}

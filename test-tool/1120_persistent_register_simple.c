@@ -25,8 +25,7 @@
 
 
 
-int T1120_persistent_register_simple(const char *initiator, const char *url,
-    int data_loss, int show_info)
+int T1120_persistent_register_simple(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	int ret, lun;

@@ -23,14 +23,12 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0122_read6_invalid(const char *initiator, const char *url, int data_loss _U_, int show_info)
+int T0122_read6_invalid(const char *initiator, const char *url)
 {
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct iscsi_data data;
 	char buf[4096];
-	struct scsi_readcapacity10 *rc10;
-	uint32_t block_size;
 	int ret, lun;
 
 	printf("0122_read6_invalid:\n");
@@ -51,29 +49,6 @@ int T0122_read6_invalid(const char *initiator, const char *url, int data_loss _U
 		printf("Failed to login to target\n");
 		return -1;
 	}
-
-	/* find the size of the LUN */
-	task = iscsi_readcapacity10_sync(iscsi, lun, 0, 0);
-	if (task == NULL) {
-		printf("Failed to send readcapacity10 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc10 = scsi_datain_unmarshall(task);
-	if (rc10 == NULL) {
-		printf("failed to unmarshall readcapacity10 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	block_size = rc10->block_size;
-	scsi_free_scsi_task(task);
 
 
 	ret = 0;
@@ -110,14 +85,14 @@ int T0122_read6_invalid(const char *initiator, const char *url, int data_loss _U
 	if (task->status == SCSI_STATUS_CANCELLED) {
 		scsi_free_scsi_task(task);
 		printf("Target dropped the session [OK]\n");
-		goto test2;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("Read6 of 1 block with iscsi ExpectedDataTransferLength==0 should not fail.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test2;
+		goto finished;
 	}
 	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
 	    task->residual != (ssize_t)block_size) {
@@ -125,13 +100,12 @@ int T0122_read6_invalid(const char *initiator, const char *url, int data_loss _U
 		printf("Read6 returned incorrect residual overflow.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test5;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
-test2:
 	/* in case the previous test failed the session */
 	iscsi_set_noautoreconnect(iscsi, 0);
 
@@ -164,7 +138,7 @@ test2:
 		printf("Read6 of 1 block with iscsi ExpectedDataTransferLength==1024 should not fail.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test3;
+		goto finished;
 	}
 	if (task->residual_status != SCSI_RESIDUAL_UNDERFLOW ||
 	    task->residual != (ssize_t)block_size) {
@@ -172,13 +146,12 @@ test2:
 		printf("Read6 returned incorrect residual underflow.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test5;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
-test3:
 	/* Try a read of 1 block but xferlength == 200 */
 	printf("Read6 1 block but with iscsi ExpectedDataTransferLength==200 ... ");
 
@@ -208,7 +181,7 @@ test3:
 		printf("Read6 of 1 block with iscsi ExpectedDataTransferLength==200 should not fail.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test4;
+		goto finished;
 	}
 	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
 	    task->residual != (ssize_t)block_size - 200) {
@@ -216,12 +189,12 @@ test3:
 		printf("Read6 returned incorrect residual overflow.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test5;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-test4:
+
 	/* Try a read of 2 blocks but xferlength == block_size */
 	printf("Read6 2 blocks but with iscsi ExpectedDataTransferLength==%d ... ", block_size);
 
@@ -251,7 +224,7 @@ test4:
 		printf("Read6 of 2 blocks with iscsi ExpectedDataTransferLength==%d should succeed.\n", block_size);
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test5;
+		goto finished;
 	}
 	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
 	    task->residual != (ssize_t)block_size) {
@@ -259,14 +232,12 @@ test4:
 		printf("Read6 returned incorrect residual overflow.\n");
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test5;
+		goto finished;
 	}
-
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
-test5:
 	/* Try a read of 1 block but make it a data-out write on the iscsi layer */
 	printf("Read6 of 1 block but sent as data-out write in iscsi layer ... ");
 
@@ -303,6 +274,7 @@ test5:
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
+
 
 finished:
 	iscsi_logout_sync(iscsi);

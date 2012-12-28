@@ -23,7 +23,6 @@
 #include "iscsi-test.h"
 #include <stdlib.h>
 
-static uint32_t block_size;
 static int pdu_was_valid = 1;
 
 /* one block sent as immediate data. PDU should have F-bit set
@@ -62,11 +61,10 @@ static int my_queue_immediate_data(struct iscsi_context *iscsi _U_, struct iscsi
 	return 1;
 }
 
-int T1042_unsolicited_nonimmediate_data(const char *initiator, const char *url, int data_loss, int show_info)
+int T1042_unsolicited_nonimmediate_data(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
 	struct iscsi_url *iscsi_url;
 	unsigned char data[4096];
@@ -96,31 +94,6 @@ int T1042_unsolicited_nonimmediate_data(const char *initiator, const char *url, 
 		printf("Failed to parse iscsi url\n");
 		return -1;
 	}
-
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	block_size = rc16->block_length;
-
-	scsi_free_scsi_task(task);
-
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");

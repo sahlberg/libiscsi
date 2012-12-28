@@ -20,14 +20,11 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0354_orwrite_beyondeol(const char *initiator, const char *url, int data_loss, int show_info)
+int T0354_orwrite_beyondeol(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
-	uint32_t block_size;
-	uint64_t num_blocks;
 	unsigned char data[4096 * 258];
 
 	printf("0354_orwrite_beyondeol:\n");
@@ -48,30 +45,6 @@ int T0354_orwrite_beyondeol(const char *initiator, const char *url, int data_los
 		return -1;
 	}
 
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
-	scsi_free_scsi_task(task);
-
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
 		ret = -2;
@@ -88,8 +61,8 @@ int T0354_orwrite_beyondeol(const char *initiator, const char *url, int data_los
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send ORWRITE command: %s\n", iscsi_get_error(iscsi));
-			ret++;
-			goto test2;
+			ret = -1;
+			goto finished;
 		}
 		if (task->status        == SCSI_STATUS_CHECK_CONDITION
 		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
@@ -103,9 +76,9 @@ int T0354_orwrite_beyondeol(const char *initiator, const char *url, int data_los
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("ORWRITE beyond end-of-lun did not return sense. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 		if (task->status        != SCSI_STATUS_CHECK_CONDITION
 		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
@@ -114,13 +87,12 @@ int T0354_orwrite_beyondeol(const char *initiator, const char *url, int data_los
 			printf("ORWRITE failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 
-test2:
 
 	/* read 1 - 256 blocks at lba 2^63 */
 	printf("Writing 1-256 blocks at LBA 2^63 ... ");
@@ -129,15 +101,15 @@ test2:
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send ORWRITE command: %s\n", iscsi_get_error(iscsi));
-			ret++;
-			goto test3;
+			ret = -1;
+			goto finished;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("ORWRITE beyond end-of-lun did not return sense. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test3;
+			goto finished;
 		}
 		if (task->status        != SCSI_STATUS_CHECK_CONDITION
 		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
@@ -146,13 +118,12 @@ test2:
 			printf("ORWRITE failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test3;
+			goto finished;
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 
-test3:
 
 	/* read 1 - 256 blocks at lba -1 */
 	printf("Writing 1-256 blocks at LBA -1 ... ");
@@ -161,15 +132,15 @@ test3:
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send ORWRITE command: %s\n", iscsi_get_error(iscsi));
-			ret++;
-			goto test4;
+			ret = -1;
+			goto finished;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("ORWRITE beyond end-of-lun did not return sense. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
-			ret++;
+			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test4;
+			goto finished;
 		}
 		if (task->status        != SCSI_STATUS_CHECK_CONDITION
 		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
@@ -178,13 +149,13 @@ test3:
 			printf("ORWRITE failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test4;
+			goto finished;
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 
-test4:
+
 	/* read 2-256 blocks, all but one block beyond the eol */
 	printf("Writing 1-255 blocks beyond eol starting at last block ... ");
 	for (i=2; i<=256; i++) {
@@ -193,14 +164,14 @@ test4:
 			printf("[FAILED]\n");
 			printf("Failed to send ORWRITE command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test5;
+			goto finished;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("ORWRITE beyond end-of-lun did not return sense. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test5;
+			goto finished;
 		}
 		if (task->status        != SCSI_STATUS_CHECK_CONDITION
 		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
@@ -209,14 +180,12 @@ test4:
 			printf("ORWRITE failed but ascq was wrong. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test5;
+			goto finished;
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 
-
-test5:
 
 finished:
 	iscsi_logout_sync(iscsi);

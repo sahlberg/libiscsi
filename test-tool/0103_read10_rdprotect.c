@@ -22,14 +22,10 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0103_read10_rdprotect(const char *initiator, const char *url, int data_loss _U_, int show_info)
+int T0103_read10_rdprotect(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	int full_size;
-	struct scsi_inquiry_standard *inq;
-	struct scsi_readcapacity10 *rc10;
-	uint32_t block_size;
 	int ret, i, lun;
 
 	printf("0103_read10_rdprotect:\n");
@@ -47,66 +43,10 @@ int T0103_read10_rdprotect(const char *initiator, const char *url, int data_loss
 		return -1;
 	}
 
-	/* See how big this inquiry data is */
-	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
-		return -1;
-	}
-	full_size = scsi_datain_getfullsize(task);
-	if (full_size > task->datain.size) {
-		scsi_free_scsi_task(task);
-
-		/* we need more data for the full list */
-		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
-			printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
-			return -1;
-		}
-	}
-
-	inq = scsi_datain_unmarshall(task);
-	if (inq == NULL) {
-		printf("failed to unmarshall inquiry datain blob\n");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-
-	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 		printf("LUN is not SBC device. Skipping test\n");
-		scsi_free_scsi_task(task);
 		return -2;
 	}
-
-	if (inq->protect) {
-		printf("LUN is formatted with protection information. Skipping test\n");
-		scsi_free_scsi_task(task);
-		return -2;
-	}
-
-	scsi_free_scsi_task(task);
-
-	/* find the size of the LUN */
-	task = iscsi_readcapacity10_sync(iscsi, lun, 0, 0);
-	if (task == NULL) {
-		printf("Failed to send readcapacity10 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc10 = scsi_datain_unmarshall(task);
-	if (rc10 == NULL) {
-		printf("failed to unmarshall readcapacity10 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	block_size = rc10->block_size;
-	scsi_free_scsi_task(task);
 
 
 	ret = 0;

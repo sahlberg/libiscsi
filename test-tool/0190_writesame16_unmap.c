@@ -20,17 +20,13 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0190_writesame16_unmap(const char *initiator, const char *url, int data_loss, int show_info)
+int T0190_writesame16_unmap(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	int full_size;
 	struct scsi_inquiry_logical_block_provisioning *inq_lbp;
 	int ret, i, lun;
-	uint32_t num_blocks;
-	int lbppb;
-	int lbpme;
 	int lbpws = 0;
 	int anc_sup = 0;
 
@@ -53,36 +49,11 @@ int T0190_writesame16_unmap(const char *initiator, const char *url, int data_los
 		return -1;
 	}
 
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send readcapacity16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("Readcapacity command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall readcapacity16 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-
-	num_blocks = rc16->returned_lba;
-	lbppb = 1 << rc16->lbppbe;
-	lbpme = rc16->lbpme;
-
-	scsi_free_scsi_task(task);
+	ret = 0;
 
 	if (lbpme == 0) {
 		printf("LBPME not set. Skip test for CPD page 0xB2 (logical block provisioning)\n");
-		goto test2;
+		goto finished;
 	}
 
 	/* Check that id we have logical block provisioning we also have the VPD page for it */
@@ -94,7 +65,7 @@ int T0190_writesame16_unmap(const char *initiator, const char *url, int data_los
 		printf("[FAILED]\n");
 		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test2;
+		goto finished;
 	}
 	full_size = scsi_datain_getfullsize(task);
 	if (full_size > task->datain.size) {
@@ -105,7 +76,7 @@ int T0190_writesame16_unmap(const char *initiator, const char *url, int data_los
 			printf("[FAILED]\n");
 			printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test2;
+			goto finished;
 		}
 	}
 
@@ -114,7 +85,7 @@ int T0190_writesame16_unmap(const char *initiator, const char *url, int data_los
 		printf("failed to unmarshall inquiry datain blob\n");
 		scsi_free_scsi_task(task);
 		ret = -1;
-		goto test2;
+		goto finished;
 	}
 
 	lbpws = inq_lbp->lbpws;
@@ -127,7 +98,6 @@ int T0190_writesame16_unmap(const char *initiator, const char *url, int data_los
 		printf("Device does not support WRITE_SAME16 for UNMAP. All WRITE_SAME16 commands to unmap should fail.\n");
 	}
 
-test2:
 	
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -155,7 +125,7 @@ test2:
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test3;
+			goto finished;
 		}
 		if (task->status        == SCSI_STATUS_CHECK_CONDITION
 		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
@@ -172,7 +142,7 @@ test2:
 				printf("WRITESAME16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 				scsi_free_scsi_task(task);
 				ret = -1;
-				goto test3;
+				goto finished;
 			}
 		} else {
 			if (task->status        != SCSI_STATUS_CHECK_CONDITION
@@ -182,7 +152,7 @@ test2:
 				printf("WRITESAME16 command should fail since LBPWS is 0 but failed with wrong sense code %s\n", iscsi_get_error(iscsi));
 				scsi_free_scsi_task(task);
 				ret = -1;
-				goto test3;
+				goto finished;
 			}
 		}
 
@@ -190,7 +160,7 @@ test2:
 	}
 	printf("[OK]\n");
 
-test3:
+
 	/* unmap the last 1 - 256 blocks at the end of the LUN */
 	printf("Unmapping last 1-256 blocks ... ");
 	if (lbpws == 0) {
@@ -210,7 +180,7 @@ test3:
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test4;
+			goto finished;
 		}
 		if (lbpws) {
 			if (task->status != SCSI_STATUS_GOOD) {
@@ -218,7 +188,7 @@ test3:
 				printf("WRITESAME16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 				scsi_free_scsi_task(task);
 				ret = -1;
-				goto test4;
+				goto finished;
 			}
 		} else {
 			if (task->status        != SCSI_STATUS_CHECK_CONDITION
@@ -228,14 +198,12 @@ test3:
 				printf("WRITESAME16 command should fail since LBPWS is 0 but failed with wrong sense code %s\n", iscsi_get_error(iscsi));
 				scsi_free_scsi_task(task);
 				ret = -1;
-				goto test4;
+				goto finished;
 			}
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
-
-test4:
 
 
 	/* Test that UNMAP=0 and ANCHOR==1 fails with check condition */
@@ -247,7 +215,7 @@ test4:
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test5;
+		goto finished;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
@@ -256,12 +224,11 @@ test4:
 		printf("WRITESAME16 with UNMAP=0 ANCHOR=1 failed with wrong sense code %s\n", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		ret = -1;
-		goto test5;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-test5:
 
 	/* Test UNMAP=1 and ANCHOR==1 */
 	printf("Try UNMAP==1 and ANCHOR==1 ... ");
@@ -275,7 +242,7 @@ test5:
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test5;
+		goto finished;
 	}
 	if (anc_sup == 0) {
 		if (task->status        != SCSI_STATUS_CHECK_CONDITION
@@ -285,7 +252,7 @@ test5:
 			printf("WRITESAME16 with UNMAP=1 ANCHOR=1 failed with wrong sense code %s\n", iscsi_get_error(iscsi));
 			scsi_free_scsi_task(task);
 			ret = -1;
-			goto test6;
+			goto finished;
 		}
 	} else {
 		if (task->status != SCSI_STATUS_GOOD) {
@@ -293,14 +260,11 @@ test5:
 			printf("WRITESAME16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
 			scsi_free_scsi_task(task);
 			ret = -1;
-			goto test6;
+			goto finished;
 		}
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
-
-test6:
-
 
 
 finished:

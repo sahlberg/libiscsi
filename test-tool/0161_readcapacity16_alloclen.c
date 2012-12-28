@@ -23,7 +23,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0161_readcapacity16_alloclen(const char *initiator, const char *url, int data_loss _U_, int show_info)
+int T0161_readcapacity16_alloclen(const char *initiator, const char *url)
 {
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -33,7 +33,7 @@ int T0161_readcapacity16_alloclen(const char *initiator, const char *url, int da
 	printf("=======================\n");
 	if (show_info) {
 		printf("Test allocation-length for READCAPACITY16\n");
-		printf("1, Readcapacity with alloclen==0 is not an error\n");
+		printf("1, READCAPACITY16 with alloclen==0 is not an error\n");
 		printf("\n");
 		return 0;
 	}
@@ -48,7 +48,6 @@ int T0161_readcapacity16_alloclen(const char *initiator, const char *url, int da
 
 
 	printf("READCAPACITY16 with AllocationLength==0 ... ");
-
 	task = malloc(sizeof(struct scsi_task));
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
@@ -68,20 +67,18 @@ int T0161_readcapacity16_alloclen(const char *initiator, const char *url, int da
 		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 
-		goto test2;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("READCAPACITY16 with AllocationLength==0 should not fail. Sense:%s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test2;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-
-test2:
 
 finished:
 	iscsi_logout_sync(iscsi);

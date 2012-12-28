@@ -20,13 +20,10 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0253_prefetch16_0blocks(const char *initiator, const char *url, int data_loss _U_, int show_info)
+int T0253_prefetch16_0blocks(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
-	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
-	uint64_t num_blocks;
 
 	printf("0253_prefetch16_0blocks:\n");
 	printf("===================\n");
@@ -45,29 +42,6 @@ int T0253_prefetch16_0blocks(const char *initiator, const char *url, int data_lo
 		printf("Failed to login to target\n");
 		return -1;
 	}
-
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	num_blocks = rc16->returned_lba;
-	scsi_free_scsi_task(task);
 
 	ret = 0;
 

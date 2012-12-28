@@ -21,13 +21,11 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0362_startstopunit_noloej(const char *initiator, const char *url, int data_loss, int show_info)
+int T0362_startstopunit_noloej(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_inquiry_standard *inq;
-	int ret, lun, removable;
-	int full_size;
+	int ret, lun;
 
 	printf("0362_startstopunit_noloej:\n");
 	printf("===================\n");
@@ -50,32 +48,6 @@ int T0362_startstopunit_noloej(const char *initiator, const char *url, int data_
 		printf("Failed to login to target\n");
 		return -1;
 	}
-
-	/* See how big this inquiry data is */
-	task = iscsi_inquiry_sync(iscsi, lun, 0, 0, 64);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
-		return -1;
-	}
-	full_size = scsi_datain_getfullsize(task);
-	if (full_size > task->datain.size) {
-		scsi_free_scsi_task(task);
-
-		/* we need more data for the full list */
-		if ((task = iscsi_inquiry_sync(iscsi, lun, 0, 0, full_size)) == NULL) {
-			printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
-			return -1;
-		}
-	}
-	inq = scsi_datain_unmarshall(task);
-	if (inq == NULL) {
-		printf("failed to unmarshall inquiry datain blob\n");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	removable = inq->rmb;
-
-	scsi_free_scsi_task(task);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -101,14 +73,14 @@ int T0362_startstopunit_noloej(const char *initiator, const char *url, int data_
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test2;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test2;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
@@ -120,7 +92,6 @@ int T0362_startstopunit_noloej(const char *initiator, const char *url, int data_
 	}
 
 
-test2:
 	/* in case the previous command did eject the media */
 	iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 1);
 
@@ -130,14 +101,14 @@ test2:
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test3;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test3;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
@@ -149,7 +120,6 @@ test2:
 	}
 
 
-test3:
 	/* in case the previous command did eject the media */
 	iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 1);
 
@@ -159,14 +129,14 @@ test3:
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test4;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test4;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
@@ -178,8 +148,6 @@ test3:
 	}
 
 
-
-test4:
 	/* in case the previous command did eject the media */
 	iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 1);
 
@@ -189,14 +157,14 @@ test4:
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test5;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test5;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
@@ -208,7 +176,6 @@ test4:
 	}
 
 
-test5:
 	/* in case the previous command did eject the media */
 	iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 1);
 
@@ -218,14 +185,14 @@ test5:
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test6;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test6;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
@@ -237,7 +204,6 @@ test5:
 	}
 
 
-test6:
 	/* in case the previous command did eject the media */
 	iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 1);
 
@@ -247,14 +213,14 @@ test6:
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test7;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test7;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
@@ -266,7 +232,6 @@ test6:
 	}
 
 
-test7:
 	/* in case the previous command did eject the media */
 	iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 1);
 
@@ -276,14 +241,14 @@ test7:
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test8;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test8;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
@@ -295,7 +260,6 @@ test7:
 	}
 
 
-test8:
 	/* in case the previous command did eject the media */
 	iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 1);
 
@@ -305,14 +269,14 @@ test8:
 	        printf("[FAILED]\n");
 		printf("Failed to send STARTSTOPUNIT command: %s\n", iscsi_get_error(iscsi));
 		ret = -1;
-		goto test9;
+		goto finished;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("[FAILED]\n");
 		printf("STARTSTOPUNIT command: failed with sense. %s\n", iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test9;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
@@ -324,7 +288,6 @@ test8:
 	}
 
 
-test9:
 	/* in case the previous command did eject the media */
 	iscsi_startstopunit_sync(iscsi, lun, 1, 0, 0, 0, 1, 1);
 

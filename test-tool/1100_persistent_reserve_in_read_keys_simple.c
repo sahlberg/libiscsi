@@ -21,7 +21,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T1100_persistent_reserve_in_read_keys_simple(const char *initiator, const char *url, int data_loss _U_, int show_info)
+int T1100_persistent_reserve_in_read_keys_simple(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;

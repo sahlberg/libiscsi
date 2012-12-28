@@ -25,7 +25,7 @@
 
 
 int T1140_persistent_reserve_access_check_ea(const char *initiator,
-    const char *url, int data_loss, int show_info)
+    const char *url)
 { 
 	struct iscsi_context *iscsi = NULL, *iscsi2 = NULL;
 	int ret;

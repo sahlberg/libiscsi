@@ -24,8 +24,6 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-uint32_t block_size;
-
 static int
 my_iscsi_add_data(struct iscsi_context *iscsi _U_, struct iscsi_data *data,
 	       unsigned char *dptr, int dsize, int pdualignment)
@@ -149,13 +147,10 @@ my_iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opc
 	return pdu;
 }
 
-int T1031_unsolicited_data_out(const char *initiator, const char *url,
-			       int data_loss _U_, int show_info)
+int T1031_unsolicited_data_out(const char *initiator, const char *url)
 {
 	struct iscsi_context *iscsi = NULL;
 	struct iscsi_context *iscsi2 = NULL;
-	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	int i, ret, lun;
 	unsigned char buf[1024];
 
@@ -174,29 +169,6 @@ int T1031_unsolicited_data_out(const char *initiator, const char *url,
 		printf("Failed to login to target\n");
 		return -1;
 	}
-
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	block_size = rc16->block_length;
-	scsi_free_scsi_task(task);
 
 
 	ret = 0;

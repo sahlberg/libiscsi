@@ -20,14 +20,11 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
-int T0192_writesame16_beyondeol(const char *initiator, const char *url, int data_loss _U_, int show_info)
+int T0192_writesame16_beyondeol(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	int ret, i, lun;
-	uint32_t block_size;
-	uint64_t num_blocks;
 	unsigned char buf[4096];
 
 	printf("0192_writesame16_beyondeol:\n");
@@ -47,30 +44,6 @@ int T0192_writesame16_beyondeol(const char *initiator, const char *url, int data
 		return -1;
 	}
 
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	block_size = rc16->block_length;
-	num_blocks = rc16->returned_lba;
-	scsi_free_scsi_task(task);
-
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
 		ret = -2;
@@ -89,7 +62,7 @@ int T0192_writesame16_beyondeol(const char *initiator, const char *url, int data
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test2;
+			goto finished;
 		}
 		if (task->status        == SCSI_STATUS_CHECK_CONDITION
 		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
@@ -105,7 +78,7 @@ int T0192_writesame16_beyondeol(const char *initiator, const char *url, int data
 			printf("WRITESAME16 command should fail when writing beyond end of device\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 		if (task->status        != SCSI_STATUS_CHECK_CONDITION
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
@@ -114,14 +87,13 @@ int T0192_writesame16_beyondeol(const char *initiator, const char *url, int data
 			printf("WRITESAME16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test2;
+			goto finished;
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 
 
-test2:
 	/* writing 1 - 256 blocks at LBA 2^63 */
 	printf("Writing 1-256 blocks at LBA 2^63 ... ");
 	for (i = 1; i <= 256; i++) {
@@ -131,14 +103,14 @@ test2:
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test3;
+			goto finished;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("WRITESAME16 command should fail when writing at LBA 2^63\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test3;
+			goto finished;
 		}
 		if (task->status        != SCSI_STATUS_CHECK_CONDITION
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
@@ -147,14 +119,13 @@ test2:
 			printf("WRITESAME16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test3;
+			goto finished;
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 
 
-test3:
 	/* write 1 - 256 blocks at LBA -1 */
 	printf("Writing 1-256 blocks at LBA -1 ... ");
 	for (i = 1; i <= 256; i++) {
@@ -164,14 +135,14 @@ test3:
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));
 			ret = -1;
-			goto test4;
+			goto finished;
 		}
 		if (task->status == SCSI_STATUS_GOOD) {
 		        printf("[FAILED]\n");
 			printf("WRITESAME16 command should fail when reading at LBA -1\n");
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test4;
+			goto finished;
 		}
 		if (task->status        != SCSI_STATUS_CHECK_CONDITION
 			|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
@@ -180,14 +151,12 @@ test3:
 			printf("WRITESAME16 failed but with the wrong sense code. It should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
 			ret = -1;
 			scsi_free_scsi_task(task);
-			goto test4;
+			goto finished;
 		}
 		scsi_free_scsi_task(task);
 	}
 	printf("[OK]\n");
 
-
-test4:
 
 finished:
 	iscsi_logout_sync(iscsi);

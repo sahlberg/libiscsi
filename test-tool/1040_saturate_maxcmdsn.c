@@ -41,14 +41,12 @@ static void test_cb(struct iscsi_context *iscsi _U_, int status,
 
 #define T1040_NO_OF_WRITES (1024)
 
-int T1040_saturate_maxcmdsn(const char *initiator, const char *url, int data_loss, int show_info)
+int T1040_saturate_maxcmdsn(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	int i, ret, lun;
-	uint32_t block_size;
-	unsigned char *data;
+	unsigned char *data = NULL;
 	struct iscsi_async_state test_state;
 
 	printf("1040_saturate_maxcmdsn:\n");
@@ -66,35 +64,11 @@ int T1040_saturate_maxcmdsn(const char *initiator, const char *url, int data_los
 		return -1;
 	}
 
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	block_size = rc16->block_length;
-
-	if (T1040_NO_OF_WRITES*2*iscsi->first_burst_length > rc16->block_length*(rc16->returned_lba +1)) {
+	if (T1040_NO_OF_WRITES*2*iscsi->first_burst_length > block_size * num_blocks) {
 		printf("target is too small for this test. at least %u bytes are required\n",T1040_NO_OF_WRITES*2*iscsi->first_burst_length);
 		ret = -1;
-		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	scsi_free_scsi_task(task);
 
 
 	if (!data_loss) {
@@ -136,8 +110,8 @@ int T1040_saturate_maxcmdsn(const char *initiator, const char *url, int data_los
 			if (task == NULL) {
 					printf("[FAILED]\n");
 				printf("Failed to send WRITE10 command: %s\n", iscsi_get_error(iscsi));
-				ret++;
-				goto test2;
+				ret = -1;
+				goto finished;
 			}
 		}
 	
@@ -148,23 +122,21 @@ int T1040_saturate_maxcmdsn(const char *initiator, const char *url, int data_los
 		if (num_cmds_in_flight != 0) {
 	        printf("[FAILED]\n");
 			printf("Did not complete all I/O before deadline.\n");
-			ret++;
-			goto test2;
+			ret = -1;
+			goto finished;
 		} else if (test_state.status != 0) {
 	        printf("[FAILED]\n");
 			printf("Not all I/O commands succeeded.\n");
-			ret++;
-			goto test2;
+			ret = -1;
+			goto finished;
 		}
 		printf("[OK]\n");
 		run++;
 	} while (iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_YES);
 	
 
-test2:
-	free(data);
-
 finished:
+	free(data);
 	iscsi_destroy_context(iscsi);
 	return ret;
 }

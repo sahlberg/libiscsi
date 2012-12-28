@@ -37,8 +37,7 @@ static void mgmt_cb(struct iscsi_context *iscsi _U_, int status _U_,
 	mgmt_task->finished = 1;
 }
 
-int T0424_reserve6_target_reset(const char *initiator, const char *url,
-				int data_loss _U_, int show_info)
+int T0424_reserve6_target_reset(const char *initiator, const char *url)
 {
 	struct iscsi_context *iscsi = NULL, *iscsi2 = NULL;
 	struct scsi_task *task;

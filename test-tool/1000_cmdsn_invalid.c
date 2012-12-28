@@ -56,13 +56,11 @@ static void test_cb(struct iscsi_context *iscsi _U_, int status,
 }
 
 
-int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, int show_info)
+int T1000_cmdsn_invalid(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_readcapacity16 *rc16;
 	int ret, lun;
-	uint32_t block_size;
 	unsigned char data[4096 * 2];
 	struct iscsi_async_state test_state;
 
@@ -82,30 +80,6 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 		printf("Failed to login to target\n");
 		return -1;
 	}
-
-	/* find the size of the LUN */
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		goto finished;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
-		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
-		ret = -1;
-		scsi_free_scsi_task(task);
-		goto finished;
-	}
-	block_size = rc16->block_length;
-	scsi_free_scsi_task(task);
-
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set. Skipping test\n");
@@ -133,8 +107,8 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITE10 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test2;
+		ret = -1;
+		goto finished;
 	}
 	test_state.task     = task;
 	test_state.finished = 0;
@@ -143,15 +117,14 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url, int data_loss, i
 	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITE10 command successful. Should have failed with error\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test2;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
-test2:
 	/* in case the previous test failed the session */
 	iscsi_set_noautoreconnect(iscsi, 0);
 	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
@@ -170,8 +143,8 @@ test2:
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITE10 command: %s\n", iscsi_get_error(iscsi));
-		ret++;
-		goto test3;
+		ret = -1;
+		goto finished;
 	}
 	test_state.task     = task;
 	test_state.finished = 0;
@@ -180,15 +153,14 @@ test2:
 	if (task->status == SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
 		printf("WRITE10 command successful. Should have failed with error\n");
-		ret++;
+		ret = -1;
 		scsi_free_scsi_task(task);
-		goto test3;
+		goto finished;
 	}
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
 
-test3:
 	/* in case the previous test failed the session */
 	iscsi_set_noautoreconnect(iscsi, 0);
 
