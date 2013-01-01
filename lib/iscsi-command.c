@@ -40,6 +40,7 @@ iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 	case SCSI_STATUS_RESERVATION_CONFLICT:
 	case SCSI_STATUS_CHECK_CONDITION:
 	case SCSI_STATUS_GOOD:
+	case SCSI_STATUS_BUSY:
 	case SCSI_STATUS_ERROR:
 	case SCSI_STATUS_CANCELLED:
 		scsi_cbdata->callback(iscsi, status, scsi_cbdata->task,
@@ -393,6 +394,11 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	case SCSI_STATUS_RESERVATION_CONFLICT:
 		iscsi_set_error(iscsi, "RESERVATION CONFLICT");
 		pdu->callback(iscsi, SCSI_STATUS_RESERVATION_CONFLICT,
+			task, pdu->private_data);
+		break;
+	case SCSI_STATUS_BUSY:
+		iscsi_set_error(iscsi, "BUSY");
+		pdu->callback(iscsi, SCSI_STATUS_BUSY,
 			task, pdu->private_data);
 		break;
 	default:
