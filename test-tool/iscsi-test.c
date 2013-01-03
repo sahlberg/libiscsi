@@ -34,10 +34,17 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-private.h"
 #include "iscsi-test.h"
+#include "iscsi-support.h"
 
 #ifndef discard_const
 #define discard_const(ptr) ((void *)((intptr_t)(ptr)))
 #endif
+
+
+int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+
+
+#ifdef	STILL_HERE
 
 const char *initiatorname1 = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test";
 const char *initiatorname2 = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test-2";
@@ -55,12 +62,14 @@ int encserv;
 int data_loss;
 int show_info;
 
+#endif	/* STILL_HERE */
+
 struct scsi_test {
        const char *name;
        int (*test)(const char *initiator, const char *url);
 };
 
-struct scsi_test tests[] = {
+static struct scsi_test tests[] = {
 /* SCSI protocol tests */
 
 /* testunitready*/
@@ -280,14 +289,14 @@ struct scsi_test tests[] = {
 };
 
 	
-void print_usage(void)
+static void print_usage(void)
 {
 	fprintf(stderr, "Usage: iscsi-test [-?] [-?|--help] [--usage] [-t|--test=<test>] [-s|--skip=<test>]\n"
 			"\t\t[-l|--list] [--info] [-i|--initiator-name=<iqn-name>]\n"
 			"\t\t<iscsi-url>\n");
 }
 
-void print_help(void)
+static void print_help(void)
 {
 	fprintf(stderr, "Usage: iscsi-test [OPTION...] <iscsi-url>\n");
 	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
@@ -310,6 +319,8 @@ void print_help(void)
 	fprintf(stderr, "  \"ipv6-address\"   [fce0::1]\n");
 }
 
+
+#ifdef	STILL_HERE
 
 struct iscsi_context *iscsi_context_login(const char *initiatorname, const char *url, int *lun)
 {
@@ -397,7 +408,6 @@ void wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_st
 	}
 }
 
-static int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 int iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
@@ -1592,6 +1602,8 @@ int inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int m
 	scsi_free_scsi_task(task);
 	return 0;
 }
+
+#endif	/* STILL_HERE */
 
 
 int main(int argc, const char *argv[])

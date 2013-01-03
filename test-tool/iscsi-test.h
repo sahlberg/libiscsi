@@ -25,6 +25,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include "iscsi-support.h"
+
+#ifdef	STILL_HERE
+
 extern const char *initiatorname1;
 extern const char *initiatorname2;
 
@@ -40,13 +44,16 @@ extern enum scsi_inquiry_peripheral_device_type device_type;
 extern int sccs;
 extern int encserv;
 
+
 struct iscsi_context *iscsi_context_login(const char *initiatorname, const char *url, int *lun);
 
+#ifdef	STILL_HERE
 struct iscsi_async_state {
 	struct scsi_task *task;
 	int status;
 	int finished;
 };
+#endif	/* STILL_HERE */
 void wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_state *test_state);
 
 struct iscsi_pdu;
@@ -288,5 +295,7 @@ int verify16_nomedium(struct iscsi_context *iscsi, int lun, unsigned char *data,
 int verify16_miscompare(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize);
 int verify16_lbaoutofrange(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize);
 int inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize);
+
+#endif	/* STILL_HERE */
 
 #endif	/* _ISCSI_TEST_H_ */
