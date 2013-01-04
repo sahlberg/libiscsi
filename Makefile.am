@@ -163,6 +163,15 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/1144_persistent_reserve_access_check_eaar.c \
 	test-tool/1145_persistent_reserve_access_check_wear.c
 
+# libiscsi test tool using cunit
+
+noinst_PROGRAMS += bin/iscsi-test-cu
+# dist_noinst_HEADERS += test-tool/iscsi-test-cu.h
+bin_iscsi_test_cu_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/test-tool
+bin_iscsi_test_cu_LDFLAGS = -ldl
+bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
+	test-tool/iscsi-support.c
+
 endif
 
 # LD_PRELOAD library.
