@@ -36,10 +36,15 @@
 #include "iscsi-support.h"
 
 
+/*****************************************************************
+ * globals
+ *****************************************************************/
 const char *initiatorname1 =
 	"iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test";
 const char *initiatorname2 =
 	"iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test-2";
+
+const char *tgt_url;
 
 uint32_t block_size;
 uint64_t num_blocks;
@@ -50,9 +55,7 @@ int removable;
 enum scsi_inquiry_peripheral_device_type device_type;
 int sccs;
 int encserv;
-
 int data_loss;
-int show_info;
 
 
 int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);

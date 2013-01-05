@@ -27,6 +27,7 @@
 
 extern const char *initiatorname1;
 extern const char *initiatorname2;
+extern const char *tgt_url;
 
 extern uint32_t block_size;
 extern uint64_t num_blocks;
@@ -34,7 +35,6 @@ extern int lbpme;
 extern int lbppb;
 extern int lbpme;
 extern int data_loss;
-extern int show_info;
 extern int removable;
 extern enum scsi_inquiry_peripheral_device_type device_type;
 extern int sccs;

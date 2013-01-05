@@ -44,6 +44,8 @@
 int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 
+int show_info;
+
 struct scsi_test {
        const char *name;
        int (*test)(const char *initiator, const char *url);
