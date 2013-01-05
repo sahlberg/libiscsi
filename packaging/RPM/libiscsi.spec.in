@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.7.0
+Version: 1.8.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -91,6 +91,16 @@ The libiscsi-devel package includes the header files for libiscsi.
 %{_libdir}/libiscsi.so
 
 %changelog
+* Sat Jan 5 2013 : 1.8.0
+ - Add new debugging/logging subsystem.
+ - Collapse related structures into one and reduce amount of calls to malloc()/free()
+ - Add more functions to ld-iscsi so that we can write to luns too.
+ - Start adding unmarshalling of CDBs
+ - Add support for using iovectors for both reading and writing. When used this eliminates any data copy in libiscsi.
+ - Fix a deadlock between CMDSN and DATA-OUT PDUs.
+ - Redo how we handle FirstBurstLength/MaxRecvDataSegmentLength/ImmediateData/InitialR2T.
+ - Add a new nice API for handling sending NOPs from the application.
+ - Add tests for PersistentReservations.
 * Tue Nov 6 2012 : 1.7.0
  - Lots of additional tests.
  - ld_iscsi updates and bugfixes.
