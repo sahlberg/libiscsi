@@ -163,6 +163,10 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/1144_persistent_reserve_access_check_eaar.c \
 	test-tool/1145_persistent_reserve_access_check_wear.c
 
+endif
+
+
+if ISCSITEST
 # libiscsi test tool using cunit
 
 noinst_PROGRAMS += bin/iscsi-test-cu
