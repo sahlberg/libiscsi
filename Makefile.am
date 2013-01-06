@@ -58,6 +58,7 @@ dist_noinst_HEADERS += test-tool/iscsi-test.h
 bin_iscsi_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/test-tool
 bin_iscsi_test_LDFLAGS = -ldl
 bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
+	test-tool/iscsi-support.c \
 	test-tool/0000_testunitready_simple.c \
 	test-tool/0100_read10_simple.c test-tool/0101_read10_beyond_eol.c \
 	test-tool/0102_read10_0blocks.c test-tool/0103_read10_rdprotect.c \
@@ -161,6 +162,23 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/1143_persistent_reserve_access_check_wero.c \
 	test-tool/1144_persistent_reserve_access_check_eaar.c \
 	test-tool/1145_persistent_reserve_access_check_wear.c
+
+# libiscsi test tool using cunit
+
+noinst_PROGRAMS += bin/iscsi-test-cu
+# dist_noinst_HEADERS += test-tool/iscsi-test-cu.h
+bin_iscsi_test_cu_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/test-tool \
+	-I/usr/local/include
+bin_iscsi_test_cu_LDFLAGS = -ldl -lcunit
+bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
+	test-tool/iscsi-support.c \
+	test-tool/test_testunitready_simple.c \
+	test-tool/test_read10_simple.c \
+	test-tool/test_read10_beyond_eol.c \
+	test-tool/test_read10_0blocks.c \
+	test-tool/test_read10_rdprotect.c \
+	test-tool/test_read10_flags.c \
+	test-tool/test_read10_invalid.c
 
 endif
 
