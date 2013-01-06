@@ -29,6 +29,11 @@ extern const char *initiatorname1;
 extern const char *initiatorname2;
 extern const char *tgt_url;
 
+extern int loglevel;
+#define LOG_SILENT  0
+#define LOG_NORMAL  1
+#define LOG_VERBOSE 2
+
 extern uint32_t block_size;
 extern uint64_t num_blocks;
 extern int lbpme;

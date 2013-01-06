@@ -47,6 +47,7 @@
 
 #define	PROG	"iscsi-test-cu"
 
+int loglevel = LOG_NORMAL;
 
 /* XXX what is this for? */
 int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
@@ -319,12 +320,14 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			mode = CU_BRM_SILENT;
+			loglevel = LOG_SILENT;
 			break;
 		case 'n':
 			mode = CU_BRM_NORMAL;
 			break;
 		case 'v':
 			mode = CU_BRM_VERBOSE;	/* default */
+			loglevel = LOG_VERBOSE;
 			break;
 		default:
 			fprintf(stderr,

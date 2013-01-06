@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <inttypes.h>
 #include <string.h>
 #include <poll.h>
@@ -59,6 +60,27 @@ int data_loss;
 
 
 int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+
+static void logging(int level, const char *format, ...)
+{
+        va_list ap;
+	static char message[1024];
+	int ret;
+
+	if (loglevel < level) {
+		return;
+	}
+
+        va_start(ap, format);
+	ret = vsnprintf(message, 1024, format, ap);
+        va_end(ap);
+
+	if (ret < 0) {
+		return;
+	}
+
+	printf("%s\n", message);
+}
 
 
 struct iscsi_context *
@@ -642,23 +664,23 @@ testunitready(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
 
-	printf("Send TESTUNITREADY ... ");
+	logging(LOG_VERBOSE, "\nSend TESTUNITREADY (Expecting SUCCESS)");
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n",
-		    iscsi_get_error(iscsi));
+		logging(LOG_NORMAL,
+			"[FAILED] Failed to send TESTUNITREADY command: %s",
+			iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("TESTUNITREADY command: failed with sense. %s\n",
-		    iscsi_get_error(iscsi));
+		logging(LOG_NORMAL,
+			"[FAILED] TESTUNITREADY command: failed with sense. %s",
+			iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 	scsi_free_scsi_task(task);
-	printf("[OK]\n");
+	logging(LOG_VERBOSE, "[OK] TestUnitReady returned SUCCESS.");
 	return 0;
 }
 

@@ -40,6 +40,7 @@
 #define discard_const(ptr) ((void *)((intptr_t)(ptr)))
 #endif
 
+int loglevel = LOG_VERBOSE;
 
 int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
