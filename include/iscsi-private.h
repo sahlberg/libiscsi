@@ -40,11 +40,6 @@ extern "C" {
   + (iscsi->header_digest == ISCSI_HEADER_DIGEST_NONE?0:ISCSI_DIGEST_SIZE))
 
 #define SMALL_ALLOC_MAX_FREE (128) /* must be power of 2 */
-/* SMALL_ALLOC_SIZE is the size for small allocations. this should be
-   max(ISCSI_HEADER_SIZE, sizeof(struct iscsi_pdu), sizeof(struct iscsi_in_pdu))
-   rounded up to the next power of 2.
-   currently this is max(48+4, 128, 88) = 128 = 2^7 */
-#define SMALL_ALLOC_SIZE (128)
 
 struct iscsi_in_pdu {
 	struct iscsi_in_pdu *next;
@@ -139,6 +134,7 @@ struct iscsi_context {
 	int smallocs;
 	void* smalloc_ptrs[SMALL_ALLOC_MAX_FREE];
 	int smalloc_free;
+	size_t smalloc_size;
 
 	time_t last_reconnect;	
 };

@@ -29,7 +29,6 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <time.h>
-#include <assert.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "slist.h"
@@ -71,13 +70,13 @@ inline char* iscsi_strdup(struct iscsi_context *iscsi, const char* str) {
 
 inline void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size) {
 	void *ptr;
-	assert(size <= SMALL_ALLOC_SIZE);
+	if (size > iscsi->smalloc_size) return NULL;
 	if (iscsi->smalloc_free > 0) {
 		ptr = iscsi->smalloc_ptrs[--iscsi->smalloc_free];
-		memset(ptr, 0, SMALL_ALLOC_SIZE);
+		memset(ptr, 0, iscsi->smalloc_size);
 		iscsi->smallocs++;
 	} else {
-		ptr = iscsi_zmalloc(iscsi, SMALL_ALLOC_SIZE);
+		ptr = iscsi_zmalloc(iscsi, iscsi->smalloc_size);
 	}
 	return ptr;
 }
@@ -173,6 +172,16 @@ iscsi_create_context(const char *initiator_name)
 	if (getenv("LIBISCSI_BIND_INTERFACES") != NULL) {
 		iscsi_set_bind_interfaces(iscsi,getenv("LIBISCSI_BIND_INTERFACES"));
 	}
+
+	/* iscsi->smalloc_size is the size for small allocations. this should be
+	   max(ISCSI_HEADER_SIZE, sizeof(struct iscsi_pdu), sizeof(struct iscsi_in_pdu))
+	   rounded up to the next power of 2. */
+	iscsi->smalloc_size = 1;
+	size_t required = ISCSI_RAW_HEADER_SIZE + ISCSI_DIGEST_SIZE;
+	if (sizeof(struct iscsi_pdu) > required) required = sizeof(struct iscsi_pdu);
+	if (sizeof(struct iscsi_in_pdu) > required) required = sizeof(struct iscsi_in_pdu);
+	while (iscsi->smalloc_size < required) iscsi->smalloc_size <<= 1;
+	ISCSI_LOG(iscsi,5,"small allocation size is %d byte", iscsi->smalloc_size);
 
 	return iscsi;
 }

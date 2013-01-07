@@ -115,14 +115,14 @@ iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return;
 	}
 
-	if (pdu->outdata.size <= SMALL_ALLOC_SIZE) {
+	if (pdu->outdata.size <= (int)iscsi->smalloc_size) {
 		iscsi_sfree(iscsi, pdu->outdata.data);
 	} else {
 		iscsi_free(iscsi, pdu->outdata.data);
 	}
 	pdu->outdata.data = NULL;
 
-	if (pdu->indata.size <= SMALL_ALLOC_SIZE) {
+	if (pdu->indata.size <= (int)iscsi->smalloc_size) {
 		iscsi_sfree(iscsi, pdu->indata.data);
 	} else {
 		iscsi_free(iscsi, pdu->indata.data);
@@ -153,13 +153,13 @@ iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 	}
 
 	if (data->size == 0) {
-		if (aligned <= SMALL_ALLOC_SIZE) {
+		if (aligned <= iscsi->smalloc_size) {
 			data->data = iscsi_szmalloc(iscsi, aligned);
 		} else {
 			data->data = iscsi_malloc(iscsi, aligned);
 		}
 	} else {
-		if (aligned > SMALL_ALLOC_SIZE) {
+		if (aligned > iscsi->smalloc_size) {
 			data->data = iscsi_realloc(iscsi, data->data, aligned);
 		}
 	}
