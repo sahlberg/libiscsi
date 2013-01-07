@@ -38,7 +38,7 @@ test_read10_flags(void)
 	}
 
 
-	logging(LOG_VERBOSE, "Test READ10 flags");
+	logging(LOG_VERBOSE, "\nTest READ10 flags");
 
 
 	logging(LOG_VERBOSE, "Test READ10 with DPO==1");
