@@ -115,14 +115,14 @@ iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return;
 	}
 
-	if (pdu->outdata.size <= (int)iscsi->smalloc_size) {
+	if (pdu->outdata.size <= iscsi->smalloc_size) {
 		iscsi_sfree(iscsi, pdu->outdata.data);
 	} else {
 		iscsi_free(iscsi, pdu->outdata.data);
 	}
 	pdu->outdata.data = NULL;
 
-	if (pdu->indata.size <= (int)iscsi->smalloc_size) {
+	if (pdu->indata.size <= iscsi->smalloc_size) {
 		iscsi_sfree(iscsi, pdu->indata.data);
 	} else {
 		iscsi_free(iscsi, pdu->indata.data);
