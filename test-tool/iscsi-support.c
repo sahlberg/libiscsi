@@ -61,7 +61,7 @@ int data_loss;
 
 int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
-static void logging(int level, const char *format, ...)
+void logging(int level, const char *format, ...)
 {
         va_list ap;
 	static char message[1024];
@@ -664,7 +664,7 @@ testunitready(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "\nSend TESTUNITREADY (Expecting SUCCESS)");
+	logging(LOG_VERBOSE, "Send TESTUNITREADY (Expecting SUCCESS)");
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
@@ -937,6 +937,135 @@ prefetch16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, int num,
 
 	printf("[OK]\n");
 	scsi_free_scsi_task(task);
+	return 0;
+}
+
+int
+read10(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int rdprotect, 
+       int dpo, int fua, int fua_nv, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send READ10 LBA:%d blocks:%d rdprotect:%d "
+	       "dpo:%d fua:%d fua_nv:%d group:%d",
+	       lba, datalen / blocksize, rdprotect,
+	       dpo, fua, fua_nv, group);
+
+	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blocksize,
+				 rdprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READ10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] READ10 command: "
+			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	if (data != NULL) {
+		memcpy(data, task->datain.data, task->datain.size);
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] READ10 returned SUCCESS.");
+	return 0;
+}
+
+int
+read10_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int rdprotect, 
+       int dpo, int fua, int fua_nv, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send READ10 (Expecting INVALID_FIELD_IN_CDB) "
+		"LBA:%d blocks:%d rdprotect:%d "
+		"dpo:%d fua:%d fua_nv:%d group:%d",
+		lba, datalen / blocksize, rdprotect,
+		dpo, fua, fua_nv, group);
+
+	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blocksize,
+				 rdprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READ10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] READ10 successful but should "
+			"have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		logging(LOG_NORMAL, "[FAILED] READ10 failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"INVALID_FIELD_IN_CDB. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	if (data != NULL) {
+		memcpy(data, task->datain.data, task->datain.size);
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] READ10 returned ILLEGAL_REQUEST/INVALID_FIELD_IB_CDB.");
+	return 0;
+}
+
+int
+read10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int rdprotect, 
+       int dpo, int fua, int fua_nv, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send READ10 (Expecting LBA_OUT_OF_RANGE) "
+		"LBA:%d blocks:%d rdprotect:%d "
+		"dpo:%d fua:%d fua_nv:%d group:%d",
+		lba, datalen / blocksize, rdprotect,
+		dpo, fua, fua_nv, group);
+
+	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blocksize,
+				 rdprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READ10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] READ10 successful but should "
+			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		logging(LOG_NORMAL, "[FAILED] READ10 failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	if (data != NULL) {
+		memcpy(data, task->datain.data, task->datain.size);
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] READ10 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
 	return 0;
 }
 

@@ -28,7 +28,7 @@
 void
 test_read10_rdprotect(void)
 {
-	int i;
+	int i, ret;
 
 
 	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
@@ -37,32 +37,14 @@ test_read10_rdprotect(void)
 	}
 
 	/*
-	 * Try out Different non-zero values for RDPROTECT.
+	 * Try out different non-zero values for RDPROTECT.
 	 * They should all fail.
 	 */
-
-	/* Read10 with non-zero RDPROTECT ... */
+	logging(LOG_VERBOSE, "\nTest READ10 with non-zero RDPROTECT");
 	for (i = 1; i < 8; i++) {
-		struct scsi_task *task_ret;
-
-		task = malloc(sizeof(struct scsi_task));
-		CU_ASSERT_PTR_NOT_NULL(task);
-
-		memset(task, 0, sizeof(struct scsi_task));
-		task->cdb[0] = SCSI_OPCODE_READ10;
-		task->cdb[1] = (i<<5)&0xe0;
-		task->cdb[8] = 1;
-		task->cdb_size = 10;
-		task->xfer_dir = SCSI_XFER_READ;
-		task->expxferlen = block_size;
-
-		task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, NULL);
-		CU_ASSERT_PTR_NOT_NULL(task_ret);
-
-		CU_ASSERT_EQUAL(task->status, SCSI_STATUS_CHECK_CONDITION);
-		CU_ASSERT_EQUAL(task->sense.key, SCSI_SENSE_ILLEGAL_REQUEST);
-		CU_ASSERT_EQUAL(task->sense.ascq, SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB);
-		scsi_free_scsi_task(task);
-		task = NULL;
+		ret = read10_invalidfieldincdb(iscsic, tgt_lun, 0,
+					       block_size, block_size,
+					       i, 0, 0, 0, 0, NULL);
+		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

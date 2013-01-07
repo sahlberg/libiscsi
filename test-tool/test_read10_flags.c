@@ -28,10 +28,8 @@
 void
 test_read10_flags(void)
 { 
-	struct scsi_task *task_ret;
+	int ret;
 
-
-	fprintf(stderr, "DEBUG: %s: entering\n", __FUNCTION__);
 
 	/* This test is only valid for SBC devices */
 	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
@@ -39,93 +37,42 @@ test_read10_flags(void)
 		return;
 	}
 
-	/* Try out READ10 with DPO : 1 */
-	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
 
-	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[1] = 0x10;
-	task->cdb[8] = 1;
-	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_READ;
-	task->expxferlen = block_size;
+	logging(LOG_VERBOSE, "Test READ10 flags");
 
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, NULL);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
-	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
-	scsi_free_scsi_task(task);
-	task = NULL;
 
-	/* Try out READ10 with FUA : 1  FUA_NV : 0 */
-	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
+	logging(LOG_VERBOSE, "Test READ10 with DPO==1");
+	ret = read10(iscsic, tgt_lun, 0,
+		     block_size, block_size,
+		     0, 1, 0, 0, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
 
-	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[1] = 0x08;
-	task->cdb[8] = 1;
-	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_READ;
-	task->expxferlen = block_size;
 
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, NULL);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
-	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
-	scsi_free_scsi_task(task);
-	task = NULL;
+	logging(LOG_VERBOSE, "Test READ10 with FUA==1 FUA_NV==0");
+	ret = read10(iscsic, tgt_lun, 0,
+		     block_size, block_size,
+		     0, 0, 1, 0, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
 
-	/* Try out READ10 with FUA : 1  FUA_NV : 1 */
-	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
 
-	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[1] = 0x0a;
-	task->cdb[8] = 1;
-	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_READ;
-	task->expxferlen = block_size;
+	logging(LOG_VERBOSE, "Test READ10 with FUA==1 FUA_NV==1");
+	ret = read10(iscsic, tgt_lun, 0,
+		     block_size, block_size,
+		     0, 0, 1, 1, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
 
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, NULL);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
-	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
-	scsi_free_scsi_task(task);
-	task = NULL;
 
-	/* Try out READ10 with FUA : 0  FUA_NV : 1 */
-	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
+	logging(LOG_VERBOSE, "Test READ10 with FUA==0 FUA_NV==1");
+	ret = read10(iscsic, tgt_lun, 0,
+		     block_size, block_size,
+		     0, 0, 0, 1, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
 
-	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[1] = 0x02;
-	task->cdb[8] = 1;
-	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_READ;
-	task->expxferlen = block_size;
 
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, NULL);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
-	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
-	scsi_free_scsi_task(task);
-	task = NULL;
 
-	/* Try out READM10 with DPO : 1 FUA : 1  FUA_NV : 1 */
-	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
-
-	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[1] = 0x18;
-	task->cdb[8] = 1;
-	task->cdb_size = 10;
-	task->xfer_dir = SCSI_XFER_READ;
-	task->expxferlen = block_size;
-
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, NULL);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
-	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
-	scsi_free_scsi_task(task);
-	task = NULL;
+	logging(LOG_VERBOSE, "Test READ10 with DPO==1 FUA==1 FUA_NV==1");
+	ret = read10(iscsic, tgt_lun, 0,
+		     block_size, block_size,
+		     0, 1, 1, 1, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
 }

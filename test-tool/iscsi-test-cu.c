@@ -324,6 +324,7 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			mode = CU_BRM_NORMAL;
+			loglevel = LOG_NORMAL;
 			break;
 		case 'v':
 			mode = CU_BRM_VERBOSE;	/* default */

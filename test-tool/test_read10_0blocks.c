@@ -26,48 +26,32 @@
 void
 test_read10_0blocks(void)
 {
-	/* read zero blocks at LBA 0 ... */
-	task = iscsi_read10_sync(iscsic, tgt_lun, 0, 0, block_size,
-	    0, 0, 0, 0, 0);
-	CU_ASSERT_PTR_NOT_NULL(task);
-	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
-	scsi_free_scsi_task(task);
-	task = NULL;
+	int ret;
 
-	/* READ10 0blocks at one block beyond <end-of-LUN> ... */
+	logging(LOG_VERBOSE, "\nTest READ10 0-blocks at LBA==0");
+	ret = read10(iscsic, tgt_lun, 0, 0, block_size,
+		     0, 0, 0, 0, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
+
 	if (num_blocks > 0x80000000) {
 		CU_PASS("[SKIPPED] LUN is too big");
 		return;
 	}
-	task = iscsi_read10_sync(iscsic, tgt_lun, num_blocks + 1, 0,
-	    block_size, 0, 0, 0, 0, 0);
-	CU_ASSERT_PTR_NOT_NULL(task);
-	CU_ASSERT_NOT_EQUAL(task->status, SCSI_STATUS_GOOD);
-	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_CHECK_CONDITION);
-	CU_ASSERT_EQUAL(task->sense.key, SCSI_SENSE_ILLEGAL_REQUEST);
-	CU_ASSERT_EQUAL(task->sense.ascq, SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE);
-	scsi_free_scsi_task(task);
-	task = NULL;
 
-	/* READ10 0blocks at LBA 2^31 ... */
-	task = iscsi_read10_sync(iscsic, tgt_lun, 0x80000000, 0, block_size,
-	    0, 0, 0, 0, 0);
-	CU_ASSERT_PTR_NOT_NULL(task);
-	CU_ASSERT_NOT_EQUAL(task->status, SCSI_STATUS_GOOD);
-	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_CHECK_CONDITION);
-	CU_ASSERT_EQUAL(task->sense.key, SCSI_SENSE_ILLEGAL_REQUEST);
-	CU_ASSERT_EQUAL(task->sense.ascq, SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE);
-	scsi_free_scsi_task(task);
-	task = NULL;
+	logging(LOG_VERBOSE, "Test READ10 0-blocks one block past end-of-LUN");
+	ret = read10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
+				   block_size, 0, 0, 0, 0, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
 
-	/* READ10 0blocks at LBA -1 ... */
-	task = iscsi_read10_sync(iscsic, tgt_lun, -1, 0, block_size,
-	    0, 0, 0, 0, 0);
-	CU_ASSERT_PTR_NOT_NULL(task);
-	CU_ASSERT_NOT_EQUAL(task->status, SCSI_STATUS_GOOD);
-	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_CHECK_CONDITION);
-	CU_ASSERT_EQUAL(task->sense.key, SCSI_SENSE_ILLEGAL_REQUEST);
-	CU_ASSERT_EQUAL(task->sense.ascq, SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE);
-	scsi_free_scsi_task(task);
-	task = NULL;
+
+	logging(LOG_VERBOSE, "Test READ10 0-blocks at LBA==2^31");
+	ret = read10_lbaoutofrange(iscsic, tgt_lun, 0x80000000, 0, block_size,
+				   0, 0, 0, 0, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
+
+
+	logging(LOG_VERBOSE, "Test READ10 0-blocks at LBA==-1");
+	ret = read10_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
+				   0, 0, 0, 0, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
 }

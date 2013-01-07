@@ -22,32 +22,28 @@
 
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
+#include "iscsi-support.h"
 #include "iscsi-test-cu.h"
 
 
 void
 test_read10_simple(void)
 {
-	int i;
+	int i, ret;
 
 
-	/* read the first 1 - 256 blocks at the start of the LUN */
+	logging(LOG_VERBOSE, "\nTest READ10 of 1-256 blocks at the start of the LUN");
 	for (i = 1; i <= 256; i++) {
-		task = iscsi_read10_sync(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0);
-		CU_ASSERT_PTR_NOT_NULL(task);
-		CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
-		scsi_free_scsi_task(task);
-		task = NULL;
+		ret = read10(iscsic, tgt_lun, 0, i * block_size,
+		    block_size, 0, 0, 0, 0, 0, NULL);
+		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-	/* read the last 1 - 256 blocks at the end of the LUN */
+
+	logging(LOG_VERBOSE, "Test READ10 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
-		task = iscsi_read10_sync(iscsic, tgt_lun, num_blocks +1 - i,
-		    i * block_size, block_size, 0, 0, 0, 0, 0);
-		CU_ASSERT_PTR_NOT_NULL(task);
-		CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
-		scsi_free_scsi_task(task);
-		task = NULL;
+		ret = read10(iscsic, tgt_lun, num_blocks +1 - i,
+		    i * block_size, block_size, 0, 0, 0, 0, 0, NULL);
+		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

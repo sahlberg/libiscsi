@@ -28,6 +28,7 @@ test_testunitready_simple(void)
 {
 	int ret;
 
+	logging(LOG_VERBOSE, "\nTest TESTUNITREADY");
 	ret = testunitready(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 }
