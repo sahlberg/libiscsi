@@ -30,15 +30,13 @@ test_read10_flags(void)
 { 
 	int ret;
 
+	logging(LOG_VERBOSE, "\nTest READ10 flags");
 
 	/* This test is only valid for SBC devices */
 	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 		CU_PASS("[SKIPPED] LUN is not SBC device. Skipping test");
 		return;
 	}
-
-
-	logging(LOG_VERBOSE, "\nTest READ10 flags");
 
 
 	logging(LOG_VERBOSE, "Test READ10 with DPO==1");
@@ -67,7 +65,6 @@ test_read10_flags(void)
 		     block_size, block_size,
 		     0, 0, 0, 1, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
-
 
 
 	logging(LOG_VERBOSE, "Test READ10 with DPO==1 FUA==1 FUA_NV==1");

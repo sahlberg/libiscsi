@@ -47,7 +47,7 @@
 
 #define	PROG	"iscsi-test-cu"
 
-int loglevel = LOG_NORMAL;
+int loglevel = LOG_SILENT;
 
 /* XXX what is this for? */
 int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
@@ -282,12 +282,13 @@ main(int argc, char *argv[])
 		{ "silent", no_argument, 0, 's' },
 		{ "normal", no_argument, 0, 'n' },
 		{ "verbose", no_argument, 0, 'v' },
+		{ "Verbose-scsi", no_argument, 0, 'V' },
 		{ NULL, 0, 0, 0 }
 	};
 	int c;
 	int opt_idx = 0;
 
-	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsnv", long_opts,
+	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsnvV", long_opts,
 		    &opt_idx)) > 0) {
 		switch (c) {
 		case 'h':
@@ -320,14 +321,14 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			mode = CU_BRM_SILENT;
-			loglevel = LOG_SILENT;
 			break;
 		case 'n':
 			mode = CU_BRM_NORMAL;
-			loglevel = LOG_NORMAL;
 			break;
 		case 'v':
 			mode = CU_BRM_VERBOSE;	/* default */
+			break;
+		case 'V':
 			loglevel = LOG_VERBOSE;
 			break;
 		default:
