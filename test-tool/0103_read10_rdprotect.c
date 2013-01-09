@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <talloc.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
@@ -55,7 +56,7 @@ int T0103_read10_rdprotect(const char *initiator, const char *url)
 	printf("Read10 with non-zero RDPROTECT ... ");
 	for (i = 1; i < 8; i++) {
 
-		task = malloc(sizeof(struct scsi_task));
+		task = talloc_zero(iscsi, struct scsi_task);
 
 		if (task == NULL) {
 			printf("Failed to allocate task structure\n");
@@ -63,7 +64,6 @@ int T0103_read10_rdprotect(const char *initiator, const char *url)
 			goto finished;
 		}
 
-		memset(task, 0, sizeof(struct scsi_task));
 		task->cdb[0] = SCSI_OPCODE_READ10;
 		task->cdb[1] = (i<<5)&0xe0;
 		task->cdb[8] = 1;

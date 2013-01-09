@@ -35,42 +35,16 @@
 #include <string.h>
 #include <stdint.h>
 #include <errno.h>
+#include <talloc.h>
 #include "slist.h"
 #include "scsi-lowlevel.h"
 
 void scsi_task_set_iov_out(struct scsi_task *task, struct scsi_iovec *iov, int niov);
 
-struct scsi_allocated_memory {
-	struct scsi_allocated_memory *next;
-	char buf[0];
-};
-
 void
 scsi_free_scsi_task(struct scsi_task *task)
 {
-	struct scsi_allocated_memory *mem;
-
-	while ((mem = task->mem)) {
-		   SLIST_REMOVE(&task->mem, mem);
-		   free(mem);
-	}
-
-	free(task->datain.data);
-	free(task);
-}
-
-void *
-scsi_malloc(struct scsi_task *task, size_t size)
-{
-	struct scsi_allocated_memory *mem;
-
-	mem = malloc(sizeof(struct scsi_allocated_memory) + size);
-	if (mem == NULL) {
-		return NULL;
-	}
-	memset(mem, 0, sizeof(struct scsi_allocated_memory) + size);
-	SLIST_ADD(&task->mem, mem);
-	return &mem->buf[0];
+	talloc_free(task);
 }
 
 struct value_string {
@@ -239,16 +213,15 @@ scsi_set_uint16(unsigned char *c, uint16_t val)
  * TESTUNITREADY
  */
 struct scsi_task *
-scsi_cdb_testunitready(void)
+scsi_cdb_testunitready(TALLOC_CTX *mem_ctx)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_TESTUNITREADY;
 
 	task->cdb_size   = 6;
@@ -263,16 +236,15 @@ scsi_cdb_testunitready(void)
  * REPORTLUNS
  */
 struct scsi_task *
-scsi_reportluns_cdb(int report_type, int alloc_len)
+scsi_cdb_reportluns(TALLOC_CTX *mem_ctx, int report_type, int alloc_len)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_REPORTLUNS;
 	task->cdb[2]   = report_type;
 	scsi_set_uint32(&task->cdb[6], alloc_len);
@@ -322,7 +294,7 @@ scsi_reportluns_datain_unmarshall(struct scsi_task *task)
 	}
 
 	num_luns = list_size / 8 - 1;
-	list = scsi_malloc(task, offsetof(struct scsi_reportluns_list, luns)
+	list = talloc_size(task, offsetof(struct scsi_reportluns_list, luns)
 			   + sizeof(uint16_t) * num_luns);
 	if (list == NULL) {
 		return NULL;
@@ -340,16 +312,15 @@ scsi_reportluns_datain_unmarshall(struct scsi_task *task)
  * READCAPACITY10
  */
 struct scsi_task *
-scsi_cdb_readcapacity10(int lba, int pmi)
+scsi_cdb_readcapacity10(TALLOC_CTX *mem_ctx, int lba, int pmi)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_READCAPACITY10;
 
 	scsi_set_uint32(&task->cdb[2], lba);
@@ -369,7 +340,7 @@ scsi_cdb_readcapacity10(int lba, int pmi)
  * READTOC
  */
 struct scsi_task *
-scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len)
+scsi_cdb_readtoc(TALLOC_CTX *mem_ctx, int msf, int format, int track_session, uint16_t alloc_len)
 {
 	struct scsi_task *task;
 
@@ -379,12 +350,11 @@ scsi_cdb_readtoc(int msf, int format, int track_session, uint16_t alloc_len)
 		return NULL;
 	}
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_READTOC;
 
 	if (msf) {
@@ -509,7 +479,7 @@ scsi_readtoc_datain_unmarshall(struct scsi_task *task)
 	/* Remove header size (4) to get bytes in descriptor list */
 	num_desc = (data_len - 4) / 8;
 
-	list = scsi_malloc(task, offsetof(struct scsi_readtoc_list, desc)
+	list = talloc_size(task, offsetof(struct scsi_readtoc_list, desc)
 			   + sizeof(struct scsi_readtoc_desc) * num_desc);
 	if (list == NULL) {
 		return NULL;
@@ -530,16 +500,15 @@ scsi_readtoc_datain_unmarshall(struct scsi_task *task)
  * RESERVE6
  */
 struct scsi_task *
-scsi_cdb_reserve6(void)
+scsi_cdb_reserve6(TALLOC_CTX *mem_ctx)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_RESERVE6;
 
 	task->cdb_size = 6;
@@ -551,16 +520,15 @@ scsi_cdb_reserve6(void)
  * RELEASE10
  */
 struct scsi_task *
-scsi_cdb_release6(void)
+scsi_cdb_release6(TALLOC_CTX *mem_ctx)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_RELEASE6;
 
 	task->cdb_size = 6;
@@ -583,8 +551,7 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 {
 	switch (scsi_serviceactionin_sa(task)) {
 	case SCSI_READCAPACITY16: {
-		struct scsi_readcapacity16 *rc16 = scsi_malloc(task,
-							       sizeof(*rc16));
+		struct scsi_readcapacity16 *rc16 = talloc(task, struct scsi_readcapacity16);
 		if (rc16 == NULL) {
 			return NULL;
 		}
@@ -601,8 +568,7 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 		return rc16;
 	}
 	case SCSI_GET_LBA_STATUS: {
-		struct scsi_get_lba_status *gls = scsi_malloc(task,
-							      sizeof(*gls));
+		struct scsi_get_lba_status *gls = talloc(task, struct scsi_get_lba_status);
 		int32_t len = scsi_get_uint32(&task->datain.data[0]);
 		int i;
 
@@ -616,10 +582,9 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 		len = len / 16;
 
 		gls->num_descriptors = len;
-		gls->descriptors = scsi_malloc(task,
+		gls->descriptors = talloc_size(gls,
 					       sizeof(*gls->descriptors) * len);
 		if (gls->descriptors == NULL) {
-			free(gls);
 			return NULL;
 		}
 
@@ -676,7 +641,7 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 	case SCSI_PERSISTENT_RESERVE_READ_KEYS:
 		i = scsi_get_uint32(&task->datain.data[4]);
 
-		rk = scsi_malloc(task, offsetof(struct scsi_persistent_reserve_in_read_keys, keys) + i);
+		rk = talloc_size(task, offsetof(struct scsi_persistent_reserve_in_read_keys, keys) + i);
 		if (rk == NULL) {
 			return NULL;
 		}
@@ -696,7 +661,7 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 			struct scsi_persistent_reserve_in_read_reservation,
 			reserved) + i;
 
-		rr = scsi_malloc(task, alloc_sz);
+		rr = talloc_size(task, alloc_sz);
 		if (rr == NULL) {
 			return NULL;
 		}
@@ -713,7 +678,7 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 		return rr;
 	}
 	case SCSI_PERSISTENT_RESERVE_REPORT_CAPABILITIES:
-		rc = scsi_malloc(task, sizeof(struct scsi_persistent_reserve_in_report_capabilities));
+		rc = talloc(task, struct scsi_persistent_reserve_in_report_capabilities);
 		if (rc == NULL) {
 			return NULL;
 		}
@@ -778,7 +743,8 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 		}
 
 		len = scsi_get_uint32(&task->datain.data[0]);
-		rsoc = scsi_malloc(task, sizeof(struct scsi_report_supported_op_codes) + len);
+		//TODO offsetof ?
+		rsoc = talloc_size(task, sizeof(struct scsi_report_supported_op_codes) + len);
 		if (rsoc == NULL) {
 			return NULL;
 		}
@@ -821,16 +787,15 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
  * MAINTENANCE In / Read Supported Op Codes
  */
 struct scsi_task *
-scsi_cdb_report_supported_opcodes(int return_timeouts, uint32_t alloc_len)
+scsi_cdb_report_supported_opcodes(TALLOC_CTX *mem_ctx, int return_timeouts, uint32_t alloc_len)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_MAINTENANCE_IN;
 	task->cdb[1]   = SCSI_REPORT_SUPPORTED_OP_CODES;
 	task->cdb[2]   = SCSI_REPORT_SUPPORTING_OPS_ALL;
@@ -873,7 +838,7 @@ scsi_readcapacity10_datain_unmarshall(struct scsi_task *task)
 	if (task->datain.size < 8) {
 		return NULL;
 	}
-	rc10 = scsi_malloc(task, sizeof(struct scsi_readcapacity10));
+	rc10 = talloc(task, struct scsi_readcapacity10);
 	if (rc10 == NULL) {
 		return NULL;
 	}
@@ -888,16 +853,15 @@ scsi_readcapacity10_datain_unmarshall(struct scsi_task *task)
  * INQUIRY
  */
 struct scsi_task *
-scsi_cdb_inquiry(int evpd, int page_code, int alloc_len)
+scsi_cdb_inquiry(TALLOC_CTX *mem_ctx, int evpd, int page_code, int alloc_len)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_INQUIRY;
 
 	if (evpd) {
@@ -959,7 +923,9 @@ scsi_inquiry_datain_getfullsize(struct scsi_task *task)
 static struct scsi_inquiry_standard *
 scsi_inquiry_unmarshall_standard(struct scsi_task *task)
 {
-	struct scsi_inquiry_standard *inq = scsi_malloc(task, sizeof(*inq));
+	struct scsi_inquiry_standard *inq =
+		talloc(task, struct scsi_inquiry_standard);
+
 	if (inq == NULL) {
 		return NULL;
 	}
@@ -1004,8 +970,9 @@ scsi_inquiry_unmarshall_standard(struct scsi_task *task)
 static struct scsi_inquiry_supported_pages *
 scsi_inquiry_unmarshall_supported_pages(struct scsi_task *task)
 {
-	struct scsi_inquiry_supported_pages *inq = scsi_malloc(task,
-							       sizeof(*inq));
+	struct scsi_inquiry_supported_pages *inq =
+		talloc(task, struct scsi_inquiry_supported_pages);
+
 	if (inq == NULL) {
 		return NULL;
 	}
@@ -1014,7 +981,7 @@ scsi_inquiry_unmarshall_supported_pages(struct scsi_task *task)
 	inq->pagecode = task->datain.data[1];
 
 	inq->num_pages = task->datain.data[3];
-	inq->pages = scsi_malloc(task, inq->num_pages);
+	inq->pages = talloc_size(inq, inq->num_pages);
 	if (inq->pages == NULL) {
 		free (inq);
 		return NULL;
@@ -1026,8 +993,9 @@ scsi_inquiry_unmarshall_supported_pages(struct scsi_task *task)
 static struct scsi_inquiry_unit_serial_number *
 scsi_inquiry_unmarshall_unit_serial_number(struct scsi_task* task)
 {
-	struct scsi_inquiry_unit_serial_number *inq = scsi_malloc(task,
-								  sizeof(*inq));
+	struct scsi_inquiry_unit_serial_number *inq =
+		talloc(task, struct scsi_inquiry_unit_serial_number);
+
 	if (inq == NULL) {
 		return NULL;
 	}
@@ -1035,9 +1003,9 @@ scsi_inquiry_unmarshall_unit_serial_number(struct scsi_task* task)
 	inq->device_type = task->datain.data[0]&0x1f;
 	inq->pagecode = task->datain.data[1];
 
-	inq->usn = scsi_malloc(task, task->datain.data[3]+1);
+	// talloc_memcpy ?
+	inq->usn = talloc_size(inq, task->datain.data[3]+1);
 	if (inq->usn == NULL) {
-		free(inq);
 		return NULL;
 	}
 	memcpy(inq->usn, &task->datain.data[4], task->datain.data[3]);
@@ -1048,8 +1016,8 @@ scsi_inquiry_unmarshall_unit_serial_number(struct scsi_task* task)
 static struct scsi_inquiry_device_identification *
 scsi_inquiry_unmarshall_device_identification(struct scsi_task *task)
 {
-	struct scsi_inquiry_device_identification *inq = scsi_malloc(task,
-								     sizeof(*inq));
+	struct scsi_inquiry_device_identification *inq =
+		talloc(task, struct scsi_inquiry_device_identification);
 	int remaining = scsi_get_uint16(&task->datain.data[2]);
 	unsigned char *dptr;
 
@@ -1063,9 +1031,11 @@ scsi_inquiry_unmarshall_device_identification(struct scsi_task *task)
 	dptr = &task->datain.data[4];
 	while (remaining > 0) {
 		struct scsi_inquiry_device_designator *dev =
-			scsi_malloc(task, sizeof(*dev));
+			talloc(inq, struct scsi_inquiry_device_designator);
+
 		if (dev == NULL) {
-			goto err;
+			talloc_free(inq);
+			return NULL;
 		}
 
 		dev->next = inq->designators;
@@ -1078,9 +1048,11 @@ scsi_inquiry_unmarshall_device_identification(struct scsi_task *task)
 		dev->designator_type     = dptr[1]&0x0f;
 
 		dev->designator_length   = dptr[3];
-		dev->designator = scsi_malloc(task, dev->designator_length + 1);
+		// TODO talloc_memcpy ?
+		dev->designator = talloc_size(dev, dev->designator_length + 1);
 		if (dev->designator == NULL) {
-			goto err;
+			talloc_free(inq);
+			return NULL;
 		}
 		dev->designator[dev->designator_length] = 0;
 		memcpy(dev->designator, &dptr[4],
@@ -1092,24 +1064,14 @@ scsi_inquiry_unmarshall_device_identification(struct scsi_task *task)
 		dptr += dev->designator_length + 4;
 	}
 	return inq;
-
- err:
-	while (inq->designators) {
-		struct scsi_inquiry_device_designator *dev = inq->designators;
-		inq->designators = dev->next;
-		free(dev->designator);
-		free(dev);
-	}
-
-	free(inq);
-	return NULL;
 }
 
 static struct scsi_inquiry_block_limits *
 scsi_inquiry_unmarshall_block_limits(struct scsi_task *task)
 {
-	struct scsi_inquiry_block_limits *inq = scsi_malloc(task,
-							    sizeof(*inq));
+	struct scsi_inquiry_block_limits *inq =
+		talloc(task, struct scsi_inquiry_block_limits);
+
 	if (inq == NULL) {
 		return NULL;
 	}
@@ -1138,7 +1100,8 @@ static struct scsi_inquiry_block_device_characteristics *
 scsi_inquiry_unmarshall_block_device_characteristics(struct scsi_task *task)
 {
 	struct scsi_inquiry_block_device_characteristics *inq =
-		scsi_malloc(task, sizeof(*inq));
+		talloc(task, struct scsi_inquiry_block_device_characteristics);
+
 	if (inq == NULL) {
 		return NULL;
 	}
@@ -1154,7 +1117,8 @@ struct scsi_inquiry_logical_block_provisioning *
 scsi_inquiry_unmarshall_logical_block_provisioning(struct scsi_task *task)
 {
 	struct scsi_inquiry_logical_block_provisioning *inq =
-		scsi_malloc(task, sizeof(*inq));
+		talloc(task, struct scsi_inquiry_logical_block_provisioning);
+
 	if (inq == NULL) {
 		return NULL;
 	}
@@ -1207,7 +1171,7 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
  * READ6
  */
 struct scsi_task *
-scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize)
+scsi_cdb_read6(TALLOC_CTX *mem_ctx, uint32_t lba, uint32_t xferlen, int blocksize)
 {
 	struct scsi_task *task;
 	int num_blocks;
@@ -1221,12 +1185,11 @@ scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize)
 		return NULL;
 	}
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_READ6;
 	task->cdb_size = 6;
 
@@ -1252,16 +1215,15 @@ scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize)
  * READ10
  */
 struct scsi_task *
-scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number)
+scsi_cdb_read10(TALLOC_CTX *mem_ctx, uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_READ10;
 
 	task->cdb[1] |= ((rdprotect & 0x07) << 5);
@@ -1295,16 +1257,15 @@ scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, in
  * READ12
  */
 struct scsi_task *
-scsi_cdb_read12(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number)
+scsi_cdb_read12(TALLOC_CTX *mem_ctx, uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_READ12;
 
 	task->cdb[1] |= ((rdprotect & 0x07) << 5);
@@ -1338,16 +1299,15 @@ scsi_cdb_read12(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, in
  * READ16
  */
 struct scsi_task *
-scsi_cdb_read16(uint64_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number)
+scsi_cdb_read16(TALLOC_CTX *mem_ctx, uint64_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_READ16;
 
 	task->cdb[1] |= ((rdprotect & 0x07) << 5);
@@ -1382,16 +1342,15 @@ scsi_cdb_read16(uint64_t lba, uint32_t xferlen, int blocksize, int rdprotect, in
  * WRITE10
  */
 struct scsi_task *
-scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
+scsi_cdb_write10(TALLOC_CTX *mem_ctx, uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_WRITE10;
 
 	task->cdb[1] |= ((wrprotect & 0x07) << 5);
@@ -1425,16 +1384,15 @@ scsi_cdb_write10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
  * WRITE12
  */
 struct scsi_task *
-scsi_cdb_write12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
+scsi_cdb_write12(TALLOC_CTX *mem_ctx, uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_WRITE12;
 
 	task->cdb[1] |= ((wrprotect & 0x07) << 5);
@@ -1468,16 +1426,15 @@ scsi_cdb_write12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
  * WRITE16
  */
 struct scsi_task *
-scsi_cdb_write16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
+scsi_cdb_write16(TALLOC_CTX *mem_ctx, uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_WRITE16;
 
 	task->cdb[1] |= ((wrprotect & 0x07) << 5);
@@ -1512,16 +1469,15 @@ scsi_cdb_write16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
  * ORWRITE
  */
 struct scsi_task *
-scsi_cdb_orwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
+scsi_cdb_orwrite(TALLOC_CTX *mem_ctx, uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_ORWRITE;
 
 	task->cdb[1] |= ((wrprotect & 0x07) << 5);
@@ -1556,16 +1512,15 @@ scsi_cdb_orwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
  * COMPAREANDWRITE
  */
 struct scsi_task *
-scsi_cdb_compareandwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
+scsi_cdb_compareandwrite(TALLOC_CTX *mem_ctx, uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group_number)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_COMPARE_AND_WRITE;
 
 	task->cdb[1] |= ((wrprotect & 0x07) << 5);
@@ -1599,16 +1554,15 @@ scsi_cdb_compareandwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrpr
  * VERIFY10
  */
 struct scsi_task *
-scsi_cdb_verify10(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize)
+scsi_cdb_verify10(TALLOC_CTX *mem_ctx, uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_VERIFY10;
 
 	if (vprotect) {
@@ -1640,16 +1594,15 @@ scsi_cdb_verify10(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
  * VERIFY12
  */
 struct scsi_task *
-scsi_cdb_verify12(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize)
+scsi_cdb_verify12(TALLOC_CTX *mem_ctx, uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_VERIFY12;
 
 	if (vprotect) {
@@ -1681,16 +1634,15 @@ scsi_cdb_verify12(uint32_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
  * VERIFY16
  */
 struct scsi_task *
-scsi_cdb_verify16(uint64_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize)
+scsi_cdb_verify16(TALLOC_CTX *mem_ctx, uint64_t lba, uint32_t xferlen, int vprotect, int dpo, int bytchk, int blocksize)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_VERIFY16;
 
 	if (vprotect) {
@@ -1723,16 +1675,15 @@ scsi_cdb_verify16(uint64_t lba, uint32_t xferlen, int vprotect, int dpo, int byt
  * UNMAP
  */
 struct scsi_task *
-scsi_cdb_unmap(int anchor, int group, uint16_t xferlen)
+scsi_cdb_unmap(TALLOC_CTX *mem_ctx, int anchor, int group, uint16_t xferlen)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_UNMAP;
 
 	if (anchor) {
@@ -1757,16 +1708,15 @@ scsi_cdb_unmap(int anchor, int group, uint16_t xferlen)
  * PERSISTENT_RESEERVE_IN
  */
 struct scsi_task *
-scsi_cdb_persistent_reserve_in(enum scsi_persistent_in_sa sa, uint16_t xferlen)
+scsi_cdb_persistent_reserve_in(TALLOC_CTX *mem_ctx, enum scsi_persistent_in_sa sa, uint16_t xferlen)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_PERSISTENT_RESERVE_IN;
 
 	task->cdb[1] |= sa & 0x1f;
@@ -1788,7 +1738,7 @@ scsi_cdb_persistent_reserve_in(enum scsi_persistent_in_sa sa, uint16_t xferlen)
  * PERSISTENT_RESERVE_OUT
  */
 struct scsi_task *
-scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persistent_out_scope scope, enum scsi_persistent_out_type type, void *param)
+scsi_cdb_persistent_reserve_out(TALLOC_CTX *mem_ctx, enum scsi_persistent_out_sa sa, enum scsi_persistent_out_scope scope, enum scsi_persistent_out_type type, void *param)
 {
 	struct scsi_task *task;
 	struct scsi_persistent_reserve_out_basic *basic;
@@ -1796,14 +1746,14 @@ scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persis
 	unsigned char *buf;
 	int xferlen;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	iov = scsi_malloc(task, sizeof(struct scsi_iovec));
+	iov = talloc(task, struct scsi_iovec);
 	if (iov == NULL) {
-		free(task);
+		talloc_free(task);
 		return NULL;
 	}
 
@@ -1818,10 +1768,9 @@ scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persis
 		basic = param;
 
 		xferlen = 24;
-		buf = scsi_malloc(task, xferlen);
+		buf = talloc_size(task, xferlen);
 		if (buf == NULL) {
-			free(task);
-			free(iov);
+			talloc_free(task);
 			return NULL;
 		}
 		
@@ -1840,17 +1789,14 @@ scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persis
 		break;
 	case SCSI_PERSISTENT_RESERVE_REGISTER_AND_MOVE:
 		/* XXX FIXME */
-		free(task);
-		free(iov);
+		talloc_free(task);
 		return NULL;
 	default:
-		free(task);
-		free(iov);
+		talloc_free(task);
 		return NULL;
 	}
 
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_PERSISTENT_RESERVE_OUT;
 
 	task->cdb[1] |= sa & 0x1f;
@@ -1873,16 +1819,15 @@ scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persis
  * WRITE_SAME10
  */
 struct scsi_task *
-scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint32_t lba, int group, uint16_t num_blocks)
+scsi_cdb_writesame10(TALLOC_CTX *mem_ctx, int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint32_t lba, int group, uint16_t num_blocks)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_WRITE_SAME10;
 
 	if (wrprotect) {
@@ -1917,16 +1862,15 @@ scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, int pbdata, int lbdat
  * WRITE_SAME16
  */
 struct scsi_task *
-scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint64_t lba, int group, uint32_t num_blocks)
+scsi_cdb_writesame16(TALLOC_CTX *mem_ctx, int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint64_t lba, int group, uint32_t num_blocks)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_WRITE_SAME16;
 
 	if (wrprotect) {
@@ -1962,18 +1906,18 @@ scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, int pbdata, int lbdat
  * MODESENSE6
  */
 struct scsi_task *
-scsi_cdb_modesense6(int dbd, enum scsi_modesense_page_control pc,
+scsi_cdb_modesense6(TALLOC_CTX *mem_ctx, int dbd,
+		    enum scsi_modesense_page_control pc,
 		    enum scsi_modesense_page_code page_code,
 		    int sub_page_code, unsigned char alloc_len)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_MODESENSE6;
 
 	if (dbd) {
@@ -2082,7 +2026,7 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
 		return NULL;
 	}
 
-	ms = scsi_malloc(task, sizeof(struct scsi_mode_sense));
+	ms = talloc(task, struct scsi_mode_sense);
 	if (ms == NULL) {
 		return NULL;
 	}
@@ -2101,7 +2045,7 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
 	while (pos < task->datain.size) {
 		struct scsi_mode_page *mp;
 
-		mp = scsi_malloc(task, sizeof(struct scsi_mode_page));
+		mp = talloc(ms, struct scsi_mode_page);
 		if (mp == NULL) {
 			return ms;
 		}
@@ -2148,16 +2092,15 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
  * STARTSTOPUNIT
  */
 struct scsi_task *
-scsi_cdb_startstopunit(int immed, int pcm, int pc, int no_flush, int loej, int start)
+scsi_cdb_startstopunit(TALLOC_CTX *mem_ctx, int immed, int pcm, int pc, int no_flush, int loej, int start)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_STARTSTOPUNIT;
 
 	if (immed) {
@@ -2187,16 +2130,15 @@ scsi_cdb_startstopunit(int immed, int pcm, int pc, int no_flush, int loej, int s
  * PREVENTALLOWMEDIUMREMOVAL
  */
 struct scsi_task *
-scsi_cdb_preventallow(int prevent)
+scsi_cdb_preventallow(TALLOC_CTX *mem_ctx, int prevent)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_PREVENTALLOW;
 
 	task->cdb[4] = prevent & 0x03;
@@ -2212,16 +2154,15 @@ scsi_cdb_preventallow(int prevent)
  * SYNCHRONIZECACHE10
  */
 struct scsi_task *
-scsi_cdb_synchronizecache10(int lba, int num_blocks, int syncnv, int immed)
+scsi_cdb_synchronizecache10(TALLOC_CTX *mem_ctx, int lba, int num_blocks, int syncnv, int immed)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_SYNCHRONIZECACHE10;
 
 	if (syncnv) {
@@ -2244,16 +2185,15 @@ scsi_cdb_synchronizecache10(int lba, int num_blocks, int syncnv, int immed)
  * SYNCHRONIZECACHE16
  */
 struct scsi_task *
-scsi_cdb_synchronizecache16(uint64_t lba, uint32_t num_blocks, int syncnv, int immed)
+scsi_cdb_synchronizecache16(TALLOC_CTX *mem_ctx, uint64_t lba, uint32_t num_blocks, int syncnv, int immed)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_SYNCHRONIZECACHE16;
 
 	if (syncnv) {
@@ -2277,16 +2217,15 @@ scsi_cdb_synchronizecache16(uint64_t lba, uint32_t num_blocks, int syncnv, int i
  * PREFETCH10
  */
 struct scsi_task *
-scsi_cdb_prefetch10(uint32_t lba, int num_blocks, int immed, int group)
+scsi_cdb_prefetch10(TALLOC_CTX *mem_ctx, uint32_t lba, int num_blocks, int immed, int group)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_PREFETCH10;
 
 	if (immed) {
@@ -2307,16 +2246,15 @@ scsi_cdb_prefetch10(uint32_t lba, int num_blocks, int immed, int group)
  * PREFETCH16
  */
 struct scsi_task *
-scsi_cdb_prefetch16(uint64_t lba, int num_blocks, int immed, int group)
+scsi_cdb_prefetch16(TALLOC_CTX *mem_ctx, uint64_t lba, int num_blocks, int immed, int group)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_PREFETCH16;
 
 	if (immed) {
@@ -2339,16 +2277,15 @@ scsi_cdb_prefetch16(uint64_t lba, int num_blocks, int immed, int group)
  * SERVICEACTIONIN16
  */
 struct scsi_task *
-scsi_cdb_serviceactionin16(enum scsi_service_action_in sa, uint32_t xferlen)
+scsi_cdb_serviceactionin16(TALLOC_CTX *mem_ctx, enum scsi_service_action_in sa, uint32_t xferlen)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_SERVICE_ACTION_IN;
 
 	task->cdb[1] = sa;
@@ -2370,25 +2307,24 @@ scsi_cdb_serviceactionin16(enum scsi_service_action_in sa, uint32_t xferlen)
  * READCAPACITY16
  */
 struct scsi_task *
-scsi_cdb_readcapacity16(void)
+scsi_cdb_readcapacity16(TALLOC_CTX *mem_ctx)
 {
-	return scsi_cdb_serviceactionin16(SCSI_READCAPACITY16, 32);
+	return scsi_cdb_serviceactionin16(mem_ctx, SCSI_READCAPACITY16, 32);
 }
 
 /*
  * GET_LBA_STATUS
  */
 struct scsi_task *
-scsi_cdb_get_lba_status(uint64_t starting_lba, uint32_t alloc_len)
+scsi_cdb_get_lba_status(TALLOC_CTX *mem_ctx, uint64_t starting_lba, uint32_t alloc_len)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_SERVICE_ACTION_IN;
 
 	task->cdb[1] = SCSI_GET_LBA_STATUS;
@@ -2412,16 +2348,15 @@ scsi_cdb_get_lba_status(uint64_t starting_lba, uint32_t alloc_len)
  * WRITEVERIFY10
  */
 struct scsi_task *
-scsi_cdb_writeverify10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number)
+scsi_cdb_writeverify10(TALLOC_CTX *mem_ctx, uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_WRITE_VERIFY10;
 
 	task->cdb[1] |= ((wrprotect & 0x07) << 5);
@@ -2452,16 +2387,15 @@ scsi_cdb_writeverify10(uint32_t lba, uint32_t xferlen, int blocksize, int wrprot
  * WRITEVERIFY12
  */
 struct scsi_task *
-scsi_cdb_writeverify12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number)
+scsi_cdb_writeverify12(TALLOC_CTX *mem_ctx, uint32_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_WRITE_VERIFY12;
 
 	task->cdb[1] |= ((wrprotect & 0x07) << 5);
@@ -2492,16 +2426,15 @@ scsi_cdb_writeverify12(uint32_t lba, uint32_t xferlen, int blocksize, int wrprot
  * WRITEVERIFY16
  */
 struct scsi_task *
-scsi_cdb_writeverify16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number)
+scsi_cdb_writeverify16(TALLOC_CTX *mem_ctx, uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int bytchk, int group_number)
 {
 	struct scsi_task *task;
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(mem_ctx, struct scsi_task);
 	if (task == NULL) {
 		return NULL;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_WRITE_VERIFY16;
 
 	task->cdb[1] |= ((wrprotect & 0x07) << 5);
@@ -2589,7 +2522,7 @@ scsi_read10_cdb_unmarshall(struct scsi_task *task)
 {
 	struct scsi_read10_cdb *read10;
 
-	read10 = scsi_malloc(task, sizeof(struct scsi_read10_cdb));
+	read10 = talloc(task, struct scsi_read10_cdb);
 	if (read10 == NULL) {
 		return NULL;
 	}
@@ -2829,9 +2762,10 @@ scsi_iovector_add(struct scsi_task *task, struct scsi_iovector *iovector, int le
 	if (len < 0) {
 		return -1;
 	}
-	
+
+	//TODO redo this as a talloc array	
 	if (iovector->iov == NULL) {
-		iovector->iov = scsi_malloc(task, IOVECTOR_INITAL_ALLOC*sizeof(struct iovec));
+		iovector->iov = talloc_size(task, IOVECTOR_INITAL_ALLOC * sizeof(struct iovec));
 		if (iovector->iov == NULL) {
 			return -1;
 		}
@@ -2841,7 +2775,7 @@ scsi_iovector_add(struct scsi_task *task, struct scsi_iovector *iovector, int le
 	/* iovec allocation is too small */
 	if (iovector->nalloc < iovector->niov + 1) {
 		struct scsi_iovec *old_iov = iovector->iov;
-		iovector->iov = scsi_malloc(task, 2 * iovector->nalloc * sizeof(struct iovec));
+		iovector->iov = talloc_size(task, 2 * iovector->nalloc * sizeof(struct iovec));
 		if (iovector->iov == NULL) {
 			return -1;
 		}

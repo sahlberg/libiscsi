@@ -60,14 +60,13 @@ int T0104_read10_flags(const char *initiator, const char *url)
 	/* Try out DPO : 1 */
 	printf("Read10 with DPO==1 ... ");
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[1] = 0x10;
 	task->cdb[8] = 1;
@@ -97,14 +96,13 @@ int T0104_read10_flags(const char *initiator, const char *url)
 	/* Try out FUA : 1  FUA_NV : 0 */
 	printf("Read10 with FUA==1 FUA_NV==0 ... ");
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[1] = 0x08;
 	task->cdb[8] = 1;
@@ -133,14 +131,13 @@ int T0104_read10_flags(const char *initiator, const char *url)
 	/* Try out FUA : 1  FUA_NV : 1 */
 	printf("Read10 with FUA==1 FUA_NV==1 ... ");
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[1] = 0x0a;
 	task->cdb[8] = 1;
@@ -169,14 +166,13 @@ int T0104_read10_flags(const char *initiator, const char *url)
 	/* Try out FUA : 0  FUA_NV : 1 */
 	printf("Read10 with FUA==0 FUA_NV==1 ... ");
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[1] = 0x02;
 	task->cdb[8] = 1;
@@ -205,14 +201,13 @@ int T0104_read10_flags(const char *initiator, const char *url)
 	/* Try out DPO : 1 FUA : 1  FUA_NV : 1 */
 	printf("Read10 with DPO==1 FUA==1 FUA_NV==1 ... ");
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[1] = 0x18;
 	task->cdb[8] = 1;

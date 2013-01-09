@@ -29,6 +29,7 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <time.h>
+#include <talloc.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "slist.h"
@@ -78,13 +79,11 @@ iscsi_create_context(const char *initiator_name)
 		return NULL;
 	}
 
-	iscsi = malloc(sizeof(struct iscsi_context));
+	iscsi = talloc_zero(NULL, struct iscsi_context);
 	if (iscsi == NULL) {
 		return NULL;
 	}
 	
-	memset(iscsi, 0, sizeof(struct iscsi_context));
-
 	strncpy(iscsi->initiator_name,initiator_name,MAX_STRING_SIZE);
 
 	iscsi->fd = -1;
@@ -289,8 +288,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		ISCSI_LOG(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs, %d realloc(s) and %d frees",iscsi->mallocs,iscsi->reallocs,iscsi->frees);
 	}
 	
-	memset(iscsi, 0, sizeof(struct iscsi_context));
-	free(iscsi);
+	talloc_free(iscsi);
 
 	return 0;
 }
