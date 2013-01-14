@@ -79,7 +79,7 @@ void logging(int level, const char *format, ...)
 		return;
 	}
 
-	printf("%s\n", message);
+	printf("    %s\n", message);
 }
 
 

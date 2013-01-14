@@ -30,7 +30,7 @@ test_read10_flags(void)
 { 
 	int ret;
 
-	logging(LOG_VERBOSE, "\nTest READ10 flags");
+	logging(LOG_VERBOSE, "\n    Test READ10 flags");
 
 	/* This test is only valid for SBC devices */
 	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {

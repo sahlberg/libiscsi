@@ -40,7 +40,7 @@ test_read10_rdprotect(void)
 	 * Try out different non-zero values for RDPROTECT.
 	 * They should all fail.
 	 */
-	logging(LOG_VERBOSE, "\nTest READ10 with non-zero RDPROTECT");
+	logging(LOG_VERBOSE, "\n    Test READ10 with non-zero RDPROTECT");
 	for (i = 1; i < 8; i++) {
 		ret = read10_invalidfieldincdb(iscsic, tgt_lun, 0,
 					       block_size, block_size,
