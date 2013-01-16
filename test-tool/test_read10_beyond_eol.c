@@ -35,7 +35,8 @@ test_read10_beyond_eol(void)
 	}
 
 
-	logging(LOG_VERBOSE, "\n    Test READ10 1-256 blocks one block beyond the end");
+	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, "Test READ10 1-256 blocks one block beyond the end");
 	for (i = 1; i <= 256; i++) {
 		ret = read10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 2 - i,
 					   i * block_size, block_size,

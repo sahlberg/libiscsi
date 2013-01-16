@@ -28,7 +28,8 @@ test_read10_0blocks(void)
 {
 	int ret;
 
-	logging(LOG_VERBOSE, "\n    Test READ10 0-blocks at LBA==0");
+	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, "Test READ10 0-blocks at LBA==0");
 	ret = read10(iscsic, tgt_lun, 0, 0, block_size,
 		     0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
