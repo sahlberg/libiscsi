@@ -81,7 +81,7 @@ int T0281_verify12_mismatch(const char *initiator, const char *url)
 		/* flip a random byte in the data */
 		buf[offset] ^= 'X';
 
-		ret = verify12_miscompare(iscsi, lun, buf, i * block_size, 0, 0, 1, 1, block_size);
+		ret = verify12_miscompare(iscsi, lun, 0, i * block_size, block_size, 0, 1, 1, buf);
 		if (ret != 0) {
 			goto finished;
 		}

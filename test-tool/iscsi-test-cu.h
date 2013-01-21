@@ -64,6 +64,22 @@ void test_read16_flags(void);
 
 void test_readcapacity10_simple(void);
 
+void test_verify10_simple(void);
+void test_verify10_beyond_eol(void);
+void test_verify10_0blocks(void);
+void test_verify10_vrprotect(void);
+void test_verify10_flags(void);
+void test_verify10_mismatch(void);
+void test_verify10_mismatch_no_cmp(void);
+
+void test_verify12_simple(void);
+void test_verify12_beyond_eol(void);
+void test_verify12_0blocks(void);
+void test_verify12_vrprotect(void);
+void test_verify12_flags(void);
+void test_verify12_mismatch(void);
+void test_verify12_mismatch_no_cmp(void);
+
 void test_verify16_simple(void);
 void test_verify16_beyond_eol(void);
 void test_verify16_0blocks(void);

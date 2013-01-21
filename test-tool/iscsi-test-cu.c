@@ -102,6 +102,28 @@ static CU_TestInfo tests_readcapacity10[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_verify10[] = {
+	{ (char *)"testVerify10Simple", test_verify10_simple },
+	{ (char *)"testVerify10BeyondEol", test_verify10_beyond_eol },
+	{ (char *)"testVerify10ZeroBlocks", test_verify10_0blocks },
+	{ (char *)"testVerify10VerifyProtect", test_verify10_vrprotect },
+	{ (char *)"testVerify10Flags", test_verify10_flags },
+	{ (char *)"testVerify10mismatch", test_verify10_mismatch },
+	{ (char *)"testVerify10mismatch_no_cmp", test_verify10_mismatch_no_cmp },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_verify12[] = {
+	{ (char *)"testVerify12Simple", test_verify12_simple },
+	{ (char *)"testVerify12BeyondEol", test_verify12_beyond_eol },
+	{ (char *)"testVerify12ZeroBlocks", test_verify12_0blocks },
+	{ (char *)"testVerify12VerifyProtect", test_verify12_vrprotect },
+	{ (char *)"testVerify12Flags", test_verify12_flags },
+	{ (char *)"testVerify12mismatch", test_verify12_mismatch },
+	{ (char *)"testVerify12mismatch_no_cmp", test_verify12_mismatch_no_cmp },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_verify16[] = {
 	{ (char *)"testVerify16Simple", test_verify16_simple },
 	{ (char *)"testVerify16BeyondEol", test_verify16_beyond_eol },
@@ -153,6 +175,10 @@ static CU_SuiteInfo suites[] = {
 	  tests_read16 },
 	{ (char *)"TestReadCapacity10", test_setup, test_teardown,
 	  tests_readcapacity10 },
+	{ (char *)"TestVerify10", test_setup, test_teardown,
+	  tests_verify10 },
+	{ (char *)"TestVerify12", test_setup, test_teardown,
+	  tests_verify12 },
 	{ (char *)"TestVerify16", test_setup, test_teardown,
 	  tests_verify16 },
 	{ (char *)"TestWrite10", test_setup, test_teardown,

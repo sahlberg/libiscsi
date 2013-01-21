@@ -197,6 +197,20 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_read16_rdprotect.c \
 	test-tool/test_read16_flags.c \
 	test-tool/test_readcapacity10_simple.c \
+	test-tool/test_verify10_simple.c \
+	test-tool/test_verify10_beyond_eol.c \
+	test-tool/test_verify10_0blocks.c \
+	test-tool/test_verify10_vrprotect.c \
+	test-tool/test_verify10_flags.c \
+	test-tool/test_verify10_mismatch.c \
+	test-tool/test_verify10_mismatch_no_cmp.c \
+	test-tool/test_verify12_simple.c \
+	test-tool/test_verify12_beyond_eol.c \
+	test-tool/test_verify12_0blocks.c \
+	test-tool/test_verify12_vrprotect.c \
+	test-tool/test_verify12_flags.c \
+	test-tool/test_verify12_mismatch.c \
+	test-tool/test_verify12_mismatch_no_cmp.c \
 	test-tool/test_verify16_simple.c \
 	test-tool/test_verify16_beyond_eol.c \
 	test-tool/test_verify16_0blocks.c \

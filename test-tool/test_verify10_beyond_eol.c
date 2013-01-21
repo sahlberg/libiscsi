@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2012 by Lee Duncan <lee@gonzoleeman.net>
+   Copyright (C) 2013 Ronnie Sahlberg <ronneisahlberg@gmail.com>
    
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,47 +25,59 @@
 
 
 void
-test_read10_beyond_eol(void)
+test_verify10_beyond_eol(void)
 { 
 	int i, ret;
 
 	if (num_blocks >= 0x80000000) {
-		CU_PASS("LUN is too big for read-beyond-eol tests with READ10. Skipping test.\n");
+		CU_PASS("LUN is too big for read-beyond-eol tests with VERIFY10. Skipping test.\n");
 		return;
 	}
 
 	logging(LOG_VERBOSE, "");
-	logging(LOG_VERBOSE, "Test READ10 1-256 blocks one block beyond the end");
+	logging(LOG_VERBOSE, "Test VERIFY10 1-256 blocks one block beyond the end");
 	for (i = 1; i <= 256; i++) {
-		ret = read10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 2 - i,
+		unsigned char *buf = malloc(block_size * i);
+
+		ret = verify10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 2 - i,
 					   i * block_size, block_size,
-					   0, 0, 0, 0, 0, NULL);
+					   0, 0, 1, buf);
+		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 
-	logging(LOG_VERBOSE, "Test READ10 1-256 blocks at LBA==2^31");
+	logging(LOG_VERBOSE, "Test VERIFY10 1-256 blocks at LBA==2^31");
 	for (i = 1; i <= 256; i++) {
-		ret = read10_lbaoutofrange(iscsic, tgt_lun, 0x80000000,
+		unsigned char *buf = malloc(block_size * i);
+
+		ret = verify10_lbaoutofrange(iscsic, tgt_lun, 0x80000000,
 					   i * block_size, block_size,
-					   0, 0, 0, 0, 0, NULL);
+					   0, 0, 1, buf);
+		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 
-	logging(LOG_VERBOSE, "Test READ10 1-256 blocks at LBA==-1");
+	logging(LOG_VERBOSE, "Test VERIFY10 1-256 blocks at LBA==-1");
 	for (i = 1; i <= 256; i++) {
-		ret = read10_lbaoutofrange(iscsic, tgt_lun, -1, i * block_size,
-					   block_size, 0, 0, 0, 0, 0, NULL);
+		unsigned char *buf = malloc(block_size * i);
+
+		ret = verify10_lbaoutofrange(iscsic, tgt_lun, -1, i * block_size,
+					   block_size, 0, 0, 1, buf);
+		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 
-	logging(LOG_VERBOSE, "Test READ10 2-256 blocks all but one block beyond the end");
+	logging(LOG_VERBOSE, "Test VERIFY10 2-256 blocks all but one block beyond the end");
 	for (i = 2; i <= 256; i++) {
-		ret = read10_lbaoutofrange(iscsic, tgt_lun, num_blocks,
+		unsigned char *buf = malloc(block_size * i);
+
+		ret = verify10_lbaoutofrange(iscsic, tgt_lun, num_blocks,
 					   i * block_size, block_size,
-					   0, 0, 0, 0, 0, NULL);
+					   0, 0, 1, buf);
+		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

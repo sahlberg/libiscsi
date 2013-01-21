@@ -1428,294 +1428,358 @@ readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi)
 }
 
 int
-verify10(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+verify10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;
 
-	printf("Send VERIFY10 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY10 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d", lba, datalen / blocksize, vprotect, dpo, bytchk);
 	task = iscsi_verify10_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY10 command: %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY10 command: %s",
+			iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("VERIFY10 is not implemented on target\n");
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY10 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("VERIFY10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] VERIFY10 command: failed with sense. %s", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 
-	printf("[OK]\n");
 	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY10 returned SUCCESS.");
 	return 0;
 }
 
 int
-verify10_nomedium(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+verify10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;
 
-	printf("Send VERIFY10 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT) ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY10 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT)", lba, datalen / blocksize, vprotect, dpo, bytchk);
 	task = iscsi_verify10_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY10 command: %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY10 command: %s",
+			iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("VERIFY10 is not implemented on target\n");
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY10 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
 	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] VERIFY10 successful but should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
 	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		printf("[FAILED]\n");
-		printf("VERIFY10 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
+	  logging(LOG_NORMAL, "[FAILED] VERIFY10 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT* but failed with %s", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		return -1;
 	}	
 
-	printf("[OK]\n");
 	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY10 returned NOT_READY/MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
 int
-verify10_miscompare(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+verify10_miscompare(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;
 
-	printf("Send VERIFY10 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting MISCOMPARE) ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY10 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting MISCOMPARE)", lba, datalen / blocksize, vprotect, dpo, bytchk);
 	task = iscsi_verify10_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY10 command: %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY10 command: %s",
+			iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("VERIFY10 is not implemented on target\n");
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY10 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("VERIFY10 command successful but should have failed with MISCOMPARE\n");
+		logging(LOG_NORMAL, "[FAILED] VERIFY10 successful but should have failed with MISCOMPARE");
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 	if (task->sense.key != SCSI_SENSE_MISCOMPARE) {
-		printf("[FAILED]\n");
-		printf("VERIFY10 command returned wrong sense key. MISCOMPARE MISCOMPARE 0x%x expected but got key 0x%x. Sense:%s\n", SCSI_SENSE_MISCOMPARE, task->sense.key, iscsi_get_error(iscsi)); 
+		logging(LOG_NORMAL, "[FAILED] VERIFY10 command returned wrong sense key. MISCOMPARE MISCOMPARE 0x%x expected but got key 0x%x. Sense:%s", SCSI_SENSE_MISCOMPARE, task->sense.key, iscsi_get_error(iscsi)); 
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 
-	printf("[OK]\n");
 	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY10 returned MISCOMPARE.");
 	return 0;
 }
 
 int
-verify10_lbaoutofrange(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+verify10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;
 
-	printf("Send VERIFY10 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting LBA_OUT_OF_RANGE) ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY10 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting LBA_OUT_OF_RANGE)", lba, datalen / blocksize, vprotect, dpo, bytchk);
 	task = iscsi_verify10_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY10 command: %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY10 command: %s",
+			iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("VERIFY10 is not implemented on target\n");
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY10 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("VERIFY10 command successful but should have failed with LBA_OUT_OF_RANGE\n");
+		logging(LOG_NORMAL, "[FAILED] VERIFY10 successful but should have failed with LBA_OUT_OF_RANGE");
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-		printf("[FAILED]\n");
-		printf("VERIFY10 should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] VERIFY10 should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 
-	printf("[OK]\n");
 	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY10 returned LBA_OUT_OF_RANGE.");
 	return 0;
 }
 
 int
-verify12(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+verify10_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;
 
-	printf("Send VERIFY12 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
-	task = iscsi_verify12_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
+	logging(LOG_VERBOSE, "Send VERIFY10 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting INVALID_FIELD_IN_CDB)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	task = iscsi_verify10_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY12 command: %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY10 command: %s",
+			iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("VERIFY12 is not implemented on target\n");
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY10 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] VERIFY10 successful but should have failed with LBA_OUT_OF_RANGE");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		logging(LOG_NORMAL, "[FAILED] VERIFY10 should have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB. Sense:%s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY10 returned INVALID_FIELD_IN_CDB.");
+	return 0;
+}
+
+int
+verify12(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send VERIFY12 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	task = iscsi_verify12_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY12 command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("VERIFY12 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] VERIFY12 command: failed with sense. %s", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 
-	printf("[OK]\n");
 	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY12 returned SUCCESS.");
 	return 0;
 }
 
 int
-verify12_nomedium(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+verify12_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;
 
-	printf("Send VERIFY12 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT) ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY12 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT)", lba, datalen / blocksize, vprotect, dpo, bytchk);
 	task = iscsi_verify12_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY12 command: %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY12 command: %s",
+			iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("VERIFY12 is not implemented on target\n");
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
 	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] VERIFY12 successful but should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
 	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		printf("[FAILED]\n");
-		printf("VERIFY12 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
+	  logging(LOG_NORMAL, "[FAILED] VERIFY12 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT* but failed with %s", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		return -1;
 	}	
 
-	printf("[OK]\n");
 	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY12 returned NOT_READY/MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
 int
-verify12_miscompare(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+verify12_miscompare(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;
 
-	printf("Send VERIFY12 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting MISCOMPARE) ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY12 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting MISCOMPARE)", lba, datalen / blocksize, vprotect, dpo, bytchk);
 	task = iscsi_verify12_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY12 command: %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY12 command: %s",
+			iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("VERIFY12 is not implemented on target\n");
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("VERIFY12 command successful but should have failed with MISCOMPARE\n");
+		logging(LOG_NORMAL, "[FAILED] VERIFY12 successful but should have failed with MISCOMPARE");
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 	if (task->sense.key != SCSI_SENSE_MISCOMPARE) {
-		printf("[FAILED]\n");
-		printf("VERIFY12 command returned wrong sense key. MISCOMPARE MISCOMPARE 0x%x expected but got key 0x%x. Sense:%s\n", SCSI_SENSE_MISCOMPARE, task->sense.key, iscsi_get_error(iscsi)); 
+		logging(LOG_NORMAL, "[FAILED] VERIFY12 command returned wrong sense key. MISCOMPARE MISCOMPARE 0x%x expected but got key 0x%x. Sense:%s", SCSI_SENSE_MISCOMPARE, task->sense.key, iscsi_get_error(iscsi)); 
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 
-	printf("[OK]\n");
 	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY12 returned MISCOMPARE.");
 	return 0;
 }
 
 int
-verify12_lbaoutofrange(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+verify12_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;
 
-	printf("Send VERIFY12 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting LBA_OUT_OF_RANGE) ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY12 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting LBA_OUT_OF_RANGE)", lba, datalen / blocksize, vprotect, dpo, bytchk);
 	task = iscsi_verify12_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY12 command: %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY12 command: %s",
+			iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("VERIFY12 is not implemented on target\n");
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("VERIFY12 command successful but should have failed with LBA_OUT_OF_RANGE\n");
+		logging(LOG_NORMAL, "[FAILED] VERIFY12 successful but should have failed with LBA_OUT_OF_RANGE");
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-		printf("[FAILED]\n");
-		printf("VERIFY12 should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] VERIFY12 should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 
-	printf("[OK]\n");
 	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY12 returned LBA_OUT_OF_RANGE.");
+	return 0;
+}
+
+int
+verify12_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send VERIFY12 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting INVALID_FIELD_IN_CDB)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	task = iscsi_verify12_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY12 command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] VERIFY12 successful but should have failed with LBA_OUT_OF_RANGE");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		logging(LOG_NORMAL, "[FAILED] VERIFY12 should have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB. Sense:%s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY12 returned INVALID_FIELD_IN_CDB.");
 	return 0;
 }
 

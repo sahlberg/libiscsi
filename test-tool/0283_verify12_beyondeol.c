@@ -58,7 +58,7 @@ int T0283_verify12_beyondeol(const char *initiator, const char *url)
 	/* verify 2 - 256 blocks beyond the end of the device */
 	printf("Verifying 2-256 blocks beyond end-of-device.\n");
 	for (i = 2; i <= 256; i++) {
-		ret = verify12_lbaoutofrange(iscsi, lun, buf, i * block_size, num_blocks, 0, 1, 1, block_size);
+		ret = verify12_lbaoutofrange(iscsi, lun, num_blocks, i * block_size, block_size, 0, 1, 1, buf);
 		if (ret != 0) {
 			goto finished;
 		}

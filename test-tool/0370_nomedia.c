@@ -308,14 +308,14 @@ int T0370_nomedia(const char *initiator, const char *url)
 
 
 	printf("Test VERIFY10.\n");
-	ret = verify10_nomedium(iscsi, lun, buf, block_size, 0, 0, 0, 1, block_size);
+	ret = verify10_nomedium(iscsi, lun, 0, block_size, block_size, 0, 0, 1, buf);
 	if (ret != 0) {
 		goto finished;
 	}
 
 
 	printf("Test VERIFY12.\n");
-	ret = verify12_nomedium(iscsi, lun, buf, block_size, 0, 0, 0, 1, block_size);
+	ret = verify12_nomedium(iscsi, lun, 0, block_size, block_size, 0, 0, 1, buf);
 	if (ret != 0) {
 		goto finished;
 	}
