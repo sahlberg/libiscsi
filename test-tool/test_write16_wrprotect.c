@@ -16,6 +16,8 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <CUnit/CUnit.h>
 
@@ -24,30 +26,30 @@
 #include "iscsi-test-cu.h"
 
 void
-test_read16_0blocks(void)
+test_write16_wrprotect(void)
 {
-	int ret;
+	int i, ret;
 
+	if (!data_loss) {
+		CU_PASS("[SKIPPED] --dataloss flag is not set. Skipping test.");
+		return;	
+	}
+
+	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+		CU_PASS("[SKIPPED] LUN is not SBC device. Skipping test");
+		return;
+	}
+
+	/*
+	 * Try out different non-zero values for WRPROTECT.
+	 * They should all fail.
+	 */
 	logging(LOG_VERBOSE, "");
-	logging(LOG_VERBOSE, "Test READ16 0-blocks at LBA==0");
-	ret = read16(iscsic, tgt_lun, 0, 0, block_size,
-		     0, 0, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
-
-	logging(LOG_VERBOSE, "Test READ16 0-blocks one block past end-of-LUN");
-	ret = read16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
-				   block_size, 0, 0, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
-
-
-	logging(LOG_VERBOSE, "Test READ16 0-blocks at LBA==2^63");
-	ret = read16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000, 0,
-				   block_size, 0, 0, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
-
-
-	logging(LOG_VERBOSE, "Test READ16 0-blocks at LBA==-1");
-	ret = read16_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
-				   0, 0, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
+	logging(LOG_VERBOSE, "Test WRITE16 with non-zero WRPROTECT");
+	for (i = 1; i < 8; i++) {
+		ret = write16_invalidfieldincdb(iscsic, tgt_lun, 0,
+					       block_size, block_size,
+					       i, 0, 0, 0, 0, NULL);
+		CU_ASSERT_EQUAL(ret, 0);
+	}
 }

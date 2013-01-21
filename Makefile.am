@@ -196,7 +196,12 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_read16_0blocks.c \
 	test-tool/test_read16_rdprotect.c \
 	test-tool/test_read16_flags.c \
-	test-tool/test_readcapacity10_simple.c
+	test-tool/test_readcapacity10_simple.c \
+	test-tool/test_write16_simple.c \
+	test-tool/test_write16_beyond_eol.c \
+	test-tool/test_write16_0blocks.c \
+	test-tool/test_write16_wrprotect.c \
+	test-tool/test_write16_flags.c
 
 endif
 

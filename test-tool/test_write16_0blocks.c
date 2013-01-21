@@ -24,30 +24,36 @@
 #include "iscsi-test-cu.h"
 
 void
-test_read16_0blocks(void)
+test_write16_0blocks(void)
 {
 	int ret;
 
+	if (!data_loss) {
+		CU_PASS("[SKIPPED] --dataloss flag is not set. Skipping test.");
+		CU_PASS("[SKIPPED] --dataloss flag is not set. Skipping test.");
+		return;	
+	}
+
 	logging(LOG_VERBOSE, "");
-	logging(LOG_VERBOSE, "Test READ16 0-blocks at LBA==0");
-	ret = read16(iscsic, tgt_lun, 0, 0, block_size,
+	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==0");
+	ret = write16(iscsic, tgt_lun, 0, 0, block_size,
 		     0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test READ16 0-blocks one block past end-of-LUN");
-	ret = read16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
-				   block_size, 0, 0, 0, 0, 0, NULL);
+	logging(LOG_VERBOSE, "Test WRITE16 0-blocks one block past end-of-LUN");
+	ret = write16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
+				    block_size, 0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test READ16 0-blocks at LBA==2^63");
-	ret = read16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000, 0,
-				   block_size, 0, 0, 0, 0, 0, NULL);
+	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==2^63");
+	ret = write16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000, 0,
+				    block_size, 0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test READ16 0-blocks at LBA==-1");
-	ret = read16_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
-				   0, 0, 0, 0, 0, NULL);
+	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==-1");
+	ret = write16_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
+				    0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 }

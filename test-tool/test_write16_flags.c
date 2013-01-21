@@ -26,12 +26,17 @@
 #include "iscsi-test-cu.h"
 
 void
-test_read16_flags(void)
+test_write16_flags(void)
 { 
 	int ret;
 
 	logging(LOG_VERBOSE, "");
-	logging(LOG_VERBOSE, "Test READ16 flags");
+	logging(LOG_VERBOSE, "Test WRITE16 flags");
+
+	if (!data_loss) {
+		CU_PASS("[SKIPPED] --dataloss flag is not set. Skipping test.");
+		return;	
+	}
 
 	/* This test is only valid for SBC devices */
 	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
@@ -39,37 +44,36 @@ test_read16_flags(void)
 		return;
 	}
 
-
-	logging(LOG_VERBOSE, "Test READ16 with DPO==1");
-	ret = read16(iscsic, tgt_lun, 0,
+	logging(LOG_VERBOSE, "Test WRITE16 with DPO==1");
+	ret = write16(iscsic, tgt_lun, 0,
 		     block_size, block_size,
 		     0, 1, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test READ16 with FUA==1 FUA_NV==0");
-	ret = read16(iscsic, tgt_lun, 0,
+	logging(LOG_VERBOSE, "Test WRITE16 with FUA==1 FUA_NV==0");
+	ret = write16(iscsic, tgt_lun, 0,
 		     block_size, block_size,
 		     0, 0, 1, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test READ16 with FUA==1 FUA_NV==1");
-	ret = read16(iscsic, tgt_lun, 0,
+	logging(LOG_VERBOSE, "Test WRITE16 with FUA==1 FUA_NV==1");
+	ret = write16(iscsic, tgt_lun, 0,
 		     block_size, block_size,
 		     0, 0, 1, 1, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test READ16 with FUA==0 FUA_NV==1");
-	ret = read16(iscsic, tgt_lun, 0,
+	logging(LOG_VERBOSE, "Test WRITE16 with FUA==0 FUA_NV==1");
+	ret = write16(iscsic, tgt_lun, 0,
 		     block_size, block_size,
 		     0, 0, 0, 1, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test READ16 with DPO==1 FUA==1 FUA_NV==1");
-	ret = read16(iscsic, tgt_lun, 0,
+	logging(LOG_VERBOSE, "Test WRITE16 with DPO==1 FUA==1 FUA_NV==1");
+	ret = write16(iscsic, tgt_lun, 0,
 		     block_size, block_size,
 		     0, 1, 1, 1, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
