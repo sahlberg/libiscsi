@@ -29,6 +29,7 @@ void
 test_write16_flags(void)
 { 
 	int ret;
+	unsigned char *buf;
 
 	logging(LOG_VERBOSE, "");
 	logging(LOG_VERBOSE, "Test WRITE16 flags");
@@ -44,37 +45,39 @@ test_write16_flags(void)
 		return;
 	}
 
+	buf = malloc(block_size);
 	logging(LOG_VERBOSE, "Test WRITE16 with DPO==1");
 	ret = write16(iscsic, tgt_lun, 0,
 		     block_size, block_size,
-		     0, 1, 0, 0, 0, NULL);
+		     0, 1, 0, 0, 0, buf);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITE16 with FUA==1 FUA_NV==0");
 	ret = write16(iscsic, tgt_lun, 0,
 		     block_size, block_size,
-		     0, 0, 1, 0, 0, NULL);
+		     0, 0, 1, 0, 0, buf);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITE16 with FUA==1 FUA_NV==1");
 	ret = write16(iscsic, tgt_lun, 0,
 		     block_size, block_size,
-		     0, 0, 1, 1, 0, NULL);
+		     0, 0, 1, 1, 0, buf);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITE16 with FUA==0 FUA_NV==1");
 	ret = write16(iscsic, tgt_lun, 0,
 		     block_size, block_size,
-		     0, 0, 0, 1, 0, NULL);
+		     0, 0, 0, 1, 0, buf);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITE16 with DPO==1 FUA==1 FUA_NV==1");
 	ret = write16(iscsic, tgt_lun, 0,
 		     block_size, block_size,
-		     0, 1, 1, 1, 0, NULL);
+		     0, 1, 1, 1, 0, buf);
 	CU_ASSERT_EQUAL(ret, 0);
+	free(buf);
 }

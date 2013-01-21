@@ -29,6 +29,7 @@ void
 test_write16_wrprotect(void)
 {
 	int i, ret;
+	unsigned char *buf;
 
 	if (!data_loss) {
 		CU_PASS("[SKIPPED] --dataloss flag is not set. Skipping test.");
@@ -46,10 +47,12 @@ test_write16_wrprotect(void)
 	 */
 	logging(LOG_VERBOSE, "");
 	logging(LOG_VERBOSE, "Test WRITE16 with non-zero WRPROTECT");
+	buf = malloc(block_size);
 	for (i = 1; i < 8; i++) {
 		ret = write16_invalidfieldincdb(iscsic, tgt_lun, 0,
 					       block_size, block_size,
-					       i, 0, 0, 0, 0, NULL);
+					       i, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
+	free(buf);
 }
