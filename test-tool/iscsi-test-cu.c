@@ -72,11 +72,18 @@ static CU_TestInfo tests_read10[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_readcapacity10[] = {
+	{ (char *)"testReadCapacity10Simple", test_readcapacity10_simple },
+	CU_TEST_INFO_NULL
+};
+
 static CU_SuiteInfo suites[] = {
 	{ (char *)"TestTestUnitReady", test_setup, test_teardown,
 	  tests_testunitready },
 	{ (char *)"TestRead10", test_setup, test_teardown,
 	  tests_read10 },
+	{ (char *)"TestReadCapacity10", test_setup, test_teardown,
+	  tests_readcapacity10 },
 	CU_SUITE_INFO_NULL
 };
 

@@ -44,5 +44,6 @@ void test_read10_rdprotect(void);
 void test_read10_flags(void);
 void test_read10_invalid(void);
 
+void test_readcapacity10_simple(void);
 
 #endif	/* _ISCSI_TEST_CU_H_ */

@@ -1070,6 +1070,32 @@ read10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
 }
 
 int
+readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send READCAPACITY10 LBA:%d pmi:%d",
+		lba, pmi);
+
+	task = iscsi_readcapacity10_sync(iscsi, lun, lba, pmi);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READCAPACITY10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] READCAPACITY10 command: "
+			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] READCAPACITY10 returned SUCCESS.");
+	return 0;
+}
+
+int
 verify10(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize)
 {
 	struct scsi_task *task;
