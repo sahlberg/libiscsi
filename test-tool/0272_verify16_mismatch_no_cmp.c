@@ -81,7 +81,7 @@ int T0272_verify16_mismatch_no_cmp(const char *initiator, const char *url)
 		/* flip a random byte in the data */
 		buf[offset] ^= 'X';
 
-		ret = verify16(iscsi, lun, buf, i * block_size, 0, 0, 1, 0, block_size);
+		ret = verify16(iscsi, lun, 0, i * block_size, block_size, 0, 1, 0, buf);
 		if (ret != 0) {
 			goto finished;
 		}

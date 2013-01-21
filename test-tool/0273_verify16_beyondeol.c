@@ -50,7 +50,7 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url)
 	/* verify 2 - 256 blocks beyond the end of the device */
 	printf("Verifying 2-256 blocks beyond end-of-device.\n");
 	for (i = 2; i <= 256; i++) {
-		ret = verify16_lbaoutofrange(iscsi, lun, buf, i * block_size, num_blocks, 0, 1, 1, block_size);
+		ret = verify16_lbaoutofrange(iscsi, lun, num_blocks, i * block_size, block_size, 0, 1, 1, buf);
 		if (ret != 0) {
 			goto finished;
 		}
@@ -59,7 +59,7 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url)
 	/* verify 1 - 256 blocks at LBA 2^63 */
 	printf("Verifying 1-256 blocks at LBA 2^63.\n");
 	for (i = 1; i <= 256; i++) {
-		ret = verify16_lbaoutofrange(iscsi, lun, buf, i * block_size, 0x8000000000000000, 0, 1, 1, block_size);
+		ret = verify16_lbaoutofrange(iscsi, lun, 0x8000000000000000, i * block_size, block_size, 0, 1, 1, buf);
 		if (ret != 0) {
 			goto finished;
 		}
@@ -68,7 +68,7 @@ int T0273_verify16_beyondeol(const char *initiator, const char *url)
 	/* verify 1 - 256 blocks at LBA -1 */
 	printf("Verifying 1-256 blocks at LBA -1.\n");
 	for (i = 1; i <= 256; i++) {
-		ret = verify16_lbaoutofrange(iscsi, lun, buf, i * block_size, 0xffffffffffffffff, 0, 1, 1, block_size);
+		ret = verify16_lbaoutofrange(iscsi, lun, 0xffffffffffffffff, i * block_size, block_size, 0, 1, 1, buf);
 		if (ret != 0) {
 			goto finished;
 		}

@@ -76,7 +76,7 @@ int T0270_verify16_simple(const char *initiator, const char *url)
 	/* verify the first 1 - 256 blocks at the start of the LUN */
 	printf("Verify first 1-256 blocks.\n");
 	for (i = 1; i <= 256; i++) {
-		ret = verify16(iscsi, lun, buf, i * block_size, 0, 0, 1, 1, block_size);
+		ret = verify16(iscsi, lun, 0, i * block_size, block_size, 0, 1, 1, buf);
 		if (ret != 0) {
 			goto finished;
 		}

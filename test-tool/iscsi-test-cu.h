@@ -64,6 +64,14 @@ void test_read16_flags(void);
 
 void test_readcapacity10_simple(void);
 
+void test_verify16_simple(void);
+void test_verify16_beyond_eol(void);
+void test_verify16_0blocks(void);
+void test_verify16_vrprotect(void);
+void test_verify16_flags(void);
+void test_verify16_mismatch(void);
+void test_verify16_mismatch_no_cmp(void);
+
 void test_write10_simple(void);
 void test_write10_beyond_eol(void);
 void test_write10_0blocks(void);

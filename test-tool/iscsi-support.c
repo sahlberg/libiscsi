@@ -1720,148 +1720,180 @@ verify12_lbaoutofrange(struct iscsi_context *iscsi, int lun, unsigned char *data
 }
 
 int
-verify16(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+verify16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;
 
-	printf("Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d", lba, datalen / blocksize, vprotect, dpo, bytchk);
 	task = iscsi_verify16_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY16 command: %s",
+			iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("VERIFY16 is not implemented on target\n");
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("VERIFY16 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] VERIFY16 command: failed with sense. %s", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 
-	printf("[OK]\n");
 	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY16 returned SUCCESS.");
 	return 0;
 }
 
 int
-verify16_nomedium(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+verify16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;
 
-	printf("Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT) ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT)", lba, datalen / blocksize, vprotect, dpo, bytchk);
 	task = iscsi_verify16_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY16 command: %s",
+			iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("VERIFY16 is not implemented on target\n");
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
 	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] VERIFY16 successful but should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY
 	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		printf("[FAILED]\n");
-		printf("VERIFY16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT*\n");
+	  logging(LOG_NORMAL, "[FAILED] VERIFY16 after eject failed with the wrong sense code. Should fail with NOT_READY/MEDIUM_NOT_PRESENT* but failed with %s", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		return -1;
 	}	
 
-	printf("[OK]\n");
 	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY16 returned NOT_READY/MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
 int
-verify16_miscompare(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+verify16_miscompare(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;
 
-	printf("Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting MISCOMPARE) ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting MISCOMPARE)", lba, datalen / blocksize, vprotect, dpo, bytchk);
 	task = iscsi_verify16_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY16 command: %s",
+			iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("VERIFY16 is not implemented on target\n");
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("VERIFY16 command successful but should have failed with MISCOMPARE\n");
+		logging(LOG_NORMAL, "[FAILED] VERIFY16 successful but should have failed with MISCOMPARE");
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 	if (task->sense.key != SCSI_SENSE_MISCOMPARE) {
-		printf("[FAILED]\n");
-		printf("VERIFY16 command returned wrong sense key. MISCOMPARE MISCOMPARE 0x%x expected but got key 0x%x. Sense:%s\n", SCSI_SENSE_MISCOMPARE, task->sense.key, iscsi_get_error(iscsi)); 
+		logging(LOG_NORMAL, "[FAILED] VERIFY16 command returned wrong sense key. MISCOMPARE MISCOMPARE 0x%x expected but got key 0x%x. Sense:%s", SCSI_SENSE_MISCOMPARE, task->sense.key, iscsi_get_error(iscsi)); 
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 
-	printf("[OK]\n");
 	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY16 returned MISCOMPARE.");
 	return 0;
 }
 
 int
-verify16_lbaoutofrange(struct iscsi_context *iscsi, int lun, unsigned char *data, uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize)
+verify16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;
 
-	printf("Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting LBA_OUT_OF_RANGE) ... ", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting LBA_OUT_OF_RANGE)", lba, datalen / blocksize, vprotect, dpo, bytchk);
 	task = iscsi_verify16_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send VERIFY16 command: %s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY16 command: %s",
+			iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("VERIFY16 is not implemented on target\n");
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("VERIFY16 command successful but should have failed with LBA_OUT_OF_RANGE\n");
+		logging(LOG_NORMAL, "[FAILED] VERIFY16 successful but should have failed with LBA_OUT_OF_RANGE");
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-		printf("[FAILED]\n");
-		printf("VERIFY16 should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] VERIFY16 should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE. Sense:%s", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 
-	printf("[OK]\n");
 	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY16 returned LBA_OUT_OF_RANGE.");
+	return 0;
+}
+
+int
+verify16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting INVALID_FIELD_IN_CDB)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	task = iscsi_verify16_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY16 command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] VERIFY16 successful but should have failed with LBA_OUT_OF_RANGE");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		logging(LOG_NORMAL, "[FAILED] VERIFY16 should have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB. Sense:%s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] VERIFY16 returned INVALID_FIELD_IN_CDB.");
 	return 0;
 }
 

@@ -102,12 +102,14 @@ static CU_TestInfo tests_readcapacity10[] = {
 	CU_TEST_INFO_NULL
 };
 
-static CU_TestInfo tests_write12[] = {
-	{ (char *)"testWrite12Simple", test_write12_simple },
-	{ (char *)"testWrite12BeyondEol", test_write12_beyond_eol },
-	{ (char *)"testWrite12ZeroBlocks", test_write12_0blocks },
-	{ (char *)"testWrite12WriteProtect", test_write12_wrprotect },
-	{ (char *)"testWrite12Flags", test_write12_flags },
+static CU_TestInfo tests_verify16[] = {
+	{ (char *)"testVerify16Simple", test_verify16_simple },
+	{ (char *)"testVerify16BeyondEol", test_verify16_beyond_eol },
+	{ (char *)"testVerify16ZeroBlocks", test_verify16_0blocks },
+	{ (char *)"testVerify16VerifyProtect", test_verify16_vrprotect },
+	{ (char *)"testVerify16Flags", test_verify16_flags },
+	{ (char *)"testVerify16mismatch", test_verify16_mismatch },
+	{ (char *)"testVerify16mismatch_no_cmp", test_verify16_mismatch_no_cmp },
 	CU_TEST_INFO_NULL
 };
 
@@ -117,6 +119,15 @@ static CU_TestInfo tests_write10[] = {
 	{ (char *)"testWrite10ZeroBlocks", test_write10_0blocks },
 	{ (char *)"testWrite10WriteProtect", test_write10_wrprotect },
 	{ (char *)"testWrite10Flags", test_write10_flags },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_write12[] = {
+	{ (char *)"testWrite12Simple", test_write12_simple },
+	{ (char *)"testWrite12BeyondEol", test_write12_beyond_eol },
+	{ (char *)"testWrite12ZeroBlocks", test_write12_0blocks },
+	{ (char *)"testWrite12WriteProtect", test_write12_wrprotect },
+	{ (char *)"testWrite12Flags", test_write12_flags },
 	CU_TEST_INFO_NULL
 };
 
@@ -142,6 +153,8 @@ static CU_SuiteInfo suites[] = {
 	  tests_read16 },
 	{ (char *)"TestReadCapacity10", test_setup, test_teardown,
 	  tests_readcapacity10 },
+	{ (char *)"TestVerify16", test_setup, test_teardown,
+	  tests_verify16 },
 	{ (char *)"TestWrite10", test_setup, test_teardown,
 	  tests_write10 },
 	{ (char *)"TestWrite12", test_setup, test_teardown,

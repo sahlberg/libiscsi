@@ -321,7 +321,7 @@ int T0370_nomedia(const char *initiator, const char *url)
 	}
 
 	printf("Test VERIFY16.\n");
-	ret = verify16_nomedium(iscsi, lun, buf, block_size, 0, 0, 0, 1, block_size);
+	ret = verify16_nomedium(iscsi, lun, 0, block_size, block_size, 0, 0, 1, buf);
 	if (ret != 0) {
 		goto finished;
 	}
