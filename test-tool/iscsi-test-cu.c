@@ -111,6 +111,15 @@ static CU_TestInfo tests_write12[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_write10[] = {
+	{ (char *)"testWrite10Simple", test_write10_simple },
+	{ (char *)"testWrite10BeyondEol", test_write10_beyond_eol },
+	{ (char *)"testWrite10ZeroBlocks", test_write10_0blocks },
+	{ (char *)"testWrite10WriteProtect", test_write10_wrprotect },
+	{ (char *)"testWrite10Flags", test_write10_flags },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_write16[] = {
 	{ (char *)"testWrite16Simple", test_write16_simple },
 	{ (char *)"testWrite16BeyondEol", test_write16_beyond_eol },
@@ -133,6 +142,8 @@ static CU_SuiteInfo suites[] = {
 	  tests_read16 },
 	{ (char *)"TestReadCapacity10", test_setup, test_teardown,
 	  tests_readcapacity10 },
+	{ (char *)"TestWrite10", test_setup, test_teardown,
+	  tests_write10 },
 	{ (char *)"TestWrite12", test_setup, test_teardown,
 	  tests_write12 },
 	{ (char *)"TestWrite16", test_setup, test_teardown,
