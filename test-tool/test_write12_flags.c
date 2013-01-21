@@ -16,6 +16,8 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <CUnit/CUnit.h>
 
@@ -24,41 +26,52 @@
 #include "iscsi-test-cu.h"
 
 void
-test_write16_0blocks(void)
-{
+test_write12_flags(void)
+{ 
 	int ret;
+	unsigned char *buf;
+
+	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, "Test WRITE12 flags");
 
 	if (!data_loss) {
 		CU_PASS("[SKIPPED] --dataloss flag is not set. Skipping test.");
 		return;	
 	}
 
-	/* This test is only valid for SBC devices */
-	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
-		CU_PASS("[SKIPPED] LUN is not SBC device. Skipping test");
-		return;
-	}
-
-	logging(LOG_VERBOSE, "");
-	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==0");
-	ret = write16(iscsic, tgt_lun, 0, 0, block_size,
-		     0, 0, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
-
-	logging(LOG_VERBOSE, "Test WRITE16 0-blocks one block past end-of-LUN");
-	ret = write16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
-				    block_size, 0, 0, 0, 0, 0, NULL);
+	buf = malloc(block_size);
+	logging(LOG_VERBOSE, "Test WRITE12 with DPO==1");
+	ret = write12(iscsic, tgt_lun, 0,
+		     block_size, block_size,
+		     0, 1, 0, 0, 0, buf);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==2^63");
-	ret = write16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000, 0,
-				    block_size, 0, 0, 0, 0, 0, NULL);
+	logging(LOG_VERBOSE, "Test WRITE12 with FUA==1 FUA_NV==0");
+	ret = write12(iscsic, tgt_lun, 0,
+		     block_size, block_size,
+		     0, 0, 1, 0, 0, buf);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==-1");
-	ret = write16_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
-				    0, 0, 0, 0, 0, NULL);
+	logging(LOG_VERBOSE, "Test WRITE12 with FUA==1 FUA_NV==1");
+	ret = write12(iscsic, tgt_lun, 0,
+		     block_size, block_size,
+		     0, 0, 1, 1, 0, buf);
 	CU_ASSERT_EQUAL(ret, 0);
+
+
+	logging(LOG_VERBOSE, "Test WRITE12 with FUA==0 FUA_NV==1");
+	ret = write12(iscsic, tgt_lun, 0,
+		     block_size, block_size,
+		     0, 0, 0, 1, 0, buf);
+	CU_ASSERT_EQUAL(ret, 0);
+
+
+	logging(LOG_VERBOSE, "Test WRITE12 with DPO==1 FUA==1 FUA_NV==1");
+	ret = write12(iscsic, tgt_lun, 0,
+		     block_size, block_size,
+		     0, 1, 1, 1, 0, buf);
+	CU_ASSERT_EQUAL(ret, 0);
+	free(buf);
 }

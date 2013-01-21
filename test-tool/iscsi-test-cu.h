@@ -64,6 +64,12 @@ void test_read16_flags(void);
 
 void test_readcapacity10_simple(void);
 
+void test_write12_simple(void);
+void test_write12_beyond_eol(void);
+void test_write12_0blocks(void);
+void test_write12_wrprotect(void);
+void test_write12_flags(void);
+
 void test_write16_simple(void);
 void test_write16_beyond_eol(void);
 void test_write16_0blocks(void);

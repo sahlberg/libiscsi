@@ -24,7 +24,7 @@
 #include "iscsi-test-cu.h"
 
 void
-test_write16_0blocks(void)
+test_write12_0blocks(void)
 {
 	int ret;
 
@@ -33,32 +33,31 @@ test_write16_0blocks(void)
 		return;	
 	}
 
-	/* This test is only valid for SBC devices */
-	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
-		CU_PASS("[SKIPPED] LUN is not SBC device. Skipping test");
+	if (num_blocks >= 0x80000000) {
+		CU_PASS("LUN is too big for read-beyond-eol tests with WRITE12. Skipping test.\n");
 		return;
 	}
 
 	logging(LOG_VERBOSE, "");
-	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==0");
-	ret = write16(iscsic, tgt_lun, 0, 0, block_size,
+	logging(LOG_VERBOSE, "Test WRITE12 0-blocks at LBA==0");
+	ret = write12(iscsic, tgt_lun, 0, 0, block_size,
 		     0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test WRITE16 0-blocks one block past end-of-LUN");
-	ret = write16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
+	logging(LOG_VERBOSE, "Test WRITE12 0-blocks one block past end-of-LUN");
+	ret = write12_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
 				    block_size, 0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==2^63");
-	ret = write16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000, 0,
+	logging(LOG_VERBOSE, "Test WRITE12 0-blocks at LBA==2^31");
+	ret = write12_lbaoutofrange(iscsic, tgt_lun, 0x80000000, 0,
 				    block_size, 0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==-1");
-	ret = write16_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
+	logging(LOG_VERBOSE, "Test WRITE12 0-blocks at LBA==-1");
+	ret = write12_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
 				    0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 }
