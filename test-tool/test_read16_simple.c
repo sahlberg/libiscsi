@@ -1,3 +1,4 @@
+
 /* 
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -21,38 +22,29 @@
 
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
+#include "iscsi-support.h"
 #include "iscsi-test-cu.h"
 
+
 void
-test_read12_0blocks(void)
+test_read16_simple(void)
 {
-	int ret;
+	int i, ret;
+
 
 	logging(LOG_VERBOSE, "");
-	logging(LOG_VERBOSE, "Test READ12 0-blocks at LBA==0");
-	ret = read12(iscsic, tgt_lun, 0, 0, block_size,
-		     0, 0, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
-
-	if (num_blocks > 0x80000000) {
-		CU_PASS("[SKIPPED] LUN is too big");
-		return;
+	logging(LOG_VERBOSE, "Test READ16 of 1-256 blocks at the start of the LUN");
+	for (i = 1; i <= 256; i++) {
+		ret = read16(iscsic, tgt_lun, 0, i * block_size,
+		    block_size, 0, 0, 0, 0, 0, NULL);
+		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-	logging(LOG_VERBOSE, "Test READ12 0-blocks one block past end-of-LUN");
-	ret = read12_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
-				   block_size, 0, 0, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
 
-
-	logging(LOG_VERBOSE, "Test READ12 0-blocks at LBA==2^31");
-	ret = read12_lbaoutofrange(iscsic, tgt_lun, 0x80000000, 0, block_size,
-				   0, 0, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
-
-
-	logging(LOG_VERBOSE, "Test READ12 0-blocks at LBA==-1");
-	ret = read12_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
-				   0, 0, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
+	logging(LOG_VERBOSE, "Test READ16 of 1-256 blocks at the end of the LUN");
+	for (i = 1; i <= 256; i++) {
+		ret = read16(iscsic, tgt_lun, num_blocks +1 - i,
+		    i * block_size, block_size, 0, 0, 0, 0, 0, NULL);
+		CU_ASSERT_EQUAL(ret, 0);
+	}
 }

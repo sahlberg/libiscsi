@@ -24,13 +24,13 @@
 #include "iscsi-test-cu.h"
 
 void
-test_read12_0blocks(void)
+test_read16_0blocks(void)
 {
 	int ret;
 
 	logging(LOG_VERBOSE, "");
-	logging(LOG_VERBOSE, "Test READ12 0-blocks at LBA==0");
-	ret = read12(iscsic, tgt_lun, 0, 0, block_size,
+	logging(LOG_VERBOSE, "Test READ16 0-blocks at LBA==0");
+	ret = read16(iscsic, tgt_lun, 0, 0, block_size,
 		     0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -39,20 +39,20 @@ test_read12_0blocks(void)
 		return;
 	}
 
-	logging(LOG_VERBOSE, "Test READ12 0-blocks one block past end-of-LUN");
-	ret = read12_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
+	logging(LOG_VERBOSE, "Test READ16 0-blocks one block past end-of-LUN");
+	ret = read16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
 				   block_size, 0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test READ12 0-blocks at LBA==2^31");
-	ret = read12_lbaoutofrange(iscsic, tgt_lun, 0x80000000, 0, block_size,
-				   0, 0, 0, 0, 0, NULL);
+	logging(LOG_VERBOSE, "Test READ16 0-blocks at LBA==2^63");
+	ret = read16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000, 0,
+				   block_size, 0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test READ12 0-blocks at LBA==-1");
-	ret = read12_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
+	logging(LOG_VERBOSE, "Test READ16 0-blocks at LBA==-1");
+	ret = read16_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
 				   0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 }

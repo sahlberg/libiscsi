@@ -56,6 +56,12 @@ void test_read12_0blocks(void);
 void test_read12_rdprotect(void);
 void test_read12_flags(void);
 
+void test_read16_simple(void);
+void test_read16_beyond_eol(void);
+void test_read16_0blocks(void);
+void test_read16_rdprotect(void);
+void test_read16_flags(void);
+
 void test_readcapacity10_simple(void);
 
 #endif	/* _ISCSI_TEST_CU_H_ */

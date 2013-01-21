@@ -16,6 +16,8 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <CUnit/CUnit.h>
 
@@ -24,35 +26,26 @@
 #include "iscsi-test-cu.h"
 
 void
-test_read12_0blocks(void)
+test_read16_rdprotect(void)
 {
-	int ret;
+	int i, ret;
 
-	logging(LOG_VERBOSE, "");
-	logging(LOG_VERBOSE, "Test READ12 0-blocks at LBA==0");
-	ret = read12(iscsic, tgt_lun, 0, 0, block_size,
-		     0, 0, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
 
-	if (num_blocks > 0x80000000) {
-		CU_PASS("[SKIPPED] LUN is too big");
+	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+		CU_PASS("[SKIPPED] LUN is not SBC device. Skipping test");
 		return;
 	}
 
-	logging(LOG_VERBOSE, "Test READ12 0-blocks one block past end-of-LUN");
-	ret = read12_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
-				   block_size, 0, 0, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
-
-
-	logging(LOG_VERBOSE, "Test READ12 0-blocks at LBA==2^31");
-	ret = read12_lbaoutofrange(iscsic, tgt_lun, 0x80000000, 0, block_size,
-				   0, 0, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
-
-
-	logging(LOG_VERBOSE, "Test READ12 0-blocks at LBA==-1");
-	ret = read12_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
-				   0, 0, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
+	/*
+	 * Try out different non-zero values for RDPROTECT.
+	 * They should all fail.
+	 */
+	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, "Test READ16 with non-zero RDPROTECT");
+	for (i = 1; i < 8; i++) {
+		ret = read16_invalidfieldincdb(iscsic, tgt_lun, 0,
+					       block_size, block_size,
+					       i, 0, 0, 0, 0, NULL);
+		CU_ASSERT_EQUAL(ret, 0);
+	}
 }

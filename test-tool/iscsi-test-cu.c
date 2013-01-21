@@ -88,6 +88,15 @@ static CU_TestInfo tests_read12[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_read16[] = {
+	{ (char *)"testRead16Simple", test_read16_simple },
+	{ (char *)"testRead16BeyondEol", test_read16_beyond_eol },
+	{ (char *)"testRead16ZeroBlocks", test_read16_0blocks },
+	{ (char *)"testRead16ReadProtect", test_read16_rdprotect },
+	{ (char *)"testRead16Flags", test_read16_flags },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_readcapacity10[] = {
 	{ (char *)"testReadCapacity10Simple", test_readcapacity10_simple },
 	CU_TEST_INFO_NULL
@@ -102,6 +111,8 @@ static CU_SuiteInfo suites[] = {
 	  tests_read10 },
 	{ (char *)"TestRead12", test_setup, test_teardown,
 	  tests_read12 },
+	{ (char *)"TestRead16", test_setup, test_teardown,
+	  tests_read16 },
 	{ (char *)"TestReadCapacity10", test_setup, test_teardown,
 	  tests_readcapacity10 },
 	CU_SUITE_INFO_NULL
