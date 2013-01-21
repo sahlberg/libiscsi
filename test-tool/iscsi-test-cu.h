@@ -37,6 +37,12 @@ int test_teardown(void);
 
 void test_testunitready_simple(void);
 
+void test_read6_simple(void);
+void test_read6_beyond_eol(void);
+void test_read6_0blocks(void);
+void test_read6_rdprotect(void);
+void test_read6_flags(void);
+
 void test_read10_simple(void);
 void test_read10_beyond_eol(void);
 void test_read10_0blocks(void);

@@ -62,6 +62,13 @@ static CU_TestInfo tests_testunitready[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_read6[] = {
+	{ (char *)"testRead6Simple", test_read6_simple },
+	{ (char *)"testRead6BeyondEol", test_read6_beyond_eol },
+	{ (char *)"testRead6ZeroBlocks", test_read6_0blocks },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_read10[] = {
 	{ (char *)"testRead10Simple", test_read10_simple },
 	{ (char *)"testRead10BeyondEol", test_read10_beyond_eol },
@@ -80,6 +87,8 @@ static CU_TestInfo tests_readcapacity10[] = {
 static CU_SuiteInfo suites[] = {
 	{ (char *)"TestTestUnitReady", test_setup, test_teardown,
 	  tests_testunitready },
+	{ (char *)"TestRead6", test_setup, test_teardown,
+	  tests_read6 },
 	{ (char *)"TestRead10", test_setup, test_teardown,
 	  tests_read10 },
 	{ (char *)"TestReadCapacity10", test_setup, test_teardown,

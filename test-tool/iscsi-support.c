@@ -941,6 +941,80 @@ prefetch16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, int num,
 }
 
 int
+read6(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send READ6 LBA:%d blocks:%d",
+		lba, datalen / blocksize);
+
+	task = iscsi_read6_sync(iscsi, lun, lba, datalen, blocksize);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READ6 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] READ6 command: "
+			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	if (data != NULL) {
+		memcpy(data, task->datain.data, task->datain.size);
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] READ6 returned SUCCESS.");
+	return 0;
+}
+
+int
+read6_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		    uint32_t datalen, int blocksize,
+		    unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send READ6 (Expecting LBA_OUT_OF_RANGE) "
+		"LBA:%d blocks:%d",
+		lba, datalen / blocksize);
+
+	task = iscsi_read6_sync(iscsi, lun, lba, datalen, blocksize);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READ6 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] READ6 successful but should "
+			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		logging(LOG_NORMAL, "[FAILED] READ6 failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	if (data != NULL) {
+		memcpy(data, task->datain.data, task->datain.size);
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] READ6 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
+	return 0;
+}
+
+int
 read10(struct iscsi_context *iscsi, int lun, uint32_t lba,
        uint32_t datalen, int blocksize, int rdprotect, 
        int dpo, int fua, int fua_nv, int group,

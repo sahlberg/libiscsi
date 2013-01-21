@@ -183,7 +183,10 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_read10_rdprotect.c \
 	test-tool/test_read10_flags.c \
 	test-tool/test_read10_invalid.c \
-	test-tool/test_readcapacity10_simple.c
+	test-tool/test_readcapacity10_simple.c \
+	test-tool/test_read6_simple.c \
+	test-tool/test_read6_beyond_eol.c \
+	test-tool/test_read6_0blocks.c
 
 endif
 
