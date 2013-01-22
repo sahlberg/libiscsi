@@ -67,4 +67,10 @@ test_unmap_0blocks(void)
 	}
 	ret = unmap(iscsic, tgt_lun, 0, list, 256);
 	CU_ASSERT_EQUAL(ret, 0);
+
+
+	logging(LOG_VERBOSE, "Test UNMAP without any descriptors.");
+	ret = unmap(iscsic, tgt_lun, 0, list, 0);
+	CU_ASSERT_EQUAL(ret, 0);
+
 }
