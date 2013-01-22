@@ -1428,6 +1428,39 @@ readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi)
 }
 
 int
+readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len)
+{
+	struct scsi_task *task;
+
+
+	logging(LOG_VERBOSE, "Send READCAPACITY16 alloc_len:%d", alloc_len);
+
+	task = scsi_cdb_serviceactionin16(SCSI_READCAPACITY16, alloc_len);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "Out-of-memory: Failed to create "
+				"READCAPACITY16 cdb.");
+		return -1;
+	}
+	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READCAPACITY16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] READCAPACITY16 command: "
+			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] READCAPACITY16 returned SUCCESS.");
+	return 0;
+}
+
+int
 verify10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;
