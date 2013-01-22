@@ -30,11 +30,7 @@ test_read16_rdprotect(void)
 {
 	int i, ret;
 
-
-	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
-		CU_PASS("[SKIPPED] LUN is not SBC device. Skipping test");
-		return;
-	}
+	CHECK_FOR_SBC;
 
 	/*
 	 * Try out different non-zero values for RDPROTECT.

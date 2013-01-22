@@ -35,6 +35,39 @@ extern int loglevel;
 #define LOG_VERBOSE 2
 void logging(int level, const char *format, ...);
 
+#define CHECK_FOR_DATALOSS						\
+do {									\
+	if (!data_loss) {						\
+		logging(LOG_VERBOSE, "[SKIPPED] --dataloss flag is not " \
+				"set. Skipping test.");	       	      	\
+		CU_PASS("[SKIPPED] --dataloss flag is not set. "	\
+				"Skipping test.");			\
+		return;							\
+	}								\
+} while (0);
+
+#define CHECK_FOR_THIN_PROVISIONING					\
+do {									\
+	if (lbpme == 0){						\
+		logging(LOG_VERBOSE, "[SKIPPED] Logical unit is fully"	\
+			" provisioned. Skipping test");			\
+		CU_PASS("[SKIPPED] Logical unit is fully provisioned."	\
+			" Skipping test");				\
+		return;	  	   					\
+	}								\
+} while (0);
+
+#define CHECK_FOR_SBC							\
+do {									\
+	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {\
+		logging(LOG_VERBOSE, "[SKIPPED] Not SBC device."	\
+			" Skipping test");				\
+		CU_PASS("[SKIPPED] Not SBC device."			\
+			" Skipping test");				\
+		return;	  	   					\
+	}								\
+} while (0);
+
 extern uint32_t block_size;
 extern uint64_t num_blocks;
 extern int lbpme;
@@ -132,6 +165,7 @@ int read16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba,
 int read16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data);
 int readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi);
 int readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len);
+int unmap(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len);
 int verify10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data);
 int verify10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data);
 int verify10_miscompare(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data);

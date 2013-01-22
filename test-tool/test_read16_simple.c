@@ -31,6 +31,7 @@ test_read16_simple(void)
 {
 	int i, ret;
 
+	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, "");
 	logging(LOG_VERBOSE, "Test READ16 of 1-256 blocks at the start of the LUN");

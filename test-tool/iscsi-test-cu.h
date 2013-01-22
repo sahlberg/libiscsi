@@ -67,6 +67,8 @@ void test_readcapacity10_simple(void);
 void test_readcapacity16_simple(void);
 void test_readcapacity16_alloclen(void);
 
+void test_unmap_simple(void);
+
 void test_verify10_simple(void);
 void test_verify10_beyond_eol(void);
 void test_verify10_0blocks(void);

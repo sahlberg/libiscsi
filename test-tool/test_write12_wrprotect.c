@@ -31,10 +31,7 @@ test_write12_wrprotect(void)
 	int i, ret;
 	unsigned char *buf;
 
-	if (!data_loss) {
-		CU_PASS("[SKIPPED] --dataloss flag is not set. Skipping test.");
-		return;	
-	}
+	CHECK_FOR_DATALOSS;
 
 	/*
 	 * Try out different non-zero values for WRPROTECT.

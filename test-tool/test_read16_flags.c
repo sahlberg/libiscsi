@@ -30,15 +30,10 @@ test_read16_flags(void)
 { 
 	int ret;
 
+	CHECK_FOR_SBC;
+
 	logging(LOG_VERBOSE, "");
 	logging(LOG_VERBOSE, "Test READ16 flags");
-
-	/* This test is only valid for SBC devices */
-	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
-		CU_PASS("[SKIPPED] LUN is not SBC device. Skipping test");
-		return;
-	}
-
 
 	logging(LOG_VERBOSE, "Test READ16 with DPO==1");
 	ret = read16(iscsic, tgt_lun, 0,

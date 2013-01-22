@@ -31,13 +31,10 @@ test_write10_flags(void)
 	int ret;
 	unsigned char *buf;
 
+	CHECK_FOR_DATALOSS;
+
 	logging(LOG_VERBOSE, "");
 	logging(LOG_VERBOSE, "Test WRITE10 flags");
-
-	if (!data_loss) {
-		CU_PASS("[SKIPPED] --dataloss flag is not set. Skipping test.");
-		return;	
-	}
 
 	buf = malloc(block_size);
 	logging(LOG_VERBOSE, "Test WRITE10 with DPO==1");

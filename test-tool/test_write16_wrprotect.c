@@ -31,15 +31,8 @@ test_write16_wrprotect(void)
 	int i, ret;
 	unsigned char *buf;
 
-	if (!data_loss) {
-		CU_PASS("[SKIPPED] --dataloss flag is not set. Skipping test.");
-		return;	
-	}
-
-	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
-		CU_PASS("[SKIPPED] LUN is not SBC device. Skipping test");
-		return;
-	}
+	CHECK_FOR_DATALOSS;
+	CHECK_FOR_SBC;
 
 	/*
 	 * Try out different non-zero values for WRPROTECT.

@@ -28,10 +28,7 @@ test_write12_0blocks(void)
 {
 	int ret;
 
-	if (!data_loss) {
-		CU_PASS("[SKIPPED] --dataloss flag is not set. Skipping test.");
-		return;	
-	}
+	CHECK_FOR_DATALOSS;
 
 	if (num_blocks >= 0x80000000) {
 		CU_PASS("LUN is too big for read-beyond-eol tests with WRITE12. Skipping test.\n");

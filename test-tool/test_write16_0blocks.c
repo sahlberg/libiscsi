@@ -28,16 +28,8 @@ test_write16_0blocks(void)
 {
 	int ret;
 
-	if (!data_loss) {
-		CU_PASS("[SKIPPED] --dataloss flag is not set. Skipping test.");
-		return;	
-	}
-
-	/* This test is only valid for SBC devices */
-	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
-		CU_PASS("[SKIPPED] LUN is not SBC device. Skipping test");
-		return;
-	}
+	CHECK_FOR_DATALOSS;
+	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, "");
 	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==0");

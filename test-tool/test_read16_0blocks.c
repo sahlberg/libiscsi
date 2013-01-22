@@ -28,6 +28,8 @@ test_read16_0blocks(void)
 {
 	int ret;
 
+	CHECK_FOR_SBC;
+
 	logging(LOG_VERBOSE, "");
 	logging(LOG_VERBOSE, "Test READ16 0-blocks at LBA==0");
 	ret = read16(iscsic, tgt_lun, 0, 0, block_size,

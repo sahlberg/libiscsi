@@ -31,10 +31,7 @@ test_write12_simple(void)
 {
 	int i, ret;
 
-	if (!data_loss) {
-		CU_PASS("[SKIPPED] --dataloss flag is not set. Skipping test.");
-		return;	
-	}
+	CHECK_FOR_DATALOSS;
 
 	logging(LOG_VERBOSE, "");
 	logging(LOG_VERBOSE, "Test WRITE12 of 1-256 blocks at the start of the LUN");

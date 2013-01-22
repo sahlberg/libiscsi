@@ -1461,6 +1461,36 @@ readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len)
 }
 
 int
+unmap(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send UNMAP list_len:%d anchor:%d", list_len, anchor);
+	task = iscsi_unmap_sync(iscsi, lun, anchor, 0, list, list_len);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send UNMAP command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] UNMAP is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] UNMAP command: failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] UNMAP returned SUCCESS.");
+	return 0;
+}
+
+int
 verify10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data)
 {
 	struct scsi_task *task;

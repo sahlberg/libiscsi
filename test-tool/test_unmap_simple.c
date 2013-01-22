@@ -27,32 +27,30 @@
 
 
 void
-test_write10_simple(void)
+test_unmap_simple(void)
 {
 	int i, ret;
+	struct unmap_list list[257];
 
 	CHECK_FOR_DATALOSS;
+	CHECK_FOR_THIN_PROVISIONING;
+	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, "");
-	logging(LOG_VERBOSE, "Test WRITE10 of 1-256 blocks at the start of the LUN");
-
+	logging(LOG_VERBOSE, "Test UNMAP of 1-256 blocks at the start of the LUN as a single descriptor");
 	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
-
-		ret = write10(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
-		free(buf);
+		list[0].lba = 0;
+		list[0].num = i;
+		ret = unmap(iscsic, tgt_lun, 0, list, 1);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-	logging(LOG_VERBOSE, "Test WRITE10 of 1-256 blocks at the end of the LUN");
-	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
 
-		ret = write10(iscsic, tgt_lun, num_blocks +1 - i,
-		    i * block_size, block_size, 0, 0, 0, 0, 0, buf);
-		free(buf);
+	logging(LOG_VERBOSE, "Test UNMAP of 1-256 blocks at the start of the LUN with one descriptor per block");
+	for (i = 1; i <= 256; i++) {
+		list[i].lba = i-1;
+		list[i].num = 1;
+		ret = unmap(iscsic, tgt_lun, 0, list, i);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
-
 }

@@ -108,6 +108,11 @@ static CU_TestInfo tests_readcapacity16[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_unmap[] = {
+	{ (char *)"testUnmapSimple", test_unmap_simple },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_verify10[] = {
 	{ (char *)"testVerify10Simple", test_verify10_simple },
 	{ (char *)"testVerify10BeyondEol", test_verify10_beyond_eol },
@@ -183,6 +188,8 @@ static CU_SuiteInfo suites[] = {
 	  tests_readcapacity10 },
 	{ (char *)"TestReadCapacity16", test_setup, test_teardown,
 	  tests_readcapacity16 },
+	{ (char *)"TestUnmap", test_setup, test_teardown,
+	  tests_unmap },
 	{ (char *)"TestVerify10", test_setup, test_teardown,
 	  tests_verify10 },
 	{ (char *)"TestVerify12", test_setup, test_teardown,
