@@ -200,6 +200,7 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_readcapacity16_simple.c \
 	test-tool/test_readcapacity16_alloclen.c \
 	test-tool/test_unmap_simple.c \
+	test-tool/test_unmap_0blocks.c \
 	test-tool/test_verify10_simple.c \
 	test-tool/test_verify10_beyond_eol.c \
 	test-tool/test_verify10_0blocks.c \

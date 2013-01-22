@@ -44,7 +44,7 @@ test_read16_simple(void)
 
 	logging(LOG_VERBOSE, "Test READ16 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
-		ret = read16(iscsic, tgt_lun, num_blocks +1 - i,
+		ret = read16(iscsic, tgt_lun, num_blocks - i,
 		    i * block_size, block_size, 0, 0, 0, 0, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
 	}

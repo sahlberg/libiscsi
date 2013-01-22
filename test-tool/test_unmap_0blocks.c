@@ -27,24 +27,35 @@
 
 
 void
-test_read6_simple(void)
+test_unmap_0blocks(void)
 {
 	int i, ret;
+	struct unmap_list list[257];
 
+	CHECK_FOR_DATALOSS;
+	CHECK_FOR_THIN_PROVISIONING;
+	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, "");
-	logging(LOG_VERBOSE, "Test READ6 of 1-255 blocks at the start of the LUN");
-	for (i = 1; i <= 255; i++) {
-		ret = read6(iscsic, tgt_lun, 0, i * block_size,
-			    block_size, NULL);
+	logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-255 as a single descriptor");
+	for (i = 0; i < 256; i++) {
+		list[0].lba = i;
+		list[0].num = 0;
+		ret = unmap(iscsic, tgt_lun, 0, list, 1);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-
-	logging(LOG_VERBOSE, "Test READ6 of 1-255 blocks at the end of the LUN");
-	for (i = 1; i <= 255; i++) {
-		ret = read6(iscsic, tgt_lun, num_blocks - i,
-			    i * block_size, block_size, NULL);
+	logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-255  with one descriptor per block");
+	for (i = 0; i < 256; i++) {
+		list[i].lba = i;
+		list[i].num = 0;
+		ret = unmap(iscsic, tgt_lun, 0, list, i);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
+
+	logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at end-of-LUN");
+	list[0].lba = num_blocks;
+	list[0].num = 0;
+	ret = unmap(iscsic, tgt_lun, 0, list, 1);
+	CU_ASSERT_EQUAL(ret, 0);
 }

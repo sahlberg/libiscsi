@@ -54,11 +54,11 @@ test_verify16_simple(void)
 	for (i = 1; i <= 256; i++) {
 		unsigned char *buf = malloc(block_size * i);
 
-		ret = read16(iscsic, tgt_lun, num_blocks +1 - i,
+		ret = read16(iscsic, tgt_lun, num_blocks - i,
 		    i * block_size, block_size, 0, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
-		ret = verify16(iscsic, tgt_lun, num_blocks +1 - i,
+		ret = verify16(iscsic, tgt_lun, num_blocks - i,
 		    i * block_size, block_size, 0, 0, 1, buf);
 		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);

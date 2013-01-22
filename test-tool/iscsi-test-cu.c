@@ -110,6 +110,7 @@ static CU_TestInfo tests_readcapacity16[] = {
 
 static CU_TestInfo tests_unmap[] = {
 	{ (char *)"testUnmapSimple", test_unmap_simple },
+	{ (char *)"testUnmapZeroBlocks", test_unmap_0blocks },
 	CU_TEST_INFO_NULL
 };
 
@@ -518,7 +519,7 @@ main(int argc, char *argv[])
 		return -1;
 	}
 	block_size = rc10->block_size;
-	num_blocks = rc10->lba;
+	num_blocks = rc10->lba + 1;
 	scsi_free_scsi_task(task);
 
 	task = iscsi_readcapacity16_sync(iscsic, lun);
@@ -538,7 +539,7 @@ main(int argc, char *argv[])
 			return -1;
 		}
 		block_size = rc16->block_length;
-		num_blocks = rc16->returned_lba;
+		num_blocks = rc16->returned_lba + 1;
 		lbpme = rc16->lbpme;
 		lbppb = 1 << rc16->lbppbe;
 		lbpme = rc16->lbpme;

@@ -47,10 +47,10 @@ test_unmap_simple(void)
 
 
 	logging(LOG_VERBOSE, "Test UNMAP of 1-256 blocks at the start of the LUN with one descriptor per block");
-	for (i = 1; i <= 256; i++) {
-		list[i].lba = i-1;
+	for (i = 0; i < 256; i++) {
+		list[i].lba = i;
 		list[i].num = 1;
-		ret = unmap(iscsic, tgt_lun, 0, list, i);
+		ret = unmap(iscsic, tgt_lun, 0, list, i + 1);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

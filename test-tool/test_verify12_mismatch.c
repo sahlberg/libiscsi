@@ -60,7 +60,7 @@ test_verify12_mismatch(void)
 		unsigned char *buf = malloc(block_size * i);
 		int offset = random() % (i * block_size);
 
-		ret = read12(iscsic, tgt_lun, num_blocks +1 - i,
+		ret = read12(iscsic, tgt_lun, num_blocks - i,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
@@ -68,7 +68,7 @@ test_verify12_mismatch(void)
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify12_miscompare(iscsic, tgt_lun, num_blocks +1 - i,
+		ret = verify12_miscompare(iscsic, tgt_lun, num_blocks - i,
 					  i * block_size, block_size, 0, 0, 1, buf);
 		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);

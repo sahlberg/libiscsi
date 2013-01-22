@@ -49,7 +49,7 @@ test_write12_simple(void)
 	for (i = 1; i <= 256; i++) {
 		unsigned char *buf = malloc(block_size * i);
 
-		ret = write12(iscsic, tgt_lun, num_blocks +1 - i,
+		ret = write12(iscsic, tgt_lun, num_blocks - i,
 		    i * block_size, block_size, 0, 0, 0, 0, 0, buf);
 		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);
