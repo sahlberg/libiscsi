@@ -64,8 +64,10 @@ int T0182_writesame10_beyondeol(const char *initiator, const char *url)
 	/* write 1 - 256 blocks beyond the end of the device */
 	printf("Writing 1-256 blocks beyond end-of-device ... ");
 	for (i = 2; i <= 257; i++) {
-		task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
-			num_blocks, i, 0, 0, 0, 0, 0, 0);
+		task = iscsi_writesame10_sync(iscsi, lun, num_blocks,
+					      buf, block_size,
+					      i,
+					      0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
@@ -105,8 +107,10 @@ int T0182_writesame10_beyondeol(const char *initiator, const char *url)
 	/* writing 1 - 256 blocks at LBA 2^31 */
 	printf("Writing 1-256 blocks at LBA 2^31 ... ");
 	for (i = 1; i <= 256; i++) {
-		task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
-			0x80000000, i, 0, 0, 0, 0, 0, 0);
+		task = iscsi_writesame10_sync(iscsi, lun, 0x80000000,
+					      buf, block_size,
+					      i,
+					      0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
@@ -137,8 +141,10 @@ int T0182_writesame10_beyondeol(const char *initiator, const char *url)
 	/* write 1 - 256 blocks at LBA -1 */
 	printf("Writing 1-256 blocks at LBA -1 ... ");
 	for (i = 1; i <= 256; i++) {
-		task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
-			-1, i, 0, 0, 0, 0, 0, 0);
+		task = iscsi_writesame10_sync(iscsi, lun, -1,
+					      buf, block_size,
+					      i,
+					      0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));

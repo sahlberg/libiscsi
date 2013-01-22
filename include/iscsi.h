@@ -750,18 +750,16 @@ iscsi_verify16_task(struct iscsi_context *iscsi, int lun,
 		    int blocksize, iscsi_command_cb cb,
 		    void *private_data);
 EXTERN struct scsi_task *
-iscsi_writesame10_task(struct iscsi_context *iscsi, int lun,
+iscsi_writesame10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       unsigned char *data, uint32_t datalen,
-		       uint32_t lba, uint16_t num_blocks,
-		       int anchor, int unmap, int pbdata, int lbdata,
-		       int wrprotect, int group,
+		       uint16_t num_blocks,
+		       int anchor, int unmap, int wrprotect, int group,
 		       iscsi_command_cb cb, void *private_data);
 EXTERN struct scsi_task *
-iscsi_writesame16_task(struct iscsi_context *iscsi, int lun,
+iscsi_writesame16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		       unsigned char *data, uint32_t datalen,
-		       uint64_t lba, uint32_t num_blocks,
-		       int anchor, int unmap, int pbdata, int lbdata,
-		       int wrprotect, int group,
+		       uint32_t num_blocks,
+		       int anchor, int unmap, int wrprotect, int group,
 		       iscsi_command_cb cb, void *private_data);
 EXTERN struct scsi_task *
 iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd,
@@ -943,18 +941,16 @@ iscsi_verify16_sync(struct iscsi_context *iscsi, int lun,
 		    int blocksize);
 
 EXTERN struct scsi_task *
-iscsi_writesame10_sync(struct iscsi_context *iscsi, int lun,
+iscsi_writesame10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       unsigned char *data, uint32_t datalen,
-		       uint32_t lba, uint16_t num_blocks,
-		       int anchor, int unmap, int pbdata, int lbdata,
-		       int wrprotect, int group);
+		       uint16_t num_blocks,
+		       int anchor, int unmap, int wrprotect, int group);
 
 EXTERN struct scsi_task *
-iscsi_writesame16_sync(struct iscsi_context *iscsi, int lun,
+iscsi_writesame16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		       unsigned char *data, uint32_t datalen,
-		       uint64_t lba, uint32_t num_blocks,
-		       int anchor, int unmap, int pbdata, int lbdata,
-		       int wrprotect, int group);
+		       uint32_t num_blocks,
+		       int anchor, int unmap, int wrprotect, int group);
 
 EXTERN struct scsi_task *
 iscsi_persistent_reserve_in_sync(struct iscsi_context *iscsi, int lun,

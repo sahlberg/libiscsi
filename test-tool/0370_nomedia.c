@@ -524,7 +524,10 @@ int T0370_nomedia(const char *initiator, const char *url)
 
 
 	printf("Test WRITESAME10 ... ");
-	task = iscsi_writesame10_sync(iscsi, lun, buf, block_size, 0, 1, 0, 0, 0, 0, 0, 0);
+	task = iscsi_writesame10_sync(iscsi, lun, 0,
+				      buf, block_size,
+				      1,
+				      0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
@@ -547,7 +550,10 @@ int T0370_nomedia(const char *initiator, const char *url)
 
 
 	printf("Test WRITESAME16 ... ");
-	task = iscsi_writesame16_sync(iscsi, lun, buf, block_size, 0, 1, 0, 0, 0, 0, 0, 0);
+	task = iscsi_writesame16_sync(iscsi, lun, 0,
+				      buf, block_size,
+				      1,
+				      0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));

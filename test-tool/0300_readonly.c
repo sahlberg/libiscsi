@@ -196,7 +196,10 @@ int T0300_readonly(const char *initiator, const char *url)
 
 	/* Write one block at lba 0 */
 	printf("WRITESAME10 to LUN 0 ... ");
-	task = iscsi_writesame10_sync(iscsi, lun, data, block_size, 0, 1, 0, 0, 0, 0, 0, 0);
+	task = iscsi_writesame10_sync(iscsi, lun, 0,
+				      data, block_size,
+				      1,
+				      0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
@@ -225,7 +228,10 @@ int T0300_readonly(const char *initiator, const char *url)
 
 	/* Write one block at lba 0 */
 	printf("WRITESAME16 to LUN 0 ... ");
-	task = iscsi_writesame16_sync(iscsi, lun, data, block_size, 0, 1, 0, 0, 0, 0, 0, 0);
+	task = iscsi_writesame16_sync(iscsi, lun, 0,
+				      data, block_size,
+				      1,
+				      0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));
@@ -258,7 +264,10 @@ int T0300_readonly(const char *initiator, const char *url)
 		printf("LUN is not thin-provisioned. [SKIPPED]\n");
 		goto finished;
 	}
-	task = iscsi_writesame10_sync(iscsi, lun, data, block_size, 0, 1, 0, 1, 0, 0, 0, 0);
+	task = iscsi_writesame10_sync(iscsi, lun, 0,
+				      data, block_size,
+				      1,
+				      0, 1, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
@@ -291,7 +300,10 @@ int T0300_readonly(const char *initiator, const char *url)
 		printf("LUN is not thin-provisioned. [SKIPPED]\n");
 		goto finished;
 	}
-	task = iscsi_writesame16_sync(iscsi, lun, data, block_size, 0, 1, 0, 1, 0, 0, 0, 0);
+	task = iscsi_writesame16_sync(iscsi, lun, 0,
+				      data, block_size,
+				      1,
+				      0, 1, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));

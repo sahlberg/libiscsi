@@ -1349,17 +1349,16 @@ iscsi_prefetch16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 struct scsi_task *
-iscsi_writesame10_task(struct iscsi_context *iscsi, int lun,
+iscsi_writesame10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       unsigned char *data, uint32_t datalen,
-		       uint32_t lba, uint16_t num_blocks,
-		       int anchor, int unmap, int pbdata, int lbdata,
-		       int wrprotect, int group,
+		       uint16_t num_blocks,
+		       int anchor, int unmap, int wrprotect, int group,
 		       iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
 
-	task = scsi_cdb_writesame10(wrprotect, anchor, unmap, pbdata, lbdata, lba, group, num_blocks);
+	task = scsi_cdb_writesame10(wrprotect, anchor, unmap, lba, group, num_blocks);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"writesame10 cdb.");
@@ -1384,17 +1383,16 @@ iscsi_writesame10_task(struct iscsi_context *iscsi, int lun,
 }
 
 struct scsi_task *
-iscsi_writesame16_task(struct iscsi_context *iscsi, int lun,
+iscsi_writesame16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		       unsigned char *data, uint32_t datalen,
-		       uint64_t lba, uint32_t num_blocks,
-		       int anchor, int unmap, int pbdata, int lbdata,
-		       int wrprotect, int group,
+		       uint32_t num_blocks,
+		       int anchor, int unmap, int wrprotect, int group,
 		       iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
 
-	task = scsi_cdb_writesame16(wrprotect, anchor, unmap, pbdata, lbdata, lba, group, num_blocks);
+	task = scsi_cdb_writesame16(wrprotect, anchor, unmap, lba, group, num_blocks);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"writesame16 cdb.");

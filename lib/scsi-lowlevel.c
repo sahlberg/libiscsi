@@ -1873,7 +1873,7 @@ scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persis
  * WRITE_SAME10
  */
 struct scsi_task *
-scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint32_t lba, int group, uint16_t num_blocks)
+scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, uint32_t lba, int group, uint16_t num_blocks)
 {
 	struct scsi_task *task;
 
@@ -1894,12 +1894,6 @@ scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, int pbdata, int lbdat
 	if (unmap) {
 		task->cdb[1] |= 0x08;
 	}
-	if (pbdata) {
-		task->cdb[1] |= 0x04;
-	}
-	if (lbdata) {
-		task->cdb[1] |= 0x02;
-	}
 	scsi_set_uint32(&task->cdb[2], lba);
 	if (group) {
 		task->cdb[6] |= (group & 0x1f);
@@ -1917,7 +1911,7 @@ scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, int pbdata, int lbdat
  * WRITE_SAME16
  */
 struct scsi_task *
-scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint64_t lba, int group, uint32_t num_blocks)
+scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, uint64_t lba, int group, uint32_t num_blocks)
 {
 	struct scsi_task *task;
 
@@ -1937,12 +1931,6 @@ scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, int pbdata, int lbdat
 	}
 	if (unmap) {
 		task->cdb[1] |= 0x08;
-	}
-	if (pbdata) {
-		task->cdb[1] |= 0x04;
-	}
-	if (lbdata) {
-		task->cdb[1] |= 0x02;
 	}
 	scsi_set_uint32(&task->cdb[2], lba >> 32);
 	scsi_set_uint32(&task->cdb[6], lba & 0xffffffff);

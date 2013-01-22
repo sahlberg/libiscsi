@@ -65,9 +65,10 @@ int T0181_writesame10_unmap_unaligned(const char *initiator, const char *url)
 	/* unmap the first 1 - lbppb blocks at the start of the LUN */
 	printf("Unmapping first 1 - (LBPPB-1) blocks ... ");
 	for (i=1; i < lbppb; i++) {
-		task = iscsi_writesame10_sync(iscsi, lun, NULL, 0,
-					0, i,
-					0, 1, 0, 0, 0, 0);
+		task = iscsi_writesame10_sync(iscsi, lun, 0,
+					      NULL, 0,
+					      i,
+					      0, 1, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));

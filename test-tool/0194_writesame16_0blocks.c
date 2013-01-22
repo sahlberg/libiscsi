@@ -55,8 +55,10 @@ int T0194_writesame16_0blocks(const char *initiator, const char *url)
 	ret = 0;
 
 	printf("Writesame16 0blocks at LBA:0 ... ");
-	task = iscsi_writesame16_sync(iscsi, lun, buf, block_size,
-			0, 0, 0, 0, 0, 0, 0, 0);
+	task = iscsi_writesame16_sync(iscsi, lun, 0,
+				      buf, block_size,
+				      0,
+				      0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));
@@ -84,8 +86,10 @@ int T0194_writesame16_0blocks(const char *initiator, const char *url)
 
 
 	printf("Writesame16 0blocks at one block beyond <end-of-LUN> ... ");
-	task = iscsi_writesame16_sync(iscsi, lun, buf, block_size,
-			num_blocks + 1, 0, 0, 0, 0, 0, 0, 0);
+	task = iscsi_writesame16_sync(iscsi, lun, num_blocks + 1,
+				      buf, block_size,
+				      0,
+				      0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));
@@ -113,8 +117,10 @@ int T0194_writesame16_0blocks(const char *initiator, const char *url)
 
 
 	printf("Writesame16 0blocks at LBA 2^63 ... ");
-	task = iscsi_writesame16_sync(iscsi, lun, buf, block_size,
-			0x8000000000000000, 0, 0, 0, 0, 0, 0, 0);
+	task = iscsi_writesame16_sync(iscsi, lun, 0x8000000000000000,
+				      buf, block_size,
+				      0,
+				      0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));
@@ -142,8 +148,10 @@ int T0194_writesame16_0blocks(const char *initiator, const char *url)
 
 
 	printf("Writesame16 0blocks at LBA -1 ... ");
-	task = iscsi_writesame16_sync(iscsi, lun, buf, block_size,
-			-1, 0, 0, 0, 0, 0, 0, 0);
+	task = iscsi_writesame16_sync(iscsi, lun, -1,
+				      buf, block_size,
+				      0,
+				      0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME16 command: %s\n", iscsi_get_error(iscsi));

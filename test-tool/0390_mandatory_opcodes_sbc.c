@@ -251,7 +251,10 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 	if (lbpme == 0) {
 		printf("[LBPME == 0, SKIPPING TEST]\n");
 	} else {
-		task = iscsi_writesame16_sync(iscsi, lun, data, block_size, 0, 1, 0, 1, 0, 0, 0, 0);
+		task = iscsi_writesame16_sync(iscsi, lun, 0,
+					      data, block_size,
+					      1,
+					      0, 1, 0, 0);
 		if (task == NULL) {
 			printf("[FAILED]\n");
 			printf("Failed to send WRITE SAME16 command: %s\n", iscsi_get_error(iscsi));

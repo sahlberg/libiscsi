@@ -792,8 +792,8 @@ EXTERN struct scsi_task *scsi_cdb_get_lba_status(uint64_t starting_lba, uint32_t
 EXTERN struct scsi_task *scsi_cdb_unmap(int anchor, int group, uint16_t xferlen);
 EXTERN struct scsi_task *scsi_cdb_persistent_reserve_in(enum scsi_persistent_in_sa sa, uint16_t xferlen);
 EXTERN struct scsi_task *scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persistent_out_scope scope, enum scsi_persistent_out_type type, void *params);
-EXTERN struct scsi_task *scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint32_t lba, int group, uint16_t num_blocks);
-EXTERN struct scsi_task *scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, int pbdata, int lbdata, uint64_t lba, int group, uint32_t num_blocks);
+EXTERN struct scsi_task *scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, uint32_t lba, int group, uint16_t num_blocks);
+EXTERN struct scsi_task *scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, uint64_t lba, int group, uint32_t num_blocks);
 EXTERN struct scsi_task *scsi_cdb_prefetch10(uint32_t lba, int num_blocks, int immed, int group);
 EXTERN struct scsi_task *scsi_cdb_prefetch16(uint64_t lba, int num_blocks, int immed, int group);
 EXTERN struct scsi_task *scsi_cdb_report_supported_opcodes(int report_timeouts, uint32_t alloc_len);

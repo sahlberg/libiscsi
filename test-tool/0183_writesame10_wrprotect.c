@@ -56,8 +56,10 @@ int T0183_writesame10_wrprotect(const char *initiator, const char *url)
 	/* Writesame10 with wrprotect */
 	printf("WRITESAME10 with WRPROTECT ... ");
 	for (i = 1; i <= 7; i++) {
-		task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
-			0, 1, 0, 0, 0, 0, i, 0);
+		task = iscsi_writesame10_sync(iscsi, lun, 0,
+					      buf, block_size,
+					      1,
+					      0, 0, i, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));

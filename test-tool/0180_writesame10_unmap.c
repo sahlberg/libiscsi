@@ -116,9 +116,10 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 		if (lbpws10 == 1 && i % lbppb) {
 			continue;
 		}
-		task = iscsi_writesame10_sync(iscsi, lun, NULL, 0,
-					0, i,
-					0, 1, 0, 0, 0, 0);
+		task = iscsi_writesame10_sync(iscsi, lun, 0,
+					      NULL, 0,
+					      i,
+					      0, 1, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
@@ -171,9 +172,10 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 			continue;
 		}
 
-		task = iscsi_writesame10_sync(iscsi, lun, NULL, 0,
-					num_blocks + 1 - i, i,
-					0, 1, 0, 0, 0, 0);
+		task = iscsi_writesame10_sync(iscsi, lun, num_blocks + 1 - i,
+					      NULL, 0,
+					      i,
+					      0, 1, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
@@ -206,9 +208,10 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 
 	/* Test that UNMAP=0 and ANCHOR==1 fails with check condition */
 	printf("Try UNMAP==0 and ANCHOR==1 ... ");
-	task = iscsi_writesame10_sync(iscsi, lun, NULL, 0,
-					0, 64,
-					1, 0, 0, 0, 0, 0);
+	task = iscsi_writesame10_sync(iscsi, lun, 0,
+				      NULL, 0,
+				      64,
+				      1, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
@@ -236,9 +239,10 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 	if (anc_sup == 0) {
 		printf("(ANC_SUP==0 so check condition expected) ");
 	}
-	task = iscsi_writesame10_sync(iscsi, lun, NULL, 0,
-					0, 64,
-					1, 1, 0, 0, 0, 0);
+	task = iscsi_writesame10_sync(iscsi, lun, 0,
+				      NULL, 0,
+				      64,
+				      1, 1, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));

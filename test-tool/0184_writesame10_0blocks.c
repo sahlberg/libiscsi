@@ -55,8 +55,10 @@ int T0184_writesame10_0blocks(const char *initiator, const char *url)
 	ret = 0;
 
 	printf("Writesame10 0blocks at LBA:0 ... ");
-	task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
-			0, 0, 0, 0, 0, 0, 0, 0);
+	task = iscsi_writesame10_sync(iscsi, lun, 0,
+				      buf, block_size,
+				      0,
+				      0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
@@ -89,8 +91,10 @@ int T0184_writesame10_0blocks(const char *initiator, const char *url)
 		printf("LUN is too big, skipping test\n");
 		goto finished;
 	}
-	task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
-			num_blocks + 1, 0, 0, 0, 0, 0, 0, 0);
+	task = iscsi_writesame10_sync(iscsi, lun, num_blocks + 1,
+				      buf, block_size,
+				      0,
+				      0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
@@ -123,8 +127,10 @@ int T0184_writesame10_0blocks(const char *initiator, const char *url)
 		printf("LUN is too big, skipping test\n");
 		goto finished;
 	}
-	task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
-			0x80000000, 0, 0, 0, 0, 0, 0, 0);
+	task = iscsi_writesame10_sync(iscsi, lun, 0x80000000,
+				      buf, block_size,
+				      0,
+				      0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
@@ -157,8 +163,10 @@ int T0184_writesame10_0blocks(const char *initiator, const char *url)
 		printf("LUN is too big, skipping test\n");
 		goto finished;
 	}
-	task = iscsi_writesame10_sync(iscsi, lun, buf, block_size,
-			-1, 0, 0, 0, 0, 0, 0, 0);
+	task = iscsi_writesame10_sync(iscsi, lun, -1,
+				      buf, block_size,
+				      0,
+				      0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send WRITESAME10 command: %s\n", iscsi_get_error(iscsi));
