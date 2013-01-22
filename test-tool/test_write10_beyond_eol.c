@@ -41,7 +41,7 @@ test_write10_beyond_eol(void)
 	for (i = 1; i <= 256; i++) {
 		unsigned char *buf = malloc(block_size * i);
 
-		ret = write10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 2 - i,
+		ret = write10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
 					   i * block_size, block_size,
 					   0, 0, 0, 0, 0, buf);
 		free(buf);
@@ -76,7 +76,7 @@ test_write10_beyond_eol(void)
 	for (i = 2; i <= 256; i++) {
 		unsigned char *buf = malloc(block_size * i);
 
-		ret = write10_lbaoutofrange(iscsic, tgt_lun, num_blocks,
+		ret = write10_lbaoutofrange(iscsic, tgt_lun, num_blocks - 1,
 					   i * block_size, block_size,
 					    0, 0, 0, 0, 0, buf);
 		free(buf);

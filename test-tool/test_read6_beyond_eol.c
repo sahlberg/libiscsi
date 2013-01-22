@@ -38,7 +38,7 @@ test_read6_beyond_eol(void)
 	logging(LOG_VERBOSE, "");
 	logging(LOG_VERBOSE, "Test READ6 1-255 blocks one block beyond the end");
 	for (i = 1; i <= 255; i++) {
-		ret = read6_lbaoutofrange(iscsic, tgt_lun, num_blocks + 2 - i,
+		ret = read6_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
 					  i * block_size, block_size,
 					  NULL);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -56,7 +56,7 @@ test_read6_beyond_eol(void)
 
 	logging(LOG_VERBOSE, "Test READ6 2-255 blocks all but one block beyond the end");
 	for (i = 2; i <= 255; i++) {
-		ret = read6_lbaoutofrange(iscsic, tgt_lun, num_blocks,
+		ret = read6_lbaoutofrange(iscsic, tgt_lun, num_blocks - 1,
 					  i * block_size, block_size,
 					  NULL);
 		CU_ASSERT_EQUAL(ret, 0);

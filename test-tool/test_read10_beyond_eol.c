@@ -37,7 +37,7 @@ test_read10_beyond_eol(void)
 	logging(LOG_VERBOSE, "");
 	logging(LOG_VERBOSE, "Test READ10 1-256 blocks one block beyond the end");
 	for (i = 1; i <= 256; i++) {
-		ret = read10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 2 - i,
+		ret = read10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
 					   i * block_size, block_size,
 					   0, 0, 0, 0, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -63,7 +63,7 @@ test_read10_beyond_eol(void)
 
 	logging(LOG_VERBOSE, "Test READ10 2-256 blocks all but one block beyond the end");
 	for (i = 2; i <= 256; i++) {
-		ret = read10_lbaoutofrange(iscsic, tgt_lun, num_blocks,
+		ret = read10_lbaoutofrange(iscsic, tgt_lun, num_blocks - 1,
 					   i * block_size, block_size,
 					   0, 0, 0, 0, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
