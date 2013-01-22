@@ -58,4 +58,13 @@ test_unmap_0blocks(void)
 	list[0].num = 0;
 	ret = unmap(iscsic, tgt_lun, 0, list, 1);
 	CU_ASSERT_EQUAL(ret, 0);
+
+
+	logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-255  with one descriptor per block, possibly \"overlapping\".");
+	for (i = 0; i < 256; i++) {
+		list[i].lba = i/2;
+		list[i].num = 0;
+	}
+	ret = unmap(iscsic, tgt_lun, 0, list, 256);
+	CU_ASSERT_EQUAL(ret, 0);
 }
