@@ -1449,9 +1449,9 @@ iscsi_unmap_task(struct iscsi_context *iscsi, int lun, int anchor, int group,
 	scsi_set_uint16(&data[0], xferlen - 2);
 	scsi_set_uint16(&data[2], xferlen - 8);
 	for (i = 0; i < list_len; i++) {
-		scsi_set_uint32(&data[8 + 16 * i], list[0].lba >> 32);
-		scsi_set_uint32(&data[8 + 16 * i + 4], list[0].lba & 0xffffffff);
-		scsi_set_uint32(&data[8 + 16 * i + 8], list[0].num);
+		scsi_set_uint32(&data[8 + 16 * i], list[i].lba >> 32);
+		scsi_set_uint32(&data[8 + 16 * i + 4], list[i].lba & 0xffffffff);
+		scsi_set_uint32(&data[8 + 16 * i + 8], list[i].num);
 	}
 
 	iov = scsi_malloc(task, sizeof(struct scsi_iovec));
