@@ -1,3 +1,4 @@
+#include <unistd.h>
 /* 
    Copyright (C) 2010 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -273,6 +274,9 @@ void discoverylogin_cb(struct iscsi_context *iscsi, int status, void *command_da
 
 void discoveryconnect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_, void *private_data)
 {
+
+  printf("sleep\n");
+sleep(9999);
 	if (status != 0) {
 		fprintf(stderr, "discoveryconnect_cb: connection failed : %s\n", iscsi_get_error(iscsi));
 		exit(10);
