@@ -2571,6 +2571,152 @@ writesame10_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba
 	return 0;
 }
 
+int
+writesame16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITESAME16 LBA:%" PRIu64 " blocks:%d "
+	       "wrprotect:%d anchor:%d unmap:%d group:%d",
+	       lba, num, wrprotect,
+		anchor, unmap_flag, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writesame16_sync(iscsi, lun, lba, 
+				      data, datalen, num,
+				      anchor, unmap_flag, wrprotect, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITESAME16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITESAME16 command: "
+			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITESAME16 returned SUCCESS.");
+	return 0;
+}
+
+int
+writesame16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITESAME16 (Expecting LBA_OUT_OF_RANGE) LBA:%" PRIu64 " blocks:%d "
+	       "wrprotect:%d anchor:%d unmap:%d group:%d",
+	       lba, num, wrprotect,
+		anchor, unmap_flag, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writesame16_sync(iscsi, lun, lba, 
+				      data, datalen, num,
+				      anchor, unmap_flag, wrprotect, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITESAME16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITESAME16 successful but should "
+			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		logging(LOG_NORMAL, "[FAILED] WRITESAME16 failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITESAME16 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
+	return 0;
+}
+
+int
+writesame16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITESAME16 (Expecting INVALID_FIELD_IN_CDB) LBA:%" PRIu64 " blocks:%d "
+	       "wrprotect:%d anchor:%d unmap:%d group:%d",
+	       lba, num, wrprotect,
+		anchor, unmap_flag, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writesame16_sync(iscsi, lun, lba, 
+				      data, datalen, num,
+				      anchor, unmap_flag, wrprotect, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITESAME16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITESAME16 successful but should "
+			"have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		logging(LOG_NORMAL, "[FAILED] WRITESAME16 failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"INVALID_FIELD_IN_CDB. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITESAME16 returned ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB.");
+	return 0;
+}
+
+
 
 int
 inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize)

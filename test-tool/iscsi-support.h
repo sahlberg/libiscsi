@@ -68,6 +68,17 @@ do {									\
 	}								\
 } while (0);
 
+#define CHECK_FOR_LBPWS							\
+do {									\
+	if (lbpws == 0) {						\
+		logging(LOG_VERBOSE, "[SKIPPED] Logical unit does not"	\
+			" have LBPWS. Skipping test");	     	  	\
+		CU_PASS("[SKIPPED] Logical unit does not have LBPWS."	\
+			" Skipping test");				\
+		return;	  	   					\
+	}								\
+} while (0);
+
 #define CHECK_FOR_LBPPB_GT_1						\
 do {									\
 	if (lbppb < 2) {						\
@@ -216,6 +227,9 @@ int write16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, ui
 int writesame10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int num_blocks, int anchor, int unmap, int wrprotect, int group, unsigned char *data);
 int writesame10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int num_blocks, int anchor, int unmap, int wrprotect, int group, unsigned char *data);
 int writesame10_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int num_blocks, int anchor, int unmap, int wrprotect, int group, unsigned char *data);
+int writesame16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int num_blocks, int anchor, int unmap, int wrprotect, int group, unsigned char *data);
+int writesame16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int num_blocks, int anchor, int unmap, int wrprotect, int group, unsigned char *data);
+int writesame16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int num_blocks, int anchor, int unmap, int wrprotect, int group, unsigned char *data);
 
 
 int inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize);

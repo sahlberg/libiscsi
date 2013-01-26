@@ -184,6 +184,16 @@ static CU_TestInfo tests_writesame10[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_writesame16[] = {
+	{ (char *)"testWriteSame16Simple", test_writesame16_simple },
+	{ (char *)"testWriteSame16BeyondEol", test_writesame16_beyond_eol },
+	{ (char *)"testWriteSame16ZeroBlocks", test_writesame16_0blocks },
+	{ (char *)"testWriteSame16WriteProtect", test_writesame16_wrprotect },
+	{ (char *)"testWriteSame16Unmap", test_writesame16_unmap },
+	{ (char *)"testWriteSame16UnmapUnaligned", test_writesame16_unmap_unaligned },
+	CU_TEST_INFO_NULL
+};
+
 static CU_SuiteInfo suites[] = {
 	{ (char *)"TestTestUnitReady", test_setup, test_teardown,
 	  tests_testunitready },
@@ -215,6 +225,8 @@ static CU_SuiteInfo suites[] = {
 	  tests_write16 },
 	{ (char *)"TestWriteSame10", test_setup, test_teardown,
 	  tests_writesame10 },
+	{ (char *)"TestWriteSame16", test_setup, test_teardown,
+	  tests_writesame16 },
 	CU_SUITE_INFO_NULL
 };
 
