@@ -57,6 +57,9 @@ enum scsi_inquiry_peripheral_device_type device_type;
 int sccs;
 int encserv;
 int data_loss;
+int lbpws10;
+int lbpws;
+int anc_sup;
 
 
 int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
@@ -2423,6 +2426,150 @@ write16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba,
 	return 0;
 }
 
+int
+writesame10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITESAME10 LBA:%d blocks:%d "
+	       "wrprotect:%d anchor:%d unmap:%d group:%d",
+	       lba, num, wrprotect,
+		anchor, unmap_flag, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writesame10_sync(iscsi, lun, lba, 
+				      data, datalen, num,
+				      anchor, unmap_flag, wrprotect, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITESAME10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITESAME10 command: "
+			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITESAME10 returned SUCCESS.");
+	return 0;
+}
+
+int
+writesame10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITESAME10 (Expecting LBA_OUT_OF_RANGE) LBA:%d blocks:%d "
+	       "wrprotect:%d anchor:%d unmap:%d group:%d",
+	       lba, num, wrprotect,
+		anchor, unmap_flag, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writesame10_sync(iscsi, lun, lba, 
+				      data, datalen, num,
+				      anchor, unmap_flag, wrprotect, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITESAME10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITESAME10 successful but should "
+			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		logging(LOG_NORMAL, "[FAILED] WRITESAME10 failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITESAME10 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
+	return 0;
+}
+
+int
+writesame10_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITESAME10 (Expecting INVALID_FIELD_IN_CDB) LBA:%d blocks:%d "
+	       "wrprotect:%d anchor:%d unmap:%d group:%d",
+	       lba, num, wrprotect,
+		anchor, unmap_flag, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writesame10_sync(iscsi, lun, lba, 
+				      data, datalen, num,
+				      anchor, unmap_flag, wrprotect, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITESAME10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITESAME10 successful but should "
+			"have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		logging(LOG_NORMAL, "[FAILED] WRITESAME10 failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"INVALID_FIELD_IN_CDB. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITESAME10 returned ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB.");
+	return 0;
+}
 
 
 int

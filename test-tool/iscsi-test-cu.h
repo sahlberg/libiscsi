@@ -112,4 +112,11 @@ void test_write16_0blocks(void);
 void test_write16_wrprotect(void);
 void test_write16_flags(void);
 
+void test_writesame10_simple(void);
+void test_writesame10_beyond_eol(void);
+void test_writesame10_0blocks(void);
+void test_writesame10_wrprotect(void);
+void test_writesame10_unmap(void);
+void test_writesame10_unmap_unaligned(void);
+
 #endif	/* _ISCSI_TEST_CU_H_ */

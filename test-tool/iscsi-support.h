@@ -48,11 +48,31 @@ do {									\
 
 #define CHECK_FOR_THIN_PROVISIONING					\
 do {									\
-	if (lbpme == 0){						\
+	if (lbpme == 0) {						\
 		logging(LOG_VERBOSE, "[SKIPPED] Logical unit is fully"	\
 			" provisioned. Skipping test");			\
 		CU_PASS("[SKIPPED] Logical unit is fully provisioned."	\
 			" Skipping test");				\
+		return;	  	   					\
+	}								\
+} while (0);
+
+#define CHECK_FOR_LBPWS10						\
+do {									\
+	if (lbpws10 == 0) {						\
+		logging(LOG_VERBOSE, "[SKIPPED] Logical unit does not"	\
+			" have LBPWS10. Skipping test");		\
+		CU_PASS("[SKIPPED] Logical unit does not have LBPWS10."	\
+			" Skipping test");				\
+		return;	  	   					\
+	}								\
+} while (0);
+
+#define CHECK_FOR_LBPPB_GT_1						\
+do {									\
+	if (lbppb < 2) {						\
+	  logging(LOG_VERBOSE, "[SKIPPED] LBPPB < 2. Skipping test");	\
+		CU_PASS("[SKIPPED] LBPPB < 2. Skipping test");		\
 		return;	  	   					\
 	}								\
 } while (0);
@@ -78,6 +98,9 @@ extern int removable;
 extern enum scsi_inquiry_peripheral_device_type device_type;
 extern int sccs;
 extern int encserv;
+extern int lbpws10;
+extern int lbpws;
+extern int anc_sup;
 
 
 struct iscsi_context *iscsi_context_login(const char *initiatorname, const char *url, int *lun);
@@ -190,6 +213,9 @@ int write12_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, ui
 int write16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data);
 int write16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data);
 int write16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data);
+int writesame10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int num_blocks, int anchor, int unmap, int wrprotect, int group, unsigned char *data);
+int writesame10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int num_blocks, int anchor, int unmap, int wrprotect, int group, unsigned char *data);
+int writesame10_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int num_blocks, int anchor, int unmap, int wrprotect, int group, unsigned char *data);
 
 
 int inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize);

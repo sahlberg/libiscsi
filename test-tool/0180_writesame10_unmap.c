@@ -27,8 +27,6 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 	int full_size;
 	struct scsi_inquiry_logical_block_provisioning *inq_lbp;
 	int ret, i, lun;
-	int lbpws10 = 0;
-	int anc_sup = 0;
 
 	printf("0180_writesame10_unmap:\n");
 	printf("=======================\n");

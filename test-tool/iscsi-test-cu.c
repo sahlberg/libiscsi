@@ -174,6 +174,16 @@ static CU_TestInfo tests_write16[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_writesame10[] = {
+	{ (char *)"testWriteSame10Simple", test_writesame10_simple },
+	{ (char *)"testWriteSame10BeyondEol", test_writesame10_beyond_eol },
+	{ (char *)"testWriteSame10ZeroBlocks", test_writesame10_0blocks },
+	{ (char *)"testWriteSame10WriteProtect", test_writesame10_wrprotect },
+	{ (char *)"testWriteSame10Unmap", test_writesame10_unmap },
+	{ (char *)"testWriteSame10UnmapUnaligned", test_writesame10_unmap_unaligned },
+	CU_TEST_INFO_NULL
+};
+
 static CU_SuiteInfo suites[] = {
 	{ (char *)"TestTestUnitReady", test_setup, test_teardown,
 	  tests_testunitready },
@@ -203,6 +213,8 @@ static CU_SuiteInfo suites[] = {
 	  tests_write12 },
 	{ (char *)"TestWrite16", test_setup, test_teardown,
 	  tests_write16 },
+	{ (char *)"TestWriteSame10", test_setup, test_teardown,
+	  tests_writesame10 },
 	CU_SUITE_INFO_NULL
 };
 
@@ -575,6 +587,41 @@ main(int argc, char *argv[])
 	sccs = inq->sccs;
 	encserv = inq->encserv;
 	scsi_free_scsi_task(task);
+
+	/* if thin provisioned we also need to read the VPD page for it */
+	if (lbpme != 0) {
+		struct scsi_inquiry_logical_block_provisioning *inq_lbp;
+
+		task = iscsi_inquiry_sync(iscsic, lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, 64);
+		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+			printf("Inquiry command failed : %s\n", iscsi_get_error(iscsic));
+			return -1;
+		}
+		full_size = scsi_datain_getfullsize(task);
+		if (full_size > task->datain.size) {
+			scsi_free_scsi_task(task);
+
+			/* we need more data for the full list */
+			if ((task = iscsi_inquiry_sync(iscsic, lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, full_size)) == NULL) {
+				printf("Inquiry command failed : %s\n", iscsi_get_error(iscsic));
+				scsi_free_scsi_task(task);
+				return -1;
+			}
+		}
+
+		inq_lbp = scsi_datain_unmarshall(task);
+		if (inq_lbp == NULL) {
+			printf("failed to unmarshall inquiry datain blob\n");
+			scsi_free_scsi_task(task);
+			return -1;
+		}
+
+		lbpws10 = inq_lbp->lbpws10;
+		lbpws   = inq_lbp->lbpws;
+		anc_sup = inq_lbp->anc_sup;
+
+		scsi_free_scsi_task(task);
+	}
 
 	iscsi_logout_sync(iscsic);
 	iscsi_destroy_context(iscsic);

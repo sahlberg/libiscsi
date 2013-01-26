@@ -236,7 +236,13 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_write16_beyond_eol.c \
 	test-tool/test_write16_0blocks.c \
 	test-tool/test_write16_wrprotect.c \
-	test-tool/test_write16_flags.c
+	test-tool/test_write16_flags.c \
+	test-tool/test_writesame10_simple.c \
+	test-tool/test_writesame10_beyond_eol.c \
+	test-tool/test_writesame10_0blocks.c \
+	test-tool/test_writesame10_wrprotect.c \
+	test-tool/test_writesame10_unmap.c \
+	test-tool/test_writesame10_unmap_unaligned.c
 
 endif
 
