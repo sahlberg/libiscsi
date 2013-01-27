@@ -26,7 +26,7 @@
 
 
 void
-test_writesame10_unmap(void)
+test_writesame10_unmap_until_end(void)
 {
 	int i, ret;
 	unsigned int j;
@@ -37,37 +37,7 @@ test_writesame10_unmap(void)
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, "");
-	logging(LOG_VERBOSE, "Test WRITESAME10 of 1-256 blocks at the start of the LUN");
-	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
-
-		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
-		memset(buf, 0xff, block_size * i);
-		ret = write10(iscsic, tgt_lun, 0,
-			      i * block_size, block_size,
-			      0, 0, 0, 0, 0, buf);
-		CU_ASSERT_EQUAL(ret, 0);
-
-		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
-		ret = writesame10(iscsic, tgt_lun, 0,
-				  block_size, i,
-				  0, 1, 0, 0, NULL);
-		CU_ASSERT_EQUAL(ret, 0);
-
-		logging(LOG_VERBOSE, "Read %d blocks and verify they are now zero", i);
-		ret = read10(iscsic, tgt_lun, 0,
-			     i * block_size, block_size,
-			     0, 0, 0, 0, 0, buf);
-		for (j = 0; j < block_size * i; j++) {
-			if (buf[j] != 0) {
-				CU_ASSERT_EQUAL(buf[j], 0);
-			}
-		}
-		free(buf);
-	}
-
-
-	logging(LOG_VERBOSE, "Test WRITESAME10 of 1-256 blocks at the end of the LUN");
+	logging(LOG_VERBOSE, "Test WRITESAME10 of 1-256 blocks at the end of the LUN by setting number-of-blocks==0");
 	for (i = 1; i <= 256; i++) {
 		unsigned char *buf = malloc(block_size * i);
 
@@ -80,8 +50,8 @@ test_writesame10_unmap(void)
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
 		ret = writesame10(iscsic, tgt_lun, num_blocks - i,
-				  block_size, i,
-				  0, 1, 0, 0, buf);
+				  0, i,
+				  0, 1, 0, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks and verify they are now zero", i);
@@ -95,27 +65,4 @@ test_writesame10_unmap(void)
 		}
 		free(buf);
 	}
-
-	logging(LOG_VERBOSE, "Verify that WRITESAME10 ANCHOR==1 + UNMAP==0 is invalid");
-	ret = writesame10_invalidfieldincdb(iscsic, tgt_lun, 0,
-					    block_size, 1,
-					    1, 0, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
-
-
-
-	if (anc_sup) {
-		logging(LOG_VERBOSE, "Test WRITESAME10 ANCHOR==1 + UNMAP==0");
-		ret = writesame10(iscsic, tgt_lun, 0,
-				  block_size, 1,
-				  1, 1, 0, 0, NULL);
-	} else {
-		logging(LOG_VERBOSE, "Test WRITESAME10 ANCHOR==1 + UNMAP==0 no ANC_SUP so expecting to fail");
-		ret = writesame10_invalidfieldincdb(iscsic, tgt_lun, 0,
-						    block_size, 1,
-						    1, 1, 0, 0, NULL);
-	}
-
-	CU_ASSERT_EQUAL(ret, 0);
-
 }

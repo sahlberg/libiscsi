@@ -197,6 +197,7 @@ static CU_TestInfo tests_writesame10[] = {
 	{ (char *)"testWriteSame10WriteProtect", test_writesame10_wrprotect },
 	{ (char *)"testWriteSame10Unmap", test_writesame10_unmap },
 	{ (char *)"testWriteSame10UnmapUnaligned", test_writesame10_unmap_unaligned },
+	{ (char *)"testWriteSame10UnmapUntilEnd", test_writesame10_unmap_until_end },
 	CU_TEST_INFO_NULL
 };
 
@@ -207,6 +208,7 @@ static CU_TestInfo tests_writesame16[] = {
 	{ (char *)"testWriteSame16WriteProtect", test_writesame16_wrprotect },
 	{ (char *)"testWriteSame16Unmap", test_writesame16_unmap },
 	{ (char *)"testWriteSame16UnmapUnaligned", test_writesame16_unmap_unaligned },
+	{ (char *)"testWriteSame16UnmapUntilEnd", test_writesame16_unmap_until_end },
 	CU_TEST_INFO_NULL
 };
 
