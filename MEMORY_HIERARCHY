@@ -2,9 +2,10 @@ Memory hierarchy for libiscsi.
 
 At the top level we have a talloc context. For now we use struct iscsi_context
 which is a top level talloc object.
+iscsi_context contains TALLOC_CTX *scsi_tasks which is a talloc context which is the parent context for all scsi_task structures.
 
 
-The most important objects are 'struct scsi_task' and these are always created as children to the top level talloc context.
+The most important objects are 'struct scsi_task'. These are always created as children to iscsi->scsi_tasks
 Any data that is associated with the scsi-task, for example data-in buffers and 
 structured from unmarshalling are all childred of the scsi_task talloc object
 they belong to.

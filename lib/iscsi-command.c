@@ -529,7 +529,7 @@ iscsi_testunitready_task(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_testunitready(iscsi);
+	task = scsi_cdb_testunitready(iscsi->scsi_tasks);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"testunitready cdb.");
@@ -557,7 +557,7 @@ iscsi_reportluns_task(struct iscsi_context *iscsi, int report_type,
 		return NULL;
 	}
 
-	task = scsi_cdb_reportluns(iscsi, report_type, alloc_len);
+	task = scsi_cdb_reportluns(iscsi->scsi_tasks, report_type, alloc_len);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"reportluns cdb.");
@@ -580,7 +580,7 @@ iscsi_inquiry_task(struct iscsi_context *iscsi, int lun, int evpd,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_inquiry(iscsi, evpd, page_code, maxsize);
+	task = scsi_cdb_inquiry(iscsi->scsi_tasks, evpd, page_code, maxsize);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"inquiry cdb.");
@@ -601,7 +601,7 @@ iscsi_readcapacity10_task(struct iscsi_context *iscsi, int lun, int lba,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_readcapacity10(iscsi, lba, pmi);
+	task = scsi_cdb_readcapacity10(iscsi->scsi_tasks, lba, pmi);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"readcapacity10 cdb.");
@@ -622,7 +622,7 @@ iscsi_readcapacity16_task(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_readcapacity16(iscsi);
+	task = scsi_cdb_readcapacity16(iscsi->scsi_tasks);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"readcapacity16 cdb.");
@@ -644,7 +644,8 @@ iscsi_get_lba_status_task(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_get_lba_status(iscsi, starting_lba, alloc_len);
+	task = scsi_cdb_get_lba_status(iscsi->scsi_tasks, starting_lba,
+				       alloc_len);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"get-lba-status cdb.");
@@ -672,7 +673,7 @@ iscsi_read6_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		return NULL;
 	}
 
-	task = scsi_cdb_read6(iscsi, lba, datalen, blocksize);
+	task = scsi_cdb_read6(iscsi->scsi_tasks, lba, datalen, blocksize);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"read6 cdb.");
@@ -701,8 +702,8 @@ iscsi_read10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		return NULL;
 	}
 
-	task = scsi_cdb_read10(iscsi, lba, datalen, blocksize, rdprotect,
-				dpo, fua, fua_nv, group_number);
+	task = scsi_cdb_read10(iscsi->scsi_tasks, lba, datalen, blocksize,
+			       rdprotect, dpo, fua, fua_nv, group_number);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"read10 cdb.");
@@ -731,8 +732,8 @@ iscsi_read12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		return NULL;
 	}
 
-	task = scsi_cdb_read12(iscsi, lba, datalen, blocksize, rdprotect,
-				dpo, fua, fua_nv, group_number);
+	task = scsi_cdb_read12(iscsi->scsi_tasks, lba, datalen, blocksize,
+			       rdprotect, dpo, fua, fua_nv, group_number);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"read12 cdb.");
@@ -761,8 +762,8 @@ iscsi_read16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		return NULL;
 	}
 
-	task = scsi_cdb_read16(iscsi, lba, datalen, blocksize, rdprotect,
-				dpo, fua, fua_nv, group_number);
+	task = scsi_cdb_read16(iscsi->scsi_tasks, lba, datalen, blocksize,
+			       rdprotect, dpo, fua, fua_nv, group_number);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"read16 cdb.");
@@ -792,8 +793,8 @@ iscsi_write10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		return NULL;
 	}
 
-	task = scsi_cdb_write10(iscsi, lba, datalen, blocksize, wrprotect,
-				dpo, fua, fua_nv, group_number);
+	task = scsi_cdb_write10(iscsi->scsi_tasks, lba, datalen, blocksize,
+				wrprotect, dpo, fua, fua_nv, group_number);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"write10 cdb.");
@@ -826,8 +827,8 @@ iscsi_write12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		return NULL;
 	}
 
-	task = scsi_cdb_write12(iscsi, lba, datalen, blocksize, wrprotect,
-				dpo, fua, fua_nv, group_number);
+	task = scsi_cdb_write12(iscsi->scsi_tasks, lba, datalen, blocksize,
+				wrprotect, dpo, fua, fua_nv, group_number);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"write12 cdb.");
@@ -860,8 +861,8 @@ iscsi_write16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		return NULL;
 	}
 
-	task = scsi_cdb_write16(iscsi, lba, datalen, blocksize, wrprotect,
-				dpo, fua, fua_nv, group_number);
+	task = scsi_cdb_write16(iscsi->scsi_tasks, lba, datalen, blocksize,
+				wrprotect, dpo, fua, fua_nv, group_number);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"write16 cdb.");
@@ -894,8 +895,8 @@ iscsi_orwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		return NULL;
 	}
 
-	task = scsi_cdb_orwrite(iscsi, lba, datalen, blocksize, wrprotect,
-				dpo, fua, fua_nv, group_number);
+	task = scsi_cdb_orwrite(iscsi->scsi_tasks, lba, datalen, blocksize,
+				wrprotect, dpo, fua, fua_nv, group_number);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"orwrite cdb.");
@@ -928,8 +929,9 @@ iscsi_compareandwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		return NULL;
 	}
 
-	task = scsi_cdb_compareandwrite(iscsi, lba, datalen, blocksize, wrprotect,
-				dpo, fua, fua_nv, group_number);
+	task = scsi_cdb_compareandwrite(iscsi->scsi_tasks, lba, datalen,
+					blocksize, wrprotect, dpo, fua, fua_nv,
+					group_number);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"compareandwrite cdb.");
@@ -962,8 +964,9 @@ iscsi_writeverify10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		return NULL;
 	}
 
-	task = scsi_cdb_writeverify10(iscsi, lba, datalen, blocksize, wrprotect,
-				dpo, bytchk, group_number);
+	task = scsi_cdb_writeverify10(iscsi->scsi_tasks, lba, datalen,
+				      blocksize, wrprotect,
+				      dpo, bytchk, group_number);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"writeverify10 cdb.");
@@ -996,8 +999,9 @@ iscsi_writeverify12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		return NULL;
 	}
 
-	task = scsi_cdb_writeverify12(iscsi, lba, datalen, blocksize, wrprotect,
-				dpo, bytchk, group_number);
+	task = scsi_cdb_writeverify12(iscsi->scsi_tasks, lba, datalen,
+				      blocksize, wrprotect,
+				      dpo, bytchk, group_number);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"writeverify12 cdb.");
@@ -1030,8 +1034,9 @@ iscsi_writeverify16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		return NULL;
 	}
 
-	task = scsi_cdb_writeverify16(iscsi, lba, datalen, blocksize, wrprotect,
-				dpo, bytchk, group_number);
+	task = scsi_cdb_writeverify16(iscsi->scsi_tasks, lba, datalen,
+				      blocksize, wrprotect,
+				      dpo, bytchk, group_number);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"writeverify16 cdb.");
@@ -1063,7 +1068,8 @@ iscsi_verify10_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		return NULL;
 	}
 
-	task = scsi_cdb_verify10(iscsi, lba, datalen, vprotect, dpo, bytchk, blocksize);
+	task = scsi_cdb_verify10(iscsi->scsi_tasks, lba, datalen, vprotect,
+				 dpo, bytchk, blocksize);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"verify10 cdb.");
@@ -1095,7 +1101,8 @@ iscsi_verify12_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		return NULL;
 	}
 
-	task = scsi_cdb_verify12(iscsi, lba, datalen, vprotect, dpo, bytchk, blocksize);
+	task = scsi_cdb_verify12(iscsi->scsi_tasks, lba, datalen, vprotect,
+				 dpo, bytchk, blocksize);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"verify12 cdb.");
@@ -1127,7 +1134,8 @@ iscsi_verify16_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		return NULL;
 	}
 
-	task = scsi_cdb_verify16(iscsi, lba, datalen, vprotect, dpo, bytchk, blocksize);
+	task = scsi_cdb_verify16(iscsi->scsi_tasks, lba, datalen, vprotect,
+				 dpo, bytchk, blocksize);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"verify16 cdb.");
@@ -1153,8 +1161,8 @@ iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd, int pc,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_modesense6(iscsi, dbd, pc, page_code, sub_page_code,
-				   alloc_len);
+	task = scsi_cdb_modesense6(iscsi->scsi_tasks, dbd, pc, page_code,
+				   sub_page_code, alloc_len);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"modesense6 cdb.");
@@ -1177,8 +1185,8 @@ iscsi_startstopunit_task(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_startstopunit(iscsi, immed, pcm, pc, no_flush,
-				      loej, start);
+	task = scsi_cdb_startstopunit(iscsi->scsi_tasks, immed, pcm, pc,
+				      no_flush, loej, start);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"startstopunit cdb.");
@@ -1200,7 +1208,7 @@ iscsi_preventallow_task(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_preventallow(iscsi, prevent);
+	task = scsi_cdb_preventallow(iscsi->scsi_tasks, prevent);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"PreventAllowMediumRemoval cdb.");
@@ -1222,8 +1230,8 @@ iscsi_synchronizecache10_task(struct iscsi_context *iscsi, int lun, int lba,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_synchronizecache10(iscsi, lba, num_blocks, syncnv,
-					   immed);
+	task = scsi_cdb_synchronizecache10(iscsi->scsi_tasks, lba, num_blocks,
+					   syncnv, immed);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"synchronizecache10 cdb.");
@@ -1245,8 +1253,8 @@ iscsi_synchronizecache16_task(struct iscsi_context *iscsi, int lun, uint64_t lba
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_synchronizecache16(iscsi, lba, num_blocks, syncnv,
-					   immed);
+	task = scsi_cdb_synchronizecache16(iscsi->scsi_tasks, lba, num_blocks,
+					   syncnv, immed);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"synchronizecache16 cdb.");
@@ -1268,7 +1276,7 @@ iscsi_persistent_reserve_in_task(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_persistent_reserve_in(iscsi, sa, xferlen);
+	task = scsi_cdb_persistent_reserve_in(iscsi->scsi_tasks, sa, xferlen);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"persistent-reserver-in cdb.");
@@ -1290,7 +1298,8 @@ iscsi_persistent_reserve_out_task(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_persistent_reserve_out(iscsi, sa, scope, type, param);
+	task = scsi_cdb_persistent_reserve_out(iscsi->scsi_tasks, sa, scope,
+					       type, param);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"persistent-reserver-out cdb.");
@@ -1312,7 +1321,8 @@ iscsi_prefetch10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_prefetch10(iscsi, lba, num_blocks, immed, group);
+	task = scsi_cdb_prefetch10(iscsi->scsi_tasks, lba, num_blocks, immed,
+				   group);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"prefetch10 cdb.");
@@ -1334,7 +1344,8 @@ iscsi_prefetch16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_prefetch16(iscsi, lba, num_blocks, immed, group);
+	task = scsi_cdb_prefetch16(iscsi->scsi_tasks, lba, num_blocks, immed,
+				   group);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"prefetch16 cdb.");
@@ -1360,7 +1371,9 @@ iscsi_writesame10_task(struct iscsi_context *iscsi, int lun,
 	struct scsi_task *task;
 	struct iscsi_data d;
 
-	task = scsi_cdb_writesame10(iscsi, wrprotect, anchor, unmap, pbdata, lbdata, lba, group, num_blocks);
+	task = scsi_cdb_writesame10(iscsi->scsi_tasks, wrprotect, anchor,
+				    unmap, pbdata, lbdata, lba, group,
+				    num_blocks);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"writesame10 cdb.");
@@ -1395,7 +1408,9 @@ iscsi_writesame16_task(struct iscsi_context *iscsi, int lun,
 	struct scsi_task *task;
 	struct iscsi_data d;
 
-	task = scsi_cdb_writesame16(iscsi, wrprotect, anchor, unmap, pbdata, lbdata, lba, group, num_blocks);
+	task = scsi_cdb_writesame16(iscsi->scsi_tasks, wrprotect, anchor,
+				    unmap, pbdata, lbdata, lba, group,
+				    num_blocks);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"writesame16 cdb.");
@@ -1433,7 +1448,7 @@ iscsi_unmap_task(struct iscsi_context *iscsi, int lun, int anchor, int group,
 
 	xferlen = 8 + list_len * 16;
 
-	task = scsi_cdb_unmap(iscsi, anchor, group, xferlen);
+	task = scsi_cdb_unmap(iscsi->scsi_tasks, anchor, group, xferlen);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"unmap cdb.");
@@ -1518,7 +1533,8 @@ iscsi_readtoc_task(struct iscsi_context *iscsi, int lun, int msf,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_readtoc(iscsi, msf, format, track_session, maxsize);
+	task = scsi_cdb_readtoc(iscsi->scsi_tasks, msf, format, track_session,
+				maxsize);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"read TOC cdb.");
@@ -1539,7 +1555,7 @@ iscsi_reserve6_task(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_reserve6(iscsi);
+	task = scsi_cdb_reserve6(iscsi->scsi_tasks);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"reserve6 cdb.");
@@ -1560,7 +1576,7 @@ iscsi_release6_task(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_release6(iscsi);
+	task = scsi_cdb_release6(iscsi->scsi_tasks);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"release6 cdb.");
@@ -1582,7 +1598,8 @@ iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi,
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_report_supported_opcodes(iscsi, return_timeouts, maxsize);
+	task = scsi_cdb_report_supported_opcodes(iscsi->scsi_tasks,
+						 return_timeouts, maxsize);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"Maintenance In/Read Supported Op Codes cdb.");
@@ -1634,6 +1651,9 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 	return -1;
 }
 
+/* TODO: Once iscsi_pdu is tallocified  this function just becomes 
+ * talloc recycle of iscsi->scsi_tasks
+ */
 void
 iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 {

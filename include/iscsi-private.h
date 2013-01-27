@@ -131,7 +131,10 @@ struct iscsi_context {
 	int reallocs;
 	int frees;
 
-	time_t last_reconnect;	
+	time_t last_reconnect;
+
+	/* TALLOC_CTX parent to all scsi_tasks */
+	void *scsi_tasks;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40

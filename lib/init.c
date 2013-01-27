@@ -83,6 +83,12 @@ iscsi_create_context(const char *initiator_name)
 	if (iscsi == NULL) {
 		return NULL;
 	}
+
+	iscsi->scsi_tasks = talloc_new(iscsi);
+	if (iscsi->scsi_tasks == NULL) {
+		talloc_free(iscsi);
+		return NULL;
+	}
 	
 	strncpy(iscsi->initiator_name,initiator_name,MAX_STRING_SIZE);
 
