@@ -24,11 +24,12 @@
 #include "iscsi-support.h"
 #include "iscsi-test-cu.h"
 
+//printf("2, Verify we can read a descriptor at the end of the lun.\n");
 
 void
-test_unmap_simple(void)
+test_get_lba_status_simple(void)
 {
-	int i, ret;
+	int ret;
 	struct unmap_list list[257];
 
 	CHECK_FOR_DATALOSS;
@@ -36,20 +37,17 @@ test_unmap_simple(void)
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, "");
-	logging(LOG_VERBOSE, "Test UNMAP of 1-256 blocks at the start of the LUN as a single descriptor");
+	logging(LOG_VERBOSE, "Verify we can read a descriptor at the start of the lun.");
+	ret = get_lba_status(iscsic, tgt_lun, 0,
+
+
+#if 0
+	logging(LOG_VERBOSE, "Test GET_LBA_STATUS for 1-255 blocks at the start of the LUN");
 	for (i = 1; i <= 256; i++) {
 		list[0].lba = 0;
 		list[0].num = i;
 		ret = unmap(iscsic, tgt_lun, 0, list, 1);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
-
-
-	logging(LOG_VERBOSE, "Test UNMAP of 1-256 blocks at the start of the LUN with one descriptor per block");
-	for (i = 0; i < 256; i++) {
-		list[i].lba = i;
-		list[i].num = 1;
-		ret = unmap(iscsic, tgt_lun, 0, list, i + 1);
-		CU_ASSERT_EQUAL(ret, 0);
-	}
+#endif
 }
