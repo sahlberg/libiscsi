@@ -21,6 +21,7 @@
 #include <string.h>
 #include <poll.h>
 #include <popt.h>
+#include <talloc.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -211,6 +212,8 @@ void list_luns(struct client_state *clnt, const char *target, const char *portal
 		show_lun(iscsi, list->luns[i]);
 	}
 
+	talloc_report_full(NULL, stdout);
+
 	scsi_free_scsi_task(task);
 	iscsi_destroy_context(iscsi);
 }
@@ -364,6 +367,8 @@ int main(int argc, const char *argv[])
 		print_usage();
 		exit(10);
 	}
+
+	talloc_enable_leak_report_full();
 
 	iscsi = iscsi_create_context(initiator);
 	if (iscsi == NULL) {
