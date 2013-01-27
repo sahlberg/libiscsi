@@ -35,7 +35,15 @@ extern struct scsi_task *task;
 int test_setup(void);
 int test_teardown(void);
 
-void test_testunitready_simple(void);
+void test_prefetch10_simple(void);
+void test_prefetch10_beyond_eol(void);
+void test_prefetch10_0blocks(void);
+void test_prefetch10_flags(void);
+
+void test_prefetch16_simple(void);
+void test_prefetch16_beyond_eol(void);
+void test_prefetch16_0blocks(void);
+void test_prefetch16_flags(void);
 
 void test_read6_simple(void);
 void test_read6_beyond_eol(void);
@@ -66,6 +74,8 @@ void test_readcapacity10_simple(void);
 
 void test_readcapacity16_simple(void);
 void test_readcapacity16_alloclen(void);
+
+void test_testunitready_simple(void);
 
 void test_unmap_simple(void);
 void test_unmap_0blocks(void);

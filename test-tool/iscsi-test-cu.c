@@ -57,8 +57,19 @@ int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
  * list of tests and test suites
  *
  *****************************************************************/
-static CU_TestInfo tests_testunitready[] = {
-	{ (char *)"testTurSimple", test_testunitready_simple },
+static CU_TestInfo tests_prefetch10[] = {
+	{ (char *)"testPrefetch10Simple", test_prefetch10_simple },
+	{ (char *)"testPrefetch10BeyondEol", test_prefetch10_beyond_eol },
+	{ (char *)"testPrefetch10ZeroBlocks", test_prefetch10_0blocks },
+	{ (char *)"testPrefetch10Flags", test_prefetch10_flags },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_prefetch16[] = {
+	{ (char *)"testPrefetch16Simple", test_prefetch16_simple },
+	{ (char *)"testPrefetch16BeyondEol", test_prefetch16_beyond_eol },
+	{ (char *)"testPrefetch16ZeroBlocks", test_prefetch16_0blocks },
+	{ (char *)"testPrefetch16Flags", test_prefetch16_flags },
 	CU_TEST_INFO_NULL
 };
 
@@ -105,6 +116,11 @@ static CU_TestInfo tests_readcapacity10[] = {
 static CU_TestInfo tests_readcapacity16[] = {
 	{ (char *)"testReadCapacity16Simple", test_readcapacity16_simple },
 	{ (char *)"testReadCapacity16Alloclen", test_readcapacity16_alloclen },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_testunitready[] = {
+	{ (char *)"testTurSimple", test_testunitready_simple },
 	CU_TEST_INFO_NULL
 };
 
@@ -195,8 +211,10 @@ static CU_TestInfo tests_writesame16[] = {
 };
 
 static CU_SuiteInfo suites[] = {
-	{ (char *)"TestTestUnitReady", test_setup, test_teardown,
-	  tests_testunitready },
+	{ (char *)"TestPrefetch10", test_setup, test_teardown,
+	  tests_prefetch10 },
+	{ (char *)"TestPrefetch16", test_setup, test_teardown,
+	  tests_prefetch16 },
 	{ (char *)"TestRead6", test_setup, test_teardown,
 	  tests_read6 },
 	{ (char *)"TestRead10", test_setup, test_teardown,
@@ -209,6 +227,8 @@ static CU_SuiteInfo suites[] = {
 	  tests_readcapacity10 },
 	{ (char *)"TestReadCapacity16", test_setup, test_teardown,
 	  tests_readcapacity16 },
+	{ (char *)"TestTestUnitReady", test_setup, test_teardown,
+	  tests_testunitready },
 	{ (char *)"TestUnmap", test_setup, test_teardown,
 	  tests_unmap },
 	{ (char *)"TestVerify10", test_setup, test_teardown,

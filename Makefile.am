@@ -176,7 +176,14 @@ bin_iscsi_test_cu_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/test-tool \
 bin_iscsi_test_cu_LDFLAGS = -ldl -lcunit
 bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/iscsi-support.c \
-	test-tool/test_testunitready_simple.c \
+	test-tool/test_prefetch10_simple.c \
+	test-tool/test_prefetch10_beyond_eol.c \
+	test-tool/test_prefetch10_0blocks.c \
+	test-tool/test_prefetch10_flags.c \
+	test-tool/test_prefetch16_simple.c \
+	test-tool/test_prefetch16_beyond_eol.c \
+	test-tool/test_prefetch16_0blocks.c \
+	test-tool/test_prefetch16_flags.c \
 	test-tool/test_read6_simple.c \
 	test-tool/test_read6_beyond_eol.c \
 	test-tool/test_read6_0blocks.c \
@@ -199,6 +206,7 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_readcapacity10_simple.c \
 	test-tool/test_readcapacity16_simple.c \
 	test-tool/test_readcapacity16_alloclen.c \
+	test-tool/test_testunitready_simple.c \
 	test-tool/test_unmap_simple.c \
 	test-tool/test_unmap_0blocks.c \
 	test-tool/test_verify10_simple.c \
