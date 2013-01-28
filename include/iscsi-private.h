@@ -190,7 +190,6 @@ struct iscsi_scsi_cbdata {
 
 struct iscsi_pdu {
 	struct iscsi_pdu *next;
-
 	struct iscsi_context *iscsi;
 
 /* There will not be a response to this pdu, so delete it once it is sent on the wire. Dont put it on the wait-queue */
@@ -201,6 +200,10 @@ struct iscsi_pdu {
  * This includes any DATA-OUT PDU as well as all NOPs.
  */
 #define ISCSI_PDU_DROP_ON_RECONNECT	0x00000004
+/* If this flag is set, then we will invoke the callback with
+ * SCSI_STATUS_CANCELLED from the destructor.
+ */
+#define ISCSI_PDU_CANCEL_FROM_DESTRUCTOR 0x00000008
 
 	uint32_t flags;
 

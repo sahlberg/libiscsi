@@ -26,6 +26,7 @@
 #include <talloc.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
+#include "scsi-lowlevel.h"
 
 int
 iscsi_discovery_async(struct iscsi_context *iscsi, iscsi_command_cb cb,

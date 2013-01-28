@@ -73,6 +73,12 @@ iscsi_pdu_destructor(struct iscsi_pdu *pdu)
 {
 	SLIST_REMOVE(&pdu->iscsi->outqueue, pdu);
 	SLIST_REMOVE(&pdu->iscsi->waitpdu, pdu);
+
+	if (pdu->flags & ISCSI_PDU_CANCEL_FROM_DESTRUCTOR) {
+		pdu->callback(pdu->iscsi, SCSI_STATUS_CANCELLED, NULL,
+			      pdu->private_data);
+	}
+
 	return 0;
 }
 

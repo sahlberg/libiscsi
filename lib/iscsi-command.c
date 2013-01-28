@@ -268,6 +268,11 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		return -1;
 	}
 
+	/* If this PDU is deallocated we need to invoke the callback with
+	 * CANCELLED.
+	 */
+	pdu->flags |= ISCSI_PDU_CANCEL_FROM_DESTRUCTOR;
+
 	/* The F flag is not set. This means we haven't sent all the unsolicited
 	 * data yet. Sent as much as we are allowed as a train of DATA-OUT PDUs.
 	 * We might already have sent some data as immediate data, which we must
@@ -299,6 +304,11 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	struct iscsi_scsi_cbdata *scsi_cbdata = &pdu->scsi_cbdata;
 	struct scsi_task *task = scsi_cbdata->task;
 
+	/* We will invoke the callback for this PDU so we no longer need the
+	 * auto-invoke callback with CANCELLED in the destructor any more
+	 */
+	pdu->flags &= ~ISCSI_PDU_CANCEL_FROM_DESTRUCTOR;
+
 	statsn = scsi_get_uint32(&in->hdr[24]);
 	if (statsn > iscsi->statsn) {
 		iscsi->statsn = statsn;
@@ -310,14 +320,14 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	}
 
 	flags = in->hdr[1];
-	if ((flags&ISCSI_PDU_DATA_FINAL) == 0) {
+	if ((flags & ISCSI_PDU_DATA_FINAL) == 0) {
 		iscsi_set_error(iscsi, "scsi response pdu but Final bit is "
 				"not set: 0x%02x.", flags);
 		pdu->callback(iscsi, SCSI_STATUS_ERROR, task,
 			      pdu->private_data);
 		return -1;
 	}
-	if ((flags&ISCSI_PDU_DATA_ACK_REQUESTED) != 0) {
+	if ((flags & ISCSI_PDU_DATA_ACK_REQUESTED) != 0) {
 		iscsi_set_error(iscsi, "scsi response asked for ACK "
 				"0x%02x.", flags);
 		pdu->callback(iscsi, SCSI_STATUS_ERROR, task,
@@ -426,9 +436,10 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	}
 
 	flags = in->hdr[1];
-	if ((flags&ISCSI_PDU_DATA_ACK_REQUESTED) != 0) {
+	if ((flags & ISCSI_PDU_DATA_ACK_REQUESTED) != 0) {
 		iscsi_set_error(iscsi, "scsi response asked for ACK "
 				"0x%02x.", flags);
+		pdu->flags &= ~ISCSI_PDU_CANCEL_FROM_DESTRUCTOR;
 		pdu->callback(iscsi, SCSI_STATUS_ERROR, task,
 			      pdu->private_data);
 		return -1;
@@ -438,16 +449,16 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	/* Dont add to reassembly buffer if we already have a user buffer */
 	if (task->iovector_in.iov == NULL) {
 		if (iscsi_add_data(iscsi, pdu->indata, in->data, dsl, 0) != 0) {
-		    iscsi_set_error(iscsi, "Out-of-memory: failed to add data "
-				"to pdu in buffer.");
+			iscsi_set_error(iscsi, "Out-of-memory: failed to add"
+					" data to pdu in buffer.");
 			return -1;
 		}
 	}
 
-	if ((flags&ISCSI_PDU_DATA_FINAL) == 0) {
+	if ((flags & ISCSI_PDU_DATA_FINAL) == 0) {
 		*is_finished = 0;
 	}
-	if ((flags&ISCSI_PDU_DATA_CONTAINS_STATUS) == 0) {
+	if ((flags & ISCSI_PDU_DATA_CONTAINS_STATUS) == 0) {
 		*is_finished = 0;
 	}
 
@@ -481,6 +492,7 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	pdu->indata->data = NULL;
 	pdu->indata->size = 0;
 
+	pdu->flags &= ~ISCSI_PDU_CANCEL_FROM_DESTRUCTOR;
 	pdu->callback(iscsi, status, task, pdu->private_data);
 
 	return 0;
@@ -1602,54 +1614,19 @@ iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi,
 }
 
 int
-iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
+iscsi_scsi_cancel_task(struct iscsi_context *iscsi _U_,
 		       struct scsi_task *task)
 {
-	struct iscsi_pdu *pdu;
-
-	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
-		if (pdu->itt == task->itt) {
-			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
-				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-				      pdu->private_data);
-			}
-			talloc_free(pdu);
-			return 0;
-		}
-	}
-	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
-		if (pdu->itt == task->itt) {
-			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
-				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-				      pdu->private_data);
-			}
-			talloc_free(pdu);
-			return 0;
-		}
-	}
-	return -1;
+	talloc_free(task);
+	return 0;
 }
 
-/* TODO: Once iscsi_pdu is tallocified  this function just becomes 
- * talloc recycle of iscsi->scsi_tasks
- */
 void
 iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 {
-	struct iscsi_pdu *pdu;
-
-	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
-		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
-			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-				      pdu->private_data);
-		}
-		talloc_free(pdu);
-	}
-	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
-		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
-			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-				      pdu->private_data);
-		}
-		talloc_free(pdu);
-	}
+	/* recycle all scsi_tasks. Send CANCEL back to the called for PDUs
+	 * still active.
+	 */
+	talloc_free(iscsi->scsi_tasks);
+	iscsi->scsi_tasks = talloc_new(iscsi);
 }

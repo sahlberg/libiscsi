@@ -32,6 +32,7 @@
 #include <talloc.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
+#include "scsi-lowlevel.h"
 #include "slist.h"
 
 

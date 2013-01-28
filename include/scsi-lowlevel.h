@@ -31,6 +31,16 @@ extern "C" {
 
 #define SCSI_CDB_MAX_SIZE			16
 
+enum scsi_status {
+	SCSI_STATUS_GOOD                 = 0,
+	SCSI_STATUS_CHECK_CONDITION      = 2,
+	SCSI_STATUS_BUSY                 = 8,
+	SCSI_STATUS_RESERVATION_CONFLICT = 0x18,
+	SCSI_STATUS_REDIRECT             = 0x101,
+	SCSI_STATUS_CANCELLED            = 0x0f000000,
+	SCSI_STATUS_ERROR                = 0x0f000001
+};
+
 enum scsi_opcode {
 	SCSI_OPCODE_TESTUNITREADY      = 0x00,
 	SCSI_OPCODE_READ6              = 0x08,
