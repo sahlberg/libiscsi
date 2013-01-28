@@ -293,8 +293,6 @@ struct scsi_iovector *iscsi_get_scsi_task_iovector_out(struct iscsi_context *isc
 
 unsigned long crc32c(char *buf, int len);
 
-struct scsi_task *iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu);
-
 void iscsi_set_noautoreconnect(struct iscsi_context *iscsi, int state);
 
 void iscsi_decrement_iface_rr(void);

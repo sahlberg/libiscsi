@@ -1601,12 +1601,6 @@ iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi,
 	return task;
 }
 
-struct scsi_task *
-iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu)
-{
-	return pdu->scsi_cbdata.task;
-}
-
 int
 iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 		       struct scsi_task *task)
