@@ -33,7 +33,6 @@
 #include "iscsi-private.h"
 #include "slist.h"
 
-
 inline void* iscsi_malloc(struct iscsi_context *iscsi, size_t size) {
 	void * ptr = malloc(size);
 	if (ptr != NULL) iscsi->mallocs++;
@@ -67,6 +66,36 @@ inline char* iscsi_strdup(struct iscsi_context *iscsi, const char* str) {
 	char *str2 = strdup(str);
 	if (str2 != NULL) iscsi->mallocs++;
 	return str2;
+}
+
+inline void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size) {
+	void *ptr;
+	if (size > iscsi->smalloc_size) return NULL;
+	if (iscsi->smalloc_free > 0) {
+		ptr = iscsi->smalloc_ptrs[--iscsi->smalloc_free];
+		memset(ptr, 0, iscsi->smalloc_size);
+		iscsi->smallocs++;
+	} else {
+		ptr = iscsi_zmalloc(iscsi, iscsi->smalloc_size);
+	}
+	return ptr;
+}
+
+inline void iscsi_sfree(struct iscsi_context *iscsi, void* ptr) {
+	if (ptr == NULL) return;
+	if (iscsi->smalloc_free == SMALL_ALLOC_MAX_FREE) {
+		/* SMALL_ALLOC_MAX_FREE should be adjusted that this happens rarely */
+		ISCSI_LOG(iscsi,6,"smalloc free == SMALLOC_MAX_FREE");
+		int i;
+		/* remove oldest half of free pointers and copy
+		 * upper half to lower half */
+		iscsi->smalloc_free>>=1;
+		for (i=0; i<iscsi->smalloc_free; i++) {
+			iscsi_free(iscsi, iscsi->smalloc_ptrs[i]);
+			iscsi->smalloc_ptrs[i] = iscsi->smalloc_ptrs[i+iscsi->smalloc_free];
+		}
+	}
+	iscsi->smalloc_ptrs[iscsi->smalloc_free++] = ptr;
 }
 
 struct iscsi_context *
@@ -143,6 +172,16 @@ iscsi_create_context(const char *initiator_name)
 	if (getenv("LIBISCSI_BIND_INTERFACES") != NULL) {
 		iscsi_set_bind_interfaces(iscsi,getenv("LIBISCSI_BIND_INTERFACES"));
 	}
+
+	/* iscsi->smalloc_size is the size for small allocations. this should be
+	   max(ISCSI_HEADER_SIZE, sizeof(struct iscsi_pdu), sizeof(struct iscsi_in_pdu))
+	   rounded up to the next power of 2. */
+	iscsi->smalloc_size = 1;
+	size_t required = ISCSI_RAW_HEADER_SIZE + ISCSI_DIGEST_SIZE;
+	if (sizeof(struct iscsi_pdu) > required) required = sizeof(struct iscsi_pdu);
+	if (sizeof(struct iscsi_in_pdu) > required) required = sizeof(struct iscsi_in_pdu);
+	while (iscsi->smalloc_size < required) iscsi->smalloc_size <<= 1;
+	ISCSI_LOG(iscsi,5,"small allocation size is %d byte", iscsi->smalloc_size);
 
 	return iscsi;
 }
@@ -236,6 +275,7 @@ int
 iscsi_destroy_context(struct iscsi_context *iscsi)
 {
 	struct iscsi_pdu *pdu;
+	int i;
 
 	if (iscsi == NULL) {
 		return 0;
@@ -283,10 +323,14 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 
 	iscsi->connect_data = NULL;
 
+	for (i=0;i<iscsi->smalloc_free;i++) {
+		iscsi_free(iscsi, iscsi->smalloc_ptrs[i]);
+	}
+
 	if (iscsi->mallocs != iscsi->frees) {
-		ISCSI_LOG(iscsi,1,"%d memory blocks lost at iscsi_destroy_context() after %d malloc(s), %d realloc(s) and %d free(s)",iscsi->mallocs-iscsi->frees,iscsi->mallocs,iscsi->reallocs,iscsi->frees);
+		ISCSI_LOG(iscsi,1,"%d memory blocks lost at iscsi_destroy_context() after %d malloc(s), %d realloc(s), %d free(s) and %d reused small allocations",iscsi->mallocs-iscsi->frees,iscsi->mallocs,iscsi->reallocs,iscsi->frees,iscsi->smallocs);
 	} else {
-		ISCSI_LOG(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs, %d realloc(s) and %d frees",iscsi->mallocs,iscsi->reallocs,iscsi->frees);
+		ISCSI_LOG(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs, %d realloc(s), %d free(s) and %d reused small allocations",iscsi->mallocs,iscsi->reallocs,iscsi->frees,iscsi->smallocs);
 	}
 	
 	memset(iscsi, 0, sizeof(struct iscsi_context));

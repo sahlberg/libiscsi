@@ -39,6 +39,7 @@ extern "C" {
 #define ISCSI_HEADER_SIZE (ISCSI_RAW_HEADER_SIZE	\
   + (iscsi->header_digest == ISCSI_HEADER_DIGEST_NONE?0:ISCSI_DIGEST_SIZE))
 
+#define SMALL_ALLOC_MAX_FREE (128) /* must be power of 2 */
 
 struct iscsi_in_pdu {
 	struct iscsi_in_pdu *next;
@@ -130,6 +131,10 @@ struct iscsi_context {
 	int mallocs;
 	int reallocs;
 	int frees;
+	int smallocs;
+	void* smalloc_ptrs[SMALL_ALLOC_MAX_FREE];
+	int smalloc_free;
+	size_t smalloc_size;
 
 	time_t last_reconnect;	
 };
@@ -298,6 +303,8 @@ inline void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);
 inline void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size);
 inline void iscsi_free(struct iscsi_context *iscsi, void* ptr);
 inline char* iscsi_strdup(struct iscsi_context *iscsi, const char* str);
+inline void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size);
+inline void iscsi_sfree(struct iscsi_context *iscsi, void* ptr);
 
 unsigned long crc32c(char *buf, int len);
 
