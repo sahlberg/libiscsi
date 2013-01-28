@@ -182,6 +182,9 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		return -1;
 	}
 
+	/* make the iscsi command pdu a child of scsi_task */
+	talloc_steal(task, pdu);
+
 	pdu->scsi_cbdata.task         = task;
 	pdu->scsi_cbdata.callback     = cb;
 	pdu->scsi_cbdata.private_data = private_data;
