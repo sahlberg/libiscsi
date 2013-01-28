@@ -31,26 +31,26 @@ static int pdu_was_valid = 1;
 static int my_queue_immediate_data(struct iscsi_context *iscsi _U_, struct iscsi_pdu *pdu _U_)
 {
 	/* The COMMAND PDU */
-	if ((pdu->outdata.data[0] & 0x3f) == ISCSI_PDU_SCSI_REQUEST) {
-		if (pdu->outdata.data[1] & 0x80) {
+	if ((pdu->outdata->data[0] & 0x3f) == ISCSI_PDU_SCSI_REQUEST) {
+		if (pdu->outdata->data[1] & 0x80) {
 			printf("SCSI-Command PDU with immediate data had the F-flag set.\n");
 			pdu_was_valid = 0;
 			return 0;
 		}
-		if ( *(uint32_t *)&pdu->outdata.data[4] & 0x00ffffff ) {
+		if ( *(uint32_t *)&pdu->outdata->data[4] & 0x00ffffff ) {
 			printf("SCSI-Command PDU had non-zero datasegmentsize.\n");
 			pdu_was_valid = 0;
 			return 0;
 		}
 	}
 	/* The DATA-OUT PDU */
-	if ((pdu->outdata.data[0] & 0x3f) == ISCSI_PDU_DATA_OUT) {
-		if (!(pdu->outdata.data[1] & 0x80)) {
+	if ((pdu->outdata->data[0] & 0x3f) == ISCSI_PDU_DATA_OUT) {
+		if (!(pdu->outdata->data[1] & 0x80)) {
 			printf("The DATA-OUT PDU did not have the F-flag set.\n");
 			pdu_was_valid = 0;
 			return 0;
 		}
-		if ( (*(uint32_t *)&pdu->outdata.data[4] & 0x00ffffff) != htonl(block_size)) {
+		if ( (*(uint32_t *)&pdu->outdata->data[4] & 0x00ffffff) != htonl(block_size)) {
 			printf("The DATA-OUT PDU did not carry a full block.\n");
 			pdu_was_valid = 0;
 			return 0;

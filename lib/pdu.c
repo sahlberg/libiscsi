@@ -68,35 +68,60 @@ void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data) {
 	ISCSI_LOG(iscsi, 0, "PDU header:%s",dump);
 }
 
+static int
+iscsi_pdu_destructor(struct iscsi_pdu *pdu)
+{
+	SLIST_REMOVE(&pdu->iscsi->outqueue, pdu);
+	SLIST_REMOVE(&pdu->iscsi->waitpdu, pdu);
+	return 0;
+}
+
 struct iscsi_pdu *
-iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
-				  enum iscsi_opcode response_opcode, uint32_t itt, uint32_t flags)
+iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi,
+				  enum iscsi_opcode opcode,
+				  enum iscsi_opcode response_opcode,
+				  uint32_t itt, uint32_t flags)
 {
 	struct iscsi_pdu *pdu;
 
-	pdu = iscsi_zmalloc(iscsi, sizeof(struct iscsi_pdu));
+	pdu = talloc_zero(iscsi, struct iscsi_pdu);
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate pdu");
 		return NULL;
 	}
 
-	pdu->outdata.size = ISCSI_HEADER_SIZE;
-       	pdu->outdata.data = iscsi_malloc(iscsi, pdu->outdata.size);
-	memset(pdu->outdata.data, 0, ISCSI_HEADER_SIZE);
+	pdu->iscsi = iscsi;
 
-	if (pdu->outdata.data == NULL) {
-		iscsi_set_error(iscsi, "failed to allocate pdu header");
-		iscsi_free(iscsi, pdu);
+	pdu->outdata = talloc(pdu, struct iscsi_data);
+	if (pdu->outdata == NULL) {
+		talloc_free(pdu);
+		iscsi_set_error(iscsi, "failed to allocate pdu->outdata");
 		return NULL;
 	}
 
+	pdu->outdata->size = ISCSI_HEADER_SIZE;
+	pdu->outdata->data = talloc_zero_size(pdu->outdata, pdu->outdata->size);
+	if (pdu->outdata->data == NULL) {
+		iscsi_set_error(iscsi, "failed to allocate pdu header");
+		talloc_free(pdu);
+		return NULL;
+	}
+
+	pdu->indata = talloc_zero(pdu, struct iscsi_data);
+	if (pdu->indata == NULL) {
+		talloc_free(pdu);
+		iscsi_set_error(iscsi, "failed to allocate pdu->indata");
+		return NULL;
+	}
+
+
 	/* opcode */
-	pdu->outdata.data[0] = opcode;
+	pdu->outdata->data[0] = opcode;
 	pdu->response_opcode = response_opcode;
 
 	/* isid */
 	if (opcode == ISCSI_PDU_LOGIN_REQUEST) {
-		memcpy(&pdu->outdata.data[8], &iscsi->isid[0], 6);
+		memcpy(&pdu->outdata->data[8], &iscsi->isid[0], 6);
 	}
 
 	/* itt */
@@ -105,6 +130,8 @@ iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opcode
 
 	/* flags */
 	pdu->flags = flags;
+
+	talloc_set_destructor(pdu, iscsi_pdu_destructor);
 
 	return pdu;
 }
@@ -115,24 +142,6 @@ iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 {
 	return iscsi_allocate_pdu_with_itt_flags(iscsi, opcode, response_opcode, iscsi_itt_post_increment(iscsi), 0);
 }	
-
-void
-iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
-{
-	if (pdu == NULL) {
-		iscsi_set_error(iscsi, "trying to free NULL pdu");
-		return;
-	}
-
-	iscsi_free(iscsi, pdu->outdata.data);
-	pdu->outdata.data = NULL;
-
-	iscsi_free(iscsi, pdu->indata.data);
-	pdu->indata.data = NULL;
-
-	iscsi_free(iscsi, pdu);
-}
-
 
 int
 iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
@@ -154,9 +163,9 @@ iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 	}
 
 	if (data->size == 0) {
-		data->data = iscsi_malloc(iscsi, aligned);
+		data->data = talloc_size(data, aligned);
 	} else {
-		data->data = iscsi_realloc(iscsi, data->data, aligned);
+		data->data = talloc_realloc_size(data, data->data, aligned);
 	}
 	if (data->data == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate buffer for %d "
@@ -189,13 +198,13 @@ iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		return -1;
 	}
 
-	if (iscsi_add_data(iscsi, &pdu->outdata, dptr, dsize, 1) != 0) {
+	if (iscsi_add_data(iscsi, pdu->outdata, dptr, dsize, 1) != 0) {
 		iscsi_set_error(iscsi, "failed to add data to pdu buffer");
 		return -1;
 	}
 
 	/* update data segment length */
-	scsi_set_uint32(&pdu->outdata.data[4], pdu->outdata.size
+	scsi_set_uint32(&pdu->outdata->data[4], pdu->outdata->size
 					       - ISCSI_HEADER_SIZE);
 
 	return 0;
@@ -319,8 +328,7 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 	pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 			      pdu->private_data);
 
-	SLIST_REMOVE(&iscsi->waitpdu, pdu);
-	iscsi_free_pdu(iscsi, pdu);
+	talloc_free(pdu);
 	return 0;
 }
 
@@ -392,8 +400,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 		switch (opcode) {
 		case ISCSI_PDU_LOGIN_RESPONSE:
 			if (iscsi_process_login_reply(iscsi, pdu, in) != 0) {
-				SLIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi_free_pdu(iscsi, pdu);
+				talloc_free(pdu);
 				iscsi_set_error(iscsi, "iscsi login reply "
 						"failed");
 				return -1;
@@ -401,8 +408,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 			break;
 		case ISCSI_PDU_TEXT_RESPONSE:
 			if (iscsi_process_text_reply(iscsi, pdu, in) != 0) {
-				SLIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi_free_pdu(iscsi, pdu);
+				talloc_free(pdu);
 				iscsi_set_error(iscsi, "iscsi text reply "
 						"failed");
 				return -1;
@@ -410,8 +416,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 			break;
 		case ISCSI_PDU_LOGOUT_RESPONSE:
 			if (iscsi_process_logout_reply(iscsi, pdu, in) != 0) {
-				SLIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi_free_pdu(iscsi, pdu);
+				talloc_free(pdu);
 				iscsi_set_error(iscsi, "iscsi logout reply "
 						"failed");
 				return -1;
@@ -419,8 +424,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 			break;
 		case ISCSI_PDU_SCSI_RESPONSE:
 			if (iscsi_process_scsi_reply(iscsi, pdu, in) != 0) {
-				SLIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi_free_pdu(iscsi, pdu);
+				talloc_free(pdu);
 				iscsi_set_error(iscsi, "iscsi response reply "
 						"failed");
 				return -1;
@@ -429,8 +433,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 		case ISCSI_PDU_DATA_IN:
 			if (iscsi_process_scsi_data_in(iscsi, pdu, in,
 						       &is_finished) != 0) {
-				SLIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi_free_pdu(iscsi, pdu);
+				talloc_free(pdu);
 				iscsi_set_error(iscsi, "iscsi data in "
 						"failed");
 				return -1;
@@ -438,8 +441,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 			break;
 		case ISCSI_PDU_NOP_IN:
 			if (iscsi_process_nop_out_reply(iscsi, pdu, in) != 0) {
-				SLIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi_free_pdu(iscsi, pdu);
+				talloc_free(pdu);
 				iscsi_set_error(iscsi, "iscsi nop-in failed");
 				return -1;
 			}
@@ -447,16 +449,14 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 		case ISCSI_PDU_SCSI_TASK_MANAGEMENT_RESPONSE:
 			if (iscsi_process_task_mgmt_reply(iscsi, pdu,
 							  in) != 0) {
-				SLIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi_free_pdu(iscsi, pdu);
+				talloc_free(pdu);
 				iscsi_set_error(iscsi, "iscsi task-mgmt failed");
 				return -1;
 			}
 			break;
 		case ISCSI_PDU_R2T:
 			if (iscsi_process_r2t(iscsi, pdu, in) != 0) {
-				SLIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi_free_pdu(iscsi, pdu);
+				talloc_free(pdu);
 				iscsi_set_error(iscsi, "iscsi r2t "
 						"failed");
 				return -1;
@@ -470,8 +470,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 		}
 
 		if (is_finished) {
-			SLIST_REMOVE(&iscsi->waitpdu, pdu);
-			iscsi_free_pdu(iscsi, pdu);
+			talloc_free(pdu);
 		}
 		return 0;
 	}
@@ -482,79 +481,79 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 void
 iscsi_pdu_set_itt(struct iscsi_pdu *pdu, uint32_t itt)
 {
-	scsi_set_uint32(&pdu->outdata.data[16], itt);
+	scsi_set_uint32(&pdu->outdata->data[16], itt);
 }
 
 void
 iscsi_pdu_set_ritt(struct iscsi_pdu *pdu, uint32_t ritt)
 {
-	scsi_set_uint32(&pdu->outdata.data[20], ritt);
+	scsi_set_uint32(&pdu->outdata->data[20], ritt);
 }
 
 void
 iscsi_pdu_set_pduflags(struct iscsi_pdu *pdu, unsigned char flags)
 {
-	pdu->outdata.data[1] = flags;
+	pdu->outdata->data[1] = flags;
 }
 
 void
 iscsi_pdu_set_immediate(struct iscsi_pdu *pdu)
 {
-	pdu->outdata.data[0] |= ISCSI_PDU_IMMEDIATE;
+	pdu->outdata->data[0] |= ISCSI_PDU_IMMEDIATE;
 }
 
 void
 iscsi_pdu_set_ttt(struct iscsi_pdu *pdu, uint32_t ttt)
 {
-	scsi_set_uint32(&pdu->outdata.data[20], ttt);
+	scsi_set_uint32(&pdu->outdata->data[20], ttt);
 }
 
 void
 iscsi_pdu_set_cmdsn(struct iscsi_pdu *pdu, uint32_t cmdsn)
 {
-	scsi_set_uint32(&pdu->outdata.data[24], cmdsn);
+	scsi_set_uint32(&pdu->outdata->data[24], cmdsn);
 }
 
 void
 iscsi_pdu_set_rcmdsn(struct iscsi_pdu *pdu, uint32_t rcmdsn)
 {
-	scsi_set_uint32(&pdu->outdata.data[32], rcmdsn);
+	scsi_set_uint32(&pdu->outdata->data[32], rcmdsn);
 }
 
 void
 iscsi_pdu_set_datasn(struct iscsi_pdu *pdu, uint32_t datasn)
 {
-	scsi_set_uint32(&pdu->outdata.data[36], datasn);
+	scsi_set_uint32(&pdu->outdata->data[36], datasn);
 }
 
 void
 iscsi_pdu_set_expstatsn(struct iscsi_pdu *pdu, uint32_t expstatsnsn)
 {
-	scsi_set_uint32(&pdu->outdata.data[28], expstatsnsn);
+	scsi_set_uint32(&pdu->outdata->data[28], expstatsnsn);
 }
 
 void
 iscsi_pdu_set_bufferoffset(struct iscsi_pdu *pdu, uint32_t bufferoffset)
 {
-	scsi_set_uint32(&pdu->outdata.data[40], bufferoffset);
+	scsi_set_uint32(&pdu->outdata->data[40], bufferoffset);
 }
 
 void
 iscsi_pdu_set_cdb(struct iscsi_pdu *pdu, struct scsi_task *task)
 {
-	memset(&pdu->outdata.data[32], 0, 16);
-	memcpy(&pdu->outdata.data[32], task->cdb, task->cdb_size);
+	memset(&pdu->outdata->data[32], 0, 16);
+	memcpy(&pdu->outdata->data[32], task->cdb, task->cdb_size);
 }
 
 void
 iscsi_pdu_set_lun(struct iscsi_pdu *pdu, uint32_t lun)
 {
-	pdu->outdata.data[8] = lun >> 8;
-	pdu->outdata.data[9] = lun & 0xff;
+	pdu->outdata->data[8] = lun >> 8;
+	pdu->outdata->data[9] = lun & 0xff;
 }
 
 void
 iscsi_pdu_set_expxferlen(struct iscsi_pdu *pdu, uint32_t expxferlen)
 {
-	scsi_set_uint32(&pdu->outdata.data[20], expxferlen);
+	scsi_set_uint32(&pdu->outdata->data[20], expxferlen);
 }

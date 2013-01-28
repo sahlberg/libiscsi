@@ -32,12 +32,12 @@ static int my_queue_immediate_data(struct iscsi_context *iscsi _U_, struct iscsi
 {
 	pdu_was_valid = 1;
 
-	if (!(pdu->outdata.data[1] & 0x80)) {
+	if (!(pdu->outdata->data[1] & 0x80)) {
 		printf("SCSI-Command PDU with immediate data did not have the F-flag set.\n");
 		pdu_was_valid = 0;
 		return 0;
 	}
-	if ( (*(uint32_t *)&pdu->outdata.data[4] & 0x00ffffff) != htonl(block_size)) {
+	if ( (*(uint32_t *)&pdu->outdata->data[4] & 0x00ffffff) != htonl(block_size)) {
 		printf("SCSI-Command PDU did not have one block of immediate data.\n");
 		pdu_was_valid = 0;
 		return 0;

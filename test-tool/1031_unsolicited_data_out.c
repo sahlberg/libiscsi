@@ -68,13 +68,13 @@ static int
 my_iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		   unsigned char *dptr, int dsize)
 {
-	if (my_iscsi_add_data(iscsi, &pdu->outdata, dptr, dsize, 1) != 0) {
+	if (my_iscsi_add_data(iscsi, pdu->outdata, dptr, dsize, 1) != 0) {
 		printf("failed to add data to pdu buffer");
 		return -1;
 	}
 
 	/* update data segment length */
-	*(uint32_t *)&pdu->outdata.data[4] = htonl(pdu->outdata.size
+	*(uint32_t *)&pdu->outdata->data[4] = htonl(pdu->outdata->size
 						   - ISCSI_HEADER_SIZE);
 
 	return 0;
@@ -83,26 +83,26 @@ my_iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 static void
 my_iscsi_pdu_set_itt(struct iscsi_pdu *pdu, uint32_t itt)
 {
-	*(uint32_t *)&pdu->outdata.data[16] = htonl(itt);
+	*(uint32_t *)&pdu->outdata->data[16] = htonl(itt);
 }
 
 static void
 my_iscsi_pdu_set_expstatsn(struct iscsi_pdu *pdu, uint32_t expstatsnsn)
 {
-	*(uint32_t *)&pdu->outdata.data[28] = htonl(expstatsnsn);
+	*(uint32_t *)&pdu->outdata->data[28] = htonl(expstatsnsn);
 }
 
 static void
 my_iscsi_pdu_set_pduflags(struct iscsi_pdu *pdu, unsigned char flags)
 {
-	pdu->outdata.data[1] = flags;
+	pdu->outdata->data[1] = flags;
 }
 
 static void
 my_iscsi_pdu_set_lun(struct iscsi_pdu *pdu, uint32_t lun)
 {
-	pdu->outdata.data[8] = lun >> 8;
-	pdu->outdata.data[9] = lun & 0xff;
+	pdu->outdata->data[8] = lun >> 8;
+	pdu->outdata->data[9] = lun & 0xff;
 }
 
 static struct iscsi_pdu *
@@ -118,23 +118,23 @@ my_iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opc
 	}
 	memset(pdu, 0, sizeof(struct iscsi_pdu));
 
-	pdu->outdata.size = ISCSI_HEADER_SIZE;
-	pdu->outdata.data = malloc(pdu->outdata.size);
+	pdu->outdata->size = ISCSI_HEADER_SIZE;
+	pdu->outdata->data = malloc(pdu->outdata->size);
 
-	if (pdu->outdata.data == NULL) {
+	if (pdu->outdata->data == NULL) {
 		printf("failed to allocate pdu header");
 		free(pdu);
 		return NULL;
 	}
-	memset(pdu->outdata.data, 0, pdu->outdata.size);
+	memset(pdu->outdata->data, 0, pdu->outdata->size);
 
 	/* opcode */
-	pdu->outdata.data[0] = opcode;
+	pdu->outdata->data[0] = opcode;
 	pdu->response_opcode = response_opcode;
 
 	/* isid */
 	if (opcode == ISCSI_PDU_LOGIN_REQUEST) {
-		memcpy(&pdu->outdata.data[8], &iscsi->isid[0], 6);
+		memcpy(&pdu->outdata->data[8], &iscsi->isid[0], 6);
 	}
 
 	/* itt */

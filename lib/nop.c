@@ -21,6 +21,7 @@
 #endif
 
 #include <stdio.h>
+#include <talloc.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 
@@ -70,14 +71,14 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	if (data != NULL && len > 0) {
 		if (iscsi_pdu_add_data(iscsi, pdu, data, len) != 0) {
 			iscsi_set_error(iscsi, "Failed to add outdata to nop-out");
-			iscsi_free_pdu(iscsi, pdu);
+			talloc_free(pdu);
 			return -1;
 		}
 	}
 
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "failed to queue iscsi nop-out pdu");
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
@@ -119,7 +120,7 @@ iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt)
 
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "failed to queue iscsi nop-out pdu");
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 

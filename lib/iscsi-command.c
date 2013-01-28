@@ -75,11 +75,9 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		if (pdu == NULL) {
 			iscsi_set_error(iscsi, "Out-of-memory, Failed to allocate "
 				"scsi data out pdu.");
-			SLIST_REMOVE(&iscsi->outqueue, cmd_pdu);
-			SLIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
 			cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 				     cmd_pdu->private_data);
-			iscsi_free_pdu(iscsi, cmd_pdu);
+			talloc_free(cmd_pdu);
 			return -1;
 
 		}
@@ -117,7 +115,7 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		pdu->out_len    = len;
 
 		/* update data segment length */
-		scsi_set_uint32(&pdu->outdata.data[4], pdu->out_len);
+		scsi_set_uint32(&pdu->outdata->data[4], pdu->out_len);
 
 		pdu->callback     = cmd_pdu->callback;
 		pdu->private_data = cmd_pdu->private_data;
@@ -125,12 +123,10 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 			iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"scsi pdu.");
-			SLIST_REMOVE(&iscsi->outqueue, cmd_pdu);
-			SLIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
 			cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 				     cmd_pdu->private_data);
-			iscsi_free_pdu(iscsi, cmd_pdu);
-			iscsi_free_pdu(iscsi, pdu);
+			talloc_free(cmd_pdu);
+			talloc_free(pdu);
 			return -1;
 		}
 
@@ -222,7 +218,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 			pdu->out_len    = len;
 
 			/* update data segment length */
-			scsi_set_uint32(&pdu->outdata.data[4], pdu->out_len);
+			scsi_set_uint32(&pdu->outdata->data[4], pdu->out_len);
 		}
 		/* We have (more) data to send and we are allowed to send
 		 * it as unsolicited data-out segments.
@@ -265,7 +261,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"scsi pdu.");
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
@@ -330,8 +326,8 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 	switch (status) {
 	case SCSI_STATUS_GOOD:
-		task->datain.data = pdu->indata.data;
-		task->datain.size = pdu->indata.size;
+		task->datain.data = pdu->indata->data;
+		task->datain.size = pdu->indata->size;
 
 		task->residual_status = SCSI_RESIDUAL_NO_RESIDUAL;
 		task->residual = 0;
@@ -348,14 +344,8 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			}
 		}
 
-		/* the pdu->datain.data was malloc'ed by iscsi_malloc,
-		   as long as we have no struct iscsi_task we cannot track
-		   the free'ing of this buffer which is currently
-		   done in scsi_free_scsi_task() */
-		if (pdu->indata.data != NULL) iscsi->frees++;
-
-		pdu->indata.data = NULL;
-		pdu->indata.size = 0;
+		pdu->indata->data = NULL;
+		pdu->indata->size = 0;
 
 		pdu->callback(iscsi, SCSI_STATUS_GOOD, task,
 			      pdu->private_data);
@@ -444,7 +434,7 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 	/* Dont add to reassembly buffer if we already have a user buffer */
 	if (task->iovector_in.iov == NULL) {
-		if (iscsi_add_data(iscsi, &pdu->indata, in->data, dsl, 0) != 0) {
+		if (iscsi_add_data(iscsi, pdu->indata, in->data, dsl, 0) != 0) {
 		    iscsi_set_error(iscsi, "Out-of-memory: failed to add data "
 				"to pdu in buffer.");
 			return -1;
@@ -482,17 +472,11 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	 * the s-bit set, so invoke the callback.
 	 */
 	status = in->hdr[3];
-	task->datain.data = pdu->indata.data;
-	task->datain.size = pdu->indata.size;
+	task->datain.data = pdu->indata->data;
+	task->datain.size = pdu->indata->size;
 
-	/* the pdu->indata.data was malloc'ed by iscsi_malloc,
-	   as long as we have no struct iscsi_task we cannot track
-	   the free'ing of this buffer which is currently
-	   done in scsi_free_scsi_task() */
-	if (pdu->indata.data != NULL) iscsi->frees++;
-	
-	pdu->indata.data = NULL;
-	pdu->indata.size = 0;
+	pdu->indata->data = NULL;
+	pdu->indata->size = 0;
 
 	pdu->callback(iscsi, status, task, pdu->private_data);
 
@@ -1628,23 +1612,21 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		if (pdu->itt == task->itt) {
-			SLIST_REMOVE(&iscsi->waitpdu, pdu);
 			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
 			}
-			iscsi_free_pdu(iscsi, pdu);
+			talloc_free(pdu);
 			return 0;
 		}
 	}
 	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
 		if (pdu->itt == task->itt) {
-			SLIST_REMOVE(&iscsi->outqueue, pdu);
 			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
 			}
-			iscsi_free_pdu(iscsi, pdu);
+			talloc_free(pdu);
 			return 0;
 		}
 	}
@@ -1660,19 +1642,17 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 	struct iscsi_pdu *pdu;
 
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
-		SLIST_REMOVE(&iscsi->waitpdu, pdu);
 		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
 		}
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 	}
 	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
-		SLIST_REMOVE(&iscsi->outqueue, pdu);
 		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
 		}
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 	}
 }

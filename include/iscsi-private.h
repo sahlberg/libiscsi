@@ -49,11 +49,9 @@ struct iscsi_in_pdu {
 	long long data_pos;
 	unsigned char *data;
 };
-void iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
-void iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *inqueue);
 
 struct iscsi_context {
-	char initiator_name[MAX_STRING_SIZE+1];
+	char *initiator_name;
 	char target_name[MAX_STRING_SIZE+1];
 	char target_address[MAX_STRING_SIZE+1];  /* If a redirect */
 	char connected_portal[MAX_STRING_SIZE+1];
@@ -127,10 +125,6 @@ struct iscsi_context {
 	int log_level;
 	iscsi_log_fn log_fn;
 
-	int mallocs;
-	int reallocs;
-	int frees;
-
 	time_t last_reconnect;
 
 	/* TALLOC_CTX parent to all scsi_tasks */
@@ -197,6 +191,8 @@ struct iscsi_scsi_cbdata {
 struct iscsi_pdu {
 	struct iscsi_pdu *next;
 
+	struct iscsi_context *iscsi;
+
 /* There will not be a response to this pdu, so delete it once it is sent on the wire. Dont put it on the wait-queue */
 #define ISCSI_PDU_DELETE_WHEN_SENT	0x00000001
 /* Dont call the CANCEL callback when the context is destroyed */
@@ -219,12 +215,12 @@ struct iscsi_pdu {
 
 	int written;
 
-	struct iscsi_data outdata; /* Header for PDU to send */
+	struct iscsi_data *outdata;/* Header for PDU to send */
 	uint32_t out_offset;       /* Offset into data-out iovector */
 	uint32_t out_len;          /* Amount of data to sent starting at out_offset */
 	uint32_t out_written;      /* Number of bytes written to socket */
 
-	struct iscsi_data indata;
+	struct iscsi_data *indata;
 
 	struct iscsi_scsi_cbdata scsi_cbdata;
 };
@@ -237,7 +233,6 @@ struct iscsi_pdu *iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi,
 				enum iscsi_opcode response_opcode,
 				uint32_t itt,
 				uint32_t flags);
-void iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 void iscsi_pdu_set_pduflags(struct iscsi_pdu *pdu, unsigned char flags);
 void iscsi_pdu_set_immediate(struct iscsi_pdu *pdu);
 void iscsi_pdu_set_ttt(struct iscsi_pdu *pdu, uint32_t ttt);
@@ -295,12 +290,6 @@ void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
 
 struct scsi_iovector *iscsi_get_scsi_task_iovector_in(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 struct scsi_iovector *iscsi_get_scsi_task_iovector_out(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
-
-inline void* iscsi_malloc(struct iscsi_context *iscsi, size_t size);
-inline void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);
-inline void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size);
-inline void iscsi_free(struct iscsi_context *iscsi, void* ptr);
-inline char* iscsi_strdup(struct iscsi_context *iscsi, const char* str);
 
 unsigned long crc32c(char *buf, int len);
 

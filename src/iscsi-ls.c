@@ -179,10 +179,12 @@ void list_luns(struct client_state *clnt, const char *target, const char *portal
 		exit(10);
 	}
 
+printf("login to target\n");
 	if (iscsi_login_sync(iscsi) != 0) {
 		fprintf(stderr, "login failed :%s\n", iscsi_get_error(iscsi));
 		exit(10);
 	}
+printf("login to target ok\n");
 
 
 	/* get initial reportluns data, all targets can report 16 bytes but some
@@ -242,6 +244,7 @@ void discovery_cb(struct iscsi_context *iscsi, int status, void *command_data, v
 {
 	struct iscsi_discovery_address *addr;
 
+printf("discovery_cb\n");
 	if (status != 0) {
 		fprintf(stderr, "Failed to do discovery on target. : %s\n", iscsi_get_error(iscsi));
 		exit(10);
