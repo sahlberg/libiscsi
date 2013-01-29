@@ -340,6 +340,10 @@ try_again:
 		iscsi_free_iscsi_inqueue(old_iscsi, old_iscsi->inqueue);
 	}
 
+	if (old_iscsi->outqueue_current != NULL && old_iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
+		iscsi_free_pdu(old_iscsi, old_iscsi->outqueue_current);
+	}
+
 	close(iscsi->fd);
 	iscsi->fd = old_iscsi->fd;
 	iscsi->mallocs+=old_iscsi->mallocs;

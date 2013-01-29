@@ -753,8 +753,8 @@ iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		unsigned long crc;
 
 		if (pdu->outdata.size < ISCSI_RAW_HEADER_SIZE + 4) {
-			iscsi_set_error(iscsi, "PDU too small (%d) to contain header digest",
-					pdu->outdata.size);
+			iscsi_set_error(iscsi, "PDU too small (%u) to contain header digest",
+					(unsigned int) pdu->outdata.size);
 			return -1;
 		}
 
