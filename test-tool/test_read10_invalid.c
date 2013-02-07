@@ -35,8 +35,6 @@ test_read10_invalid(void)
 	struct scsi_task *task_ret;
 
 
-	fprintf(stderr, "DEBUG: %s: entering\n", __FUNCTION__);
-
 	/* Try a read10 of 1 block but xferlength == 0 */
 	task = malloc(sizeof(struct scsi_task));
 	CU_ASSERT_PTR_NOT_NULL(task);
