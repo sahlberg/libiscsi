@@ -127,7 +127,6 @@ struct iscsi_pdu;
 int (*local_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 
-
 /*
  * PGR support
  */
@@ -158,6 +157,9 @@ static inline int pr_type_is_all_registrants(
 		return 0;
 	}
 }
+
+int prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
+    struct scsi_persistent_reserve_in_read_keys **rkp);
 
 int register_and_ignore(struct iscsi_context *iscsi, int lun,
     unsigned long long key);

@@ -215,6 +215,11 @@ static CU_TestInfo tests_writesame16[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_prin_read_keys[] = {
+	{ (char *)"testPrinReadKeysSimple", test_prin_read_keys_simple },
+	CU_TEST_INFO_NULL
+};
+
 static CU_SuiteInfo suites[] = {
 	{ (char *)"TestPrefetch10", test_setup, test_teardown,
 	  tests_prefetch10 },
@@ -252,6 +257,8 @@ static CU_SuiteInfo suites[] = {
 	  tests_writesame10 },
 	{ (char *)"TestWriteSame16", test_setup, test_teardown,
 	  tests_writesame16 },
+	{ (char *)"TestPrinReadKeys", test_setup, test_teardown,
+	  tests_prin_read_keys },
 	CU_SUITE_INFO_NULL
 };
 

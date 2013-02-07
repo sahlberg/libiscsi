@@ -138,4 +138,6 @@ void test_writesame16_unmap(void);
 void test_writesame16_unmap_unaligned(void);
 void test_writesame16_unmap_until_end(void);
 
+void test_prin_read_keys_simple(void);
+
 #endif	/* _ISCSI_TEST_CU_H_ */

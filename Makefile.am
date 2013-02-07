@@ -258,7 +258,8 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_writesame16_wrprotect.c \
 	test-tool/test_writesame16_unmap.c \
 	test-tool/test_writesame16_unmap_unaligned.c \
-	test-tool/test_writesame16_unmap_until_end.c
+	test-tool/test_writesame16_unmap_until_end.c \
+	test-tool/test_prin_read_keys_simple.c
 
 endif
 
