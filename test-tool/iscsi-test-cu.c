@@ -49,7 +49,10 @@
 
 int loglevel = LOG_SILENT;
 
-/* XXX what is this for? */
+/*
+ * this allows us to redefine how PDU are queued, at times, for
+ * testing purposes
+ */
 int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 /*****************************************************************
@@ -281,7 +284,7 @@ print_usage(void)
 	fprintf(stderr,
 	    "  -l|--list                        List all tests and exit\n");
 	fprintf(stderr,
-	    "  -X|--dataloss                    Allow destructive tests\n");
+	    "  -d|--dataloss                    Allow destructive tests\n");
 	fprintf(stderr,
 	    "  -g|--ignore                      Error Action: Ignore test errors [DEFAULT]\n");
 	fprintf(stderr,
@@ -294,6 +297,8 @@ print_usage(void)
 	    "  -n|--normal                      Test Mode: Normal\n");
 	fprintf(stderr,
 	    "  -v|--verbose                     Test Mode: Verbose [DEFAULT]\n");
+	fprintf(stderr,
+	    "-V|--Verbose-scsi                  Enable verbose SCSI logging [default SILENT]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr,
 	    "Where <iscsi-url> iSCSI URL format is: %s\n", ISCSI_URL_SYNTAX);
