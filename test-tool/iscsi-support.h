@@ -179,9 +179,9 @@ int verify_read_works(struct iscsi_context *iscsi, int lun, unsigned char *buf);
 int verify_write_works(struct iscsi_context *iscsi, int lun, unsigned char *buf);
 int verify_read_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf);
 int verify_write_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf);
-int testunitready(struct iscsi_context *iscsi, int lun);
-int testunitready_nomedium(struct iscsi_context *iscsi, int lun);
-int testunitready_conflict(struct iscsi_context *iscsi, int lun);
+
+int inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize);
+int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len);
 int prefetch10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group);
 int prefetch10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group);
 int prefetch10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group);
@@ -201,6 +201,9 @@ int read16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba,
 int read16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data);
 int readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi);
 int readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len);
+int testunitready(struct iscsi_context *iscsi, int lun);
+int testunitready_nomedium(struct iscsi_context *iscsi, int lun);
+int testunitready_conflict(struct iscsi_context *iscsi, int lun);
 int unmap(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len);
 int verify10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data);
 int verify10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data);
@@ -234,6 +237,5 @@ int writesame16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba
 int writesame16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int num_blocks, int anchor, int unmap, int wrprotect, int group, unsigned char *data);
 
 
-int inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize);
 
 #endif	/* _ISCSI_SUPPORT_H_ */

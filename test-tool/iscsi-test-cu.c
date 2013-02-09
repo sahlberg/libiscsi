@@ -60,6 +60,11 @@ int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
  * list of tests and test suites
  *
  *****************************************************************/
+static CU_TestInfo tests_get_lba_status[] = {
+	{ (char *)"testGetLBAStatusSimple", test_get_lba_status_simple },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_prefetch10[] = {
 	{ (char *)"testPrefetch10Simple", test_prefetch10_simple },
 	{ (char *)"testPrefetch10BeyondEol", test_prefetch10_beyond_eol },
@@ -221,6 +226,8 @@ static CU_TestInfo tests_prin_read_keys[] = {
 };
 
 static CU_SuiteInfo suites[] = {
+	{ (char *)"TestGetLBAStatus", test_setup, test_teardown,
+	  tests_get_lba_status },
 	{ (char *)"TestPrefetch10", test_setup, test_teardown,
 	  tests_prefetch10 },
 	{ (char *)"TestPrefetch16", test_setup, test_teardown,

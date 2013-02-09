@@ -35,6 +35,8 @@ extern struct scsi_task *task;
 int test_setup(void);
 int test_teardown(void);
 
+void test_get_lba_status_simple(void);
+
 void test_prefetch10_simple(void);
 void test_prefetch10_beyond_eol(void);
 void test_prefetch10_0blocks(void);
