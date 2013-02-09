@@ -184,6 +184,7 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_prefetch16_beyond_eol.c \
 	test-tool/test_prefetch16_0blocks.c \
 	test-tool/test_prefetch16_flags.c \
+	test-tool/test_prin_read_keys_simple.c \
 	test-tool/test_read6_simple.c \
 	test-tool/test_read6_beyond_eol.c \
 	test-tool/test_read6_0blocks.c \
@@ -258,8 +259,7 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_writesame16_wrprotect.c \
 	test-tool/test_writesame16_unmap.c \
 	test-tool/test_writesame16_unmap_unaligned.c \
-	test-tool/test_writesame16_unmap_until_end.c \
-	test-tool/test_prin_read_keys_simple.c
+	test-tool/test_writesame16_unmap_until_end.c
 
 endif
 
