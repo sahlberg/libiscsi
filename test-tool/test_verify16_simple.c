@@ -31,7 +31,7 @@ test_verify16_simple(void)
 {
 	int i, ret;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
 		unsigned char *buf = malloc(block_size * i);

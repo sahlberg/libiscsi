@@ -30,7 +30,7 @@ test_prefetch10_flags(void)
 { 
 	int ret;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test PREFETCH10 flags");
 
 	logging(LOG_VERBOSE, "Test PREFETCH10 with IMMED==1");

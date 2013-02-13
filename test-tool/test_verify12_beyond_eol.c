@@ -34,7 +34,7 @@ test_verify12_beyond_eol(void)
 		return;
 	}
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY12 1-256 blocks one block beyond the end");
 	for (i = 1; i <= 256; i++) {
 		unsigned char *buf = malloc(block_size * i);

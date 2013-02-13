@@ -33,7 +33,7 @@ test_write10_flags(void)
 
 	CHECK_FOR_DATALOSS;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITE10 flags");
 
 	buf = malloc(block_size);

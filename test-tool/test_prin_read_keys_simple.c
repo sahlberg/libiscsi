@@ -33,7 +33,7 @@ test_prin_read_keys_simple(void)
 	int al;
 
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test Persistent Reserve IN READ_KEYS works.");
 
 	ret = prin_read_keys(iscsic, tgt_lun, &task, NULL);

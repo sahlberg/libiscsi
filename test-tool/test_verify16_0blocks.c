@@ -28,7 +28,7 @@ test_verify16_0blocks(void)
 {
 	int ret;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 0-blocks at LBA==0");
 	ret = verify16(iscsic, tgt_lun, 0, 0, block_size,
 		     0, 0, 1, NULL);

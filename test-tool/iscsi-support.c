@@ -74,6 +74,11 @@ void logging(int level, const char *format, ...)
 		return;
 	}
 
+	if (strncmp(LOG_BLANK_LINE, format, LOG_BLANK_LINE_CMP_LEN)==0) {
+		printf("\n");
+		return;
+	}
+
         va_start(ap, format);
 	ret = vsnprintf(message, 1024, format, ap);
         va_end(ap);

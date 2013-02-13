@@ -31,7 +31,7 @@ test_verify16_vrprotect(void)
 {
 	int i, ret;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 with non-zero VRPROTECT");
 
 	for (i = 1; i < 8; i++) {

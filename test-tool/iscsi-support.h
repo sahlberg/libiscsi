@@ -33,7 +33,14 @@ extern int loglevel;
 #define LOG_SILENT  0
 #define LOG_NORMAL  1
 #define LOG_VERBOSE 2
-void logging(int level, const char *format, ...);
+void logging(int level, const char *format, ...) _R_(2,3);
+
+/*
+ * define special flags for logging a blank line, so compiler
+ * does not commplain when logging a ""
+ */
+#define	LOG_BLANK_LINE " "
+#define LOG_BLANK_LINE_CMP_LEN 2
 
 #define CHECK_FOR_DATALOSS						\
 do {									\

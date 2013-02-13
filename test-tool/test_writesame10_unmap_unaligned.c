@@ -37,7 +37,7 @@ test_writesame10_unmap_unaligned(void)
 	CHECK_FOR_LBPPB_GT_1;
 	CHECK_FOR_SBC;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that unaligned WRITESAME10 Unmap fails. LBPPB==%d", lbppb);
 	for (i = 1; i < lbppb; i++) {
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10 at LBA:%d", lbppb - i, i);

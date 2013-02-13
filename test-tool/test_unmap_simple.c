@@ -36,7 +36,7 @@ test_unmap_simple(void)
 	CHECK_FOR_THIN_PROVISIONING;
 	CHECK_FOR_SBC;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test UNMAP of 1-256 blocks at the start of the LUN as a single descriptor");
 	for (i = 1; i <= 256; i++) {
 		list[0].lba = 0;

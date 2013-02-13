@@ -28,7 +28,7 @@ test_read6_0blocks(void)
 {
 	int ret;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ6 0-blocks at LBA==0");
 	ret = read6(iscsic, tgt_lun, 0, 0, block_size, NULL);
 	CU_ASSERT_EQUAL(ret, 0);

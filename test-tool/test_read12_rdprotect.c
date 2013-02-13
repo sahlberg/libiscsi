@@ -40,7 +40,7 @@ test_read12_rdprotect(void)
 	 * Try out different non-zero values for RDPROTECT.
 	 * They should all fail.
 	 */
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ12 with non-zero RDPROTECT");
 	for (i = 1; i < 8; i++) {
 		ret = read12_invalidfieldincdb(iscsic, tgt_lun, 0,

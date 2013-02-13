@@ -36,7 +36,7 @@ test_writesame10_0blocks(void)
 		return;
 	}
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks at LBA==0");
 	ret = writesame10(iscsic, tgt_lun, 0,
 			  block_size, 0,

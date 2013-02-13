@@ -31,7 +31,7 @@ test_writesame16_0blocks(void)
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks at LBA==0");
 	ret = writesame16(iscsic, tgt_lun, 0,
 			  block_size, 0,

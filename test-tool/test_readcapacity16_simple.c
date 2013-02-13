@@ -32,7 +32,7 @@ test_readcapacity16_simple(void)
 	int ret;
 
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that READCAPACITY16 works");
 
 	ret = readcapacity16(iscsic, tgt_lun, 16);

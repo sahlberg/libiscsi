@@ -32,7 +32,7 @@ test_read16_flags(void)
 
 	CHECK_FOR_SBC;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ16 flags");
 
 	logging(LOG_VERBOSE, "Test READ16 with DPO==1");

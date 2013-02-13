@@ -32,7 +32,7 @@ test_readcapacity10_simple(void)
 	int ret;
 
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test basic READCAPACITY10");
 
 	ret = readcapacity10(iscsic, tgt_lun, 0, 0);

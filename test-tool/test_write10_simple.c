@@ -33,7 +33,7 @@ test_write10_simple(void)
 
 	CHECK_FOR_DATALOSS;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITE10 of 1-256 blocks at the start of the LUN");
 
 	for (i = 1; i <= 256; i++) {

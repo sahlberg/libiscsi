@@ -32,7 +32,7 @@ test_verify10_flags(void)
 	int ret;
 	unsigned char *buf = malloc(block_size);
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY10 flags");
 
 	ret = read10(iscsic, tgt_lun, 0, block_size,

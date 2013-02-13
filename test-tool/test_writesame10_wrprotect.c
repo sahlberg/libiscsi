@@ -38,7 +38,7 @@ test_writesame10_wrprotect(void)
 	 * Try out different non-zero values for WRPROTECT.
 	 * They should all fail.
 	 */
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME10 with non-zero WRPROTECT");
 	buf = malloc(block_size);
 	for (i = 1; i < 8; i++) {

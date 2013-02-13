@@ -30,7 +30,7 @@ test_read12_flags(void)
 { 
 	int ret;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ12 flags");
 
 	/* This test is only valid for SBC devices */

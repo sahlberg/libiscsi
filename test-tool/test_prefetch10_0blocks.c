@@ -28,7 +28,7 @@ test_prefetch10_0blocks(void)
 {
 	int ret;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test PREFETCH10 0-blocks at LBA==0");
 	ret = prefetch10(iscsic, tgt_lun, 0,
 			 0, 0, 0);

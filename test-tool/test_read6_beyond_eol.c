@@ -35,7 +35,7 @@ test_read6_beyond_eol(void)
 	}
 
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ6 1-255 blocks one block beyond the end");
 	for (i = 1; i <= 255; i++) {
 		ret = read6_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,

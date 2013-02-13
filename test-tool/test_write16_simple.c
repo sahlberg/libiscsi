@@ -34,7 +34,7 @@ test_write16_simple(void)
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the start of the LUN");
 
 	for (i = 1; i <= 256; i++) {

@@ -32,7 +32,7 @@ test_read10_simple(void)
 	int i, ret;
 
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ10 of 1-256 blocks at the start of the LUN");
 	for (i = 1; i <= 256; i++) {
 		ret = read10(iscsic, tgt_lun, 0, i * block_size,

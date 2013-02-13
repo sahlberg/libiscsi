@@ -30,7 +30,7 @@ test_read10_flags(void)
 { 
 	int ret;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ10 flags");
 
 	/* This test is only valid for SBC devices */
