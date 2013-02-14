@@ -798,8 +798,8 @@ int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t 
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send GET_LBA_STATUS LBA:%" PRIu64 " blocks:%d "
-		"len:%d", lba, len);
+	logging(LOG_VERBOSE, "Send GET_LBA_STATUS LBA:%" PRIu64 " blocks:%d",
+		lba, len);
 
 	task = iscsi_get_lba_status_sync(iscsi, lun, lba, len);
 	if (task == NULL) {

@@ -30,7 +30,7 @@ test_get_lba_status_simple(void)
 {
 	int i, ret;
 
-	logging(LOG_VERBOSE, "");
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test GET_LBA_STATUS of 1-256 blocks at the start of the LUN");
 	for (i = 1; i <= 256; i++) {
 		ret = get_lba_status(iscsic, tgt_lun, 0, 24);
