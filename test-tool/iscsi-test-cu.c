@@ -225,6 +225,21 @@ static CU_TestInfo tests_prin_read_keys[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_prout_register[] = {
+	{ (char *)"testProutRegisterSimple", test_prout_register_simple },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_prout_reserve[] = {
+	{ (char *)"testProutReserveSimple", test_prout_reserve_simple },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_prin_serviceaction_range[] = {
+	{ (char *)"testPrinServiceactionRange", test_prin_serviceaction_range },
+	CU_TEST_INFO_NULL
+};
+
 static CU_SuiteInfo suites[] = {
 	{ (char *)"TestGetLBAStatus", test_setup, test_teardown,
 	  tests_get_lba_status },
@@ -266,6 +281,12 @@ static CU_SuiteInfo suites[] = {
 	  tests_writesame16 },
 	{ (char *)"TestPrinReadKeys", test_setup, test_teardown,
 	  tests_prin_read_keys },
+	{ (char *)"TestPrinServiceactionRange", test_setup, test_teardown,
+	  tests_prin_serviceaction_range },
+	{ (char *)"TestProutRegister", test_setup, test_teardown,
+	  tests_prout_register },
+	{ (char *)"TestProutReserve", test_setup, test_teardown,
+	  tests_prout_reserve },
 	CU_SUITE_INFO_NULL
 };
 
@@ -312,7 +333,7 @@ print_usage(void)
 	fprintf(stderr,
 	    "  -v|--verbose                     Test Mode: Verbose [DEFAULT]\n");
 	fprintf(stderr,
-	    "-V|--Verbose-scsi                  Enable verbose SCSI logging [default SILENT]\n");
+	    "  -V|--Verbose-scsi                Enable verbose SCSI logging [default SILENT]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr,
 	    "Where <iscsi-url> iSCSI URL format is: %s\n", ISCSI_URL_SYNTAX);

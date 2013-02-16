@@ -188,6 +188,49 @@ iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 }
 
 int
+prin_task(struct iscsi_context *iscsi, int lun, int service_action,
+    int success_expected)
+{
+	const int buf_sz = 16384;
+	struct scsi_task *task;
+	int ret = 0;
+
+
+	logging(LOG_VERBOSE, "Send PRIN/SA=0x%02x, expect %s", service_action,
+	    success_expected ? "success" : "failure");
+
+	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
+	    service_action, buf_sz);
+	if (task == NULL) {
+	        logging(LOG_NORMAL,
+		    "[FAILED] Failed to send PRIN command: %s",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+
+	if (success_expected) {
+		if (task->status != SCSI_STATUS_GOOD) {
+			logging(LOG_NORMAL,
+			    "[FAILED] PRIN/SA=0x%x failed: %s",
+			    service_action, iscsi_get_error(iscsi));
+			ret = -1;
+		}
+	} else {
+		if (task->status == SCSI_STATUS_GOOD) {
+			logging(LOG_NORMAL,
+			    "[FAILED] PRIN/SA=0x%x succeeded with invalid serviceaction",
+				service_action);
+			ret = -1;
+		}
+	}
+
+	scsi_free_scsi_task(task);
+	task = NULL;
+
+	return ret;
+}
+
+int
 prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
 	struct scsi_persistent_reserve_in_read_keys **rkp)
 {

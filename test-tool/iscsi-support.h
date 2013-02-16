@@ -165,9 +165,10 @@ static inline int pr_type_is_all_registrants(
 	}
 }
 
+int prin_task(struct iscsi_context *iscsi, int lun, int service_action,
+    int success_expected);
 int prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
     struct scsi_persistent_reserve_in_read_keys **rkp);
-
 int prout_register_and_ignore(struct iscsi_context *iscsi, int lun,
     unsigned long long key);
 int prout_register_key(struct iscsi_context *iscsi, int lun,
