@@ -231,10 +231,12 @@ prout_register_and_ignore(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_persistent_reserve_out_basic poc;
 	struct scsi_task *task;
+	int ret = 0;
 
 
 	/* register our reservation key with the target */
-	printf("Send PROUT/REGISTER_AND_IGNORE to register init=%s ... ",
+	logging(LOG_VERBOSE,
+	    "Send PROUT/REGISTER_AND_IGNORE to register init=%s",
 	    iscsi->initiator_name);
 
 	if (!data_loss) {
@@ -248,33 +250,29 @@ prout_register_and_ignore(struct iscsi_context *iscsi, int lun,
 	    SCSI_PERSISTENT_RESERVE_REGISTER_AND_IGNORE_EXISTING_KEY,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU, 0, &poc);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send PROUT command: %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send PROUT command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status == SCSI_STATUS_CHECK_CONDITION &&
 	    task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST &&
 	    task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[SKIPPED]\n");
-		printf("PROUT Not Supported\n");
-		scsi_free_scsi_task(task);
-		return -2;
+		logging(LOG_NORMAL, "[SKIPPED] PROUT Not Supported");
+		ret = -2;
+		goto dun;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("PROUT command: failed with sense. %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] PROUT command: failed with sense. %s",
 		    iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
+		ret = -1;
 	}
 
+  dun:
 	scsi_free_scsi_task(task);
-	printf("[OK]\n");
-
-	return 0;
+	return ret;
 }
-
 
 int
 prout_register_key(struct iscsi_context *iscsi, int lun,
@@ -282,10 +280,12 @@ prout_register_key(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_persistent_reserve_out_basic poc;
 	struct scsi_task *task;
+	int ret = 0;
 
 
-	/* register our reservation key with the target */
-	printf("Send PROUT/REGISTER to %s init=%s... ",
+	/* register/unregister our reservation key with the target */
+
+	logging(LOG_VERBOSE, "Send PROUT/REGISTER to %s init=%s",
 	    sark != 0 ? "register" : "unregister",
 	    iscsi->initiator_name);
 
@@ -301,25 +301,22 @@ prout_register_key(struct iscsi_context *iscsi, int lun,
 	    SCSI_PERSISTENT_RESERVE_REGISTER,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU, 0, &poc);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send PROUT command: %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send PROUT command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("PROUT command: failed with sense. %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] PROUT command: failed with sense: %s",
 		    iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
+		ret = -1;
 	}
 
 	scsi_free_scsi_task(task);
-	printf("[OK]\n");
 
-	return 0;
+	return ret;
 }
-
 
 int
 prin_verify_key_presence(struct iscsi_context *iscsi, int lun,
@@ -330,35 +327,39 @@ prin_verify_key_presence(struct iscsi_context *iscsi, int lun,
 	int i;
 	int key_found;
 	struct scsi_persistent_reserve_in_read_keys *rk = NULL;
+	int ret = 0;
 
 
-	printf("Send PRIN/READ_KEYS to verify key %s init=%s... ",
+	logging(LOG_VERBOSE,
+	    "Send PRIN/READ_KEYS to verify key %s init=%s... ",
 	    present ? "present" : "absent",
 	    iscsi->initiator_name);
+
 	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
 	    SCSI_PERSISTENT_RESERVE_READ_KEYS, buf_sz);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send PRIN command: %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send PRIN command: %s",
 		    iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("PRIN command: failed with sense. %s\n",
-		    iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	rk = scsi_datain_unmarshall(task);
-	if (rk == NULL) {
-		printf("failed to unmarshall PRIN/READ_KEYS data. %s\n",
-		    iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
 		return -1;
 	}
 
-	scsi_free_scsi_task(task);
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL,
+		    "[FAILED] PRIN command: failed with sense. %s",
+		    iscsi_get_error(iscsi));
+		ret = -1;
+		goto dun;
+	}
+
+	rk = scsi_datain_unmarshall(task);
+	if (rk == NULL) {
+		logging(LOG_NORMAL,
+		    "[FAILED] failed to unmarshall PRIN/READ_KEYS data. %s",
+		    iscsi_get_error(iscsi));
+		ret = -1;
+		goto dun;
+	}
 
 	key_found = 0;
 	for (i = 0; i < rk->num_keys; i++) {
@@ -366,20 +367,20 @@ prin_verify_key_presence(struct iscsi_context *iscsi, int lun,
 			key_found = 1;
 	}
 
-	if ((present && key_found) ||
-	    (!present && !key_found)) {
-		printf("[OK]\n");
-		return 0;
-	} else {
-	        printf("[FAILED]\n");
+	if ((present && !key_found) || (!present && key_found)) {
 		if (present)
-			printf("Key found when none expected\n");
+			logging(LOG_NORMAL,
+			    "[FAILED] Key found when none expected");
 		else
-			printf("Key not found when expected\n");
-		return -1;
+			logging(LOG_NORMAL,
+			    "[FAILED] Key not found when expected");
+		ret = -1;
 	}
-}
 
+  dun:
+	scsi_free_scsi_task(task);
+	return ret;
+}
 
 int
 prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
@@ -387,9 +388,11 @@ prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_persistent_reserve_out_basic poc;
 	struct scsi_task *task;
+	int ret = 0;
 
 
-	printf("Send PROUT/REGISTER to ensure reregister fails init=%s... ",
+	logging(LOG_VERBOSE,
+	    "Send PROUT/REGISTER to ensure reregister fails init=%s",
 	    iscsi->initiator_name);
 
 	if (!data_loss) {
@@ -405,8 +408,8 @@ prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
 	    &poc);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send PROUT command: %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send PROUT command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
@@ -414,24 +417,21 @@ prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
 	if (task->status != SCSI_STATUS_CHECK_CONDITION ||
 	    task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST ||
 	    task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		printf("[FAILED]\n");
-		printf("PROUT/REGISTER when already registered should fail\n");
-		scsi_free_scsi_task(task);
-		return -1;
+		logging(LOG_NORMAL,
+		    "[FAILED] PROUT/REGISTER when already registered should fail");
+		ret = -1;
+		goto dun;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("PROUT/REGISTER command: succeeded when it should not have!\n");
-		scsi_free_scsi_task(task);
-		return -1;
+		logging(LOG_NORMAL,
+		    "[FAILED] PROUT/REGISTER command: succeeded when it should not have");
+		ret = -1;
 	}
 
+  dun:
 	scsi_free_scsi_task(task);
-	printf("[OK]\n");
-
-	return 0;
+	return ret;
 }
-
 
 int
 prout_reserve(struct iscsi_context *iscsi, int lun,
@@ -439,10 +439,12 @@ prout_reserve(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_persistent_reserve_out_basic poc;
 	struct scsi_task *task;
+	int ret = 0;
 
 
 	/* reserve the target using specified reservation type */
-	printf("Send PROUT/RESERVE to reserve, type=%d (%s) init=%s ... ",
+	logging(LOG_VERBOSE,
+	    "Send PROUT/RESERVE to reserve, type=%d (%s) init=%s",
 	    pr_type, scsi_pr_type_str(pr_type),
 	    iscsi->initiator_name);
 
@@ -458,25 +460,22 @@ prout_reserve(struct iscsi_context *iscsi, int lun,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
 	    pr_type, &poc);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send PROUT command: %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send PROUT command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
+
 	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("PROUT command: failed with sense. %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] PROUT command: failed with sense. %s",
 		    iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
+		ret = -1;
 	}
 
 	scsi_free_scsi_task(task);
-	printf("[OK]\n");
-
-	return 0;
+	return ret;
 }
-
 
 int
 prout_release(struct iscsi_context *iscsi, int lun,
@@ -484,10 +483,11 @@ prout_release(struct iscsi_context *iscsi, int lun,
 {
 	struct scsi_persistent_reserve_out_basic poc;
 	struct scsi_task *task;
+	int ret = 0;
 
 
-	/* release the target using specified reservation type */
-	printf("Send PROUT/RELEASE to release reservation, type=%d init=%s ... ",
+	logging(LOG_VERBOSE,
+	    "Send PROUT/RELEASE to release reservation, type=%d init=%s",
 	    pr_type, iscsi->initiator_name);
 
 	if (!data_loss) {
@@ -502,23 +502,21 @@ prout_release(struct iscsi_context *iscsi, int lun,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
 	    pr_type, &poc);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send PROUT command: %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send PROUT command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
+
 	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("PROUT command: failed with sense. %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] PROUT command: failed with sense. %s",
 		    iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
+		ret = -1;
 	}
 
 	scsi_free_scsi_task(task);
-	printf("[OK]\n");
-
-	return 0;
+	return ret;
 }
 
 int
@@ -528,56 +526,63 @@ prin_verify_reserved_as(struct iscsi_context *iscsi, int lun,
 	struct scsi_task *task;
 	const int buf_sz = 16384;
 	struct scsi_persistent_reserve_in_read_reservation *rr = NULL;
+	int ret = 0;
 
 
-	printf("Send PRIN/READ_RESERVATION to verify type=%d init=%s... ",
+	logging(LOG_VERBOSE,
+	    "Send PRIN/READ_RESERVATION to verify type=%d init=%s... ",
 	    pr_type, iscsi->initiator_name);
+
 	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
 	    SCSI_PERSISTENT_RESERVE_READ_RESERVATION, buf_sz);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send PRIN command: %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send PRIN command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
+
 	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("PRIN command: failed with sense. %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] PRIN command: failed with sense: %s",
 		    iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
+		ret = -1;
+		goto dun;
 	}
 	rr = scsi_datain_unmarshall(task);
 	if (rr == NULL) {
-		printf("failed to unmarshall PRIN/READ_RESERVATION data. %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to unmarshall PRIN/READ_RESERVATION data. %s",
 		    iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
+		ret = -1;
+		goto dun;
 	}
-
-	scsi_free_scsi_task(task);
-
-
 	if (!rr->reserved) {
-	        printf("[FAILED]\n");
-		printf("Failed to find Target reserved as expected.\n");
-		return -1;
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to find Target reserved as expected.");
+		ret = -1;
+		goto dun;
 	}
 	if (rr->reservation_key != key) {
-	        printf("[FAILED]\n");
-		printf("Failed to find reservation key 0x%llx: found 0x%lx.\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to find reservation key 0x%llx: found 0x%lx.",
 		    key, rr->reservation_key);
-		return -1;
+		ret = -1;
+		goto dun;
 	}
 	if (rr->pr_type != pr_type) {
-	        printf("[FAILED]\n");
-		printf("Failed to find reservation type %d: found %d.\n",
+		logging(LOG_NORMAL,
+		    "Failed to find reservation type %d: found %d.",
 		    pr_type, rr->pr_type);
 		return -1;
+		ret = -1;
+		goto dun;
 	}
 
-	printf("[OK]\n");
-	return 0;
+  dun:
+	/* ??? free rr? */
+	scsi_free_scsi_task(task);
+	return ret;
 }
 
 int
@@ -587,33 +592,37 @@ verify_read_works(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 	const uint32_t lba = 1;
 	const int blksize = 512;
 	const uint32_t datalen = 1 * blksize;
+	int ret = 0;
+
 
 	/*
 	 * try to read the second 512-byte block
 	 */
 
-	printf("Send READ10 to verify READ works init=%s ... ",
+	logging(LOG_VERBOSE, "Send READ10 to verify READ works init=%s",
 	    iscsi->initiator_name);
 
-	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blksize, 0, 0, 0, 0, 0);
+	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blksize,
+	    0, 0, 0, 0, 0);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send READ10 command: %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send READ10 command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
+
 	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("READ10 command: failed with sense: %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] READ10 command: failed with sense: %s",
 		    iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
+		ret = -1;
+		goto dun;
 	}
 	memcpy(buf, task->datain.data, task->datain.size);
-	scsi_free_scsi_task(task);
 
-	printf("[OK]\n");
-	return 0;
+  dun:
+	scsi_free_scsi_task(task);
+	return ret;
 }
 
 int
@@ -623,34 +632,34 @@ verify_write_works(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 	const uint32_t lba = 1;
 	const int blksize = 512;
 	const uint32_t datalen = 1 * blksize;
+	int ret = 0;
+
 
 	/*
 	 * try to write the second 512-byte block
 	 */
 
-	printf("Send WRITE10 to verify WRITE works init=%s ... ",
+	logging(LOG_VERBOSE, "Send WRITE10 to verify WRITE works init=%s",
 	    iscsi->initiator_name);
 
-	task = iscsi_write10_sync(iscsi, lun, lba, buf, datalen, blksize, 0, 0, 0, 0, 0);
+	task = iscsi_write10_sync(iscsi, lun, lba, buf, datalen, blksize,
+	    0, 0, 0, 0, 0);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send WRITE10 command: %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send WRITE10 command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
+
 	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("WRITE10 command: failed with sense: %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] WRITE10 command: failed with sense: %s",
 		    iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
+		ret = -1;
 	}
 	scsi_free_scsi_task(task);
-
-	printf("[OK]\n");
-	return 0;
+	return ret;
 }
-
 
 int
 verify_read_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf)
@@ -659,37 +668,41 @@ verify_read_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 	const uint32_t lba = 1;
 	const int blksize = 512;
 	const uint32_t datalen = 1 * blksize;
+	int ret = 0;
+
 
 	/*
 	 * try to read the second 512-byte block -- should fail
 	 */
 
-	printf("Send READ10 to verify READ does not work init=%s ... ",
+	logging(LOG_VERBOSE,
+	    "Send READ10 to verify READ does not work init=%s",
 	    iscsi->initiator_name);
 
-	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blksize, 0, 0, 0, 0, 0);
+	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blksize,
+	    0, 0, 0, 0, 0);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send READ10 command: %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send READ10 command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
+
 	if (task->status == SCSI_STATUS_GOOD) {
 		memcpy(buf, task->datain.data, task->datain.size);
-	        printf("[FAILED]\n");
-		printf("READ10 command succeeded when expected to fail\n");
-		scsi_free_scsi_task(task);
-		return -1;
+		logging(LOG_NORMAL,
+		    "[FAILED] READ10 command succeeded when expected to fail");
+		ret = -1;
+		goto dun;
 	}
 
 	/*
 	 * XXX should we verify sense data?
 	 */
 
+  dun:
 	scsi_free_scsi_task(task);
-
-	printf("[OK]\n");
-	return 0;
+	return ret;
 }
 
 int
@@ -699,36 +712,40 @@ verify_write_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 	const uint32_t lba = 1;
 	const int blksize = 512;
 	const uint32_t datalen = 1 * blksize;
+	int ret = 0;
+
 
 	/*
 	 * try to write the second 512-byte block
 	 */
 
-	printf("Send WRITE10 to verify WRITE does not work init=%s ... ",
+	logging(LOG_VERBOSE,
+	    "Send WRITE10 to verify WRITE does not work init=%s",
 	    iscsi->initiator_name);
 
-	task = iscsi_write10_sync(iscsi, lun, lba, buf, datalen, blksize, 0, 0, 0, 0, 0);
+	task = iscsi_write10_sync(iscsi, lun, lba, buf, datalen, blksize,
+	    0, 0, 0, 0, 0);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send WRITE10 command: %s\n",
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send WRITE10 command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
+
 	if (task->status == SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("WRITE10 command: succeeded when exptec to fail\n");
-		scsi_free_scsi_task(task);
-		return -1;
+		logging(LOG_NORMAL,
+		    "[FAILED] WRITE10 command: succeeded when exptec to fail");
+		ret = -1;
+		goto dun;
 	}
 
 	/*
 	 * XXX should we verify sense data?
 	 */
 
+  dun:
 	scsi_free_scsi_task(task);
-
-	printf("[OK]\n");
-	return 0;
+	return ret;
 }
 
 int
