@@ -194,46 +194,35 @@ prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
 {
 	const int buf_sz = 16384;
 	struct scsi_persistent_reserve_in_read_keys *rk = NULL;
-	struct scsi_task *task;
 
 
 	logging(LOG_VERBOSE, "Send PRIN/READ_KEYS");
 
-	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
+	*tp = iscsi_persistent_reserve_in_sync(iscsi, lun,
 	    SCSI_PERSISTENT_RESERVE_READ_KEYS, buf_sz);
-	if (task == NULL) {
+	if (*tp == NULL) {
 	        logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PRIN command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
-	if (tp != NULL)
-		*tp = task;
 
-	if (task->status != SCSI_STATUS_GOOD) {
+	if ((*tp)->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] PRIN command: failed with sense. %s",
 		    iscsi_get_error(iscsi));
-		if (tp == NULL)
-			scsi_free_scsi_task(task);
 		return -1;
 	}
 
-	rk = scsi_datain_unmarshall(task);
+	rk = scsi_datain_unmarshall(*tp);
 	if (rk == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAIL] failed to unmarshall PRIN/READ_KEYS data. %s",
 		    iscsi_get_error(iscsi));
-		if (tp == NULL)
-			scsi_free_scsi_task(task);
 		return -1;
 	}
 	if (rkp != NULL)
 		*rkp = rk;
-
-	/* clean up if we are managing our own task */
-	if (tp == NULL)
-		scsi_free_scsi_task(task);
 
 	return 0;
 }
