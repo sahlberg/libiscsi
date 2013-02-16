@@ -90,7 +90,6 @@ void logging(int level, const char *format, ...)
 	printf("    %s\n", message);
 }
 
-
 struct iscsi_context *
 iscsi_context_login(const char *initiatorname, const char *url, int *lun)
 {
@@ -206,7 +205,6 @@ prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
-
 	if ((*tp)->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] PRIN command: failed with sense. %s",
@@ -227,7 +225,6 @@ prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
 	return 0;
 }
 
-
 int
 prout_register_and_ignore(struct iscsi_context *iscsi, int lun,
     unsigned long long sark)
@@ -239,6 +236,12 @@ prout_register_and_ignore(struct iscsi_context *iscsi, int lun,
 	/* register our reservation key with the target */
 	printf("Send PROUT/REGISTER_AND_IGNORE to register init=%s ... ",
 	    iscsi->initiator_name);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping PROUT\n");
+		return -1;
+	}
+
 	memset(&poc, 0, sizeof (poc));
 	poc.service_action_reservation_key = sark;
 	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
@@ -285,6 +288,12 @@ prout_register_key(struct iscsi_context *iscsi, int lun,
 	printf("Send PROUT/REGISTER to %s init=%s... ",
 	    sark != 0 ? "register" : "unregister",
 	    iscsi->initiator_name);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping PROUT\n");
+		return -1;
+	}
+
 	memset(&poc, 0, sizeof (poc));
 	poc.service_action_reservation_key = sark;
 	poc.reservation_key = rk;
@@ -382,6 +391,12 @@ prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
 
 	printf("Send PROUT/REGISTER to ensure reregister fails init=%s... ",
 	    iscsi->initiator_name);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping PROUT\n");
+		return -1;
+	}
+
 	memset(&poc, 0, sizeof (poc));
 	poc.service_action_reservation_key = sark;
 	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
@@ -431,6 +446,11 @@ prout_reserve(struct iscsi_context *iscsi, int lun,
 	    pr_type, scsi_pr_type_str(pr_type),
 	    iscsi->initiator_name);
 
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping PROUT\n");
+		return -1;
+	}
+
 	memset(&poc, 0, sizeof (poc));
 	poc.reservation_key = key;
 	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
@@ -469,6 +489,11 @@ prout_release(struct iscsi_context *iscsi, int lun,
 	/* release the target using specified reservation type */
 	printf("Send PROUT/RELEASE to release reservation, type=%d init=%s ... ",
 	    pr_type, iscsi->initiator_name);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping PROUT\n");
+		return -1;
+	}
 
 	memset(&poc, 0, sizeof (poc));
 	poc.reservation_key = key;
