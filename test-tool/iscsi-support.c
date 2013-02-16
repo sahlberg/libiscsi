@@ -817,6 +817,32 @@ testunitready(struct iscsi_context *iscsi, int lun)
 }
 
 int
+testunitready_clear_ua(struct iscsi_context *iscsi, int lun)
+{
+	struct scsi_task *task;
+
+
+	logging(LOG_VERBOSE,
+	    "Send TESTUNITREADY (To Clear Possible UA) init=%s",
+		iscsi->initiator_name);
+
+	task = iscsi_testunitready_sync(iscsi, lun);
+	if (task == NULL) {
+		logging(LOG_NORMAL,
+			"[FAILED] Failed to send TESTUNITREADY command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL,
+			"[INFO] TESTUNITREADY command: failed with sense. %s",
+			iscsi_get_error(iscsi));
+	}
+	scsi_free_scsi_task(task);
+	return 0;
+}
+
+int
 testunitready_nomedium(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;

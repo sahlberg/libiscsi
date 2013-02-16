@@ -31,9 +31,14 @@
 extern struct iscsi_context *iscsic;
 extern int tgt_lun;
 extern struct scsi_task *task;
+extern struct iscsi_context *iscsic2;
+extern int tgt_lun2;
+extern unsigned char *read_write_buf;
 
 int test_setup(void);
 int test_teardown(void);
+int test_setup_pgr(void);
+int test_teardown_pgr(void);
 
 void test_get_lba_status_simple(void);
 
@@ -144,5 +149,11 @@ void test_prin_read_keys_simple(void);
 void test_prin_serviceaction_range(void);
 void test_prout_register_simple(void);
 void test_prout_reserve_simple(void);
+void test_prout_reserve_access_ea(void);
+void test_prout_reserve_access_we(void);
+void test_prout_reserve_access_earo(void);
+void test_prout_reserve_access_wero(void);
+void test_prout_reserve_access_eaar(void);
+void test_prout_reserve_access_wear(void);
 
 #endif	/* _ISCSI_TEST_CU_H_ */

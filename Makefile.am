@@ -190,6 +190,7 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_prin_serviceaction_range.c \
 	test-tool/test_prout_register_simple.c \
 	test-tool/test_prout_reserve_simple.c \
+	test-tool/test_prout_reserve_access.c \
 	test-tool/test_read6_simple.c \
 	test-tool/test_read6_beyond_eol.c \
 	test-tool/test_read6_0blocks.c \

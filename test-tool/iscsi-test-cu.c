@@ -232,6 +232,16 @@ static CU_TestInfo tests_prout_register[] = {
 
 static CU_TestInfo tests_prout_reserve[] = {
 	{ (char *)"testProutReserveSimple", test_prout_reserve_simple },
+	{ (char *)"testProutReserveAccessEA", test_prout_reserve_access_ea },
+	{ (char *)"testProutReserveAccessWE", test_prout_reserve_access_we },
+	{ (char *)"testProutReserveAccessEARO",
+	  test_prout_reserve_access_earo },
+	{ (char *)"testProutReserveAccessWERO",
+	  test_prout_reserve_access_wero },
+	{ (char *)"testProutReserveAccessEAAR",
+	  test_prout_reserve_access_eaar },
+	{ (char *)"testProutReserveAccessWEAR",
+	  test_prout_reserve_access_wear },
 	CU_TEST_INFO_NULL
 };
 
@@ -239,6 +249,7 @@ static CU_TestInfo tests_prin_serviceaction_range[] = {
 	{ (char *)"testPrinServiceactionRange", test_prin_serviceaction_range },
 	CU_TEST_INFO_NULL
 };
+
 
 static CU_SuiteInfo suites[] = {
 	{ (char *)"TestGetLBAStatus", test_setup, test_teardown,
@@ -285,7 +296,7 @@ static CU_SuiteInfo suites[] = {
 	  tests_prin_serviceaction_range },
 	{ (char *)"TestProutRegister", test_setup, test_teardown,
 	  tests_prout_register },
-	{ (char *)"TestProutReserve", test_setup, test_teardown,
+	{ (char *)"TestProutReserve", test_setup_pgr, test_teardown_pgr,
 	  tests_prout_reserve },
 	CU_SUITE_INFO_NULL
 };
@@ -296,6 +307,9 @@ static CU_SuiteInfo suites[] = {
 int tgt_lun;
 struct iscsi_context *iscsic;
 struct scsi_task *task;
+int tgt_lun2;
+struct iscsi_context *iscsic2;
+unsigned char *read_write_buf;
 
 
 static void
@@ -352,7 +366,6 @@ print_usage(void)
 	fprintf(stderr, "\n");
 }
 
-
 int
 test_setup(void)
 {
@@ -366,17 +379,56 @@ test_setup(void)
 	return 0;
 }
 
+int
+test_setup_pgr(void)
+{
+	task = NULL;
+	read_write_buf = NULL;
+
+	iscsic = iscsi_context_login(initiatorname1, tgt_url, &tgt_lun);
+	if (iscsic == NULL) {
+		fprintf(stderr,
+		    "error: Failed to login to target for test set-up\n");
+		return 1;
+	}
+
+	iscsic2 = iscsi_context_login(initiatorname2, tgt_url, &tgt_lun2);
+	if (iscsic2 == NULL) {
+		fprintf(stderr,
+		    "error: Failed to login to target for test set-up\n");
+		iscsi_logout_sync(iscsic);
+		iscsi_destroy_context(iscsic);
+		iscsic = NULL;
+		return 1;
+	}
+	return 0;
+}
 
 int
 test_teardown(void)
 {
-	if (task)
+	if (task) {
 		scsi_free_scsi_task(task);
-	iscsi_logout_sync(iscsic);
-	iscsi_destroy_context(iscsic);
+		task = NULL;
+	}
+	if (iscsic) {
+		iscsi_logout_sync(iscsic);
+		iscsi_destroy_context(iscsic);
+		iscsic = NULL;
+	}
 	return 0;
 }
 
+int
+test_teardown_pgr(void)
+{
+	test_teardown();
+	if (read_write_buf != NULL) {
+		free(read_write_buf);
+		read_write_buf = NULL;
+	}
+	return 0;
+}
 
 static void
 list_all_tests(void)
