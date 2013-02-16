@@ -78,7 +78,7 @@ int T1130_persistent_reserve_simple(const char *initiator, const char *url)
 	ret = 0;
 
 	/* register our reservation key with the target */
-	ret = register_and_ignore(iscsi, lun, key);
+	ret = prout_register_and_ignore(iscsi, lun, key);
 	if (ret != 0)
 		goto finished;
 
@@ -87,25 +87,25 @@ int T1130_persistent_reserve_simple(const char *initiator, const char *url)
 		enum scsi_persistent_out_type pr_type = pr_types_to_test[i];
 
 		/* reserve the target */
-		ret = reserve(iscsi, lun, key, pr_type);
+		ret = prout_reserve(iscsi, lun, key, pr_type);
 		if (ret != 0)
 			goto finished;
 
 		/* verify target reservation */
-		ret = verify_reserved_as(iscsi, lun,
+		ret = prin_verify_reserved_as(iscsi, lun,
 		    pr_type_is_all_registrants(pr_type) ? 0 : key,
 		    pr_type);
 		if (ret != 0)
 			goto finished;
 
 		/* release our reservation */
-		ret = release(iscsi, lun, key, pr_type);
+		ret = prout_release(iscsi, lun, key, pr_type);
 		if (ret != 0)
 			goto finished;
 	}
 
 	/* remove our key from the target */
-	ret = register_key(iscsi, lun, 0, key);
+	ret = prout_register_key(iscsi, lun, 0, key);
 	if (ret != 0)
 		goto finished;
 

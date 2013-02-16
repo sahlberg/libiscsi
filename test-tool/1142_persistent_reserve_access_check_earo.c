@@ -76,20 +76,20 @@ int T1142_persistent_reserve_access_check_earo(const char *initiator,
 	}
 	
 	/* register our reservation key with the target */
-	ret = register_and_ignore(iscsi, lun, key);
+	ret = prout_register_and_ignore(iscsi, lun, key);
 	if (ret != 0)
 		goto finished;
-	ret = register_and_ignore(iscsi2, lun2, key2);
+	ret = prout_register_and_ignore(iscsi2, lun2, key2);
 	if (ret != 0)
 		goto finished;
 
 	/* reserve the target through initiator 1 */
-	ret = reserve(iscsi, lun, key, pr_type);
+	ret = prout_reserve(iscsi, lun, key, pr_type);
 	if (ret != 0)
 		goto finished;
 
 	/* verify target reservation */
-	ret = verify_reserved_as(iscsi, lun,
+	ret = prin_verify_reserved_as(iscsi, lun,
 	    pr_type_is_all_registrants(pr_type) ? 0 : key,
 	    pr_type);
 	if (ret != 0)
@@ -123,7 +123,7 @@ int T1142_persistent_reserve_access_check_earo(const char *initiator,
 		goto finished;
 
 	/* unregister init2 */
-	ret = register_key(iscsi2, lun2, 0, key);
+	ret = prout_register_key(iscsi2, lun2, 0, key);
 	if (ret != 0) {
 		goto finished;
 	}
@@ -139,12 +139,12 @@ int T1142_persistent_reserve_access_check_earo(const char *initiator,
 		goto finished;
 
 	/* release our reservation */
-	ret = release(iscsi, lun, key, pr_type);
+	ret = prout_release(iscsi, lun, key, pr_type);
 	if (ret != 0)
 		goto finished;
 
 	/* remove our key from the target */
-	ret = register_key(iscsi, lun, 0, key);
+	ret = prout_register_key(iscsi, lun, 0, key);
 	if (ret != 0)
 		goto finished;
 

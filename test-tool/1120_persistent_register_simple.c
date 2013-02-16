@@ -60,32 +60,32 @@ int T1120_persistent_register_simple(const char *initiator, const char *url)
 	ret = 0;
 
 	/* register our reservation key with the target */
-	ret = register_and_ignore(iscsi, lun, key);
+	ret = prout_register_and_ignore(iscsi, lun, key);
 	if (ret != 0) {
 		goto finished;
 	}
 
 	/* verify we can read the registration */
-	ret = verify_key_presence(iscsi, lun, key, 1);
+	ret = prin_verify_key_presence(iscsi, lun, key, 1);
 	if (ret != 0) {
 		goto finished;
 	}
 
 	/* try to reregister, which should fail */
-	ret = reregister_key_fails(iscsi, lun, key+1);
+	ret = prout_reregister_key_fails(iscsi, lun, key+1);
 	if (ret != 0) {
 		goto finished;
 	}
 
 	/* release from the target */
-	ret = register_key(iscsi, lun, 0, key);
+	ret = prout_register_key(iscsi, lun, 0, key);
 	if (ret != 0) {
 		goto finished;
 	}
 
 	/* Verify the registration is gone */
 	/* verify we can read the registration */
-	ret = verify_key_presence(iscsi, lun, key, 0);
+	ret = prin_verify_key_presence(iscsi, lun, key, 0);
 	if (ret != 0) {
 		goto finished;
 	}

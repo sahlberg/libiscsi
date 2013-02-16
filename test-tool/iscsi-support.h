@@ -168,19 +168,19 @@ static inline int pr_type_is_all_registrants(
 int prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
     struct scsi_persistent_reserve_in_read_keys **rkp);
 
-int register_and_ignore(struct iscsi_context *iscsi, int lun,
+int prout_register_and_ignore(struct iscsi_context *iscsi, int lun,
     unsigned long long key);
-int register_key(struct iscsi_context *iscsi, int lun,
+int prout_register_key(struct iscsi_context *iscsi, int lun,
     unsigned long long sark, unsigned long long rk);
-int verify_key_presence(struct iscsi_context *iscsi, int lun,
+int prin_verify_key_presence(struct iscsi_context *iscsi, int lun,
     unsigned long long key, int present);
-int reregister_key_fails(struct iscsi_context *iscsi, int lun,
+int prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
     unsigned long long sark);
-int reserve(struct iscsi_context *iscsi, int lun,
+int prout_reserve(struct iscsi_context *iscsi, int lun,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
-int release(struct iscsi_context *iscsi, int lun,
+int prout_release(struct iscsi_context *iscsi, int lun,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
-int verify_reserved_as(struct iscsi_context *iscsi, int lun,
+int prin_verify_reserved_as(struct iscsi_context *iscsi, int lun,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
 int verify_read_works(struct iscsi_context *iscsi, int lun, unsigned char *buf);
 int verify_write_works(struct iscsi_context *iscsi, int lun, unsigned char *buf);

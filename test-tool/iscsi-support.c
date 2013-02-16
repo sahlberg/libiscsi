@@ -240,7 +240,7 @@ prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
 
 
 int
-register_and_ignore(struct iscsi_context *iscsi, int lun,
+prout_register_and_ignore(struct iscsi_context *iscsi, int lun,
     unsigned long long sark)
 {
 	struct scsi_persistent_reserve_out_basic poc;
@@ -285,7 +285,7 @@ register_and_ignore(struct iscsi_context *iscsi, int lun,
 
 
 int
-register_key(struct iscsi_context *iscsi, int lun,
+prout_register_key(struct iscsi_context *iscsi, int lun,
     unsigned long long sark, unsigned long long rk)
 {
 	struct scsi_persistent_reserve_out_basic poc;
@@ -324,7 +324,7 @@ register_key(struct iscsi_context *iscsi, int lun,
 
 
 int
-verify_key_presence(struct iscsi_context *iscsi, int lun,
+prin_verify_key_presence(struct iscsi_context *iscsi, int lun,
     unsigned long long key, int present)
 {
 	struct scsi_task *task;
@@ -384,7 +384,7 @@ verify_key_presence(struct iscsi_context *iscsi, int lun,
 
 
 int
-reregister_key_fails(struct iscsi_context *iscsi, int lun,
+prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
     unsigned long long sark)
 {
 	struct scsi_persistent_reserve_out_basic poc;
@@ -430,7 +430,7 @@ reregister_key_fails(struct iscsi_context *iscsi, int lun,
 
 
 int
-reserve(struct iscsi_context *iscsi, int lun,
+prout_reserve(struct iscsi_context *iscsi, int lun,
     unsigned long long key, enum scsi_persistent_out_type pr_type)
 {
 	struct scsi_persistent_reserve_out_basic poc;
@@ -470,7 +470,7 @@ reserve(struct iscsi_context *iscsi, int lun,
 
 
 int
-release(struct iscsi_context *iscsi, int lun,
+prout_release(struct iscsi_context *iscsi, int lun,
     unsigned long long key, enum scsi_persistent_out_type pr_type)
 {
 	struct scsi_persistent_reserve_out_basic poc;
@@ -508,7 +508,7 @@ release(struct iscsi_context *iscsi, int lun,
 }
 
 int
-verify_reserved_as(struct iscsi_context *iscsi, int lun,
+prin_verify_reserved_as(struct iscsi_context *iscsi, int lun,
     unsigned long long key, enum scsi_persistent_out_type pr_type)
 {
 	struct scsi_task *task;
@@ -565,7 +565,6 @@ verify_reserved_as(struct iscsi_context *iscsi, int lun,
 	printf("[OK]\n");
 	return 0;
 }
-
 
 int
 verify_read_works(struct iscsi_context *iscsi, int lun, unsigned char *buf)
