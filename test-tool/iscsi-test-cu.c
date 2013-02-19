@@ -82,6 +82,36 @@ static CU_TestInfo tests_prefetch16[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_prin_read_keys[] = {
+	{ (char *)"testPrinReadKeysSimple", test_prin_read_keys_simple },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_prout_register[] = {
+	{ (char *)"testProutRegisterSimple", test_prout_register_simple },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_prout_reserve[] = {
+	{ (char *)"testProutReserveSimple", test_prout_reserve_simple },
+	{ (char *)"testProutReserveAccessEA", test_prout_reserve_access_ea },
+	{ (char *)"testProutReserveAccessWE", test_prout_reserve_access_we },
+	{ (char *)"testProutReserveAccessEARO",
+	  test_prout_reserve_access_earo },
+	{ (char *)"testProutReserveAccessWERO",
+	  test_prout_reserve_access_wero },
+	{ (char *)"testProutReserveAccessEAAR",
+	  test_prout_reserve_access_eaar },
+	{ (char *)"testProutReserveAccessWEAR",
+	  test_prout_reserve_access_wear },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_prin_serviceaction_range[] = {
+	{ (char *)"testPrinServiceactionRange", test_prin_serviceaction_range },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_read6[] = {
 	{ (char *)"testRead6Simple", test_read6_simple },
 	{ (char *)"testRead6BeyondEol", test_read6_beyond_eol },
@@ -125,6 +155,11 @@ static CU_TestInfo tests_readcapacity10[] = {
 static CU_TestInfo tests_readcapacity16[] = {
 	{ (char *)"testReadCapacity16Simple", test_readcapacity16_simple },
 	{ (char *)"testReadCapacity16Alloclen", test_readcapacity16_alloclen },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_readonly[] = {
+	{ (char *)"testReadOnlySBC", test_readonly_sbc },
 	CU_TEST_INFO_NULL
 };
 
@@ -221,37 +256,6 @@ static CU_TestInfo tests_writesame16[] = {
 	CU_TEST_INFO_NULL
 };
 
-static CU_TestInfo tests_prin_read_keys[] = {
-	{ (char *)"testPrinReadKeysSimple", test_prin_read_keys_simple },
-	CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_prout_register[] = {
-	{ (char *)"testProutRegisterSimple", test_prout_register_simple },
-	CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_prout_reserve[] = {
-	{ (char *)"testProutReserveSimple", test_prout_reserve_simple },
-	{ (char *)"testProutReserveAccessEA", test_prout_reserve_access_ea },
-	{ (char *)"testProutReserveAccessWE", test_prout_reserve_access_we },
-	{ (char *)"testProutReserveAccessEARO",
-	  test_prout_reserve_access_earo },
-	{ (char *)"testProutReserveAccessWERO",
-	  test_prout_reserve_access_wero },
-	{ (char *)"testProutReserveAccessEAAR",
-	  test_prout_reserve_access_eaar },
-	{ (char *)"testProutReserveAccessWEAR",
-	  test_prout_reserve_access_wear },
-	CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_prin_serviceaction_range[] = {
-	{ (char *)"testPrinServiceactionRange", test_prin_serviceaction_range },
-	CU_TEST_INFO_NULL
-};
-
-
 static CU_SuiteInfo suites[] = {
 	{ (char *)"TestGetLBAStatus", test_setup, test_teardown,
 	  tests_get_lba_status },
@@ -271,6 +275,8 @@ static CU_SuiteInfo suites[] = {
 	  tests_readcapacity10 },
 	{ (char *)"TestReadCapacity16", test_setup, test_teardown,
 	  tests_readcapacity16 },
+	{ (char *)"TestReadOnly", test_setup, test_teardown,
+	  tests_readonly },
 	{ (char *)"TestTestUnitReady", test_setup, test_teardown,
 	  tests_testunitready },
 	{ (char *)"TestUnmap", test_setup, test_teardown,
@@ -749,6 +755,30 @@ main(int argc, char *argv[])
 
 		scsi_free_scsi_task(task);
 	}
+
+
+	/* check if the device is write protected or not */
+	task = iscsi_modesense6_sync(iscsic, lun, 0, SCSI_MODESENSE_PC_CURRENT,
+				     SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES,
+				     0, 255);
+	if (task == NULL) {
+		printf("Failed to send MODE_SENSE6 command: %s\n",
+		    iscsi_get_error(iscsic));
+		iscsi_destroy_context(iscsic);
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		struct scsi_mode_sense *ms;
+
+		ms = scsi_datain_unmarshall(task);
+		if (ms == NULL) {
+			printf("failed to unmarshall mode sense datain blob\n");
+			scsi_free_scsi_task(task);
+			return -1;
+		}
+		readonly = !!(ms->device_specific_parameter & 0x80);
+	}
+	scsi_free_scsi_task(task);
 
 	iscsi_logout_sync(iscsic);
 	iscsi_destroy_context(iscsic);
