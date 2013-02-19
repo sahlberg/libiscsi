@@ -16,43 +16,36 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <CUnit/CUnit.h>
 
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
-#include "iscsi-support.h"
 #include "iscsi-test-cu.h"
 
-
 void
-test_write16_simple(void)
+test_writeverify16_wrprotect(void)
 {
 	int i, ret;
+	unsigned char *buf;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
+	/*
+	 * Try out different non-zero values for WRPROTECT.
+	 * They should all fail.
+	 */
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the start of the LUN");
-
-	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
-
-		ret = write16(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
-		free(buf);
+	logging(LOG_VERBOSE, "Test WRITEVERIFY16 with non-zero WRPROTECT");
+	buf = malloc(block_size);
+	for (i = 1; i < 8; i++) {
+		ret = writeverify16_invalidfieldincdb(iscsic, tgt_lun, 0,
+					       block_size, block_size,
+					       i, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
-
-	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the end of the LUN");
-	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
-
-		ret = write16(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 0, 0, 0, buf);
-		free(buf);
-		CU_ASSERT_EQUAL(ret, 0);
-	}
-
+	free(buf);
 }

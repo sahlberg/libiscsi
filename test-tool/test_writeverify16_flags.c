@@ -16,43 +16,38 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <CUnit/CUnit.h>
 
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
-#include "iscsi-support.h"
 #include "iscsi-test-cu.h"
 
-
 void
-test_write16_simple(void)
-{
-	int i, ret;
+test_writeverify16_flags(void)
+{ 
+	int ret;
+	unsigned char *buf;
 
 	CHECK_FOR_DATALOSS;
-	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the start of the LUN");
+	logging(LOG_VERBOSE, "Test WRITEVERIFY16 flags");
 
-	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
+	buf = malloc(block_size);
+	logging(LOG_VERBOSE, "Test WRITEVERIFY16 with DPO==1");
+	ret = writeverify16(iscsic, tgt_lun, 0,
+		     block_size, block_size,
+		     0, 1, 0, 0, buf);
+	CU_ASSERT_EQUAL(ret, 0);
 
-		ret = write16(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
-		free(buf);
-		CU_ASSERT_EQUAL(ret, 0);
-	}
+	logging(LOG_VERBOSE, "Test WRITEVERIFY16 with BYTCHK==1");
+	ret = writeverify16(iscsic, tgt_lun, 0,
+		     block_size, block_size,
+		     0, 0, 1, 0, buf);
+	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the end of the LUN");
-	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
-
-		ret = write16(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 0, 0, 0, buf);
-		free(buf);
-		CU_ASSERT_EQUAL(ret, 0);
-	}
-
+	free(buf);
 }

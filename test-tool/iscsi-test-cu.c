@@ -256,6 +256,33 @@ static CU_TestInfo tests_writesame16[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_writeverify10[] = {
+	{ (char *)"testWriteVerify10Simple", test_writeverify10_simple },
+	{ (char *)"testWriteVerify10BeyondEol", test_writeverify10_beyond_eol },
+	{ (char *)"testWriteVerify10ZeroBlocks", test_writeverify10_0blocks },
+	{ (char *)"testWriteVerify10WriteProtect", test_writeverify10_wrprotect },
+	{ (char *)"testWriteVerify10Flags", test_writeverify10_flags },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_writeverify12[] = {
+	{ (char *)"testWriteVerify12Simple", test_writeverify12_simple },
+	{ (char *)"testWriteVerify12BeyondEol", test_writeverify12_beyond_eol },
+	{ (char *)"testWriteVerify12ZeroBlocks", test_writeverify12_0blocks },
+	{ (char *)"testWriteVerify12WriteProtect", test_writeverify12_wrprotect },
+	{ (char *)"testWriteVerify12Flags", test_writeverify12_flags },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_writeverify16[] = {
+	{ (char *)"testWriteVerify16Simple", test_writeverify16_simple },
+	{ (char *)"testWriteVerify16BeyondEol", test_writeverify16_beyond_eol },
+	{ (char *)"testWriteVerify16ZeroBlocks", test_writeverify16_0blocks },
+	{ (char *)"testWriteVerify16WriteProtect", test_writeverify16_wrprotect },
+	{ (char *)"testWriteVerify16Flags", test_writeverify16_flags },
+	CU_TEST_INFO_NULL
+};
+
 static CU_SuiteInfo suites[] = {
 	{ (char *)"TestGetLBAStatus", test_setup, test_teardown,
 	  tests_get_lba_status },
@@ -263,6 +290,14 @@ static CU_SuiteInfo suites[] = {
 	  tests_prefetch10 },
 	{ (char *)"TestPrefetch16", test_setup, test_teardown,
 	  tests_prefetch16 },
+	{ (char *)"TestPrinReadKeys", test_setup, test_teardown,
+	  tests_prin_read_keys },
+	{ (char *)"TestPrinServiceactionRange", test_setup, test_teardown,
+	  tests_prin_serviceaction_range },
+	{ (char *)"TestProutRegister", test_setup, test_teardown,
+	  tests_prout_register },
+	{ (char *)"TestProutReserve", test_setup_pgr, test_teardown_pgr,
+	  tests_prout_reserve },
 	{ (char *)"TestRead6", test_setup, test_teardown,
 	  tests_read6 },
 	{ (char *)"TestRead10", test_setup, test_teardown,
@@ -297,14 +332,12 @@ static CU_SuiteInfo suites[] = {
 	  tests_writesame10 },
 	{ (char *)"TestWriteSame16", test_setup, test_teardown,
 	  tests_writesame16 },
-	{ (char *)"TestPrinReadKeys", test_setup, test_teardown,
-	  tests_prin_read_keys },
-	{ (char *)"TestPrinServiceactionRange", test_setup, test_teardown,
-	  tests_prin_serviceaction_range },
-	{ (char *)"TestProutRegister", test_setup, test_teardown,
-	  tests_prout_register },
-	{ (char *)"TestProutReserve", test_setup_pgr, test_teardown_pgr,
-	  tests_prout_reserve },
+	{ (char *)"TestWriteVerify10", test_setup, test_teardown,
+	  tests_writeverify10 },
+	{ (char *)"TestWriteVerify12", test_setup, test_teardown,
+	  tests_writeverify12 },
+	{ (char *)"TestWriteVerify16", test_setup, test_teardown,
+	  tests_writeverify16 },
 	CU_SUITE_INFO_NULL
 };
 

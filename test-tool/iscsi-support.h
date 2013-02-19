@@ -261,6 +261,18 @@ int writesame16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t dat
 int writesame16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int num_blocks, int anchor, int unmap, int wrprotect, int group, unsigned char *data);
 int writesame16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int num_blocks, int anchor, int unmap, int wrprotect, int group, unsigned char *data);
 int writesame16_writeprotected(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int num_blocks, int anchor, int unmap, int wrprotect, int group, unsigned char *data);
+int writeverify10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
+int writeverify10_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
+int writeverify10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
+int writeverify10_writeprotected(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
+int writeverify12(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
+int writeverify12_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
+int writeverify12_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
+int writeverify12_writeprotected(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
+int writeverify16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
+int writeverify16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
+int writeverify16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
+int writeverify16_writeprotected(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
 
 
 

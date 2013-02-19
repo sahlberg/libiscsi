@@ -21,38 +21,40 @@
 
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
-#include "iscsi-support.h"
 #include "iscsi-test-cu.h"
 
-
 void
-test_write16_simple(void)
+test_writeverify16_0blocks(void)
 {
-	int i, ret;
+	int ret;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the start of the LUN");
+	logging(LOG_VERBOSE, "Test WRITEVERIFY16 0-blocks at LBA==0");
+	ret = writeverify16(iscsic, tgt_lun, 0,
+			    0, block_size,
+			    0, 0, 0, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
 
-	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
+	logging(LOG_VERBOSE, "Test WRITEVERIFY16 0-blocks one block past end-of-LUN");
+	ret = writeverify16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1,
+					  0, block_size,
+					  0, 0, 0, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
 
-		ret = write16(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
-		free(buf);
-		CU_ASSERT_EQUAL(ret, 0);
-	}
 
-	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the end of the LUN");
-	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
+	logging(LOG_VERBOSE, "Test WRITEVERIFY16 0-blocks at LBA==2^63");
+	ret = writeverify16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000,
+					  0, block_size,
+					  0, 0, 0, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
 
-		ret = write16(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 0, 0, 0, buf);
-		free(buf);
-		CU_ASSERT_EQUAL(ret, 0);
-	}
 
+	logging(LOG_VERBOSE, "Test WRITEVERIFY16 0-blocks at LBA==-1");
+	ret = writeverify16_lbaoutofrange(iscsic, tgt_lun, -1,
+					  0, block_size,
+					  0, 0, 0, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
 }

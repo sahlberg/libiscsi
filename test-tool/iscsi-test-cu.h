@@ -53,6 +53,18 @@ void test_prefetch16_beyond_eol(void);
 void test_prefetch16_0blocks(void);
 void test_prefetch16_flags(void);
 
+void test_prin_read_keys_simple(void);
+void test_prin_serviceaction_range(void);
+
+void test_prout_register_simple(void);
+void test_prout_reserve_simple(void);
+void test_prout_reserve_access_ea(void);
+void test_prout_reserve_access_we(void);
+void test_prout_reserve_access_earo(void);
+void test_prout_reserve_access_wero(void);
+void test_prout_reserve_access_eaar(void);
+void test_prout_reserve_access_wear(void);
+
 void test_read6_simple(void);
 void test_read6_beyond_eol(void);
 void test_read6_0blocks(void);
@@ -148,15 +160,22 @@ void test_writesame16_unmap(void);
 void test_writesame16_unmap_unaligned(void);
 void test_writesame16_unmap_until_end(void);
 
-void test_prin_read_keys_simple(void);
-void test_prin_serviceaction_range(void);
-void test_prout_register_simple(void);
-void test_prout_reserve_simple(void);
-void test_prout_reserve_access_ea(void);
-void test_prout_reserve_access_we(void);
-void test_prout_reserve_access_earo(void);
-void test_prout_reserve_access_wero(void);
-void test_prout_reserve_access_eaar(void);
-void test_prout_reserve_access_wear(void);
+void test_writeverify10_simple(void);
+void test_writeverify10_beyond_eol(void);
+void test_writeverify10_0blocks(void);
+void test_writeverify10_wrprotect(void);
+void test_writeverify10_flags(void);
+
+void test_writeverify12_simple(void);
+void test_writeverify12_beyond_eol(void);
+void test_writeverify12_0blocks(void);
+void test_writeverify12_wrprotect(void);
+void test_writeverify12_flags(void);
+
+void test_writeverify16_simple(void);
+void test_writeverify16_beyond_eol(void);
+void test_writeverify16_0blocks(void);
+void test_writeverify16_wrprotect(void);
+void test_writeverify16_flags(void);
 
 #endif	/* _ISCSI_TEST_CU_H_ */

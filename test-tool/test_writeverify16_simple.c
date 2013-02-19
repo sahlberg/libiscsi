@@ -26,7 +26,7 @@
 
 
 void
-test_write16_simple(void)
+test_writeverify16_simple(void)
 {
 	int i, ret;
 
@@ -34,23 +34,23 @@ test_write16_simple(void)
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the start of the LUN");
+	logging(LOG_VERBOSE, "Test WRITEVERIFY16 of 1-256 blocks at the start of the LUN");
 
 	for (i = 1; i <= 256; i++) {
 		unsigned char *buf = malloc(block_size * i);
 
-		ret = write16(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+		ret = writeverify16(iscsic, tgt_lun, 0, i * block_size,
+		    block_size, 0, 0, 0, 0, buf);
 		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the end of the LUN");
+	logging(LOG_VERBOSE, "Test WRITEVERIFY16 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
 		unsigned char *buf = malloc(block_size * i);
 
-		ret = write16(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 0, 0, 0, buf);
+		ret = writeverify16(iscsic, tgt_lun, num_blocks - i,
+		    i * block_size, block_size, 0, 0, 0, 0, buf);
 		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}

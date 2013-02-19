@@ -26,31 +26,34 @@
 
 
 void
-test_write16_simple(void)
+test_writeverify12_simple(void)
 {
 	int i, ret;
 
 	CHECK_FOR_DATALOSS;
-	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the start of the LUN");
+	logging(LOG_VERBOSE, "Test WRITEVERIFY12 of 1-256 blocks at the start of the LUN");
 
 	for (i = 1; i <= 256; i++) {
 		unsigned char *buf = malloc(block_size * i);
 
-		ret = write16(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+		ret = writeverify12(iscsic, tgt_lun, 0, i * block_size,
+		    block_size, 0, 0, 0, 0, buf);
 		free(buf);
+		if (ret == -2) {
+			CU_PASS("[SKIPPED] Target does not support WRITEVERIFY12. Skipping test");
+			return;
+		}
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the end of the LUN");
+	logging(LOG_VERBOSE, "Test WRITE12 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
 		unsigned char *buf = malloc(block_size * i);
 
-		ret = write16(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 0, 0, 0, buf);
+		ret = writeverify12(iscsic, tgt_lun, num_blocks - i,
+		    i * block_size, block_size, 0, 0, 0, 0, buf);
 		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}

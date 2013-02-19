@@ -3270,6 +3270,548 @@ writesame16_writeprotected(struct iscsi_context *iscsi, int lun, uint64_t lba, u
 	return 0;
 }
 
+int
+writeverify10(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY10 LBA:%d blocks:%d "
+	       "wrprotect:%d dpo:%d bytchk:%d group:%d",
+	       lba, datalen / blocksize, wrprotect,
+	       dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify10_sync(iscsi, lun, lba, 
+				  data, datalen, blocksize,
+				  wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY10 command: "
+			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY10 returned SUCCESS.");
+	return 0;
+}
+
+int
+writeverify10_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY10 (Expecting INVALID_FIELD_IN_CDB) "
+		"LBA:%d blocks:%d wrprotect:%d "
+		"dpo:%d bytchk:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify10_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY10 successful but should "
+			"have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY10 failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"INVALID_FIELD_IN_CDB. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY10 returned ILLEGAL_REQUEST/INVALID_FIELD_IB_CDB.");
+	return 0;
+}
+
+int
+writeverify10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY10 (Expecting LBA_OUT_OF_RANGE) "
+		"LBA:%d blocks:%d wrprotect:%d "
+		"dpo:%d bytchk:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify10_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY10 successful but should "
+			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY10 failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY10 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
+	return 0;
+}
+
+int
+writeverify10_writeprotected(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY10 (Expecting WRITE_PROTECTED) "
+		"LBA:%d blocks:%d wrprotect:%d "
+		"dpo:%d bytchk:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify10_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY10 successful but should "
+			"have failed with DATA_PROTECTION/WRITE_PROTECTED");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY10 failed with wrong sense. "
+			"Should have failed with DATA_PRTOTECTION/"
+			"WRITE_PROTECTED. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY10 returned DATA_PROTECTION/WRITE_PROTECTED.");
+	return 0;
+}
+
+int
+writeverify12(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY12 LBA:%d blocks:%d "
+	       "wrprotect:%d dpo:%d bytchk:%d group:%d",
+	       lba, datalen / blocksize, wrprotect,
+	       dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify12_sync(iscsi, lun, lba, 
+				  data, datalen, blocksize,
+				  wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY12 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY12 command: "
+			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY12 returned SUCCESS.");
+	return 0;
+}
+
+int
+writeverify12_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY12 (Expecting INVALID_FIELD_IN_CDB) "
+		"LBA:%d blocks:%d wrprotect:%d "
+		"dpo:%d bytchk:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify12_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY12 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY12 successful but should "
+			"have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY12 failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"INVALID_FIELD_IN_CDB. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY12 returned ILLEGAL_REQUEST/INVALID_FIELD_IB_CDB.");
+	return 0;
+}
+
+int
+writeverify12_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY12 (Expecting LBA_OUT_OF_RANGE) "
+		"LBA:%d blocks:%d wrprotect:%d "
+		"dpo:%d bytchk:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify12_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY12 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY12 successful but should "
+			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY12 failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY12 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
+	return 0;
+}
+
+int
+writeverify12_writeprotected(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY12 (Expecting WRITE_PROTECTED) "
+		"LBA:%d blocks:%d wrprotect:%d "
+		"dpo:%d bytchk:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify12_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY12 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY12 successful but should "
+			"have failed with DATA_PROTECTION/WRITE_PROTECTED");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY12 failed with wrong sense. "
+			"Should have failed with DATA_PRTOTECTION/"
+			"WRITE_PROTECTED. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY12 returned DATA_PROTECTION/WRITE_PROTECTED.");
+	return 0;
+}
+
+int
+writeverify16(struct iscsi_context *iscsi, int lun, uint64_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY16 LBA:%" PRIu64 " blocks:%d "
+	       "wrprotect:%d dpo:%d bytchk:%d group:%d",
+	       lba, datalen / blocksize, wrprotect,
+	       dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify16_sync(iscsi, lun, lba, 
+				  data, datalen, blocksize,
+				  wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY16 command: "
+			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY16 returned SUCCESS.");
+	return 0;
+}
+
+int
+writeverify16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY16 (Expecting INVALID_FIELD_IN_CDB) "
+		"LBA:%" PRIu64 " blocks:%d wrprotect:%d "
+		"dpo:%d bytchk:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify16_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY16 successful but should "
+			"have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY16 failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"INVALID_FIELD_IN_CDB. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY16 returned ILLEGAL_REQUEST/INVALID_FIELD_IB_CDB.");
+	return 0;
+}
+
+int
+writeverify16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY16 (Expecting LBA_OUT_OF_RANGE) "
+		"LBA:%" PRIu64 " blocks:%d wrprotect:%d "
+		"dpo:%d bytchk:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify16_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY16 successful but should "
+			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY16 failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY16 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
+	return 0;
+}
+
+int
+writeverify16_writeprotected(struct iscsi_context *iscsi, int lun, uint64_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY16 (Expecting WRITE_PROTECTED) "
+		"LBA:%" PRIu64 " blocks:%d wrprotect:%d "
+		"dpo:%d bytchk:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify16_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY16 successful but should "
+			"have failed with DATA_PROTECTION/WRITE_PROTECTED");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY16 failed with wrong sense. "
+			"Should have failed with DATA_PRTOTECTION/"
+			"WRITE_PROTECTED. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY16 returned DATA_PROTECTION/WRITE_PROTECTED.");
+	return 0;
+}
 
 int
 inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize)
