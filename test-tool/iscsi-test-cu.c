@@ -62,6 +62,7 @@ int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
  *****************************************************************/
 static CU_TestInfo tests_get_lba_status[] = {
 	{ (char *)"testGetLBAStatusSimple", test_get_lba_status_simple },
+	{ (char *)"testGetLBAStatusBeyondEol", test_get_lba_status_beyond_eol },
 	CU_TEST_INFO_NULL
 };
 

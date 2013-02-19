@@ -927,6 +927,46 @@ int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t 
 	return 0;
 }
 
+int get_lba_status_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send GET_LBA_STATUS (expecting LBA_OUT_OF_RANGE) LBA:%" PRIu64 " blocks:%d",
+		lba, len);
+
+	task = iscsi_get_lba_status_sync(iscsi, lun, lba, len);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send GET_LBA_STATUS "
+			"command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] GET_LBA_STATUS is not "
+			"implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] GET_LBA_STATUS returned SUCCESS. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		logging(LOG_NORMAL, "[FAILED] GET_LBA_STATUS failed with the wrong sense code. Should have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE but failed with sense:%s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] GET_LBA_STATUS returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
+	return 0;
+}
+
 int
 prefetch10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, int immed, int group)
 {

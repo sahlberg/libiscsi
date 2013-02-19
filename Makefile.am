@@ -178,6 +178,7 @@ bin_iscsi_test_cu_LDFLAGS = -ldl -lcunit
 bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/iscsi-support.c \
 	test-tool/test_get_lba_status_simple.c \
+	test-tool/test_get_lba_status_beyond_eol.c \
 	test-tool/test_prefetch10_simple.c \
 	test-tool/test_prefetch10_beyond_eol.c \
 	test-tool/test_prefetch10_0blocks.c \
