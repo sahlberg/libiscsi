@@ -810,6 +810,56 @@ prin_verify_reserved_as(struct iscsi_context *iscsi, int lun,
 }
 
 int
+prin_verify_not_reserved(struct iscsi_context *iscsi, int lun)
+{
+	struct scsi_task *task;
+	const int buf_sz = 16384;
+	struct scsi_persistent_reserve_in_read_reservation *rr = NULL;
+	int ret = 0;
+
+
+	logging(LOG_VERBOSE,
+	    "Send PRIN/READ_RESERVATION to verify not reserved init=%s",
+	    iscsi->initiator_name);
+
+	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
+	    SCSI_PERSISTENT_RESERVE_READ_RESERVATION, buf_sz);
+	if (task == NULL) {
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send PRIN command: %s",
+		    iscsi_get_error(iscsi));
+		return -1;
+	}
+
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL,
+		    "[FAILED] PRIN command: failed with sense: %s",
+		    iscsi_get_error(iscsi));
+		ret = -1;
+		goto dun;
+	}
+	rr = scsi_datain_unmarshall(task);
+	if (rr == NULL) {
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to unmarshall PRIN/READ_RESERVATION data: %s",
+		    iscsi_get_error(iscsi));
+		ret = -1;
+		goto dun;
+	}
+	if (rr->reserved) {
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to find Target not reserved as expected.");
+		ret = -1;
+		goto dun;
+	}
+
+  dun:
+	/* ??? free rr? */
+	scsi_free_scsi_task(task);
+	return ret;
+}
+
+int
 verify_read_works(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 {
 	struct scsi_task *task;

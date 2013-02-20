@@ -103,9 +103,12 @@ static CU_TestInfo tests_prout_register[] = {
 };
 
 static CU_TestInfo tests_prout_reserve[] = {
-	{ (char *)"testProutReserveSimple", test_prout_reserve_simple },
-	{ (char *)"testProutReserveAccessEA", test_prout_reserve_access_ea },
-	{ (char *)"testProutReserveAccessWE", test_prout_reserve_access_we },
+	{ (char *)"testProutReserveSimple",
+	  test_prout_reserve_simple },
+	{ (char *)"testProutReserveAccessEA",
+	  test_prout_reserve_access_ea },
+	{ (char *)"testProutReserveAccessWE",
+	  test_prout_reserve_access_we },
 	{ (char *)"testProutReserveAccessEARO",
 	  test_prout_reserve_access_earo },
 	{ (char *)"testProutReserveAccessWERO",
@@ -114,6 +117,18 @@ static CU_TestInfo tests_prout_reserve[] = {
 	  test_prout_reserve_access_eaar },
 	{ (char *)"testProutReserveAccessWEAR",
 	  test_prout_reserve_access_wear },
+	{ (char *)"testProutReserveOwnershipEA",
+	  test_prout_reserve_ownership_ea },
+	{ (char *)"testProutReserveOwnershipWE",
+	  test_prout_reserve_ownership_we },
+	{ (char *)"testProutReserveOwnershipEARO",
+	  test_prout_reserve_ownership_earo },
+	{ (char *)"testProutReserveOwnershipWERO",
+	  test_prout_reserve_ownership_wero },
+	{ (char *)"testProutReserveOwnershipEAAR",
+	  test_prout_reserve_ownership_eaar },
+	{ (char *)"testProutReserveOwnershipWEAR",
+	  test_prout_reserve_ownership_wear },
 	CU_TEST_INFO_NULL
 };
 

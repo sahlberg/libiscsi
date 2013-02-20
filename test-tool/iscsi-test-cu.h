@@ -71,6 +71,12 @@ void test_prout_reserve_access_earo(void);
 void test_prout_reserve_access_wero(void);
 void test_prout_reserve_access_eaar(void);
 void test_prout_reserve_access_wear(void);
+void test_prout_reserve_ownership_ea(void);
+void test_prout_reserve_ownership_we(void);
+void test_prout_reserve_ownership_earo(void);
+void test_prout_reserve_ownership_wero(void);
+void test_prout_reserve_ownership_eaar(void);
+void test_prout_reserve_ownership_wear(void);
 
 void test_read6_simple(void);
 void test_read6_beyond_eol(void);

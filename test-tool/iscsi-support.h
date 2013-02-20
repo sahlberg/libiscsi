@@ -192,6 +192,7 @@ int prout_reserve(struct iscsi_context *iscsi, int lun,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
 int prout_release(struct iscsi_context *iscsi, int lun,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
+int prin_verify_not_reserved(struct iscsi_context *iscsi, int lun);
 int prin_verify_reserved_as(struct iscsi_context *iscsi, int lun,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
 int verify_read_works(struct iscsi_context *iscsi, int lun, unsigned char *buf);
