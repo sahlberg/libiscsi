@@ -188,6 +188,187 @@ iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 }
 
 int
+orwrite(struct iscsi_context *iscsi, int lun, uint64_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int fua, int fua_nv, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send ORWRITE LBA:%" PRIu64 " blocks:%d "
+	       "wrprotect:%d dpo:%d fua:%d fua_nv:%d group:%d",
+	       lba, datalen / blocksize, wrprotect,
+	       dpo, fua, fua_nv, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_orwrite_sync(iscsi, lun, lba, 
+				  data, datalen, blocksize,
+				  wrprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send ORWRITE command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] ORWRITE command: "
+			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] ORWRITE returned SUCCESS.");
+	return 0;
+}
+
+int
+orwrite_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int fua, int fua_nv, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send ORWRITE (Expecting INVALID_FIELD_IN_CDB) "
+		"LBA:%" PRIu64 " blocks:%d wrprotect:%d "
+		"dpo:%d fua:%d fua_nv:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, fua, fua_nv, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_orwrite_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send ORWRITE command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] ORWRITE successful but should "
+			"have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		logging(LOG_NORMAL, "[FAILED] ORWRITE failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"INVALID_FIELD_IN_CDB. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] ORWRITE returned ILLEGAL_REQUEST/INVALID_FIELD_IB_CDB.");
+	return 0;
+}
+
+int
+orwrite_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int fua, int fua_nv, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send ORWRITE (Expecting LBA_OUT_OF_RANGE) "
+		"LBA:%" PRIu64 " blocks:%d wrprotect:%d "
+		"dpo:%d fua:%d fua_nv:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, fua, fua_nv, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_orwrite_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send ORWRITE command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] ORWRITE successful but should "
+			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
+		logging(LOG_NORMAL, "[FAILED] ORWRITE failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] ORWRITE returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
+	return 0;
+}
+
+int
+orwrite_writeprotected(struct iscsi_context *iscsi, int lun, uint64_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int fua, int fua_nv, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send ORWRITE (Expecting WRITE_PROTECTED) "
+		"LBA:%" PRIu64 " blocks:%d wrprotect:%d "
+		"dpo:%d fua:%d fua_nv:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, fua, fua_nv, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_orwrite_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send ORWRITE command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] ORWRITE successful but should "
+			"have failed with DATA_PROTECTION/WRITE_PROTECTED");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+		logging(LOG_NORMAL, "[FAILED] ORWRITE failed with wrong sense. "
+			"Should have failed with DATA_PRTOTECTION/"
+			"WRITE_PROTECTED. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] ORWRITE returned DATA_PROTECTION/WRITE_PROTECTED.");
+	return 0;
+}
+
+int
 prin_task(struct iscsi_context *iscsi, int lun, int service_action,
     int success_expected)
 {

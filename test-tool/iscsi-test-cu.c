@@ -66,6 +66,16 @@ static CU_TestInfo tests_get_lba_status[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_orwrite[] = {
+	{ (char *)"testOrWriteSimple", test_orwrite_simple },
+	{ (char *)"testOrWriteBeyondEol", test_orwrite_beyond_eol },
+	{ (char *)"testOrWriteZeroBlocks", test_orwrite_0blocks },
+	{ (char *)"testOrWriteProtect", test_orwrite_wrprotect },
+	{ (char *)"testOrWriteFlags", test_orwrite_flags },
+	{ (char *)"testOrWriteVerify", test_orwrite_verify },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_prefetch10[] = {
 	{ (char *)"testPrefetch10Simple", test_prefetch10_simple },
 	{ (char *)"testPrefetch10BeyondEol", test_prefetch10_beyond_eol },
@@ -286,6 +296,8 @@ static CU_TestInfo tests_writeverify16[] = {
 static CU_SuiteInfo suites[] = {
 	{ (char *)"TestGetLBAStatus", test_setup, test_teardown,
 	  tests_get_lba_status },
+	{ (char *)"TestOrWrite", test_setup, test_teardown,
+	  tests_orwrite },
 	{ (char *)"TestPrefetch10", test_setup, test_teardown,
 	  tests_prefetch10 },
 	{ (char *)"TestPrefetch16", test_setup, test_teardown,

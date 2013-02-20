@@ -43,6 +43,13 @@ int test_teardown_pgr(void);
 void test_get_lba_status_simple(void);
 void test_get_lba_status_beyond_eol(void);
 
+void test_orwrite_simple(void);
+void test_orwrite_beyond_eol(void);
+void test_orwrite_0blocks(void);
+void test_orwrite_wrprotect(void);
+void test_orwrite_flags(void);
+void test_orwrite_verify(void);
+
 void test_prefetch10_simple(void);
 void test_prefetch10_beyond_eol(void);
 void test_prefetch10_0blocks(void);
