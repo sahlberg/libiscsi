@@ -135,8 +135,15 @@ test_readonly_sbc(void)
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
+	logging(LOG_VERBOSE, "Test ORWRITE fails with WRITE_PROTECTED");
+	ret = orwrite_writeprotected(iscsic, tgt_lun, 0,
+				     block_size, block_size,
+				     0, 0, 0, 0, 0, buf);
+	if (ret == -2) {
+		logging(LOG_VERBOSE, "ORWRITE not supported on target. Skipped.");
+	}
+	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	/* NOT implemented yet */
 	logging(LOG_VERBOSE, "Test for COMPAREANDWRITE not implemented yet.");
-	logging(LOG_VERBOSE, "Test for ORWRITE not implemented yet.");
 }
