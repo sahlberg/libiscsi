@@ -17,8 +17,6 @@
 
 #include <stdio.h>
 #include <arpa/inet.h>
-// #include <string.h>
-
 #include <CUnit/CUnit.h>
 
 #include "iscsi.h"
@@ -27,7 +25,7 @@
 
 
 static void
-verify_persistent_reserve(struct iscsi_context *iscsi1, int lun1,
+verify_persistent_reserve_access(struct iscsi_context *iscsi1, int lun1,
     struct iscsi_context *iscsi2, int lun2,
     const enum scsi_persistent_out_type pr_type,
     int reg_i2_can_read,
@@ -120,7 +118,7 @@ verify_persistent_reserve(struct iscsi_context *iscsi1, int lun1,
 void
 test_prout_reserve_access_ea(void)
 {
-	verify_persistent_reserve(iscsic, tgt_lun, iscsic2, tgt_lun2,
+	verify_persistent_reserve_access(iscsic, tgt_lun, iscsic2, tgt_lun2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS,
 	    0, 0, 0, 0);
 }
@@ -128,7 +126,7 @@ test_prout_reserve_access_ea(void)
 void
 test_prout_reserve_access_we(void)
 {
-	verify_persistent_reserve(iscsic, tgt_lun, iscsic2, tgt_lun2,
+	verify_persistent_reserve_access(iscsic, tgt_lun, iscsic2, tgt_lun2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
 	    1, 0, 1, 0);
 }
@@ -136,7 +134,7 @@ test_prout_reserve_access_we(void)
 void
 test_prout_reserve_access_earo(void)
 {
-	verify_persistent_reserve(iscsic, tgt_lun, iscsic2, tgt_lun2,
+	verify_persistent_reserve_access(iscsic, tgt_lun, iscsic2, tgt_lun2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY,
 	    1, 1, 0, 0);
 }
@@ -144,7 +142,7 @@ test_prout_reserve_access_earo(void)
 void
 test_prout_reserve_access_wero(void)
 {
-	verify_persistent_reserve(iscsic, tgt_lun, iscsic2, tgt_lun2,
+	verify_persistent_reserve_access(iscsic, tgt_lun, iscsic2, tgt_lun2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY,
 	    1, 1, 1, 0);
 }
@@ -152,7 +150,7 @@ test_prout_reserve_access_wero(void)
 void
 test_prout_reserve_access_eaar(void)
 {
-	verify_persistent_reserve(iscsic, tgt_lun, iscsic2, tgt_lun2,
+	verify_persistent_reserve_access(iscsic, tgt_lun, iscsic2, tgt_lun2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS,
 	    1, 1, 0, 0);
 }
@@ -160,7 +158,7 @@ test_prout_reserve_access_eaar(void)
 void
 test_prout_reserve_access_wear(void)
 {
-	verify_persistent_reserve(iscsic, tgt_lun, iscsic2, tgt_lun2,
+	verify_persistent_reserve_access(iscsic, tgt_lun, iscsic2, tgt_lun2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS,
 	    1, 1, 1, 0);
 }
