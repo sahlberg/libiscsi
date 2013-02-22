@@ -6,16 +6,6 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
 AM_SILENT_RULES
 LT_INIT
-if test "${libdir}" = '${exec_prefix}/lib'; then
-  case `uname -m` in
-    x86_64|ppc64|powerpc64)
-      libdir='${exec_prefix}/lib64'
-      ;;
-    *)
-      libdir='${exec_prefix}/lib'
-      ;;
-  esac
-fi
 
 AC_CANONICAL_HOST
 AM_CONDITIONAL(LD_ISCSI,
