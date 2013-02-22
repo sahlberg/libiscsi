@@ -175,8 +175,7 @@ if ISCSITEST
 
 noinst_PROGRAMS += bin/iscsi-test-cu
 # dist_noinst_HEADERS += test-tool/iscsi-test-cu.h
-bin_iscsi_test_cu_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/test-tool \
-	-I/usr/local/include
+bin_iscsi_test_cu_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/test-tool
 bin_iscsi_test_cu_LDFLAGS = -ldl -lcunit
 bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/iscsi-support.c \
