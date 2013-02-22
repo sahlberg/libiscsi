@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libiscsi
+Description: iSCSI initiator library
+Version: @VERSION@
+
+Libs: -L${libdir} -liscsi
+Libs.private:
+Cflags: -I${includedir}

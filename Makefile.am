@@ -12,6 +12,9 @@ EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt \
 
 # Simplify conditions below by declaring variables as empty
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libiscsi.pc
+
 bin_PROGRAMS =
 noinst_PROGRAMS =
 EXTRA_PROGRAMS =

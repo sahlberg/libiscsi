@@ -111,5 +111,5 @@ fi
 AM_CONDITIONAL(ISCSITEST, [test "$ac_cv_have_cunit" = yes])
 
 
-AC_CONFIG_FILES(Makefile)
+AC_CONFIG_FILES(Makefile libiscsi.pc)
 AC_OUTPUT
