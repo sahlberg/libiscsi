@@ -81,8 +81,23 @@ Currently we have SG3-UTILS and MTX.
 Patches for other packages would be welcome.
 
 
+ISCSI-TEST-CU
+=============
+iscsi-test-cu is a CUnit based test tool for scsi and iscsi.
+
+iscsi-test-cu -l to list all tests.
+iscsi-test-cu -t <test-suite> <iscsi-url> to run a test suite
+iscsi-test-cu -t <test-suite>.<test> <iscsi-url> to run a specific test
+
+The tests are all self-documented to describe what they test and how they test.
+Use -V with a test to print the documentation for a test.
+
+
 ISCSI-TEST
 ==========
+iscsi-test is depreciated and is being replaced by iscsi-test-cu.
+No new tests will be developed for iscsi-test.
+
 The test-tool subdirectory contains a iscsi/scsi test tool.
 This is a tool that is aimed at providing a comprehensive iscsi and scsi
 emulation test suite. 
