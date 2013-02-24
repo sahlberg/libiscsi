@@ -89,6 +89,7 @@ The libiscsi-devel package includes the header files for libiscsi.
 %{_includedir}/iscsi/iscsi.h
 %{_includedir}/iscsi/scsi-lowlevel.h
 %{_libdir}/libiscsi.so
+%{_libdir}/pkgconfig/libiscsi.pc
 
 %changelog
 * Sat Jan 5 2013 : 1.8.0
