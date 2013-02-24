@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="iscsi-inq.1">
+
+<refmeta>
+	<refentrytitle>iscsi-inq</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">iscsi-inq</refmiscinfo>
+	<refmiscinfo class="manual">iscsi-inq: Perform INQUIRY on an iSCSI LUN</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>iscsi-inq</refname>
+        <refpurpose>Utility to request INQUIRY data from an iSCSI LUN</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>iscsi-inq [ OPTIONS ] &lt;ISCSI-URL&gt;</command>
+	</cmdsynopsis>
+	
+	<cmdsynopsis>
+		<command>iscsi-inq</command>
+		<arg choice="opt">-i --initiator-name=&lt;IQN&gt;</arg>
+		<arg choice="opt">-e --evpd=&lt;INTEGER&gt;</arg>
+		<arg choice="opt">-c --pagecode=&lt;INTEGER&gt;</arg>
+		<arg choice="opt">-d --debug=&lt;INTEGER&gt;</arg>
+		<arg choice="opt">-? --help</arg>
+		<arg choice="opt">--usage</arg>
+		<arg>&lt;ISCSI-URL&gt;</arg>
+	</cmdsynopsis>
+	
+</refsynopsisdiv>
+
+  <refsect1><title>DESCRIPTION</title>
+    <para>
+      iscsi-inq is a utility to request INQUIRY data from an iSCSI LUN.
+    </para>
+  </refsect1>
+
+  <refsect1><title>ISCSI URL FORMAT</title>
+    <para>
+      iSCSI URL format is 'iscsi://[&lt;username&gt;[%&lt;password&gt;]@]&lt;host&gt;[:&lt;port&gt;]/&lt;target-iqn-name&gt;/&lt;lun&gt;'
+    </para>
+
+    <para>
+      Username and password are only required if the target requires CHAP
+      authentication. Optionally you can specify the username and password via
+      the environment variables LIBISCSI_CHAP_USERNAME and
+      LIBISCSI_CHAP_PASSWORD.
+    </para>
+
+    <para>
+      Host can be specified either as a hostname, an IPv4 address or an
+      IPv6 address.
+
+      Examples:
+      <screen format="linespecific">
+	iscsi://192.0.2.1/iqn.ronnie.test/1
+	iscsi://[2001:DB8::1]:3261/iqn.ronnie.test/1
+	iscsi://ronnie%password@iscsi.example.com/iqn.ronnie.test/1
+      </screen>
+    </para>
+    
+    <para>
+      Port is the TCP port on the target to connect to. Default is 3260.
+    </para>
+
+    <para>
+      Target-iqn-name is the iqn name of the target. An iSCSI portal can have
+      multiple targets defined. Use iscsi-ls to list all targets available on
+      one specific portal.
+    </para>
+
+    <para>
+      LUN is the LUN number to report the INQUIRY data for.
+    </para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <variablelist>
+
+      <varlistentry><term>-i --initiator-name=&lt;IQN&gt;</term>
+        <listitem>
+          <para>
+            This specifies the initiator-name that iscsi-inq will use when
+	    logging in to the target.
+	  </para>
+	  <para>
+	    The default name is
+	    'iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-inq' but you can use
+	    this argument to override this. This is mainly needed for cases
+	    where the target is configured with access-control to only
+	    allow discovery logins from known initiator-names.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-e --evpd=&lt;INTEGER&gt;</term>
+        <listitem>
+          <para>
+	    By default iscsi-inq will display the standard inquiry data. 
+	    Specify evpd as 1 to display extended VPD pages.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-c --pagecode=&lt;INTEGER&gt;</term>
+        <listitem>
+          <para>
+	    This argument specifies which VPD page to display when evpd is
+	    requested. Default is 0x00 which represents SUPPORTED VPD PAGES.
+	  </para>
+          <para>
+	    This argument can only be used when evpd is set to 1.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-d --debug=&lt;INTEGER&gt;</term>
+        <listitem>
+          <para>
+	    Debug level.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-? --help</term>
+        <listitem>
+          <para>
+	    Display basic help text.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>--usage</term>
+        <listitem>
+          <para>
+	    Display basic usage text.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Examples</title>
+    <para>
+      To print the standard INQUIRY page:
+      <screen format="linespecific">
+	iscsi-inq iscsi://192.0.2.1/iqn.ronnie.test/1
+      </screen>
+    </para>
+    <para>
+      To list available pages:
+      <screen format="linespecific">
+	iscsi-inq -e 1 iscsi://192.0.2.1/iqn.ronnie.test/1
+      </screen>
+    </para>
+    <para>
+      To show a specific page:
+      <screen format="linespecific">
+	iscsi-inq -e 1 -c 0x80 iscsi://192.0.2.1/iqn.ronnie.test/1
+      </screen>
+    </para>
+  </refsect1>
+
+  <refsect1><title>SEE ALSO</title>
+    <para>
+      iscsi-ls(1)
+      <ulink url="http://github.com/sahlberg/libiscsi"/>
+    </para>
+  </refsect1>
+
+</refentry>
