@@ -58,7 +58,9 @@ bin_iscsi_dd_SOURCES = examples/iscsi-dd.c
 # libiscsi test tool
 
 noinst_PROGRAMS += bin/iscsi-test
-dist_noinst_HEADERS += test-tool/iscsi-test.h
+dist_noinst_HEADERS += test-tool/iscsi-support.h \
+		       test-tool/iscsi-test.h \
+		       test-tool/iscsi-test-cu.h
 bin_iscsi_test_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/test-tool
 bin_iscsi_test_LDFLAGS = -ldl
 bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
