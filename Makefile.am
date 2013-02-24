@@ -12,7 +12,8 @@ XSLTPROC = /usr/bin/xsltproc
 man1_MANS = doc/iscsi-inq.1 doc/iscsi-ls.1
 
 EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt \
-	     packaging/RPM/libiscsi.spec.in packaging/RPM/makerpms.sh
+	     packaging/RPM/libiscsi.spec.in packaging/RPM/makerpms.sh \
+	     doc/iscsi-inq.1.xml doc/iscsi-ls.1.xml
 
 # Simplify conditions below by declaring variables as empty
 
