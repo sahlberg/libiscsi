@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.8.0
+Version: 1.9.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -92,6 +92,11 @@ The libiscsi-devel package includes the header files for libiscsi.
 %{_libdir}/pkgconfig/libiscsi.pc
 
 %changelog
+* Sun Feb 24 2013 : 1.9.0
+ - Add new CUnit based test tool: iscsi-test-cu to replace iscsi-test
+ - Add tests for persistent reservation
+ - Autotools updates
+ - Add pkgconfig
 * Sat Jan 5 2013 : 1.8.0
  - Add new debugging/logging subsystem.
  - Collapse related structures into one and reduce amount of calls to malloc()/free()
