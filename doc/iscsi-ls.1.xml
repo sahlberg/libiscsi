@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="iscsi-ls.1">
+
+<refmeta>
+	<refentrytitle>iscsi-ls</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">iscsi-ls</refmiscinfo>
+	<refmiscinfo class="manual">iscsi-ls: list iSCSI targets and LUNs</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>iscsi-ls</refname>
+        <refpurpose>Utility to list iSCSI targets and LUNs</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>iscsi-ls [ OPTIONS ] &lt;ISCSI-PORTAL&gt;</command>
+	</cmdsynopsis>
+	
+	<cmdsynopsis>
+		<command>iscsi-ls</command>
+		<arg choice="opt">-i --initiator-name=&lt;IQN&gt;</arg>
+		<arg choice="opt">-s --show-luns</arg>
+		<arg choice="opt">-d --debug=&lt;INTEGER&gt;</arg>
+		<arg choice="opt">-? --help</arg>
+		<arg choice="opt">--usage</arg>
+	</cmdsynopsis>
+	
+</refsynopsisdiv>
+
+  <refsect1><title>DESCRIPTION</title>
+    <para>
+      iscsi-ls is a utility to list all targets and LUNs for an iSCSI portal.
+    </para>
+  </refsect1>
+
+  <refsect1><title>ISCSI PORTAL URL FORMAT</title>
+    <para>
+      iSCSI portal format is 'iscsi://[&lt;username&gt;[%&lt;password&gt;]@]&lt;host&gt;[:&lt;port&gt;]'
+    </para>
+
+    <para>
+      Username and password are only required if the target requires CHAP
+      authentication. Optionally you can specify the username and password via
+      the environment variables LIBISCSI_CHAP_USERNAME and
+      LIBISCSI_CHAP_PASSWORD.
+    </para>
+
+    <para>
+      Host can be specified either as a hostname, an IPv4 address or an
+      IPv6 address.
+
+      Examples:
+      <screen format="linespecific">
+	iscsi://192.0.2.1
+	iscsi://[2001:DB8::1]:3261
+	iscsi://ronnie%password@iscsi.example.com
+      </screen>
+    </para>
+    
+    <para>
+      Port is the TCP port on the target to connect to. Default is 3260.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <variablelist>
+
+      <varlistentry><term>-i --initiator-name=&lt;IQN&gt;</term>
+        <listitem>
+          <para>
+            This specifies the initiator-name that iscsi-ls will use when
+	    logging in to the target.
+	  </para>
+	  <para>
+	    The default name is
+	    'iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-ls' but you can use
+	    this argument to override this. This is mainly needed for cases
+	    where the target is configured with access-control to only
+	    allow discovery logins from known initiator-names.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-s --show-luns</term>
+        <listitem>
+          <para>
+            In addition to listing all the targets at the specified portal
+	    also list all the LUNs and their types on each discovered target.
+	  </para>
+	  <para>
+	    In order to display the type of LUN iscsi-ls need to be able to
+	    perform a normal login on the targets. If the target is using
+	    access-control you will need to specify an initiator-name
+	    that allows normal logins to the target.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-d --debug=&lt;INTEGER&gt;</term>
+        <listitem>
+          <para>
+	    Debug level.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-? --help</term>
+        <listitem>
+          <para>
+	    Display basic help text.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>--usage</term>
+        <listitem>
+          <para>
+	    Display basic usage text.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+  </refsect1>
+
+  <refsect1><title>SEE ALSO</title>
+    <para>
+      iscsi-inq(1)
+      <ulink url="http://github.com/sahlberg/libiscsi"/>
+    </para>
+  </refsect1>
+
+</refentry>

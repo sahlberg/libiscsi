@@ -6,6 +6,10 @@ AM_CPPFLAGS=-I. -I$(srcdir)/include "-D_U_=__attribute__((unused))" \
 	"-D_R_(A,B)=__attribute__((format(printf,A,B)))"
 AM_CFLAGS=$(WARN_CFLAGS)
 LDADD = lib/libiscsi.la -lpopt
+XSLTPROC = /usr/bin/xsltproc
+
+# Manpages
+man1_MANS = doc/iscsi-ls.1
 
 EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt \
 	     packaging/RPM/libiscsi.spec.in packaging/RPM/makerpms.sh
@@ -320,3 +324,6 @@ bin_SCRIPTS = bin/ld_iscsi.so
 bin/ld_iscsi.so: bin/ld_iscsi.o
 	$(CC) -shared -o bin/ld_iscsi.so bin/ld_iscsi.o -ldl
 endif
+
+doc/iscsi-ls.1: doc/iscsi-ls.1.xml
+	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
