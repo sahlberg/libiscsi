@@ -221,6 +221,7 @@ int read16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba,
 int read16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data);
 int readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi);
 int readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len);
+int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start);
 int testunitready_clear_ua(struct iscsi_context *iscsi, int lun);
 int testunitready(struct iscsi_context *iscsi, int lun);
 int testunitready_nomedium(struct iscsi_context *iscsi, int lun);

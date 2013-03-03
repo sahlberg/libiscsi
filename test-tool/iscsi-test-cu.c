@@ -193,6 +193,13 @@ static CU_TestInfo tests_testunitready[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_startstopunit[] = {
+	{ (char *)"testStartStopUnitSimple", test_startstopunit_simple },
+	{ (char *)"testStartStopUnitPwrCnd", test_startstopunit_pwrcnd },
+	{ (char *)"testStartStopUnitNoLoej", test_startstopunit_noloej },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_unmap[] = {
 	{ (char *)"testUnmapSimple", test_unmap_simple },
 	{ (char *)"testUnmapZeroBlocks", test_unmap_0blocks },
@@ -339,6 +346,8 @@ static CU_SuiteInfo suites[] = {
 	  tests_readcapacity16 },
 	{ (char *)"TestReadOnly", test_setup, test_teardown,
 	  tests_readonly },
+	{ (char *)"TestStartStopUnit", test_setup, test_teardown,
+	  tests_startstopunit },
 	{ (char *)"TestTestUnitReady", test_setup, test_teardown,
 	  tests_testunitready },
 	{ (char *)"TestUnmap", test_setup, test_teardown,

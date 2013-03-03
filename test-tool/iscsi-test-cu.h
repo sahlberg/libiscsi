@@ -110,6 +110,10 @@ void test_readcapacity16_alloclen(void);
 
 void test_readonly_sbc(void);
 
+void test_startstopunit_simple(void);
+void test_startstopunit_pwrcnd(void);
+void test_startstopunit_noloej(void);
+
 void test_testunitready_simple(void);
 
 void test_unmap_simple(void);

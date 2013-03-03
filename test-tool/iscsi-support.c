@@ -1022,6 +1022,31 @@ verify_write_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 	return ret;
 }
 
+int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send STARTSTOPUNIT (Expecting SUCCESS) IMMED:%d PCM:%d PC:%d NO_FLUSH:%d LOEJ:%d START:%d", immed, pcm, pc, no_flush, loej, start);
+	task = iscsi_startstopunit_sync(iscsi, lun, immed, pcm, pc, no_flush,
+					loej, start);
+	if (task == NULL) {
+		logging(LOG_NORMAL,
+			"[FAILED] Failed to send STARTSTOPUNIT command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL,
+			"[FAILED] STARTSTOPUNIT command: failed with sense. %s",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] STARTSTOPUNIT returned SUCCESS.");
+	return 0;
+}
+
 int
 testunitready(struct iscsi_context *iscsi, int lun)
 {
@@ -1043,7 +1068,7 @@ testunitready(struct iscsi_context *iscsi, int lun)
 		return -1;
 	}
 	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] TestUnitReady returned SUCCESS.");
+	logging(LOG_VERBOSE, "[OK] TESTUNITREADY returned SUCCESS.");
 	return 0;
 }
 
@@ -1078,12 +1103,11 @@ testunitready_nomedium(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
 
-	printf("Send TESTUNITREADY (expecting NOT_READY/MEDIUM_NOT_PRESENT) ... ");
+	logging(LOG_VERBOSE, "Send TESTUNITREADY (expecting NOT_READY/MEDIUM_NOT_PRESENT)");
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n",
-		    iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send TESTUNITREADY "
+			"command: %s", iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
@@ -1091,13 +1115,14 @@ testunitready_nomedium(struct iscsi_context *iscsi, int lun)
 	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		printf("[FAILED]\n");
-		printf("TESTUNITREADY Should have failed with NOT_READY/MEDIUM_NOT_PRESENT*\n");
+		logging(LOG_NORMAL, "[FAILED] TESTUNITREADY Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* Buut failed "
+			"with %s", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		return -1;
 	}	
 	scsi_free_scsi_task(task);
-	printf("[OK]\n");
+	logging(LOG_VERBOSE, "[OK] TESTUNITREADY returned MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
@@ -1106,21 +1131,19 @@ testunitready_conflict(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
 
-	printf("Send TESTUNITREADY (expecting RESERVATION_CONFLICT) ... ");
+	logging(LOG_VERBOSE, "Send TESTUNITREADY (expecting RESERVATION_CONFLICT)");
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send TESTUNITREADY command: %s\n",
-		    iscsi_get_error(iscsi));
+		logging(LOG_NORMAL, "[FAILED] Failed to send TESTUNITREADY "
+			"command: %s", iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
-		printf("[FAILED]\n");
-		printf("Expected RESERVATION CONFLICT\n");
+		logging(LOG_NORMAL, "[FAILED] Expected RESERVATION CONFLICT");
 		return -1;
 	}
 	scsi_free_scsi_task(task);
-	printf("[OK]\n");
+	logging(LOG_VERBOSE, "[OK] TESTUNITREADY returned RESERVATION_CONFLICT.");
 	return 0;
 }
 
