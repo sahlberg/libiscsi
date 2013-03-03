@@ -369,6 +369,61 @@ orwrite_writeprotected(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 int
+orwrite_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int fua, int fua_nv, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send ORWRITE (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%" PRIu64 " blocks:%d wrprotect:%d "
+		"dpo:%d fua:%d fua_nv:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, fua, fua_nv, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_orwrite_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send ORWRITE command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	  logging(LOG_NORMAL, "[FAILED] ORWRITE command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] ORWRITE Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] ORWRITE returned MEDIUM_NOT_PRESENT.");
+	return 0;
+}
+
+int
 prin_task(struct iscsi_context *iscsi, int lun, int service_action,
     int success_expected)
 {
@@ -1022,11 +1077,171 @@ verify_write_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 	return ret;
 }
 
+int
+synchronizecache10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, int sync_nv, int immed)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send SYNCHRONIZECACHE10 LBA:%d blocks:%d"
+		" sync_nv:%d immed:%d",
+		lba, num, sync_nv, immed);
+
+	task = iscsi_synchronizecache10_sync(iscsi, lun, lba, num,
+					     sync_nv, immed);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send SYNCHRONIZECAHCE10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] SYNCHRONIZECAHCE10 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] SYNCHRONIZECACHE10 command: "
+			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] SYNCHRONIZECAHCE10 returned SUCCESS.");
+	return 0;
+}
+
+int
+synchronizecache10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, int sync_nv, int immed)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send SYNCHRONIZECACHE10 (Expecting MEDIUM_NOT_PRESENT) LBA:%d blocks:%d"
+		" sync_nv:%d immed:%d",
+		lba, num, sync_nv, immed);
+
+	task = iscsi_synchronizecache10_sync(iscsi, lun, lba, num,
+					     sync_nv, immed);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send SYNCHRONIZECAHCE10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] SYNCHRONIZECAHCE10 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	  logging(LOG_NORMAL, "[FAILED] SYNCHRONIZECACHE10 command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] SYNCHRONIZECAHCE10 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] SYNCHRONIZECAHCE10 returned MEDIUM_NOT_PRESENT.");
+	return 0;
+}
+
+int
+synchronizecache16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num, int sync_nv, int immed)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send SYNCHRONIZECACHE16 LBA:%" PRIu64 " blocks:%d"
+		" sync_nv:%d immed:%d",
+		lba, num, sync_nv, immed);
+
+	task = iscsi_synchronizecache16_sync(iscsi, lun, lba, num,
+					     sync_nv, immed);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send SYNCHRONIZECAHCE16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] SYNCHRONIZECAHCE16 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] SYNCHRONIZECACHE16 command: "
+			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] SYNCHRONIZECAHCE16 returned SUCCESS.");
+	return 0;
+}
+
+int
+synchronizecache16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, int num, int sync_nv, int immed)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send SYNCHRONIZECACHE16 (Expecting MEDIUM_NOT_PRESENT) LBA:%" PRIu64 " blocks:%d"
+		" sync_nv:%d immed:%d",
+		lba, num, sync_nv, immed);
+
+	task = iscsi_synchronizecache16_sync(iscsi, lun, lba, num,
+					     sync_nv, immed);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send SYNCHRONIZECAHCE16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] SYNCHRONIZECAHCE16 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	  logging(LOG_NORMAL, "[FAILED] SYNCHRONIZECACHE16 command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] SYNCHRONIZECACHE16 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] SYNCHRONIZECAHCE16 returned MEDIUM_NOT_PRESENT.");
+	return 0;
+}
+
 int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start)
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send STARTSTOPUNIT (Expecting SUCCESS) IMMED:%d PCM:%d PC:%d NO_FLUSH:%d LOEJ:%d START:%d", immed, pcm, pc, no_flush, loej, start);
+	logging(LOG_VERBOSE, "Send STARTSTOPUNIT IMMED:%d PCM:%d PC:%d NO_FLUSH:%d LOEJ:%d START:%d", immed, pcm, pc, no_flush, loej, start);
 	task = iscsi_startstopunit_sync(iscsi, lun, immed, pcm, pc, no_flush,
 					loej, start);
 	if (task == NULL) {
@@ -1052,7 +1267,7 @@ testunitready(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send TESTUNITREADY (Expecting SUCCESS)");
+	logging(LOG_VERBOSE, "Send TESTUNITREADY");
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
@@ -1103,11 +1318,16 @@ testunitready_nomedium(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send TESTUNITREADY (expecting NOT_READY/MEDIUM_NOT_PRESENT)");
+	logging(LOG_VERBOSE, "Send TESTUNITREADY (Expecting MEDIUM_NOT_PRESENT)");
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send TESTUNITREADY "
 			"command: %s", iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	  logging(LOG_NORMAL, "[FAILED] TESTUNITREADY command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
 		return -1;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
@@ -1116,7 +1336,7 @@ testunitready_nomedium(struct iscsi_context *iscsi, int lun)
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
 	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
 		logging(LOG_NORMAL, "[FAILED] TESTUNITREADY Should have failed "
-			"with NOT_READY/MEDIUM_NOT_PRESENT* Buut failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
 			"with %s", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		return -1;
@@ -1131,7 +1351,7 @@ testunitready_conflict(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send TESTUNITREADY (expecting RESERVATION_CONFLICT)");
+	logging(LOG_VERBOSE, "Send TESTUNITREADY (Expecting RESERVATION_CONFLICT)");
 	task = iscsi_testunitready_sync(iscsi, lun);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send TESTUNITREADY "
@@ -1185,7 +1405,7 @@ int get_lba_status_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t 
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send GET_LBA_STATUS (expecting LBA_OUT_OF_RANGE) LBA:%" PRIu64 " blocks:%d",
+	logging(LOG_VERBOSE, "Send GET_LBA_STATUS (Expecting LBA_OUT_OF_RANGE) LBA:%" PRIu64 " blocks:%d",
 		lba, len);
 
 	task = iscsi_get_lba_status_sync(iscsi, lun, lba, len);
@@ -1218,6 +1438,49 @@ int get_lba_status_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t 
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] GET_LBA_STATUS returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
+	return 0;
+}
+
+int get_lba_status_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send GET_LBA_STATUS (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%" PRIu64 " blocks:%d",
+		lba, len);
+
+	task = iscsi_get_lba_status_sync(iscsi, lun, lba, len);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send GET_LBA_STATUS "
+			"command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] GET_LBA_STATUS is not "
+			"implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] GET_LBA_STATUS returned SUCCESS. Should have failed with MEDIUM_NOT_PRESENT.");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] GET_LBA_STATUS failed with the wrong sense code. Should have failed with NOT_READY/MEDIUM_NOT_PRESENT but failed with sense:%s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] GET_LBA_STATUS returned MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
@@ -1261,10 +1524,9 @@ prefetch10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send PREFETCH10 (expecting ILLEGAL_REQUEST/"
-			     "LBA_OUT_OF_RANGE) LBA:%d blocks:%d"
-			     " immed:%d group:%d",
-			     lba, num, immed, group);
+	logging(LOG_VERBOSE, "Send PREFETCH10 (Expecting LBA_OUT_OF_RANGE) "
+		"LBA:%d blocks:%d immed:%d group:%d",
+		lba, num, immed, group);
 
 	task = iscsi_prefetch10_sync(iscsi, lun, lba, num, immed, group);
 	if (task == NULL) {
@@ -1303,10 +1565,9 @@ prefetch10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba,
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send PREFETCH10 (expecting NOT_READY/"
-			     "MEDIUM_NOT_PRESENT) LBA:%d blocks:%d"
-			     " immed:%d group:%d",
-			     lba, num, immed, group);
+	logging(LOG_VERBOSE, "Send PREFETCH10 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%d blocks:%d immed:%d group:%d",
+		lba, num, immed, group);
 
 	task = iscsi_prefetch10_sync(iscsi, lun, lba, num, immed, group);
 	if (task == NULL) {
@@ -1338,7 +1599,7 @@ prefetch10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba,
 	}	
 
 	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] PREFETCH10 returned NOT_READY/MEDIUM_NOT_PRESENT.");
+	logging(LOG_VERBOSE, "[OK] PREFETCH10 returned MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
@@ -1382,10 +1643,9 @@ prefetch16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba,
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send PREFETCH16 (expecting ILLEGAL_REQUEST/"
-			     "LBA_OUT_OF_RANGE) LBA:%" PRIu64 " blocks:%d"
-			     " immed:%d group:%d",
-			     lba, num, immed, group);
+	logging(LOG_VERBOSE, "Send PREFETCH16 (Expecting LBA_OUT_OF_RANGE) "
+		"LBA:%" PRIu64 " blocks:%d immed:%d group:%d",
+		lba, num, immed, group);
 
 	task = iscsi_prefetch16_sync(iscsi, lun, lba, num, immed, group);
 	if (task == NULL) {
@@ -1424,10 +1684,9 @@ prefetch16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba,
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send PREFETCH16 (expecting NOT_READY/"
-			     "MEDIUM_NOT_PRESENT) LBA:%" PRIu64 " blocks:%d"
-			     " immed:%d group:%d",
-			     lba, num, immed, group);
+	logging(LOG_VERBOSE, "Send PREFETCH16 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%" PRIu64 " blocks:%d immed:%d group:%d",
+		lba, num, immed, group);
 
 	task = iscsi_prefetch16_sync(iscsi, lun, lba, num, immed, group);
 	if (task == NULL) {
@@ -1459,7 +1718,7 @@ prefetch16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba,
 	}	
 
 	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] PREFETCH16 returned NOT_READY/MEDIUM_NOT_PRESENT.");
+	logging(LOG_VERBOSE, "[OK] PREFETCH16 returned MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
@@ -1667,6 +1926,54 @@ read10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
 }
 
 int
+read10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		uint32_t datalen, int blocksize, int rdprotect, 
+		int dpo, int fua, int fua_nv, int group,
+		unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send READ10  (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%d blocks:%d rdprotect:%d "
+		"dpo:%d fua:%d fua_nv:%d group:%d",
+		lba, datalen / blocksize, rdprotect,
+		dpo, fua, fua_nv, group);
+
+	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blocksize,
+				 rdprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READ10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] READ10 successful but should "
+			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] READ10 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	if (data != NULL) {
+		memcpy(data, task->datain.data, task->datain.size);
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] READ10 returned MEDIUM_NOT_PRESENT.");
+	return 0;
+}
+
+int
 read12(struct iscsi_context *iscsi, int lun, uint32_t lba,
        uint32_t datalen, int blocksize, int rdprotect, 
        int dpo, int fua, int fua_nv, int group,
@@ -1792,6 +2099,54 @@ read12_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] READ12 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
+	return 0;
+}
+
+int
+read12_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		uint32_t datalen, int blocksize, int rdprotect, 
+		int dpo, int fua, int fua_nv, int group,
+		unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send READ12 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%d blocks:%d rdprotect:%d "
+		"dpo:%d fua:%d fua_nv:%d group:%d",
+		lba, datalen / blocksize, rdprotect,
+		dpo, fua, fua_nv, group);
+
+	task = iscsi_read12_sync(iscsi, lun, lba, datalen, blocksize,
+				 rdprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READ12 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] READ12 successful but should "
+			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] READ12 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	if (data != NULL) {
+		memcpy(data, task->datain.data, task->datain.size);
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] READ12 returned MEDIUM_NOT_PRESENT*.");
 	return 0;
 }
 
@@ -1925,6 +2280,54 @@ read16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 int
+read16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba,
+		uint32_t datalen, int blocksize, int rdprotect, 
+		int dpo, int fua, int fua_nv, int group,
+		unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send READ16 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%" PRId64 " blocks:%d rdprotect:%d "
+		"dpo:%d fua:%d fua_nv:%d group:%d",
+		lba, datalen / blocksize, rdprotect,
+		dpo, fua, fua_nv, group);
+
+	task = iscsi_read16_sync(iscsi, lun, lba, datalen, blocksize,
+				 rdprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READ16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] READ16 successful but should "
+			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] READ16 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	if (data != NULL) {
+		memcpy(data, task->datain.data, task->datain.size);
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] READ16 returned MEDIUM_NOT_PRESENT.");
+	return 0;
+}
+
+int
 readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi)
 {
 	struct scsi_task *task;
@@ -1947,6 +2350,43 @@ readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi)
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] READCAPACITY10 returned SUCCESS.");
+	return 0;
+}
+
+int
+readcapacity10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send READCAPACITY10 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%d pmi:%d",
+		lba, pmi);
+
+	task = iscsi_readcapacity10_sync(iscsi, lun, lba, pmi);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READCAPACITY10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	  logging(LOG_NORMAL, "[FAILED] READCAPACITY10 command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] READCAPACITY10 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] READCAPACITY10 returned  MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
@@ -1980,6 +2420,49 @@ readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len)
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] READCAPACITY16 returned SUCCESS.");
+	return 0;
+}
+
+int
+readcapacity16_nomedium(struct iscsi_context *iscsi, int lun, int alloc_len)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send READCAPACITY16 (Expecting MEDIUM_NOT_PRESENT) "
+		"alloc_len:%d", alloc_len);
+
+	task = scsi_cdb_serviceactionin16(SCSI_READCAPACITY16, alloc_len);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READCAPACITY16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READCAPACITY16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+
+	if (task->status == SCSI_STATUS_GOOD) {
+	  logging(LOG_NORMAL, "[FAILED] READCAPACITY16 command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] READCAPACITY16 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] READCAPACITY16 returned  MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
@@ -2018,7 +2501,9 @@ unmap_writeprotected(struct iscsi_context *iscsi, int lun, int anchor, struct un
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send UNMAP (Expecting WRITE_PROTECTED) list_len:%d anchor:%d", list_len, anchor);
+	logging(LOG_VERBOSE, "Send UNMAP (Expecting WRITE_PROTECTED) "
+		"list_len:%d anchor:%d", list_len, anchor);
+
 	task = iscsi_unmap_sync(iscsi, lun, anchor, 0, list, list_len);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send UNMAP command: %s",
@@ -2051,6 +2536,50 @@ unmap_writeprotected(struct iscsi_context *iscsi, int lun, int anchor, struct un
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] UNMAP returned DATA_PROTECTION/WRITE_PROTECTED.");
+	return 0;
+}
+
+int
+unmap_nomedium(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send UNMAP (Expecting MEDIUM_NOT_PRESENT) "
+		"list_len:%d anchor:%d", list_len, anchor);
+
+	task = iscsi_unmap_sync(iscsi, lun, anchor, 0, list, list_len);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send UNMAP command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] UNMAP is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] UNMAP successful but should "
+			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] UNMAP Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] UNMAP returned MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
@@ -2089,7 +2618,10 @@ verify10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t d
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send VERIFY10 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY10 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d",
+		lba, datalen / blocksize, vprotect, dpo, bytchk);
+
 	task = iscsi_verify10_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY10 command: %s",
@@ -2119,7 +2651,7 @@ verify10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t d
 	}	
 
 	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] VERIFY10 returned NOT_READY/MEDIUM_NOT_PRESENT.");
+	logging(LOG_VERBOSE, "[OK] VERIFY10 returned MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
@@ -2128,7 +2660,10 @@ verify10_miscompare(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send VERIFY10 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting MISCOMPARE)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY10 (Expecting MISCOMPARE) "
+		"LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d",
+		lba, datalen / blocksize, vprotect, dpo, bytchk);
+
 	task = iscsi_verify10_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY10 command: %s",
@@ -2163,7 +2698,10 @@ verify10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, uint3
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send VERIFY10 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting LBA_OUT_OF_RANGE)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY10 (Expecting LBA_OUT_OF_RANGE) "
+		"LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d",
+		lba, datalen / blocksize, vprotect, dpo, bytchk);
+
 	task = iscsi_verify10_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY10 command: %s",
@@ -2200,7 +2738,10 @@ verify10_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba, u
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send VERIFY10 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting INVALID_FIELD_IN_CDB)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY10 (Expecting INVALID_FIELD_IN_CDB) "
+		"LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d",
+		lba, datalen / blocksize, vprotect, dpo, bytchk);
+
 	task = iscsi_verify10_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY10 command: %s",
@@ -2267,7 +2808,10 @@ verify12_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t d
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send VERIFY12 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY12 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d",
+		lba, datalen / blocksize, vprotect, dpo, bytchk);
+
 	task = iscsi_verify12_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY12 command: %s",
@@ -2297,7 +2841,7 @@ verify12_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t d
 	}	
 
 	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] VERIFY12 returned NOT_READY/MEDIUM_NOT_PRESENT.");
+	logging(LOG_VERBOSE, "[OK] VERIFY12 returned MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
@@ -2306,7 +2850,10 @@ verify12_miscompare(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send VERIFY12 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting MISCOMPARE)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY12 (expecting MISCOMPARE) "
+		"LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d",
+		lba, datalen / blocksize, vprotect, dpo, bytchk);
+
 	task = iscsi_verify12_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY12 command: %s",
@@ -2341,7 +2888,10 @@ verify12_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, uint3
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send VERIFY12 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting LBA_OUT_OF_RANGE)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY12 (Expecting LBA_OUT_OF_RANGE) "
+		"LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d",
+		lba, datalen / blocksize, vprotect, dpo, bytchk);
+
 	task = iscsi_verify12_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY12 command: %s",
@@ -2378,7 +2928,10 @@ verify12_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba, u
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send VERIFY12 LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting INVALID_FIELD_IN_CDB)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY12 (Expecting INVALID_FIELD_IN_CDB) "
+		"LBA:%d blocks:%d vprotect:%d dpo:%d bytchk:%d",
+		lba, datalen / blocksize, vprotect, dpo, bytchk);
+
 	task = iscsi_verify12_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY12 command: %s",
@@ -2445,7 +2998,10 @@ verify16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t d
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting NOT_READY/MEDIUM_NOT_PRESENT)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY16 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d",
+		lba, datalen / blocksize, vprotect, dpo, bytchk);
+
 	task = iscsi_verify16_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY16 command: %s",
@@ -2475,7 +3031,7 @@ verify16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t d
 	}	
 
 	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] VERIFY16 returned NOT_READY/MEDIUM_NOT_PRESENT.");
+	logging(LOG_VERBOSE, "[OK] VERIFY16 returned NOT_MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
@@ -2484,7 +3040,10 @@ verify16_miscompare(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting MISCOMPARE)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY16 (Expecting MISCOMPARE) "
+		"LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d",
+		lba, datalen / blocksize, vprotect, dpo, bytchk);
+
 	task = iscsi_verify16_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY16 command: %s",
@@ -2519,7 +3078,10 @@ verify16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint3
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting LBA_OUT_OF_RANGE)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY16 (Expecting LBA_OUT_OF_RANGE) "
+		"LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d",
+		lba, datalen / blocksize, vprotect, dpo, bytchk);
+
 	task = iscsi_verify16_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY16 command: %s",
@@ -2556,7 +3118,10 @@ verify16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba, u
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send VERIFY16 LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d (expecting INVALID_FIELD_IN_CDB)", lba, datalen / blocksize, vprotect, dpo, bytchk);
+	logging(LOG_VERBOSE, "Send VERIFY16 (Expecting INVALID_FIELD_IN_CDB) "
+		"LBA:%" PRIu64 " blocks:%d vprotect:%d dpo:%d bytchk:%d",
+		lba, datalen / blocksize, vprotect, dpo, bytchk);
+
 	task = iscsi_verify16_sync(iscsi, lun, data, datalen, lba, vprotect, dpo, bytchk, blocksize);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send VERIFY16 command: %s",
@@ -2770,6 +3335,55 @@ write10_writeprotected(struct iscsi_context *iscsi, int lun, uint32_t lba,
 }
 
 int
+write10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		 uint32_t datalen, int blocksize, int wrprotect, 
+		 int dpo, int fua, int fua_nv, int group,
+		 unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITE10 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%d blocks:%d wrprotect:%d "
+		"dpo:%d fua:%d fua_nv:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, fua, fua_nv, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_write10_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITE10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITE10 successful but should "
+			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] WRITE10 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITE10 returned MEDIUM_NOT_PRESENT.");
+	return 0;
+}
+
+int
 write12(struct iscsi_context *iscsi, int lun, uint32_t lba,
        uint32_t datalen, int blocksize, int wrprotect, 
        int dpo, int fua, int fua_nv, int group,
@@ -2947,6 +3561,55 @@ write12_writeprotected(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] WRITE12 returned DATA_PROTECTION/WRITE_PROTECTED.");
+	return 0;
+}
+
+int
+write12_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba,
+		 uint32_t datalen, int blocksize, int wrprotect, 
+		 int dpo, int fua, int fua_nv, int group,
+		 unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITE12 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%d blocks:%d wrprotect:%d "
+		"dpo:%d fua:%d fua_nv:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, fua, fua_nv, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_write12_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITE12 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITE12 successful but should "
+			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] WRITE12 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITE12 returned MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
@@ -3132,6 +3795,55 @@ write16_writeprotected(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 int
+write16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba,
+		 uint32_t datalen, int blocksize, int wrprotect, 
+		 int dpo, int fua, int fua_nv, int group,
+		 unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITE16 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%" PRIu64 " blocks:%d wrprotect:%d "
+		"dpo:%d fua:%d fua_nv:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, fua, fua_nv, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_write16_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITE16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITE16 successful but should "
+			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] WRITE16 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITE16 returned MEDIUM_NOT_PRESENT.");
+	return 0;
+}
+
+int
 writesame10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data)
 {
 	struct scsi_task *task;
@@ -3178,9 +3890,10 @@ writesame10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, ui
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send WRITESAME10 (Expecting LBA_OUT_OF_RANGE) LBA:%d blocks:%d "
-	       "wrprotect:%d anchor:%d unmap:%d group:%d",
-	       lba, num, wrprotect,
+	logging(LOG_VERBOSE, "Send WRITESAME10 (Expecting LBA_OUT_OF_RANGE) "
+		"LBA:%d blocks:%d "
+		"wrprotect:%d anchor:%d unmap:%d group:%d",
+		lba, num, wrprotect,
 		anchor, unmap_flag, group);
 
 	if (!data_loss) {
@@ -3229,9 +3942,10 @@ writesame10_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send WRITESAME10 (Expecting INVALID_FIELD_IN_CDB) LBA:%d blocks:%d "
-	       "wrprotect:%d anchor:%d unmap:%d group:%d",
-	       lba, num, wrprotect,
+	logging(LOG_VERBOSE, "Send WRITESAME10 (Expecting INVALID_FIELD_IN_CDB) "
+		"LBA:%d blocks:%d "
+		"wrprotect:%d anchor:%d unmap:%d group:%d",
+		lba, num, wrprotect,
 		anchor, unmap_flag, group);
 
 	if (!data_loss) {
@@ -3281,9 +3995,10 @@ writesame10_writeprotected(struct iscsi_context *iscsi, int lun, uint32_t lba, u
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send WRITESAME10 (Expecting WRITE_PROTECTED) LBA:%d blocks:%d "
-	       "wrprotect:%d anchor:%d unmap:%d group:%d",
-	       lba, num, wrprotect,
+	logging(LOG_VERBOSE, "Send WRITESAME10 (Expecting WRITE_PROTECTED) "
+		"LBA:%d blocks:%d "
+		"wrprotect:%d anchor:%d unmap:%d group:%d",
+		lba, num, wrprotect,
 		anchor, unmap_flag, group);
 
 	if (!data_loss) {
@@ -3324,6 +4039,59 @@ writesame10_writeprotected(struct iscsi_context *iscsi, int lun, uint32_t lba, u
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] WRITESAME10 returned DATA_PROTECTION/WRITE_PROTECTED.");
+	return 0;
+}
+
+int
+writesame10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITESAME10 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%d blocks:%d "
+		"wrprotect:%d anchor:%d unmap:%d group:%d",
+		lba, num, wrprotect,
+		anchor, unmap_flag, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writesame10_sync(iscsi, lun, lba, 
+				      data, datalen, num,
+				      anchor, unmap_flag, wrprotect, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITESAME10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	  logging(LOG_NORMAL, "[FAILED] WRITESAME10 command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] WRITESAME10 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITESAME10 returned MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
@@ -3374,9 +4142,10 @@ writesame16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, ui
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send WRITESAME16 (Expecting LBA_OUT_OF_RANGE) LBA:%" PRIu64 " blocks:%d "
-	       "wrprotect:%d anchor:%d unmap:%d group:%d",
-	       lba, num, wrprotect,
+	logging(LOG_VERBOSE, "Send WRITESAME16 (Expecting LBA_OUT_OF_RANGE) "
+		"LBA:%" PRIu64 " blocks:%d "
+		"wrprotect:%d anchor:%d unmap:%d group:%d",
+		lba, num, wrprotect,
 		anchor, unmap_flag, group);
 
 	if (!data_loss) {
@@ -3425,9 +4194,10 @@ writesame16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send WRITESAME16 (Expecting INVALID_FIELD_IN_CDB) LBA:%" PRIu64 " blocks:%d "
-	       "wrprotect:%d anchor:%d unmap:%d group:%d",
-	       lba, num, wrprotect,
+	logging(LOG_VERBOSE, "Send WRITESAME16 (Expecting INVALID_FIELD_IN_CDB) "
+		"LBA:%" PRIu64 " blocks:%d "
+		"wrprotect:%d anchor:%d unmap:%d group:%d",
+		lba, num, wrprotect,
 		anchor, unmap_flag, group);
 
 	if (!data_loss) {
@@ -3521,6 +4291,59 @@ writesame16_writeprotected(struct iscsi_context *iscsi, int lun, uint64_t lba, u
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] WRITESAME16 returned DATA_PROTECTION/WRITE_PROTECTED.");
+	return 0;
+}
+
+int
+writesame16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITESAME16 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%" PRIu64 " blocks:%d "
+		"wrprotect:%d anchor:%d unmap:%d group:%d",
+		lba, num, wrprotect,
+		anchor, unmap_flag, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writesame16_sync(iscsi, lun, lba, 
+				      data, datalen, num,
+				      anchor, unmap_flag, wrprotect, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITESAME16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	  logging(LOG_NORMAL, "[FAILED] WRITESAME16 command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] WRITESAME16 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITESAME16 returned MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 
@@ -3706,6 +4529,55 @@ writeverify10_writeprotected(struct iscsi_context *iscsi, int lun, uint32_t lba,
 }
 
 int
+writeverify10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY10 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%d blocks:%d wrprotect:%d "
+		"dpo:%d bytchk:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify10_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY10 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY10 successful but should "
+			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY10 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY10 returned MEDIUM_NOT_PRESENT.");
+	return 0;
+}
+
+int
 writeverify12(struct iscsi_context *iscsi, int lun, uint32_t lba,
        uint32_t datalen, int blocksize, int wrprotect, 
        int dpo, int bytchk, int group,
@@ -3887,6 +4759,55 @@ writeverify12_writeprotected(struct iscsi_context *iscsi, int lun, uint32_t lba,
 }
 
 int
+writeverify12_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY12 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%d blocks:%d wrprotect:%d "
+		"dpo:%d bytchk:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify12_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY12 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY12 successful but should "
+			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY12 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY12 returned MEDIUM_NOT_PRESENT.");
+	return 0;
+}
+
+int
 writeverify16(struct iscsi_context *iscsi, int lun, uint64_t lba,
        uint32_t datalen, int blocksize, int wrprotect, 
        int dpo, int bytchk, int group,
@@ -4064,6 +4985,55 @@ writeverify16_writeprotected(struct iscsi_context *iscsi, int lun, uint64_t lba,
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] WRITEVERIFY16 returned DATA_PROTECTION/WRITE_PROTECTED.");
+	return 0;
+}
+
+int
+writeverify16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba,
+       uint32_t datalen, int blocksize, int wrprotect, 
+       int dpo, int bytchk, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send WRITEVERIFY16 (Expecting MEDIUM_NOT_PRESENT) "
+		"LBA:%" PRIu64 " blocks:%d wrprotect:%d "
+		"dpo:%d bytchk:%d group:%d",
+		lba, datalen / blocksize, wrprotect,
+		dpo, bytchk, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = iscsi_writeverify16_sync(iscsi, lun, lba, data, datalen, blocksize,
+				 wrprotect, dpo, bytchk, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send WRITEVERIFY16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY16 successful but should "
+			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
+	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
+		logging(LOG_NORMAL, "[FAILED] WRITEVERIFY16 Should have failed "
+			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] WRITEVERIFY16 returned MEDIUM_NOT_PRESENT.");
 	return 0;
 }
 

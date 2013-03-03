@@ -50,7 +50,7 @@ test_startstopunit_simple(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test TESTNUITREADY that medium is ejected.");
+	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is ejected.");
 	ret = testunitready_nomedium(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -72,7 +72,7 @@ test_startstopunit_simple(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test TESTNUITREADY that medium is ejected.");
+	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is ejected.");
 	ret = testunitready_nomedium(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 

@@ -33,7 +33,7 @@ test_startstopunit_noloej(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test STARTSTOPUNIT LOEJ==0");
 	if (!removable) {
-		logging(LOG_VERBOSE, "[SKIPPED] LUN is not removalbe. "
+		logging(LOG_VERBOSE, "[SKIPPED] LUN is not removable. "
 			"Skipping test.");
 		return;
 	}
@@ -43,7 +43,7 @@ test_startstopunit_noloej(void)
 			    0, 0, 0, 0, 0, 0);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test TESTNUITREADY that medium is not ejected.");
+	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
 	ret = testunitready(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -52,7 +52,7 @@ test_startstopunit_noloej(void)
 			    0, 0, 0, 0, 0, 1);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test TESTNUITREADY that medium is not ejected.");
+	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
 	ret = testunitready(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -61,7 +61,7 @@ test_startstopunit_noloej(void)
 			    1, 0, 0, 0, 0, 0);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test TESTNUITREADY that medium is not ejected.");
+	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
 	ret = testunitready(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -70,7 +70,7 @@ test_startstopunit_noloej(void)
 			    1, 0, 0, 0, 0, 1);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test TESTNUITREADY that medium is not ejected.");
+	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
 	ret = testunitready(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -79,7 +79,7 @@ test_startstopunit_noloej(void)
 			    0, 0, 0, 1, 0, 0);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test TESTNUITREADY that medium is not ejected.");
+	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
 	ret = testunitready(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -88,7 +88,7 @@ test_startstopunit_noloej(void)
 			    0, 0, 0, 1, 0, 1);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test TESTNUITREADY that medium is not ejected.");
+	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
 	ret = testunitready(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -97,7 +97,7 @@ test_startstopunit_noloej(void)
 			    1, 0, 0, 1, 0, 0);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test TESTNUITREADY that medium is not ejected.");
+	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
 	ret = testunitready(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -106,7 +106,7 @@ test_startstopunit_noloej(void)
 			    1, 0, 0, 1, 0, 1);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test TESTNUITREADY that medium is not ejected.");
+	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
 	ret = testunitready(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
