@@ -105,6 +105,7 @@ static CU_TestInfo tests_preventallow[] = {
 	{ (char *)"testPreventAllowWarmReset", test_preventallow_warm_reset },
 	{ (char *)"testPreventAllowColdReset", test_preventallow_cold_reset },
 	{ (char *)"testPreventAllowLUNReset", test_preventallow_lun_reset },
+	{ (char *)"testPreventAllow2ITNexuses", test_preventallow_2_itnexuses },
 	CU_TEST_INFO_NULL
 };
 

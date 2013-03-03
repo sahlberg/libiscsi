@@ -69,6 +69,7 @@ void test_preventallow_logout(void);
 void test_preventallow_warm_reset(void);
 void test_preventallow_cold_reset(void);
 void test_preventallow_lun_reset(void);
+void test_preventallow_2_itnexuses(void);
 
 void test_prin_read_keys_simple(void);
 void test_prin_serviceaction_range(void);

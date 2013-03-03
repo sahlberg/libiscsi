@@ -210,6 +210,7 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_preventallow_warm_reset.c \
 	test-tool/test_preventallow_cold_reset.c \
 	test-tool/test_preventallow_lun_reset.c \
+	test-tool/test_preventallow_2_itnexuses.c \
 	test-tool/test_prin_read_keys_simple.c \
 	test-tool/test_prin_serviceaction_range.c \
 	test-tool/test_prout_register_simple.c \
