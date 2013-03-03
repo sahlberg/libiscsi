@@ -157,6 +157,81 @@ int iscsi_logout_sync(struct iscsi_context *iscsi)
 	return state.status;
 }
 
+int
+iscsi_task_mgmt_sync(struct iscsi_context *iscsi,
+		     int lun, enum iscsi_task_mgmt_funcs function, 
+		     uint32_t ritt, uint32_t rcmdsn)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_task_mgmt_async(iscsi, lun, function,
+				  ritt, rcmdsn,
+				  iscsi_sync_cb, &state) != 0) {
+		iscsi_set_error(iscsi, "Failed to send TASK MGMT function: %s",
+				iscsi_get_error(iscsi));
+		return -1;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.status;
+}
+
+int
+iscsi_task_mgmt_abort_task_sync(struct iscsi_context *iscsi,
+				struct scsi_task *task)
+{
+	iscsi_scsi_cancel_task(iscsi, task);
+
+	return iscsi_task_mgmt_sync(iscsi, task->lun,
+				    ISCSI_TM_ABORT_TASK,
+				    task->itt, task->cmdsn);
+}
+
+int
+iscsi_task_mgmt_abort_task_set_sync(struct iscsi_context *iscsi,
+				    uint32_t lun)
+{
+	iscsi_scsi_cancel_all_tasks(iscsi);
+
+	return iscsi_task_mgmt_sync(iscsi, lun,
+				    ISCSI_TM_ABORT_TASK_SET,
+				    0xffffffff, 0);
+}
+
+int
+iscsi_task_mgmt_lun_reset_sync(struct iscsi_context *iscsi,
+			       uint32_t lun)
+{
+	iscsi_scsi_cancel_all_tasks(iscsi);
+
+	return iscsi_task_mgmt_sync(iscsi, lun,
+				    ISCSI_TM_LUN_RESET,
+				    0xffffffff, 0);
+}
+
+int
+iscsi_task_mgmt_target_warm_reset_sync(struct iscsi_context *iscsi)
+{
+	iscsi_scsi_cancel_all_tasks(iscsi);
+
+	return iscsi_task_mgmt_sync(iscsi, 0,
+				    ISCSI_TM_TARGET_WARM_RESET,
+				    0xffffffff, 0);
+}
+
+
+int
+iscsi_task_mgmt_target_cold_reset_sync(struct iscsi_context *iscsi)
+{
+	iscsi_scsi_cancel_all_tasks(iscsi);
+
+	return iscsi_task_mgmt_sync(iscsi, 0,
+				    ISCSI_TM_TARGET_COLD_RESET,
+				    0xffffffff, 0);
+}
 
 
 /*

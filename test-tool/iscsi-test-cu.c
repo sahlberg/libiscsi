@@ -100,6 +100,11 @@ static CU_TestInfo tests_prefetch16[] = {
 static CU_TestInfo tests_preventallow[] = {
 	{ (char *)"testPreventAllowSimple", test_preventallow_simple },
 	{ (char *)"testPreventAllowEject", test_preventallow_eject },
+	{ (char *)"testPreventAllowITNexusLoss", test_preventallow_itnexus_loss },
+	{ (char *)"testPreventAllowLogout", test_preventallow_logout },
+	{ (char *)"testPreventAllowWarmReset", test_preventallow_warm_reset },
+	{ (char *)"testPreventAllowColdReset", test_preventallow_cold_reset },
+	{ (char *)"testPreventAllowLUNReset", test_preventallow_lun_reset },
 	CU_TEST_INFO_NULL
 };
 

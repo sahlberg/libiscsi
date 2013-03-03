@@ -550,6 +550,33 @@ iscsi_task_mgmt_target_cold_reset_async(struct iscsi_context *iscsi,
 
 
 
+/*
+ * Synchronous calls for task management
+ *
+ * Returns:
+ *  0 success.
+ * <0 error.
+ */
+EXTERN int
+iscsi_task_mgmt_sync(struct iscsi_context *iscsi,
+		     int lun, enum iscsi_task_mgmt_funcs function,
+		     uint32_t ritt, uint32_t rcmdscn);
+
+EXTERN int
+iscsi_task_mgmt_abort_task_sync(struct iscsi_context *iscsi, struct scsi_task *task);
+
+EXTERN int
+iscsi_task_mgmt_abort_task_set_sync(struct iscsi_context *iscsi, uint32_t lun);
+
+EXTERN int
+iscsi_task_mgmt_lun_reset_sync(struct iscsi_context *iscsi, uint32_t lun);
+
+EXTERN int
+iscsi_task_mgmt_target_warm_reset_sync(struct iscsi_context *iscsi);
+
+EXTERN int
+iscsi_task_mgmt_target_cold_reset_sync(struct iscsi_context *iscsi);
+
 
 
 
