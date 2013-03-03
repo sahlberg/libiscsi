@@ -82,7 +82,7 @@ test_startstopunit_simple(void)
 			    0, 0, 0, 0, 1, 1);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Verify we can read from the media.");
+	logging(LOG_VERBOSE, "Verify we can access the media again.");
 	ret = testunitready(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 }

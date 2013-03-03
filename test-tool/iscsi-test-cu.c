@@ -97,6 +97,12 @@ static CU_TestInfo tests_prefetch16[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_preventallow[] = {
+	{ (char *)"testPreventAllowSimple", test_preventallow_simple },
+	{ (char *)"testPreventAllowEject", test_preventallow_eject },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_prin_read_keys[] = {
 	{ (char *)"testPrinReadKeysSimple", test_prin_read_keys_simple },
 	CU_TEST_INFO_NULL
@@ -331,6 +337,8 @@ static CU_SuiteInfo suites[] = {
 	  tests_prefetch10 },
 	{ (char *)"TestPrefetch16", test_setup, test_teardown,
 	  tests_prefetch16 },
+	{ (char *)"TestPreventAllow", test_setup, test_teardown,
+	  tests_preventallow },
 	{ (char *)"TestPrinReadKeys", test_setup, test_teardown,
 	  tests_prin_read_keys },
 	{ (char *)"TestPrinServiceactionRange", test_setup, test_teardown,

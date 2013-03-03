@@ -1262,6 +1262,42 @@ int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int 
 	return 0;
 }
 
+int startstopunit_preventremoval(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send STARTSTOPUNIT (Expecting MEDIUM_REMOVAL_PREVENTED) "
+		"IMMED:%d PCM:%d PC:%d NO_FLUSH:%d LOEJ:%d START:%d",
+		immed, pcm, pc, no_flush, loej, start);
+
+	task = iscsi_startstopunit_sync(iscsi, lun, immed, pcm, pc, no_flush,
+					loej, start);
+	if (task == NULL) {
+		logging(LOG_NORMAL,
+			"[FAILED] Failed to send STARTSTOPUNIT command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL,
+			"[FAILED] STARTSTOPUNIT successful but should have failed with ILLEGAL_REQUEST/MEDIUM_REMOVAL_PREVENTED");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_REMOVAL_PREVENTED) {
+		logging(LOG_NORMAL, "[FAILED] STARTSTOPUNIT Should have failed "
+			"with ILLEGAL_REQUEST/MEDIUM_REMOVAL_PREVENTED But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] STARTSTOPUNIT returned MEDIUM_REMOVAL_PREVENTED.");
+	return 0;
+}
+
 int
 testunitready(struct iscsi_context *iscsi, int lun)
 {
@@ -1719,6 +1755,37 @@ prefetch16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba,
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] PREFETCH16 returned MEDIUM_NOT_PRESENT.");
+	return 0;
+}
+
+int
+preventallow(struct iscsi_context *iscsi, int lun, int prevent)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send PREVENTALLOW prevent:%d", prevent);
+	task = iscsi_preventallow_sync(iscsi, lun, prevent);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send PREVENTALLOW "
+			"command: %s", iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] PREVENTALLOW is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] PREVENTALLOW command: "
+			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] PREVENTALLOW returned SUCCESS.");
 	return 0;
 }
 

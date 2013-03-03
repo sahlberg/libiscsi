@@ -62,6 +62,9 @@ void test_prefetch16_beyond_eol(void);
 void test_prefetch16_0blocks(void);
 void test_prefetch16_flags(void);
 
+void test_preventallow_simple(void);
+void test_preventallow_eject(void);
+
 void test_prin_read_keys_simple(void);
 void test_prin_serviceaction_range(void);
 

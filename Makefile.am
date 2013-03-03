@@ -203,6 +203,8 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_prefetch16_beyond_eol.c \
 	test-tool/test_prefetch16_0blocks.c \
 	test-tool/test_prefetch16_flags.c \
+	test-tool/test_preventallow_simple.c \
+	test-tool/test_preventallow_eject.c \
 	test-tool/test_prin_read_keys_simple.c \
 	test-tool/test_prin_serviceaction_range.c \
 	test-tool/test_prout_register_simple.c \

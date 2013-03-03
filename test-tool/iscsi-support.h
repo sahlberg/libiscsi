@@ -64,6 +64,17 @@ do {									\
 	}								\
 } while (0);
 
+#define CHECK_FOR_REMOVABLE						\
+do {									\
+	if (!removable) {						\
+		logging(LOG_VERBOSE, "[SKIPPED] Logical unit is not "	\
+			"removable. Skipping test.");			\
+		CU_PASS("[SKIPPED] Logical unit is not removable"	\
+			" Skipping test");				\
+		return;							\
+	}								\
+} while (0);
+
 #define CHECK_FOR_THIN_PROVISIONING					\
 do {									\
 	if (lbpme == 0) {						\
@@ -214,6 +225,7 @@ int prefetch10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int 
 int prefetch16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num_blocks, int immed, int group);
 int prefetch16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, int num_blocks, int immed, int group);
 int prefetch16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, int num_blocks, int immed, int group);
+int preventallow(struct iscsi_context *iscsi, int lun, int prevent);
 int read6(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, unsigned char *data);
 int read6_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, unsigned char *data);
 int read10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data);
@@ -233,6 +245,7 @@ int readcapacity10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, 
 int readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len);
 int readcapacity16_nomedium(struct iscsi_context *iscsi, int lun, int alloc_len);
 int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start);
+int startstopunit_preventremoval(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start);
 int synchronizecache10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int sync_nv, int immed);
 int synchronizecache10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int sync_nv, int immed);
 int synchronizecache16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num_blocks, int sync_nv, int immed);
