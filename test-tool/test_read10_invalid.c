@@ -36,10 +36,9 @@ test_read10_invalid(void)
 
 
 	/* Try a read10 of 1 block but xferlength == 0 */
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsic, struct scsi_task);
 	CU_ASSERT_PTR_NOT_NULL(task);
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[8] = 1;
 	task->cdb_size = 10;
@@ -65,10 +64,9 @@ test_read10_invalid(void)
 	iscsi_set_noautoreconnect(iscsic, 0);
 
 	/* Try a read10 of 1 block but xferlength == 1024 */
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsic, struct scsi_task);
 	CU_ASSERT_PTR_NOT_NULL(task);
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[8] = 1;
 	task->cdb_size = 10;
@@ -84,10 +82,9 @@ test_read10_invalid(void)
 	task = NULL;
 
 	/* Try a read10 of 1 block but xferlength == 200 */
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsic, struct scsi_task);
 	CU_ASSERT_PTR_NOT_NULL(task);
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[8] = 1;
 	task->cdb_size = 10;
@@ -103,10 +100,9 @@ test_read10_invalid(void)
 	task = NULL;
 
 	/* Try a read10 of 2 blocks but xferlength == 'block_size' */
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsic, struct scsi_task);
 	CU_ASSERT_PTR_NOT_NULL(task);
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[8] = 2;
 	task->cdb_size = 10;
@@ -122,10 +118,9 @@ test_read10_invalid(void)
 	task = NULL;
 
 	/* Try a read10 of 1 block but make it a data-out write on the iscsi layer */
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsic, struct scsi_task);
 	CU_ASSERT_PTR_NOT_NULL(task);
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[8] = 1;
 	task->cdb_size = 10;

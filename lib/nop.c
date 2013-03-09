@@ -21,8 +21,10 @@
 #endif
 
 #include <stdio.h>
+#include <talloc.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
+#include "scsi-lowlevel.h"
 
 int
 iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
@@ -70,14 +72,14 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	if (data != NULL && len > 0) {
 		if (iscsi_pdu_add_data(iscsi, pdu, data, len) != 0) {
 			iscsi_set_error(iscsi, "Failed to add outdata to nop-out");
-			iscsi_free_pdu(iscsi, pdu);
+			talloc_free(pdu);
 			return -1;
 		}
 	}
 
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "failed to queue iscsi nop-out pdu");
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
@@ -119,7 +121,7 @@ iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt)
 
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "failed to queue iscsi nop-out pdu");
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
@@ -135,6 +137,7 @@ iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	iscsi->nops_in_flight = 0;
 
 	if (pdu->callback == NULL) {
+		talloc_free(pdu);
 		return 0;
 	}
 
@@ -147,6 +150,7 @@ iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	}
 	
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, &data, pdu->private_data);
+	talloc_free(pdu);
 
 	return 0;
 }

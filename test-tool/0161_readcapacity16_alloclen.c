@@ -48,14 +48,13 @@ int T0161_readcapacity16_alloclen(const char *initiator, const char *url)
 
 
 	printf("READCAPACITY16 with AllocationLength==0 ... ");
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = 0x9e;
 	task->cdb[1] = 0x10;
 	task->cdb_size = 16;

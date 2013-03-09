@@ -72,7 +72,7 @@ iscsi_task_mgmt_async(struct iscsi_context *iscsi,
 
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "failed to queue iscsi taskmgmt pdu");
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
@@ -93,7 +93,7 @@ iscsi_process_task_mgmt_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 	}
 
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, &response, pdu->private_data);
-
+	talloc_free(pdu);
 	return 0;
 }
 

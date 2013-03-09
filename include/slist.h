@@ -37,7 +37,9 @@
 	}
 
 #define SLIST_REMOVE(list, item) \
-	if ((*list) == (item)) { 				\
+	if ((*list) == NULL) {					\
+	   ;	       	     					\
+	} else if ((*list) == (item)) { 			\
 	   (*list) = (item)->next;				\
 	} else {						\
 	   void *head = (*list);				\

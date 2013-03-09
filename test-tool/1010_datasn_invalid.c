@@ -28,26 +28,26 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi _U_, struct iscsi_pdu 
 {
 	uint32_t datasn;
 
-	if (pdu->outdata.data[0] != ISCSI_PDU_DATA_OUT) {
+	if (pdu->outdata->data[0] != ISCSI_PDU_DATA_OUT) {
 		return 0;
 	}
 	switch (clamp_datasn) {
 	case 1:
 		/* change datasn to 0 */
-		*(uint32_t *)&pdu->outdata.data[36] = 0;
+		*(uint32_t *)&pdu->outdata->data[36] = 0;
 		break;
 	case 2:
 		/* change datasn to 27 */
-		*(uint32_t *)&pdu->outdata.data[36] = htonl(27);
+		*(uint32_t *)&pdu->outdata->data[36] = htonl(27);
 		break;
 	case 3:
 		/* change datasn to -1 */
-		*(uint32_t *)&pdu->outdata.data[36] = htonl(-1);
+		*(uint32_t *)&pdu->outdata->data[36] = htonl(-1);
 		break;
 	case 4:
 		/* change datasn from (0,1) to (1,0) */
-		datasn = ntohl(*(uint32_t *)&pdu->outdata.data[36]);
-		*(uint32_t *)&pdu->outdata.data[36] = htonl(1 - datasn);
+		datasn = ntohl(*(uint32_t *)&pdu->outdata->data[36]);
+		*(uint32_t *)&pdu->outdata->data[36] = htonl(1 - datasn);
 		break;
 	}
 	return 0;

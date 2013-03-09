@@ -751,14 +751,14 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 	/* initiator name */
 	if (iscsi_login_add_initiatorname(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* optional alias */
 	if (iscsi->alias) {
 		if (iscsi_login_add_alias(iscsi, pdu) != 0) {
-			iscsi_free_pdu(iscsi, pdu);
+			talloc_free(pdu);
 			return -1;
 		}
 	}
@@ -766,134 +766,134 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	/* target name */
 	if (iscsi->session_type == ISCSI_SESSION_NORMAL) {
 		if (iscsi_login_add_targetname(iscsi, pdu) != 0) {
-			iscsi_free_pdu(iscsi, pdu);
+			talloc_free(pdu);
 			return -1;
 		}
 	}
 
 	/* session type */
 	if (iscsi_login_add_sessiontype(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* header digest */
 	if (iscsi_login_add_headerdigest(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* auth method */
 	if (iscsi_login_add_authmethod(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* auth algorithm */
 	if (iscsi_login_add_authalgorithm(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* chap username */
 	if (iscsi_login_add_chap_username(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* chap response */
 	if (iscsi_login_add_chap_response(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* data digest */
 	if (iscsi_login_add_datadigest(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* initial r2t */
 	if (iscsi_login_add_initialr2t(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* immediate data */
 	if (iscsi_login_add_immediatedata(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* max burst length */
 	if (iscsi_login_add_maxburstlength(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* first burst length */
 	if (iscsi_login_add_firstburstlength(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* default time 2 wait */
 	if (iscsi_login_add_defaulttime2wait(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* default time 2 retain */
 	if (iscsi_login_add_defaulttime2retain(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* max outstanding r2t */
 	if (iscsi_login_add_maxoutstandingr2t(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* errorrecoverylevel */
 	if (iscsi_login_add_errorrecoverylevel(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* ifmarker */
 	if (iscsi_login_add_ifmarker(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* ofmarker */
 	if (iscsi_login_add_ofmarker(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* maxconnections */
 	if (iscsi_login_add_maxconnections(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* max recv data segment length */
 	if (iscsi_login_add_maxrecvdatasegmentlength(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* data pdu in order */
 	if (iscsi_login_add_datapduinorder(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
 	/* data sequence in order */
 	if (iscsi_login_add_datasequenceinorder(iscsi, pdu) != 0) {
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
@@ -904,7 +904,7 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"pdu.");
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
@@ -974,6 +974,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 					"login data %d>%d", len, size);
 			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 				      pdu->private_data);
+			talloc_free(pdu);
 			return -1;
 		}
 
@@ -1055,6 +1056,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		ISCSI_LOG(iscsi, 2, "target requests redirect to %s",iscsi->target_address);
 		pdu->callback(iscsi, SCSI_STATUS_REDIRECT, NULL,
 				  pdu->private_data);
+		talloc_free(pdu);
 		return 0;
 	}
 
@@ -1063,6 +1065,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				       login_error_str(status), status);
 		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 			      pdu->private_data);
+		talloc_free(pdu);
 		return 0;
 	}
 
@@ -1084,6 +1087,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		}
 	}
 
+	talloc_free(pdu);
 	return 0;
 }
 
@@ -1128,7 +1132,7 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"logout pdu.");
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 		return -1;
 	}
 
@@ -1148,7 +1152,7 @@ struct iscsi_in_pdu *in)
 
 	iscsi->is_loggedin = 0;
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
-
+	talloc_free(pdu);
 	return 0;
 }
 

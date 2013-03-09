@@ -56,14 +56,13 @@ int T0122_read6_invalid(const char *initiator, const char *url)
 	/* Try a read of 1 block but xferlength == 0 */
 	printf("Read6 1 block but with iscsi ExpectedDataTransferLength==0 ... ");
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ6;
 	task->cdb[4] = 1;
 	task->cdb_size = 6;
@@ -112,14 +111,13 @@ int T0122_read6_invalid(const char *initiator, const char *url)
 	/* Try a read of 1 block but xferlength == 1024 */
 	printf("Read6 1 block but with iscsi ExpectedDataTransferLength==1024 ... ");
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ6;
 	task->cdb[4] = 1;
 	task->cdb_size = 6;
@@ -155,14 +153,13 @@ int T0122_read6_invalid(const char *initiator, const char *url)
 	/* Try a read of 1 block but xferlength == 200 */
 	printf("Read6 1 block but with iscsi ExpectedDataTransferLength==200 ... ");
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ6;
 	task->cdb[4] = 1;
 	task->cdb_size = 6;
@@ -198,14 +195,13 @@ int T0122_read6_invalid(const char *initiator, const char *url)
 	/* Try a read of 2 blocks but xferlength == block_size */
 	printf("Read6 2 blocks but with iscsi ExpectedDataTransferLength==%d ... ", block_size);
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ6;
 	task->cdb[4] = 2;
 	task->cdb_size = 6;
@@ -241,14 +237,13 @@ int T0122_read6_invalid(const char *initiator, const char *url)
 	/* Try a read of 1 block but make it a data-out write on the iscsi layer */
 	printf("Read6 of 1 block but sent as data-out write in iscsi layer ... ");
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ6;
 	task->cdb[4] = 1;
 	task->cdb_size = 6;

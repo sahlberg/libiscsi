@@ -261,17 +261,6 @@ EXTERN int iscsi_set_initiator_username_pwd(struct iscsi_context *iscsi,
 EXTERN int iscsi_is_logged_in(struct iscsi_context *iscsi);
 
 
-enum scsi_status {
-	SCSI_STATUS_GOOD                 = 0,
-	SCSI_STATUS_CHECK_CONDITION      = 2,
-	SCSI_STATUS_BUSY                 = 8,
-	SCSI_STATUS_RESERVATION_CONFLICT = 0x18,
-	SCSI_STATUS_REDIRECT             = 0x101,
-	SCSI_STATUS_CANCELLED            = 0x0f000000,
-	SCSI_STATUS_ERROR                = 0x0f000001
-};
-
-
 /*
  * Generic callback for completion of iscsi_*_async().
  * command_data depends on status.

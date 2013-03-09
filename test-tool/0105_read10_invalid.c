@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <talloc.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
@@ -56,14 +57,13 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 	/* Try a read of 1 block but xferlength == 0 */
 	printf("Read10 1 block but with iscsi ExpectedDataTransferLength==0 ... ");
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[8] = 1;
 	task->cdb_size = 10;
@@ -112,14 +112,13 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 	/* Try a read of 1 block but xferlength == 1024 */
 	printf("Read10 1 block but with iscsi ExpectedDataTransferLength==1024 ... ");
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[8] = 1;
 	task->cdb_size = 10;
@@ -155,14 +154,13 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 	/* Try a read of 1 block but xferlength == 200 */
 	printf("Read10 1 block but with iscsi ExpectedDataTransferLength==200 ... ");
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[8] = 1;
 	task->cdb_size = 10;
@@ -198,14 +196,13 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 	/* Try a read of 2 blocks but xferlength == 'block_size' */
 	printf("Read10 2 blocks but with iscsi ExpectedDataTransferLength==%d ... ", block_size);
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[8] = 2;
 	task->cdb_size = 10;
@@ -242,14 +239,13 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 	/* Try a read of 1 block but make it a data-out write on the iscsi layer */
 	printf("Read10 of 1 block but sent as data-out write in iscsi layer ... ");
 
-	task = malloc(sizeof(struct scsi_task));
+	task = talloc_zero(iscsi, struct scsi_task);
 	if (task == NULL) {
 		printf("Failed to allocate task structure\n");
 		ret = -1;
 		goto finished;
 	}
 
-	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ10;
 	task->cdb[8] = 1;
 	task->cdb_size = 10;

@@ -853,13 +853,11 @@ prin_verify_reserved_as(struct iscsi_context *iscsi, int lun,
 		logging(LOG_NORMAL,
 		    "Failed to find reservation type %d: found %d.",
 		    pr_type, rr->pr_type);
-		return -1;
 		ret = -1;
 		goto dun;
 	}
 
   dun:
-	/* ??? free rr? */
 	scsi_free_scsi_task(task);
 	return ret;
 }
@@ -909,7 +907,6 @@ prin_verify_not_reserved(struct iscsi_context *iscsi, int lun)
 	}
 
   dun:
-	/* ??? free rr? */
 	scsi_free_scsi_task(task);
 	return ret;
 }
@@ -2465,7 +2462,7 @@ readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len)
 
 	logging(LOG_VERBOSE, "Send READCAPACITY16 alloc_len:%d", alloc_len);
 
-	task = scsi_cdb_serviceactionin16(SCSI_READCAPACITY16, alloc_len);
+	task = scsi_cdb_serviceactionin16(iscsi, SCSI_READCAPACITY16, alloc_len);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "Out-of-memory: Failed to create "
 				"READCAPACITY16 cdb.");
@@ -2498,7 +2495,7 @@ readcapacity16_nomedium(struct iscsi_context *iscsi, int lun, int alloc_len)
 	logging(LOG_VERBOSE, "Send READCAPACITY16 (Expecting MEDIUM_NOT_PRESENT) "
 		"alloc_len:%d", alloc_len);
 
-	task = scsi_cdb_serviceactionin16(SCSI_READCAPACITY16, alloc_len);
+	task = scsi_cdb_serviceactionin16(iscsi, SCSI_READCAPACITY16, alloc_len);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send READCAPACITY16 command: %s",
 		       iscsi_get_error(iscsi));

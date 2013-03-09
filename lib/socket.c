@@ -163,7 +163,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		return -1;
 	}
 
-	addr = iscsi_strdup(iscsi, portal);
+	addr = talloc_strdup(iscsi, portal);
 	if (addr == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: "
 				"Failed to strdup portal address.");
@@ -192,7 +192,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		host ++;
 		str = strchr(host, ']');
 		if (str == NULL) {
-			iscsi_free(iscsi, addr);
+			talloc_free(addr);
 			iscsi_set_error(iscsi, "Invalid target:%s  "
 				"Missing ']' in IPv6 address", portal);
 			return -1;
@@ -202,12 +202,12 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	/* is it a hostname ? */
 	if (getaddrinfo(host, NULL, NULL, &ai) != 0) {
-		iscsi_free(iscsi, addr);
+		talloc_free(addr);
 		iscsi_set_error(iscsi, "Invalid target:%s  "
 			"Can not resolv into IPv4/v6.", portal);
 		return -1;
  	}
-	iscsi_free(iscsi, addr);
+	talloc_free(addr);
 
 	switch (ai->ai_family) {
 	case AF_INET:
@@ -448,17 +448,28 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 }
 
 static int
+iscsi_in_pdu_destructor(struct iscsi_in_pdu *in)
+{
+	struct iscsi_context *iscsi = talloc_find_parent_bytype(in, 
+					struct iscsi_context);
+
+	SLIST_REMOVE(&iscsi->inqueue, in);
+	return 0;
+}
+
+static int
 iscsi_read_from_socket(struct iscsi_context *iscsi)
 {
 	struct iscsi_in_pdu *in;
 	ssize_t data_size, count;
 
 	if (iscsi->incoming == NULL) {
-		iscsi->incoming = iscsi_zmalloc(iscsi, sizeof(struct iscsi_in_pdu));
+		iscsi->incoming = talloc_zero(iscsi, struct iscsi_in_pdu);
 		if (iscsi->incoming == NULL) {
-			iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu");
+			iscsi_set_error(iscsi, "Out-of-memory: failed to talloc iscsi_in_pdu");
 			return -1;
 		}
+		talloc_set_destructor(iscsi->incoming, iscsi_in_pdu_destructor);
 	}
 	in = iscsi->incoming;
 
@@ -506,9 +517,9 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			count = iscsi_iovector_readv_writev(iscsi, iovector_in, in->data_pos + offset, count, 0);
 		} else {
 			if (in->data == NULL) {
-				in->data = iscsi_malloc(iscsi, data_size);
+				in->data = talloc_size(in, data_size);
 				if (in->data == NULL) {
-					iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu->data(%d)", (int)data_size);
+					iscsi_set_error(iscsi, "Out-of-memory: failed to talloc iscsi_in_pdu->data(%d)", (int)data_size);
 					return -1;
 				}
 			}
@@ -545,8 +556,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		if (iscsi_process_pdu(iscsi, current) != 0) {
 			return -1;
 		}
-		SLIST_REMOVE(&iscsi->inqueue, current);
-		iscsi_free_iscsi_in_pdu(iscsi, current);
+		talloc_free(current);
 	}
 
 
@@ -586,13 +596,13 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 
 		pdu = iscsi->outqueue_current;
 
-		total = pdu->outdata.size;
+		total = pdu->outdata->size;
 		total = (total + 3) & 0xfffffffc;
 
 		/* Write header and any immediate data */
 		if (pdu->written < total) {
 			count = send(iscsi->fd,
-				     pdu->outdata.data + pdu->written,
+				     pdu->outdata->data + pdu->written,
 				     total - pdu->written,
 				     0);
 			if (count == -1) {
@@ -636,7 +646,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		}
 
 		if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
-			iscsi_free_pdu(iscsi, pdu);
+			talloc_free(pdu);
 		}
 		iscsi->outqueue_current = NULL;
 	}
@@ -752,42 +762,23 @@ iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	if (iscsi->header_digest != ISCSI_HEADER_DIGEST_NONE) {
 		unsigned long crc;
 
-		if (pdu->outdata.size < ISCSI_RAW_HEADER_SIZE + 4) {
+		if (pdu->outdata->size < ISCSI_RAW_HEADER_SIZE + 4) {
 			iscsi_set_error(iscsi, "PDU too small (%u) to contain header digest",
-					(unsigned int) pdu->outdata.size);
+					(unsigned)pdu->outdata->size);
 			return -1;
 		}
 
-		crc = crc32c((char *)pdu->outdata.data, ISCSI_RAW_HEADER_SIZE);
+		crc = crc32c((char *)pdu->outdata->data, ISCSI_RAW_HEADER_SIZE);
 
-		pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+3] = (crc >> 24)&0xff;
-		pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+2] = (crc >> 16)&0xff;
-		pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+1] = (crc >>  8)&0xff;
-		pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+0] = (crc)      &0xff;
+		pdu->outdata->data[ISCSI_RAW_HEADER_SIZE+3] = (crc >> 24)&0xff;
+		pdu->outdata->data[ISCSI_RAW_HEADER_SIZE+2] = (crc >> 16)&0xff;
+		pdu->outdata->data[ISCSI_RAW_HEADER_SIZE+1] = (crc >>  8)&0xff;
+		pdu->outdata->data[ISCSI_RAW_HEADER_SIZE+0] = (crc)      &0xff;
 	}
 
 	iscsi_add_to_outqueue(iscsi, pdu);
 
 	return 0;
-}
-
-void
-iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
-{
-	iscsi_free(iscsi, in->data);
-	in->data=NULL;
-	iscsi_free(iscsi, in);
-	in=NULL;
-}
-
-void
-iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *inqueue)
-{
-	while (inqueue != NULL) {
-	      struct iscsi_in_pdu *next = inqueue->next;
-	      iscsi_free_iscsi_in_pdu(iscsi, inqueue);
-	      inqueue = next;
-	}
 }
 
 void iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value)

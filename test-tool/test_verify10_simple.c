@@ -35,6 +35,7 @@ test_verify10_simple(void)
 	logging(LOG_VERBOSE, "Test VERIFY10 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
 		unsigned char *buf = malloc(block_size * i);
+
 		ret = read10(iscsic, tgt_lun, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);

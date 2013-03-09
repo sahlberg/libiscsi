@@ -61,7 +61,7 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 						"failed.");
 				ct->cb(iscsi, SCSI_STATUS_ERROR, NULL,
 				       ct->private_data);
-				iscsi_free(iscsi, ct);
+				talloc_free(ct);
 			}
 			scsi_free_scsi_task(task);
 			return;
@@ -80,7 +80,7 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 	ct->cb(iscsi, status?SCSI_STATUS_ERROR:SCSI_STATUS_GOOD, NULL,
 	       ct->private_data);
 	scsi_free_scsi_task(task);
-	iscsi_free(iscsi, ct);
+	talloc_free(ct);
 }
 
 static void
@@ -93,7 +93,7 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 		iscsi_disconnect(iscsi);
 		if (iscsi->bind_interfaces[0]) iscsi_decrement_iface_rr();
 		if (iscsi_connect_async(iscsi, iscsi->target_address, iscsi_connect_cb, iscsi->connect_data) != 0) {
-			iscsi_free(iscsi, ct);
+			talloc_free(ct);
 			return;
 		}
 		return;
@@ -101,7 +101,7 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 
 	if (status != 0) {
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
-		iscsi_free(iscsi, ct);
+		talloc_free(ct);
 		return;
 	}
 
@@ -122,14 +122,14 @@ iscsi_connect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_
 		iscsi_set_error(iscsi, "Failed to connect to iSCSI socket. "
 				"%s", iscsi_get_error(iscsi));
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
-		iscsi_free(iscsi, ct);
+		talloc_free(ct);
 		return;
 	}
 
 	if (iscsi_login_async(iscsi, iscsi_login_cb, ct) != 0) {
 		iscsi_set_error(iscsi, "iscsi_login_async failed.");
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
-		iscsi_free(iscsi, ct);
+		talloc_free(ct);
 	}
 }
 
@@ -144,7 +144,7 @@ iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
 	if (iscsi->portal != portal)
 	 strncpy(iscsi->portal,portal,MAX_STRING_SIZE);
 
-	ct = iscsi_malloc(iscsi, sizeof(struct connect_task));
+	ct = talloc(iscsi, struct connect_task);
 	if (ct == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory. Failed to allocate "
 				"connect_task structure.");
@@ -154,7 +154,7 @@ iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
 	ct->lun          = lun;
 	ct->private_data = private_data;
 	if (iscsi_connect_async(iscsi, portal, iscsi_connect_cb, ct) != 0) {
-		iscsi_free(iscsi, ct);
+		talloc_free(ct);
 		return -ENOMEM;
 	}
 	return 0;
@@ -190,7 +190,6 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 	ISCSI_LOG(iscsi, 2, "reconnect deferred, cancelling all tasks");
 
 	while ((pdu = iscsi->outqueue)) {
-		SLIST_REMOVE(&iscsi->outqueue, pdu);
 		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 			/* If an error happened during connect/login,
 			   we dont want to call any of the callbacks.
@@ -200,10 +199,9 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 					      NULL, pdu->private_data);
 			}		      
 		}
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 	}
 	while ((pdu = iscsi->waitpdu)) {
-		SLIST_REMOVE(&iscsi->waitpdu, pdu);
 		/* If an error happened during connect/login,
 		   we dont want to call any of the callbacks.
 		 */
@@ -211,7 +209,7 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
 				      NULL, pdu->private_data);
 		}
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(iscsi);
 	}
 }
 
@@ -308,7 +306,7 @@ try_again:
 			 * write command is replayed.
 			 * Similarly we dont want to requeue NOPs. 
 		 	 */
-			iscsi_free_pdu(old_iscsi, pdu);
+			talloc_free(pdu);
 			continue;
 		}
 
@@ -317,7 +315,8 @@ try_again:
 
 		/* do not increase cmdsn for PDUs marked for immediate delivery
 		 * this will result in a protocol error */
-		pdu->cmdsn = (pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE)?iscsi->cmdsn:iscsi->cmdsn++;
+		pdu->cmdsn = (pdu->outdata->data[0] & ISCSI_PDU_IMMEDIATE) ?
+					iscsi->cmdsn : iscsi->cmdsn++;
 		iscsi_pdu_set_cmdsn(pdu, pdu->cmdsn);
 
 		iscsi_pdu_set_expstatsn(pdu, iscsi->statsn);
@@ -333,25 +332,23 @@ try_again:
 		goto try_again;
 	}
 	
-	if (old_iscsi->incoming != NULL) {
-		iscsi_free_iscsi_in_pdu(old_iscsi, old_iscsi->incoming);
-	}
-	if (old_iscsi->inqueue != NULL) {
-		iscsi_free_iscsi_inqueue(old_iscsi, old_iscsi->inqueue);
-	}
+	talloc_free(old_iscsi->incoming);
+	old_iscsi->incoming = NULL;
+
+	talloc_free(old_iscsi->inqueue);
+	old_iscsi->inqueue = NULL;
 
 	if (old_iscsi->outqueue_current != NULL && old_iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
-		iscsi_free_pdu(old_iscsi, old_iscsi->outqueue_current);
+		talloc_free(old_iscsi->outqueue_current);
+		old_iscsi->outqueue_current = NULL;
 	}
 
 	close(iscsi->fd);
 	iscsi->fd = old_iscsi->fd;
-	iscsi->mallocs+=old_iscsi->mallocs;
-	iscsi->frees+=old_iscsi->frees;
 
 	memcpy(old_iscsi, iscsi, sizeof(struct iscsi_context));
 	memset(iscsi, 0, sizeof(struct iscsi_context));
-	free(iscsi);
+	talloc_free(iscsi);
 
 	old_iscsi->is_reconnecting = 0;
 	old_iscsi->last_reconnect = time(NULL);

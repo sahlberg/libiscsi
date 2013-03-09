@@ -29,45 +29,12 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <time.h>
+#include <talloc.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
+#include "scsi-lowlevel.h"
 #include "slist.h"
 
-
-inline void* iscsi_malloc(struct iscsi_context *iscsi, size_t size) {
-	void * ptr = malloc(size);
-	if (ptr != NULL) iscsi->mallocs++;
-	return ptr;
-}
-
-inline void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size) {
-	void * ptr = malloc(size);
-	if (ptr != NULL) {
-		memset(ptr,0x00,size);
-		iscsi->mallocs++;
-	}
-	return ptr;
-}
-
-inline void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size) {
-	void * _ptr = realloc(ptr, size);
-	if (_ptr != NULL) {
-		iscsi->reallocs++;
-	}
-	return _ptr;
-}
-
-inline void iscsi_free(struct iscsi_context *iscsi, void* ptr) {
-	if (ptr == NULL) return;
-	free(ptr);
-	iscsi->frees++;
-}
-
-inline char* iscsi_strdup(struct iscsi_context *iscsi, const char* str) {
-	char *str2 = strdup(str);
-	if (str2 != NULL) iscsi->mallocs++;
-	return str2;
-}
 
 struct iscsi_context *
 iscsi_create_context(const char *initiator_name)
@@ -78,14 +45,20 @@ iscsi_create_context(const char *initiator_name)
 		return NULL;
 	}
 
-	iscsi = malloc(sizeof(struct iscsi_context));
+	iscsi = talloc_zero(NULL, struct iscsi_context);
 	if (iscsi == NULL) {
 		return NULL;
 	}
-	
-	memset(iscsi, 0, sizeof(struct iscsi_context));
-
-	strncpy(iscsi->initiator_name,initiator_name,MAX_STRING_SIZE);
+	iscsi->scsi_tasks = talloc_new(iscsi);
+	if (iscsi->scsi_tasks == NULL) {
+		talloc_free(iscsi);
+		return NULL;
+	}
+	iscsi->initiator_name = talloc_strdup(iscsi, initiator_name);
+	if (iscsi->initiator_name == NULL) {
+		talloc_free(iscsi);
+		return NULL;
+	}
 
 	iscsi->fd = -1;
 	
@@ -256,7 +229,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 						pdu->private_data);
 			}
 		}
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 	}
 	while ((pdu = iscsi->waitpdu)) {
 		SLIST_REMOVE(&iscsi->waitpdu, pdu);
@@ -267,30 +240,16 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 					pdu->private_data);
 		}
-		iscsi_free_pdu(iscsi, pdu);
+		talloc_free(pdu);
 	}
 
 	if (iscsi->outqueue_current != NULL && iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
-		iscsi_free_pdu(iscsi, iscsi->outqueue_current);
-	}
-
-	if (iscsi->incoming != NULL) {
-		iscsi_free_iscsi_in_pdu(iscsi, iscsi->incoming);
-	}
-	if (iscsi->inqueue != NULL) {
-		iscsi_free_iscsi_inqueue(iscsi, iscsi->inqueue);
+		talloc_free(iscsi->outqueue_current);
 	}
 
 	iscsi->connect_data = NULL;
 
-	if (iscsi->mallocs != iscsi->frees) {
-		ISCSI_LOG(iscsi,1,"%d memory blocks lost at iscsi_destroy_context() after %d malloc(s), %d realloc(s) and %d free(s)",iscsi->mallocs-iscsi->frees,iscsi->mallocs,iscsi->reallocs,iscsi->frees);
-	} else {
-		ISCSI_LOG(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs, %d realloc(s) and %d frees",iscsi->mallocs,iscsi->reallocs,iscsi->frees);
-	}
-	
-	memset(iscsi, 0, sizeof(struct iscsi_context));
-	free(iscsi);
+	talloc_free(iscsi);
 
 	return 0;
 }
@@ -449,11 +408,7 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 		if (tmp) *tmp=0;
 	}
 	
-	if (iscsi != NULL)
-		iscsi_url = iscsi_malloc(iscsi, sizeof(struct iscsi_url));
-	else
-		iscsi_url = malloc(sizeof(struct iscsi_url));
-	
+	iscsi_url = talloc(iscsi, struct iscsi_url);
 	if (iscsi_url == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate iscsi_url structure");
 		return NULL;
@@ -491,12 +446,8 @@ iscsi_parse_portal_url(struct iscsi_context *iscsi, const char *url)
 void
 iscsi_destroy_url(struct iscsi_url *iscsi_url)
 {
-	struct iscsi_context *iscsi = iscsi_url->iscsi;
 	memset(iscsi_url, 0, sizeof(struct iscsi_url));
-	if (iscsi != NULL)
-		iscsi_free(iscsi, iscsi_url);
-	else
-		free(iscsi_url);
+	talloc_free(iscsi_url);
 }
 
 
