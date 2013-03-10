@@ -746,6 +746,13 @@ struct scsi_persistent_reserve_in_report_capabilities {
        uint16_t persistent_reservation_type_mask;
 };
 
+struct scsi_read6_cdb {
+	enum scsi_opcode opcode;
+	uint32_t lba;
+	uint16_t transfer_length;
+	uint8_t  control;
+};
+
 struct scsi_read10_cdb {
 	enum scsi_opcode opcode;
 	uint8_t  rdprotect;
@@ -755,6 +762,101 @@ struct scsi_read10_cdb {
 	uint32_t lba;
 	uint8_t  group;
 	uint16_t transfer_length;
+	uint8_t  control;
+};
+
+struct scsi_read12_cdb {
+	enum scsi_opcode opcode;
+	uint8_t  rdprotect;
+	uint8_t  dpo;
+	uint8_t  fua;
+	uint8_t	 rarc;
+	uint8_t  fua_nv;
+	uint32_t lba;
+	uint32_t transfer_length;
+	uint8_t  group;
+	uint8_t  control;
+};
+
+struct scsi_read16_cdb {
+	enum scsi_opcode opcode;
+	uint8_t  rdprotect;
+	uint8_t  dpo;
+	uint8_t  fua;
+	uint8_t	 rarc;
+	uint8_t  fua_nv;
+	uint64_t lba;
+	uint32_t transfer_length;
+	uint8_t  group;
+	uint8_t  control;
+};
+
+struct scsi_verify10_cdb {
+	enum scsi_opcode opcode;
+	uint8_t  vrprotect;
+	uint8_t  dpo;
+	uint8_t  bytchk;
+	uint32_t lba;
+	uint8_t  group;
+	uint16_t verification_length;
+	uint8_t  control;
+};
+
+struct scsi_verify12_cdb {
+	enum scsi_opcode opcode;
+	uint8_t  vrprotect;
+	uint8_t  dpo;
+	uint8_t  bytchk;
+	uint32_t lba;
+	uint32_t verification_length;
+	uint8_t  group;
+	uint8_t  control;
+};
+
+struct scsi_verify16_cdb {
+	enum scsi_opcode opcode;
+	uint8_t  vrprotect;
+	uint8_t  dpo;
+	uint8_t  bytchk;
+	uint64_t lba;
+	uint32_t verification_length;
+	uint8_t  group;
+	uint8_t  control;
+};
+
+struct scsi_write10_cdb {
+	enum scsi_opcode opcode;
+	uint8_t  wrprotect;
+	uint8_t  dpo;
+	uint8_t  fua;
+	uint8_t  fua_nv;
+	uint32_t lba;
+	uint8_t  group;
+	uint16_t transfer_length;
+	uint8_t  control;
+};
+
+struct scsi_write12_cdb {
+	enum scsi_opcode opcode;
+	uint8_t  wrprotect;
+	uint8_t  dpo;
+	uint8_t  fua;
+	uint8_t  fua_nv;
+	uint32_t lba;
+	uint32_t transfer_length;
+	uint8_t  group;
+	uint8_t  control;
+};
+
+struct scsi_write16_cdb {
+	enum scsi_opcode opcode;
+	uint8_t  wrprotect;
+	uint8_t  dpo;
+	uint8_t  fua;
+	uint8_t  fua_nv;
+	uint32_t lba;
+	uint32_t transfer_length;
+	uint8_t  group;
 	uint8_t  control;
 };
 

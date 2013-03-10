@@ -2574,6 +2574,24 @@ scsi_datain_unmarshall(struct scsi_task *task)
 }
 
 
+static struct scsi_read6_cdb *
+scsi_read6_cdb_unmarshall(struct scsi_task *task)
+{
+	struct scsi_read6_cdb *read6;
+
+	read6 = scsi_malloc(task, sizeof(struct scsi_read6_cdb));
+	if (read6 == NULL) {
+		return NULL;
+	}
+
+	read6->opcode          = SCSI_OPCODE_READ6;
+	read6->lba             = scsi_get_uint32(&task->cdb[0]) & 0x001fffff;
+	read6->transfer_length = task->cdb[4];
+	read6->control         = task->cdb[5];
+
+        return read6;
+}
+
 static struct scsi_read10_cdb *
 scsi_read10_cdb_unmarshall(struct scsi_task *task)
 {
@@ -2597,6 +2615,189 @@ scsi_read10_cdb_unmarshall(struct scsi_task *task)
         return read10;
 }
 
+static struct scsi_read12_cdb *
+scsi_read12_cdb_unmarshall(struct scsi_task *task)
+{
+	struct scsi_read12_cdb *read12;
+
+	read12 = scsi_malloc(task, sizeof(struct scsi_read12_cdb));
+	if (read12 == NULL) {
+		return NULL;
+	}
+
+	read12->opcode          = SCSI_OPCODE_READ12;
+	read12->rdprotect       = (task->cdb[1] >> 5) & 0x7;
+	read12->dpo             = !!(task->cdb[1] & 0x10);
+	read12->fua             = !!(task->cdb[1] & 0x08);
+	read12->rarc            = !!(task->cdb[1] & 0x04);
+	read12->fua_nv          = !!(task->cdb[1] & 0x02);
+	read12->lba             = scsi_get_uint32(&task->cdb[2]);
+	read12->transfer_length = scsi_get_uint32(&task->cdb[6]);
+	read12->group           = task->cdb[10] & 0x1f;
+	read12->control         = task->cdb[11];
+
+        return read12;
+}
+
+static struct scsi_read16_cdb *
+scsi_read16_cdb_unmarshall(struct scsi_task *task)
+{
+	struct scsi_read16_cdb *read16;
+
+	read16 = scsi_malloc(task, sizeof(struct scsi_read16_cdb));
+	if (read16 == NULL) {
+		return NULL;
+	}
+
+	read16->opcode          = SCSI_OPCODE_READ16;
+	read16->rdprotect       = (task->cdb[1] >> 5) & 0x7;
+	read16->dpo             = !!(task->cdb[1] & 0x10);
+	read16->fua             = !!(task->cdb[1] & 0x08);
+	read16->rarc            = !!(task->cdb[1] & 0x04);
+	read16->fua_nv          = !!(task->cdb[1] & 0x02);
+	read16->lba             = scsi_get_uint64(&task->cdb[2]);
+	read16->transfer_length = scsi_get_uint32(&task->cdb[10]);
+	read16->group           = task->cdb[14] & 0x1f;
+	read16->control         = task->cdb[15];
+
+        return read16;
+}
+
+static struct scsi_verify10_cdb *
+scsi_verify10_cdb_unmarshall(struct scsi_task *task)
+{
+	struct scsi_verify10_cdb *verify10;
+
+	verify10 = scsi_malloc(task, sizeof(struct scsi_verify10_cdb));
+	if (verify10 == NULL) {
+		return NULL;
+	}
+
+	verify10->opcode              = SCSI_OPCODE_VERIFY10;
+	verify10->vrprotect           = (task->cdb[1] >> 5) & 0x7;
+	verify10->dpo                 = !!(task->cdb[1] & 0x10);
+	verify10->bytchk              = !!(task->cdb[1] & 0x02);
+	verify10->lba                 = scsi_get_uint32(&task->cdb[2]);
+	verify10->group               = task->cdb[6] & 0x1f;
+	verify10->verification_length = scsi_get_uint16(&task->cdb[7]);
+	verify10->control             = task->cdb[9];
+
+        return verify10;
+}
+
+static struct scsi_verify12_cdb *
+scsi_verify12_cdb_unmarshall(struct scsi_task *task)
+{
+	struct scsi_verify12_cdb *verify12;
+
+	verify12 = scsi_malloc(task, sizeof(struct scsi_verify12_cdb));
+	if (verify12 == NULL) {
+		return NULL;
+	}
+
+	verify12->opcode              = SCSI_OPCODE_VERIFY12;
+	verify12->vrprotect           = (task->cdb[1] >> 5) & 0x7;
+	verify12->dpo                 = !!(task->cdb[1] & 0x10);
+	verify12->bytchk              = !!(task->cdb[1] & 0x02);
+	verify12->lba                 = scsi_get_uint32(&task->cdb[2]);
+	verify12->verification_length = scsi_get_uint32(&task->cdb[6]);
+	verify12->group               = task->cdb[10] & 0x1f;
+	verify12->control             = task->cdb[11];
+
+        return verify12;
+}
+
+static struct scsi_verify16_cdb *
+scsi_verify16_cdb_unmarshall(struct scsi_task *task)
+{
+	struct scsi_verify16_cdb *verify16;
+
+	verify16 = scsi_malloc(task, sizeof(struct scsi_verify16_cdb));
+	if (verify16 == NULL) {
+		return NULL;
+	}
+
+	verify16->opcode              = SCSI_OPCODE_VERIFY16;
+	verify16->vrprotect           = (task->cdb[1] >> 5) & 0x7;
+	verify16->dpo                 = !!(task->cdb[1] & 0x10);
+	verify16->bytchk              = !!(task->cdb[1] & 0x02);
+	verify16->lba                 = scsi_get_uint64(&task->cdb[2]);
+	verify16->verification_length = scsi_get_uint32(&task->cdb[10]);
+	verify16->group               = task->cdb[14] & 0x1f;
+	verify16->control             = task->cdb[15];
+
+        return verify16;
+}
+
+static struct scsi_write10_cdb *
+scsi_write10_cdb_unmarshall(struct scsi_task *task)
+{
+	struct scsi_write10_cdb *write10;
+
+	write10 = scsi_malloc(task, sizeof(struct scsi_write10_cdb));
+	if (write10 == NULL) {
+		return NULL;
+	}
+
+	write10->opcode          = SCSI_OPCODE_WRITE10;
+	write10->wrprotect       = (task->cdb[1] >> 5) & 0x7;
+	write10->dpo             = !!(task->cdb[1] & 0x10);
+	write10->fua             = !!(task->cdb[1] & 0x08);
+	write10->fua_nv          = !!(task->cdb[1] & 0x02);
+	write10->lba             = scsi_get_uint32(&task->cdb[2]);
+	write10->group           = task->cdb[6] & 0x1f;
+	write10->transfer_length = scsi_get_uint16(&task->cdb[7]);
+	write10->control         = task->cdb[9];
+
+        return write10;
+}
+
+static struct scsi_write12_cdb *
+scsi_write12_cdb_unmarshall(struct scsi_task *task)
+{
+	struct scsi_write12_cdb *write12;
+
+	write12 = scsi_malloc(task, sizeof(struct scsi_write12_cdb));
+	if (write12 == NULL) {
+		return NULL;
+	}
+
+	write12->opcode          = SCSI_OPCODE_WRITE12;
+	write12->wrprotect       = (task->cdb[1] >> 5) & 0x7;
+	write12->dpo             = !!(task->cdb[1] & 0x10);
+	write12->fua             = !!(task->cdb[1] & 0x08);
+	write12->fua_nv          = !!(task->cdb[1] & 0x02);
+	write12->lba             = scsi_get_uint32(&task->cdb[2]);
+	write12->transfer_length = scsi_get_uint32(&task->cdb[6]);
+	write12->group           = task->cdb[10] & 0x1f;
+	write12->control         = task->cdb[11];
+
+        return write12;
+}
+
+static struct scsi_write16_cdb *
+scsi_write16_cdb_unmarshall(struct scsi_task *task)
+{
+	struct scsi_write16_cdb *write16;
+
+	write16 = scsi_malloc(task, sizeof(struct scsi_write16_cdb));
+	if (write16 == NULL) {
+		return NULL;
+	}
+
+	write16->opcode          = SCSI_OPCODE_WRITE16;
+	write16->wrprotect       = (task->cdb[1] >> 5) & 0x7;
+	write16->dpo             = !!(task->cdb[1] & 0x10);
+	write16->fua             = !!(task->cdb[1] & 0x08);
+	write16->fua_nv          = !!(task->cdb[1] & 0x02);
+	write16->lba             = scsi_get_uint64(&task->cdb[2]);
+	write16->transfer_length = scsi_get_uint32(&task->cdb[10]);
+	write16->group           = task->cdb[14] & 0x1f;
+	write16->control         = task->cdb[15];
+
+        return write16;
+}
+
 void *
 scsi_cdb_unmarshall(struct scsi_task *task, enum scsi_opcode opcode)
 {
@@ -2605,8 +2806,26 @@ scsi_cdb_unmarshall(struct scsi_task *task, enum scsi_opcode opcode)
 	}
 
 	switch (task->cdb[0]) {
+	case SCSI_OPCODE_READ6:
+		return scsi_read6_cdb_unmarshall(task);
 	case SCSI_OPCODE_READ10:
 		return scsi_read10_cdb_unmarshall(task);
+	case SCSI_OPCODE_READ12:
+		return scsi_read12_cdb_unmarshall(task);
+	case SCSI_OPCODE_READ16:
+		return scsi_read16_cdb_unmarshall(task);
+	case SCSI_OPCODE_VERIFY10:
+		return scsi_verify10_cdb_unmarshall(task);
+	case SCSI_OPCODE_VERIFY12:
+		return scsi_verify12_cdb_unmarshall(task);
+	case SCSI_OPCODE_VERIFY16:
+		return scsi_verify16_cdb_unmarshall(task);
+	case SCSI_OPCODE_WRITE10:
+		return scsi_write10_cdb_unmarshall(task);
+	case SCSI_OPCODE_WRITE12:
+		return scsi_write12_cdb_unmarshall(task);
+	case SCSI_OPCODE_WRITE16:
+		return scsi_write16_cdb_unmarshall(task);
 	}
 	return NULL;
 }
