@@ -5105,26 +5105,32 @@ writeverify16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 int
-inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize)
+inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize, struct scsi_task **save_task)
 {
 	struct scsi_task *task;
 
-	printf("Send INQUIRY evpd:%d page_code:%d ... ", evpd, page_code);
+	logging(LOG_VERBOSE, "Send INQUIRY evpd:%d page_code:%d alloc_len:%d",
+		evpd, page_code, maxsize);
 	task = iscsi_inquiry_sync(iscsi, lun, evpd, page_code, maxsize);
 	if (task == NULL) {
-	        printf("[FAILED]\n");
-		printf("Failed to send INQUIRY command: %s\n", iscsi_get_error(iscsi));
+	        logging(LOG_NORMAL, "[FAILED] Failed to send INQUIRY command: "
+			"%s", iscsi_get_error(iscsi));
 		return -1;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
-	        printf("[FAILED]\n");
-		printf("INQUIRY command: failed with sense. %s\n", iscsi_get_error(iscsi));
+	        logging(LOG_NORMAL, "[FAILED] INQUIRY command: failed with "
+			"sense. %s", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 
-	printf("[OK]\n");
-	scsi_free_scsi_task(task);
+	if (save_task != NULL) {
+		*save_task = task;
+	} else {
+		scsi_free_scsi_task(task);
+	}
+
+	logging(LOG_VERBOSE, "[OK] INQUIRY returned SUCCESS.");
 	return 0;
 }
 

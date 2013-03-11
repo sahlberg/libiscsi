@@ -188,6 +188,7 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/iscsi-support.c \
 	test-tool/test_get_lba_status_simple.c \
 	test-tool/test_get_lba_status_beyond_eol.c \
+	test-tool/test_inquiry_standard.c \
 	test-tool/test_nomedia_sbc.c \
 	test-tool/test_orwrite_simple.c \
 	test-tool/test_orwrite_beyond_eol.c \

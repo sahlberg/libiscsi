@@ -80,7 +80,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 
 
 	printf("Test INQUIRY.\n");
-	if (inquiry(iscsi, lun, 0, 0, 64) == -1) {
+	if (inquiry(iscsi, lun, 0, 0, 64, NULL) == -1) {
 		ret = -1;
 	}
 

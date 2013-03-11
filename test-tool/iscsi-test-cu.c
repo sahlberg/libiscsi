@@ -66,6 +66,11 @@ static CU_TestInfo tests_get_lba_status[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_inquiry[] = {
+	{ (char *)"testInquiryStandard", test_inquiry_standard },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_nomedia[] = {
 	{ (char *)"testNoMediaSBC", test_nomedia_sbc },
 	CU_TEST_INFO_NULL
@@ -335,6 +340,8 @@ static CU_TestInfo tests_writeverify16[] = {
 static CU_SuiteInfo suites[] = {
 	{ (char *)"TestGetLBAStatus", test_setup, test_teardown,
 	  tests_get_lba_status },
+	{ (char *)"TestInquiry", test_setup, test_teardown,
+	  tests_inquiry },
 	{ (char *)"TestNoMedia", test_setup, test_teardown,
 	  tests_nomedia },
 	{ (char *)"TestOrWrite", test_setup, test_teardown,
