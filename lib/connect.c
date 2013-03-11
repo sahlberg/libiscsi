@@ -277,6 +277,7 @@ try_again:
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
 		if (iscsi->reconnect_max_retries != -1 && retry >= iscsi->reconnect_max_retries) {
 			iscsi_defer_reconnect(old_iscsi);
+			iscsi_destroy_context(iscsi);
 			return -1;
 		}
 		int backoff=retry;
