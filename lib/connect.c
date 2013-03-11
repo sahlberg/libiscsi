@@ -219,6 +219,12 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
 	struct iscsi_context *iscsi = old_iscsi;
 
+	/* if there is already a deferred reconnect do not try again */
+	if (iscsi->reconnect_deferred) {
+		ISCSI_LOG(iscsi, 2, "reconnect initiated, but reconnect is already deferred");
+		return -1;
+	}
+
 	ISCSI_LOG(iscsi, 2, "reconnect initiated");
 
 	/* This is mainly for tests, where we do not want to automatically
@@ -271,6 +277,7 @@ try_again:
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
 		if (iscsi->reconnect_max_retries != -1 && retry >= iscsi->reconnect_max_retries) {
 			iscsi_defer_reconnect(old_iscsi);
+			iscsi_destroy_context(iscsi);
 			return -1;
 		}
 		int backoff=retry;
