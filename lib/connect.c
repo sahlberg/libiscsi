@@ -219,6 +219,12 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
 	struct iscsi_context *iscsi = old_iscsi;
 
+	/* if there is already a deferred reconnect do not try again */
+	if (iscsi->reconnect_deferred) {
+		ISCSI_LOG(iscsi, 2, "reconnect initiated, but reconnect is already deferred");
+		return -1;
+	}
+
 	ISCSI_LOG(iscsi, 2, "reconnect initiated");
 
 	/* This is mainly for tests, where we do not want to automatically
