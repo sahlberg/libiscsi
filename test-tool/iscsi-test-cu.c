@@ -68,6 +68,7 @@ static CU_TestInfo tests_get_lba_status[] = {
 
 static CU_TestInfo tests_inquiry[] = {
 	{ (char *)"testInquiryStandard", test_inquiry_standard },
+	{ (char *)"testInquiryAllocLength", test_inquiry_alloc_length},
 	CU_TEST_INFO_NULL
 };
 
