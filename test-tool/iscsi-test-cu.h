@@ -46,6 +46,7 @@ void test_get_lba_status_beyond_eol(void);
 void test_inquiry_standard(void);
 void test_inquiry_alloc_length(void);
 void test_inquiry_evpd(void);
+void test_inquiry_supported_vpd(void);
 
 void test_nomedia_sbc(void);
 

@@ -5109,7 +5109,7 @@ inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsi
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send INQUIRY evpd:%d page_code:%d alloc_len:%d",
+	logging(LOG_VERBOSE, "Send INQUIRY evpd:%d page_code:%02x alloc_len:%d",
 		evpd, page_code, maxsize);
 	task = iscsi_inquiry_sync(iscsi, lun, evpd, page_code, maxsize);
 	if (task == NULL) {
@@ -5139,7 +5139,7 @@ inquiry_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int evpd, int pa
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send INQUIRY (Expecting INVALID_FIELD_IN_CDB) evpd:%d page_code:%d alloc_len:%d",
+	logging(LOG_VERBOSE, "Send INQUIRY (Expecting INVALID_FIELD_IN_CDB) evpd:%d page_code:%02x alloc_len:%d",
 		evpd, page_code, maxsize);
 	task = iscsi_inquiry_sync(iscsi, lun, evpd, page_code, maxsize);
 	if (task == NULL) {
