@@ -71,6 +71,7 @@ static CU_TestInfo tests_inquiry[] = {
 	{ (char *)"testInquiryAllocLength", test_inquiry_alloc_length},
 	{ (char *)"testInquiryEVPD", test_inquiry_evpd},
 	{ (char *)"testInquirySupportedVPD", test_inquiry_supported_vpd},
+	{ (char *)"testInquiryMandatoryVPDSBC", test_inquiry_mandatory_vpd_sbc},
 	CU_TEST_INFO_NULL
 };
 
