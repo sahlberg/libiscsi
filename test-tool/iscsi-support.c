@@ -5134,3 +5134,39 @@ inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsi
 	return 0;
 }
 
+int
+inquiry_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send INQUIRY (Expecting INVALID_FIELD_IN_CDB) evpd:%d page_code:%d alloc_len:%d",
+		evpd, page_code, maxsize);
+	task = iscsi_inquiry_sync(iscsi, lun, evpd, page_code, maxsize);
+	if (task == NULL) {
+	        logging(LOG_NORMAL, "[FAILED] Failed to send INQUIRY command: "
+			"%s", iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] INQUIRY successful but should "
+			"have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		logging(LOG_NORMAL, "[FAILED] INQUIRY failed with wrong sense. "
+			"Should have failed with ILLEGAL_REQUEST/"
+			"INVALID_FIELD_IN_CDB. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] INQUIRY returned ILLEGAL_REQUEST/INVALID_FIELD_IB_CDB.");
+	return 0;
+}
+
