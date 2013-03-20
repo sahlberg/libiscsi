@@ -71,7 +71,7 @@ int T0213_read12_0blocks(const char *initiator, const char *url)
 		printf("LUN is too big, skipping test\n");
 		goto finished;
 	}
-	task = iscsi_read12_sync(iscsi, lun, num_blocks + 1, 0, block_size, 0, 0, 0, 0, 0);
+	task = iscsi_read12_sync(iscsi, lun, num_blocks + 2, 0, block_size, 0, 0, 0, 0, 0);
 	if (task == NULL) {
 	        printf("[FAILED]\n");
 		printf("Failed to send READ12 command: %s\n", iscsi_get_error(iscsi));

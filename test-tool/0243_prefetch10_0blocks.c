@@ -63,7 +63,7 @@ int T0243_prefetch10_0blocks(const char *initiator, const char *url)
 		printf("LUN is too big, skipping test\n");
 		goto finished;
 	}
-	ret = prefetch10_lbaoutofrange(iscsi, lun, num_blocks + 1, 0, 0, 0);
+	ret = prefetch10_lbaoutofrange(iscsi, lun, num_blocks + 2, 0, 0, 0);
 	if (ret != 0) {
 		goto finished;
 	}

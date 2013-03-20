@@ -91,7 +91,7 @@ int T0184_writesame10_0blocks(const char *initiator, const char *url)
 		printf("LUN is too big, skipping test\n");
 		goto finished;
 	}
-	task = iscsi_writesame10_sync(iscsi, lun, num_blocks + 1,
+	task = iscsi_writesame10_sync(iscsi, lun, num_blocks + 2,
 				      buf, block_size,
 				      0,
 				      0, 0, 0, 0);

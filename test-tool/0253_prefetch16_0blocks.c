@@ -56,7 +56,7 @@ int T0253_prefetch16_0blocks(const char *initiator, const char *url)
 
 	/* Prefetch 0 blocks beyond end of the LUN */
 	printf("PREFETCH16 0blocks at one block beyond <end-of-LUN>.\n");
-	ret = prefetch16_lbaoutofrange(iscsi, lun, num_blocks + 1, 0, 0, 0);
+	ret = prefetch16_lbaoutofrange(iscsi, lun, num_blocks + 2, 0, 0, 0);
 	if (ret != 0) {
 		goto finished;
 	}

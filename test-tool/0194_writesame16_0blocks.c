@@ -86,7 +86,7 @@ int T0194_writesame16_0blocks(const char *initiator, const char *url)
 
 
 	printf("Writesame16 0blocks at one block beyond <end-of-LUN> ... ");
-	task = iscsi_writesame16_sync(iscsi, lun, num_blocks + 1,
+	task = iscsi_writesame16_sync(iscsi, lun, num_blocks + 2,
 				      buf, block_size,
 				      0,
 				      0, 0, 0, 0);
