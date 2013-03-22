@@ -683,9 +683,7 @@ prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
 	poc.service_action_reservation_key = sark;
 	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
 	    SCSI_PERSISTENT_RESERVE_REGISTER,
-	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
-	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
-	    &poc);
+	    SCSI_PERSISTENT_RESERVE_SCOPE_LU, 0, &poc);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PROUT command: %s",
