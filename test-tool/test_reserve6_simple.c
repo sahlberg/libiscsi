@@ -26,24 +26,22 @@
 
 
 void
-test_read6_simple(void)
+test_reserve6_simple(void)
 {
-	int i, ret;
+	int ret;
 
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test READ6 of 1-255 blocks at the start of the LUN");
-	for (i = 1; i <= 255; i++) {
-		ret = read6(iscsic, tgt_lun, 0, i * block_size,
-			    block_size, NULL);
-		CU_ASSERT_EQUAL(ret, 0);
-	}
+	logging(LOG_VERBOSE, "Test basic RESERVE6/RELEASE6 commands if supported");
 
-
-	logging(LOG_VERBOSE, "Test READ6 of 1-255 blocks at the end of the LUN");
-	for (i = 1; i <= 255; i++) {
-		ret = read6(iscsic, tgt_lun, num_blocks - i,
-			    i * block_size, block_size, NULL);
-		CU_ASSERT_EQUAL(ret, 0);
+	ret = reserve6(iscsic, tgt_lun);
+	if (ret == -2) {
+		logging(LOG_VERBOSE, "[SKIPPED] Target does not support RESERVE6. Skipping test");
+		CU_PASS("[SKIPPED] Target does not support RESERVE6. Skipping test");
+		return;
 	}
+	CU_ASSERT_EQUAL(ret, 0);
+
+	ret = release6(iscsic, tgt_lun);
+	CU_ASSERT_EQUAL(ret, 0);
 }

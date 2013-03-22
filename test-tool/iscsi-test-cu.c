@@ -214,6 +214,12 @@ static CU_TestInfo tests_readonly[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_reserve6[] = {
+	{ (char *)"testReserve6Simple", test_reserve6_simple },
+	{ (char *)"testReserve6_2Initiators", test_reserve6_2initiators },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_testunitready[] = {
 	{ (char *)"testTurSimple", test_testunitready_simple },
 	CU_TEST_INFO_NULL
@@ -378,6 +384,8 @@ static CU_SuiteInfo suites[] = {
 	  tests_readcapacity16 },
 	{ (char *)"TestReadOnly", test_setup, test_teardown,
 	  tests_readonly },
+	{ (char *)"TestReserve6", test_setup, test_teardown,
+	  tests_reserve6 },
 	{ (char *)"TestStartStopUnit", test_setup, test_teardown,
 	  tests_startstopunit },
 	{ (char *)"TestTestUnitReady", test_setup, test_teardown,
