@@ -217,6 +217,8 @@ static CU_TestInfo tests_readonly[] = {
 static CU_TestInfo tests_reserve6[] = {
 	{ (char *)"testReserve6Simple", test_reserve6_simple },
 	{ (char *)"testReserve6_2Initiators", test_reserve6_2initiators },
+	{ (char *)"testReserve6Logout", test_reserve6_logout },
+	{ (char *)"testReserve6ITNexusLoss", test_reserve6_itnexus_loss },
 	CU_TEST_INFO_NULL
 };
 

@@ -247,6 +247,8 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_readonly_sbc.c \
 	test-tool/test_reserve6_simple.c \
 	test-tool/test_reserve6_2initiators.c \
+	test-tool/test_reserve6_logout.c \
+	test-tool/test_reserve6_itnexus_loss.c \
 	test-tool/test_startstopunit_simple.c \
 	test-tool/test_startstopunit_pwrcnd.c \
 	test-tool/test_startstopunit_noloej.c \
