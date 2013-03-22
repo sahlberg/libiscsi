@@ -77,6 +77,11 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 		status = 0;
 	}
 
+	/* Dont fail the login just because the medium is reserved */
+	if (status == SCSI_STATUS_RESERVATION_CONFLICT) {
+		status = 0;
+	}
+
 	ct->cb(iscsi, status?SCSI_STATUS_ERROR:SCSI_STATUS_GOOD, NULL,
 	       ct->private_data);
 	scsi_free_scsi_task(task);
