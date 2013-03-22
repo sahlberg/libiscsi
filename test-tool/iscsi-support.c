@@ -690,22 +690,13 @@ prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
-	
-	if (task->status != SCSI_STATUS_CHECK_CONDITION ||
-	    task->sense.key != SCSI_SENSE_ILLEGAL_REQUEST ||
-	    task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+
+	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
 		logging(LOG_NORMAL,
-		    "[FAILED] PROUT/REGISTER when already registered should fail");
-		ret = -1;
-		goto dun;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL,
-		    "[FAILED] PROUT/REGISTER command: succeeded when it should not have");
+		    "[FAILED] Expected RESERVATION CONFLICT");
 		ret = -1;
 	}
 
-  dun:
 	scsi_free_scsi_task(task);
 	return ret;
 }
