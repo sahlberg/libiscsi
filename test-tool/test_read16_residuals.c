@@ -1,9 +1,5 @@
 /*
-   Copyright (C) 2013 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
-
-   Based on test_read10_invalid.c :
-
-   Copyright (C) 2012 by Lee Duncan <lee@gonzoleeman.net>
+   Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -32,22 +28,21 @@
 
 
 void
-test_read10_residuals(void)
+test_read16_residuals(void)
 {
 	struct scsi_task *task_ret;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test READ10 commands with residuals");
+	logging(LOG_VERBOSE, "Test READ16 commands with residuals");
 	logging(LOG_VERBOSE, "Block size is %zu", block_size);
 
-	/* Try a read10 of 1 block but xferlength == 0 */
 	task = malloc(sizeof(struct scsi_task));
 	CU_ASSERT_PTR_NOT_NULL(task);
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[8] = 1;
-	task->cdb_size = 10;
+	task->cdb[0] = SCSI_OPCODE_READ16;
+	task->cdb[13] = 1;
+	task->cdb_size = 16;
 	task->xfer_dir = SCSI_XFER_READ;
 	task->expxferlen = 0;
 
@@ -98,9 +93,9 @@ test_read10_residuals(void)
 	CU_ASSERT_PTR_NOT_NULL(task);
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[8] = 1;
-	task->cdb_size = 10;
+	task->cdb[0] = SCSI_OPCODE_READ16;
+	task->cdb[13] = 1;
+	task->cdb_size = 16;
 	task->xfer_dir = SCSI_XFER_READ;
 	task->expxferlen = 10000;
 
@@ -146,9 +141,9 @@ test_read10_residuals(void)
 	CU_ASSERT_PTR_NOT_NULL(task);
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[8] = 1;
-	task->cdb_size = 10;
+	task->cdb[0] = SCSI_OPCODE_READ16;
+	task->cdb[13] = 1;
+	task->cdb_size = 16;
 	task->xfer_dir = SCSI_XFER_READ;
 	task->expxferlen = 200;
 
@@ -192,9 +187,9 @@ test_read10_residuals(void)
 	CU_ASSERT_PTR_NOT_NULL(task);
 
 	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0] = SCSI_OPCODE_READ10;
-	task->cdb[8] = 2;
-	task->cdb_size = 10;
+	task->cdb[0] = SCSI_OPCODE_READ16;
+	task->cdb[13] = 2;
+	task->cdb_size = 16;
 	task->xfer_dir = SCSI_XFER_READ;
 	task->expxferlen = block_size;
 

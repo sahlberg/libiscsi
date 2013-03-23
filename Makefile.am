@@ -237,11 +237,13 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_read12_0blocks.c \
 	test-tool/test_read12_rdprotect.c \
 	test-tool/test_read12_flags.c \
+	test-tool/test_read12_residuals.c \
 	test-tool/test_read16_simple.c \
 	test-tool/test_read16_beyond_eol.c \
 	test-tool/test_read16_0blocks.c \
 	test-tool/test_read16_rdprotect.c \
 	test-tool/test_read16_flags.c \
+	test-tool/test_read16_residuals.c \
 	test-tool/test_readcapacity10_simple.c \
 	test-tool/test_readcapacity16_simple.c \
 	test-tool/test_readcapacity16_alloclen.c \

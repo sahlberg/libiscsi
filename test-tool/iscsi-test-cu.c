@@ -187,6 +187,7 @@ static CU_TestInfo tests_read12[] = {
 	{ (char *)"testRead12ZeroBlocks", test_read12_0blocks },
 	{ (char *)"testRead12ReadProtect", test_read12_rdprotect },
 	{ (char *)"testRead12Flags", test_read12_flags },
+	{ (char *)"testRead12Residuals", test_read12_residuals },
 	CU_TEST_INFO_NULL
 };
 
@@ -196,6 +197,7 @@ static CU_TestInfo tests_read16[] = {
 	{ (char *)"testRead16ZeroBlocks", test_read16_0blocks },
 	{ (char *)"testRead16ReadProtect", test_read16_rdprotect },
 	{ (char *)"testRead16Flags", test_read16_flags },
+	{ (char *)"testRead16Residuals", test_read16_residuals },
 	CU_TEST_INFO_NULL
 };
 
