@@ -36,7 +36,7 @@ test_read10_invalid(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test invalid READ10 commands");
-	logging(LOG_VERBOSE, "Block size is %u", block_size);
+	logging(LOG_VERBOSE, "Block size is %zu", block_size);
 
 	/* Try a read10 of 1 block but xferlength == 0 */
 	task = malloc(sizeof(struct scsi_task));
@@ -63,14 +63,27 @@ test_read10_invalid(void)
 	CU_ASSERT_NOT_EQUAL(task->status, SCSI_STATUS_CANCELLED); /* XXX redundant? */
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
+			iscsi_get_error(iscsic));
+	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Verify residual overflow flag is set");
+	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW) {
+		logging(LOG_VERBOSE, "[FAILED] Target did not set residual "
+			"overflow flag");
+	}
 	CU_ASSERT_EQUAL(task->residual_status, SCSI_RESIDUAL_OVERFLOW);
 
-	logging(LOG_VERBOSE, "Verify we got %u bytes of residual overflow",
+	logging(LOG_VERBOSE, "Verify we got %zu bytes of residual overflow",
 		block_size);
-	CU_ASSERT_EQUAL(task->residual, (int64_t)block_size);
+	if (task->residual != block_size) {
+		logging(LOG_VERBOSE, "[FAILED] Target did not set correct "
+			"amount of residual. Expected %zu but got %zu.",
+			block_size, task->residual);
+	}
+	CU_ASSERT_EQUAL(task->residual, block_size);
 	scsi_free_scsi_task(task);
 	task = NULL;
 
@@ -93,17 +106,30 @@ test_read10_invalid(void)
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
+			iscsi_get_error(iscsic));
+	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Verify we got a whole block back from the target");
 	CU_ASSERT_EQUAL(task->datain.size, (int)block_size);
 
 	logging(LOG_VERBOSE, "Verify residual underflow flag is set");
-	CU_ASSERT_EQUAL(task->residual_status, SCSI_RESIDUAL_OVERFLOW);
+	if (task->residual_status != SCSI_RESIDUAL_UNDERFLOW) {
+		logging(LOG_VERBOSE, "[FAILED] Target did not set residual "
+			"underflow flag");
+	}
+	CU_ASSERT_EQUAL(task->residual_status, SCSI_RESIDUAL_UNDERFLOW);
 
-	logging(LOG_VERBOSE, "Verify we got %u bytes of residual underflow",
+	logging(LOG_VERBOSE, "Verify we got %zu bytes of residual underflow",
 		10000 - block_size);
-	CU_ASSERT_EQUAL(task->residual, (int64_t)(10000 - block_size));
+	if (task->residual != 10000 - block_size) {
+		logging(LOG_VERBOSE, "[FAILED] Target did not set correct "
+			"amount of residual. Expected %zu but got %zu.",
+			10000 - block_size, task->residual);
+	}
+	CU_ASSERT_EQUAL(task->residual, 10000 - block_size);
 	scsi_free_scsi_task(task);
 	task = NULL;
 
@@ -124,17 +150,30 @@ test_read10_invalid(void)
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
+			iscsi_get_error(iscsic));
+	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Verify we got 200 bytes back from the target");
 	CU_ASSERT_EQUAL(task->datain.size, 200);
 
 	logging(LOG_VERBOSE, "Verify residual overflow flag is set");
+	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW) {
+		logging(LOG_VERBOSE, "[FAILED] Target did not set residual "
+			"overflow flag");
+	}
 	CU_ASSERT_EQUAL(task->residual_status, SCSI_RESIDUAL_OVERFLOW);
 
-	logging(LOG_VERBOSE, "Verify we got %u bytes of residual overflow",
+	logging(LOG_VERBOSE, "Verify we got %zu bytes of residual overflow",
 		block_size - 200);
-	CU_ASSERT_EQUAL(task->residual, (int64_t)block_size - 200);
+	if (task->residual != block_size - 200) {
+		logging(LOG_VERBOSE, "[FAILED] Target did not set correct "
+			"amount of residual. Expected %zu but got %zu.",
+			block_size - 200, task->residual);
+	}
+	CU_ASSERT_EQUAL(task->residual, block_size - 200);
 
 	scsi_free_scsi_task(task);
 	task = NULL;
@@ -142,7 +181,7 @@ test_read10_invalid(void)
 
 
 	logging(LOG_VERBOSE, "Try reading two blocks but iSCSI expected "
-		"transfer length==%u (==one block)", block_size);
+		"transfer length==%zu (==one block)", block_size);
 	task = malloc(sizeof(struct scsi_task));
 	CU_ASSERT_PTR_NOT_NULL(task);
 
@@ -157,16 +196,29 @@ test_read10_invalid(void)
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
+			iscsi_get_error(iscsic));
+	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Verify we got one whole block back from the target");
 	CU_ASSERT_EQUAL(task->datain.size, (int)block_size);
 
 	logging(LOG_VERBOSE, "Verify residual overflow flag is set");
+	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW) {
+		logging(LOG_VERBOSE, "[FAILED] Target did not set residual "
+			"overflow flag");
+	}
 	CU_ASSERT_EQUAL(task->residual_status, SCSI_RESIDUAL_OVERFLOW);
 
 	logging(LOG_VERBOSE, "Verify we got one block of residual overflow");
-	CU_ASSERT_EQUAL(task->residual, (int64_t)block_size);
+	if (task->residual != block_size) {
+		logging(LOG_VERBOSE, "[FAILED] Target did not set correct "
+			"amount of residual. Expected %zu but got %zu.",
+			block_size, task->residual);
+	}
+	CU_ASSERT_EQUAL(task->residual, block_size);
 
 	scsi_free_scsi_task(task);
 	task = NULL;
@@ -189,6 +241,12 @@ test_read10_invalid(void)
 
 	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, &data);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
+
+	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
+			iscsi_get_error(iscsic));
+	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 	scsi_free_scsi_task(task);
 	task = NULL;

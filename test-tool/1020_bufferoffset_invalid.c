@@ -136,7 +136,7 @@ int T1020_bufferoffset_invalid(const char *initiator, const char *url)
 	iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
 	iscsi->target_max_recv_data_segment_length = block_size;
 
-	printf("Write 2 DATA-IN with BUFFEROFFSET==-%d ... ", block_size);
+	printf("Write 2 DATA-IN with BUFFEROFFSET==-%zu ... ", block_size);
 	/* we dont want autoreconnect since some targets will drop the
 	 * on this condition.
 	 */

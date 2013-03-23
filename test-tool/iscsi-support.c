@@ -47,7 +47,7 @@ const char *initiatorname2 =
 
 const char *tgt_url;
 
-uint32_t block_size;
+size_t block_size;
 uint64_t num_blocks;
 int lbpme;
 int lbppb;

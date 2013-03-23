@@ -25,7 +25,8 @@ int T0350_orwrite_simple(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	int ret, i, j, lun;
+	int ret, i, lun;
+	unsigned int j;
 	unsigned char r1data[4096 * 256];
 	unsigned char r2data[4096 * 256];
 	unsigned char ordata[4096 * 256];
@@ -84,7 +85,7 @@ int T0350_orwrite_simple(const char *initiator, const char *url)
 		}
 		memcpy(r1data, task->datain.data, i * block_size);
 		memset(ordata, 0x5a, i * block_size);
-		for (j = 0; j < (int)(i * block_size); j++) {
+		for (j = 0; j < i * block_size; j++) {
 			r2data[j] = r1data[j] | ordata[j];
 		}
 		scsi_free_scsi_task(task);
@@ -169,7 +170,7 @@ int T0350_orwrite_simple(const char *initiator, const char *url)
 		memcpy(r1data, task->datain.data, i * block_size);
 		memcpy(r1data, task->datain.data, i * block_size);
 		memset(ordata, 0xa5, i * block_size);
-		for (j = 0; j < (int)(i * block_size); j++) {
+		for (j = 0; j < i * block_size; j++) {
 			r2data[j] = r1data[j] | ordata[j];
 		}
 		scsi_free_scsi_task(task);

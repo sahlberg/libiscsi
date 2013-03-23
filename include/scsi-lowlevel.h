@@ -267,7 +267,7 @@ struct scsi_task {
 	unsigned char cdb[SCSI_CDB_MAX_SIZE];
 
 	enum scsi_residual residual_status;
-	int residual;
+	size_t residual;
 	struct scsi_sense sense;
 	struct scsi_data datain;
 	struct scsi_allocated_memory *mem;

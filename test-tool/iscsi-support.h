@@ -128,7 +128,7 @@ do {									\
 	}								\
 } while (0);
 
-extern uint32_t block_size;
+extern size_t block_size;
 extern uint64_t num_blocks;
 extern int lbpme;
 extern int lbppb;

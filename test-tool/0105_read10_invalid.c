@@ -95,7 +95,7 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 		goto finished;
 	}
 	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
-	    task->residual != (int64_t)block_size) {
+	    task->residual != block_size) {
 	        printf("[FAILED]\n");
 		printf("Read10 returned incorrect residual overflow.\n");
 		ret = -1;
@@ -141,7 +141,7 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 		goto finished;
 	}
 	if (task->residual_status != SCSI_RESIDUAL_UNDERFLOW ||
-	    task->residual != (int64_t)block_size) {
+	    task->residual != block_size) {
 	        printf("[FAILED]\n");
 		printf("Read10 returned incorrect residual underflow.\n");
 		ret = -1;
@@ -184,7 +184,7 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 		goto finished;
 	}
 	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
-	    task->residual != (int64_t)(block_size - 200)) {
+	    task->residual != block_size - 200) {
 	        printf("[FAILED]\n");
 		printf("Read10 returned incorrect residual overflow.\n");
 		ret = -1;
@@ -196,7 +196,7 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 
 
 	/* Try a read of 2 blocks but xferlength == 'block_size' */
-	printf("Read10 2 blocks but with iscsi ExpectedDataTransferLength==%d ... ", block_size);
+	printf("Read10 2 blocks but with iscsi ExpectedDataTransferLength==%zu ... ", block_size);
 
 	task = malloc(sizeof(struct scsi_task));
 	if (task == NULL) {
@@ -221,13 +221,13 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 	        printf("[FAILED]\n");
-		printf("Read10 of 2 blocks with iscsi ExpectedDataTransferLength==%d should succeed.\n", block_size);
+		printf("Read10 of 2 blocks with iscsi ExpectedDataTransferLength==%zu should succeed.\n", block_size);
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
 	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW ||
-	    task->residual != (int64_t)block_size) {
+	    task->residual != block_size) {
 	        printf("[FAILED]\n");
 		printf("Read10 returned incorrect residual overflow.\n");
 		ret = -1;
