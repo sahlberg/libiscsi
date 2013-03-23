@@ -33,7 +33,7 @@ test_read10_residuals(void)
 	struct scsi_task *task_ret;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test invalid READ10 commands");
+	logging(LOG_VERBOSE, "Test READ10 commands with residuals");
 	logging(LOG_VERBOSE, "Block size is %zu", block_size);
 
 	/* Try a read10 of 1 block but xferlength == 0 */
