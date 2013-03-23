@@ -59,6 +59,8 @@ test_reserve6_itnexus_loss(void)
 	logging(LOG_VERBOSE, "Disconnect from the target.");
 	iscsi_destroy_context(iscsic);
 
+	sleep(3);
+
 	logging(LOG_VERBOSE, "Reconnect to target");
 	iscsic = iscsi_context_login(initiatorname1, tgt_url, &tgt_lun);
 	if (iscsic == NULL) {
