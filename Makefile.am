@@ -230,6 +230,7 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_read10_0blocks.c \
 	test-tool/test_read10_rdprotect.c \
 	test-tool/test_read10_flags.c \
+	test-tool/test_read10_residuals.c \
 	test-tool/test_read10_invalid.c \
 	test-tool/test_read12_simple.c \
 	test-tool/test_read12_beyond_eol.c \

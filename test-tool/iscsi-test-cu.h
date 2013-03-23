@@ -106,6 +106,7 @@ void test_read10_beyond_eol(void);
 void test_read10_0blocks(void);
 void test_read10_rdprotect(void);
 void test_read10_flags(void);
+void test_read10_residuals(void);
 void test_read10_invalid(void);
 
 void test_read12_simple(void);

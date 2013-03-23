@@ -176,6 +176,7 @@ static CU_TestInfo tests_read10[] = {
 	{ (char *)"testRead10ZeroBlocks", test_read10_0blocks },
 	{ (char *)"testRead10ReadProtect", test_read10_rdprotect },
 	{ (char *)"testRead10Flags", test_read10_flags },
+	{ (char *)"testRead10Residuals", test_read10_residuals },
 	{ (char *)"testRead10Invalid", test_read10_invalid },
 	CU_TEST_INFO_NULL
 };
