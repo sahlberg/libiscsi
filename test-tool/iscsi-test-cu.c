@@ -334,6 +334,7 @@ static CU_TestInfo tests_writeverify10[] = {
 	{ (char *)"testWriteVerify10ZeroBlocks", test_writeverify10_0blocks },
 	{ (char *)"testWriteVerify10WriteProtect", test_writeverify10_wrprotect },
 	{ (char *)"testWriteVerify10Flags", test_writeverify10_flags },
+	{ (char *)"testWriteVerify10Residuals", test_writeverify10_residuals },
 	CU_TEST_INFO_NULL
 };
 
@@ -343,6 +344,7 @@ static CU_TestInfo tests_writeverify12[] = {
 	{ (char *)"testWriteVerify12ZeroBlocks", test_writeverify12_0blocks },
 	{ (char *)"testWriteVerify12WriteProtect", test_writeverify12_wrprotect },
 	{ (char *)"testWriteVerify12Flags", test_writeverify12_flags },
+	{ (char *)"testWriteVerify12Residuals", test_writeverify12_residuals },
 	CU_TEST_INFO_NULL
 };
 
@@ -352,6 +354,7 @@ static CU_TestInfo tests_writeverify16[] = {
 	{ (char *)"testWriteVerify16ZeroBlocks", test_writeverify16_0blocks },
 	{ (char *)"testWriteVerify16WriteProtect", test_writeverify16_wrprotect },
 	{ (char *)"testWriteVerify16Flags", test_writeverify16_flags },
+	{ (char *)"testWriteVerify16Residuals", test_writeverify16_residuals },
 	CU_TEST_INFO_NULL
 };
 

@@ -210,17 +210,20 @@ void test_writeverify10_beyond_eol(void);
 void test_writeverify10_0blocks(void);
 void test_writeverify10_wrprotect(void);
 void test_writeverify10_flags(void);
+void test_writeverify10_residuals(void);
 
 void test_writeverify12_simple(void);
 void test_writeverify12_beyond_eol(void);
 void test_writeverify12_0blocks(void);
 void test_writeverify12_wrprotect(void);
 void test_writeverify12_flags(void);
+void test_writeverify12_residuals(void);
 
 void test_writeverify16_simple(void);
 void test_writeverify16_beyond_eol(void);
 void test_writeverify16_0blocks(void);
 void test_writeverify16_wrprotect(void);
 void test_writeverify16_flags(void);
+void test_writeverify16_residuals(void);
 
 #endif	/* _ISCSI_TEST_CU_H_ */

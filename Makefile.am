@@ -316,16 +316,19 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_writeverify10_0blocks.c \
 	test-tool/test_writeverify10_wrprotect.c \
 	test-tool/test_writeverify10_flags.c \
+	test-tool/test_writeverify10_residuals.c \
 	test-tool/test_writeverify12_simple.c \
 	test-tool/test_writeverify12_beyond_eol.c \
 	test-tool/test_writeverify12_0blocks.c \
 	test-tool/test_writeverify12_wrprotect.c \
 	test-tool/test_writeverify12_flags.c \
+	test-tool/test_writeverify12_residuals.c \
 	test-tool/test_writeverify16_simple.c \
 	test-tool/test_writeverify16_beyond_eol.c \
 	test-tool/test_writeverify16_0blocks.c \
 	test-tool/test_writeverify16_wrprotect.c \
-	test-tool/test_writeverify16_flags.c
+	test-tool/test_writeverify16_flags.c \
+	test-tool/test_writeverify16_residuals.c
 
 endif
 
