@@ -225,6 +225,7 @@ test_write16_residuals(void)
 
 
 
+	logging(LOG_VERBOSE, "Verify that if iSCSI EDTL > SCSI TL then we only write SCSI TL amount of data");
 
 	logging(LOG_VERBOSE, "Write two blocks of 'a'");
 	memset(buf, 'a', 10000);
@@ -265,6 +266,80 @@ test_write16_residuals(void)
 	CU_ASSERT_EQUAL(task->residual_status, SCSI_RESIDUAL_UNDERFLOW);
 
 	logging(LOG_VERBOSE, "Verify we got one block of residual underflow");
+	if (task->residual != block_size) {
+		logging(LOG_VERBOSE, "[FAILED] Target did not set correct "
+			"amount of residual. Expected %zu but got %zu.",
+			block_size, task->residual);
+	}
+	CU_ASSERT_EQUAL(task->residual, block_size);
+	scsi_free_scsi_task(task);
+	task = NULL;
+
+	logging(LOG_VERBOSE, "Read the two blocks");
+	ret = read16(iscsic, tgt_lun, 0, 2* block_size,
+		     block_size, 0, 0, 0, 0, 0, buf);
+	CU_ASSERT_EQUAL(ret, 0);
+
+	logging(LOG_VERBOSE, "Verify that the first block was changed to 'b'");
+	for (i = 0; i < block_size; i++) {
+		if (buf[i] != 'b') {
+			logging(LOG_NORMAL, "First block did not contain expected 'b'");
+			CU_FAIL("Block was not written correctly");
+			break;
+		}
+	}
+
+	logging(LOG_VERBOSE, "Verify that the second block was NOT overwritten and still contains 'a'");
+	for (i = block_size; i < 2 * block_size; i++) {
+		if (buf[i] != 'a') {
+			logging(LOG_NORMAL, "Second block was overwritten and no longer contain 'a'");
+			CU_FAIL("Second block was incorrectly overwritten correctly");
+			break;
+		}
+	}
+
+
+	logging(LOG_VERBOSE, "Verify that if iSCSI EDTL < SCSI TL then we only write iSCSI EDTL amount of data");
+
+	logging(LOG_VERBOSE, "Write two blocks of 'a'");
+	memset(buf, 'a', 10000);
+	ret = write16(iscsic, tgt_lun, 0, 2 * block_size,
+	    block_size, 0, 0, 0, 0, 0, buf);
+	CU_ASSERT_EQUAL(ret, 0);
+
+	logging(LOG_VERBOSE, "Write two blocks of 'b' but set iSCSI EDTL to 1 blocks.");
+	task = malloc(sizeof(struct scsi_task));
+	CU_ASSERT_PTR_NOT_NULL(task);
+
+	memset(buf, 'b', 10000);
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0] = SCSI_OPCODE_WRITE16;
+	task->cdb[13] = 2;
+	task->cdb_size = 16;
+	task->xfer_dir = SCSI_XFER_WRITE;
+	task->expxferlen = block_size;
+
+	data.size = task->expxferlen;
+	data.data = &buf[0];
+	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, &data);
+	CU_ASSERT_PTR_NOT_NULL(task_ret);
+
+	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
+			iscsi_get_error(iscsic));
+	}
+	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
+
+	logging(LOG_VERBOSE, "Verify residual overflow flag is set");
+	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW) {
+		logging(LOG_VERBOSE, "[FAILED] Target did not set residual "
+			"overflow flag");
+	}
+	CU_ASSERT_EQUAL(task->residual_status, SCSI_RESIDUAL_OVERFLOW);
+
+	logging(LOG_VERBOSE, "Verify we got one block of residual overflow");
 	if (task->residual != block_size) {
 		logging(LOG_VERBOSE, "[FAILED] Target did not set correct "
 			"amount of residual. Expected %zu but got %zu.",
