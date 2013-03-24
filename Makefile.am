@@ -284,16 +284,19 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_write10_0blocks.c \
 	test-tool/test_write10_wrprotect.c \
 	test-tool/test_write10_flags.c \
+	test-tool/test_write10_residuals.c \
 	test-tool/test_write12_simple.c \
 	test-tool/test_write12_beyond_eol.c \
 	test-tool/test_write12_0blocks.c \
 	test-tool/test_write12_wrprotect.c \
 	test-tool/test_write12_flags.c \
+	test-tool/test_write12_residuals.c \
 	test-tool/test_write16_simple.c \
 	test-tool/test_write16_beyond_eol.c \
 	test-tool/test_write16_0blocks.c \
 	test-tool/test_write16_wrprotect.c \
 	test-tool/test_write16_flags.c \
+	test-tool/test_write16_residuals.c \
 	test-tool/test_writesame10_simple.c \
 	test-tool/test_writesame10_beyond_eol.c \
 	test-tool/test_writesame10_0blocks.c \

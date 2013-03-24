@@ -173,18 +173,21 @@ void test_write10_beyond_eol(void);
 void test_write10_0blocks(void);
 void test_write10_wrprotect(void);
 void test_write10_flags(void);
+void test_write10_residuals(void);
 
 void test_write12_simple(void);
 void test_write12_beyond_eol(void);
 void test_write12_0blocks(void);
 void test_write12_wrprotect(void);
 void test_write12_flags(void);
+void test_write12_residuals(void);
 
 void test_write16_simple(void);
 void test_write16_beyond_eol(void);
 void test_write16_0blocks(void);
 void test_write16_wrprotect(void);
 void test_write16_flags(void);
+void test_write16_residuals(void);
 
 void test_writesame10_simple(void);
 void test_writesame10_beyond_eol(void);
