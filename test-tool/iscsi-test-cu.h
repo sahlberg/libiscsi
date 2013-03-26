@@ -134,6 +134,9 @@ void test_reserve6_simple(void);
 void test_reserve6_2initiators(void);
 void test_reserve6_logout(void);
 void test_reserve6_itnexus_loss(void);
+void test_reserve6_target_cold_reset(void);
+void test_reserve6_target_warm_reset(void);
+void test_reserve6_lun_reset(void);
 
 void test_startstopunit_simple(void);
 void test_startstopunit_pwrcnd(void);

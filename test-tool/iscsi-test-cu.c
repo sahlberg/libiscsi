@@ -222,6 +222,9 @@ static CU_TestInfo tests_reserve6[] = {
 	{ (char *)"testReserve6_2Initiators", test_reserve6_2initiators },
 	{ (char *)"testReserve6Logout", test_reserve6_logout },
 	{ (char *)"testReserve6ITNexusLoss", test_reserve6_itnexus_loss },
+	{ (char *)"testReserve6TargetColdReset", test_reserve6_target_cold_reset },
+	{ (char *)"testReserve6TargetWarmReset", test_reserve6_target_warm_reset },
+	{ (char *)"testReserve6LUNReset", test_reserve6_lun_reset },
 	CU_TEST_INFO_NULL
 };
 

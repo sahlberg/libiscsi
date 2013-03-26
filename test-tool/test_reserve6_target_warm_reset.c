@@ -26,16 +26,16 @@
 
 
 void
-test_reserve6_itnexus_loss(void)
+test_reserve6_target_warm_reset(void)
 {
 	int ret;
 
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test that RESERVE6 is released on it-nexus loss");
+	logging(LOG_VERBOSE, "Test that RESERVE6 is released on target warm reset");
 
 
-	logging(LOG_NORMAL, "Take out a RESERVE6 from the first initiator");
+	logging(LOG_VERBOSE, "Take out a RESERVE6 from the first initiator");
 	ret = reserve6(iscsic, tgt_lun);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "[SKIPPED] Target does not support RESERVE6. Skipping test");
@@ -52,28 +52,28 @@ test_reserve6_itnexus_loss(void)
 		return;
 	}
 
-	logging(LOG_NORMAL, "Try to take out a RESERVE6 from the second initiator");
+	logging(LOG_VERBOSE, "Try to take out a RESERVE6 from the second initiator");
 	ret = reserve6_conflict(iscsic2, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Disconnect from the target.");
-	iscsi_destroy_context(iscsic);
+
+
+	logging(LOG_VERBOSE, "Send a Warm Reset to the target");
+	ret = iscsi_task_mgmt_target_warm_reset_sync(iscsic);
+	if (ret != 0) {
+		logging(LOG_NORMAL, "Warm reset failed");
+	}
+	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Sleep for three seconds incase the target is slow to reset");
 	sleep(3);
 
-	logging(LOG_VERBOSE, "Reconnect to target");
-	iscsic = iscsi_context_login(initiatorname1, tgt_url, &tgt_lun);
-	if (iscsic == NULL) {
-		logging(LOG_VERBOSE, "Failed to login to target");
-		return;
-	}
 
-	logging(LOG_NORMAL, "RESERVE6 from the second initiator should work now");
+	logging(LOG_VERBOSE, "RESERVE6 from the second initiator should work now");
 	ret = reserve6(iscsic2, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_NORMAL, "RELEASE6 from the second initiator");
+	logging(LOG_VERBOSE, "RELEASE6 from the second initiator");
 	ret = release6(iscsic2, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 }
