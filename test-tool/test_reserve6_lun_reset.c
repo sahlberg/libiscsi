@@ -45,19 +45,6 @@ test_reserve6_lun_reset(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Create a second connection to the target");
-	iscsic2 = iscsi_context_login(initiatorname1, tgt_url, &tgt_lun);
-	if (iscsic2 == NULL) {
-		logging(LOG_VERBOSE, "Failed to login to target");
-		return;
-	}
-
-	logging(LOG_VERBOSE, "Try to take out a RESERVE6 from the second initiator");
-	ret = reserve6_conflict(iscsic2, tgt_lun);
-	CU_ASSERT_EQUAL(ret, 0);
-
-
-
 	logging(LOG_VERBOSE, "Send a LUN Reset");
 	ret = iscsi_task_mgmt_lun_reset_sync(iscsic, tgt_lun);
 	if (ret != 0) {
@@ -68,6 +55,13 @@ test_reserve6_lun_reset(void)
 	logging(LOG_VERBOSE, "Sleep for three seconds incase the target is slow to reset");
 	sleep(3);
 
+
+	logging(LOG_VERBOSE, "Create a second connection to the target");
+	iscsic2 = iscsi_context_login(initiatorname1, tgt_url, &tgt_lun);
+	if (iscsic2 == NULL) {
+		logging(LOG_VERBOSE, "Failed to login to target");
+		return;
+	}
 
 	logging(LOG_VERBOSE, "RESERVE6 from the second initiator should work now");
 	ret = reserve6(iscsic2, tgt_lun);
