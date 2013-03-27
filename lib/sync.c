@@ -157,6 +157,26 @@ int iscsi_logout_sync(struct iscsi_context *iscsi)
 	return state.status;
 }
 
+static void
+iscsi_task_mgmt_sync_cb(struct iscsi_context *iscsi _U_, int status,
+	      void *command_data, void *private_data)
+{
+	struct iscsi_sync_state *state = private_data;
+
+	if (state != NULL) {
+		state->status    = status;
+		state->finished = 1;
+	}
+
+	/* The task mgmt command might have completed successfully
+	 * but the target might have responded with
+	 * "command not implemented" or something.
+	 */
+	if (command_data && *(uint32_t *)command_data) {
+		state->status = SCSI_STATUS_ERROR;
+	}
+}
+
 int
 iscsi_task_mgmt_sync(struct iscsi_context *iscsi,
 		     int lun, enum iscsi_task_mgmt_funcs function, 
@@ -168,7 +188,7 @@ iscsi_task_mgmt_sync(struct iscsi_context *iscsi,
 
 	if (iscsi_task_mgmt_async(iscsi, lun, function,
 				  ritt, rcmdsn,
-				  iscsi_sync_cb, &state) != 0) {
+				  iscsi_task_mgmt_sync_cb, &state) != 0) {
 		iscsi_set_error(iscsi, "Failed to send TASK MGMT function: %s",
 				iscsi_get_error(iscsi));
 		return -1;
