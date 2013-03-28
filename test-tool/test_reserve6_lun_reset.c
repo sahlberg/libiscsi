@@ -48,7 +48,7 @@ test_reserve6_lun_reset(void)
 	logging(LOG_VERBOSE, "Send a LUN Reset");
 	ret = iscsi_task_mgmt_lun_reset_sync(iscsic, tgt_lun);
 	if (ret != 0) {
-		logging(LOG_NORMAL, "LUN reset failed");
+		logging(LOG_NORMAL, "LUN reset failed. %s", iscsi_get_error(iscsic));
 	}
 	CU_ASSERT_EQUAL(ret, 0);
 

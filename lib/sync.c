@@ -158,7 +158,7 @@ int iscsi_logout_sync(struct iscsi_context *iscsi)
 }
 
 static void
-iscsi_task_mgmt_sync_cb(struct iscsi_context *iscsi _U_, int status,
+iscsi_task_mgmt_sync_cb(struct iscsi_context *iscsi, int status,
 	      void *command_data, void *private_data)
 {
 	struct iscsi_sync_state *state = private_data;
@@ -173,6 +173,23 @@ iscsi_task_mgmt_sync_cb(struct iscsi_context *iscsi _U_, int status,
 	 * "command not implemented" or something.
 	 */
 	if (command_data && *(uint32_t *)command_data) {
+		switch (*(uint32_t *)command_data) {
+		case 1: iscsi_set_error(iscsi, "TASK MGMT responded Task Does Not Exist");
+			break;
+		case 2: iscsi_set_error(iscsi, "TASK MGMT responded LUN Does Not Exist");
+			break;
+		case 3: iscsi_set_error(iscsi, "TASK MGMT responded Task Still Allegiant");
+			break;
+		case 4: iscsi_set_error(iscsi, "TASK MGMT responded Task Allegiance Reassignment Not Supported");
+			break;
+		case 5: iscsi_set_error(iscsi, "TASK MGMT responded Task Mgmt Function Not Supported");
+			break;
+		case 6: iscsi_set_error(iscsi, "TASK MGMT responded Function Authorization Failed");
+			break;
+		case 255: iscsi_set_error(iscsi, "TASK MGMT responded Function Rejected");
+			break;
+		}
+
 		state->status = SCSI_STATUS_ERROR;
 	}
 }

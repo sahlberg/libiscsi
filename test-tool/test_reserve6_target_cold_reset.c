@@ -48,7 +48,7 @@ test_reserve6_target_cold_reset(void)
 	logging(LOG_VERBOSE, "Send a Cold Reset to the target");
 	ret = iscsi_task_mgmt_target_cold_reset_sync(iscsic);
 	if (ret != 0) {
-		logging(LOG_NORMAL, "Cold reset failed");
+		logging(LOG_NORMAL, "Cold reset failed. %s", iscsi_get_error(iscsic));
 	}
 	CU_ASSERT_EQUAL(ret, 0);
 
