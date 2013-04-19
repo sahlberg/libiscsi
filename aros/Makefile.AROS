@@ -1,0 +1,15 @@
+AR=ar
+CC=gcc
+CFLAGS=-g -O0 -DAROS=1 -D_U_=" " -DHAVE_SYS_TYPES_H -DHAVE_SOCKADDR_LEN -I. -Iinclude -Iaros
+
+OBJS=lib/connect.o lib/crc32c.o lib/discovery.o lib/init.o lib/iscsi-command.o lib/logging.o lib/login.o lib/md5.o lib/nop.o lib/pdu.o lib/scsi-lowlevel.o lib/socket.o lib/sync.o lib/task_mgmt.o
+
+all: lib/libiscsi.a
+
+lib/libiscsi.a: $(OBJS)
+	$(AR) cru $@ $(OBJS)
+
+.c.o:
+	echo $(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
+
