@@ -37,6 +37,26 @@ if test x"$libiscsi_cv_NEED_SYS_FILIO_H" = x"yes"; then
     AC_DEFINE(NEED_SYS_FILIO_H,1,[Whether we need sys/filio.h])
 fi
 
+# check for arpa/inet.h
+dnl Check for arpa/inet.h
+AC_CHECK_HEADERS([arpa/inet.h])
+
+# check for poll.h
+dnl Check for poll.h
+AC_CHECK_HEADERS([poll.h])
+
+
+AC_CACHE_CHECK([for sockaddr_in6 support],libiscsi_cv_HAVE_SOCKADDR_IN6,[
+AC_TRY_COMPILE([#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>],
+[struct sockaddr_in6 sock; int len = sizeof(sock);],
+libiscsi_cv_HAVE_SOCKADDR_IN6=yes,libiscsi_cv_HAVE_SOCKADDR_IN6=no)])
+if test x"$libiscsi_cv_HAVE_SOCKADDR_IN6" = x"yes"; then
+    AC_DEFINE(HAVE_SOCKADDR_IN6,1,[Whether we have IPv6 support])
+fi
+
+
 AC_MSG_CHECKING(whether libpopt is available)
 ac_save_CFLAGS="$CFLAGS"
 ac_save_LIBS="$LIBS"

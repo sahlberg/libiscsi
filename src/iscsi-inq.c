@@ -14,12 +14,18 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <poll.h>
 #include <popt.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"

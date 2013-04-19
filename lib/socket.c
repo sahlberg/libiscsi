@@ -14,6 +14,29 @@
    You should have received a copy of the GNU Lesser General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+
+#ifdef AROS
+#include "aros/aros_compat.h"
+#endif
 
 #if defined(WIN32)
 #include <winsock2.h>
@@ -21,15 +44,11 @@
 #define ioctl ioctlsocket
 #define close closesocket
 #else
-#include "config.h"
 #include <strings.h>
-#include <arpa/inet.h>
 #include <netdb.h>
-#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <poll.h>
 #include <sys/ioctl.h>
 #endif
 
@@ -217,6 +236,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		((struct sockaddr_in *)(ai->ai_addr))->sin_len = socksize;
 #endif
 		break;
+#ifdef HAVE_SOCKADDR_IN6
 	case AF_INET6:
 		socksize = sizeof(struct sockaddr_in6);
 		((struct sockaddr_in6 *)(ai->ai_addr))->sin6_port = htons(port);
@@ -224,6 +244,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		((struct sockaddr_in6 *)(ai->ai_addr))->sin6_len = socksize;
 #endif
 		break;
+#endif
 	default:
 		iscsi_set_error(iscsi, "Unknown address family :%d. "
 				"Only IPv4/IPv6 supported so far.",

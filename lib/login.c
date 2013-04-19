@@ -19,10 +19,20 @@
 #define _GNU_SOURCE
 #endif
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+
 #if defined(WIN32)
 #include <winsock2.h>
-#else
-#include <arpa/inet.h>
 #endif
 
 #include <stdio.h>

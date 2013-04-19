@@ -14,12 +14,17 @@
    You should have received a copy of the GNU Lesser General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
 
 #if defined(WIN32)
 #include <winsock2.h>
 #include "win32/win32_compat.h"
-#else
-#include <poll.h>
 #endif
 
 #include <stdio.h>

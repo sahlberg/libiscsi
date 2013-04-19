@@ -21,12 +21,26 @@
  * 3, unmarshall data-in into a real structure
  * 4, marshall a real structure into a data-out blob
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+
+#ifdef AROS
+#include "aros/aros_compat.h"
+#endif
 
 #if defined(WIN32)
 #include <winsock2.h>
 #else
 #include <strings.h>
-#include <arpa/inet.h>
 #endif
 
 #include <stdio.h>
