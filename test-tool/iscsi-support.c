@@ -28,7 +28,6 @@
 #include <inttypes.h>
 #include <string.h>
 #include <poll.h>
-#include <popt.h>
 #include <fnmatch.h>
 #include "slist.h"
 #include "iscsi.h"
