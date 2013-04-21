@@ -22,7 +22,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <poll.h>
-#include <popt.h>
+#include <getopt.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -56,40 +56,51 @@ void print_help(void)
 	fprintf(stderr, "  \"ipv6-address\"   [fce0::1]\n");
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
-	poptContext pc;
 	struct iscsi_context *iscsi;
-	const char **extra_argv;
-	int extra_argc = 0;
 	const char *url = NULL;
 	struct iscsi_url *iscsi_url = NULL;
 	int show_help = 0, show_usage = 0, debug = 0, size_only=0;
-	int res;
+	int c;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 
-	struct poptOption popt_options[] = {
-		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
-		{ "usage", 0, POPT_ARG_NONE, &show_usage, 0, "Display brief usage message", NULL },
-		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
-		{ "size", 's', POPT_ARG_NONE, &size_only, 0, "Print target size only", NULL },
-		{ "debug", 'd', POPT_ARG_INT, &debug, 0, "Debugging level", "integer" },
-		POPT_TABLEEND
+	static struct option long_options[] = {
+		{"help",           no_argument,          NULL,        'h'},
+		{"usage",          no_argument,          NULL,        'u'},
+		{"debug",          no_argument,          NULL,        'd'},
+		{"size",           no_argument,          NULL,        's'},
+		{"initiator_name", required_argument,    NULL,        'i'},
+		{"evpd",           required_argument,    NULL,        'e'},
+		{"pagecode",       required_argument,    NULL,        'c'},
+		{0, 0, 0, 0}
 	};
+	int option_index;
 
-	pc = poptGetContext(argv[0], argc, argv, popt_options, POPT_CONTEXT_POSIXMEHARDER);
-	if ((res = poptGetNextOpt(pc)) < -1) {
-		fprintf(stderr, "Failed to parse option : %s %s\n",
-			poptBadOption(pc, 0), poptStrerror(res));
-		exit(10);
-	}
-	extra_argv = poptGetArgs(pc);
-	if (extra_argv) {
-		url = strdup(*extra_argv);
-		extra_argv++;
-		while (extra_argv[extra_argc]) {
-			extra_argc++;
+	while ((c = getopt_long(argc, argv, "h?udi:s", long_options,
+			&option_index)) != -1) {
+		switch (c) {
+		case 'h':
+		case '?':
+			show_help = 1;
+			break;
+		case 'u':
+			show_usage = 1;
+			break;
+		case 's':
+			size_only = 1;
+			break;
+		case 'd':
+			debug = 1;
+			break;
+		case 'i':
+			initiator = optarg;
+			break;
+		default:
+			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
+			print_help();
+			exit(0);
 		}
 	}
 
@@ -103,8 +114,6 @@ int main(int argc, const char *argv[])
 		exit(0);
 	}
 
-	poptFreeContext(pc);
-
 	iscsi = iscsi_create_context(initiator);
 	if (iscsi == NULL) {
 		fprintf(stderr, "Failed to create context\n");
@@ -116,6 +125,7 @@ int main(int argc, const char *argv[])
 		iscsi_set_log_level(iscsi, debug);
 	}
 
+	url = strdup(argv[optind]);
 	if (url == NULL) {
 		fprintf(stderr, "You must specify the URL\n");
 		print_usage();
