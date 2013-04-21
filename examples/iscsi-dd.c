@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <poll.h>
-#include <popt.h>
+#include <getopt.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -142,40 +142,42 @@ void fill_read_queue(struct client *client)
 
 int main(int argc, const char *argv[])
 {
-	poptContext pc;
-	const char **extra_argv;
 	char *src_url = NULL;
 	char *dst_url = NULL;
 	struct iscsi_url *iscsi_url;
 	struct scsi_task *task;
 	struct scsi_readcapacity10 *rc10;
-	int extra_argc = 0;
-	int res;
+	int c;
 	struct pollfd pfd[2];
 	struct client client;
 
-	struct poptOption popt_options[] = {
-		POPT_AUTOHELP
-		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
-		{ "src", 0, POPT_ARG_STRING, &src_url, 0, "SRC lun", "iscsi url" },
-		{ "dst", 0, POPT_ARG_STRING, &dst_url, 0, "DST lun", "iscsi url" },
-		POPT_TABLEEND
+	static struct option long_options[] = {
+		{"dst",            required_argument,    NULL,        'd'},
+		{"src",            required_argument,    NULL,        's'},
+		{"initiator_name", required_argument,    NULL,        'i'},
+		{0, 0, 0, 0}
 	};
+	int option_index;
 
-	pc = poptGetContext(argv[0], argc, argv, popt_options, POPT_CONTEXT_POSIXMEHARDER);
-	if ((res = poptGetNextOpt(pc)) < -1) {
-		fprintf(stderr, "Failed to parse option : %s %s\n",
-			poptBadOption(pc, 0), poptStrerror(res));
-		exit(10);
-	}
-	extra_argv = poptGetArgs(pc);
-	if (extra_argv) {
-		extra_argv++;
-		while (extra_argv[extra_argc]) {
-			extra_argc++;
+	while ((c = getopt_long(argc, argv, "d:s:i:", long_options,
+			&option_index)) != -1) {
+		switch (c) {
+		case 'd':
+			dst = optarg;
+			break;
+		case 's':
+			src = optarg;
+			break;
+		case 'i':
+			initiator = optarg;
+			break;
+		default:
+			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
+			print_help();
+			exit(0);
 		}
 	}
-	poptFreeContext(pc);
+
 
 	if (src_url == NULL) {
 		fprintf(stderr, "You must specify source url\n");
