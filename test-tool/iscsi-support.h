@@ -142,6 +142,7 @@ extern int lbpws10;
 extern int lbpws;
 extern int anc_sup;
 extern int readonly;
+extern int sbc3_support;
 
 struct iscsi_context *iscsi_context_login(const char *initiatorname, const char *url, int *lun);
 

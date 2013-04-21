@@ -60,6 +60,7 @@ int lbpws10;
 int lbpws;
 int anc_sup;
 int readonly;
+int sbc3_support;
 
 int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
@@ -2465,7 +2466,13 @@ readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len)
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
-
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] READCAPACITY16 command: "
 			"failed with sense. %s", iscsi_get_error(iscsi));
@@ -2498,7 +2505,13 @@ readcapacity16_nomedium(struct iscsi_context *iscsi, int lun, int alloc_len)
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
-
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
 	if (task->status == SCSI_STATUS_GOOD) {
 	  logging(LOG_NORMAL, "[FAILED] READCAPACITY16 command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
 		scsi_free_scsi_task(task);

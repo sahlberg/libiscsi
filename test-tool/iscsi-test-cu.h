@@ -49,6 +49,8 @@ void test_inquiry_evpd(void);
 void test_inquiry_supported_vpd(void);
 void test_inquiry_mandatory_vpd_sbc(void);
 
+void test_mandatory_sbc(void);
+
 void test_nomedia_sbc(void);
 
 void test_orwrite_simple(void);

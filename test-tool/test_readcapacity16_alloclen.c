@@ -1,4 +1,3 @@
-
 /* 
    Copyright (C) 2013 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -37,6 +36,11 @@ test_readcapacity16_alloclen(void)
 
 	for (i = 0; i < 16; i++) {
 		ret = readcapacity16(iscsic, tgt_lun, i);
+		if (sbc3_support && ret == -2) {
+			logging(LOG_NORMAL, "[FAILED] READCAPACITY16 is not available but the device claims SBC-3 support.");
+			CU_FAIL("READCAPACITY16 failed but the device claims SBC-3 support.");
+			return;
+		}
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

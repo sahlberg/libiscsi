@@ -75,6 +75,11 @@ static CU_TestInfo tests_inquiry[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_mandatory[] = {
+	{ (char *)"testMandatorySBC", test_mandatory_sbc },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_nomedia[] = {
 	{ (char *)"testNoMediaSBC", test_nomedia_sbc },
 	CU_TEST_INFO_NULL
@@ -366,6 +371,8 @@ static CU_SuiteInfo suites[] = {
 	  tests_get_lba_status },
 	{ (char *)"TestInquiry", test_setup, test_teardown,
 	  tests_inquiry },
+	{ (char *)"TestMandatory", test_setup, test_teardown,
+	  tests_mandatory },
 	{ (char *)"TestNoMedia", test_setup, test_teardown,
 	  tests_nomedia },
 	{ (char *)"TestOrWrite", test_setup, test_teardown,
@@ -679,7 +686,7 @@ main(int argc, char *argv[])
 		{ "Verbose-scsi", no_argument, 0, 'V' },
 		{ NULL, 0, 0, 0 }
 	};
-	int c;
+	int i, c;
 	int opt_idx = 0;
 
 	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsnvV", long_opts,
@@ -843,6 +850,13 @@ main(int argc, char *argv[])
 	sccs = inq->sccs;
 	encserv = inq->encserv;
 	scsi_free_scsi_task(task);
+
+	sbc3_support = 0;
+	for (i = 0; i < 8; i++) {
+		if (inq->version_descriptor[i] == 0x04C0) {
+			sbc3_support = 1;
+		}
+	}
 
 	/* if thin provisioned we also need to read the VPD page for it */
 	if (lbpme != 0) {
