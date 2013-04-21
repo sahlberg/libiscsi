@@ -27,7 +27,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <poll.h>
-#include <popt.h>
+#include <getopt.h>
 #include <fnmatch.h>
 #include "slist.h"
 #include "iscsi.h"
@@ -303,11 +303,8 @@ static void print_help(void)
 }
 
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
-	poptContext pc;
-	const char **extra_argv;
-	int extra_argc = 0;
 	const char *url = NULL;
 	int show_help = 0, show_usage = 0, list_tests = 0;
 	int res, num_failed, num_skipped;
@@ -321,36 +318,63 @@ int main(int argc, const char *argv[])
 	struct scsi_readcapacity16 *rc16;
 	struct scsi_inquiry_standard *inq;
 	int full_size;
+	int c;
 
-	struct poptOption popt_options[] = {
-		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
-		{ "usage", 0, POPT_ARG_NONE, &show_usage, 0, "Display brief usage message", NULL },
-		{ "list", 'l', POPT_ARG_NONE, &list_tests, 0, "List all tests", NULL },
-		{ "initiator-name", 'i', POPT_ARG_STRING, &initiatorname1, 0, "Initiatorname to use", "iqn-name" },
-		{ "initiator-name-2", 'I', POPT_ARG_STRING, &initiatorname2, 0, "Second initiatorname to use for tests using more than one session", "iqn-name" },
-		{ "test", 't', POPT_ARG_STRING, &testname, 0, "Which test to run", "testname" },
-		{ "skip", 's', POPT_ARG_STRING, &skipname, 0, "Which test to skip", "skipname" },
-		{ "info", 0, POPT_ARG_NONE, &show_info, 0, "Show information about the test", "testname" },
-		{ "dataloss", 0, POPT_ARG_NONE, &data_loss, 0, "Allow destructuve tests", NULL },
-		POPT_TABLEEND
+	static struct option long_options[] = {
+		{"help",             no_argument,          NULL,        'h'},
+		{"usage",            no_argument,          NULL,        'u'},
+		{"dataloss",         no_argument,          NULL,        'D'},
+		{"info",             no_argument,          NULL,        'X'},
+		{"list",             no_argument,          NULL,        'l'},
+		{"test",             required_argument,    NULL,        't'},
+		{"skip",             required_argument,    NULL,        's'},
+		{"initiator_name",   required_argument,    NULL,        'i'},
+		{"initiator_name-2", required_argument,    NULL,        'I'},
+		{0, 0, 0, 0}
 	};
+	int option_index;
+
+	while ((c = getopt_long(argc, argv, "h?ui:I:ls:t:", long_options,
+			&option_index)) != -1) {
+		switch (c) {
+		case 'h':
+		case '?':
+			show_help = 1;
+			break;
+		case 'u':
+			show_usage = 1;
+			break;
+		case 'l':
+			list_tests = 1;
+			break;
+		case 'D':
+			data_loss = 1;
+			break;
+		case 'X':
+			show_info = 1;
+			break;
+		case 's':
+			skipname = optarg;
+			break;
+		case 't':
+			testname = optarg;
+			break;
+		case 'i':
+			initiatorname1 = optarg;
+			break;
+		case 'I':
+			initiatorname2 = optarg;
+			break;
+		default:
+			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
+			print_help();
+			exit(0);
+		}
+	}
+
 
 	real_iscsi_queue_pdu = dlsym(RTLD_NEXT, "iscsi_queue_pdu");
 
-	pc = poptGetContext(argv[0], argc, argv, popt_options, POPT_CONTEXT_POSIXMEHARDER);
-	if ((res = poptGetNextOpt(pc)) < -1) {
-		fprintf(stderr, "Failed to parse option : %s %s\n",
-			poptBadOption(pc, 0), poptStrerror(res));
-		exit(10);
-	}
-	extra_argv = poptGetArgs(pc);
-	if (extra_argv) {
-		url = strdup(*extra_argv);
-		extra_argv++;
-		while (extra_argv[extra_argc]) {
-			extra_argc++;
-		}
-	}
 
 	if (show_help != 0) {
 		print_help();
@@ -371,13 +395,11 @@ int main(int argc, const char *argv[])
 		}
 		exit(0);
 	}
-	poptFreeContext(pc);
 
+	url = strdup(argv[optind]);
 	if (url == NULL) {
 		fprintf(stderr, "You must specify the URL\n");
 		print_usage();
-		free(skipname);
-		free(testname);
 		exit(10);
 	}
 
@@ -505,8 +527,6 @@ int main(int argc, const char *argv[])
 		printf("\n");
 	}
 
-	free(skipname);
-	free(testname);
 	free(discard_const(url));
 
 	return num_failed ? num_failed : num_skipped ? 77 : 0;
