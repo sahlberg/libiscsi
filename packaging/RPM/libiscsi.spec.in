@@ -12,7 +12,6 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-root
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: libtool
-BuildRequires: popt-devel
 
 %description
 libiscsi is a library for attaching to iSCSI resources across

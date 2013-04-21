@@ -5,7 +5,7 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 AM_CPPFLAGS=-I. -I$(srcdir)/include "-D_U_=__attribute__((unused))" \
 	"-D_R_(A,B)=__attribute__((format(printf,A,B)))"
 AM_CFLAGS=$(WARN_CFLAGS)
-LDADD = lib/libiscsi.la -lpopt
+LDADD = lib/libiscsi.la
 XSLTPROC = /usr/bin/xsltproc
 
 # Manpages
@@ -46,7 +46,6 @@ lib_libiscsi_la_LDFLAGS = \
 
 # libiscsi utilities
 
-if PROGRAMS
 bin_PROGRAMS += bin/iscsi-inq bin/iscsi-ls bin/iscsi-readcapacity16
 bin_iscsi_inq_SOURCES = src/iscsi-inq.c
 bin_iscsi_ls_SOURCES = src/iscsi-ls.c
@@ -173,8 +172,6 @@ bin_iscsi_test_SOURCES = test-tool/iscsi-test.c \
 	test-tool/1143_persistent_reserve_access_check_wero.c \
 	test-tool/1144_persistent_reserve_access_check_eaar.c \
 	test-tool/1145_persistent_reserve_access_check_wear.c
-
-endif
 
 
 if ISCSITEST
