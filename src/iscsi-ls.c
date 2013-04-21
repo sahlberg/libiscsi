@@ -22,11 +22,15 @@
 #include <poll.h>
 #endif
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <popt.h>
+#include <getopt.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -292,7 +296,7 @@ void discoveryconnect_cb(struct iscsi_context *iscsi, int status, void *command_
 
 void print_usage(void)
 {
-	fprintf(stderr, "Usage: iscsi-ls [-?s] [-?|--help] [--usage] [-i|--initiator-name=iqn-name]\n"
+	fprintf(stderr, "Usage: iscsi-ls [-?|--help] [--usage] [-i|--initiator-name=iqn-name]\n"
 			"\t\t[-s|--show-luns] <iscsi-portal-url>\n");
 }
 
@@ -301,7 +305,6 @@ void print_help(void)
 	fprintf(stderr, "Usage: iscsi-ls [OPTION...] <iscsi-url>\n");
 	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
 	fprintf(stderr, "  -s, --show-luns                   Show the luns for each target\n");
-	fprintf(stderr, "  -d, --debug=integer               debug level (0=disabled)\n");	
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Help options:\n");
 	fprintf(stderr, "  -?, --help                        Show this help message\n");
@@ -315,41 +318,48 @@ void print_help(void)
 	fprintf(stderr, "  \"ipv6-address\"   [fce0::1]\n");
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
 	struct iscsi_context *iscsi;
 	struct iscsi_url *iscsi_url = NULL;
 	struct client_state state;
-	const char **extra_argv;
-	int extra_argc = 0;
 	const char *url = NULL;
-	poptContext pc;
-	int res;
-	int show_help = 0, show_usage = 0, debug = 0;
+	int c;
+	static int show_help = 0, show_usage = 0, debug = 0;
 
-	struct poptOption popt_options[] = {
-		{ "help", '?', POPT_ARG_NONE, &show_help, 0, "Show this help message", NULL },
-		{ "usage", 0, POPT_ARG_NONE, &show_usage, 0, "Display brief usage message", NULL },
-		{ "initiator-name", 'i', POPT_ARG_STRING, &initiator, 0, "Initiatorname to use", "iqn-name" },
-		{ "show-luns", 's', POPT_ARG_NONE, &showluns, 0, "Show the luns for each target", NULL },
-		{ "debug", 'd', POPT_ARG_INT, &debug, 0, "Debugging level", "integer" },		
-		POPT_TABLEEND
+	static struct option long_options[] = {
+		{"help",           no_argument,          NULL,        'h'},
+		{"usage",          no_argument,          NULL,        'u'},
+		{"debug",          no_argument,          NULL,        'd'},
+		{"show-luns",      no_argument,          NULL,        's'},
+		{"initiator_name", required_argument,    NULL,        'i'},
+		{0, 0, 0, 0}
 	};
+	int option_index;
 
-	memset(&state, 0, sizeof(state));
-
-	pc = poptGetContext(argv[0], argc, argv, popt_options, POPT_CONTEXT_POSIXMEHARDER);
-	if ((res = poptGetNextOpt(pc)) < -1) {
-		fprintf(stderr, "Failed to parse option : %s %s\n",
-			poptBadOption(pc, 0), poptStrerror(res));
-		exit(10);
-	}
-	extra_argv = poptGetArgs(pc);
-	if (extra_argv) {
-		url = strdup(*extra_argv);
-		extra_argv++;
-		while (extra_argv[extra_argc]) {
-			extra_argc++;
+	while ((c = getopt_long(argc, argv, "h?udi:s", long_options,
+			&option_index)) != -1) {
+		switch (c) {
+		case 'h':
+		case '?':
+			show_help = 1;
+			break;
+		case 'u':
+			show_usage = 1;
+			break;
+		case 'd':
+			debug = 1;
+			break;
+		case 'i':
+			initiator = optarg;
+			break;
+		case 's':
+			showluns = 1;
+			break;
+		default:
+			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
+			print_help();
+			exit(0);
 		}
 	}
 
@@ -363,8 +373,14 @@ int main(int argc, const char *argv[])
 		exit(0);
 	}
 
-	poptFreeContext(pc);
+	if (optind != argc -1) {
+		print_usage();
+		exit(0);
+	}
 
+	memset(&state, 0, sizeof(state));
+
+	url = strdup(argv[optind]);
 	if (url == NULL) {
 		fprintf(stderr, "You must specify iscsi target portal.\n");
 		print_usage();
