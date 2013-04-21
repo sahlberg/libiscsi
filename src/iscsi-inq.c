@@ -110,6 +110,8 @@ void inquiry_supported_pages(struct scsi_inquiry_supported_pages *inq)
 
 void inquiry_standard(struct scsi_inquiry_standard *inq)
 {
+	int i;
+
 	printf("Peripheral Qualifier:%s\n",
 		scsi_devqualifier_to_str(inq->qualifier));
 	printf("Peripheral Device Type:%s\n",
@@ -131,6 +133,17 @@ void inquiry_standard(struct scsi_inquiry_standard *inq)
 	printf("Vendor:%s\n", inq->vendor_identification);
 	printf("Product:%s\n", inq->product_identification);
 	printf("Revision:%s\n", inq->product_revision_level);
+
+	for (i = 0; i < 8; i++) {
+		if (inq->version_descriptor[i] == 0) {
+			continue;
+		}
+
+		printf("Version Descriptor:%04x %s\n",
+			inq->version_descriptor[i],
+			scsi_version_descriptor_to_str(
+				inq->version_descriptor[i]));
+	}
 }
 
 void do_inquiry(struct iscsi_context *iscsi, int lun, int evpd, int pc)

@@ -196,3 +196,4 @@ scsi_task_add_data_out_buffer
 scsi_task_set_iov_in
 scsi_task_set_iov_out
 scsi_version_to_str
+scsi_version_descriptor_to_str

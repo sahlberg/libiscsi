@@ -981,6 +981,8 @@ scsi_inquiry_datain_getfullsize(struct scsi_task *task)
 static struct scsi_inquiry_standard *
 scsi_inquiry_unmarshall_standard(struct scsi_task *task)
 {
+	int i;
+
 	struct scsi_inquiry_standard *inq = scsi_malloc(task, sizeof(*inq));
 	if (inq == NULL) {
 		return NULL;
@@ -1019,6 +1021,11 @@ scsi_inquiry_unmarshall_standard(struct scsi_task *task)
 	inq->clocking               = (task->datain.data[56]>>2)&0x03;
 	inq->qas                    = !!(task->datain.data[56]&0x02);
 	inq->ius                    = !!(task->datain.data[56]&0x01);
+
+	for (i = 0; i < 8; i++) {
+		inq->version_descriptor[i] = scsi_get_uint16(
+					   &task->datain.data[58 + i * 2]);
+	}
 
 	return inq;
 }
@@ -2926,6 +2933,77 @@ scsi_version_to_str(enum scsi_version version)
 	return "unknown";
 }
 
+const char *
+scsi_version_descriptor_to_str(enum scsi_version_descriptor version_descriptor)
+{
+	switch (version_descriptor) {
+	case SCSI_VERSION_DESCRIPTOR_ISCSI:
+		return "iSCSI";
+	case SCSI_VERSION_DESCRIPTOR_SBC:
+		return "SBC";
+	case SCSI_VERSION_DESCRIPTOR_SBC_ANSI_INCITS_306_1998:
+		return "SBC ANSI INCITS 306-1998";
+	case SCSI_VERSION_DESCRIPTOR_SBC_T10_0996_D_R08C:
+		return "SBC T10/0996-D revision 08c";
+	case SCSI_VERSION_DESCRIPTOR_SBC_2:
+		return "SBC-2";
+	case SCSI_VERSION_DESCRIPTOR_SBC_2_ISO_IEC_14776_322:
+		return "SBC-2 ISO/IEC 14776-322";
+	case SCSI_VERSION_DESCRIPTOR_SBC_2_ANSI_INCITS_405_2005:
+		return "SBC-2 ANSI INCITS 405-2005";
+	case SCSI_VERSION_DESCRIPTOR_SBC_2_T10_1417_D_R16:
+		return "SBC-2 T10/1417-D revision 16";
+	case SCSI_VERSION_DESCRIPTOR_SBC_2_T10_1417_D_R5A:
+		return "SBC-2 T10/1417-D revision 5A";
+	case SCSI_VERSION_DESCRIPTOR_SBC_2_T10_1417_D_R15:
+		return "SBC-2 T10/1417-D revision 15";
+	case SCSI_VERSION_DESCRIPTOR_SBC_3:
+		return "SBC-3";
+	case SCSI_VERSION_DESCRIPTOR_SPC:
+		return "SPC";
+	case SCSI_VERSION_DESCRIPTOR_SPC_ANSI_INCITS_301_1997:
+		return "SPC ANSI INCITS 301-1997";
+	case SCSI_VERSION_DESCRIPTOR_SPC_T10_0995_D_R11A:
+		return "SPC T10/0995-D revision 11a";
+	case SCSI_VERSION_DESCRIPTOR_SPC_2:
+		return "SPC-2";
+	case SCSI_VERSION_DESCRIPTOR_SPC_2_ISO_IEC_14776_452:
+		return "SPC-2 ISO.IEC 14776-452";
+	case SCSI_VERSION_DESCRIPTOR_SPC_2_ANSI_INCITS_351_2001:
+		return "SPC-2 ANSI INCITS 351-2001";
+	case SCSI_VERSION_DESCRIPTOR_SPC_2_T10_1236_D_R20:
+		return "SPC-2 T10/1236-D revision 20";
+	case SCSI_VERSION_DESCRIPTOR_SPC_2_T10_1236_D_R12:
+		return "SPC-2 T10/1236-D revision 12";
+	case SCSI_VERSION_DESCRIPTOR_SPC_2_T10_1236_D_R18:
+		return "SPC-2 T10/1236-D revision 18";
+	case SCSI_VERSION_DESCRIPTOR_SPC_2_T10_1236_D_R19:
+		return "SPC-2 T10/1236-D revision 19";
+	case SCSI_VERSION_DESCRIPTOR_SPC_3:
+		return "SPC-3";
+	case SCSI_VERSION_DESCRIPTOR_SPC_3_ISO_IEC_14776_453:
+		return "SPC-3 ISO/IEC 14776-453";
+	case SCSI_VERSION_DESCRIPTOR_SPC_3_ANSI_INCITS_408_2005:
+		return "SPC-3 ANSI INCITS 408-2005";
+	case SCSI_VERSION_DESCRIPTOR_SPC_3_T10_1416_D_R7:
+		return "SPC-3 T10/1416-D revision 7";
+	case SCSI_VERSION_DESCRIPTOR_SPC_3_T10_1416_D_R21:
+		return "SPC-3 T10/1416-D revision 21";
+	case SCSI_VERSION_DESCRIPTOR_SPC_3_T10_1416_D_R22:
+		return "SPC-3 T10/1416-D revision 22";
+	case SCSI_VERSION_DESCRIPTOR_SPC_3_T10_1416_D_R23:
+		return "SPC-3 T10/1416-D revision 23";
+	case SCSI_VERSION_DESCRIPTOR_SPC_4:
+		return "SPC-4";
+	case SCSI_VERSION_DESCRIPTOR_SPC_4_T10_1731_D_R16:
+		return "SPC-4 T10/1731-D revision 16";
+	case SCSI_VERSION_DESCRIPTOR_SPC_4_T10_1731_D_R18:
+		return "SPC-4 T10/1731-D revision 18";
+	case SCSI_VERSION_DESCRIPTOR_SPC_4_T10_1731_D_R23:
+		return "SPC-4 T10/1731-D revision 23";
+	}
+	return "unknown";
+}
 
 const char *
 scsi_inquiry_pagecode_to_str(int pagecode)
