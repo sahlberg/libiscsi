@@ -14,6 +14,8 @@
 #define ioctl IoctlSocket
 #define close CloseSocket
 
+#define writev aros_writev
+#define readv aros_readv
 #define inet_pton aros_inet_pton
 #define freeaddrinfo aros_freeaddrinfo
 #define getnameinfo aros_getnameinfo

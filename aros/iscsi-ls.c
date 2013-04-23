@@ -26,6 +26,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef AROS
+#include "aros/aros_compat.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

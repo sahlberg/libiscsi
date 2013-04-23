@@ -167,3 +167,12 @@ int aros_poll(struct pollfd *fds, unsigned int nfds, int timo)
   return rc;
 }
 
+ssize_t aros_readv(int fd, const struct iovec *iov, int iovcnt)
+{
+	return read(fd, iov[0].iov_base, iov[0].iov_len);
+}
+
+ssize_t aros_writev(int fd, const struct iovec *iov, int iovcnt)
+{
+	return write(fd, iov[0].iov_base, iov[0].iov_len);
+}
