@@ -43,7 +43,6 @@ test_read16_simple(void)
 			CU_PASS("READ16 is not implemented and no SBC-3 support claimed.");
 			return;
 		}	
-
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
