@@ -232,6 +232,48 @@ scsi_get_uint16(const unsigned char *c)
 	return ntohs(*(uint16_t *)c);
 }
 
+static inline uint64_t
+task_get_uint64(struct scsi_task *task, int offset)
+{
+	if (offset <= task->datain.size - 8) {
+		const unsigned char *c = &task->datain.data[offset];
+		uint64_t val;
+
+		val = ntohl(*(uint32_t *)c);
+		val <<= 32;
+		c += 4;
+		val |= ntohl(*(uint32_t *)c);
+
+		return val;
+	} else {
+		return 0;
+	}
+}
+
+static inline uint32_t
+task_get_uint32(struct scsi_task *task, int offset)
+{
+	if (offset <= task->datain.size - 4) {
+		const unsigned char *c = &task->datain.data[offset];
+
+		return ntohl(*(uint32_t *)c);
+	} else {
+		return 0;
+	}
+}
+
+static inline uint16_t
+task_get_uint16(struct scsi_task *task, int offset)
+{
+	if (offset <= task->datain.size - 2) {
+		const unsigned char *c = &task->datain.data[offset];
+
+		return ntohs(*(uint16_t *)c);
+	} else {
+		return 0;
+	}
+}
+
 inline void
 scsi_set_uint64(unsigned char *c, uint64_t v)
 {
@@ -319,7 +361,7 @@ scsi_reportluns_datain_getfullsize(struct scsi_task *task)
 {
 	uint32_t list_size;
 
-	list_size = scsi_get_uint32(&task->datain.data[0]) + 8;
+	list_size = task_get_uint32(task, 0) + 8;
 
 	return list_size;
 }
@@ -338,7 +380,7 @@ scsi_reportluns_datain_unmarshall(struct scsi_task *task)
 		return NULL;
 	}
 
-	list_size = scsi_get_uint32(&task->datain.data[0]) + 8;
+	list_size = task_get_uint32(task, 0) + 8;
 	if (list_size < task->datain.size) {
 		return NULL;
 	}
@@ -352,7 +394,7 @@ scsi_reportluns_datain_unmarshall(struct scsi_task *task)
 
 	list->num = num_luns;
 	for (i = 0; i < num_luns; i++) {
-		list->luns[i] = scsi_get_uint16(&task->datain.data[i*8+8]);
+		list->luns[i] = task_get_uint16(task, i * 8 + 8);
 	}
 
 	return list;
@@ -442,7 +484,7 @@ scsi_readtoc_datain_getfullsize(struct scsi_task *task)
 {
 	uint16_t toc_data_len;
 
-	toc_data_len = scsi_get_uint16(&task->datain.data[0]) + 2;
+	toc_data_len = task_get_uint16(task, 0) + 2;
 
 	return toc_data_len;
 }
@@ -465,7 +507,7 @@ scsi_readtoc_desc_unmarshall(struct scsi_task *task, struct scsi_readtoc_list *l
 		list->desc[i].desc.toc.track
 			= task->datain.data[4+8*i+2];
 		list->desc[i].desc.toc.lba
-			= scsi_get_uint32(&task->datain.data[4+8*i+4]);
+			= task_get_uint32(task, 4 + 8 * i + 4);
 		break;
 	case SCSI_READ_SESSION_INFO:
 		list->desc[i].desc.ses.adr
@@ -475,7 +517,7 @@ scsi_readtoc_desc_unmarshall(struct scsi_task *task, struct scsi_readtoc_list *l
 		list->desc[i].desc.ses.first_in_last
 			= task->datain.data[4+8*i+2];
 		list->desc[i].desc.ses.lba
-			= scsi_get_uint32(&task->datain.data[4+8*i+4]);
+			= task_get_uint32(task, 4 + 8 * i + 4);
 		break;
 	case SCSI_READ_FULL_TOC:
 		list->desc[i].desc.full.session
@@ -610,22 +652,22 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 		if (rc16 == NULL) {
 			return NULL;
 		}
-		rc16->returned_lba = scsi_get_uint32(&task->datain.data[0]);
-		rc16->returned_lba = (rc16->returned_lba << 32) | scsi_get_uint32(&task->datain.data[4]);
-		rc16->block_length = scsi_get_uint32(&task->datain.data[8]);
+		rc16->returned_lba = task_get_uint32(task, 0);
+		rc16->returned_lba = (rc16->returned_lba << 32) | task_get_uint32(task, 4);
+		rc16->block_length = task_get_uint32(task, 8);
 		rc16->p_type       = (task->datain.data[12] >> 1) & 0x07;
 		rc16->prot_en      = task->datain.data[12] & 0x01;
 		rc16->p_i_exp      = (task->datain.data[13] >> 4) & 0x0f;
 		rc16->lbppbe       = task->datain.data[13] & 0x0f;
 		rc16->lbpme        = !!(task->datain.data[14] & 0x80);
 		rc16->lbprz        = !!(task->datain.data[14] & 0x40);
-		rc16->lalba        = scsi_get_uint16(&task->datain.data[14]) & 0x3fff;
+		rc16->lalba        = task_get_uint16(task, 14) & 0x3fff;
 		return rc16;
 	}
 	case SCSI_GET_LBA_STATUS: {
 		struct scsi_get_lba_status *gls = scsi_malloc(task,
 							      sizeof(*gls));
-		int32_t len = scsi_get_uint32(&task->datain.data[0]);
+		int32_t len = task_get_uint32(task, 0);
 		int i;
 
 		if (gls == NULL) {
@@ -646,11 +688,11 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 		}
 
 		for (i = 0; i < (int)gls->num_descriptors; i++) {
-			gls->descriptors[i].lba  = scsi_get_uint32(&task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 0]);
+			gls->descriptors[i].lba  = task_get_uint32(task, 8 + i * sizeof(struct scsi_lba_status_descriptor) + 0);
 			gls->descriptors[i].lba <<= 32;
- 			gls->descriptors[i].lba |= scsi_get_uint32(&task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 4]);
+ 			gls->descriptors[i].lba |= task_get_uint32(task, 8 + i * sizeof(struct scsi_lba_status_descriptor) + 4);
 
-			gls->descriptors[i].num_blocks = scsi_get_uint32(&task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 8]);
+			gls->descriptors[i].num_blocks = task_get_uint32(task, 8 + i * sizeof(struct scsi_lba_status_descriptor) + 8);
 
 			gls->descriptors[i].provisioning = task->datain.data[8 + i * sizeof(struct scsi_lba_status_descriptor) + 12] & 0x0f;
 		}
@@ -676,7 +718,7 @@ scsi_persistentreservein_datain_getfullsize(struct scsi_task *task)
 {
 	switch (scsi_persistentreservein_sa(task)) {
 	case SCSI_PERSISTENT_RESERVE_READ_KEYS:
-		return scsi_get_uint32(&task->datain.data[4]) + 8;
+		return task_get_uint32(task, 4) + 8;
 	case SCSI_PERSISTENT_RESERVE_READ_RESERVATION:
 		return 8;
 	case SCSI_PERSISTENT_RESERVE_REPORT_CAPABILITIES:
@@ -696,24 +738,24 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 
 	switch (scsi_persistentreservein_sa(task)) {
 	case SCSI_PERSISTENT_RESERVE_READ_KEYS:
-		i = scsi_get_uint32(&task->datain.data[4]);
+		i = task_get_uint32(task, 4);
 
 		rk = scsi_malloc(task, offsetof(struct scsi_persistent_reserve_in_read_keys, keys) + i);
 		if (rk == NULL) {
 			return NULL;
 		}
-		rk->prgeneration      = scsi_get_uint32(&task->datain.data[0]);
-		rk->additional_length = scsi_get_uint32(&task->datain.data[4]);
+		rk->prgeneration      = task_get_uint32(task, 0);
+		rk->additional_length = task_get_uint32(task, 4);
 
 		rk->num_keys = rk->additional_length / 8;
 		for (i = 0; i < (int)rk->num_keys; i++) {
-			rk->keys[i] = scsi_get_uint64(&task->datain.data[8 + i * 8]);
+			rk->keys[i] = task_get_uint64(task, 8 + i * 8);
 		}
 		return rk;
 	case SCSI_PERSISTENT_RESERVE_READ_RESERVATION: {
 		size_t	alloc_sz;
 
-		i = scsi_get_uint32(&task->datain.data[4]);
+		i = task_get_uint32(task, 4);
 		alloc_sz = offsetof(
 			struct scsi_persistent_reserve_in_read_reservation,
 			reserved) + i;
@@ -723,12 +765,12 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 			return NULL;
 		}
 		memset(rr, 0, alloc_sz);
-		rr->prgeneration = scsi_get_uint32(&task->datain.data[0]);
+		rr->prgeneration = task_get_uint32(task, 0);
 
 		if (i > 0) {
 			rr->reserved = 1;
 			rr->reservation_key =
-				scsi_get_uint64(&task->datain.data[8]);
+				task_get_uint64(task, 8);
 			rr->pr_type = task->datain.data[21] & 0xff;
 		}
 
@@ -739,14 +781,14 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 		if (rc == NULL) {
 			return NULL;
 		}
-		rc->length         = scsi_get_uint16(&task->datain.data[0]);
+		rc->length         = task_get_uint16(task, 0);
 		rc->crh            = !!(task->datain.data[2] & 0x10);
 		rc->sip_c          = !!(task->datain.data[2] & 0x08);
 		rc->atp_c          = !!(task->datain.data[2] & 0x04);
 		rc->ptpl_c         = !!(task->datain.data[2] & 0x01);
 		rc->tmv            = !!(task->datain.data[3] & 0x80);
 		rc->allow_commands = task->datain.data[3] >> 4;
-		rc->persistent_reservation_type_mask = scsi_get_uint16(&task->datain.data[4]);
+		rc->persistent_reservation_type_mask = task_get_uint16(task, 4);
 
 		return rc;
 	default:
@@ -776,7 +818,7 @@ scsi_maintenancein_datain_getfullsize(struct scsi_task *task)
 
 	switch (scsi_maintenancein_sa(task)) {
 	case SCSI_REPORT_SUPPORTED_OP_CODES:
-		return scsi_get_uint32(&task->datain.data[0]) + 4;
+		return task_get_uint32(task, 0) + 4;
 	default:
 		return -1;
 	}
@@ -799,7 +841,7 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 			return NULL;
 		}
 
-		len = scsi_get_uint32(&task->datain.data[0]);
+		len = task_get_uint32(task, 0);
 		rsoc = scsi_malloc(task, sizeof(struct scsi_report_supported_op_codes) + len);
 		if (rsoc == NULL) {
 			return NULL;
@@ -900,8 +942,8 @@ scsi_readcapacity10_datain_unmarshall(struct scsi_task *task)
 		return NULL;
 	}
 
-	rc10->lba        = scsi_get_uint32(&task->datain.data[0]);
-	rc10->block_size = scsi_get_uint32(&task->datain.data[4]);
+	rc10->lba        = task_get_uint32(task, 0);
+	rc10->block_size = task_get_uint32(task, 4);
 
 	return rc10;
 }
@@ -972,7 +1014,7 @@ scsi_inquiry_datain_getfullsize(struct scsi_task *task)
 	case SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION:
 	case SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS:
 	case SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING:
-		return scsi_get_uint16(&task->datain.data[2]) + 4;
+		return task_get_uint16(task, 2) + 4;
 	default:
 		return -1;
 	}
@@ -1023,8 +1065,7 @@ scsi_inquiry_unmarshall_standard(struct scsi_task *task)
 	inq->ius                    = !!(task->datain.data[56]&0x01);
 
 	for (i = 0; i < 8; i++) {
-		inq->version_descriptor[i] = scsi_get_uint16(
-					   &task->datain.data[58 + i * 2]);
+		inq->version_descriptor[i] = task_get_uint16(task, 58 + i * 2);
 	}
 
 	return inq;
@@ -1079,7 +1120,7 @@ scsi_inquiry_unmarshall_device_identification(struct scsi_task *task)
 {
 	struct scsi_inquiry_device_identification *inq = scsi_malloc(task,
 								     sizeof(*inq));
-	int remaining = scsi_get_uint16(&task->datain.data[2]);
+	int remaining = task_get_uint16(task, 2);
 	unsigned char *dptr;
 
 	if (inq == NULL) {
@@ -1148,17 +1189,18 @@ scsi_inquiry_unmarshall_block_limits(struct scsi_task *task)
 
 	inq->wsnz                  = task->datain.data[4] & 0x01;
 	inq->max_cmp               = task->datain.data[5];
-	inq->opt_gran              = scsi_get_uint16(&task->datain.data[6]);
-	inq->max_xfer_len          = scsi_get_uint32(&task->datain.data[8]);
-	inq->opt_xfer_len          = scsi_get_uint32(&task->datain.data[12]);
-	inq->max_prefetch          = scsi_get_uint32(&task->datain.data[16]);
-	inq->max_unmap             = scsi_get_uint32(&task->datain.data[20]);
-	inq->max_unmap_bdc         = scsi_get_uint32(&task->datain.data[24]);
-	inq->opt_unmap_gran        = scsi_get_uint32(&task->datain.data[28]);
+	inq->opt_gran              = task_get_uint16(task, 6);
+	inq->max_xfer_len          = task_get_uint32(task, 8);
+	inq->opt_xfer_len          = task_get_uint32(task, 12);
+	inq->max_prefetch          = task_get_uint32(task, 16);
+	inq->max_unmap             = task_get_uint32(task, 20);
+	inq->max_unmap_bdc         = task_get_uint32(task, 24);
+	inq->opt_unmap_gran        = task_get_uint32(task, 28);
 	inq->ugavalid              = !!(task->datain.data[32]&0x80);
-	inq->unmap_gran_align      = scsi_get_uint32(&task->datain.data[32]) & 0x7fffffff;
-	inq->max_ws_len            = scsi_get_uint32(&task->datain.data[36]);
-	inq->max_ws_len            = (inq->max_ws_len << 32) | scsi_get_uint32(&task->datain.data[40]);
+	inq->unmap_gran_align      = task_get_uint32(task, 32) & 0x7fffffff;
+	inq->max_ws_len            = task_get_uint32(task, 36);
+	inq->max_ws_len            = (inq->max_ws_len << 32)
+				   	| task_get_uint32(task, 40);
 
 	return inq;
 }
@@ -1175,7 +1217,7 @@ scsi_inquiry_unmarshall_block_device_characteristics(struct scsi_task *task)
 	inq->device_type           = task->datain.data[0]&0x1f;
 	inq->pagecode              = task->datain.data[1];
 
-	inq->medium_rotation_rate  = scsi_get_uint16(&task->datain.data[4]);
+	inq->medium_rotation_rate  = task_get_uint16(task, 4);
 	return inq;
 }
 
@@ -2040,10 +2082,10 @@ scsi_parse_mode_caching(struct scsi_task *task, int pos, struct scsi_mode_page *
 	mp->caching.demand_read_retention_priority = (task->datain.data[pos+1] >> 4) & 0x0f;
 	mp->caching.write_retention_priority       = task->datain.data[pos+1] & 0x0f;
 
-	mp->caching.disable_prefetch_transfer_length = scsi_get_uint16(&task->datain.data[pos+2]);
-	mp->caching.minimum_prefetch = scsi_get_uint16(&task->datain.data[pos+4]);
-	mp->caching.maximum_prefetch = scsi_get_uint16(&task->datain.data[pos+6]);
-	mp->caching.maximum_prefetch_ceiling = scsi_get_uint16(&task->datain.data[pos+8]);
+	mp->caching.disable_prefetch_transfer_length = task_get_uint16(task, pos + 2);
+	mp->caching.minimum_prefetch = task_get_uint16(task, pos + 4);
+	mp->caching.maximum_prefetch = task_get_uint16(task, pos + 6);
+	mp->caching.maximum_prefetch_ceiling = task_get_uint16(task, pos + 8);
 
 	mp->caching.fsw    = task->datain.data[pos+10] & 0x80;
 	mp->caching.lbcss  = task->datain.data[pos+10] & 0x40;
@@ -2051,7 +2093,7 @@ scsi_parse_mode_caching(struct scsi_task *task, int pos, struct scsi_mode_page *
 	mp->caching.nv_dis = task->datain.data[pos+10] & 0x01;
 
 	mp->caching.number_of_cache_segments = task->datain.data[pos+11];
-	mp->caching.cache_segment_size = scsi_get_uint16(&task->datain.data[pos+12]);
+	mp->caching.cache_segment_size = task_get_uint16(task, pos + 12);
 }
 
 static void
@@ -2059,15 +2101,15 @@ scsi_parse_mode_disconnect_reconnect(struct scsi_task *task, int pos, struct scs
 {
 	mp->disconnect_reconnect.buffer_full_ratio = task->datain.data[pos];
 	mp->disconnect_reconnect.buffer_empty_ratio = task->datain.data[pos+1];
-	mp->disconnect_reconnect.bus_inactivity_limit = scsi_get_uint16(&task->datain.data[pos+2]);
-	mp->disconnect_reconnect.disconnect_time_limit = scsi_get_uint16(&task->datain.data[pos+4]);
-	mp->disconnect_reconnect.connect_time_limit = scsi_get_uint16(&task->datain.data[pos+6]);
-	mp->disconnect_reconnect.maximum_burst_size = scsi_get_uint16(&task->datain.data[pos+8]);
+	mp->disconnect_reconnect.bus_inactivity_limit = task_get_uint16(task, pos + 2);
+	mp->disconnect_reconnect.disconnect_time_limit = task_get_uint16(task, pos + 4);
+	mp->disconnect_reconnect.connect_time_limit = task_get_uint16(task, pos + 6);
+	mp->disconnect_reconnect.maximum_burst_size = task_get_uint16(task, pos + 8);
 	mp->disconnect_reconnect.emdp = task->datain.data[pos+10] & 0x80;
 	mp->disconnect_reconnect.fair_arbitration = (task->datain.data[pos+10]>>4) & 0x0f;
 	mp->disconnect_reconnect.dimm = task->datain.data[pos+10] & 0x08;
 	mp->disconnect_reconnect.dtdc = task->datain.data[pos+10] & 0x07;
-	mp->disconnect_reconnect.first_burst_size = scsi_get_uint16(&task->datain.data[pos+12]);
+	mp->disconnect_reconnect.first_burst_size = task_get_uint16(task, pos + 12);
 }
 
 static void
@@ -2081,8 +2123,8 @@ scsi_parse_mode_informational_exceptions_control(struct scsi_task *task, int pos
 	mp->iec.ebackerr       = task->datain.data[pos] & 0x02;
 	mp->iec.logerr         = task->datain.data[pos] & 0x01;
 	mp->iec.mrie           = task->datain.data[pos+1] & 0x0f;
-	mp->iec.interval_timer = scsi_get_uint32(&task->datain.data[pos+2]);
-	mp->iec.report_count   = scsi_get_uint32(&task->datain.data[pos+6]);
+	mp->iec.interval_timer = task_get_uint32(task, pos + 2);
+	mp->iec.report_count   = task_get_uint32(task, pos + 6);
 }
 
 
@@ -2129,7 +2171,7 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
 
 		if (mp->spf) {
 			mp->subpage_code = task->datain.data[pos++];
-			mp->len = scsi_get_uint16(&task->datain.data[pos]);
+			mp->len = task_get_uint16(task, pos);
 			pos += 2;
 		} else {
 			mp->subpage_code = 0;
