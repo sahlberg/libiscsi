@@ -38,6 +38,12 @@ test_read16_simple(void)
 	for (i = 1; i <= 256; i++) {
 		ret = read16(iscsic, tgt_lun, 0, i * block_size,
 		    block_size, 0, 0, 0, 0, 0, NULL);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented on this target and it does not claim SBC-3 support.");
+			CU_PASS("READ16 is not implemented and no SBC-3 support claimed.");
+			return;
+		}	
+
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -46,6 +52,7 @@ test_read16_simple(void)
 	for (i = 1; i <= 256; i++) {
 		ret = read16(iscsic, tgt_lun, num_blocks - i,
 		    i * block_size, block_size, 0, 0, 0, 0, 0, NULL);
+
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

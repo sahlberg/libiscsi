@@ -37,6 +37,11 @@ test_read16_beyond_eol(void)
 		ret = read16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
 					   i * block_size, block_size,
 					   0, 0, 0, 0, 0, NULL);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented on this target and it does not claim SBC-3 support.");
+			CU_PASS("READ16 is not implemented and no SBC-3 support claimed.");
+			return;
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

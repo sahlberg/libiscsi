@@ -34,6 +34,11 @@ test_read16_0blocks(void)
 	logging(LOG_VERBOSE, "Test READ16 0-blocks at LBA==0");
 	ret = read16(iscsic, tgt_lun, 0, 0, block_size,
 		     0, 0, 0, 0, 0, NULL);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented on this target and it does not claim SBC-3 support.");
+		CU_PASS("READ16 is not implemented and no SBC-3 support claimed.");
+		return;
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READ16 0-blocks one block past end-of-LUN");

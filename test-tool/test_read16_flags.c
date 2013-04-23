@@ -39,6 +39,11 @@ test_read16_flags(void)
 	ret = read16(iscsic, tgt_lun, 0,
 		     block_size, block_size,
 		     0, 1, 0, 0, 0, NULL);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented on this target and it does not claim SBC-3 support.");
+		CU_PASS("READ16 is not implemented and no SBC-3 support claimed.");
+		return;
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 

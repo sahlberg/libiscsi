@@ -2226,6 +2226,18 @@ read16(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		if (sbc3_support) {
+			logging(LOG_NORMAL, "[FAILED] READ16 is not available but the device claims SBC-3 support.");
+			return -1;
+		} else {
+			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented and SBC-3 is not claimed.");
+			return -2;
+		}
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] READ16 command: "
 			"failed with sense. %s", iscsi_get_error(iscsi));
@@ -2262,6 +2274,18 @@ read16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send READ16 command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		if (sbc3_support) {
+			logging(LOG_NORMAL, "[FAILED] READ16 is not available but the device claims SBC-3 support.");
+			return -1;
+		} else {
+			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented and SBC-3 is not claimed.");
+			return -2;
+		}
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] READ16 successful but should "
@@ -2310,6 +2334,18 @@ read16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		if (sbc3_support) {
+			logging(LOG_NORMAL, "[FAILED] READ16 is not available but the device claims SBC-3 support.");
+			return -1;
+		} else {
+			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented and SBC-3 is not claimed.");
+			return -2;
+		}
+	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] READ16 successful but should "
 			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
@@ -2355,6 +2391,18 @@ read16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send READ16 command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		if (sbc3_support) {
+			logging(LOG_NORMAL, "[FAILED] READ16 is not available but the device claims SBC-3 support.");
+			return -1;
+		} else {
+			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented and SBC-3 is not claimed.");
+			return -2;
+		}
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] READ16 successful but should "
@@ -2469,9 +2517,14 @@ readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len)
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented on target");
 		scsi_free_scsi_task(task);
-		return -2;
+		if (sbc3_support) {
+			logging(LOG_NORMAL, "[FAILED] READCAPACITY16 is not available but the device claims SBC-3 support.");
+			return -1;
+		} else {
+			logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented and SBC-3 is not claimed.");
+			return -2;
+		}
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] READCAPACITY16 command: "
@@ -2508,9 +2561,14 @@ readcapacity16_nomedium(struct iscsi_context *iscsi, int lun, int alloc_len)
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented on target");
 		scsi_free_scsi_task(task);
-		return -2;
+		if (sbc3_support) {
+			logging(LOG_NORMAL, "[FAILED] READCAPACITY16 is not available but the device claims SBC-3 support.");
+			return -1;
+		} else {
+			logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented and SBC-3 is not claimed.");
+			return -2;
+		}
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 	  logging(LOG_NORMAL, "[FAILED] READCAPACITY16 command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
