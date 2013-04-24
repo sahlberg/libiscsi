@@ -44,6 +44,11 @@ test_write12_wrprotect(void)
 		ret = write12_invalidfieldincdb(iscsic, tgt_lun, 0,
 					       block_size, block_size,
 					       i, 0, 0, 0, 0, buf);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] WRITE12 is not implemented.");
+			CU_PASS("WRITE12 is not implemented.");
+			return;
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 	free(buf);

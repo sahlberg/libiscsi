@@ -39,6 +39,11 @@ test_write12_0blocks(void)
 	logging(LOG_VERBOSE, "Test WRITE12 0-blocks at LBA==0");
 	ret = write12(iscsic, tgt_lun, 0, 0, block_size,
 		     0, 0, 0, 0, 0, NULL);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITE12 is not implemented.");
+		CU_PASS("WRITE12 is not implemented.");
+		return;
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE12 0-blocks one block past end-of-LUN");

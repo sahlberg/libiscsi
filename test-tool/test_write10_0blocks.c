@@ -44,6 +44,11 @@ test_write10_0blocks(void)
 	logging(LOG_VERBOSE, "Test WRITE10 0-blocks one block past end-of-LUN");
 	ret = write10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
 				    block_size, 0, 0, 0, 0, 0, NULL);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
+		CU_PASS("WRITE10 is not implemented.");
+		return;
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 

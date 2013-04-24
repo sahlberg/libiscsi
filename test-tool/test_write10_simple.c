@@ -1,4 +1,3 @@
-
 /* 
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -42,6 +41,11 @@ test_write10_simple(void)
 		ret = write10(iscsic, tgt_lun, 0, i * block_size,
 		    block_size, 0, 0, 0, 0, 0, buf);
 		free(buf);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
+			CU_PASS("WRITE10 is not implemented.");
+			return;
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

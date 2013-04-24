@@ -41,6 +41,11 @@ test_write10_flags(void)
 	ret = write10(iscsic, tgt_lun, 0,
 		     block_size, block_size,
 		     0, 1, 0, 0, 0, buf);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
+		CU_PASS("WRITE10 is not implemented.");
+		return;
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 

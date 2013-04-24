@@ -968,7 +968,6 @@ verify_write_works(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
-
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] WRITE10 command: failed with sense: %s",
@@ -3394,6 +3393,13 @@ write10(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
+		return -2;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITE10 command: "
 			"failed with sense. %s", iscsi_get_error(iscsi));
@@ -3431,6 +3437,13 @@ write10_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send WRITE10 command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
+		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITE10 successful but should "
@@ -3480,6 +3493,13 @@ write10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
+		return -2;
+	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITE10 successful but should "
 			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
@@ -3526,6 +3546,13 @@ write10_writeprotected(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send WRITE10 command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
+		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITE10 successful but should "
@@ -3574,6 +3601,13 @@ write10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send WRITE10 command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
+		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITE10 successful but should "
@@ -3624,6 +3658,13 @@ write12(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE12 is not implemented.");
+		return -2;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITE12 command: "
 			"failed with sense. %s", iscsi_get_error(iscsi));
@@ -3661,6 +3702,13 @@ write12_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send WRITE12 command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE12 is not implemented.");
+		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITE12 successful but should "
@@ -3710,6 +3758,13 @@ write12_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE12 is not implemented.");
+		return -2;
+	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITE12 successful but should "
 			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
@@ -3756,6 +3811,13 @@ write12_writeprotected(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send WRITE12 command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE12 is not implemented.");
+		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITE12 successful but should "
@@ -3804,6 +3866,13 @@ write12_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send WRITE12 command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE12 is not implemented.");
+		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITE12 successful but should "
