@@ -3854,6 +3854,13 @@ write16(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
+		return -2;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITE16 command: "
 			"failed with sense. %s", iscsi_get_error(iscsi));
@@ -3891,6 +3898,13 @@ write16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send WRITE16 command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
+		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITE16 successful but should "
@@ -3939,6 +3953,13 @@ write16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send WRITE16 command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
+		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITE16 successful but should "
@@ -3993,6 +4014,13 @@ write16_writeprotected(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		scsi_free_scsi_task(task);
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
+		return -2;
+	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
 	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
@@ -4040,6 +4068,13 @@ write16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba,
 			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
 		scsi_free_scsi_task(task);
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
+		return -2;
 	}
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
 	    || task->sense.key  != SCSI_SENSE_NOT_READY

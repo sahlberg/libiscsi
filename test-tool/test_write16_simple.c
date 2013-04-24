@@ -42,6 +42,11 @@ test_write16_simple(void)
 		ret = write16(iscsic, tgt_lun, 0, i * block_size,
 		    block_size, 0, 0, 0, 0, 0, buf);
 		free(buf);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
+			CU_PASS("WRITE16 is not implemented.");
+			return;
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
