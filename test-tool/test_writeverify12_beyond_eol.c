@@ -45,6 +45,11 @@ test_writeverify12_beyond_eol(void)
 						  i * block_size, block_size,
 						  0, 0, 0, 0, buf);
 		free(buf);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY12 is not implemented.");
+			CU_PASS("WRITEVERIFY12 is not implemented.");
+			return;
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

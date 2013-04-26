@@ -45,6 +45,11 @@ test_writeverify10_beyond_eol(void)
 						  i * block_size, block_size,
 						  0, 0, 0, 0, buf);
 		free(buf);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY10 is not implemented.");
+			CU_PASS("WRITEVERIFY10 is not implemented.");
+			return;
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

@@ -39,6 +39,11 @@ test_writeverify10_0blocks(void)
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks at LBA==0");
 	ret = writeverify10(iscsic, tgt_lun, 0, 0, block_size,
 			    0, 0, 0, 0, NULL);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY10 is not implemented.");
+		CU_PASS("WRITEVERIFY10 is not implemented.");
+		return;
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks one block past end-of-LUN");

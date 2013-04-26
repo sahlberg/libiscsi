@@ -42,9 +42,10 @@ test_writeverify12_simple(void)
 		    block_size, 0, 0, 0, 0, buf);
 		free(buf);
 		if (ret == -2) {
-			CU_PASS("[SKIPPED] Target does not support WRITEVERIFY12. Skipping test");
+			logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY12 is not implemented.");
+			CU_PASS("WRITEVERIFY12 is not implemented.");
 			return;
-		}
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

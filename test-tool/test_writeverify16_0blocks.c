@@ -36,6 +36,11 @@ test_writeverify16_0blocks(void)
 	ret = writeverify16(iscsic, tgt_lun, 0,
 			    0, block_size,
 			    0, 0, 0, 0, NULL);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY16 is not implemented.");
+		CU_PASS("WRITEVERIFY16 is not implemented.");
+		return;
+       	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 0-blocks one block past end-of-LUN");
