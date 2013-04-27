@@ -37,6 +37,11 @@ test_prin_read_keys_simple(void)
 	logging(LOG_VERBOSE, "Test Persistent Reserve IN READ_KEYS works.");
 
 	ret = prin_read_keys(iscsic, tgt_lun, &task, NULL);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE IN is not implemented.");
+		CU_PASS("PERSISTENT RESERVE IN is not implemented.");
+		return;
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test DATA-IN is at least 8 bytes.");

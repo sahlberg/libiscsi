@@ -38,6 +38,11 @@ test_prout_register_simple(void)
 
 	/* register our reservation key with the target */
 	ret = prout_register_and_ignore(iscsic, tgt_lun, key);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE OUT is not implemented.");
+		CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
+		return;
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	/* verify we can read the registration */

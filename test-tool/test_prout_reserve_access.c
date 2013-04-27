@@ -49,6 +49,11 @@ verify_persistent_reserve_access(struct iscsi_context *iscsi1, int lun1,
 
 	/* register our reservation key with the target */
 	ret = prout_register_and_ignore(iscsi1, lun1, key);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE OUT is not implemented.");
+		CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
+		return;
+	}	
 	CU_ASSERT_EQUAL(0, ret);
 	ret = prout_register_and_ignore(iscsi2, lun2, key2);
 	CU_ASSERT_EQUAL(0, ret);

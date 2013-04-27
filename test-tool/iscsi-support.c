@@ -472,6 +472,13 @@ prin_task(struct iscsi_context *iscsi, int lun, int service_action,
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE IN is not implemented.");
+		return -2;
+	}
 
 	if (success_expected) {
 		if (task->status != SCSI_STATUS_GOOD) {
@@ -512,6 +519,12 @@ prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
 		    "[FAILED] Failed to send PRIN command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
+	}
+	if ((*tp)->status        == SCSI_STATUS_CHECK_CONDITION
+	    && (*tp)->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && (*tp)->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE IN is not implemented.");
+		return -2;
 	}
 	if ((*tp)->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
@@ -614,6 +627,13 @@ prout_register_key(struct iscsi_context *iscsi, int lun,
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE OUT is not implemented.");
+		return -2;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] PROUT command: failed with sense: %s",
@@ -650,6 +670,13 @@ prin_verify_key_presence(struct iscsi_context *iscsi, int lun,
 		    "[FAILED] Failed to send PRIN command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE IN is not implemented.");
+		return -2;
 	}
 
 	if (task->status != SCSI_STATUS_GOOD) {
@@ -719,6 +746,13 @@ prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE OUT is not implemented.");
+		return -2;
+	}
 
 	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
 		logging(LOG_NORMAL,
@@ -762,6 +796,13 @@ prout_reserve(struct iscsi_context *iscsi, int lun,
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE OUT is not implemented.");
+		return -2;
+	}
 
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
@@ -804,6 +845,13 @@ prout_release(struct iscsi_context *iscsi, int lun,
 		    iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE OUT is not implemented.");
+		return -2;
+	}
 
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
@@ -837,6 +885,13 @@ prin_verify_reserved_as(struct iscsi_context *iscsi, int lun,
 		    "[FAILED] Failed to send PRIN command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE IN is not implemented.");
+		return -2;
 	}
 
 	if (task->status != SCSI_STATUS_GOOD) {
@@ -902,6 +957,13 @@ prin_verify_not_reserved(struct iscsi_context *iscsi, int lun)
 		    "[FAILED] Failed to send PRIN command: %s",
 		    iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE IN is not implemented.");
+		return -2;
 	}
 
 	if (task->status != SCSI_STATUS_GOOD) {
