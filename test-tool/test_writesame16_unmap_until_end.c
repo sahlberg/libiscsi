@@ -16,6 +16,7 @@
 */
 
 #include <stdio.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -30,6 +31,7 @@ test_writesame16_unmap_until_end(void)
 {
 	int i, ret;
 	unsigned int j;
+	unsigned char *buf = alloca(256 * block_size);
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_THIN_PROVISIONING;
@@ -39,19 +41,21 @@ test_writesame16_unmap_until_end(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME16 of 1-256 blocks at the end of the LUN by setting number-of-blocks==0");
 	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
-
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, block_size * i);
 		ret = write16(iscsic, tgt_lun, num_blocks - i,
 			      i * block_size, block_size,
 			      0, 0, 0, 0, 0, buf);
-		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
 		ret = writesame16(iscsic, tgt_lun, num_blocks - i,
 				  0, i,
 				  0, 1, 0, 0, NULL);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
+			CU_PASS("[SKIPPED] Target does not support WRITESAME16. Skipping test");
+			return;
+		}
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks and verify they are now zero", i);
@@ -63,6 +67,5 @@ test_writesame16_unmap_until_end(void)
 				CU_ASSERT_EQUAL(buf[j], 0);
 			}
 		}
-		free(buf);
 	}
 }

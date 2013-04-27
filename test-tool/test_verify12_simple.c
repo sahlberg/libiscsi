@@ -1,4 +1,3 @@
-
 /* 
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -17,6 +16,7 @@
 */
 
 #include <stdio.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -30,37 +30,39 @@ void
 test_verify12_simple(void)
 {
 	int i, ret;
+	unsigned char *buf = alloca(256 * block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test VERIFY12 of 1-256 blocks at the end of the LUN");
+	logging(LOG_VERBOSE, "Test VERIFY12 of 1-256 blocks at the start of the LUN");
 	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
-		ret = read12(iscsic, tgt_lun, 0, i * block_size,
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
+		ret = read10(iscsic, tgt_lun, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		ret = verify12(iscsic, tgt_lun, 0, i * block_size,
 			       block_size, 0, 0, 1, buf);
 		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support VERIFY12. Skipping test");
-			free(buf);
 			return;
 		}
-		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 	logging(LOG_VERBOSE, "Test VERIFY12 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
-
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
 		ret = read12(iscsic, tgt_lun, num_blocks - i,
 		    i * block_size, block_size, 0, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		ret = verify12(iscsic, tgt_lun, num_blocks - i,
 		    i * block_size, block_size, 0, 0, 1, buf);
-		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

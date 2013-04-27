@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -30,6 +31,9 @@ void
 test_orwrite_verify(void)
 {
 	int i, ret;
+	unsigned char *buf     = alloca(256 * block_size);
+	unsigned char *readbuf = alloca(256 * block_size);
+
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -37,18 +41,14 @@ test_orwrite_verify(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test ORWRITE of 1-256 blocks at the start of the LUN");
 	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
-		unsigned char *readbuf = malloc(block_size * i);
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
 
 		logging(LOG_VERBOSE, "Write %d blocks of all-zero", i);
 		memset(buf, 0, block_size * i);
-		ret = write16(iscsic, tgt_lun, 0, i * block_size,
+		ret = write10(iscsic, tgt_lun, 0, i * block_size,
 		    block_size, 0, 0, 0, 0, 0, buf);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
-			CU_PASS("WRITE16 is not implemented.");
-			return;
-		}	
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0xa5", i);
@@ -63,7 +63,7 @@ test_orwrite_verify(void)
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read16(iscsic, tgt_lun, 0, i * block_size,
+		ret = read10(iscsic, tgt_lun, 0, i * block_size,
 		    block_size, 0, 0, 0, 0, 0, readbuf);
 		CU_ASSERT_EQUAL(ret, 0);
 
@@ -78,7 +78,7 @@ test_orwrite_verify(void)
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read16(iscsic, tgt_lun, 0, i * block_size,
+		ret = read10(iscsic, tgt_lun, 0, i * block_size,
 		    block_size, 0, 0, 0, 0, 0, readbuf);
 		CU_ASSERT_EQUAL(ret, 0);
 
@@ -86,15 +86,13 @@ test_orwrite_verify(void)
 		memset(buf, 0xff, block_size * i);
 		ret = memcmp(buf, readbuf, block_size * i);
 		CU_ASSERT_EQUAL(ret, 0);
-
-		free(buf);
-		free(readbuf);
 	}
 
 	logging(LOG_VERBOSE, "Test ORWRITE of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
-		unsigned char *readbuf = malloc(block_size * i);
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
 
 		logging(LOG_VERBOSE, "Write %d blocks of all-zero", i);
 		memset(buf, 0, block_size * i);
@@ -132,8 +130,5 @@ test_orwrite_verify(void)
 		memset(buf, 0xff, block_size * i);
 		ret = memcmp(buf, readbuf, block_size * i);
 		CU_ASSERT_EQUAL(ret, 0);
-
-		free(buf);
-		free(readbuf);
 	}
 }

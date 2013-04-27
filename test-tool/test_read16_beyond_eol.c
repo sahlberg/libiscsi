@@ -34,6 +34,10 @@ test_read16_beyond_eol(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ16 1-256 blocks one block beyond the end");
 	for (i = 1; i <= 256; i++) {
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
+
 		ret = read16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
 					   i * block_size, block_size,
 					   0, 0, 0, 0, 0, NULL);
@@ -48,6 +52,10 @@ test_read16_beyond_eol(void)
 
 	logging(LOG_VERBOSE, "Test READ16 1-256 blocks at LBA==2^63");
 	for (i = 1; i <= 256; i++) {
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
+
 		ret = read16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000,
 					   i * block_size, block_size,
 					   0, 0, 0, 0, 0, NULL);
@@ -57,6 +65,10 @@ test_read16_beyond_eol(void)
 
 	logging(LOG_VERBOSE, "Test READ16 1-256 blocks at LBA==-1");
 	for (i = 1; i <= 256; i++) {
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
+
 		ret = read16_lbaoutofrange(iscsic, tgt_lun, -1, i * block_size,
 					   block_size, 0, 0, 0, 0, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -65,6 +77,10 @@ test_read16_beyond_eol(void)
 
 	logging(LOG_VERBOSE, "Test READ16 2-256 blocks all but one block beyond the end");
 	for (i = 2; i <= 256; i++) {
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
+
 		ret = read16_lbaoutofrange(iscsic, tgt_lun, num_blocks - 1,
 					   i * block_size, block_size,
 					   0, 0, 0, 0, 0, NULL);

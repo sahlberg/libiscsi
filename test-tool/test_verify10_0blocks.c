@@ -33,6 +33,7 @@ test_verify10_0blocks(void)
 	ret = verify10(iscsic, tgt_lun, 0, 0, block_size,
 		     0, 0, 1, NULL);
 	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY10 is not implemented.");
 		CU_PASS("[SKIPPED] Target does not support VERIFY10. Skipping test");
 		return;
 	}

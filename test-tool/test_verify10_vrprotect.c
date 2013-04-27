@@ -1,4 +1,3 @@
-
 /* 
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -17,6 +16,7 @@
 */
 
 #include <stdio.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -30,21 +30,21 @@ void
 test_verify10_vrprotect(void)
 {
 	int i, ret;
+	unsigned char *buf = alloca(block_size);
+
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY10 with non-zero VRPROTECT");
 
 	for (i = 1; i < 8; i++) {
-		unsigned char *buf = malloc(block_size);
-
 		ret = read10(iscsic, tgt_lun, 0, block_size,
 		    block_size, 0, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		ret = verify10_invalidfieldincdb(iscsic, tgt_lun, 0, block_size,
 						 block_size, i, 0, 1, buf);
-		free(buf);
 		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] VERIFY10 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support VERIFY10. Skipping test");
 			return;
 		}

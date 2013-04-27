@@ -37,6 +37,7 @@ test_writesame16_0blocks(void)
 			  block_size, 0,
 			  0, 0, 0, 0, NULL);
 	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
 		CU_PASS("[SKIPPED] Target does not support WRITESAME16. Skipping test");
 		return;
 	}

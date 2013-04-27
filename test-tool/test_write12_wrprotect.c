@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -29,7 +30,7 @@ void
 test_write12_wrprotect(void)
 {
 	int i, ret;
-	unsigned char *buf;
+	unsigned char *buf = alloca(block_size);
 
 	CHECK_FOR_DATALOSS;
 
@@ -39,7 +40,6 @@ test_write12_wrprotect(void)
 	 */
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITE12 with non-zero WRPROTECT");
-	buf = malloc(block_size);
 	for (i = 1; i < 8; i++) {
 		ret = write12_invalidfieldincdb(iscsic, tgt_lun, 0,
 					       block_size, block_size,
@@ -51,5 +51,4 @@ test_write12_wrprotect(void)
 		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
-	free(buf);
 }

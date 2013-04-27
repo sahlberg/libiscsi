@@ -16,6 +16,7 @@
 */
 
 #include <stdio.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -29,16 +30,19 @@ void
 test_verify16_mismatch(void)
 {
 	int i, ret;
+	unsigned char *buf = malloc(256 * block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 for blocks 1-255");
 	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
 		int offset = random() % (i * block_size);
+
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
 
 		ret = read16(iscsic, tgt_lun, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf);
-		CU_ASSERT_EQUAL(ret, 0);
 
 		/* flip a random byte in the data */
 		buf[offset] ^= 'X';
@@ -47,18 +51,20 @@ test_verify16_mismatch(void)
 		ret = verify16_miscompare(iscsic, tgt_lun, 0, i * block_size,
 					  block_size, 0, 0, 1, buf);
 		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support VERIFY16. Skipping test");
-			free(buf);
 			return;
 		}
-		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 	logging(LOG_VERBOSE, "Test VERIFY16 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
 		int offset = random() % (i * block_size);
+
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
 
 		ret = read16(iscsic, tgt_lun, num_blocks - i,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, buf);
@@ -70,7 +76,6 @@ test_verify16_mismatch(void)
 
 		ret = verify16_miscompare(iscsic, tgt_lun, num_blocks - i,
 					  i * block_size, block_size, 0, 0, 1, buf);
-		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

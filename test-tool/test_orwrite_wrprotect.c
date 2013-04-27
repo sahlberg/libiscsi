@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -29,7 +30,7 @@ void
 test_orwrite_wrprotect(void)
 {
 	int i, ret;
-	unsigned char *buf;
+	unsigned char *buf = alloca(block_size);
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -40,18 +41,15 @@ test_orwrite_wrprotect(void)
 	 */
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test ORWRITE with non-zero WRPROTECT");
-	buf = malloc(block_size);
 	for (i = 1; i < 8; i++) {
 		ret = orwrite_invalidfieldincdb(iscsic, tgt_lun, 0,
 					       block_size, block_size,
 					       i, 0, 0, 0, 0, buf);
 		if (ret == -2) {
-			free(buf);
 			logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
 			CU_PASS("ORWRITE is not implemented.");
 			return;
 		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
-	free(buf);
 }

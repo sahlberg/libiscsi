@@ -478,6 +478,9 @@ print_usage(void)
 	fprintf(stderr,
 	    "  -A|--abort                       Error Action: ABORT if any tests fail\n");
 	fprintf(stderr,
+	    "  -u|--usb                         The device is attached to a USB bus.\n"
+	    "                                   Additional restrictions apply, such as maximum transfer length 120kb.\n");
+	fprintf(stderr,
 	    "  -s|--silent                      Test Mode: Silent\n");
 	fprintf(stderr,
 	    "  -n|--normal                      Test Mode: Normal\n");
@@ -670,6 +673,7 @@ main(int argc, char *argv[])
 	struct scsi_readcapacity16 *rc16;
 	struct scsi_inquiry_standard *inq;
 	int full_size;
+	int is_usb;
 	static struct option long_opts[] = {
 		{ "help", no_argument, 0, '?' },
 		{ "list", no_argument, 0, 'l' },
@@ -682,6 +686,7 @@ main(int argc, char *argv[])
 		{ "abort", no_argument, 0, 'A' },
 		{ "silent", no_argument, 0, 's' },
 		{ "normal", no_argument, 0, 'n' },
+		{ "usb", no_argument, 0, 'u' },
 		{ "verbose", no_argument, 0, 'v' },
 		{ "Verbose-scsi", no_argument, 0, 'V' },
 		{ NULL, 0, 0, 0 }
@@ -689,7 +694,7 @@ main(int argc, char *argv[])
 	int i, c;
 	int opt_idx = 0;
 
-	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsnvV", long_opts,
+	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsnuvV", long_opts,
 		    &opt_idx)) > 0) {
 		switch (c) {
 		case 'h':
@@ -725,6 +730,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			mode = CU_BRM_NORMAL;
+			break;
+		case 'u':
+			is_usb = 1;
 			break;
 		case 'v':
 			mode = CU_BRM_VERBOSE;	/* default */
@@ -916,6 +924,11 @@ main(int argc, char *argv[])
 		readonly = !!(ms->device_specific_parameter & 0x80);
 	}
 	scsi_free_scsi_task(task);
+
+	if (is_usb) {
+		printf("USB device. Clamping maximum transfer length to 120k\n");
+		maximum_transfer_length = 120 *1024 / block_size;
+	}
 
 	iscsi_logout_sync(iscsic);
 	iscsi_destroy_context(iscsic);

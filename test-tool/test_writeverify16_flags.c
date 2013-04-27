@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -29,14 +30,13 @@ void
 test_writeverify16_flags(void)
 { 
 	int ret;
-	unsigned char *buf;
+	unsigned char *buf = alloca(block_size);
 
 	CHECK_FOR_DATALOSS;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 flags");
 
-	buf = malloc(block_size);
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 with DPO==1");
 	ret = writeverify16(iscsic, tgt_lun, 0,
 		     block_size, block_size,
@@ -53,6 +53,4 @@ test_writeverify16_flags(void)
 		     block_size, block_size,
 		     0, 0, 1, 0, buf);
 	CU_ASSERT_EQUAL(ret, 0);
-
-	free(buf);
 }

@@ -1,4 +1,3 @@
-
 /* 
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -44,6 +43,7 @@ test_verify10_flags(void)
 	ret = verify10(iscsic, tgt_lun, 0, block_size,
 		       block_size, 0, 1, 0, buf);
 	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY10 is not implemented.");
 		CU_PASS("[SKIPPED] Target does not support VERIFY10. Skipping test");
 		free(buf);
 		return;

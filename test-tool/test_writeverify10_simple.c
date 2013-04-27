@@ -16,6 +16,7 @@
 */
 
 #include <stdio.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -29,6 +30,7 @@ void
 test_writeverify10_simple(void)
 {
 	int i, ret;
+	unsigned char *buf = alloca(256 * block_size);
 
 	CHECK_FOR_DATALOSS;
 
@@ -36,12 +38,13 @@ test_writeverify10_simple(void)
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 of 1-256 blocks at the start of the LUN");
 
 	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
-
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
 		ret = writeverify10(iscsic, tgt_lun, 0, i * block_size,
 		    block_size, 0, 0, 0, 0, buf);
-		free(buf);
 		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY10 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support WRITEVERIFY10. Skipping test");
 			return;
 		}
@@ -50,11 +53,11 @@ test_writeverify10_simple(void)
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
-
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
 		ret = writeverify10(iscsic, tgt_lun, num_blocks - i,
 		    i * block_size, block_size, 0, 0, 0, 0, buf);
-		free(buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

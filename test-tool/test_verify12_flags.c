@@ -1,4 +1,3 @@
-
 /* 
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -17,6 +16,7 @@
 */
 
 #include <stdio.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -30,12 +30,12 @@ void
 test_verify12_flags(void)
 {
 	int ret;
-	unsigned char *buf = malloc(block_size);
+	unsigned char *buf = alloca(block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY12 flags");
 
-	ret = read12(iscsic, tgt_lun, 0, block_size,
+	ret = read10(iscsic, tgt_lun, 0, block_size,
 		     block_size, 0, 0, 0, 0, 0, buf);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -44,8 +44,8 @@ test_verify12_flags(void)
 	ret = verify12(iscsic, tgt_lun, 0, block_size,
 		       block_size, 0, 1, 0, buf);
 	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented.");
 		CU_PASS("[SKIPPED] Target does not support VERIFY12. Skipping test");
-		free(buf);
 		return;
 	}
 	CU_ASSERT_EQUAL(ret, 0);
@@ -55,5 +55,4 @@ test_verify12_flags(void)
 	ret = verify12(iscsic, tgt_lun, 0, block_size,
 		       block_size, 0, 0, 1, buf);
 	CU_ASSERT_EQUAL(ret, 0);
-	free(buf);
 }

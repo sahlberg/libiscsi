@@ -47,6 +47,7 @@ test_writeverify16_residuals(void)
 	ret = writeverify16(iscsic, tgt_lun, 0, 0,
 			    block_size, 0, 0, 0, 0, NULL);
 	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY16 is not implemented.");
 		CU_PASS("[SKIPPED] Target does not support WRITEVERIFY16. Skipping test");
 		return;
 	}

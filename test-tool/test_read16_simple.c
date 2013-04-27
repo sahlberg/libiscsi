@@ -1,4 +1,3 @@
-
 /* 
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -36,6 +35,10 @@ test_read16_simple(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ16 of 1-256 blocks at the start of the LUN");
 	for (i = 1; i <= 256; i++) {
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
+
 		ret = read16(iscsic, tgt_lun, 0, i * block_size,
 		    block_size, 0, 0, 0, 0, 0, NULL);
 		if (ret == -2) {
@@ -49,6 +52,10 @@ test_read16_simple(void)
 
 	logging(LOG_VERBOSE, "Test READ16 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
+
 		ret = read16(iscsic, tgt_lun, num_blocks - i,
 		    i * block_size, block_size, 0, 0, 0, 0, 0, NULL);
 

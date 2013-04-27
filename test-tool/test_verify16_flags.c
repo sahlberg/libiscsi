@@ -17,6 +17,7 @@
 */
 
 #include <stdio.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -30,22 +31,21 @@ void
 test_verify16_flags(void)
 {
 	int ret;
-	unsigned char *buf = malloc(block_size);
+	unsigned char *buf = alloca(block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 flags");
 
 	ret = read16(iscsic, tgt_lun, 0, block_size,
 		     block_size, 0, 0, 0, 0, 0, buf);
-	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test VERIFY16 with DPO==1");
 	ret = verify16(iscsic, tgt_lun, 0, block_size,
 		       block_size, 0, 1, 0, buf);
 	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented.");
 		CU_PASS("[SKIPPED] Target does not support VERIFY16. Skipping test");
-		free(buf);
 		return;
 	}
 	CU_ASSERT_EQUAL(ret, 0);
@@ -55,5 +55,4 @@ test_verify16_flags(void)
 	ret = verify16(iscsic, tgt_lun, 0, block_size,
 		       block_size, 0, 0, 1, buf);
 	CU_ASSERT_EQUAL(ret, 0);
-	free(buf);
 }

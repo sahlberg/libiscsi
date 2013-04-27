@@ -1,4 +1,3 @@
-
 /* 
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -39,11 +38,17 @@ test_writesame16_unmap_unaligned(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that unaligned WRITESAME16 Unmap fails. LBPPB==%d", lbppb);
+
 	for (i = 1; i < lbppb; i++) {
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16 at LBA:%d", lbppb - i, i);
 		ret = writesame16_invalidfieldincdb(iscsic, tgt_lun, i,
 						    block_size, lbppb - i,
 						    0, 1, 0, 0, NULL);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
+			CU_PASS("[SKIPPED] Target does not support WRITESAME16. Skipping test");
+			return;
+		}
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

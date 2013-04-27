@@ -61,6 +61,7 @@ int lbpws;
 int anc_sup;
 int readonly;
 int sbc3_support;
+int maximum_transfer_length;
 
 int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
