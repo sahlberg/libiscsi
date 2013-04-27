@@ -181,8 +181,6 @@ static CU_TestInfo tests_read10[] = {
 	{ (char *)"testRead10ZeroBlocks", test_read10_0blocks },
 	{ (char *)"testRead10ReadProtect", test_read10_rdprotect },
 	{ (char *)"testRead10Flags", test_read10_flags },
-	{ (char *)"testRead10Residuals", test_read10_residuals },
-	{ (char *)"testRead10Invalid", test_read10_invalid },
 	CU_TEST_INFO_NULL
 };
 
@@ -192,7 +190,6 @@ static CU_TestInfo tests_read12[] = {
 	{ (char *)"testRead12ZeroBlocks", test_read12_0blocks },
 	{ (char *)"testRead12ReadProtect", test_read12_rdprotect },
 	{ (char *)"testRead12Flags", test_read12_flags },
-	{ (char *)"testRead12Residuals", test_read12_residuals },
 	CU_TEST_INFO_NULL
 };
 
@@ -202,7 +199,6 @@ static CU_TestInfo tests_read16[] = {
 	{ (char *)"testRead16ZeroBlocks", test_read16_0blocks },
 	{ (char *)"testRead16ReadProtect", test_read16_rdprotect },
 	{ (char *)"testRead16Flags", test_read16_flags },
-	{ (char *)"testRead16Residuals", test_read16_residuals },
 	CU_TEST_INFO_NULL
 };
 
@@ -290,7 +286,6 @@ static CU_TestInfo tests_write10[] = {
 	{ (char *)"testWrite10ZeroBlocks", test_write10_0blocks },
 	{ (char *)"testWrite10WriteProtect", test_write10_wrprotect },
 	{ (char *)"testWrite10Flags", test_write10_flags },
-	{ (char *)"testWrite10Residuals", test_write10_residuals },
 	CU_TEST_INFO_NULL
 };
 
@@ -300,7 +295,6 @@ static CU_TestInfo tests_write12[] = {
 	{ (char *)"testWrite12ZeroBlocks", test_write12_0blocks },
 	{ (char *)"testWrite12WriteProtect", test_write12_wrprotect },
 	{ (char *)"testWrite12Flags", test_write12_flags },
-	{ (char *)"testWrite12Residuals", test_write12_residuals },
 	CU_TEST_INFO_NULL
 };
 
@@ -310,7 +304,6 @@ static CU_TestInfo tests_write16[] = {
 	{ (char *)"testWrite16ZeroBlocks", test_write16_0blocks },
 	{ (char *)"testWrite16WriteProtect", test_write16_wrprotect },
 	{ (char *)"testWrite16Flags", test_write16_flags },
-	{ (char *)"testWrite16Residuals", test_write16_residuals },
 	CU_TEST_INFO_NULL
 };
 
@@ -342,7 +335,6 @@ static CU_TestInfo tests_writeverify10[] = {
 	{ (char *)"testWriteVerify10ZeroBlocks", test_writeverify10_0blocks },
 	{ (char *)"testWriteVerify10WriteProtect", test_writeverify10_wrprotect },
 	{ (char *)"testWriteVerify10Flags", test_writeverify10_flags },
-	{ (char *)"testWriteVerify10Residuals", test_writeverify10_residuals },
 	CU_TEST_INFO_NULL
 };
 
@@ -352,7 +344,6 @@ static CU_TestInfo tests_writeverify12[] = {
 	{ (char *)"testWriteVerify12ZeroBlocks", test_writeverify12_0blocks },
 	{ (char *)"testWriteVerify12WriteProtect", test_writeverify12_wrprotect },
 	{ (char *)"testWriteVerify12Flags", test_writeverify12_flags },
-	{ (char *)"testWriteVerify12Residuals", test_writeverify12_residuals },
 	CU_TEST_INFO_NULL
 };
 
@@ -362,11 +353,25 @@ static CU_TestInfo tests_writeverify16[] = {
 	{ (char *)"testWriteVerify16ZeroBlocks", test_writeverify16_0blocks },
 	{ (char *)"testWriteVerify16WriteProtect", test_writeverify16_wrprotect },
 	{ (char *)"testWriteVerify16Flags", test_writeverify16_flags },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_iscsiresiduals[] = {
+	{ (char *)"testRead10Invalid", test_read10_invalid },
+	{ (char *)"testRead10Residuals", test_read10_residuals },
+	{ (char *)"testRead12Residuals", test_read12_residuals },
+	{ (char *)"testRead16Residuals", test_read16_residuals },
+	{ (char *)"testWrite10Residuals", test_write10_residuals },
+	{ (char *)"testWrite12Residuals", test_write12_residuals },
+	{ (char *)"testWrite16Residuals", test_write16_residuals },
+	{ (char *)"testWriteVerify10Residuals", test_writeverify10_residuals },
+	{ (char *)"testWriteVerify12Residuals", test_writeverify12_residuals },
 	{ (char *)"testWriteVerify16Residuals", test_writeverify16_residuals },
 	CU_TEST_INFO_NULL
 };
 
 static CU_SuiteInfo suites[] = {
+        /* SCSI tests */
 	{ (char *)"TestGetLBAStatus", test_setup, test_teardown,
 	  tests_get_lba_status },
 	{ (char *)"TestInquiry", test_setup, test_teardown,
@@ -435,6 +440,10 @@ static CU_SuiteInfo suites[] = {
 	  tests_writeverify12 },
 	{ (char *)"TestWriteVerify16", test_setup, test_teardown,
 	  tests_writeverify16 },
+
+	/* iSCSI tests */
+	{ (char *)"TestiSCSIResiduals", test_setup, test_teardown,
+	  tests_iscsiresiduals },
 	CU_SUITE_INFO_NULL
 };
 
