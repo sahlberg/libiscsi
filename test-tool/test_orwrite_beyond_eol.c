@@ -43,9 +43,10 @@ test_orwrite_beyond_eol(void)
 					    0, 0, 0, 0, 0, buf);
 		free(buf);
 		if (ret == -2) {
-			CU_PASS("[SKIPPED] Target does not support ORWRITE. Skipping test");
+			logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
+			CU_PASS("ORWRITE is not implemented.");
 			return;
-		}
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

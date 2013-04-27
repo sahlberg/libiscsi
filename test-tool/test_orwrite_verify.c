@@ -44,6 +44,11 @@ test_orwrite_verify(void)
 		memset(buf, 0, block_size * i);
 		ret = write16(iscsic, tgt_lun, 0, i * block_size,
 		    block_size, 0, 0, 0, 0, 0, buf);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
+			CU_PASS("WRITE16 is not implemented.");
+			return;
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0xa5", i);
@@ -51,11 +56,10 @@ test_orwrite_verify(void)
 		ret = orwrite(iscsic, tgt_lun, 0, i * block_size,
 			      block_size, 0, 0, 0, 0, 0, buf);
 		if (ret == -2) {
-			CU_PASS("[SKIPPED] Target does not support ORWRITE. Skipping test");
-			free(buf);
-			free(readbuf);
+			logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
+			CU_PASS("ORWRITE is not implemented.");
 			return;
-		}
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);

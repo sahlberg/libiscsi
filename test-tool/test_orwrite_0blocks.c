@@ -37,9 +37,10 @@ test_orwrite_0blocks(void)
 		      0, block_size,
 		      0, 0, 0, 0, 0, NULL);
 	if (ret == -2) {
-		CU_PASS("[SKIPPED] Target does not support ORWRITE. Skipping test");
+		logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
+		CU_PASS("ORWRITE is not implemented.");
 		return;
-	}
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test ORWRITE 0-blocks one block past end-of-LUN");

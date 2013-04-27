@@ -63,7 +63,6 @@ test_readonly_sbc(void)
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
-
 	logging(LOG_VERBOSE, "Test WRITE_SAME16 fails with WRITE_PROTECTED");
 	ret = writesame16_writeprotected(iscsic, tgt_lun, 0, block_size, 1,
 					 0, 0, 0, 0, buf);

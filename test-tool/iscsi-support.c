@@ -213,6 +213,13 @@ orwrite(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
+		return -2;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] ORWRITE command: "
 			"failed with sense. %s", iscsi_get_error(iscsi));
@@ -250,6 +257,13 @@ orwrite_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send ORWRITE command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
+		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] ORWRITE successful but should "
@@ -299,6 +313,13 @@ orwrite_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
+		return -2;
+	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] ORWRITE successful but should "
 			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
@@ -345,6 +366,13 @@ orwrite_writeprotected(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send ORWRITE command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
+		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] ORWRITE successful but should "
@@ -397,8 +425,8 @@ orwrite_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba,
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented on target");
 		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
 		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {

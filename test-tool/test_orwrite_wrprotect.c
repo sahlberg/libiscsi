@@ -46,10 +46,11 @@ test_orwrite_wrprotect(void)
 					       block_size, block_size,
 					       i, 0, 0, 0, 0, buf);
 		if (ret == -2) {
-			CU_PASS("[SKIPPED] Target does not support ORWRITE. Skipping test");
 			free(buf);
+			logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
+			CU_PASS("ORWRITE is not implemented.");
 			return;
-		}
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 	free(buf);
