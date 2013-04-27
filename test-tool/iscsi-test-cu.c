@@ -370,81 +370,239 @@ static CU_TestInfo tests_iscsiresiduals[] = {
 	CU_TEST_INFO_NULL
 };
 
-static CU_SuiteInfo suites[] = {
-        /* SCSI tests */
-	{ (char *)"TestGetLBAStatus", test_setup, test_teardown,
-	  tests_get_lba_status },
-	{ (char *)"TestInquiry", test_setup, test_teardown,
-	  tests_inquiry },
-	{ (char *)"TestMandatory", test_setup, test_teardown,
-	  tests_mandatory },
-	{ (char *)"TestNoMedia", test_setup, test_teardown,
-	  tests_nomedia },
-	{ (char *)"TestOrWrite", test_setup, test_teardown,
-	  tests_orwrite },
-	{ (char *)"TestPrefetch10", test_setup, test_teardown,
-	  tests_prefetch10 },
-	{ (char *)"TestPrefetch16", test_setup, test_teardown,
-	  tests_prefetch16 },
-	{ (char *)"TestPreventAllow", test_setup, test_teardown,
-	  tests_preventallow },
-	{ (char *)"TestPrinReadKeys", test_setup, test_teardown,
-	  tests_prin_read_keys },
-	{ (char *)"TestPrinServiceactionRange", test_setup, test_teardown,
-	  tests_prin_serviceaction_range },
-	{ (char *)"TestProutRegister", test_setup, test_teardown,
-	  tests_prout_register },
-	{ (char *)"TestProutReserve", test_setup_pgr, test_teardown_pgr,
-	  tests_prout_reserve },
-	{ (char *)"TestRead6", test_setup, test_teardown,
-	  tests_read6 },
-	{ (char *)"TestRead10", test_setup, test_teardown,
-	  tests_read10 },
-	{ (char *)"TestRead12", test_setup, test_teardown,
-	  tests_read12 },
-	{ (char *)"TestRead16", test_setup, test_teardown,
-	  tests_read16 },
-	{ (char *)"TestReadCapacity10", test_setup, test_teardown,
-	  tests_readcapacity10 },
-	{ (char *)"TestReadCapacity16", test_setup, test_teardown,
-	  tests_readcapacity16 },
-	{ (char *)"TestReadOnly", test_setup, test_teardown,
-	  tests_readonly },
-	{ (char *)"TestReserve6", test_setup, test_teardown,
-	  tests_reserve6 },
-	{ (char *)"TestStartStopUnit", test_setup, test_teardown,
-	  tests_startstopunit },
-	{ (char *)"TestTestUnitReady", test_setup, test_teardown,
-	  tests_testunitready },
-	{ (char *)"TestUnmap", test_setup, test_teardown,
-	  tests_unmap },
-	{ (char *)"TestVerify10", test_setup, test_teardown,
-	  tests_verify10 },
-	{ (char *)"TestVerify12", test_setup, test_teardown,
-	  tests_verify12 },
-	{ (char *)"TestVerify16", test_setup, test_teardown,
-	  tests_verify16 },
-	{ (char *)"TestWrite10", test_setup, test_teardown,
-	  tests_write10 },
-	{ (char *)"TestWrite12", test_setup, test_teardown,
-	  tests_write12 },
-	{ (char *)"TestWrite16", test_setup, test_teardown,
-	  tests_write16 },
-	{ (char *)"TestWriteSame10", test_setup, test_teardown,
-	  tests_writesame10 },
-	{ (char *)"TestWriteSame16", test_setup, test_teardown,
-	  tests_writesame16 },
-	{ (char *)"TestWriteVerify10", test_setup, test_teardown,
-	  tests_writeverify10 },
-	{ (char *)"TestWriteVerify12", test_setup, test_teardown,
-	  tests_writeverify12 },
-	{ (char *)"TestWriteVerify16", test_setup, test_teardown,
-	  tests_writeverify16 },
 
-	/* iSCSI tests */
-	{ (char *)"TestiSCSIResiduals", test_setup, test_teardown,
+/* SCSI protocol tests */
+static CU_SuiteInfo scsi_suites[] = {
+	{ (char *)"GetLBAStatus", test_setup, test_teardown,
+	  tests_get_lba_status },
+	{ (char *)"Inquiry", test_setup, test_teardown,
+	  tests_inquiry },
+	{ (char *)"Mandatory", test_setup, test_teardown,
+	  tests_mandatory },
+	{ (char *)"NoMedia", test_setup, test_teardown,
+	  tests_nomedia },
+	{ (char *)"OrWrite", test_setup, test_teardown,
+	  tests_orwrite },
+	{ (char *)"Prefetch10", test_setup, test_teardown,
+	  tests_prefetch10 },
+	{ (char *)"Prefetch16", test_setup, test_teardown,
+	  tests_prefetch16 },
+	{ (char *)"PreventAllow", test_setup, test_teardown,
+	  tests_preventallow },
+	{ (char *)"PrinReadKeys", test_setup, test_teardown,
+	  tests_prin_read_keys },
+	{ (char *)"PrinServiceactionRange", test_setup, test_teardown,
+	  tests_prin_serviceaction_range },
+	{ (char *)"ProutRegister", test_setup, test_teardown,
+	  tests_prout_register },
+	{ (char *)"ProutReserve", test_setup_pgr, test_teardown_pgr,
+	  tests_prout_reserve },
+	{ (char *)"Read6", test_setup, test_teardown,
+	  tests_read6 },
+	{ (char *)"Read10", test_setup, test_teardown,
+	  tests_read10 },
+	{ (char *)"Read12", test_setup, test_teardown,
+	  tests_read12 },
+	{ (char *)"Read16", test_setup, test_teardown,
+	  tests_read16 },
+	{ (char *)"ReadCapacity10", test_setup, test_teardown,
+	  tests_readcapacity10 },
+	{ (char *)"ReadCapacity16", test_setup, test_teardown,
+	  tests_readcapacity16 },
+	{ (char *)"ReadOnly", test_setup, test_teardown,
+	  tests_readonly },
+	{ (char *)"Reserve6", test_setup, test_teardown,
+	  tests_reserve6 },
+	{ (char *)"StartStopUnit", test_setup, test_teardown,
+	  tests_startstopunit },
+	{ (char *)"TestUnitReady", test_setup, test_teardown,
+	  tests_testunitready },
+	{ (char *)"Unmap", test_setup, test_teardown,
+	  tests_unmap },
+	{ (char *)"Verify10", test_setup, test_teardown,
+	  tests_verify10 },
+	{ (char *)"Verify12", test_setup, test_teardown,
+	  tests_verify12 },
+	{ (char *)"Verify16", test_setup, test_teardown,
+	  tests_verify16 },
+	{ (char *)"Write10", test_setup, test_teardown,
+	  tests_write10 },
+	{ (char *)"Write12", test_setup, test_teardown,
+	  tests_write12 },
+	{ (char *)"Write16", test_setup, test_teardown,
+	  tests_write16 },
+	{ (char *)"WriteSame10", test_setup, test_teardown,
+	  tests_writesame10 },
+	{ (char *)"WriteSame16", test_setup, test_teardown,
+	  tests_writesame16 },
+	{ (char *)"WriteVerify10", test_setup, test_teardown,
+	  tests_writeverify10 },
+	{ (char *)"WriteVerify12", test_setup, test_teardown,
+	  tests_writeverify12 },
+	{ (char *)"WriteVerify16", test_setup, test_teardown,
+	  tests_writeverify16 },
+	CU_SUITE_INFO_NULL
+};
+
+/* iSCSI protocol tests */
+static CU_SuiteInfo iscsi_suites[] = {
+	{ (char *)"iSCSIResiduals", test_setup, test_teardown,
 	  tests_iscsiresiduals },
 	CU_SUITE_INFO_NULL
+};
+
+/* All tests */
+static CU_SuiteInfo all_suites[] = {
+	{ (char *)"GetLBAStatus", test_setup, test_teardown,
+	  tests_get_lba_status },
+	{ (char *)"Inquiry", test_setup, test_teardown,
+	  tests_inquiry },
+	{ (char *)"Mandatory", test_setup, test_teardown,
+	  tests_mandatory },
+	{ (char *)"NoMedia", test_setup, test_teardown,
+	  tests_nomedia },
+	{ (char *)"OrWrite", test_setup, test_teardown,
+	  tests_orwrite },
+	{ (char *)"Prefetch10", test_setup, test_teardown,
+	  tests_prefetch10 },
+	{ (char *)"Prefetch16", test_setup, test_teardown,
+	  tests_prefetch16 },
+	{ (char *)"PreventAllow", test_setup, test_teardown,
+	  tests_preventallow },
+	{ (char *)"PrinReadKeys", test_setup, test_teardown,
+	  tests_prin_read_keys },
+	{ (char *)"PrinServiceactionRange", test_setup, test_teardown,
+	  tests_prin_serviceaction_range },
+	{ (char *)"ProutRegister", test_setup, test_teardown,
+	  tests_prout_register },
+	{ (char *)"ProutReserve", test_setup_pgr, test_teardown_pgr,
+	  tests_prout_reserve },
+	{ (char *)"Read6", test_setup, test_teardown,
+	  tests_read6 },
+	{ (char *)"Read10", test_setup, test_teardown,
+	  tests_read10 },
+	{ (char *)"Read12", test_setup, test_teardown,
+	  tests_read12 },
+	{ (char *)"Read16", test_setup, test_teardown,
+	  tests_read16 },
+	{ (char *)"ReadCapacity10", test_setup, test_teardown,
+	  tests_readcapacity10 },
+	{ (char *)"ReadCapacity16", test_setup, test_teardown,
+	  tests_readcapacity16 },
+	{ (char *)"ReadOnly", test_setup, test_teardown,
+	  tests_readonly },
+	{ (char *)"Reserve6", test_setup, test_teardown,
+	  tests_reserve6 },
+	{ (char *)"StartStopUnit", test_setup, test_teardown,
+	  tests_startstopunit },
+	{ (char *)"TestUnitReady", test_setup, test_teardown,
+	  tests_testunitready },
+	{ (char *)"Unmap", test_setup, test_teardown,
+	  tests_unmap },
+	{ (char *)"Verify10", test_setup, test_teardown,
+	  tests_verify10 },
+	{ (char *)"Verify12", test_setup, test_teardown,
+	  tests_verify12 },
+	{ (char *)"Verify16", test_setup, test_teardown,
+	  tests_verify16 },
+	{ (char *)"Write10", test_setup, test_teardown,
+	  tests_write10 },
+	{ (char *)"Write12", test_setup, test_teardown,
+	  tests_write12 },
+	{ (char *)"Write16", test_setup, test_teardown,
+	  tests_write16 },
+	{ (char *)"WriteSame10", test_setup, test_teardown,
+	  tests_writesame10 },
+	{ (char *)"WriteSame16", test_setup, test_teardown,
+	  tests_writesame16 },
+	{ (char *)"WriteVerify10", test_setup, test_teardown,
+	  tests_writeverify10 },
+	{ (char *)"WriteVerify12", test_setup, test_teardown,
+	  tests_writeverify12 },
+	{ (char *)"WriteVerify16", test_setup, test_teardown,
+	  tests_writeverify16 },
+	{ (char *)"iSCSIResiduals", test_setup, test_teardown,
+	  tests_iscsiresiduals },
+	CU_SUITE_INFO_NULL
+};
+
+static CU_SuiteInfo scsi_usb_stick_suites[] = {
+	{ (char *)"GetLBAStatus", test_setup, test_teardown,
+	  tests_get_lba_status },
+	{ (char *)"Inquiry", test_setup, test_teardown,
+	  tests_inquiry },
+	{ (char *)"Mandatory", test_setup, test_teardown,
+	  tests_mandatory },
+	{ (char *)"OrWrite", test_setup, test_teardown,
+	  tests_orwrite },
+	{ (char *)"Prefetch10", test_setup, test_teardown,
+	  tests_prefetch10 },
+	{ (char *)"Prefetch16", test_setup, test_teardown,
+	  tests_prefetch16 },
+	{ (char *)"PrinReadKeys", test_setup, test_teardown,
+	  tests_prin_read_keys },
+	{ (char *)"PrinServiceactionRange", test_setup, test_teardown,
+	  tests_prin_serviceaction_range },
+	{ (char *)"ProutRegister", test_setup, test_teardown,
+	  tests_prout_register },
+	{ (char *)"ProutReserve", test_setup_pgr, test_teardown_pgr,
+	  tests_prout_reserve },
+	{ (char *)"Read6", test_setup, test_teardown,
+	  tests_read6 },
+	{ (char *)"Read10", test_setup, test_teardown,
+	  tests_read10 },
+	{ (char *)"Read12", test_setup, test_teardown,
+	  tests_read12 },
+	{ (char *)"Read16", test_setup, test_teardown,
+	  tests_read16 },
+	{ (char *)"ReadCapacity10", test_setup, test_teardown,
+	  tests_readcapacity10 },
+	{ (char *)"ReadCapacity16", test_setup, test_teardown,
+	  tests_readcapacity16 },
+	{ (char *)"ReadOnly", test_setup, test_teardown,
+	  tests_readonly },
+	{ (char *)"Reserve6", test_setup, test_teardown,
+	  tests_reserve6 },
+	{ (char *)"TestUnitReady", test_setup, test_teardown,
+	  tests_testunitready },
+	{ (char *)"Unmap", test_setup, test_teardown,
+	  tests_unmap },
+	{ (char *)"Verify10", test_setup, test_teardown,
+	  tests_verify10 },
+	{ (char *)"Verify12", test_setup, test_teardown,
+	  tests_verify12 },
+	{ (char *)"Verify16", test_setup, test_teardown,
+	  tests_verify16 },
+	{ (char *)"Write10", test_setup, test_teardown,
+	  tests_write10 },
+	{ (char *)"Write12", test_setup, test_teardown,
+	  tests_write12 },
+	{ (char *)"Write16", test_setup, test_teardown,
+	  tests_write16 },
+	{ (char *)"WriteSame10", test_setup, test_teardown,
+	  tests_writesame10 },
+	{ (char *)"WriteSame16", test_setup, test_teardown,
+	  tests_writesame16 },
+	{ (char *)"WriteVerify10", test_setup, test_teardown,
+	  tests_writeverify10 },
+	{ (char *)"WriteVerify12", test_setup, test_teardown,
+	  tests_writeverify12 },
+	{ (char *)"WriteVerify16", test_setup, test_teardown,
+	  tests_writeverify16 },
+	CU_SUITE_INFO_NULL
+};
+
+struct test_family {
+       const char *name;
+       CU_SuiteInfo *suites;
+};
+
+static struct test_family families[] = {
+       { "ALL",		     all_suites },
+       { "SCSI",	     scsi_suites },
+       { "iSCSI",	     iscsi_suites },
+       { "SCSI-USB-STICK",   scsi_usb_stick_suites },
+       { NULL, NULL}
 };
 
 /*
@@ -582,89 +740,99 @@ test_teardown_pgr(void)
 static void
 list_all_tests(void)
 {
+	struct test_family *fp;
 	CU_SuiteInfo *sp;
 	CU_TestInfo *tp;
 
-	for (sp = suites; sp->pName != NULL; sp++)
-		for (tp = sp->pTests; tp->pName != NULL; tp++)
-			printf("%s.%s\n", sp->pName, tp->pName);
+	for (fp = families; fp->name; fp++) {
+		printf("%s\n", fp->name);
+		for (sp = fp->suites; sp->pName != NULL; sp++) {
+			printf("%s.%s\n", fp->name,sp->pName);
+			for (tp = sp->pTests; tp->pName != NULL; tp++) {
+				printf("%s.%s.%s\n", fp->name,sp->pName,
+					tp->pName);
+			}
+		}
+	}
 }
 
 
 static CU_ErrorCode
 add_tests(const char *testname_re)
 {
-	char *suitename_re = NULL;
-	char *subtestname_re = NULL;
+	char *family_re = NULL;
+	const char *suite_re = NULL;
+	const char *test_re = NULL;
 	char *cp;
+	struct test_family *fp;
 	CU_SuiteInfo *sp;
 	CU_TestInfo *tp;
 
 
 	/* if not testname(s) register all tests and return */
-	if (!testname_re)
-		return CU_register_suites(suites);
+	if (!testname_re) {
+		return CU_register_suites(all_suites);
+	}
 
 	/*
-	 * break testname_re into suitename_re and subtestname_re
+	 * break testname_re into family/suite/test
 	 *
-	 * syntax is:  SUITE_RE[.[SUBTEST_RE]]
+	 * syntax is:  FAMILY[.SUITE[.TEST]]
 	 */
-
-	/* is there a subtest name? */
-	if ((cp = strchr(testname_re, '.')) == NULL) {
-		suitename_re = strdup(testname_re);
-	} else {
-		size_t suitename_sz;
-		size_t subtestname_sz;
-
-		suitename_sz = cp - testname_re;
-		suitename_re = malloc(suitename_sz+1);
-		memset(suitename_re, 0, suitename_sz+1);
-		strncpy(suitename_re, testname_re, suitename_sz);
-
-		subtestname_sz = strlen(testname_re) - (suitename_sz+1);
-		if (subtestname_sz) {
-			subtestname_re = malloc(subtestname_sz+1);
-			memset(subtestname_re, 0, subtestname_sz+1);
-			strncpy(subtestname_re, cp+1, subtestname_sz);
+	family_re = strdup(testname_re);
+	if ((cp = strchr(family_re, '.')) != NULL) {
+		*cp++ = 0;
+		suite_re = cp;
+		if ((cp = strchr(suite_re, '.')) != NULL) {
+			*cp++ = 0;
+			test_re = cp;
 		}
 	}
-	if (!suitename_re) {
-		fprintf(stderr, "error: can't parse testsuite name: %s\n",
-		    testname_re);
+	if (suite_re == NULL) {
+		suite_re = "*";
+	}
+	if (test_re == NULL) {
+		test_re = "*";
+	}
+
+	if (!family_re) {
+		fprintf(stderr, "error: can't parse test family name: %s\n",
+		    family_re);
 		return CUE_NOTEST;
 	}
 
 	/*
-	 * cycle through the test suites and tests, adding
+	 * cycle through the test families/suites/tests, adding
 	 * ones that match
 	 */
-	for (sp = suites; sp->pName != NULL; sp++) {
-		int suite_added = 0;
-		CU_pSuite pSuite = NULL;
-
-		if (fnmatch(suitename_re, sp->pName, 0) != 0)
+	for (fp = families; fp->name; fp++) {
+		if (fnmatch(family_re, fp->name, 0) != 0)
 		    continue;
 
-		for (tp = sp->pTests; tp->pName != NULL; tp++) {
-			if (subtestname_re)
-				if (fnmatch(subtestname_re, tp->pName, 0) != 0)
+		for (sp = fp->suites; sp->pName != NULL; sp++) {
+			int suite_added = 0;
+			CU_pSuite pSuite = NULL;
+
+			if (fnmatch(suite_re, sp->pName, 0) != 0)
+				continue;
+
+			for (tp = sp->pTests; tp->pName != NULL; tp++) {
+				if (fnmatch(test_re, tp->pName, 0) != 0) {
 					continue;
-			if (!suite_added) {
-				suite_added++;
-				pSuite = CU_add_suite(sp->pName,
-				    sp->pInitFunc, sp->pCleanupFunc);
+				}
+				if (!suite_added) {
+					suite_added++;
+					pSuite = CU_add_suite(sp->pName,
+						sp->pInitFunc, sp->pCleanupFunc);
+				}
+				CU_add_test(pSuite, tp->pName, tp->pTestFunc);
 			}
-			CU_add_test(pSuite, tp->pName, tp->pTestFunc);
 		}
 	}
 
 	/* all done -- clean up */
-	if (suitename_re)
-		free(suitename_re);
-	if (subtestname_re)
-		free(subtestname_re);
+	if (family_re)
+		free(family_re);
 
 	return CUE_SUCCESS;
 }
