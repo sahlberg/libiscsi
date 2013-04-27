@@ -71,14 +71,23 @@ test_inquiry_standard(void)
 		CU_FAIL("Invalid version in INQUIRY data");
 	}
 
-	logging(LOG_VERBOSE, "Verify response-data-format is 2");
+	logging(LOG_VERBOSE, "Verify response-data-format is 2 "
+		"(SPC-2 or later)");
+	if (inq->response_data_format != 2) {
+		logging(LOG_NORMAL, "[FAILED] Response data format is "
+			"invalid. Must be 2 but device returned %d",
+			inq->response_data_format);
+	}
 	CU_ASSERT_EQUAL(inq->response_data_format, 2);
 
 	logging(LOG_VERBOSE, "Verify additional-length is correct");
+	if (inq->additional_length != task->datain.size - 5) {
+		logging(LOG_NORMAL, "[FAILED] Bad additional length "
+			"returned. Should be %d but device returned %d.",
+			task->datain.size - 5,
+			inq->additional_length);
+	}
 	CU_ASSERT_EQUAL(inq->additional_length, task->datain.size - 5);
-
-	logging(LOG_VERBOSE, "Verify Hi-Sup is set");
-	CU_ASSERT_EQUAL(inq->hisup, 1);
 
 	logging(LOG_VERBOSE, "Verify VENDOR_IDENTIFICATION is in ASCII");
 	for (i = 8; i < 16; i++) {

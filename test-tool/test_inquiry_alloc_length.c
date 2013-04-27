@@ -75,6 +75,7 @@ test_inquiry_alloc_length(void)
 		logging(LOG_NORMAL, "[SKIPPED] This device does not claim "
 			"SPC-3 or later");
 		CU_PASS("[SKIPPED] Not SPC-3 or later");
+		goto finished;
 	}
 
 	logging(LOG_VERBOSE, "Version is SPC-3 or later. Read INQUIRY data using 16-bit allocation length");
@@ -88,6 +89,7 @@ test_inquiry_alloc_length(void)
 	CU_ASSERT_EQUAL(ret, 0);
 	
 
+finished:
 	if (task != NULL) {
 		scsi_free_scsi_task(task);
 		task = NULL;
