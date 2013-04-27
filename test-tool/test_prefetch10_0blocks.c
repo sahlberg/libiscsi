@@ -33,9 +33,10 @@ test_prefetch10_0blocks(void)
 	ret = prefetch10(iscsic, tgt_lun, 0,
 			 0, 0, 0);
 	if (ret == -2) {
-		CU_PASS("[SKIPPED] Target does not support PREFETCH10. Skipping test");
+		logging(LOG_NORMAL, "[SKIPPED] PREFETCH10 is not implemented.");
+		CU_PASS("PREFETCH10 is not implemented.");
 		return;
-	}
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	if (num_blocks > 0x80000000) {

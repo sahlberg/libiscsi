@@ -33,9 +33,10 @@ test_prefetch16_0blocks(void)
 	ret = prefetch16(iscsic, tgt_lun, 0,
 			 0, 0, 0);
 	if (ret == -2) {
-		CU_PASS("[SKIPPED] Target does not support PREFETCH16. Skipping test");
+		logging(LOG_NORMAL, "[SKIPPED] PREFETCH16 is not implemented.");
+		CU_PASS("PREFETCH16 is not implemented.");
 		return;
-	}
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks one block past end-of-LUN");

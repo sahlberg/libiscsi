@@ -40,9 +40,10 @@ test_prefetch10_beyond_eol(void)
 		ret = prefetch10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
 					       i, 0, 0);
 		if (ret == -2) {
-			CU_PASS("[SKIPPED] Target does not support PREFETCH10. Skipping test");
+			logging(LOG_NORMAL, "[SKIPPED] PREFETCH10 is not implemented.");
+			CU_PASS("PREFETCH10 is not implemented.");
 			return;
-		}
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

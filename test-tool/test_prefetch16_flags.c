@@ -36,6 +36,11 @@ test_prefetch16_flags(void)
 	logging(LOG_VERBOSE, "Test PREFETCH16 with IMMED==1");
 	ret = prefetch16(iscsic, tgt_lun, 0,
 			 1, 1, 0);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] PREFETCH16 is not implemented.");
+		CU_PASS("PREFETCH16 is not implemented.");
+		return;
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 with GROUP==3");

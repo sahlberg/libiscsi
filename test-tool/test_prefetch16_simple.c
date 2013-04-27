@@ -35,9 +35,10 @@ test_prefetch16_simple(void)
 	for (i = 1; i <= 256; i++) {
 		ret = prefetch16(iscsic, tgt_lun, 0, i, 0, 0);
 		if (ret == -2) {
-			CU_PASS("[SKIPPED] Target does not support PREFETCH16. Skipping test");
+			logging(LOG_NORMAL, "[SKIPPED] PREFETCH16 is not implemented.");
+			CU_PASS("PREFETCH16 is not implemented.");
 			return;
-		}
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
