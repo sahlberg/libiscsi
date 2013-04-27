@@ -32,6 +32,11 @@ test_read12_0blocks(void)
 	logging(LOG_VERBOSE, "Test READ12 0-blocks at LBA==0");
 	ret = read12(iscsic, tgt_lun, 0, 0, block_size,
 		     0, 0, 0, 0, 0, NULL);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
+		CU_PASS("READ12 is not implemented.");
+		return;
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	if (num_blocks > 0x80000000) {

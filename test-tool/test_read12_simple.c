@@ -1,4 +1,3 @@
-
 /* 
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -37,6 +36,11 @@ test_read12_simple(void)
 	for (i = 1; i <= 256; i++) {
 		ret = read12(iscsic, tgt_lun, 0, i * block_size,
 		    block_size, 0, 0, 0, 0, 0, NULL);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
+			CU_PASS("READ12 is not implemented.");
+			return;
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

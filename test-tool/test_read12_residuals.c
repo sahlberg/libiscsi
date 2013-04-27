@@ -59,6 +59,13 @@ test_read12_residuals(void)
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 	CU_ASSERT_NOT_EQUAL(task->status, SCSI_STATUS_CANCELLED); /* XXX redundant? */
 
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented on this target.");
+		CU_PASS("READ12 is not implemented.");
+		return;
+	}	
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",

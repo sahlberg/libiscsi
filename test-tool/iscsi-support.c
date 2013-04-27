@@ -2076,6 +2076,13 @@ read12(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
+		return -2;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] READ12 command: "
 			"failed with sense. %s", iscsi_get_error(iscsi));
@@ -2112,6 +2119,13 @@ read12_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send READ12 command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
+		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] READ12 successful but should "
@@ -2160,6 +2174,13 @@ read12_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
+		return -2;
+	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] READ12 successful but should "
 			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
@@ -2205,6 +2226,13 @@ read12_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send READ12 command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
+		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] READ12 successful but should "

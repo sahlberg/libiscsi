@@ -46,6 +46,11 @@ test_read12_rdprotect(void)
 		ret = read12_invalidfieldincdb(iscsic, tgt_lun, 0,
 					       block_size, block_size,
 					       i, 0, 0, 0, 0, NULL);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
+			CU_PASS("READ12 is not implemented.");
+			return;
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

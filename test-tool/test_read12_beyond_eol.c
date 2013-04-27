@@ -40,6 +40,11 @@ test_read12_beyond_eol(void)
 		ret = read12_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
 					   i * block_size, block_size,
 					   0, 0, 0, 0, 0, NULL);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
+			CU_PASS("READ12 is not implemented.");
+			return;
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

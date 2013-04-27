@@ -48,7 +48,7 @@ test_writeverify10_simple(void)
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-	logging(LOG_VERBOSE, "Test WRITE10 of 1-256 blocks at the end of the LUN");
+	logging(LOG_VERBOSE, "Test WRITEVERIFY10 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
 		unsigned char *buf = malloc(block_size * i);
 
