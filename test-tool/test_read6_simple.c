@@ -36,6 +36,11 @@ test_read6_simple(void)
 	for (i = 1; i <= 255; i++) {
 		ret = read6(iscsic, tgt_lun, 0, i * block_size,
 			    block_size, NULL);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] READ6 is not implemented.");
+			CU_PASS("READ6 is not implemented.");
+			return;
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

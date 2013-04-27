@@ -1884,6 +1884,13 @@ read6(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] READ6 is not implemented.");
+		return -2;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] READ6 command: "
 			"failed with sense. %s", iscsi_get_error(iscsi));
@@ -1916,6 +1923,13 @@ read6_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		logging(LOG_NORMAL, "[FAILED] Failed to send READ6 command: %s",
 		       iscsi_get_error(iscsi));
 		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] READ6 is not implemented.");
+		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] READ6 successful but should "

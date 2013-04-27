@@ -31,6 +31,11 @@ test_read6_0blocks(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ6 0-blocks at LBA==0");
 	ret = read6(iscsic, tgt_lun, 0, 0, block_size, NULL);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] READ6 is not implemented.");
+		CU_PASS("READ6 is not implemented.");
+		return;
+	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	if (num_blocks > 0x1fffff) {

@@ -45,6 +45,11 @@ test_writesame10_wrprotect(void)
 		ret = writesame10_invalidfieldincdb(iscsic, tgt_lun, 0,
 						    block_size, 1,
 						    0, 0, i, 0, buf);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 is not implemented.");
+			CU_PASS("WRITESAME10 is not implemented.");
+			return;
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 	free(buf);

@@ -41,6 +41,11 @@ test_read6_beyond_eol(void)
 		ret = read6_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
 					  i * block_size, block_size,
 					  NULL);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] READ6 is not implemented.");
+			CU_PASS("READ6 is not implemented.");
+			return;
+		}	
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
