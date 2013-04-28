@@ -526,7 +526,7 @@ static CU_SuiteInfo all_suites[] = {
 	CU_SUITE_INFO_NULL
 };
 
-static CU_SuiteInfo scsi_usb_stick_suites[] = {
+static CU_SuiteInfo scsi_usb_sbc_suites[] = {
 	{ (char *)"GetLBAStatus", test_setup, test_teardown,
 	  tests_get_lba_status },
 	{ (char *)"Inquiry", test_setup, test_teardown,
@@ -601,7 +601,7 @@ static struct test_family families[] = {
        { "ALL",		     all_suites },
        { "SCSI",	     scsi_suites },
        { "iSCSI",	     iscsi_suites },
-       { "SCSI-USB-STICK",   scsi_usb_stick_suites },
+       { "SCSI-USB-SBC",     scsi_usb_sbc_suites },
        { NULL, NULL}
 };
 
