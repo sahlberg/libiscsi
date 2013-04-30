@@ -33,10 +33,6 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		/* change the cmdsn so it becomes too big */
 		*(uint32_t *)&pdu->outdata.data[24] = htonl(iscsi->maxcmdsn + 1);
 		break;
-	case 2:
-		/* change the cmdsn so it becomes too small */
-		*(uint32_t *)&pdu->outdata.data[24] = 0;
-		break;
 	}
 
 	change_cmdsn = 0;	
@@ -59,7 +55,7 @@ void test_iscsi_cmdsn_invalid(void)
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
 	change_cmdsn = 1;
 	/* we dont want autoreconnect since some targets will drop the
-	 * on this condition.
+	 * connection on this condition.
 	 */
 	iscsi_set_noautoreconnect(iscsic, 1);
 	iscsi_set_timeout(iscsic, 3);

@@ -309,7 +309,7 @@ test_writeverify10_residuals(void)
 	for (i = block_size; i < 2 * block_size; i++) {
 		if (buf[i] != 'a') {
 			logging(LOG_NORMAL, "Second block was overwritten and no longer contain 'a'");
-			CU_FAIL("Second block was incorrectly overwritten correctly");
+			CU_FAIL("Second block was incorrectly overwritten");
 			break;
 		}
 	}
@@ -383,7 +383,7 @@ test_writeverify10_residuals(void)
 	for (i = block_size; i < 2 * block_size; i++) {
 		if (buf[i] != 'a') {
 			logging(LOG_NORMAL, "Second block was overwritten and no longer contain 'a'");
-			CU_FAIL("Second block was incorrectly overwritten correctly");
+			CU_FAIL("Second block was incorrectly overwritten");
 			break;
 		}
 	}
