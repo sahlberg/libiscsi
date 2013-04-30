@@ -71,10 +71,17 @@ EXTERN int iscsi_service(struct iscsi_context *iscsi, int revents);
 EXTERN int iscsi_queue_length(struct iscsi_context *iscsi);
 
 /*
+ * Set the timeout in seconds after which a synchronous SCSI command
+ * will timeout.
+ * Default is 0 == no timeout.
+ */
+EXTERN int iscsi_set_timeout(struct iscsi_context *iscsi, int timeout);
+
+/*
  * To set tcp keepalive for the session.
  * Only options supported by given platform (if any) are set.
  */
-int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval);
+EXTERN int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval);
 
 struct iscsi_url {
        char portal[MAX_STRING_SIZE+1];
@@ -268,7 +275,8 @@ enum scsi_status {
 	SCSI_STATUS_RESERVATION_CONFLICT = 0x18,
 	SCSI_STATUS_REDIRECT             = 0x101,
 	SCSI_STATUS_CANCELLED            = 0x0f000000,
-	SCSI_STATUS_ERROR                = 0x0f000001
+	SCSI_STATUS_ERROR                = 0x0f000001,
+	SCSI_STATUS_TIMEOUT              = 0x0f000002
 };
 
 

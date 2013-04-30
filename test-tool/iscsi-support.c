@@ -1390,6 +1390,12 @@ testunitready(struct iscsi_context *iscsi, int lun)
 			iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status == SCSI_STATUS_TIMEOUT) {
+		logging(LOG_NORMAL,
+			"TESTUNITREADY timed out");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 			"[FAILED] TESTUNITREADY command: failed with sense. %s",

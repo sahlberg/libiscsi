@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
@@ -60,7 +61,7 @@ event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 			return;
 		}
 		if (ret == 0) {
-			/* poll timedout, try again */
+			iscsi_timeout_scan(iscsi);
 			continue;
 		}
 		if (iscsi_service(iscsi, pfd.revents) < 0) {

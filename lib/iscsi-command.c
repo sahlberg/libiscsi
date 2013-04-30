@@ -148,6 +148,45 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 	return 0;
 }
 
+void
+iscsi_timeout_scan(struct iscsi_context *iscsi)
+{
+	struct iscsi_pdu *pdu;
+	struct iscsi_pdu *next_pdu;
+	time_t t = time(NULL);
+
+	for (pdu = iscsi->waitpdu; pdu; pdu = next_pdu) {
+		struct iscsi_scsi_cbdata *scsi_cbdata;
+		struct scsi_task *task;
+
+		next_pdu = pdu->next;
+
+		if (pdu->scsi_timeout == 0) {
+			/* no timeout for this pdu */
+			continue;
+		}
+		if (t < pdu->scsi_timeout) {
+			/* not expired yet */
+			continue;
+		}
+		if (pdu->outdata.data[0] != ISCSI_PDU_SCSI_REQUEST) {
+			continue;
+		}
+
+		scsi_cbdata = &pdu->scsi_cbdata;
+		task = scsi_cbdata->task;
+
+		SLIST_REMOVE(&iscsi->waitpdu, pdu);
+		pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
+				task, pdu->private_data);
+		iscsi_set_error(iscsi, "SCSI command timed out");
+
+		/* task is freed by the sync caller */
+		task->status = SCSI_STATUS_TIMEOUT;
+	}
+}
+
+
 /* Using 'struct iscsi_data *d' for data-out is optional
  * and will be converted into a one element data-out iovector.
  */
@@ -1662,3 +1701,4 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 		iscsi_free_pdu(iscsi, pdu);
 	}
 }
+

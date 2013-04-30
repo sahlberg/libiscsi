@@ -61,6 +61,7 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <time.h>
 #include "scsi-lowlevel.h"
 #include "iscsi.h"
 #include "iscsi-private.h"
@@ -73,7 +74,13 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	struct iscsi_pdu *current = iscsi->outqueue;
 	struct iscsi_pdu *last = NULL;
-	
+
+	if (iscsi->scsi_timeout > 0) {
+		pdu->scsi_timeout = time(NULL) + iscsi->scsi_timeout;
+	} else {
+		pdu->scsi_timeout = 0;
+	}
+
 	if (iscsi->outqueue == NULL) {
 		iscsi->outqueue = pdu;
 		pdu->next = NULL;

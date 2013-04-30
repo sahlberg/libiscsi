@@ -131,7 +131,8 @@ struct iscsi_context {
 	int reallocs;
 	int frees;
 
-	time_t last_reconnect;	
+	time_t last_reconnect;
+	int scsi_timeout;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40
@@ -224,6 +225,7 @@ struct iscsi_pdu {
 	struct iscsi_data indata;
 
 	struct iscsi_scsi_cbdata scsi_cbdata;
+	time_t scsi_timeout;
 };
 
 struct iscsi_pdu *iscsi_allocate_pdu(struct iscsi_context *iscsi,
@@ -325,6 +327,8 @@ iscsi_serial32_compare(uint32_t s1, uint32_t s2);
 
 u_int32_t
 iscsi_itt_post_increment(struct iscsi_context *iscsi);
+
+void iscsi_timeout_scan(struct iscsi_context *iscsi);
 
 #ifdef __cplusplus
 }

@@ -534,3 +534,9 @@ iscsi_set_initial_r2t(struct iscsi_context *iscsi, enum iscsi_initial_r2t initia
 	return 0;
 }
 
+int
+iscsi_set_timeout(struct iscsi_context *iscsi, int timeout)
+{
+	iscsi->scsi_timeout = timeout;
+	return 0;
+}
