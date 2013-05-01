@@ -28,10 +28,16 @@ static int change_cmdsn;
 
 static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
+	static uint32_t old_cmdsn;
+
 	switch (change_cmdsn) {
 	case 1:
+		old_cmdsn = *(uint32_t *)&pdu->outdata.data[24];
 		/* change the cmdsn so it becomes too big */
 		*(uint32_t *)&pdu->outdata.data[24] = htonl(iscsi->maxcmdsn + 1);
+		break;
+	case 2:
+		*(uint32_t *)&pdu->outdata.data[24] = old_cmdsn;
 		break;
 	}
 
@@ -47,8 +53,8 @@ void test_iscsi_cmdsn_toohigh(void)
 	logging(LOG_VERBOSE, "Test sending invalid iSCSI CMDSN");
 	logging(LOG_VERBOSE, "CMDSN MUST be in the range EXPCMDSN and MAXCMDSN");
 
-	logging(LOG_VERBOSE, "Test that a CMDSN > MAXCMDSN is an error");
-	logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == MAXCMDSN+1");
+	logging(LOG_VERBOSE, "RFC3720:3.2.2.1 CMDSN > MAXCMDSN must be silently ignored by the target");
+	logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == MAXCMDSN+1. Should be ignored by the target.");
 
 	iscsic->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
 	iscsic->target_max_recv_data_segment_length = block_size;
@@ -62,4 +68,18 @@ void test_iscsi_cmdsn_toohigh(void)
 
 	ret = testunitready(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, -1);
+	if (ret == -1) {
+		logging(LOG_VERBOSE, "[SUCCESS] We did not receive a reply");
+	} else {
+		logging(LOG_VERBOSE, "[FAILURE] We got a response from the target but SMDSN was outside of the window.");
+	}
+
+	
+
+	iscsi_set_noautoreconnect(iscsic, 0);
+	logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == EXPCMDSN. should work again");
+	change_cmdsn = 2;
+	ret = testunitready(iscsic, tgt_lun);
+	CU_ASSERT_EQUAL(ret, 0);
+
 }
