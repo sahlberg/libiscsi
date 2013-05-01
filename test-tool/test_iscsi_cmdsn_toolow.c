@@ -28,20 +28,14 @@ static int change_cmdsn;
 
 static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	static uint32_t old_cmdsn;
-
 	switch (change_cmdsn) {
 	case 1:
-		old_cmdsn = *(uint32_t *)&pdu->outdata.data[24];
 		/* change the cmdsn so it becomes too big */
 		*(uint32_t *)&pdu->outdata.data[24] = htonl(iscsi->expcmdsn + 1);
 		/* fudge the cmdsn value back to where it should be if this
 		 * pdu is ignored.
 		 */
-		iscsi->cmdsn--;
-		break;
-	case 2:
-		*(uint32_t *)&pdu->outdata.data[24] = old_cmdsn;
+		iscsi->cmdsn = iscsi->expcmdsn;
 		break;
 	}
 
@@ -82,7 +76,6 @@ void test_iscsi_cmdsn_toolow(void)
 
 	iscsi_set_noautoreconnect(iscsic, 0);
 	logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == EXPCMDSN. should work again");
-	change_cmdsn = 2;
 	ret = testunitready(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
