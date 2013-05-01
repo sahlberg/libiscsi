@@ -39,7 +39,7 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 	return 0;
 }
 
-void test_iscsi_cmdsn_invalid(void)
+void test_iscsi_cmdsn_toohigh(void)
 { 
 	int ret;
 

@@ -49,7 +49,7 @@ void test_inquiry_evpd(void);
 void test_inquiry_supported_vpd(void);
 void test_inquiry_mandatory_vpd_sbc(void);
 
-void test_iscsi_cmdsn_invalid(void);
+void test_iscsi_cmdsn_toohigh(void);
 
 void test_mandatory_sbc(void);
 
