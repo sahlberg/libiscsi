@@ -92,13 +92,17 @@ int
 iscsi_process_task_mgmt_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			    struct iscsi_in_pdu *in)
 {
-	uint32_t response, maxcmdsn;
+	uint32_t response, maxcmdsn, expcmdsn;
 
 	response = in->hdr[2];
 
 	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (iscsi_serial32_compare(maxcmdsn,iscsi->maxcmdsn) > 0) {
+	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
 		iscsi->maxcmdsn = maxcmdsn;
+	}
+	expcmdsn = scsi_get_uint32(&in->hdr[28]);
+	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
+		iscsi->expcmdsn = expcmdsn;
 	}
 
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, &response, pdu->private_data);

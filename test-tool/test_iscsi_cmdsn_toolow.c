@@ -34,7 +34,7 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 	case 1:
 		old_cmdsn = *(uint32_t *)&pdu->outdata.data[24];
 		/* change the cmdsn so it becomes too big */
-		*(uint32_t *)&pdu->outdata.data[24] = htonl(iscsi->maxcmdsn + 1);
+		*(uint32_t *)&pdu->outdata.data[24] = htonl(iscsi->expcmdsn + 1);
 		/* fudge the cmdsn value back to where it should be if this
 		 * pdu is ignored.
 		 */
@@ -49,7 +49,7 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 	return 0;
 }
 
-void test_iscsi_cmdsn_toohigh(void)
+void test_iscsi_cmdsn_toolow(void)
 { 
 	int ret;
 
@@ -57,8 +57,8 @@ void test_iscsi_cmdsn_toohigh(void)
 	logging(LOG_VERBOSE, "Test sending invalid iSCSI CMDSN");
 	logging(LOG_VERBOSE, "CMDSN MUST be in the range EXPCMDSN and MAXCMDSN");
 
-	logging(LOG_VERBOSE, "RFC3720:3.2.2.1 CMDSN > MAXCMDSN must be silently ignored by the target");
-	logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == MAXCMDSN+1. Should be ignored by the target.");
+	logging(LOG_VERBOSE, "RFC3720:3.2.2.1 CMDSN < EXPCMDSN must be silently ignored by the target");
+	logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == EXPCMDSN-1. Should be ignored by the target.");
 
 	iscsic->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
 	iscsic->target_max_recv_data_segment_length = block_size;
@@ -79,6 +79,7 @@ void test_iscsi_cmdsn_toohigh(void)
 	}
 
 	
+
 	iscsi_set_noautoreconnect(iscsic, 0);
 	logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == EXPCMDSN. should work again");
 	change_cmdsn = 2;

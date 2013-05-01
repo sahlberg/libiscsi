@@ -432,6 +432,7 @@ static CU_SuiteInfo scsi_suites[] = {
 
 static CU_TestInfo tests_iscsi_cmdsn[] = {
 	{ (char *)"iSCSICmdSnTooHigh", test_iscsi_cmdsn_toohigh },
+	{ (char *)"iSCSICmdSnTooLow", test_iscsi_cmdsn_toolow },
 	CU_TEST_INFO_NULL
 };
 

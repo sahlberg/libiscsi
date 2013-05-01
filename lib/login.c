@@ -951,7 +951,7 @@ int
 iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			  struct iscsi_in_pdu *in)
 {
-	uint32_t status, maxcmdsn;
+  uint32_t status, maxcmdsn, expcmdsn;
 	char *ptr = (char *)in->data;
 	int size = in->data_pos;
 
@@ -960,8 +960,12 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	iscsi->statsn = scsi_get_uint16(&in->hdr[24]);
 
 	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (iscsi_serial32_compare(maxcmdsn,iscsi->maxcmdsn) > 0) {
+	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
 		iscsi->maxcmdsn = maxcmdsn;
+	}
+	expcmdsn = scsi_get_uint32(&in->hdr[28]);
+	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
+		iscsi->expcmdsn = expcmdsn;
 	}
 	
 	/* XXX here we should parse the data returned in case the target
@@ -1149,11 +1153,15 @@ int
 iscsi_process_logout_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 struct iscsi_in_pdu *in)
 {
-	uint32_t maxcmdsn;
+  uint32_t maxcmdsn, expcmdsn;
 
 	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (iscsi_serial32_compare(maxcmdsn,iscsi->maxcmdsn) > 0) {
+	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
 		iscsi->maxcmdsn = maxcmdsn;
+	}
+	expcmdsn = scsi_get_uint32(&in->hdr[28]);
+	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
+		iscsi->expcmdsn = expcmdsn;
 	}
 
 	iscsi->is_loggedin = 0;
