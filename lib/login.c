@@ -36,12 +36,16 @@
 #endif
 
 #include <stdio.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
 #include "md5.h"
+#ifdef HAVE_LIBGCRYPT
+#include <gcrypt.h>
+#endif
 
 static int
 iscsi_login_add_initiatorname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
@@ -628,6 +632,41 @@ i2h(int i)
 	return i + '0';
 }
 
+#ifndef HAVE_LIBGCRYPT
+typedef struct MD5Context *gcry_md_hd_t;
+#define gcry_md_write MD5Update
+#define GCRY_MD_MD5 1
+
+static inline void gcry_md_open(gcry_md_hd_t *hd, int algo, unsigned int flags)
+{
+	assert(algo == GCRY_MD_MD5 && flags == 0);
+	*hd = malloc(sizeof(struct MD5Context));
+	if (*hd) {
+		MD5Init(*hd);
+	}
+}
+
+static inline void gcry_md_putc(gcry_md_hd_t h, unsigned char c)
+{
+	MD5Update(h, &c, 1);
+}
+
+static inline char *gcry_md_read(gcry_md_hd_t h, int algo)
+{
+	unsigned char digest[16];
+	assert(algo == 0 || algo == GCRY_MD_MD5);
+
+	MD5Final(digest, h);
+	return memcpy(h->buf, digest, sizeof(digest));
+}
+
+static inline void gcry_md_close(gcry_md_hd_t h)
+{
+	memset(h, 0, sizeof(*h));
+	free(h);
+}
+#endif
+
 static int
 iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
@@ -635,7 +674,7 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 	char * strp;
 	unsigned char c, cc[2];
 	unsigned char digest[16];
-	struct MD5Context ctx;
+	gcry_md_hd_t ctx;
 	int i;
 
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_SECNEG
@@ -643,22 +682,27 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return 0;
 	}
 
+	gcry_md_open(&ctx, GCRY_MD_MD5, 0);
+	if (!ctx) {
+		iscsi_set_error(iscsi, "Cannot create MD5 algorithm");
+		return -1;
+	}
+
 	if (!iscsi->chap_c[0]) {
 		iscsi_set_error(iscsi, "No CHAP challenge found");
 		return -1;
 	}
-	MD5Init(&ctx);
-	c = iscsi->chap_i;
-	MD5Update(&ctx, &c, 1);
-	MD5Update(&ctx, (unsigned char *)iscsi->passwd, strlen(iscsi->passwd));
-	
+	gcry_md_putc(ctx, iscsi->chap_i);
+	gcry_md_write(ctx, (unsigned char *)iscsi->passwd, strlen(iscsi->passwd));
+
 	strp = iscsi->chap_c;
 	while (*strp != 0) {
 		c = (h2i(strp[0]) << 4) | h2i(strp[1]);
 		strp += 2;
-		MD5Update(&ctx, &c, 1);
+		gcry_md_putc(ctx, c);
 	}
-	MD5Final(digest, &ctx);
+	memcpy(digest, gcry_md_read(ctx, 0), sizeof(digest));
+	gcry_md_close(ctx);
 
 	strncpy(str,"CHAP_R=0x",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str))
