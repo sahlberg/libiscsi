@@ -408,7 +408,8 @@ enum scsi_version_descriptor {
 	SCSI_VERSION_DESCRIPTOR_SPC_4_T10_1731_D_R16		= 0x0461,
 	SCSI_VERSION_DESCRIPTOR_SPC_4_T10_1731_D_R18		= 0x0462,
 	SCSI_VERSION_DESCRIPTOR_SPC_4_T10_1731_D_R23		= 0x0463,
-	SCSI_VERSION_DESCRIPTOR_SSC				= 0x0200
+	SCSI_VERSION_DESCRIPTOR_SSC				= 0x0200,
+	SCSI_VERSION_DESCRIPTOR_UAS_T10_2095D_R04		= 0x1747
 };
 
 EXTERN const char *scsi_version_descriptor_to_str(enum scsi_version_descriptor version_descriptor);

@@ -3045,6 +3045,8 @@ scsi_version_descriptor_to_str(enum scsi_version_descriptor version_descriptor)
 		return "SPC-4 T10/1731-D revision 23";
 	case SCSI_VERSION_DESCRIPTOR_SSC:
 		return "SSC";
+	case SCSI_VERSION_DESCRIPTOR_UAS_T10_2095D_R04:
+		return "UAS T10/2095-D revision 04";
 	}
 	return "unknown";
 }
