@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -29,22 +30,19 @@ void
 test_writesame10_wrprotect(void)
 {
 	int i, ret;
-	unsigned char *buf;
+	unsigned char *buf = alloca(block_size);
+
+	/*
+	 * Try out different non-zero values for WRPROTECT.
+	 */
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
+	logging(LOG_VERBOSE, "Test WRITESAME10 with non-zero WRPROTECT");
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
-	/*
-	 * Try out different non-zero values for WRPROTECT.
-	 * They should all fail.
-	 */
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITESAME10 with non-zero WRPROTECT");
-	if (inq->protect) {
-		logging(LOG_VERBOSE, "No tests for devices that support protection information yet.");
-	} else {
-		logging(LOG_VERBOSE, "Device does not support protection information. All commands should fail.");
-		buf = malloc(block_size);
+	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
+		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
 			ret = writesame10_invalidfieldincdb(iscsic, tgt_lun, 0,
 							    block_size, 1,
@@ -56,6 +54,8 @@ test_writesame10_wrprotect(void)
 			}	
 			CU_ASSERT_EQUAL(ret, 0);
 		}
-		free(buf);
+		return;
 	}
+
+	logging(LOG_NORMAL, "No tests for devices that support protection information yet.");
 }

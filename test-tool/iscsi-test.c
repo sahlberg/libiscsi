@@ -315,8 +315,8 @@ int main(int argc, char *argv[])
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_task *inq_task;
+	struct scsi_task *rc16_task;
 	struct scsi_readcapacity10 *rc10;
-	struct scsi_readcapacity16 *rc16;
 	int full_size;
 	int c;
 
@@ -437,27 +437,23 @@ int main(int argc, char *argv[])
 	num_blocks = rc10->lba;
 	scsi_free_scsi_task(task);
 
-	task = iscsi_readcapacity16_sync(iscsi, lun);
-	if (task == NULL) {
+	rc16_task = iscsi_readcapacity16_sync(iscsi, lun);
+	if (rc16_task == NULL) {
 		printf("Failed to send READCAPACITY16 command: %s\n", iscsi_get_error(iscsi));
 		iscsi_destroy_context(iscsi);
 		return -1;
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		rc16 = scsi_datain_unmarshall(task);
+	if (rc16_task->status == SCSI_STATUS_GOOD) {
+		rc16 = scsi_datain_unmarshall(rc16_task);
 		if (rc16 == NULL) {
 			printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
-			scsi_free_scsi_task(task);
+			scsi_free_scsi_task(rc16_task);
 			iscsi_destroy_context(iscsi);
 			return -1;
 		}
 		block_size = rc16->block_length;
 		num_blocks = rc16->returned_lba;
-		lbpme      = rc16->lbpme;
 		lbppb      = 1 << rc16->lbppbe;
-		lbpme      = rc16->lbpme;
-
-		scsi_free_scsi_task(task);
 	}
 
 
@@ -519,6 +515,7 @@ int main(int argc, char *argv[])
 	}
 
 	scsi_free_scsi_task(inq_task);
+	scsi_free_scsi_task(rc16_task);
 	iscsi_logout_sync(iscsi);
 	iscsi_destroy_context(iscsi);
 

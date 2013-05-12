@@ -77,7 +77,7 @@ do {									\
 
 #define CHECK_FOR_THIN_PROVISIONING					\
 do {									\
-	if (lbpme == 0) {						\
+	if (rc16 == NULL || rc16->lbpme == 0) {	       		       	\
 		logging(LOG_VERBOSE, "[SKIPPED] Logical unit is fully"	\
 			" provisioned. Skipping test");			\
 		CU_PASS("[SKIPPED] Logical unit is fully provisioned."	\
@@ -129,16 +129,15 @@ do {									\
 } while (0);
 
 extern struct scsi_inquiry_standard *inq;
+extern struct scsi_readcapacity16 *rc16;
 
 extern size_t block_size;
 extern uint64_t num_blocks;
-extern int lbpme;
 extern int lbppb;
-extern int lbpme;
 extern int data_loss;
+extern int anc_sup;
 extern int lbpws10;
 extern int lbpws;
-extern int anc_sup;
 extern int readonly;
 extern int sbc3_support;
 extern int maximum_transfer_length;

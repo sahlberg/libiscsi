@@ -47,17 +47,16 @@ const char *initiatorname2 =
 const char *tgt_url;
 
 struct scsi_inquiry_standard *inq;
+struct scsi_readcapacity16 *rc16;
 
 size_t block_size;
 uint64_t num_blocks;
-int lbpme;
 int lbppb;
-int lbpme;
 enum scsi_inquiry_peripheral_device_type device_type;
 int data_loss;
+int anc_sup;
 int lbpws10;
 int lbpws;
-int anc_sup;
 int readonly;
 int sbc3_support;
 int maximum_transfer_length;

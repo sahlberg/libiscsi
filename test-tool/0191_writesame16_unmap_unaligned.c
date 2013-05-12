@@ -41,7 +41,7 @@ int T0191_writesame16_unmap_unaligned(const char *initiator, const char *url)
 		return -1;
 	}
 
-	if (lbpme == 0){
+	if (rc16 == NULL || rc16->lbpme == 0){
 		printf("Logical unit is fully provisioned. Skipping test\n");
 		ret = -2;
 		goto finished;

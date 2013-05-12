@@ -35,10 +35,11 @@ test_verify10_vrprotect(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY10 with non-zero VRPROTECT");
-	if (inq->protect) {
-		logging(LOG_VERBOSE, "No tests for devices that support protection information yet.");
-	} else {
-		logging(LOG_VERBOSE, "Device does not support protection information. All commands should fail.");
+
+	CHECK_FOR_SBC;
+
+	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
+		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
 			ret = read10(iscsic, tgt_lun, 0, block_size,
 			    block_size, 0, 0, 0, 0, 0, buf);
@@ -53,5 +54,8 @@ test_verify10_vrprotect(void)
 			}
 			CU_ASSERT_EQUAL(ret, 0);
 		}
+		return;
 	}
+
+	logging(LOG_NORMAL, "No tests for devices that support protection information yet.");
 }

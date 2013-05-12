@@ -23,7 +23,7 @@
 int T0160_readcapacity16_simple(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
-	struct scsi_readcapacity16 *rc16;
+	struct scsi_readcapacity16 *rc;
 	struct scsi_task *task;
 	int ret, lun;
 
@@ -59,8 +59,8 @@ int T0160_readcapacity16_simple(const char *initiator, const char *url)
 		scsi_free_scsi_task(task);
 		goto finished;
 	}
-	rc16 = scsi_datain_unmarshall(task);
-	if (rc16 == NULL) {
+	rc = scsi_datain_unmarshall(task);
+	if (rc == NULL) {
  	        printf("[FAILED]\n");
 		printf("failed to unmarshall READCAPACITY16 data. %s\n", iscsi_get_error(iscsi));
 		ret = -1;

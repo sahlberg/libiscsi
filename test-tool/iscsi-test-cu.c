@@ -857,8 +857,8 @@ main(int argc, char *argv[])
 	CU_ErrorAction error_action = CUEA_IGNORE;
 	int res;
 	struct scsi_readcapacity10 *rc10;
-	struct scsi_readcapacity16 *rc16;
 	struct scsi_task *inq_task;
+	struct scsi_task *rc16_task;
 	int full_size;
 	int is_usb;
 	static struct option long_opts[] = {
@@ -992,29 +992,25 @@ main(int argc, char *argv[])
 	num_blocks = rc10->lba + 1;
 	scsi_free_scsi_task(task);
 
-	task = iscsi_readcapacity16_sync(iscsic, lun);
-	if (task == NULL) {
+	rc16_task = iscsi_readcapacity16_sync(iscsic, lun);
+	if (rc16_task == NULL) {
 		printf("Failed to send READCAPACITY16 command: %s\n",
 		    iscsi_get_error(iscsic));
 		iscsi_destroy_context(iscsic);
 		return -1;
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		rc16 = scsi_datain_unmarshall(task);
+	if (rc16_task->status == SCSI_STATUS_GOOD) {
+		rc16 = scsi_datain_unmarshall(rc16_task);
 		if (rc16 == NULL) {
 			printf("failed to unmarshall READCAPACITY16 data. %s\n",
 			    iscsi_get_error(iscsic));
-			scsi_free_scsi_task(task);
+			scsi_free_scsi_task(rc16_task);
 			iscsi_destroy_context(iscsic);
 			return -1;
 		}
 		block_size = rc16->block_length;
 		num_blocks = rc16->returned_lba + 1;
-		lbpme = rc16->lbpme;
 		lbppb = 1 << rc16->lbppbe;
-		lbpme = rc16->lbpme;
-
-		scsi_free_scsi_task(task);
 	}
 
 	inq_task = iscsi_inquiry_sync(iscsic, lun, 0, 0, 64);
@@ -1049,7 +1045,7 @@ main(int argc, char *argv[])
 	}
 
 	/* if thin provisioned we also need to read the VPD page for it */
-	if (lbpme != 0) {
+	if (rc16 && rc16->lbpme != 0){
 		struct scsi_inquiry_logical_block_provisioning *inq_lbp;
 
 		task = iscsi_inquiry_sync(iscsic, lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, 64);
@@ -1146,6 +1142,7 @@ main(int argc, char *argv[])
 	free(discard_const(tgt_url));
 
 	scsi_free_scsi_task(inq_task);
+	scsi_free_scsi_task(rc16_task);
 
 	return 0;
 }

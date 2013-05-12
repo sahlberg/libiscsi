@@ -49,7 +49,7 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 
 	ret = 0;
 
-	if (lbpme == 0){
+	if (rc16 == NULL || rc16->lbpme == 0){
 		printf("Logical unit is fully provisioned. All commands should fail with check condition.\n");
 	}
 

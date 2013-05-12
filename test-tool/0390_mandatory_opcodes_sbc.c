@@ -208,7 +208,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 
 
 	printf("Test UNMAP ... ");
-	if (lbpme == 0) {
+	if (rc16 == NULL || rc16->lbpme == 0){
 		printf("[LBPME == 0, SKIPPING TEST]\n");
 	} else {
 		task = iscsi_unmap_sync(iscsi, lun, 0, 0, NULL, 0);
@@ -246,7 +246,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 
 
 	printf("Test WRITE SAME16 ... ");
-	if (lbpme == 0) {
+	if (rc16 == NULL || rc16->lbpme == 0){
 		printf("[LBPME == 0, SKIPPING TEST]\n");
 	} else {
 		task = iscsi_writesame16_sync(iscsi, lun, 0,

@@ -49,7 +49,7 @@ int T0190_writesame16_unmap(const char *initiator, const char *url)
 
 	ret = 0;
 
-	if (lbpme == 0) {
+	if (rc16 == NULL || rc16->lbpme == 0){
 		printf("LBPME not set. Skip test for CPD page 0xB2 (logical block provisioning)\n");
 		goto finished;
 	}

@@ -34,19 +34,17 @@ test_writeverify16_wrprotect(void)
 	unsigned char *buf = alloca(block_size);
 
 
-	CHECK_FOR_DATALOSS;
-	CHECK_FOR_SBC;
-
 	/*
 	 * Try out different non-zero values for WRPROTECT.
-	 * They should all fail.
 	 */
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 with non-zero WRPROTECT");
-	if (inq->protect) {
-		logging(LOG_VERBOSE, "No tests for devices that support protection information yet.");
-	} else {
-		logging(LOG_VERBOSE, "Device does not support protection information. All commands should fail.");
+
+	CHECK_FOR_DATALOSS;
+	CHECK_FOR_SBC;
+
+	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
+		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
 			ret = writeverify16_invalidfieldincdb(iscsic, tgt_lun, 0,
 						       block_size, block_size,
@@ -58,5 +56,8 @@ test_writeverify16_wrprotect(void)
 		       	}	
 			CU_ASSERT_EQUAL(ret, 0);
 		}
+		return;
 	}
+
+	logging(LOG_NORMAL, "No tests for devices that support protection information yet.");
 }

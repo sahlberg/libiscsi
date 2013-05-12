@@ -259,7 +259,7 @@ int T0300_readonly(const char *initiator, const char *url)
 
 	/* UNMAP one block at lba 0 */
 	printf("WRITESAME10 to UNMAP LUN 0 ... ");
-	if (lbpme == 0) {
+	if (rc16 == NULL || rc16->lbpme == 0){
 		printf("LUN is not thin-provisioned. [SKIPPED]\n");
 		goto finished;
 	}
@@ -295,10 +295,6 @@ int T0300_readonly(const char *initiator, const char *url)
 
 	/* UNMAP one block at lba 0 */
 	printf("WRITESAME16 to UNMAP LUN 0 ... ");
-	if (lbpme == 0) {
-		printf("LUN is not thin-provisioned. [SKIPPED]\n");
-		goto finished;
-	}
 	task = iscsi_writesame16_sync(iscsi, lun, 0,
 				      data, block_size,
 				      1,
@@ -331,10 +327,6 @@ int T0300_readonly(const char *initiator, const char *url)
 
 	/* UNMAP one block at lba 0 */
 	printf("UNMAP LUN 0 ... ");
-	if (lbpme == 0) {
-		printf("LUN is not thin-provisioned. [SKIPPED]\n");
-		goto finished;
-	}
 	list[0].lba = 0;
 	list[0].num = 1;
 	task = iscsi_unmap_sync(iscsi, lun, 0, 0, &list[0], 1);
