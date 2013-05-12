@@ -72,6 +72,7 @@ static CU_TestInfo tests_inquiry[] = {
 	{ (char *)"InquiryEVPD", test_inquiry_evpd},
 	{ (char *)"InquirySupportedVPD", test_inquiry_supported_vpd},
 	{ (char *)"InquiryMandatoryVPDSBC", test_inquiry_mandatory_vpd_sbc},
+	{ (char *)"InquiryVersionDescriptors", test_inquiry_version_descriptors},
 	CU_TEST_INFO_NULL
 };
 
