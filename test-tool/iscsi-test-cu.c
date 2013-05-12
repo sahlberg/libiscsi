@@ -858,7 +858,7 @@ main(int argc, char *argv[])
 	int res;
 	struct scsi_readcapacity10 *rc10;
 	struct scsi_readcapacity16 *rc16;
-	struct scsi_inquiry_standard *inq;
+	struct scsi_task *inq_task;
 	int full_size;
 	int is_usb;
 	static struct option long_opts[] = {
@@ -1017,34 +1017,29 @@ main(int argc, char *argv[])
 		scsi_free_scsi_task(task);
 	}
 
-	task = iscsi_inquiry_sync(iscsic, lun, 0, 0, 64);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+	inq_task = iscsi_inquiry_sync(iscsic, lun, 0, 0, 64);
+	if (inq_task == NULL || inq_task->status != SCSI_STATUS_GOOD) {
 		printf("Inquiry command failed : %s\n", iscsi_get_error(iscsic));
 		return -1;
 	}
-	full_size = scsi_datain_getfullsize(task);
-	if (full_size > task->datain.size) {
-		scsi_free_scsi_task(task);
+	full_size = scsi_datain_getfullsize(inq_task);
+	if (full_size > inq_task->datain.size) {
+		scsi_free_scsi_task(inq_task);
 
 		/* we need more data for the full list */
-		task = iscsi_inquiry_sync(iscsic, lun, 0, 0, full_size);
-		if (task == NULL) {
+		inq_task = iscsi_inquiry_sync(iscsic, lun, 0, 0, full_size);
+		if (inq_task == NULL) {
 			printf("Inquiry command failed : %s\n",
 			    iscsi_get_error(iscsic));
 			return -1;
 		}
 	}
-	inq = scsi_datain_unmarshall(task);
+	inq = scsi_datain_unmarshall(inq_task);
 	if (inq == NULL) {
 		printf("failed to unmarshall inquiry datain blob\n");
-		scsi_free_scsi_task(task);
+		scsi_free_scsi_task(inq_task);
 		return -1;
 	}
-	removable = inq->rmb;
-	device_type = inq->device_type;
-	sccs = inq->sccs;
-	encserv = inq->encserv;
-	scsi_free_scsi_task(task);
 
 	sbc3_support = 0;
 	for (i = 0; i < 8; i++) {
@@ -1149,6 +1144,8 @@ main(int argc, char *argv[])
 	if (testname_re)
 		free(testname_re);
 	free(discard_const(tgt_url));
+
+	scsi_free_scsi_task(inq_task);
 
 	return 0;
 }

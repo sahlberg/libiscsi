@@ -28,7 +28,7 @@ void
 test_inquiry_supported_vpd(void)
 {
 	int ret, i;
-	struct scsi_inquiry_supported_pages *inq;
+	struct scsi_inquiry_supported_pages *sup_inq;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test INQUIRY supported VPD pages");
@@ -43,21 +43,21 @@ test_inquiry_supported_vpd(void)
 	CU_ASSERT(task->datain.size >= 4);
 
 	logging(LOG_VERBOSE, "Verify we can unmarshall the DATA-IN buffer");
-	inq = scsi_datain_unmarshall(task);
-	CU_ASSERT_NOT_EQUAL(inq, NULL);
-	if (inq == NULL) {
+	sup_inq = scsi_datain_unmarshall(task);
+	CU_ASSERT_NOT_EQUAL(sup_inq, NULL);
+	if (sup_inq == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to unmarshall DATA-IN "
 			"buffer");
 		return;
 	}
 
 	logging(LOG_VERBOSE, "Verify we read all the supported pages");
-	for (i = 0; i < inq->num_pages; i++) {
+	for (i = 0; i < sup_inq->num_pages; i++) {
 		logging(LOG_VERBOSE, "Verify we can read page 0x%02x",
-			inq->pages[i]);
+			sup_inq->pages[i]);
 
 		ret = inquiry(iscsic, tgt_lun,
-			      1, inq->pages[i],
+			      1, sup_inq->pages[i],
 			      255, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
 	}

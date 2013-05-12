@@ -53,7 +53,7 @@ int T0361_startstopunit_pwrcnd(const char *initiator, const char *url)
 	ret = 0;
 
 
-	if (removable) {
+	if (inq->rmb) {
 		printf("Media is removable. STARTSTOPUNIT should work\n");
 	} else {
 		printf("Media is not removable. STARTSTOPUNIT should fail\n");

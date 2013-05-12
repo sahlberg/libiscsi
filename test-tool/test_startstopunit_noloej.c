@@ -32,7 +32,7 @@ test_startstopunit_noloej(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test STARTSTOPUNIT LOEJ==0");
-	if (!removable) {
+	if (!inq->rmb) {
 		logging(LOG_VERBOSE, "[SKIPPED] LUN is not removable. "
 			"Skipping test.");
 		return;

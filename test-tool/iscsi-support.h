@@ -47,8 +47,8 @@ do {									\
 	if (!data_loss) {						\
 		logging(LOG_VERBOSE, "[SKIPPED] --dataloss flag is not " \
 				"set. Skipping test.");	       	      	\
-		CU_PASS("[SKIPPED] --dataloss flag is not set. "	\
-				"Skipping test.");			\
+		CU_PASS("[SKIPPED] --dataloss flag is not set."		\
+			" Skipping test");				\
 		return;							\
 	}								\
 } while (0);
@@ -66,7 +66,7 @@ do {									\
 
 #define CHECK_FOR_REMOVABLE						\
 do {									\
-	if (!removable) {						\
+	if (!inq->rmb) {						\
 		logging(LOG_VERBOSE, "[SKIPPED] Logical unit is not "	\
 			"removable. Skipping test.");			\
 		CU_PASS("[SKIPPED] Logical unit is not removable"	\
@@ -119,7 +119,7 @@ do {									\
 
 #define CHECK_FOR_SBC							\
 do {									\
-	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {\
+	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {\
 		logging(LOG_VERBOSE, "[SKIPPED] Not SBC device."	\
 			" Skipping test");				\
 		CU_PASS("[SKIPPED] Not SBC device."			\
@@ -128,16 +128,14 @@ do {									\
 	}								\
 } while (0);
 
+extern struct scsi_inquiry_standard *inq;
+
 extern size_t block_size;
 extern uint64_t num_blocks;
 extern int lbpme;
 extern int lbppb;
 extern int lbpme;
 extern int data_loss;
-extern int removable;
-extern enum scsi_inquiry_peripheral_device_type device_type;
-extern int sccs;
-extern int encserv;
 extern int lbpws10;
 extern int lbpws;
 extern int anc_sup;

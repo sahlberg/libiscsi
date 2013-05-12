@@ -59,15 +59,14 @@ int T0300_readonly(const char *initiator, const char *url)
 		return -1;
 	}
 
-	if (!data_loss) {
-		printf("--dataloss flag is not set. Skipping test\n");
-		ret = -2;
-		goto finished;
+	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+		logging(LOG_VERBOSE, "[SKIPPED] Not SBC device."
+			" Skipping test");
+		return -2;
 	}
-
-	/* This test is only valid for SBC devices */
-	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
-		printf("LUN is not SBC device. Skipping test\n");
+	if (!data_loss) {
+		logging(LOG_VERBOSE, "[SKIPPED] --dataloss flag not set."
+			" Skipping test");
 		return -2;
 	}
 

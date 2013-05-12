@@ -55,7 +55,7 @@ int T0360_startstopunit_simple(const char *initiator, const char *url)
 	ret = 0;
 
 
-	if (removable) {
+	if (inq->rmb) {
 		printf("Media is removable. STARTSTOPUNIT should work\n");
 	} else {
 		printf("Media is not removable. STARTSTOPUNIT should fail\n");
@@ -80,7 +80,7 @@ int T0360_startstopunit_simple(const char *initiator, const char *url)
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-	if (removable) {
+	if (inq->rmb) {
 		printf("Medium is removable. Check with TESTUNITREADY that was removed.\n");
 		ret = testunitready_nomedium(iscsi, lun);
 		if (ret != 0) {
@@ -138,7 +138,7 @@ int T0360_startstopunit_simple(const char *initiator, const char *url)
 	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-	if (removable) {
+	if (inq->rmb) {
 		printf("Medium is removable. Check with TESTUNITREADY that was removed.\n");
 		ret = testunitready_nomedium(iscsi, lun);
 		if (ret != 0) {

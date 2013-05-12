@@ -28,7 +28,7 @@ void
 test_inquiry_alloc_length(void)
 {
 	int ret, i;
-	struct scsi_inquiry_standard *inq;
+	struct scsi_inquiry_standard *std_inq;
 	struct scsi_task *task2 = NULL;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -48,16 +48,16 @@ test_inquiry_alloc_length(void)
 	CU_ASSERT(task->datain.size >= 36);
 
 	logging(LOG_VERBOSE, "Verify we can unmarshall the DATA-IN buffer");
-	inq = scsi_datain_unmarshall(task);
-	CU_ASSERT_NOT_EQUAL(inq, NULL);
-	if (inq == NULL) {
+	std_inq = scsi_datain_unmarshall(task);
+	CU_ASSERT_NOT_EQUAL(std_inq, NULL);
+	if (std_inq == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to unmarshall DATA-IN "
 			"buffer");
 		return;
 	}
 
 	logging(LOG_VERBOSE, "Verify peripheral-qualifier is 0");
-	CU_ASSERT_EQUAL(inq->qualifier, 0);
+	CU_ASSERT_EQUAL(std_inq->qualifier, 0);
 
 
 
@@ -67,7 +67,7 @@ test_inquiry_alloc_length(void)
 	   target responds properly.
 	*/
 	logging(LOG_VERBOSE, "If version is SPC-3 or later INQUIRY supports 16-bit allocation lengths");
-	switch (inq->version) {
+	switch (std_inq->version) {
 	case 0x5:
 	case 0x6:
 		break;

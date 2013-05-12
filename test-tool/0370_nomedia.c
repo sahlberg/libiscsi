@@ -71,7 +71,7 @@ int T0370_nomedia(const char *initiator, const char *url)
 		return -1;
 	}
 
-	if (!removable) {
+	if (!inq->rmb) {
 		printf("Media is not removable. Skipping test.\n");
 		ret = -2;
 		goto finished;

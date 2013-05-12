@@ -57,7 +57,7 @@ int T0382_preventallow_itnexus_loss(const char *initiator, const char *url)
 	ret = 0;
 
 
-	if (!removable) {
+	if (!inq->rmb) {
 		printf("Media is not removable. Skipping tests\n");
 		ret = -2;
 		goto finished;
@@ -75,7 +75,7 @@ int T0382_preventallow_itnexus_loss(const char *initiator, const char *url)
 	/* SPC doesnt really say anything about what should happen if using PREVENTALLOW 
 	 * on a device that does not support medium removals.
 	 */
-	if (removable) {
+	if (inq->rmb) {
 		if (task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("PREVENTALLOW command: failed with sense %s\n", iscsi_get_error(iscsi));
@@ -166,7 +166,7 @@ int T0382_preventallow_itnexus_loss(const char *initiator, const char *url)
 	/* SPC doesnt really say anything about what should happen if using PREVENTALLOW 
 	 * on a device that does not support medium removals.
 	 */
-	if (removable) {
+	if (inq->rmb) {
 		if (task->status != SCSI_STATUS_GOOD) {
 			printf("[FAILED]\n");
 			printf("PREVENTALLOW command: failed with sense %s\n", iscsi_get_error(iscsi));

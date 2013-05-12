@@ -43,11 +43,11 @@ int T0103_read10_rdprotect(const char *initiator, const char *url)
 		return -1;
 	}
 
-	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
-		printf("LUN is not SBC device. Skipping test\n");
+	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+		logging(LOG_VERBOSE, "[SKIPPED] Not SBC device."
+			" Skipping test");
 		return -2;
 	}
-
 
 	ret = 0;
 

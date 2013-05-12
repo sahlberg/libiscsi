@@ -28,7 +28,7 @@ void
 test_inquiry_standard(void)
 {
 	int ret, i;
-	struct scsi_inquiry_standard *inq;
+	struct scsi_inquiry_standard *std_inq;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test of the standard INQUIRY page");
@@ -41,19 +41,19 @@ test_inquiry_standard(void)
 	CU_ASSERT(task->datain.size >= 36);
 
 	logging(LOG_VERBOSE, "Verify we can unmarshall the DATA-IN buffer");
-	inq = scsi_datain_unmarshall(task);
-	CU_ASSERT_NOT_EQUAL(inq, NULL);
-	if (inq == NULL) {
+	std_inq = scsi_datain_unmarshall(task);
+	CU_ASSERT_NOT_EQUAL(std_inq, NULL);
+	if (std_inq == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to unmarshall DATA-IN "
 			"buffer");
 		return;
 	}
 
 	logging(LOG_VERBOSE, "Verify peripheral-qualifier is 0");
-	CU_ASSERT_EQUAL(inq->qualifier, 0);
+	CU_ASSERT_EQUAL(std_inq->qualifier, 0);
 
 	logging(LOG_VERBOSE, "Verify version field is either 0x4, 0x5 or 0x6");
-	switch (inq->version) {
+	switch (std_inq->version) {
 	case 0x0:
 		logging(LOG_NORMAL, "[WARNING] Standard INQUIRY data claims "
 			"conformance to no standard. Version==0. "
@@ -67,27 +67,27 @@ test_inquiry_standard(void)
 	default:
 		logging(LOG_NORMAL, "[FAILED] Invalid version in standard "
 			"INQUIRY data. Version %d found but only versions "
-			"0x4,0x4,0x6 are valid.", inq->version);
+			"0x4,0x4,0x6 are valid.", std_inq->version);
 		CU_FAIL("Invalid version in INQUIRY data");
 	}
 
 	logging(LOG_VERBOSE, "Verify response-data-format is 2 "
 		"(SPC-2 or later)");
-	if (inq->response_data_format != 2) {
+	if (std_inq->response_data_format != 2) {
 		logging(LOG_NORMAL, "[FAILED] Response data format is "
 			"invalid. Must be 2 but device returned %d",
-			inq->response_data_format);
+			std_inq->response_data_format);
 	}
-	CU_ASSERT_EQUAL(inq->response_data_format, 2);
+	CU_ASSERT_EQUAL(std_inq->response_data_format, 2);
 
 	logging(LOG_VERBOSE, "Verify additional-length is correct");
-	if (inq->additional_length != task->datain.size - 5) {
+	if (std_inq->additional_length != task->datain.size - 5) {
 		logging(LOG_NORMAL, "[FAILED] Bad additional length "
 			"returned. Should be %d but device returned %d.",
 			task->datain.size - 5,
-			inq->additional_length);
+			std_inq->additional_length);
 	}
-	CU_ASSERT_EQUAL(inq->additional_length, task->datain.size - 5);
+	CU_ASSERT_EQUAL(std_inq->additional_length, task->datain.size - 5);
 
 	logging(LOG_VERBOSE, "Verify VENDOR_IDENTIFICATION is in ASCII");
 	for (i = 8; i < 16; i++) {
@@ -138,14 +138,14 @@ test_inquiry_standard(void)
 	}
 
 	logging(LOG_VERBOSE, "Verify AERC is clear in SPC-3 and later");
-	if (task->datain.data[3] & 0x80 && inq->version >= 5) {
+	if (task->datain.data[3] & 0x80 && std_inq->version >= 5) {
 		logging(LOG_NORMAL, "[FAILED] AERC is set but this device "
 			"reports SPC-3 or later.");
 		CU_FAIL("AERC is set but SPC-3+ is claimed");
 	}
 
 	logging(LOG_VERBOSE, "Verify TRMTSK is clear in SPC-2 and later");
-	if (task->datain.data[3] & 0x40 && inq->version >= 4) {
+	if (task->datain.data[3] & 0x40 && std_inq->version >= 4) {
 		logging(LOG_NORMAL, "[FAILED] TRMTSK is set but this device "
 			"reports SPC-2 or later.");
 		CU_FAIL("TRMTSK is set but SPC-2+ is claimed");

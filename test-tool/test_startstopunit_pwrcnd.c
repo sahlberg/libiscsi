@@ -32,7 +32,7 @@ test_startstopunit_pwrcnd(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test STARTSTOPUNIT PowerCondition");
-	if (!removable) {
+	if (!inq->rmb) {
 		logging(LOG_VERBOSE, "[SKIPPED] LUN is not removable. "
 			"Skipping test.");
 		return;

@@ -26,7 +26,7 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url)
 {
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_inquiry_supported_pages *inq;
+	struct scsi_inquiry_supported_pages *sup_inq;
 	int ret, lun, i;
 	int full_size;
 	enum scsi_inquiry_pagecode page_code;
@@ -81,8 +81,8 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url)
 			goto finished;
 		}
 	}
-	inq = scsi_datain_unmarshall(task);
-	if (inq == NULL) {
+	sup_inq = scsi_datain_unmarshall(task);
+	if (sup_inq == NULL) {
 		printf("[FAILED]\n");
 		printf("failed to unmarshall inquiry datain blob\n");
 		scsi_free_scsi_task(task);
@@ -92,11 +92,11 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url)
 	printf("[OK]\n");
 
 	printf("Read each page and verify qualifier, type and page code:\n");
-	for (i = 0; i < inq->num_pages; i++) {
+	for (i = 0; i < sup_inq->num_pages; i++) {
 		struct scsi_task *pc_task;
 
-		printf("Verify page 0x%02x can be read ... ", inq->pages[i]);
-		pc_task = iscsi_inquiry_sync(iscsi, lun, 1, inq->pages[i], 255);
+		printf("Verify page 0x%02x can be read ... ", sup_inq->pages[i]);
+		pc_task = iscsi_inquiry_sync(iscsi, lun, 1, sup_inq->pages[i], 255);
 		if (pc_task == NULL) {
 			printf("[FAILED]\n");
 			printf("Failed to send INQUIRY command : %s\n", iscsi_get_error(iscsi));
@@ -112,11 +112,11 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url)
 		}
 		printf("[OK]\n");
 
-		printf("Verify page 0x%02x qualifier   ... ", inq->pages[i]);
-		if ((pc_task->datain.data[0] & 0xe0) >> 5 != inq->qualifier) {
+		printf("Verify page 0x%02x qualifier   ... ", sup_inq->pages[i]);
+		if ((pc_task->datain.data[0] & 0xe0) >> 5 != sup_inq->qualifier) {
 			printf("[FAILED]\n");
 			printf("Qualifier differs between VPD pages: %x != %x\n",
-			       pc_task->datain.data[0] & 0xe0, inq->qualifier);
+			       pc_task->datain.data[0] & 0xe0, sup_inq->qualifier);
 			ret = -1;
 			scsi_free_scsi_task(pc_task);
 			continue;
@@ -124,11 +124,11 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url)
 			printf("[OK]\n");
  		}
 
-		printf("Verify page 0x%02x device type ... ", inq->pages[i]);
-		if ((pc_task->datain.data[0] & 0x1f) != inq->device_type) {
+		printf("Verify page 0x%02x device type ... ", sup_inq->pages[i]);
+		if ((pc_task->datain.data[0] & 0x1f) != sup_inq->device_type) {
 			printf("[FAILED]\n");
 			printf("Device Type differs between VPD pages: %x != %x\n",
-			       pc_task->datain.data[0] & 0x1f, inq->device_type);
+			       pc_task->datain.data[0] & 0x1f, sup_inq->device_type);
 			ret = -1;
 			scsi_free_scsi_task(pc_task);
 			continue;
@@ -136,11 +136,11 @@ int T0404_inquiry_all_reported_vpd(const char *initiator, const char *url)
 			printf("[OK]\n");
  		}
 
-		printf("Verify page 0x%02x page code   ... ", inq->pages[i]);
-		if (pc_task->datain.data[1] != inq->pages[i]) {
+		printf("Verify page 0x%02x page code   ... ", sup_inq->pages[i]);
+		if (pc_task->datain.data[1] != sup_inq->pages[i]) {
 			printf("[FAILED]\n");
 			printf("Page code is wrong: %x != %x\n",
-			       pc_task->datain.data[1], inq->pages[i]);
+			       pc_task->datain.data[1], sup_inq->pages[i]);
 			ret = -1;
 			scsi_free_scsi_task(pc_task);
 			continue;

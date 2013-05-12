@@ -26,7 +26,7 @@ int T0403_inquiry_supported_vpd(const char *initiator, const char *url)
 {
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_inquiry_supported_pages *inq;
+	struct scsi_inquiry_supported_pages *std_inq;
 	size_t i;
 	int ret, lun, j;
 	int full_size;
@@ -83,8 +83,8 @@ int T0403_inquiry_supported_vpd(const char *initiator, const char *url)
 			goto finished;
 		}
 	}
-	inq = scsi_datain_unmarshall(task);
-	if (inq == NULL) {
+	std_inq = scsi_datain_unmarshall(task);
+	if (std_inq == NULL) {
 		printf("[FAILED]\n");
 		printf("failed to unmarshall inquiry datain blob\n");
 		scsi_free_scsi_task(task);
@@ -96,12 +96,12 @@ int T0403_inquiry_supported_vpd(const char *initiator, const char *url)
 	printf("Verify we have all mandatory SPC VPD pages:\n");
 	for (i = 0; i < sizeof(required_spc_pages) / sizeof(enum scsi_inquiry_pagecode); i++) {
 		printf("Verify the target supports page 0x%02x ... ", required_spc_pages[i]);
-		for (j = 0; j < inq->num_pages; j++) {
-			if (required_spc_pages[i] == inq->pages[j]) {
+		for (j = 0; j < std_inq->num_pages; j++) {
+			if (required_spc_pages[i] == std_inq->pages[j]) {
 				break;
 			}
 		}
-		if (j == inq->num_pages) {
+		if (j == std_inq->num_pages) {
 			printf("[FAILED]\n");
 			printf("Target did not report page 0x%02x. This page is mandatory in SPC.\n", required_spc_pages[i]);
 			ret = -1;

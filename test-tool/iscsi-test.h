@@ -27,7 +27,6 @@
 
 #include "iscsi-support.h"
 
-
 extern int show_info;
 
 int T0000_testunitready_simple(const char *initiator, const char *url);

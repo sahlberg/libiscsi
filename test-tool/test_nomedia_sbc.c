@@ -36,7 +36,7 @@ test_nomedia_sbc(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that Medium commands fail when medium is ejected on SBC devices");
 
-	if (!removable) {
+	if (!inq->rmb) {
 		logging(LOG_VERBOSE, "[SKIPPED] LUN is not removable. "
 			"Skipping test.");
 		return;

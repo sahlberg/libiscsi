@@ -26,7 +26,7 @@ int T0410_readtoc_basic(const char *initiator, const char *url)
 {
 	struct iscsi_context *iscsi;
 	struct scsi_task *task, *task1;
-	struct scsi_inquiry_standard *inq;
+	struct scsi_inquiry_standard *std_inq;
 	struct scsi_readcapacity10 *rc10;
 	struct scsi_readtoc_list *list, *list1;
 	int ret, lun, i, toc_device, full_size;
@@ -85,8 +85,8 @@ int T0410_readtoc_basic(const char *initiator, const char *url)
 			goto finished;
 		}
 	}
-	inq = scsi_datain_unmarshall(task);
-	if (inq == NULL) {
+	std_inq = scsi_datain_unmarshall(task);
+	if (std_inq == NULL) {
 		printf("[FAILED]\n");
 		printf("failed to unmarshall inquiry datain blob\n");
 		scsi_free_scsi_task(task);
@@ -96,7 +96,7 @@ int T0410_readtoc_basic(const char *initiator, const char *url)
 	printf("[OK]\n");
 
 	printf("Check device-type is either of DISK, TAPE or CD/DVD  ... ");
-	switch (inq->device_type) {
+	switch (std_inq->device_type) {
 	case SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_MMC:
 		toc_device = 1;
 		break;

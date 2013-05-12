@@ -47,12 +47,11 @@ int T0104_read10_flags(const char *initiator, const char *url)
 		return -1;
 	}
 
-	/* This test is only valid for SBC devices */
-	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
-		printf("LUN is not SBC device. Skipping test\n");
+	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+		logging(LOG_VERBOSE, "[SKIPPED] Not SBC device."
+			" Skipping test");
 		return -2;
 	}
-
 
 	ret = 0;
 

@@ -33,12 +33,7 @@ test_read12_flags(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ12 flags");
 
-	/* This test is only valid for SBC devices */
-	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
-		CU_PASS("[SKIPPED] LUN is not SBC device. Skipping test");
-		return;
-	}
-
+	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, "Test READ12 with DPO==1");
 	ret = read12(iscsic, tgt_lun, 0,

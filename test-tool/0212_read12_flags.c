@@ -44,12 +44,11 @@ int T0212_read12_flags(const char *initiator, const char *url)
 		return -1;
 	}
 
-	/* This test is only valid for SBC devices */
-	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
-		printf("LUN is not SBC device. Skipping test\n");
+	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+		logging(LOG_VERBOSE, "[SKIPPED] Not SBC device."
+			" Skipping test");
 		return -2;
 	}
-
 
 	printf("Read12 with DPO ");
 	task = iscsi_read12_sync(iscsi, lun, 0, block_size, block_size, 0, 1, 0, 0, 0);

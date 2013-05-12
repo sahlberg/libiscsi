@@ -59,7 +59,7 @@ int T0362_startstopunit_noloej(const char *initiator, const char *url)
 	ret = 0;
 
 
-	if (!removable) {
+	if (!inq->rmb) {
 		printf("Media is not removable. SKIPPING tests\n");
 		ret = -2;
 		goto finished;

@@ -62,18 +62,16 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 		return -1;
 	}
 
-	if (device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
-		printf("Not a SBC device. Skipping test\n");
-		ret = -2;
-		goto finished;
+	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+		logging(LOG_VERBOSE, "[SKIPPED] Not SBC device."
+			" Skipping test");
+		return -2;
 	}
-
 	if (!data_loss) {
-		printf("--dataloss flag is not set. Skipping test\n");
-		ret = -2;
-		goto finished;
+		logging(LOG_VERBOSE, "[SKIPPED] --dataloss flag not set."
+			" Skipping test");
+		return -2;
 	}
-	
 
 	printf("Test FORMAT UNIT ... ");
 	printf("[TEST NOT IMPLEMENTED YET]\n");
@@ -86,7 +84,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 
 
 	printf("Test MAINTENANCE IN ... ");
-	if (sccs == 0) {
+	if (inq->sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
 	} else {
 		printf("[TEST NOT IMPLEMENTED YET]\n");
@@ -94,7 +92,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 
 
 	printf("Test MAINTENANCE OUT ... ");
-	if (sccs == 0) {
+	if (inq->sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
 	} else {
 		printf("[TEST NOT IMPLEMENTED YET]\n");
@@ -138,7 +136,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 
 
 	printf("Test RECEIVE DIAGNOSTIC RESULT ... ");
-	if (encserv == 0) {
+	if (inq->encserv == 0) {
 		printf("[ENCSERV == 0, SKIPPING TEST]\n");
 	} else {
 		printf("[TEST NOT IMPLEMENTED YET]\n");
@@ -146,7 +144,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 
 
 	printf("Test REDUNDANCY GROUP IN ... ");
-	if (sccs == 0) {
+	if (inq->sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
 	} else {
 		printf("[TEST NOT IMPLEMENTED YET]\n");
@@ -154,7 +152,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 
 
 	printf("Test REDUNDANCY GROUP OUT ... ");
-	if (sccs == 0) {
+	if (inq->sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
 	} else {
 		printf("[TEST NOT IMPLEMENTED YET]\n");
@@ -188,7 +186,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 
 
 	printf("Test SPARE IN ... ");
-	if (sccs == 0) {
+	if (inq->sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
 		goto finished;
 	}
@@ -196,7 +194,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 
 
 	printf("Test SPARE OUT ... ");
-	if (sccs == 0) {
+	if (inq->sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
 	} else {
 		printf("[TEST NOT IMPLEMENTED YET]\n");
@@ -232,7 +230,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 
 
 	printf("Test VOLUME SET IN ... ");
-	if (sccs == 0) {
+	if (inq->sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
 	} else {
 		printf("[TEST NOT IMPLEMENTED YET]\n");
@@ -240,7 +238,7 @@ int T0390_mandatory_opcodes_sbc(const char *initiator, const char *url)
 
 
 	printf("Test VOLUME SET OUT ... ");
-	if (sccs == 0) {
+	if (inq->sccs == 0) {
 		printf("[SCCS == 0, SKIPPING TEST]\n");
 	} else {
 		printf("[TEST NOT IMPLEMENTED YET]\n");

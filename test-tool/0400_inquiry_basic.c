@@ -26,7 +26,7 @@ int T0400_inquiry_basic(const char *initiator, const char *url)
 {
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_inquiry_standard *inq;
+	struct scsi_inquiry_standard *std_inq;
 	int ret, lun, i;
 	int full_size;
 
@@ -90,8 +90,8 @@ int T0400_inquiry_basic(const char *initiator, const char *url)
 			goto finished;
 		}
 	}
-	inq = scsi_datain_unmarshall(task);
-	if (inq == NULL) {
+	std_inq = scsi_datain_unmarshall(task);
+	if (std_inq == NULL) {
 		printf("[FAILED]\n");
 		printf("failed to unmarshall inquiry datain blob\n");
 		scsi_free_scsi_task(task);
@@ -111,14 +111,14 @@ int T0400_inquiry_basic(const char *initiator, const char *url)
 	printf("[OK]\n");
 
 	printf("Check device-type is either of DISK, TAPE or CD/DVD  ... ");
-	switch (inq->device_type) {
+	switch (std_inq->device_type) {
 	case SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS:
 	case SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_SEQUENTIAL_ACCESS:
 	case SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_MMC:
 		break;
 	default:
 		printf("[FAILED]\n");
-		printf("Device-type is not DISK, TAPE or CD/DVD. Device reported:%s\n", scsi_devtype_to_str(inq->device_type));
+		printf("Device-type is not DISK, TAPE or CD/DVD. Device reported:%s\n", scsi_devtype_to_str(std_inq->device_type));
 		ret = -1;
 		goto test4;
 	}
@@ -127,9 +127,9 @@ int T0400_inquiry_basic(const char *initiator, const char *url)
 
 test4:
 	printf("Check PREIPHERAL QUALIFIER FIELD is 0  ... ");
-	if (inq->qualifier != 0) {
+	if (std_inq->qualifier != 0) {
 		printf("[FAILED]\n");
-		printf("QUALIFIER was not 0, it was %d\n", inq->qualifier);
+		printf("QUALIFIER was not 0, it was %d\n", std_inq->qualifier);
 		ret = -1;
 		goto test5;
 	}
@@ -137,14 +137,14 @@ test4:
 
 test5:
 	printf("Check VERSION field is either 0x4, 0x5 or 0x6 ... ");
-	switch (inq->version) {
+	switch (std_inq->version) {
 	case 0x4: /* SPC-2 */
 	case 0x5: /* SPC-3 */
 	case 0x6: /* SPC-4 */
 		break;
 	default:
 		printf("[FAILED]\n");
-		printf("Invalid VERSION:%d. Should be 0x4, 0x5 or 0x6\n", inq->version);
+		printf("Invalid VERSION:%d. Should be 0x4, 0x5 or 0x6\n", std_inq->version);
 		ret = -1;
 		goto test6;
 	}
@@ -152,9 +152,9 @@ test5:
 
 test6:
 	printf("Check RESPONSE DATA FORMAT is 2 ... ");
-	if (inq->response_data_format != 2) {
+	if (std_inq->response_data_format != 2) {
 		printf("[FAILED]\n");
-		printf("Invalid RESPONSE_DATA_FORMAT:%d. Should be 2\n", inq->response_data_format);
+		printf("Invalid RESPONSE_DATA_FORMAT:%d. Should be 2\n", std_inq->response_data_format);
 		ret = -1;
 		goto test7;
 	}
@@ -162,9 +162,9 @@ test6:
 
 test7:
 	printf("Verify Additional-Length ... ");
-	if (inq->additional_length + 5 != full_size) {
+	if (std_inq->additional_length + 5 != full_size) {
 		printf("[FAILED]\n");
-		printf("Invalid additional-length. Was %d but should be %d\n", inq->additional_length, full_size-5);
+		printf("Invalid additional-length. Was %d but should be %d\n", std_inq->additional_length, full_size-5);
 		ret = -1;
 		goto test8;
 	}
@@ -172,7 +172,7 @@ test7:
 
 test8:
 	printf("Verify HiSup is set ... ");
-	if (!inq->hisup) {
+	if (!std_inq->hisup) {
 		printf("[FAILED]\n");
 		printf("HiSup flag is not set.\n");
 		ret = -1;
@@ -236,7 +236,7 @@ test11:
 
 test12:
 	printf("Verify AERC is clear in SPC-3 and later ... ");
-	if (task->datain.data[3] & 0x80 && inq->version >= 5) {
+	if (task->datain.data[3] & 0x80 && std_inq->version >= 5) {
 		printf("[FAILED]\n");
 		printf("AERC is set but this device reports SPC-3 or later\n");
 		ret = -1;
@@ -246,7 +246,7 @@ test12:
 
 test13:
 	printf("Verify TrmTsk is clear in SPC-2 and later ... ");
-	if (task->datain.data[3] & 0x40 && inq->version >= 4) {
+	if (task->datain.data[3] & 0x40 && std_inq->version >= 4) {
 		printf("[FAILED]\n");
 		printf("TrmTsk is set but this device reports SPC-2 or later\n");
 		ret = -1;

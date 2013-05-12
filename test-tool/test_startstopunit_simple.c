@@ -35,7 +35,7 @@ test_startstopunit_simple(void)
 
 
 	logging(LOG_VERBOSE, "Test we can eject removable the media with IMMED==1");
-	if (removable) {
+	if (inq->rmb) {
 		logging(LOG_VERBOSE, "Media is not removable. STARTSTOPUNIT should fail");
 	} else {
 		logging(LOG_VERBOSE, "Media is removable. STARTSTOPUNIT should work");
@@ -43,7 +43,7 @@ test_startstopunit_simple(void)
 
 	ret = startstopunit(iscsic, tgt_lun,
 			    1, 0, 0, 0, 1, 0);
-	if (!removable) {
+	if (!inq->rmb) {
 		CU_ASSERT_NOT_EQUAL(ret, 0);
 		return;
 	}
