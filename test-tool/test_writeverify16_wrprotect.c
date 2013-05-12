@@ -43,15 +43,20 @@ test_writeverify16_wrprotect(void)
 	 */
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 with non-zero WRPROTECT");
-	for (i = 1; i < 8; i++) {
-		ret = writeverify16_invalidfieldincdb(iscsic, tgt_lun, 0,
-					       block_size, block_size,
-					       i, 0, 0, 0, buf);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY16 is not implemented.");
-			CU_PASS("WRITEVERIFY16 is not implemented.");
-			return;
-	       	}	
-		CU_ASSERT_EQUAL(ret, 0);
+	if (inq->protect) {
+		logging(LOG_VERBOSE, "No tests for devices that support protection information yet.");
+	} else {
+		logging(LOG_VERBOSE, "Device does not support protection information. All commands should fail.");
+		for (i = 1; i < 8; i++) {
+			ret = writeverify16_invalidfieldincdb(iscsic, tgt_lun, 0,
+						       block_size, block_size,
+						       i, 0, 0, 0, buf);
+			if (ret == -2) {
+				logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY16 is not implemented.");
+				CU_PASS("WRITEVERIFY16 is not implemented.");
+				return;
+		       	}	
+			CU_ASSERT_EQUAL(ret, 0);
+		}
 	}
 }

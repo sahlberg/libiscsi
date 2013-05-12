@@ -40,10 +40,15 @@ test_read10_rdprotect(void)
 
 	CHECK_FOR_SBC;
 
-	for (i = 1; i < 8; i++) {
-		ret = read10_invalidfieldincdb(iscsic, tgt_lun, 0,
+	if (inq->protect) {
+		logging(LOG_VERBOSE, "No tests for devices that support protection information yet.");
+	} else {
+		logging(LOG_VERBOSE, "Device does not support protection information. All commands should fail.");
+		for (i = 1; i < 8; i++) {
+			ret = read10_invalidfieldincdb(iscsic, tgt_lun, 0,
 					       block_size, block_size,
 					       i, 0, 0, 0, 0, NULL);
-		CU_ASSERT_EQUAL(ret, 0);
+			CU_ASSERT_EQUAL(ret, 0);
+		}
 	}
 }
