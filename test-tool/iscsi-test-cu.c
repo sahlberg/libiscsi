@@ -70,8 +70,9 @@ static CU_TestInfo tests_inquiry[] = {
 	{ (char *)"InquiryStandard", test_inquiry_standard },
 	{ (char *)"InquiryAllocLength", test_inquiry_alloc_length},
 	{ (char *)"InquiryEVPD", test_inquiry_evpd},
-	{ (char *)"InquirySupportedVPD", test_inquiry_supported_vpd},
+	{ (char *)"InquiryBlockLimits", test_inquiry_block_limits},
 	{ (char *)"InquiryMandatoryVPDSBC", test_inquiry_mandatory_vpd_sbc},
+	{ (char *)"InquirySupportedVPD", test_inquiry_supported_vpd},
 	{ (char *)"InquiryVersionDescriptors", test_inquiry_version_descriptors},
 	CU_TEST_INFO_NULL
 };
