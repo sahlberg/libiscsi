@@ -2654,6 +2654,13 @@ readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len)
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
 		scsi_free_scsi_task(task);
+		if (inq->protect) {
+			logging(LOG_NORMAL, "[FAILED] READCAPACITY16 is not "
+				"available but INQ->PROTECT is set. "
+				"ReadCapacity16 is mandatory when INQ->PROTECT "
+				"is set.");
+			return -1;
+		}
 		if (sbc3_support) {
 			logging(LOG_NORMAL, "[FAILED] READCAPACITY16 is not available but the device claims SBC-3 support.");
 			return -1;

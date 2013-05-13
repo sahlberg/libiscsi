@@ -36,7 +36,7 @@ test_readcapacity16_simple(void)
 
 	ret = readcapacity16(iscsic, tgt_lun, 16);
 	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented on this target and it does not claim SBC-3 support.");
+		logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented on this target and it does not claim support.");
 		CU_PASS("READCAPACITY16 is not implemented and no SBC-3 support claimed.");
 		return;
 	}	
