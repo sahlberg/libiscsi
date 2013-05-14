@@ -251,8 +251,9 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_read16_flags.c \
 	test-tool/test_read16_residuals.c \
 	test-tool/test_readcapacity10_simple.c \
-	test-tool/test_readcapacity16_simple.c \
 	test-tool/test_readcapacity16_alloclen.c \
+	test-tool/test_readcapacity16_protection.c \
+	test-tool/test_readcapacity16_simple.c \
 	test-tool/test_readonly_sbc.c \
 	test-tool/test_reserve6_simple.c \
 	test-tool/test_reserve6_2initiators.c \
