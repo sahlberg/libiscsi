@@ -27,7 +27,7 @@
 void
 test_inquiry_block_limits(void)
 {
-	int ret, expected_pl;
+	int ret;
 	struct scsi_inquiry_block_limits *inq_bl;
 	struct scsi_task *bl_task = NULL;
 	struct scsi_inquiry_logical_block_provisioning *lbp = NULL;
@@ -67,23 +67,28 @@ test_inquiry_block_limits(void)
 	/* if it is not SBC3 then we assume it must be SBC2 */
 	if (sbc3_support) {
 		logging(LOG_VERBOSE, "Device claims SBC-3. Verify that "				"PageLength == 0x3C");
-		expected_pl = 0x3c;
 	} else {
 		logging(LOG_VERBOSE, "Device is not SBC-3. Verify that "
-			"PageLength == 0x0C");
-		expected_pl = 0x0c;
-	}	
-	CU_ASSERT_EQUAL(bl_task->datain.data[3], expected_pl);
-	if (bl_task->datain.data[3] != expected_pl) {
-		logging(LOG_NORMAL, "[FAILURE] Invalid PageLength returned. "
-			"Was %d but expected %d",
-			bl_task->datain.data[3], expected_pl);
-	} else {
-		logging(LOG_VERBOSE, "[SUCCESS] PageLength matches SCSI SBC "
-			"level");
+			"PageLength == 0x0C (but allow 0x3C too. Some SBC-2 "
+			"devices support some SBC-3 features.");
+	}
+	switch (bl_task->datain.data[3]) {
+	case 0x3c:
+		/* accept 0x3c (==SBC-3) for all levels */
+		break;
+	case 0x0c:
+		/* only accept 0x0c for levels < SBC-3 */
+		if (!sbc3_support) {
+			break;
+		}
+		/* fallthrough */
+	default:
+		CU_FAIL("[FAILED] Invalid pagelength returned");
+		logging(LOG_NORMAL, "[FAILURE] Invalid PageLength returned.");
 	}
 
-	if (!sbc3_support) {
+
+	if (bl_task->datain.data[3] != 0x3c) {
 		goto finished;
 	}
 
