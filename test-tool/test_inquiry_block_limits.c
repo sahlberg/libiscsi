@@ -75,6 +75,11 @@ test_inquiry_block_limits(void)
 	switch (bl_task->datain.data[3]) {
 	case 0x3c:
 		/* accept 0x3c (==SBC-3) for all levels */
+		if (!sbc3_support) {
+			logging(LOG_NORMAL, "[WARNING] SBC-3 pagelength (0x3C) "
+				"returned but SBC-3 support was not claimed "
+				"in the standard inquiry page.");
+		}
 		break;
 	case 0x0c:
 		/* only accept 0x0c for levels < SBC-3 */
