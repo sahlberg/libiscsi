@@ -246,6 +246,7 @@ static CU_TestInfo tests_startstopunit[] = {
 
 static CU_TestInfo tests_unmap[] = {
 	{ (char *)"UnmapSimple", test_unmap_simple },
+	{ (char *)"UnmapVPD", test_unmap_vpd },
 	{ (char *)"UnmapZeroBlocks", test_unmap_0blocks },
 	CU_TEST_INFO_NULL
 };

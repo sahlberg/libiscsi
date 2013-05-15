@@ -154,6 +154,7 @@ void test_testunitready_simple(void);
 
 void test_unmap_simple(void);
 void test_unmap_0blocks(void);
+void test_unmap_vpd(void);
 
 void test_verify10_simple(void);
 void test_verify10_beyond_eol(void);
