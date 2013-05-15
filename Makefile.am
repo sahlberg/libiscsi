@@ -315,6 +315,7 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_writesame10_unmap.c \
 	test-tool/test_writesame10_unmap_unaligned.c \
 	test-tool/test_writesame10_unmap_until_end.c \
+	test-tool/test_writesame10_unmap_vpd.c \
 	test-tool/test_writesame16_simple.c \
 	test-tool/test_writesame16_beyond_eol.c \
 	test-tool/test_writesame16_0blocks.c \
@@ -322,6 +323,7 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_writesame16_unmap.c \
 	test-tool/test_writesame16_unmap_unaligned.c \
 	test-tool/test_writesame16_unmap_until_end.c \
+	test-tool/test_writesame16_unmap_vpd.c \
 	test-tool/test_writeverify10_simple.c \
 	test-tool/test_writeverify10_beyond_eol.c \
 	test-tool/test_writeverify10_0blocks.c \

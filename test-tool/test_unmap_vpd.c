@@ -31,11 +31,11 @@ test_unmap_vpd(void)
 	int ret;
 	struct unmap_list list[1];
 
-	CHECK_FOR_SBC;
-
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test UNMAP availability is consistent with VPD settings");
 
+	CHECK_FOR_DATALOSS;
+	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, "Check if UNMAP is available.");
 	list[0].lba = 0;

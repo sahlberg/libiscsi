@@ -319,6 +319,7 @@ static CU_TestInfo tests_writesame10[] = {
 	{ (char *)"WriteSame10Unmap", test_writesame10_unmap },
 	{ (char *)"WriteSame10UnmapUnaligned", test_writesame10_unmap_unaligned },
 	{ (char *)"WriteSame10UnmapUntilEnd", test_writesame10_unmap_until_end },
+	{ (char *)"WriteSame10UnmapVPD", test_writesame10_unmap_vpd },
 	CU_TEST_INFO_NULL
 };
 
@@ -330,6 +331,7 @@ static CU_TestInfo tests_writesame16[] = {
 	{ (char *)"WriteSame16Unmap", test_writesame16_unmap },
 	{ (char *)"WriteSame16UnmapUnaligned", test_writesame16_unmap_unaligned },
 	{ (char *)"WriteSame16UnmapUntilEnd", test_writesame16_unmap_until_end },
+	{ (char *)"WriteSame16UnmapVPD", test_writesame16_unmap_vpd },
 	CU_TEST_INFO_NULL
 };
 
@@ -1098,13 +1100,13 @@ main(int argc, char *argv[])
 	}
 	scsi_free_scsi_task(task);
 
+	iscsi_logout_sync(iscsic);
+	iscsi_destroy_context(iscsic);
+
 	if (is_usb) {
 		printf("USB device. Clamping maximum transfer length to 120k\n");
 		maximum_transfer_length = 120 *1024 / block_size;
 	}
-
-	iscsi_logout_sync(iscsic);
-	iscsi_destroy_context(iscsic);
 
 	if (CU_initialize_registry() != 0) {
 		fprintf(stderr, "error: unable to initialize test registry\n");
@@ -1137,7 +1139,7 @@ main(int argc, char *argv[])
 	free(discard_const(tgt_url));
 
 	scsi_free_scsi_task(inq_task);
-	scsi_free_scsi_task(inq_lbp_task);
+	//scsi_free_scsi_task(inq_lbp_task);
 	scsi_free_scsi_task(rc16_task);
 
 	return 0;
