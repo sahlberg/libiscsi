@@ -30,7 +30,7 @@ test_inquiry_block_limits(void)
 	int ret, expected_pl;
 	struct scsi_inquiry_block_limits *inq_bl;
 	struct scsi_task *bl_task = NULL;
-	struct scsi_inquiry_logical_block_provisioning *inq_lbp = NULL;
+	struct scsi_inquiry_logical_block_provisioning *lbp = NULL;
 	struct scsi_task *lbp_task = NULL;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -97,14 +97,14 @@ test_inquiry_block_limits(void)
 		      1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING,
 		      64, &lbp_task);
 	if (ret == 0) {
-		inq_lbp = scsi_datain_unmarshall(lbp_task);
-		if (inq_lbp == NULL) {
+		lbp = scsi_datain_unmarshall(lbp_task);
+		if (lbp == NULL) {
 			logging(LOG_NORMAL, "[FAILURE] failed to unmarshall "
 			"inquiry datain blob.");
 		}
 	}
 
-	if (inq_lbp && inq_lbp->lbpu) {
+	if (lbp && lbp->lbpu) {
 		/* We support UNMAP so MAXIMUM UNMAP LBA COUNT and
 		 * MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT.
 		 * They must be > 0.

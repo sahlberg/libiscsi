@@ -25,7 +25,7 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	int full_size;
-	struct scsi_inquiry_logical_block_provisioning *inq_lbp;
+	struct scsi_inquiry_logical_block_provisioning *lbp;
 	int ret, i, lun;
 
 	printf("0180_writesame10_unmap:\n");
@@ -77,21 +77,16 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 		}
 	}
 
-	inq_lbp = scsi_datain_unmarshall(task);
-	if (inq_lbp == NULL) {
+	lbp = scsi_datain_unmarshall(task);
+	if (lbp == NULL) {
 		printf("failed to unmarshall inquiry datain blob\n");
 		scsi_free_scsi_task(task);
 		ret = -1;
 		goto finished;
 	}
-
-	lbpws10 = inq_lbp->lbpws10;
-	anc_sup = inq_lbp->anc_sup;
-
-	scsi_free_scsi_task(task);
 	printf("[OK]\n");
 
-	if (lbpws10 == 0) {
+	if (lbp->lbpws10 == 0) {
 		printf("Device does not support WRITE_SAME10 for UNMAP. All WRITE_SAME10 commands to unmap should fail.\n");
 	}
 
@@ -105,13 +100,13 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 
 	/* unmap the first 1 - 256 blocks at the start of the LUN */
 	printf("Unmapping first 1-256 blocks ... ");
-	if (lbpws10 == 0) {
+	if (lbp->lbpws10 == 0) {
 		printf("(Should all fail since LBPWS10 is 0) ");
 	}
 	for (i=1; i<=256; i++) {
 		/* only try unmapping whole physical blocks, of if unmap using ws10 is not supported
 		   we test for all and they should all fail */
-		if (lbpws10 == 1 && i % lbppb) {
+		if (lbp->lbpws10 == 1 && i % lbppb) {
 			continue;
 		}
 		task = iscsi_writesame10_sync(iscsi, lun, 0,
@@ -133,7 +128,7 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 			ret = -2;
 			goto finished;
 		}
-		if (lbpws10) {
+		if (lbp->lbpws10) {
 			if (task->status != SCSI_STATUS_GOOD) {
 			        printf("[FAILED]\n");
 				printf("WRITESAME10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
@@ -160,13 +155,13 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 
 	/* unmap the last 1 - 256 blocks at the end of the LUN */
 	printf("Unmapping last 1-256 blocks ... ");
-	if (lbpws10 == 0) {
+	if (lbp->lbpws10 == 0) {
 		printf("(Should all fail since LBPWS10 is 0) ");
 	}
 	for (i=1; i<=256; i++) {
 		/* only try unmapping whole physical blocks, of if unmap using ws10 is not supported
 		   we test for all and they should all fail */
-		if (lbpws10 == 1 && i % lbppb) {
+		if (lbp->lbpws10 == 1 && i % lbppb) {
 			continue;
 		}
 
@@ -180,7 +175,7 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 			ret = -1;
 			goto finished;
 		}
-		if (lbpws10) {
+		if (lbp->lbpws10) {
 			if (task->status != SCSI_STATUS_GOOD) {
 			        printf("[FAILED]\n");
 				printf("WRITESAME10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
@@ -234,7 +229,7 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 
 	/* Test UNMAP=1 and ANCHOR==1 */
 	printf("Try UNMAP==1 and ANCHOR==1 ... ");
-	if (anc_sup == 0) {
+	if (lbp->anc_sup == 0) {
 		printf("(ANC_SUP==0 so check condition expected) ");
 	}
 	task = iscsi_writesame10_sync(iscsi, lun, 0,
@@ -247,7 +242,7 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 		ret = -1;
 		goto finished;
 	}
-	if (anc_sup == 0) {
+	if (lbp->anc_sup == 0) {
 		if (task->status        != SCSI_STATUS_CHECK_CONDITION
 		    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 		    || task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {

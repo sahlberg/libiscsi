@@ -861,6 +861,7 @@ main(int argc, char *argv[])
 	int res;
 	struct scsi_readcapacity10 *rc10;
 	struct scsi_task *inq_task;
+	struct scsi_task *inq_lbp_task = NULL;
 	struct scsi_task *rc16_task;
 	int full_size;
 	int is_usb;
@@ -1049,37 +1050,27 @@ main(int argc, char *argv[])
 
 	/* if thin provisioned we also need to read the VPD page for it */
 	if (rc16 && rc16->lbpme != 0){
-		struct scsi_inquiry_logical_block_provisioning *inq_lbp;
-
-		task = iscsi_inquiry_sync(iscsic, lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, 64);
-		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+		inq_lbp_task = iscsi_inquiry_sync(iscsic, lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, 64);
+		if (inq_lbp_task == NULL || inq_lbp_task->status != SCSI_STATUS_GOOD) {
 			printf("Inquiry command failed : %s\n", iscsi_get_error(iscsic));
 			return -1;
 		}
-		full_size = scsi_datain_getfullsize(task);
-		if (full_size > task->datain.size) {
-			scsi_free_scsi_task(task);
+		full_size = scsi_datain_getfullsize(inq_lbp_task);
+		if (full_size > inq_lbp_task->datain.size) {
+			scsi_free_scsi_task(inq_lbp_task);
 
 			/* we need more data for the full list */
-			if ((task = iscsi_inquiry_sync(iscsic, lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, full_size)) == NULL) {
+			if ((inq_lbp_task = iscsi_inquiry_sync(iscsic, lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, full_size)) == NULL) {
 				printf("Inquiry command failed : %s\n", iscsi_get_error(iscsic));
-				scsi_free_scsi_task(task);
 				return -1;
 			}
 		}
 
-		inq_lbp = scsi_datain_unmarshall(task);
+		inq_lbp = scsi_datain_unmarshall(inq_lbp_task);
 		if (inq_lbp == NULL) {
 			printf("failed to unmarshall inquiry datain blob\n");
-			scsi_free_scsi_task(task);
 			return -1;
 		}
-
-		lbpws10 = inq_lbp->lbpws10;
-		lbpws   = inq_lbp->lbpws;
-		anc_sup = inq_lbp->anc_sup;
-
-		scsi_free_scsi_task(task);
 	}
 
 
@@ -1145,6 +1136,7 @@ main(int argc, char *argv[])
 	free(discard_const(tgt_url));
 
 	scsi_free_scsi_task(inq_task);
+	scsi_free_scsi_task(inq_lbp_task);
 	scsi_free_scsi_task(rc16_task);
 
 	return 0;

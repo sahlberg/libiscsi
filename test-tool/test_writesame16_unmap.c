@@ -105,7 +105,7 @@ test_writesame16_unmap(void)
 
 
 
-	if (anc_sup) {
+	if (inq_lbp->anc_sup) {
 		logging(LOG_VERBOSE, "Test WRITESAME16 ANCHOR==1 + UNMAP==0");
 		ret = writesame16(iscsic, tgt_lun, 0,
 				  block_size, 1,

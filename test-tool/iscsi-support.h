@@ -88,7 +88,7 @@ do {									\
 
 #define CHECK_FOR_LBPWS10						\
 do {									\
-	if (lbpws10 == 0) {						\
+	if (inq_lbp->lbpws10 == 0) {	       				\
 		logging(LOG_VERBOSE, "[SKIPPED] Logical unit does not"	\
 			" have LBPWS10. Skipping test");		\
 		CU_PASS("[SKIPPED] Logical unit does not have LBPWS10."	\
@@ -99,7 +99,7 @@ do {									\
 
 #define CHECK_FOR_LBPWS							\
 do {									\
-	if (lbpws == 0) {						\
+	if (inq_lbp->lbpws == 0) {		       			\
 		logging(LOG_VERBOSE, "[SKIPPED] Logical unit does not"	\
 			" have LBPWS. Skipping test");	     	  	\
 		CU_PASS("[SKIPPED] Logical unit does not have LBPWS."	\
@@ -129,15 +129,13 @@ do {									\
 } while (0);
 
 extern struct scsi_inquiry_standard *inq;
+extern struct scsi_inquiry_logical_block_provisioning *inq_lbp;
 extern struct scsi_readcapacity16 *rc16;
 
 extern size_t block_size;
 extern uint64_t num_blocks;
 extern int lbppb;
 extern int data_loss;
-extern int anc_sup;
-extern int lbpws10;
-extern int lbpws;
 extern int readonly;
 extern int sbc3_support;
 extern int maximum_transfer_length;
