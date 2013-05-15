@@ -863,9 +863,9 @@ main(int argc, char *argv[])
 	CU_ErrorAction error_action = CUEA_IGNORE;
 	int res;
 	struct scsi_readcapacity10 *rc10;
-	struct scsi_task *inq_task;
+	struct scsi_task *inq_task = NULL;
 	struct scsi_task *inq_lbp_task = NULL;
-	struct scsi_task *rc16_task;
+	struct scsi_task *rc16_task = NULL;
 	int full_size;
 	int is_usb;
 	static struct option long_opts[] = {
@@ -1138,9 +1138,15 @@ main(int argc, char *argv[])
 		free(testname_re);
 	free(discard_const(tgt_url));
 
-	scsi_free_scsi_task(inq_task);
-	//scsi_free_scsi_task(inq_lbp_task);
-	scsi_free_scsi_task(rc16_task);
+	if (inq_task != NULL) {
+		scsi_free_scsi_task(inq_task);
+	}
+	if (inq_lbp_task != NULL) {
+		scsi_free_scsi_task(inq_lbp_task);
+	}
+	if (rc16_task != NULL) {
+		scsi_free_scsi_task(rc16_task);
+	}
 
 	return 0;
 }
