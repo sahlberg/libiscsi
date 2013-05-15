@@ -50,6 +50,8 @@ test_readcapacity16_protection(void)
 				"the device does not claim support for "
 				"protection information in the standard "
 				"inquiry VPD.");
+		} else {
+			logging(LOG_VERBOSE, "[SUCCESS] PROT_EN is 0");
 		}
 		CU_ASSERT_EQUAL(rc16->prot_en, 0);
 
@@ -59,6 +61,8 @@ test_readcapacity16_protection(void)
 				"the device does not claim support for "
 				"protection information in the standard "
 				"inquiry VPD.");
+		} else {
+			logging(LOG_VERBOSE, "[SUCCESS] P_TYPE is 0");
 		}
 		CU_ASSERT_EQUAL(rc16->p_type, 0);
 
@@ -68,6 +72,8 @@ test_readcapacity16_protection(void)
 				"the device does not claim support for "
 				"protection information in the standard "
 				"inquiry VPD.");
+		} else {
+			logging(LOG_VERBOSE, "[SUCCESS] P_I_EXP is 0");
 		}
 		CU_ASSERT_EQUAL(rc16->p_i_exp, 0);
 
@@ -84,6 +90,8 @@ test_readcapacity16_protection(void)
 		if (rc16->p_type) {
 			logging(LOG_VERBOSE, "[FAILED] P_TYPE is non-zero but "
 				"protection information is not enabled.");
+		} else {
+			logging(LOG_VERBOSE, "[SUCCESS] P_TYPE is 0");
 		}
 		CU_ASSERT_EQUAL(rc16->p_type, 0);
 
@@ -91,6 +99,8 @@ test_readcapacity16_protection(void)
 		if (rc16->p_i_exp) {
 			logging(LOG_VERBOSE, "[FAILED] P_I_EXP is non-zero but "
 				"protection information is not enabled");
+		} else {
+			logging(LOG_VERBOSE, "[SUCCESS] P_I_EXP is 0");
 		}
 		CU_ASSERT_EQUAL(rc16->p_i_exp, 0);
 
