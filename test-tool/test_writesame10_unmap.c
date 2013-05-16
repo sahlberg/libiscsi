@@ -54,14 +54,23 @@ test_writesame10_unmap(void)
 				  0, 1, 0, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
 
-		logging(LOG_VERBOSE, "Read %d blocks and verify they are now zero", i);
-		ret = read10(iscsic, tgt_lun, 0,
-			     i * block_size, block_size,
-			     0, 0, 0, 0, 0, buf);
-		for (j = 0; j < block_size * i; j++) {
-			if (buf[j] != 0) {
-				CU_ASSERT_EQUAL(buf[j], 0);
+		if (rc16->lbprz) {
+			logging(LOG_VERBOSE, "LBPRZ is set. Read the unmapped "
+				"blocks back and verify they are all zero");
+
+			logging(LOG_VERBOSE, "Read %d blocks and verify they "
+				"are now zero", i);
+			ret = read10(iscsic, tgt_lun, 0,
+				i * block_size, block_size,
+				0, 0, 0, 0, 0, buf);
+			for (j = 0; j < block_size * i; j++) {
+				if (buf[j] != 0) {
+					CU_ASSERT_EQUAL(buf[j], 0);
+				}
 			}
+		} else {
+			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
+				"and verify zero test");
 		}
 		free(buf);
 	}
@@ -84,14 +93,23 @@ test_writesame10_unmap(void)
 				  0, 1, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
-		logging(LOG_VERBOSE, "Read %d blocks and verify they are now zero", i);
-		ret = read10(iscsic, tgt_lun, num_blocks - i,
-			     i * block_size, block_size,
-			     0, 0, 0, 0, 0, buf);
-		for (j = 0; j < block_size * i; j++) {
-			if (buf[j] != 0) {
-				CU_ASSERT_EQUAL(buf[j], 0);
+		if (rc16->lbprz) {
+			logging(LOG_VERBOSE, "LBPRZ is set. Read the unmapped "
+				"blocks back and verify they are all zero");
+
+			logging(LOG_VERBOSE, "Read %d blocks and verify they "
+				"are now zero", i);
+			ret = read10(iscsic, tgt_lun, num_blocks - i,
+					i * block_size, block_size,
+					0, 0, 0, 0, 0, buf);
+			for (j = 0; j < block_size * i; j++) {
+				if (buf[j] != 0) {
+					CU_ASSERT_EQUAL(buf[j], 0);
+				}
 			}
+		} else {
+			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
+				"and verify zero test");
 		}
 		free(buf);
 	}
