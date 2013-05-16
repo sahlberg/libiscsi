@@ -28,7 +28,7 @@ void
 test_inquiry_block_limits(void)
 {
 	int ret;
-	struct scsi_inquiry_block_limits *inq_bl;
+	struct scsi_inquiry_block_limits *bl;
 	struct scsi_task *bl_task = NULL;
 	struct scsi_inquiry_logical_block_provisioning *lbp = NULL;
 	struct scsi_task *lbp_task = NULL;
@@ -44,8 +44,8 @@ test_inquiry_block_limits(void)
 		      64, &bl_task);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	inq_bl = scsi_datain_unmarshall(bl_task);
-	if (inq_bl == NULL) {
+	bl = scsi_datain_unmarshall(bl_task);
+	if (bl == NULL) {
 		logging(LOG_NORMAL, "[FAILURE] failed to unmarshall inquiry "
 			"datain blob.");
 		CU_FAIL("[FAILURE] failed to unmarshall inquiry "
@@ -125,36 +125,36 @@ test_inquiry_block_limits(void)
 		logging(LOG_VERBOSE, "Device claims UNMAP support via LBPU");
 		logging(LOG_VERBOSE, "Verify that MAXIMUM UNMAP LBA COUNT is "
 			"not 0");
-		CU_ASSERT_NOT_EQUAL(inq_bl->max_unmap, 0);
+		CU_ASSERT_NOT_EQUAL(bl->max_unmap, 0);
 
 		logging(LOG_VERBOSE, "Verify that MAXIMUM UNMAP LBA COUNT is "
 			"at least 2^LBPPBE");
-		CU_ASSERT_EQUAL(inq_bl->max_unmap >= (1U << rc16->lbppbe), 1);
+		CU_ASSERT_EQUAL(bl->max_unmap >= (1U << rc16->lbppbe), 1);
 
-		if (inq_bl->max_unmap != 0xffffffff) {
+		if (bl->max_unmap != 0xffffffff) {
 			logging(LOG_VERBOSE, "Verify that MAXIMUM UNMAP LBA "
 				"COUNT is not insanely big");
-			CU_ASSERT_EQUAL(inq_bl->max_unmap <= 1024*1024, 0);
+			CU_ASSERT_EQUAL(bl->max_unmap <= 1024*1024, 0);
 		}
 
 		logging(LOG_VERBOSE, "Verify that MAXIMUM UNMAP BLOCK "
 			"DESCRIPTOR COUNT is not 0");
-		CU_ASSERT_NOT_EQUAL(inq_bl->max_unmap_bdc, 0);
-		if (inq_bl->max_unmap_bdc != 0xffffffff) {
+		CU_ASSERT_NOT_EQUAL(bl->max_unmap_bdc, 0);
+		if (bl->max_unmap_bdc != 0xffffffff) {
 			logging(LOG_VERBOSE, "Verify that MAXIMUM UNMAP "
 				"BLOCK DESCRIPTOR COUNT is not insanely big");
-			CU_ASSERT_EQUAL(inq_bl->max_unmap_bdc <= 1024*1024, 0);
+			CU_ASSERT_EQUAL(bl->max_unmap_bdc <= 1024*1024, 0);
 		}
 	} else {
 		logging(LOG_VERBOSE, "Device does not claim UNMAP support via "
 			"LBPU");
 		logging(LOG_VERBOSE, "Verify that MAXIMUM UNMAP LBA COUNT is "
 			"0");
-		CU_ASSERT_EQUAL(inq_bl->max_unmap, 0);
+		CU_ASSERT_EQUAL(bl->max_unmap, 0);
 
 		logging(LOG_VERBOSE, "Verify that MAXIMUM UNMAP BLOCK "
 			"DESCRIPTOR COUNT is 0");
-		CU_ASSERT_EQUAL(inq_bl->max_unmap_bdc, 0);
+		CU_ASSERT_EQUAL(bl->max_unmap_bdc, 0);
 	}
 
 

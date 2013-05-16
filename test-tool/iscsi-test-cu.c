@@ -865,6 +865,7 @@ main(int argc, char *argv[])
 	struct scsi_readcapacity10 *rc10;
 	struct scsi_task *inq_task = NULL;
 	struct scsi_task *inq_lbp_task = NULL;
+	struct scsi_task *inq_bl_task = NULL;
 	struct scsi_task *rc16_task = NULL;
 	int full_size;
 	int is_usb;
@@ -1051,6 +1052,31 @@ main(int argc, char *argv[])
 		}
 	}
 
+	/* try reading block limits vpd */
+	inq_bl_task = iscsi_inquiry_sync(iscsic, lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS, 64);
+	if (inq_bl_task && inq_bl_task->status != SCSI_STATUS_GOOD) {
+		scsi_free_scsi_task(inq_bl_task);
+		inq_bl_task = NULL;
+	}
+	if (inq_bl_task) {
+		full_size = scsi_datain_getfullsize(inq_bl_task);
+		if (full_size > inq_bl_task->datain.size) {
+			scsi_free_scsi_task(inq_lbp_task);
+
+			if ((inq_bl_task = iscsi_inquiry_sync(iscsic, lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS, full_size)) == NULL) {
+				printf("Inquiry command failed : %s\n", iscsi_get_error(iscsic));
+				return -1;
+			}
+		}
+
+		inq_bl = scsi_datain_unmarshall(inq_bl_task);
+		if (inq_bl == NULL) {
+			printf("failed to unmarshall inquiry datain blob\n");
+			return -1;
+		}
+	}
+
+
 	/* if thin provisioned we also need to read the VPD page for it */
 	if (rc16 && rc16->lbpme != 0){
 		inq_lbp_task = iscsi_inquiry_sync(iscsic, lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, 64);
@@ -1140,6 +1166,9 @@ main(int argc, char *argv[])
 
 	if (inq_task != NULL) {
 		scsi_free_scsi_task(inq_task);
+	}
+	if (inq_bl_task != NULL) {
+		scsi_free_scsi_task(inq_bl_task);
 	}
 	if (inq_lbp_task != NULL) {
 		scsi_free_scsi_task(inq_lbp_task);

@@ -16,7 +16,6 @@
 */
 
 #include <stdio.h>
-#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -31,7 +30,7 @@ test_writesame16_unmap(void)
 {
 	int i, ret;
 	unsigned int j;
-	unsigned char *buf = alloca(256 * block_size);
+	unsigned char *buf = malloc(block_size * 65536);
 
 
 	CHECK_FOR_DATALOSS;
@@ -55,6 +54,7 @@ test_writesame16_unmap(void)
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support WRITESAME16. Skipping test");
+			free(buf);
 			return;
 		}
 		CU_ASSERT_EQUAL(ret, 0);
@@ -135,4 +135,117 @@ test_writesame16_unmap(void)
 
 	CU_ASSERT_EQUAL(ret, 0);
 
+
+	if (inq_bl == NULL) {
+		logging(LOG_VERBOSE, "[FAILED] WRITESAME16 works but "
+			"BlockLimits VPD is missing.");
+		CU_FAIL("[FAILED] WRITESAME10 works but "
+			"BlockLimits VPD is missing.");
+		free(buf);
+		return;
+	}
+
+	i = 256;
+	if (inq_bl->max_ws_len == 0 || inq_bl->max_ws_len >= 256) {
+		logging(LOG_VERBOSE, "Block Limits VPD page reports MAX_WS_LEN "
+			"as either 0 (==no limit) or >= 256. Test Unmapping "
+			"256 blocks to verify that it can handle 2-byte "
+			"lengths");
+
+		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
+		memset(buf, 0xff, block_size * i);
+		ret = write10(iscsic, tgt_lun, 0,
+			      i * block_size, block_size,
+			      0, 0, 0, 0, 0, buf);
+		CU_ASSERT_EQUAL(ret, 0);
+
+		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
+		ret = writesame10(iscsic, tgt_lun, 0,
+				  block_size, i,
+				  0, 1, 0, 0, NULL);
+		CU_ASSERT_EQUAL(ret, 0);
+
+		if (rc16->lbprz) {
+			logging(LOG_VERBOSE, "LBPRZ is set. Read the unmapped "
+				"blocks back and verify they are all zero");
+
+			logging(LOG_VERBOSE, "Read %d blocks and verify they "
+				"are now zero", i);
+			ret = read10(iscsic, tgt_lun, 0,
+				i * block_size, block_size,
+				0, 0, 0, 0, 0, buf);
+			for (j = 0; j < block_size * i; j++) {
+				if (buf[j] != 0) {
+					CU_ASSERT_EQUAL(buf[j], 0);
+				}
+			}
+		} else {
+			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
+				"and verify zero test");
+		}
+	} else {
+		logging(LOG_VERBOSE, "Block Limits VPD page reports MAX_WS_LEN "
+			"as <256. Verify that a 256 block unmap fails with "
+			"INVALID_FIELD_IN_CDB.");
+
+		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
+		ret = writesame10_invalidfieldincdb(iscsic, tgt_lun, 0,
+				  block_size, i,
+				  0, 1, 0, 0, NULL);
+		CU_ASSERT_EQUAL(ret, 0);
+	}
+
+
+
+	i = 65536;
+	if (inq_bl->max_ws_len == 0 || inq_bl->max_ws_len >= 256) {
+		logging(LOG_VERBOSE, "Block Limits VPD page reports MAX_WS_LEN "
+			"as either 0 (==no limit) or >= 256. Test Unmapping "
+			"256 blocks to verify that it can handle 2-byte "
+			"lengths");
+
+		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
+		memset(buf, 0xff, block_size * i);
+		ret = write10(iscsic, tgt_lun, 0,
+			      i * block_size, block_size,
+			      0, 0, 0, 0, 0, buf);
+		CU_ASSERT_EQUAL(ret, 0);
+
+		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
+		ret = writesame10(iscsic, tgt_lun, 0,
+				  block_size, i,
+				  0, 1, 0, 0, NULL);
+		CU_ASSERT_EQUAL(ret, 0);
+
+		if (rc16->lbprz) {
+			logging(LOG_VERBOSE, "LBPRZ is set. Read the unmapped "
+				"blocks back and verify they are all zero");
+
+			logging(LOG_VERBOSE, "Read %d blocks and verify they "
+				"are now zero", i);
+			ret = read10(iscsic, tgt_lun, 0,
+				i * block_size, block_size,
+				0, 0, 0, 0, 0, buf);
+			for (j = 0; j < block_size * i; j++) {
+				if (buf[j] != 0) {
+					CU_ASSERT_EQUAL(buf[j], 0);
+				}
+			}
+		} else {
+			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
+				"and verify zero test");
+		}
+	} else {
+		logging(LOG_VERBOSE, "Block Limits VPD page reports MAX_WS_LEN "
+			"as <256. Verify that a 256 block unmap fails with "
+			"INVALID_FIELD_IN_CDB.");
+
+		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
+		ret = writesame10_invalidfieldincdb(iscsic, tgt_lun, 0,
+				  block_size, i,
+				  0, 1, 0, 0, NULL);
+		CU_ASSERT_EQUAL(ret, 0);
+	}
+
+	free(buf);
 }

@@ -48,6 +48,7 @@ const char *tgt_url;
 
 struct scsi_inquiry_standard *inq;
 struct scsi_inquiry_logical_block_provisioning *inq_lbp;
+struct scsi_inquiry_block_limits *inq_bl;
 struct scsi_readcapacity16 *rc16;
 
 size_t block_size;
