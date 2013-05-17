@@ -139,7 +139,7 @@ test_writesame16_unmap(void)
 	if (inq_bl == NULL) {
 		logging(LOG_VERBOSE, "[FAILED] WRITESAME16 works but "
 			"BlockLimits VPD is missing.");
-		CU_FAIL("[FAILED] WRITESAME10 works but "
+		CU_FAIL("[FAILED] WRITESAME16 works but "
 			"BlockLimits VPD is missing.");
 		free(buf);
 		return;
@@ -154,13 +154,13 @@ test_writesame16_unmap(void)
 
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, block_size * i);
-		ret = write10(iscsic, tgt_lun, 0,
+		ret = write16(iscsic, tgt_lun, 0,
 			      i * block_size, block_size,
 			      0, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
-		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
-		ret = writesame10(iscsic, tgt_lun, 0,
+		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
+		ret = writesame16(iscsic, tgt_lun, 0,
 				  block_size, i,
 				  0, 1, 0, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -171,7 +171,7 @@ test_writesame16_unmap(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			ret = read10(iscsic, tgt_lun, 0,
+			ret = read16(iscsic, tgt_lun, 0,
 				i * block_size, block_size,
 				0, 0, 0, 0, 0, buf);
 			for (j = 0; j < block_size * i; j++) {
@@ -188,8 +188,8 @@ test_writesame16_unmap(void)
 			"as <256. Verify that a 256 block unmap fails with "
 			"INVALID_FIELD_IN_CDB.");
 
-		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
-		ret = writesame10_invalidfieldincdb(iscsic, tgt_lun, 0,
+		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
+		ret = writesame16_invalidfieldincdb(iscsic, tgt_lun, 0,
 				  block_size, i,
 				  0, 1, 0, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -206,13 +206,13 @@ test_writesame16_unmap(void)
 
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, block_size * i);
-		ret = write10(iscsic, tgt_lun, 0,
+		ret = write16(iscsic, tgt_lun, 0,
 			      i * block_size, block_size,
 			      0, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
-		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
-		ret = writesame10(iscsic, tgt_lun, 0,
+		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
+		ret = writesame16(iscsic, tgt_lun, 0,
 				  block_size, i,
 				  0, 1, 0, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -223,7 +223,7 @@ test_writesame16_unmap(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			ret = read10(iscsic, tgt_lun, 0,
+			ret = read16(iscsic, tgt_lun, 0,
 				i * block_size, block_size,
 				0, 0, 0, 0, 0, buf);
 			for (j = 0; j < block_size * i; j++) {
@@ -240,8 +240,8 @@ test_writesame16_unmap(void)
 			"as <256. Verify that a 256 block unmap fails with "
 			"INVALID_FIELD_IN_CDB.");
 
-		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
-		ret = writesame10_invalidfieldincdb(iscsic, tgt_lun, 0,
+		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
+		ret = writesame16_invalidfieldincdb(iscsic, tgt_lun, 0,
 				  block_size, i,
 				  0, 1, 0, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
