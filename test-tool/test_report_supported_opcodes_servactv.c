@@ -36,8 +36,6 @@ test_report_supported_opcodes_servactv(void)
 	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES SERVACTV flag");
 
 
-	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES report ALL opcodes "
-		"without timeout descriptors");
 	ret = report_supported_opcodes(iscsic, tgt_lun,
 		0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
 		65535, &rso_task);
