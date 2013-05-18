@@ -895,7 +895,7 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
  * MAINTENANCE In / Read Supported Op Codes
  */
 struct scsi_task *
-scsi_cdb_report_supported_opcodes(int return_timeouts, uint32_t alloc_len)
+scsi_cdb_report_supported_opcodes(int rctd, int options, enum scsi_opcode opcode, int sa, uint32_t alloc_len)
 {
 	struct scsi_task *task;
 
@@ -907,11 +907,15 @@ scsi_cdb_report_supported_opcodes(int return_timeouts, uint32_t alloc_len)
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0]   = SCSI_OPCODE_MAINTENANCE_IN;
 	task->cdb[1]   = SCSI_REPORT_SUPPORTED_OP_CODES;
-	task->cdb[2]   = SCSI_REPORT_SUPPORTING_OPS_ALL;
+	task->cdb[2]   = options & 0x07;
 
-	if (return_timeouts) {
+	if (rctd) {
 		task->cdb[2] |= 0x80;
 	}
+
+	task->cdb[3]   = opcode;
+
+	scsi_set_uint32(&task->cdb[4], sa);
 
 	scsi_set_uint32(&task->cdb[6], alloc_len);
 

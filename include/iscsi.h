@@ -837,7 +837,9 @@ iscsi_release6_task(struct iscsi_context *iscsi, int lun,
 
 EXTERN struct scsi_task *
 iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi, int lun,
-				    int return_timeouts, int maxsize,
+				    int rctd, int options,
+				    int opcode, int sa,
+				    uint32_t alloc_len,
 				    iscsi_command_cb cb, void *private_data);
 
 /*
@@ -1011,7 +1013,9 @@ iscsi_release6_sync(struct iscsi_context *iscsi, int lun);
 
 EXTERN struct scsi_task *
 iscsi_report_supported_opcodes_sync(struct iscsi_context *iscsi, int lun,
-				    int return_timeouts, int maxsize);
+				    int rctd, int options,
+				    int opcode, int sa,
+				    uint32_t alloc_len);
 
 /*
  * These functions are used when the application wants to specify its own buffers to read the data

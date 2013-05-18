@@ -1633,13 +1633,16 @@ iscsi_release6_task(struct iscsi_context *iscsi, int lun,
 }
 
 struct scsi_task *
-iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi, 
-				    int lun, int return_timeouts, int maxsize,
+iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi, int lun,
+				    int rctd, int options,
+				    int opcode, int sa,
+				    uint32_t alloc_len,
 				    iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
 
-	task = scsi_cdb_report_supported_opcodes(return_timeouts, maxsize);
+	task = scsi_cdb_report_supported_opcodes(rctd, options, opcode, sa,
+						 alloc_len);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"Maintenance In/Read Supported Op Codes cdb.");

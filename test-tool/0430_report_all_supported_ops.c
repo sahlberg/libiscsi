@@ -53,7 +53,9 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url)
 
 	printf("See if Report Supported Opcodes is supported... ");
 	/* See how big data is */
-	task = iscsi_report_supported_opcodes_sync(iscsi, lun, 0, 4);
+	task = iscsi_report_supported_opcodes_sync(iscsi, lun,
+			0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
+			4);
 	if (task == NULL) {
 		printf("[FAILED]\n");
 		printf("Failed to send Report Supported Opcodes command : %s\n",
@@ -84,7 +86,9 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url)
 	if (full_size > task->datain.size) {
 		scsi_free_scsi_task(task);
 		/* we need more data for the full list */
-		if ((task = iscsi_report_supported_opcodes_sync(iscsi, lun,  0, full_size)) == NULL) {
+		if ((task = iscsi_report_supported_opcodes_sync(iscsi, lun,
+				0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
+				full_size)) == NULL) {
 			printf("[FAILED]\n");
 			printf("REPORT SUPPORTED OPCODES failed : %s\n", iscsi_get_error(iscsi));
 			ret = -1;
@@ -115,7 +119,9 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url)
 	/*Report All Supported Operations including timeout info.*/
 	printf("See if Report Supported Opcodes with Timeouts is supported... ");
 	/* See how big data is */
-	task = iscsi_report_supported_opcodes_sync(iscsi, lun, 1, 4);
+	task = iscsi_report_supported_opcodes_sync(iscsi, lun,
+			1, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
+			4);
 	if (task == NULL) {
 		printf("[FAILED]\n");
 		printf("Failed to send Report Supported Opcodes command : %s\n",
@@ -148,7 +154,9 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url)
 		scsi_free_scsi_task(task);
 
 		/* we need more data for the full list */
-		if ((task = iscsi_report_supported_opcodes_sync(iscsi, lun,  1, full_size)) == NULL) {
+		if ((task = iscsi_report_supported_opcodes_sync(iscsi, lun,
+				1, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
+				full_size)) == NULL) {
 			printf("[FAILED]\n");
 			printf("REPORT SUPPORTED OPCODES failed : %s\n", iscsi_get_error(iscsi));
 			ret = -1;
