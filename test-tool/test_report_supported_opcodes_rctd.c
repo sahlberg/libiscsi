@@ -67,6 +67,7 @@ test_report_supported_opcodes_rctd(void)
 				"CTDP set");
 		}
 	}
+
 	scsi_free_scsi_task(rso_task);
 
 
@@ -92,6 +93,17 @@ test_report_supported_opcodes_rctd(void)
 				"without CTDP set");
 			CU_FAIL("[FAILED] Command descriptor without "
 				"CTDP set");
+		}
+	}
+
+	logging(LOG_VERBOSE, "Verify that all timeout descriptors have the "
+		"correct length");
+	for (i = 0; i < rsoc->num_descriptors; i++) {
+		if (rsoc->descriptors[i].to.descriptor_length != 0x0a) {
+			logging(LOG_NORMAL, "[FAILED] Command descriptor "
+				"with invalid TimeoutDescriptor length");
+			CU_FAIL("[FAILED] Command descriptor with "
+				"invalid TimeoutDescriptor length");
 		}
 	}
 
