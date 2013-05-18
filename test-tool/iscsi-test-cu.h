@@ -140,6 +140,7 @@ void test_readonly_sbc(void);
 
 void test_report_supported_opcodes_simple(void);
 void test_report_supported_opcodes_rctd(void);
+void test_report_supported_opcodes_servactv(void);
 
 void test_reserve6_simple(void);
 void test_reserve6_2initiators(void);

@@ -224,6 +224,7 @@ static CU_TestInfo tests_readonly[] = {
 static CU_TestInfo tests_report_supported_opcodes[] = {
 	{ (char *)"ReportSupportedOpcodesSimple", test_report_supported_opcodes_simple },
 	{ (char *)"ReportSupportedOpcodesRCTD", test_report_supported_opcodes_rctd },
+	{ (char *)"ReportSupportedOpcodesSERVACTV", test_report_supported_opcodes_servactv },
 	CU_TEST_INFO_NULL
 };
 
