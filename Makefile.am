@@ -255,6 +255,8 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_readcapacity16_protection.c \
 	test-tool/test_readcapacity16_simple.c \
 	test-tool/test_readonly_sbc.c \
+	test-tool/test_report_supported_opcodes_simple.c \
+	test-tool/test_report_supported_opcodes_rctd.c \
 	test-tool/test_reserve6_simple.c \
 	test-tool/test_reserve6_2initiators.c \
 	test-tool/test_reserve6_logout.c \

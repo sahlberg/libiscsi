@@ -31,7 +31,7 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url)
 	struct scsi_command_descriptor *desc;
 	int ret, lun;
 	int full_size, desc_size;
-	unsigned i;
+	int i;
 
 	printf("0430_report_all_supported_ops:\n");
 	printf("===================\n");
@@ -108,9 +108,9 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url)
 	printf("=======================\n");
 	for (i = 0; i < rsoc->num_descriptors; i++) {
 		printf("op:%x\tsa:%x\tcdb length:%d\n",
-		       rsoc->descriptors[i].op_code,
-		       rsoc->descriptors[i].service_action,
-		       rsoc->descriptors[i].cdb_length);
+		       rsoc->descriptors[i].opcode,
+		       rsoc->descriptors[i].sa,
+		       rsoc->descriptors[i].cdb_len);
 	}
 
 	printf("\n[OK]\n");
@@ -179,13 +179,13 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url)
 	desc = &rsoc->descriptors[0];
 	for (i = 0; i < rsoc->num_descriptors; i++) {
 		printf("op:%x\tsa:%x\tcdb_length:%d\ttimeout info: length:%d\tcommand specific:%x\tnominal processing%d\trecommended%d\n",
-		       desc->op_code,
-		       desc->service_action,
-		       desc->cdb_length,
-		       desc->to[0].descriptor_length,
-		       desc->to[0].command_specific,
-		       desc->to[0].nominal_processing_timeout,
-		       desc->to[0].recommended_timeout);
+		       desc->opcode,
+		       desc->sa,
+		       desc->cdb_len,
+		       desc->to.descriptor_length,
+		       desc->to.command_specific,
+		       desc->to.nominal_processing_timeout,
+		       desc->to.recommended_timeout);
 		desc = (struct scsi_command_descriptor *)((char *)desc +
 							  desc_size);
 	}

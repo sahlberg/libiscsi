@@ -806,12 +806,6 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 	}
 }
 
-static inline int
-scsi_maintenancein_return_timeouts(const struct scsi_task *task)
-{
-	return task->cdb[2] & 0x80;
-}
-
 static inline uint8_t
 scsi_maintenancein_sa(const struct scsi_task *task)
 {
@@ -841,9 +835,7 @@ static void *
 scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 {
 	struct scsi_report_supported_op_codes *rsoc;
-	struct scsi_command_descriptor *desc, *datain;
-	uint32_t len, i;
-	int return_timeouts, desc_size;
+	int len, i;
 
 	switch (scsi_maintenancein_sa(task)) {
 	case SCSI_REPORT_SUPPORTED_OP_CODES:
@@ -852,37 +844,52 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 		}
 
 		len = task_get_uint32(task, 0);
-		rsoc = scsi_malloc(task, sizeof(struct scsi_report_supported_op_codes) + len);
+		/* len / 8 is not always correct since if CTDP==1 then the
+		 * descriptor is 20 bytes in size intead of 8.
+		 * It doesnt matter here though since it just means we would
+		 * allocate more descriptors at the end of the structure than
+		 * we strictly need. This avoids having to traverse the
+		 * datain buffer twice.
+		 */
+		rsoc = scsi_malloc(task,
+			offsetof(struct scsi_report_supported_op_codes,
+				 descriptors) +
+			len / 8 * sizeof(struct scsi_command_descriptor));
 		if (rsoc == NULL) {
 			return NULL;
 		}
-		/* Does the descriptor include command timeout info? */
-		return_timeouts = scsi_maintenancein_return_timeouts(task);
 
-		/* Size of descriptor depends on whether timeout included. */
-		desc_size = sizeof (struct scsi_command_descriptor);
-		if (return_timeouts) {
-			desc_size += sizeof (struct scsi_op_timeout_descriptor);
-		}
-		rsoc->num_descriptors = len / desc_size;
+		rsoc->num_descriptors = 0;
+		i = 4;
+		while (len >= 8) {
+			struct scsi_command_descriptor *desc;
+			
+			desc = &rsoc->descriptors[rsoc->num_descriptors++];
+			desc->opcode = task_get_uint8(task, i);
+			desc->sa = task_get_uint16(task, i + 2);
+			desc->ctdp = !!(task_get_uint8(task, i + 5) & 0x02);
+			desc->servactv = !!(task_get_uint8(task, i + 5) & 0x01);
+			desc->cdb_len = task_get_uint16(task, i + 6);
 
-		desc = &rsoc->descriptors[0];
-		datain = (struct scsi_command_descriptor *)&task->datain.data[4];
+			len -= 8;
+			i += 8;
 
-		for (i=0; i < rsoc->num_descriptors; i++) {
-			desc->op_code = datain->op_code;
-			desc->service_action = ntohs(datain->service_action);
-			desc->cdb_length =  ntohs(datain->cdb_length);
-			if (return_timeouts) {
-				desc->to[0].descriptor_length = ntohs(datain->to[0].descriptor_length);
-				desc->to[0].command_specific = datain->to[0].command_specific;
-				desc->to[0].nominal_processing_timeout
-					= ntohl(datain->to[0].nominal_processing_timeout);
-				desc->to[0].recommended_timeout
-					= ntohl(datain->to[0].recommended_timeout);
+			/* No tiemout description */
+			if (!desc->ctdp) {
+				continue;
 			}
-			desc = (struct scsi_command_descriptor *)((char *)desc + desc_size);
-			datain = (struct scsi_command_descriptor *)((char *)datain + desc_size);
+
+			desc->to.descriptor_length =
+				task_get_uint16(task, i);
+			desc->to.command_specific =
+				task_get_uint8(task, i + 3);
+			desc->to.nominal_processing_timeout =
+				task_get_uint32(task, i + 4);
+			desc->to.recommended_timeout =
+				task_get_uint32(task, i + 8);
+
+			len -= desc->to.descriptor_length + 2;
+			i += desc->to.descriptor_length + 2;
 		}
 
 		return rsoc;

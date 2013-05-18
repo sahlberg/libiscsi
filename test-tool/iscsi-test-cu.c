@@ -221,6 +221,12 @@ static CU_TestInfo tests_readonly[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_report_supported_opcodes[] = {
+	{ (char *)"ReportSupportedOpcodesSimple", test_report_supported_opcodes_simple },
+	{ (char *)"ReportSupportedOpcodesRCTD", test_report_supported_opcodes_rctd },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_reserve6[] = {
 	{ (char *)"Reserve6Simple", test_reserve6_simple },
 	{ (char *)"Reserve6_2Initiators", test_reserve6_2initiators },
@@ -403,6 +409,8 @@ static CU_SuiteInfo scsi_suites[] = {
 	  tests_readcapacity16 },
 	{ (char *)"ReadOnly", test_setup, test_teardown,
 	  tests_readonly },
+	{ (char *)"ReportSupportedOpcodes", test_setup, test_teardown,
+	  tests_report_supported_opcodes },
 	{ (char *)"Reserve6", test_setup, test_teardown,
 	  tests_reserve6 },
 	{ (char *)"StartStopUnit", test_setup, test_teardown,
@@ -505,6 +513,8 @@ static CU_SuiteInfo all_suites[] = {
 	  tests_readcapacity16 },
 	{ (char *)"ReadOnly", test_setup, test_teardown,
 	  tests_readonly },
+	{ (char *)"ReportSupportedOpcodes", test_setup, test_teardown,
+	  tests_report_supported_opcodes },
 	{ (char *)"Reserve6", test_setup, test_teardown,
 	  tests_reserve6 },
 	{ (char *)"StartStopUnit", test_setup, test_teardown,
@@ -577,6 +587,8 @@ static CU_SuiteInfo scsi_usb_sbc_suites[] = {
 	  tests_readcapacity16 },
 	{ (char *)"ReadOnly", test_setup, test_teardown,
 	  tests_readonly },
+	{ (char *)"ReportSupportedOpcodes", test_setup, test_teardown,
+	  tests_report_supported_opcodes },
 	{ (char *)"Reserve6", test_setup, test_teardown,
 	  tests_reserve6 },
 	{ (char *)"TestUnitReady", test_setup, test_teardown,
