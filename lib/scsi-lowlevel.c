@@ -976,7 +976,7 @@ scsi_cdb_report_supported_opcodes(int rctd, int options, enum scsi_opcode opcode
 
 	task->cdb[3]   = opcode;
 
-	scsi_set_uint32(&task->cdb[4], sa);
+	scsi_set_uint16(&task->cdb[4], sa);
 
 	scsi_set_uint32(&task->cdb[6], alloc_len);
 
