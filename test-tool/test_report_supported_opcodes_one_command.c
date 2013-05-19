@@ -30,7 +30,9 @@ test_report_supported_opcodes_one_command(void)
 {
 	int i, ret;
 	struct scsi_task *rso_task;
+	struct scsi_task *one_task;
 	struct scsi_report_supported_op_codes *rsoc;
+	struct scsi_report_supported_op_codes_one_command *rsoc_one;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES reading one-command");
@@ -56,7 +58,7 @@ test_report_supported_opcodes_one_command(void)
 	CU_ASSERT_NOT_EQUAL(rsoc, NULL);
 
 
-	logging(LOG_VERBOSE, "Verify read one-command for all supported "
+	logging(LOG_VERBOSE, "Verify read one-command works for all supported "
 		"opcodes");
 	for (i = 0; i < rsoc->num_descriptors; i++) {
 		logging(LOG_VERBOSE, "Check opcode:0x%02x ServiceAction:0x%02x",
@@ -106,6 +108,42 @@ test_report_supported_opcodes_one_command(void)
 		}
 		CU_ASSERT_EQUAL(ret, 0);
 	}
+
+
+	logging(LOG_VERBOSE, "Verify read one-command CDB looks sane");
+	for (i = 0; i < rsoc->num_descriptors; i++) {
+		logging(LOG_VERBOSE, "Check CDB for opcode:0x%02x "
+			"ServiceAction:0x%02x",
+			rsoc->descriptors[i].opcode,
+			rsoc->descriptors[i].sa);
+		ret = report_supported_opcodes(
+			iscsic, tgt_lun,
+			0,
+			rsoc->descriptors[i].servactv ?
+				SCSI_REPORT_SUPPORTING_SERVICEACTION :
+				SCSI_REPORT_SUPPORTING_OPCODE,
+			rsoc->descriptors[i].opcode,
+			rsoc->descriptors[i].sa,
+			65535, &one_task);
+
+		logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
+		rsoc_one = scsi_datain_unmarshall(one_task);
+		CU_ASSERT_NOT_EQUAL(rsoc_one, NULL);
+
+		logging(LOG_VERBOSE, "Verify CDB length is not 0");
+		CU_ASSERT_NOT_EQUAL(rsoc_one->cdb_length, 0);
+		if (rsoc_one->cdb_length != 0) {
+			logging(LOG_NORMAL, "[FAILED] CDB length is 0");
+		}
+		
+		logging(LOG_VERBOSE, "Verify CDB[0] Usage Data is 0xFF");
+		CU_ASSERT_EQUAL(rsoc_one->cdb_usage_data[0], 0xff);
+		if (rsoc_one->cdb_usage_data[0] != 0xff) {
+			logging(LOG_NORMAL, "[FAILED] CDB[0] Usage Data is "
+				"not 0xFF");
+		}
+	}
+
 
 	scsi_free_scsi_task(rso_task);
 }

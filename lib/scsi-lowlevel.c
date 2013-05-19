@@ -812,6 +812,12 @@ scsi_maintenancein_sa(const struct scsi_task *task)
 	return task->cdb[1];
 }
 
+static inline uint8_t
+scsi_report_supported_opcodes_options(const struct scsi_task *task)
+{
+	return task->cdb[2] & 0x07;
+}
+
 /*
  * parse the data in blob and calculate the size of a full maintenancein
  * datain structure
@@ -822,7 +828,15 @@ scsi_maintenancein_datain_getfullsize(struct scsi_task *task)
 
 	switch (scsi_maintenancein_sa(task)) {
 	case SCSI_REPORT_SUPPORTED_OP_CODES:
-		return task_get_uint32(task, 0) + 4;
+		switch (scsi_report_supported_opcodes_options(task)) {
+		case SCSI_REPORT_SUPPORTING_OPS_ALL:
+			return task_get_uint32(task, 0) + 4;
+		case SCSI_REPORT_SUPPORTING_OPCODE:
+		case SCSI_REPORT_SUPPORTING_SERVICEACTION:
+			return 4 +
+				(task_get_uint8(task, 1) & 0x80) ? 12 : 0 +
+				task_get_uint16(task, 2);
+		}
 	default:
 		return -1;
 	}
@@ -835,64 +849,104 @@ static void *
 scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 {
 	struct scsi_report_supported_op_codes *rsoc;
+	struct scsi_report_supported_op_codes_one_command *rsoc_one;
 	int len, i;
 
 	switch (scsi_maintenancein_sa(task)) {
 	case SCSI_REPORT_SUPPORTED_OP_CODES:
-		if (task->datain.size < 4) {
-			return NULL;
-		}
-
-		len = task_get_uint32(task, 0);
-		/* len / 8 is not always correct since if CTDP==1 then the
-		 * descriptor is 20 bytes in size intead of 8.
-		 * It doesnt matter here though since it just means we would
-		 * allocate more descriptors at the end of the structure than
-		 * we strictly need. This avoids having to traverse the
-		 * datain buffer twice.
-		 */
-		rsoc = scsi_malloc(task,
-			offsetof(struct scsi_report_supported_op_codes,
-				 descriptors) +
-			len / 8 * sizeof(struct scsi_command_descriptor));
-		if (rsoc == NULL) {
-			return NULL;
-		}
-
-		rsoc->num_descriptors = 0;
-		i = 4;
-		while (len >= 8) {
-			struct scsi_command_descriptor *desc;
-			
-			desc = &rsoc->descriptors[rsoc->num_descriptors++];
-			desc->opcode = task_get_uint8(task, i);
-			desc->sa = task_get_uint16(task, i + 2);
-			desc->ctdp = !!(task_get_uint8(task, i + 5) & 0x02);
-			desc->servactv = !!(task_get_uint8(task, i + 5) & 0x01);
-			desc->cdb_len = task_get_uint16(task, i + 6);
-
-			len -= 8;
-			i += 8;
-
-			/* No tiemout description */
-			if (!desc->ctdp) {
-				continue;
+		switch (scsi_report_supported_opcodes_options(task)) {
+		case SCSI_REPORT_SUPPORTING_OPS_ALL:
+			if (task->datain.size < 4) {
+				return NULL;
 			}
 
-			desc->to.descriptor_length =
-				task_get_uint16(task, i);
-			desc->to.command_specific =
-				task_get_uint8(task, i + 3);
-			desc->to.nominal_processing_timeout =
-				task_get_uint32(task, i + 4);
-			desc->to.recommended_timeout =
-				task_get_uint32(task, i + 8);
+			len = task_get_uint32(task, 0);
+			/* len / 8 is not always correct since if CTDP==1 then
+			 * the descriptor is 20 bytes in size intead of 8.
+			 * It doesnt matter here though since it just means
+			 * we would allocate more descriptors at the end of
+			 * the structure than we strictly need. This avoids
+			 * having to traverse the datain buffer twice.
+			 */
+			rsoc = scsi_malloc(task,
+				offsetof(struct scsi_report_supported_op_codes,
+					descriptors) +
+				len / 8 * sizeof(struct scsi_command_descriptor));
+			if (rsoc == NULL) {
+				return NULL;
+			}
 
-			len -= desc->to.descriptor_length + 2;
-			i += desc->to.descriptor_length + 2;
+			rsoc->num_descriptors = 0;
+			i = 4;
+			while (len >= 8) {
+				struct scsi_command_descriptor *desc;
+			
+				desc = &rsoc->descriptors[rsoc->num_descriptors++];
+				desc->opcode =
+					task_get_uint8(task, i);
+				desc->sa =
+					task_get_uint16(task, i + 2);
+				desc->ctdp =
+					!!(task_get_uint8(task, i + 5) & 0x02);
+				desc->servactv =
+					!!(task_get_uint8(task, i + 5) & 0x01);
+				desc->cdb_len =
+					task_get_uint16(task, i + 6);
+
+				len -= 8;
+				i += 8;
+
+				/* No tiemout description */
+				if (!desc->ctdp) {
+					continue;
+				}
+
+				desc->to.descriptor_length =
+					task_get_uint16(task, i);
+				desc->to.command_specific =
+					task_get_uint8(task, i + 3);
+				desc->to.nominal_processing_timeout =
+					task_get_uint32(task, i + 4);
+				desc->to.recommended_timeout =
+					task_get_uint32(task, i + 8);
+
+				len -= desc->to.descriptor_length + 2;
+				i += desc->to.descriptor_length + 2;
+			}
+			return rsoc;
+		case SCSI_REPORT_SUPPORTING_OPCODE:
+		case SCSI_REPORT_SUPPORTING_SERVICEACTION:
+			rsoc_one = scsi_malloc(task, sizeof(struct scsi_report_supported_op_codes_one_command));
+			if (rsoc_one == NULL) {
+				return NULL;
+			}
+
+			rsoc_one->ctdp =
+				!!(task_get_uint8(task, 1) & 0x80);
+			rsoc_one->support =
+				task_get_uint8(task, 1) & 0x07;
+			rsoc_one->cdb_length =
+				task_get_uint16(task, 2);
+			if(rsoc_one->cdb_length <= 16) {
+				memcpy(rsoc_one->cdb_usage_data,
+					&task->datain.data[4],
+					rsoc_one->cdb_length);
+			}
+
+			if (rsoc_one->ctdp) {
+				i = 4 + rsoc_one->cdb_length;
+
+				rsoc_one->to.descriptor_length =
+					task_get_uint16(task, i);
+				rsoc_one->to.command_specific =
+					task_get_uint8(task, i + 3);
+				rsoc_one->to.nominal_processing_timeout =
+					task_get_uint32(task, i + 4);
+				rsoc_one->to.recommended_timeout =
+					task_get_uint32(task, i + 8);
+			}
+			return rsoc_one;
 		}
-
-		return rsoc;
 	};
 
 	return NULL;

@@ -760,6 +760,16 @@ struct scsi_report_supported_op_codes {
 	struct scsi_command_descriptor descriptors[0];
 };
 
+struct scsi_report_supported_op_codes_one_command {
+	uint8_t ctdp;
+	uint8_t support;
+	uint8_t cdb_length;
+	uint8_t cdb_usage_data[16];
+
+	/* only present if CTDP==1 */
+	struct scsi_op_timeout_descriptor to;
+};
+
 struct scsi_persistent_reserve_in_read_keys {
        uint32_t prgeneration;
        uint32_t additional_length;
