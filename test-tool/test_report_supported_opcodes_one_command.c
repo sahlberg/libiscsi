@@ -132,7 +132,7 @@ test_report_supported_opcodes_one_command(void)
 
 		logging(LOG_VERBOSE, "Verify CDB length is not 0");
 		CU_ASSERT_NOT_EQUAL(rsoc_one->cdb_length, 0);
-		if (rsoc_one->cdb_length != 0) {
+		if (rsoc_one->cdb_length == 0) {
 			logging(LOG_NORMAL, "[FAILED] CDB length is 0");
 		}
 		
@@ -142,6 +142,8 @@ test_report_supported_opcodes_one_command(void)
 			logging(LOG_NORMAL, "[FAILED] CDB[0] Usage Data is "
 				"not 0xFF");
 		}
+
+		scsi_free_scsi_task(one_task);
 	}
 
 

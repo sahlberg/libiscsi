@@ -2764,7 +2764,7 @@ int report_supported_opcodes(struct iscsi_context *iscsi, int lun, int rctd, int
 	struct scsi_task *task;
 
 	logging(LOG_VERBOSE, "Send REPORT_SUPPORTED_OPCODE RCTD:%d OPTIONS:%d "
-		"OPCODE:%d SA:%d ALLOC_LEN:%d",
+		"OPCODE:0x%02x SA:%d ALLOC_LEN:%d",
 		rctd, options, opcode, sa, alloc_len);
 
 	task = iscsi_report_supported_opcodes_sync(iscsi, lun,
@@ -2806,7 +2806,7 @@ int report_supported_opcodes_invalidfieldincdb(struct iscsi_context *iscsi, int 
 	struct scsi_task *task;
 
 	logging(LOG_VERBOSE, "Send REPORT_SUPPORTED_OPCODE (expecting INVALID_FIELD_IN_CDB) RCTD:%d OPTIONS:%d "
-		"OPCODE:%d SA:%d ALLOC_LEN:%d",
+		"OPCODE:0x%02x SA:%d ALLOC_LEN:%d",
 		rctd, options, opcode, sa, alloc_len);
 
 	task = iscsi_report_supported_opcodes_sync(iscsi, lun,
