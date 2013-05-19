@@ -2801,6 +2801,49 @@ int report_supported_opcodes(struct iscsi_context *iscsi, int lun, int rctd, int
 	return 0;
 }
 
+int report_supported_opcodes_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int rctd, int options, int opcode, int sa, int alloc_len, struct scsi_task **save_task)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send REPORT_SUPPORTED_OPCODE (expecting INVALID_FIELD_IN_CDB) RCTD:%d OPTIONS:%d "
+		"OPCODE:%d SA:%d ALLOC_LEN:%d",
+		rctd, options, opcode, sa, alloc_len);
+
+	task = iscsi_report_supported_opcodes_sync(iscsi, lun,
+		rctd, options, opcode, sa, alloc_len);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send "
+			"REPORT_SUPPORTED_OPCODES command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] REPORT_SUPPORTED_OPCODES is not "
+			"implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		logging(LOG_NORMAL, "[FAILED] REPORT_SUPPORTED_OPCODES should have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB. Sense:%s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	if (save_task != NULL) {
+		*save_task = task;
+	} else {
+		scsi_free_scsi_task(task);
+	}
+
+	logging(LOG_VERBOSE, "[OK] REPORT_SUPPORTED_OPCODES returned "
+		"INVALID_FIELD_IN_CDB.");
+	return 0;
+}
+
 int
 reserve6(struct iscsi_context *iscsi, int lun)
 {
