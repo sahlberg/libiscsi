@@ -1632,6 +1632,30 @@ iscsi_release6_task(struct iscsi_context *iscsi, int lun,
 	return task;
 }
 
+
+struct scsi_task *
+iscsi_sanitize_task(struct iscsi_context *iscsi, int lun,
+		    int immed, int ause, int sa, int param_len,
+		    struct iscsi_data *data,
+		    iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_sanitize(immed, ause, sa, param_len);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"sanitize cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
+				     data, private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
 struct scsi_task *
 iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi, int lun,
 				    int rctd, int options,

@@ -59,6 +59,8 @@ iscsi_release6_task
 iscsi_report_supported_opcodes_sync
 iscsi_report_supported_opcodes_task
 iscsi_reconnect
+iscsi_sanitize_sync
+iscsi_sanitize_task
 iscsi_set_noautoreconnect
 iscsi_set_reconnect_max_retries
 iscsi_set_timeout
@@ -157,6 +159,7 @@ scsi_cdb_readtoc
 scsi_cdb_reserve6
 scsi_cdb_release6
 scsi_cdb_report_supported_opcodes
+scsi_cdb_sanitize
 scsi_cdb_serviceactionin16
 scsi_cdb_startstopunit
 scsi_cdb_synchronizecache10

@@ -53,6 +53,17 @@ do {									\
 	}								\
 } while (0);
 
+#define CHECK_FOR_SANITIZE						\
+do {									\
+	if (!allow_sanitize) {						\
+		logging(LOG_VERBOSE, "[SKIPPED] --allow_sanitize flag " \
+			"is not set. Skipping test.");	       	      	\
+		CU_PASS("[SKIPPED] --allow_sanitize flag is not set."	\
+			" Skipping test");				\
+		return;							\
+	}								\
+} while (0);
+
 #define CHECK_FOR_READONLY						\
 do {									\
 	if (!readonly) {						\
@@ -137,6 +148,7 @@ extern size_t block_size;
 extern uint64_t num_blocks;
 extern int lbppb;
 extern int data_loss;
+extern int allow_sanitize;
 extern int readonly;
 extern int sbc3_support;
 extern int maximum_transfer_length;
@@ -248,6 +260,7 @@ int report_supported_opcodes_invalidfieldincdb(struct iscsi_context *iscsi, int 
 int release6(struct iscsi_context *iscsi, int lun);
 int reserve6(struct iscsi_context *iscsi, int lun);
 int reserve6_conflict(struct iscsi_context *iscsi, int lun);
+int sanitize(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data);
 int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start);
 int startstopunit_preventremoval(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start);
 int synchronizecache10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int sync_nv, int immed);

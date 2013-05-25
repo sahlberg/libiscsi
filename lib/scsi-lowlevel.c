@@ -332,6 +332,42 @@ scsi_cdb_testunitready(void)
 	return task;
 }
 
+/*
+ * SANITIZE
+ */
+struct scsi_task *
+scsi_cdb_sanitize(int immed, int ause, int sa, int param_len)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_SANITIZE;
+
+	task->cdb[1] = sa & 0x1f;
+	if (immed) {
+		task->cdb[1] |= 0x80;
+	}
+	if (ause) {
+		task->cdb[1] |= 0x20;
+	}
+
+	scsi_set_uint16(&task->cdb[7], param_len);
+
+	task->cdb_size   = 10;
+	if (param_len != 0) {
+		task->xfer_dir = SCSI_XFER_WRITE;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = param_len;
+
+	return task;
+}
 
 /*
  * REPORTLUNS

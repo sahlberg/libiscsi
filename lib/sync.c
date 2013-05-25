@@ -482,6 +482,28 @@ iscsi_readcapacity16_sync(struct iscsi_context *iscsi, int lun)
 }
 
 struct scsi_task *
+iscsi_sanitize_sync(struct iscsi_context *iscsi, int lun,
+		    int immed, int ause, int sa, int param_len,
+		    struct iscsi_data *data)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_sanitize_task(iscsi, lun,
+				immed, ause, sa, param_len, data,
+				scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi,
+				"Failed to send Sanitize command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
 iscsi_get_lba_status_sync(struct iscsi_context *iscsi, int lun, uint64_t starting_lba, uint32_t alloc_len)
 {
 	struct iscsi_sync_state state;

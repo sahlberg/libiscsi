@@ -56,6 +56,7 @@ uint64_t num_blocks;
 int lbppb;
 enum scsi_inquiry_peripheral_device_type device_type;
 int data_loss;
+int allow_sanitize;
 int readonly;
 int sbc3_support;
 int maximum_transfer_length;
@@ -1310,6 +1311,42 @@ synchronizecache16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, 
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] SYNCHRONIZECAHCE16 returned MEDIUM_NOT_PRESENT.");
+	return 0;
+}
+
+int sanitize(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send SANITIZE IMMED:%d AUSE:%d SA:%d "
+		"PARAM_LEN:%d",
+		immed, ause, sa, param_len);
+
+	task = iscsi_sanitize_sync(iscsi, lun, immed, ause, sa, param_len,
+				   data);
+	if (task == NULL) {
+		logging(LOG_NORMAL,
+			"[FAILED] Failed to send SANITIZE command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
+			"implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL,
+			"[FAILED] SANITIZE command: failed with sense. %s",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] SANITIZE returned SUCCESS.");
 	return 0;
 }
 

@@ -48,6 +48,7 @@ enum scsi_opcode {
 	SCSI_OPCODE_WRITE_SAME10       = 0x41,
 	SCSI_OPCODE_UNMAP              = 0x42,
 	SCSI_OPCODE_READTOC            = 0x43,
+	SCSI_OPCODE_SANITIZE           = 0x48,
 	SCSI_OPCODE_PERSISTENT_RESERVE_IN  = 0x5E,
 	SCSI_OPCODE_PERSISTENT_RESERVE_OUT = 0x5F,
 	SCSI_OPCODE_READ16             = 0x88,
@@ -295,6 +296,17 @@ EXTERN void *scsi_get_task_private_ptr(struct scsi_task *task);
  * TESTUNITREADY
  */
 EXTERN struct scsi_task *scsi_cdb_testunitready(void);
+
+/*
+ * SANITIZE
+ */
+#define SCSI_SANITIZE_OVERWRITE		0x01
+#define SCSI_SANITIZE_BLOCK_ERASE	0x02
+#define SCSI_SANITIZE_CRYPTO_ERASE	0x03
+#define SCSI_SANITIZE_EXIT_FAILURE_MODE	0x1f
+
+EXTERN struct scsi_task *scsi_cdb_sanitize(int immed, int ause, int sa,
+       int param_len);
 
 
 /*

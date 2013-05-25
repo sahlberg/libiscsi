@@ -221,6 +221,11 @@ static CU_TestInfo tests_readonly[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_sanitize[] = {
+	{ (char *)"Sanitize", test_sanitize_simple },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_report_supported_opcodes[] = {
 	{ (char *)"ReportSupportedOpcodesSimple", test_report_supported_opcodes_simple },
 	{ (char *)"ReportSupportedOpcodesOneCommand", test_report_supported_opcodes_one_command },
@@ -415,6 +420,8 @@ static CU_SuiteInfo scsi_suites[] = {
 	  tests_report_supported_opcodes },
 	{ (char *)"Reserve6", test_setup, test_teardown,
 	  tests_reserve6 },
+	{ (char *)"Sanitize", test_setup, test_teardown,
+	  tests_sanitize },
 	{ (char *)"StartStopUnit", test_setup, test_teardown,
 	  tests_startstopunit },
 	{ (char *)"UnitReady", test_setup, test_teardown,
@@ -519,6 +526,8 @@ static CU_SuiteInfo all_suites[] = {
 	  tests_report_supported_opcodes },
 	{ (char *)"Reserve6", test_setup, test_teardown,
 	  tests_reserve6 },
+	{ (char *)"Sanitize", test_setup, test_teardown,
+	  tests_sanitize },
 	{ (char *)"StartStopUnit", test_setup, test_teardown,
 	  tests_startstopunit },
 	{ (char *)"TestUnitReady", test_setup, test_teardown,
@@ -668,6 +677,8 @@ print_usage(void)
 	    "  -l|--list                        List all tests and exit\n");
 	fprintf(stderr,
 	    "  -d|--dataloss                    Allow destructive tests\n");
+	fprintf(stderr,
+	    "  -S|--allow-sanitize              Allow sanitize-opcode tests\n");
 	fprintf(stderr,
 	    "  -g|--ignore                      Error Action: Ignore test errors [DEFAULT]\n");
 	fprintf(stderr,
@@ -890,6 +901,7 @@ main(int argc, char *argv[])
 		{ "initiator-name-2", required_argument, 0, 'I' },
 		{ "test", required_argument, 0, 't' },
 		{ "dataloss", no_argument, 0, 'd' },
+		{ "allow-sanitize", no_argument, 0, 'S' },
 		{ "ignore", no_argument, 0, 'g' },
 		{ "fail", no_argument, 0, 'f' },
 		{ "abort", no_argument, 0, 'A' },
@@ -903,7 +915,7 @@ main(int argc, char *argv[])
 	int i, c;
 	int opt_idx = 0;
 
-	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsnuvV", long_opts,
+	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsSnuvV", long_opts,
 		    &opt_idx)) > 0) {
 		switch (c) {
 		case 'h':
@@ -936,6 +948,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			mode = CU_BRM_SILENT;
+			break;
+		case 'S':
+			allow_sanitize = 1;
 			break;
 		case 'n':
 			mode = CU_BRM_NORMAL;
