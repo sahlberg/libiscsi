@@ -152,6 +152,7 @@ void test_reserve6_target_warm_reset(void);
 void test_reserve6_lun_reset(void);
 
 void test_sanitize_simple(void);
+void test_sanitize_overwrite(void);
 
 void test_startstopunit_simple(void);
 void test_startstopunit_pwrcnd(void);

@@ -1350,6 +1350,54 @@ int sanitize(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, 
 	return 0;
 }
 
+int sanitize_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send SANITIZE (Expecting INVALID_FIELD_IN_CDB) "
+		"IMMED:%d AUSE:%d SA:%d "
+		"PARAM_LEN:%d",
+		immed, ause, sa, param_len);
+
+	task = iscsi_sanitize_sync(iscsi, lun, immed, ause, sa, param_len,
+				   data);
+	if (task == NULL) {
+		logging(LOG_NORMAL,
+			"[FAILED] Failed to send SANITIZE command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
+			"implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] SANITIZE successful but should "
+			"have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		logging(LOG_NORMAL, "[FAILED] SANITIZE failed with wrong "
+			"sense. Should have failed with ILLEGAL_REQUEST/"
+			"INVALID_FIELD_IN_CDB. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] SANITIZE returned ILLEGAL_REQUEST/"
+		"INVALID_FIELD_IB_CDB.");
+	return 0;
+}
+
 int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start)
 {
 	struct scsi_task *task;
