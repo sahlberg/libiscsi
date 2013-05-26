@@ -364,7 +364,7 @@ scsi_cdb_sanitize(int immed, int ause, int sa, int param_len)
 	} else {
 		task->xfer_dir = SCSI_XFER_NONE;
 	}
-	task->expxferlen = param_len;
+	task->expxferlen = (param_len + 3) & 0xfffc;
 
 	return task;
 }

@@ -224,6 +224,7 @@ static CU_TestInfo tests_readonly[] = {
 static CU_TestInfo tests_sanitize[] = {
 	{ (char *)"Sanitize", test_sanitize_simple },
 	{ (char *)"Overwrite", test_sanitize_overwrite },
+	{ (char *)"ParamLen", test_sanitize_paramlen },
 	CU_TEST_INFO_NULL
 };
 
