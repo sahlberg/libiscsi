@@ -38,46 +38,37 @@ test_sanitize_overwrite(void)
 	CHECK_FOR_SANITIZE;
 
 
-	logging(LOG_VERBOSE, "Parameter list length <= 4 is an error");
-	logging(LOG_VERBOSE, "Test that parameter list length == 0 fails");
-		ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, 0, NULL);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not implemented.");
-		CU_PASS("SANITIZE is not implemented.");
-		return;
-	}	
-	CU_ASSERT_EQUAL(ret, 0);
-
-
-	logging(LOG_VERBOSE, "Test that parameter list length == 4 fails");
-	data.size = 4;
-	data.data = alloca(data.size);
-	memset(data.data, 0, data.size);
-		ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
-	CU_ASSERT_EQUAL(ret, 0);
-
-
-	logging(LOG_VERBOSE, "Parameter list length >= blocksize + 5 is an "
-		"error");
-	logging(LOG_VERBOSE, "Test that parameter list length == blocksize + 8 "
-		"fails");
-	data.size = block_size + 8;
-	data.data = alloca(data.size);
-	memset(data.data, 0, data.size);
-		ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
-	CU_ASSERT_EQUAL(ret, 0);
-
-
-	logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE of full block of 0xaa");
+	logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE with initialization pattern of one full block");
 	data.size = block_size + 4;
+	data.data = alloca(data.size);
+	memset(&data.data[4], 0xaa, block_size);
+
 	data.data[0] = 0x01;
 	data.data[1] = 0x00;
 	data.data[2] = block_size >> 8;
 	data.data[3] = block_size & 0xff;
-	memset(&data.data[4], 0xaa, block_size);
+	ret = sanitize(iscsic, tgt_lun,
+		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+	CU_ASSERT_EQUAL(ret, 0);
+
+
+	logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE with initialization pattern of one half block");
+	data.size = block_size / 2 + 4;
+
+	data.data[2] = (block_size / 2) >> 8;
+	data.data[3] = (block_size / 2 ) & 0xff;
+
+	ret = sanitize(iscsic, tgt_lun,
+		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+	CU_ASSERT_EQUAL(ret, 0);
+
+
+	logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE with initialization pattern of 4 bytes");
+	data.size = 4 + 4;
+
+	data.data[2] = 0;
+	data.data[3] = 4;
+
 	ret = sanitize(iscsic, tgt_lun,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
 	CU_ASSERT_EQUAL(ret, 0);
