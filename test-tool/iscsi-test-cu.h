@@ -154,6 +154,7 @@ void test_reserve6_lun_reset(void);
 void test_sanitize_simple(void);
 void test_sanitize_overwrite(void);
 void test_sanitize_paramlen(void);
+void test_sanitize_invalid_serviceaction(void);
 
 void test_startstopunit_simple(void);
 void test_startstopunit_pwrcnd(void);

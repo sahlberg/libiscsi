@@ -225,6 +225,7 @@ static CU_TestInfo tests_sanitize[] = {
 	{ (char *)"Sanitize", test_sanitize_simple },
 	{ (char *)"Overwrite", test_sanitize_overwrite },
 	{ (char *)"ParamLen", test_sanitize_paramlen },
+	{ (char *)"InvalidServiceAction", test_sanitize_invalid_serviceaction },
 	CU_TEST_INFO_NULL
 };
 
