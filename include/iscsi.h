@@ -678,6 +678,18 @@ iscsi_sanitize_task(struct iscsi_context *iscsi, int lun,
 		    struct iscsi_data *data,
 		    iscsi_command_cb cb, void *private_data);
 EXTERN struct scsi_task *
+iscsi_sanitize_block_erase_task(struct iscsi_context *iscsi, int lun,
+			       int immed, int ause,
+			       iscsi_command_cb cb, void *private_data);
+EXTERN struct scsi_task *
+iscsi_sanitize_crypto_erase_task(struct iscsi_context *iscsi, int lun,
+				 int immed, int ause,
+				 iscsi_command_cb cb, void *private_data);
+EXTERN struct scsi_task *
+iscsi_sanitize_exit_failure_mode_task(struct iscsi_context *iscsi, int lun,
+				      int immed, int ause,
+				      iscsi_command_cb cb, void *private_data);
+EXTERN struct scsi_task *
 iscsi_get_lba_status_task(struct iscsi_context *iscsi, int lun,
 			  uint64_t starting_lba, uint32_t alloc_len,
 			  iscsi_command_cb cb,
@@ -952,6 +964,15 @@ EXTERN struct scsi_task *
 iscsi_sanitize_sync(struct iscsi_context *iscsi, int lun,
 		    int immed, int ause, int sa, int param_len,
 		    struct iscsi_data *data);
+EXTERN struct scsi_task *
+iscsi_sanitize_block_erase_sync(struct iscsi_context *iscsi, int lun,
+		    int immed, int ause);
+EXTERN struct scsi_task *
+iscsi_sanitize_crypto_erase_sync(struct iscsi_context *iscsi, int lun,
+		    int immed, int ause);
+EXTERN struct scsi_task *
+iscsi_sanitize_exit_failure_mode_sync(struct iscsi_context *iscsi, int lun,
+		    int immed, int ause);
 EXTERN struct scsi_task *
 iscsi_synchronizecache10_sync(struct iscsi_context *iscsi, int lun, int lba,
 			      int num_blocks, int syncnv, int immed);

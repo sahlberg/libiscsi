@@ -1657,6 +1657,73 @@ iscsi_sanitize_task(struct iscsi_context *iscsi, int lun,
 }
 
 struct scsi_task *
+iscsi_sanitize_block_erase_task(struct iscsi_context *iscsi, int lun,
+		    int immed, int ause,
+		    iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_sanitize(immed, ause, SCSI_SANITIZE_BLOCK_ERASE, 0);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"sanitize cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
+				     NULL, private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
+iscsi_sanitize_crypto_erase_task(struct iscsi_context *iscsi, int lun,
+		    int immed, int ause,
+		    iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_sanitize(immed, ause, SCSI_SANITIZE_CRYPTO_ERASE, 0);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"sanitize cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
+				     NULL, private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
+iscsi_sanitize_exit_failure_mode_task(struct iscsi_context *iscsi, int lun,
+		    int immed, int ause,
+		    iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_sanitize(immed, ause,
+				 SCSI_SANITIZE_EXIT_FAILURE_MODE, 0);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"sanitize cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
+				     NULL, private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
 iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi, int lun,
 				    int rctd, int options,
 				    int opcode, int sa,
