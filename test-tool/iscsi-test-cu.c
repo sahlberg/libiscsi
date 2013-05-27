@@ -894,6 +894,7 @@ main(int argc, char *argv[])
 	struct scsi_readcapacity10 *rc10;
 	struct scsi_task *inq_task = NULL;
 	struct scsi_task *inq_lbp_task = NULL;
+	struct scsi_task *inq_bdc_task = NULL;
 	struct scsi_task *inq_bl_task = NULL;
 	struct scsi_task *rc16_task = NULL;
 	struct scsi_task *rsop_task = NULL;
@@ -1110,6 +1111,18 @@ main(int argc, char *argv[])
 		}
 	}
 
+	/* try reading block device characteristics vpd */
+	inq_bdc_task = iscsi_inquiry_sync(iscsic, lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS, 255);
+	if (inq_bdc_task == NULL) {
+		printf("Failed to read Block Device Characteristics page\n");
+	}
+	if (inq_bdc_task) {
+		inq_bdc = scsi_datain_unmarshall(inq_bdc_task);
+		if (inq_bdc == NULL) {
+			printf("failed to unmarshall inquiry datain blob\n");
+			return -1;
+		}
+	}
 
 	/* if thin provisioned we also need to read the VPD page for it */
 	if (rc16 && rc16->lbpme != 0){
@@ -1223,6 +1236,9 @@ main(int argc, char *argv[])
 	}
 	if (inq_lbp_task != NULL) {
 		scsi_free_scsi_task(inq_lbp_task);
+	}
+	if (inq_bdc_task != NULL) {
+		scsi_free_scsi_task(inq_bdc_task);
 	}
 	if (rc16_task != NULL) {
 		scsi_free_scsi_task(rc16_task);

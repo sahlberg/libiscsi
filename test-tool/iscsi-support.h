@@ -141,6 +141,7 @@ do {									\
 
 extern struct scsi_inquiry_standard *inq;
 extern struct scsi_inquiry_logical_block_provisioning *inq_lbp;
+extern struct scsi_inquiry_block_device_characteristics *inq_bdc;
 extern struct scsi_inquiry_block_limits *inq_bl;
 extern struct scsi_readcapacity16 *rc16;
 extern struct scsi_report_supported_op_codes *rsop;
