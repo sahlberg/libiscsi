@@ -517,6 +517,12 @@ struct scsi_inquiry_block_device_characteristics {
 	enum scsi_inquiry_pagecode pagecode;
 
 	int medium_rotation_rate;
+	int product_type;
+	int wabereq;
+	int wacereq;
+	int nominal_form_factor;
+	int fuab;
+	int vbuls;
 };
 
 enum scsi_inquiry_provisioning_type {

@@ -1329,6 +1329,12 @@ scsi_inquiry_unmarshall_block_device_characteristics(struct scsi_task *task)
 	inq->pagecode              = task_get_uint8(task, 1);
 
 	inq->medium_rotation_rate  = task_get_uint16(task, 4);
+	inq->product_type          = task_get_uint8(task, 6);
+	inq->wabereq               = (task_get_uint8(task, 7) >> 6) & 0x03;
+	inq->wacereq               = (task_get_uint8(task, 7) >> 4) & 0x03;
+	inq->nominal_form_factor   = task_get_uint8(task, 7) & 0x0f;
+	inq->fuab                  = !!(task_get_uint8(task, 8) & 0x02);
+	inq->vbuls                 = !!(task_get_uint8(task, 8) & 0x01);
 	return inq;
 }
 
