@@ -143,6 +143,7 @@ extern struct scsi_inquiry_standard *inq;
 extern struct scsi_inquiry_logical_block_provisioning *inq_lbp;
 extern struct scsi_inquiry_block_limits *inq_bl;
 extern struct scsi_readcapacity16 *rc16;
+extern struct scsi_report_supported_op_codes *rsop;
 
 extern size_t block_size;
 extern uint64_t num_blocks;
@@ -165,6 +166,7 @@ void wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_st
 struct iscsi_pdu;
 int (*local_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
+struct scsi_command_descriptor *get_command_descriptor(int opcode, int sa);
 
 /*
  * PGR support

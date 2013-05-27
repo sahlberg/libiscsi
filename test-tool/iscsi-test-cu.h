@@ -151,9 +151,10 @@ void test_reserve6_target_cold_reset(void);
 void test_reserve6_target_warm_reset(void);
 void test_reserve6_lun_reset(void);
 
-void test_sanitize_simple(void);
+void test_sanitize_block_erase(void);
+void test_sanitize_crypto_erase(void);
 void test_sanitize_overwrite(void);
-void test_sanitize_paramlen(void);
+void test_sanitize_exit_failure_mode(void);
 void test_sanitize_invalid_serviceaction(void);
 
 void test_startstopunit_simple(void);

@@ -222,9 +222,10 @@ static CU_TestInfo tests_readonly[] = {
 };
 
 static CU_TestInfo tests_sanitize[] = {
-	{ (char *)"Sanitize", test_sanitize_simple },
+	{ (char *)"BlockErase", test_sanitize_block_erase },
+	{ (char *)"CryptoErase", test_sanitize_crypto_erase },
+	{ (char *)"ExitFailureMode", test_sanitize_exit_failure_mode },
 	{ (char *)"Overwrite", test_sanitize_overwrite },
-	{ (char *)"ParamLen", test_sanitize_paramlen },
 	{ (char *)"InvalidServiceAction", test_sanitize_invalid_serviceaction },
 	CU_TEST_INFO_NULL
 };
@@ -895,6 +896,7 @@ main(int argc, char *argv[])
 	struct scsi_task *inq_lbp_task = NULL;
 	struct scsi_task *inq_bl_task = NULL;
 	struct scsi_task *rc16_task = NULL;
+	struct scsi_task *rsop_task = NULL;
 	int full_size;
 	int is_usb;
 	static struct option long_opts[] = {
@@ -1134,6 +1136,23 @@ main(int argc, char *argv[])
 		}
 	}
 
+	rsop_task = iscsi_report_supported_opcodes_sync(iscsic, lun,
+		1, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0, 65535);
+	if (rsop_task == NULL) {
+		printf("Failed to send REPORT_SUPPORTED_OPCODES command: %s\n",
+		    iscsi_get_error(iscsic));
+		iscsi_destroy_context(iscsic);
+		return -1;
+	}
+	if (rsop_task->status == SCSI_STATUS_GOOD) {
+		rsop = scsi_datain_unmarshall(rsop_task);
+		if (rsop == NULL) {
+			printf("failed to unmarshall REPORT_SUPPORTED_OPCODES "
+			       "data. %s\n",
+			       iscsi_get_error(iscsic));
+			scsi_free_scsi_task(rsop_task);
+		}
+	}
 
 	/* check if the device is write protected or not */
 	task = iscsi_modesense6_sync(iscsic, lun, 0, SCSI_MODESENSE_PC_CURRENT,
@@ -1207,6 +1226,9 @@ main(int argc, char *argv[])
 	}
 	if (rc16_task != NULL) {
 		scsi_free_scsi_task(rc16_task);
+	}
+	if (rsop_task != NULL) {
+		scsi_free_scsi_task(rsop_task);
 	}
 
 	return 0;

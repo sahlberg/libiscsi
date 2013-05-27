@@ -50,6 +50,7 @@ struct scsi_inquiry_standard *inq;
 struct scsi_inquiry_logical_block_provisioning *inq_lbp;
 struct scsi_inquiry_block_limits *inq_bl;
 struct scsi_readcapacity16 *rc16;
+struct scsi_report_supported_op_codes *rsop;
 
 size_t block_size;
 uint64_t num_blocks;
@@ -5840,3 +5841,21 @@ inquiry_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int evpd, int pa
 	return 0;
 }
 
+struct scsi_command_descriptor *
+get_command_descriptor(int opcode, int sa)
+{
+	int i;
+
+	if (rsop == NULL) {
+		return NULL;
+	}
+
+	for (i = 0; i < rsop->num_descriptors; i++) {
+		if (rsop->descriptors[i].opcode == opcode
+		&& rsop->descriptors[i].sa == sa) {
+			return &rsop->descriptors[i];
+		}
+	}
+	
+	return NULL;
+}

@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -26,23 +27,36 @@
 #include "iscsi-test-cu.h"
 
 void
-test_sanitize_simple(void)
+test_sanitize_crypto_erase(void)
 { 
 	int ret;
+	struct iscsi_data data;
+	struct scsi_command_descriptor *cd;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test basic SANITIZE");
+	logging(LOG_VERBOSE, "Test SANITIZE CRYPTO ERASE");
 
 	CHECK_FOR_SANITIZE;
 
-	logging(LOG_VERBOSE, "Test we can perform basic BLOCK ERASE SANITIZE");
-
-	ret = sanitize(iscsic, tgt_lun,
-		       0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not implemented.");
+	logging(LOG_NORMAL, "Check that SANITIZE CRYPTO_ERASE is supported "
+		"in REPORT_SUPPORTED_OPCODES");
+	cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
+				    SCSI_SANITIZE_CRYPTO_ERASE);
+	if (cd == NULL) {
+		logging(LOG_NORMAL, "[SKIPPED] SANITIZE CRYPTO_ERASE is not "
+			"implemented according to REPORT_SUPPORTED_OPCODES.");
 		CU_PASS("SANITIZE is not implemented.");
 		return;
-	}	
+	}
+
+	data.size = 8;
+	data.data = alloca(data.size);
+	memset(data.data, 0, data.size);
+
+	logging(LOG_VERBOSE, "CRYPTO_ERASE parameter list length must be 0");
+	logging(LOG_VERBOSE, "Test that non-zero param length is an error for "
+		"CRYPTO ERASE");
+	ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+		       0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 8, &data);
 	CU_ASSERT_EQUAL(ret, 0);
 }

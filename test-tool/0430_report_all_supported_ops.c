@@ -27,7 +27,7 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url)
 {
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
-	struct scsi_report_supported_op_codes *rsoc;
+	struct scsi_report_supported_op_codes *tmp_rsoc;
 	struct scsi_command_descriptor *desc;
 	int ret, lun;
 	int full_size, desc_size;
@@ -95,8 +95,8 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url)
 			goto finished;
 		}
 	}
-	rsoc = scsi_datain_unmarshall(task);
-	if (rsoc == NULL) {
+	tmp_rsoc = scsi_datain_unmarshall(task);
+	if (tmp_rsoc == NULL) {
 		printf("[FAILED]\n");
 		printf("failed to unmarshall REPORT SUPPORTED OPCODES datain blob\n");
 		scsi_free_scsi_task(task);
@@ -104,13 +104,13 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url)
 		goto finished;
 	}
 
-	printf("Supported Commands: %d\n", rsoc->num_descriptors);
+	printf("Supported Commands: %d\n", tmp_rsoc->num_descriptors);
 	printf("=======================\n");
-	for (i = 0; i < rsoc->num_descriptors; i++) {
+	for (i = 0; i < tmp_rsoc->num_descriptors; i++) {
 		printf("op:%x\tsa:%x\tcdb length:%d\n",
-		       rsoc->descriptors[i].opcode,
-		       rsoc->descriptors[i].sa,
-		       rsoc->descriptors[i].cdb_len);
+		       tmp_rsoc->descriptors[i].opcode,
+		       tmp_rsoc->descriptors[i].sa,
+		       tmp_rsoc->descriptors[i].cdb_len);
 	}
 
 	printf("\n[OK]\n");
@@ -163,8 +163,8 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url)
 			goto finished;
 		}
 	}
-	rsoc = scsi_datain_unmarshall(task);
-	if (rsoc == NULL) {
+	tmp_rsoc = scsi_datain_unmarshall(task);
+	if (tmp_rsoc == NULL) {
 		printf("[FAILED]\n");
 		printf("failed to unmarshall REPORT SUPPORTED OPCODES datain blob\n");
 		scsi_free_scsi_task(task);
@@ -172,12 +172,12 @@ int T0430_report_all_supported_ops(const char *initiator, const char *url)
 		goto finished;
 	}
 
-	printf("Supported Commands (with timeout information): %d\n", rsoc->num_descriptors);
+	printf("Supported Commands (with timeout information): %d\n", tmp_rsoc->num_descriptors);
 	printf("=======================\n");
 	desc_size = sizeof (struct scsi_command_descriptor)
 		+  sizeof (struct scsi_op_timeout_descriptor);
-	desc = &rsoc->descriptors[0];
-	for (i = 0; i < rsoc->num_descriptors; i++) {
+	desc = &tmp_rsoc->descriptors[0];
+	for (i = 0; i < tmp_rsoc->num_descriptors; i++) {
 		printf("op:%x\tsa:%x\tcdb_length:%d\ttimeout info: length:%d\tcommand specific:%x\tnominal processing%d\trecommended%d\n",
 		       desc->opcode,
 		       desc->sa,

@@ -29,14 +29,25 @@
 void
 test_sanitize_overwrite(void)
 { 
-	int ret;
+	int i, ret;
 	struct iscsi_data data;
+	struct scsi_command_descriptor *cd;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE");
 
 	CHECK_FOR_SANITIZE;
 
+	logging(LOG_NORMAL, "Check that SANITIZE OVERWRITE is supported "
+		"in REPORT_SUPPORTED_OPCODES");
+	cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
+				    SCSI_SANITIZE_OVERWRITE);
+	if (cd == NULL) {
+		logging(LOG_NORMAL, "[SKIPPED] SANITIZE OVERWRITE is not "
+			"implemented according to REPORT_SUPPORTED_OPCODES.");
+		CU_PASS("SANITIZE is not implemented.");
+		return;
+	}
 
 	logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE with initialization pattern of one full block");
 	data.size = block_size + 4;
@@ -72,4 +83,40 @@ test_sanitize_overwrite(void)
 	ret = sanitize(iscsic, tgt_lun,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
 	CU_ASSERT_EQUAL(ret, 0);
+
+	logging(LOG_VERBOSE, "OVERWRITE parameter list length must "
+			"be > 4 and < blocksize+5");
+	for (i = 0; i < 5; i++) {
+		logging(LOG_VERBOSE, "Test OVERWRITE with ParamLen:%d is an "
+			"error.", i);
+
+		ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+			       0, 0, SCSI_SANITIZE_OVERWRITE, i, &data);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
+				"implemented.");
+			CU_PASS("SANITIZE is not implemented.");
+			return;
+		} else {
+			CU_ASSERT_EQUAL(ret, 0);
+		}
+	}
+
+
+	logging(LOG_VERBOSE, "Test OVERWRITE with ParamLen:%d is an "
+			"error.", i);
+
+	data.size = block_size + 8;
+	data.data = alloca(data.size);
+	memset(data.data, 0, data.size);
+	ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+		       0, 0, SCSI_SANITIZE_OVERWRITE, block_size + 5, &data);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
+			"implemented.");
+		CU_PASS("SANITIZE is not implemented.");
+		return;
+	} else {
+		CU_ASSERT_EQUAL(ret, 0);
+	}
 }
