@@ -802,9 +802,7 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 		size_t	alloc_sz;
 
 		i = task_get_uint32(task, 4);
-		alloc_sz = offsetof(
-			struct scsi_persistent_reserve_in_read_reservation,
-			reserved) + i;
+		alloc_sz = sizeof(struct scsi_persistent_reserve_in_read_reservation);
 
 		rr = scsi_malloc(task, alloc_sz);
 		if (rr == NULL) {
