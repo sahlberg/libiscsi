@@ -134,7 +134,7 @@ test_inquiry_block_limits(void)
 		if (bl->max_unmap != 0xffffffff) {
 			logging(LOG_VERBOSE, "Verify that MAXIMUM UNMAP LBA "
 				"COUNT is not insanely big");
-			CU_ASSERT_EQUAL(bl->max_unmap <= 1024*1024, 0);
+			CU_ASSERT_TRUE(bl->max_unmap <= 1024*1024);
 		}
 
 		logging(LOG_VERBOSE, "Verify that MAXIMUM UNMAP BLOCK "
@@ -143,7 +143,7 @@ test_inquiry_block_limits(void)
 		if (bl->max_unmap_bdc != 0xffffffff) {
 			logging(LOG_VERBOSE, "Verify that MAXIMUM UNMAP "
 				"BLOCK DESCRIPTOR COUNT is not insanely big");
-			CU_ASSERT_EQUAL(bl->max_unmap_bdc <= 1024*1024, 0);
+			CU_ASSERT_TRUE(bl->max_unmap_bdc <= 1024*1024);
 		}
 	} else {
 		logging(LOG_VERBOSE, "Device does not claim UNMAP support via "
