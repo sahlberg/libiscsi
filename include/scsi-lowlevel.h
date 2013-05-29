@@ -803,6 +803,7 @@ struct scsi_persistent_reserve_in_read_reservation {
        int reserved;
 
        uint64_t reservation_key;
+       unsigned char pr_scope;
        unsigned char pr_type;
 };
 

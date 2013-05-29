@@ -815,7 +815,8 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 			rr->reserved = 1;
 			rr->reservation_key =
 				task_get_uint64(task, 8);
-			rr->pr_type = task_get_uint8(task, 21) & 0xff;
+			rr->pr_scope = task_get_uint8(task, 21) >> 4;
+			rr->pr_type = task_get_uint8(task, 21) & 0xf;
 		}
 
 		return rr;
