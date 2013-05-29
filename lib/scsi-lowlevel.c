@@ -1400,7 +1400,7 @@ scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize)
 	int num_blocks;
 
 	num_blocks = xferlen/blocksize;
-	if (num_blocks > 265) {
+	if (num_blocks > 256) {
 		return NULL;
 	}
 
