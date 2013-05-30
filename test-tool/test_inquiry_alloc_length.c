@@ -87,7 +87,7 @@ test_inquiry_alloc_length(void)
 	ret = inquiry(iscsic, tgt_lun, 0, 0, 512, &task2);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "INQUIRY data should be the same when allocation length is 255 and 256 bytes");
+	logging(LOG_VERBOSE, "INQUIRY data should be the same when allocation length is 511 and 512 bytes");
 	ret = task->datain.size != task2->datain.size;
 	CU_ASSERT_EQUAL(ret, 0);
 	ret = memcmp(task->datain.data, task2->datain.data, task->datain.size);
