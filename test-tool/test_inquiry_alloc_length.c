@@ -79,7 +79,12 @@ test_inquiry_alloc_length(void)
 	}
 
 	logging(LOG_VERBOSE, "Version is SPC-3 or later. Read INQUIRY data using 16-bit allocation length");
-	ret = inquiry(iscsic, tgt_lun, 0, 0, 256, &task2);
+	logging(LOG_VERBOSE, "Read INQUIRY data with allocation length 511 (low order byte is 0xff)");
+	ret = inquiry(iscsic, tgt_lun, 0, 0, 511, &task);
+	CU_ASSERT_EQUAL(ret, 0);
+
+	logging(LOG_VERBOSE, "Read INQUIRY data with allocation length 512 (low order byte is 0x00)");
+	ret = inquiry(iscsic, tgt_lun, 0, 0, 512, &task2);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "INQUIRY data should be the same when allocation length is 255 and 256 bytes");
