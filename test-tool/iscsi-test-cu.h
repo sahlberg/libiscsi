@@ -104,7 +104,6 @@ void test_prout_reserve_ownership_wear(void);
 
 void test_read6_simple(void);
 void test_read6_beyond_eol(void);
-void test_read6_0blocks(void);
 void test_read6_rdprotect(void);
 void test_read6_flags(void);
 

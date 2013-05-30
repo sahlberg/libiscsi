@@ -230,7 +230,6 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_prout_reserve_ownership.c \
 	test-tool/test_read6_simple.c \
 	test-tool/test_read6_beyond_eol.c \
-	test-tool/test_read6_0blocks.c \
 	test-tool/test_read10_simple.c \
 	test-tool/test_read10_beyond_eol.c \
 	test-tool/test_read10_0blocks.c \

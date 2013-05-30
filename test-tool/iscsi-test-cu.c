@@ -173,7 +173,6 @@ static CU_TestInfo tests_prin_serviceaction_range[] = {
 static CU_TestInfo tests_read6[] = {
 	{ (char *)"Read6Simple", test_read6_simple },
 	{ (char *)"Read6BeyondEol", test_read6_beyond_eol },
-	{ (char *)"Read6ZeroBlocks", test_read6_0blocks },
 	CU_TEST_INFO_NULL
 };
 
