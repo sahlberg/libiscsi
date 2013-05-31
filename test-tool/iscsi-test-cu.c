@@ -82,6 +82,11 @@ static CU_TestInfo tests_mandatory[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_modesense6[] = {
+	{ (char *)"AllPages", test_modesense6_all_pages },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_nomedia[] = {
 	{ (char *)"NoMediaSBC", test_nomedia_sbc },
 	CU_TEST_INFO_NULL
@@ -387,6 +392,8 @@ static CU_SuiteInfo scsi_suites[] = {
 	  tests_inquiry },
 	{ (char *)"Mandatory", test_setup, test_teardown,
 	  tests_mandatory },
+	{ (char *)"ModeSense6", test_setup, test_teardown,
+	  tests_modesense6 },
 	{ (char *)"NoMedia", test_setup, test_teardown,
 	  tests_nomedia },
 	{ (char *)"OrWrite", test_setup, test_teardown,
@@ -493,6 +500,8 @@ static CU_SuiteInfo all_suites[] = {
 	  tests_inquiry },
 	{ (char *)"Mandatory", test_setup, test_teardown,
 	  tests_mandatory },
+	{ (char *)"ModeSense6", test_setup, test_teardown,
+	  tests_modesense6 },
 	{ (char *)"NoMedia", test_setup, test_teardown,
 	  tests_nomedia },
 	{ (char *)"OrWrite", test_setup, test_teardown,
@@ -573,6 +582,8 @@ static CU_SuiteInfo scsi_usb_sbc_suites[] = {
 	  tests_inquiry },
 	{ (char *)"Mandatory", test_setup, test_teardown,
 	  tests_mandatory },
+	{ (char *)"ModeSense6", test_setup, test_teardown,
+	  tests_modesense6 },
 	{ (char *)"OrWrite", test_setup, test_teardown,
 	  tests_orwrite },
 	{ (char *)"Prefetch10", test_setup, test_teardown,
