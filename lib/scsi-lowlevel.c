@@ -1422,7 +1422,7 @@ scsi_cdb_read6(uint32_t lba, uint32_t xferlen, int blocksize)
 	task->cdb[3] = (lba    )&0xff;
 
 	if (num_blocks < 256) {
-		task->cdb[4] = num_blocks;
+		task->cdb[4] = num_blocks & 0xff;
 	}
 
 	if (xferlen != 0) {
