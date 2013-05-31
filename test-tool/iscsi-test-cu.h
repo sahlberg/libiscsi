@@ -57,6 +57,7 @@ void test_iscsi_cmdsn_toolow(void);
 void test_mandatory_sbc(void);
 
 void test_modesense6_all_pages(void);
+void test_modesense6_residuals(void);
 
 void test_nomedia_sbc(void);
 
