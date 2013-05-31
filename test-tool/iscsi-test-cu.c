@@ -898,7 +898,7 @@ main(int argc, char *argv[])
 	struct scsi_task *rc16_task = NULL;
 	struct scsi_task *rsop_task = NULL;
 	int full_size;
-	int is_usb;
+	int is_usb = 0;
 	static struct option long_opts[] = {
 		{ "help", no_argument, 0, '?' },
 		{ "list", no_argument, 0, 'l' },
