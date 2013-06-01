@@ -43,6 +43,11 @@ test_sanitize_block_erase(void)
 	cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
 				    SCSI_SANITIZE_BLOCK_ERASE);
 	if (cd == NULL) {
+		if (inq_bdc && inq_bdc->wabereq) {
+			logging(LOG_NORMAL, "[WARNING] SANITIZE BLOCK ERASE "
+				"opcode is not supproted but WABEREQ is "
+				"not 0");
+		}
 		logging(LOG_NORMAL, "[SKIPPED] SANITIZE BLOCK_ERASE is not "
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 		CU_PASS("SANITIZE is not implemented.");
@@ -58,6 +63,10 @@ test_sanitize_block_erase(void)
 			"supported but MediumRotationRate is not 0 "
 			"indicating that this is a HDD. Only SSDs should "
 			"implement BLOCK ERASE");
+	}
+	if (inq_bdc && !inq_bdc->wabereq) {
+		logging(LOG_NORMAL, "[WARNING] SANITIZE BLOCK ERASE "
+			"opcode is supproted but WABEREQ is 0");
 	}
 
 	logging(LOG_VERBOSE, "Test we can perform basic BLOCK ERASE SANITIZE");
