@@ -45,7 +45,7 @@ test_sanitize_block_erase(void)
 	if (cd == NULL) {
 		if (inq_bdc && inq_bdc->wabereq) {
 			logging(LOG_NORMAL, "[WARNING] SANITIZE BLOCK ERASE "
-				"opcode is not supproted but WABEREQ is "
+				"opcode is not supported but WABEREQ is "
 				"not 0");
 		}
 		logging(LOG_NORMAL, "[SKIPPED] SANITIZE BLOCK_ERASE is not "
