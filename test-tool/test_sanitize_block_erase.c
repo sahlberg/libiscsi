@@ -48,6 +48,17 @@ test_sanitize_block_erase(void)
 		CU_PASS("SANITIZE is not implemented.");
 		return;
 	}
+	if (inq_bdc == NULL) {
+		logging(LOG_NORMAL, "[WARNING] SANITIZE BLOCK ERASE opcode is "
+			"supported but BlockDeviceCharacteristics VPD page is "
+			"missing");
+	}
+	if (inq_bdc && inq_bdc->medium_rotation_rate != 0) {
+		logging(LOG_NORMAL, "[WARNING] SANITIZE BLOCK ERASE opcode is "
+			"supported but MediumRotationRate is not 0 "
+			"indicating that this is a HDD. Only SSDs should "
+			"implement BLOCK ERASE");
+	}
 
 	logging(LOG_VERBOSE, "Test we can perform basic BLOCK ERASE SANITIZE");
 
