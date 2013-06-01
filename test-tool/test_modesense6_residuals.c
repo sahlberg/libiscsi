@@ -75,7 +75,7 @@ test_modesense6_residuals(void)
 
 
 	logging(LOG_VERBOSE, "Try a MODESENSE6 command with 255 bytes of "
-		"transfer length and verify that we dont get residuals.");
+		"transfer length and verify that we get residuals if the target returns less than the requested amount of data.");
 	if (task != NULL) {
 		scsi_free_scsi_task(task);
 		task = NULL;
@@ -94,13 +94,33 @@ test_modesense6_residuals(void)
 	logging(LOG_VERBOSE, "[SUCCESS] All Pages fetched.");
 
 
-	logging(LOG_VERBOSE, "Verify residual underflow flag not set");
-	if (task->residual_status == SCSI_RESIDUAL_UNDERFLOW) {
-		logging(LOG_VERBOSE, "[FAILED] Target set residual "
-			"underflow flag");
-	}
-	CU_ASSERT_NOT_EQUAL(task->residual_status, SCSI_RESIDUAL_UNDERFLOW);
+	if (task->datain.size == 255) {
+		logging(LOG_VERBOSE, "We got all 255 bytes of data back "
+			"from the target. Verify that underflow is not set.");
 
+		if (task->residual_status == SCSI_RESIDUAL_UNDERFLOW) {
+			logging(LOG_VERBOSE, "[FAILED] Target set residual "
+				"underflow flag");
+		} else {
+			logging(LOG_VERBOSE, "[SUCCESS] Residual underflow "
+				"is not set");
+		}
+		CU_ASSERT_NOT_EQUAL(task->residual_status,
+				SCSI_RESIDUAL_UNDERFLOW);
+	} else {
+		logging(LOG_VERBOSE, "We got less than the requested 255 bytes "
+			"from the target. Verify that underflow is set.");
+
+		if (task->residual_status != SCSI_RESIDUAL_UNDERFLOW) {
+			logging(LOG_VERBOSE, "[FAILED] Target did not set "
+				"residual underflow flag");
+		} else {
+			logging(LOG_VERBOSE, "[SUCCESS] Residual underflow "
+				"is set");
+		}
+		CU_ASSERT_EQUAL(task->residual_status,
+				SCSI_RESIDUAL_UNDERFLOW);
+	}
 
 
 	if (task != NULL) {
