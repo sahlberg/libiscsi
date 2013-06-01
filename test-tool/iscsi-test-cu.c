@@ -47,7 +47,7 @@
 
 #define	PROG	"iscsi-test-cu"
 
-int loglevel = LOG_SILENT;
+int loglevel = LOG_NORMAL;
 
 /*
  * this allows us to redefine how PDU are queued, at times, for
