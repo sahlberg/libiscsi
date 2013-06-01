@@ -56,9 +56,9 @@ do {									\
 #define CHECK_FOR_SANITIZE						\
 do {									\
 	if (!allow_sanitize) {						\
-		logging(LOG_VERBOSE, "[SKIPPED] --allow_sanitize flag " \
+		logging(LOG_VERBOSE, "[SKIPPED] --allow-sanitize flag " \
 			"is not set. Skipping test.");	       	      	\
-		CU_PASS("[SKIPPED] --allow_sanitize flag is not set."	\
+		CU_PASS("[SKIPPED] --allow-sanitize flag is not set."	\
 			" Skipping test");				\
 		return;							\
 	}								\
