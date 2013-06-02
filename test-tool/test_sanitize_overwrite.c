@@ -48,16 +48,27 @@ test_sanitize_overwrite(void)
 		CU_PASS("SANITIZE is not implemented.");
 		return;
 	}
+
+	logging(LOG_VERBOSE, "Verify that we have BlockDeviceCharacteristics "
+		"VPD page.");
 	if (inq_bdc == NULL) {
-		logging(LOG_NORMAL, "[WARNING] SANITIZE OVERWRITE opcode is "
+		logging(LOG_NORMAL, "[FAILED] SANITIZE OVERWRITE opcode is "
 			"supported but BlockDeviceCharacteristics VPD page is "
 			"missing");
+		CU_FAIL("[FAILED] BlockDeviceCharacteristics VPD "
+			"page is missing");
 	}
+
+	logging(LOG_VERBOSE, "Check MediumRotationRate whether this is a HDD "
+		"or a SSD device.");
 	if (inq_bdc && inq_bdc->medium_rotation_rate == 0) {
+		logging(LOG_NORMAL, "This is a HDD device");
 		logging(LOG_NORMAL, "[WARNING] SANITIZE OVERWRITE opcode is "
 			"supported but MediumRotationRate is 0 "
 			"indicating that this is an SSD. Only HDDs should "
 			"implement OVERWRITE");
+	} else {
+		logging(LOG_NORMAL, "This is a SSD device");
 	}
 
 	logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE with initialization pattern of one full block");
