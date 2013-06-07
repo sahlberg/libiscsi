@@ -2825,25 +2825,34 @@ int
 release6(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
+	int i, res = 0;
 
 	logging(LOG_VERBOSE, "Send RELEASE6");
 
-	task = iscsi_release6_sync(iscsi, lun);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send RELEASE6 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] RELEASE6 command: "
-			"failed with sense. %s", iscsi_get_error(iscsi));
+	for (i = 0; i < 3 && res == 0; ++i) {
+		task = iscsi_release6_sync(iscsi, lun);
+		if (task == NULL) {
+			logging(LOG_NORMAL,
+				"[FAILED] Failed to send RELEASE6 command: %s",
+				iscsi_get_error(iscsi));
+			res = -1;
+			break;
+		}
+		if (task->status != SCSI_STATUS_GOOD &&
+		    !(task->status        == SCSI_STATUS_CHECK_CONDITION
+		      && task->sense.key  == SCSI_SENSE_UNIT_ATTENTION
+		      && task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET)) {
+			logging(LOG_NORMAL, "[FAILED] RELEASE6 command: "
+				"failed with sense. %s",
+				iscsi_get_error(iscsi));
+			res = -1;
+		}
 		scsi_free_scsi_task(task);
-		return -1;
 	}
 
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] RELEASE6 returned SUCCESS.");
-	return 0;
+	if (res == 0)
+		logging(LOG_VERBOSE, "[OK] RELEASE6 returned SUCCESS.");
+	return res;
 }
 
 int report_supported_opcodes(struct iscsi_context *iscsi, int lun, int rctd, int options, int opcode, int sa, int alloc_len, struct scsi_task **save_task)
@@ -2935,64 +2944,80 @@ int
 reserve6(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
+	int i, res = 0;
 
 	logging(LOG_VERBOSE, "Send RESERVE6");
 
-	task = iscsi_reserve6_sync(iscsi, lun);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send RESERVE6 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		logging(LOG_NORMAL, "[SKIPPED] RESERVE6 is not implemented on target");
+	for (i = 0; i < 3 && res == 0; ++i) {
+		task = iscsi_reserve6_sync(iscsi, lun);
+		if (task == NULL) {
+			logging(LOG_NORMAL,
+				"[FAILED] Failed to send RESERVE6 command: %s",
+				iscsi_get_error(iscsi));
+			res = -1;
+			break;
+		}
+		if (task->status        == SCSI_STATUS_CHECK_CONDITION
+		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+			logging(LOG_NORMAL, "[SKIPPED] RESERVE6 is not "
+				"implemented on target");
+			res = -2;
+		} else if (task->status != SCSI_STATUS_GOOD &&
+		    !(task->status        == SCSI_STATUS_CHECK_CONDITION
+		      && task->sense.key  == SCSI_SENSE_UNIT_ATTENTION
+		      && task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET)) {
+			logging(LOG_NORMAL, "[FAILED] RESERVE6 command: "
+				"failed with sense. %s",
+				iscsi_get_error(iscsi));
+			res = -1;
+		}
 		scsi_free_scsi_task(task);
-		return -2;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] RESERVE6 command: "
-			"failed with sense. %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
 	}
 
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] RESERVE6 returned SUCCESS.");
-	return 0;
+	if (res == 0)
+		logging(LOG_VERBOSE, "[OK] RESERVE6 returned SUCCESS.");
+	return res;
 }
 
 int
 reserve6_conflict(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
+	int i, res = 0;
 
 	logging(LOG_VERBOSE, "Send RESERVE6 (Expecting RESERVATION_CONFLICT)");
 
-	task = iscsi_reserve6_sync(iscsi, lun);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send RESERVE6 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		logging(LOG_NORMAL, "[SKIPPED] RESERVE6 is not implemented on target");
+	for (i = 0; i < 3 && res == 0; ++i) {
+		task = iscsi_reserve6_sync(iscsi, lun);
+		if (task == NULL) {
+			logging(LOG_NORMAL,
+				"[FAILED] Failed to send RESERVE6 command: %s",
+				iscsi_get_error(iscsi));
+			res = -1;
+			break;
+		}
+		if (task->status        == SCSI_STATUS_CHECK_CONDITION
+		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+			logging(LOG_NORMAL, "[SKIPPED] RESERVE6 is not"
+				" implemented on target");
+			res = -2;
+		} else if (task->status != SCSI_STATUS_RESERVATION_CONFLICT &&
+		    !(task->status        == SCSI_STATUS_CHECK_CONDITION
+		      && task->sense.key  == SCSI_SENSE_UNIT_ATTENTION
+		      && task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET)) {
+			logging(LOG_NORMAL, "[FAILED] RESERVE6 command: "
+				"should have failed with RESERVATION_CONFLICT");
+			res = -1;
+		}
 		scsi_free_scsi_task(task);
-		return -2;
-	}
-	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
-		logging(LOG_NORMAL, "[FAILED] RESERVE6 command: "
-			"should have failed with RESERVATION_CONFLICT");
-		scsi_free_scsi_task(task);
-		return -1;
 	}
 
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] RESERVE6 returned RESERVATION_CONFLICT.");
-	return 0;
+	if (res == 0)
+		logging(LOG_VERBOSE,
+			"[OK] RESERVE6 returned RESERVATION_CONFLICT.");
+	return res;
 }
 
 int
