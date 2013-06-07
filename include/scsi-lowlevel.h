@@ -152,6 +152,7 @@ EXTERN const char *scsi_sense_key_str(int key);
 #define SCSI_SENSE_ASCQ_LOGICAL_UNIT_NOT_SUPPORTED         0x2500
 #define SCSI_SENSE_ASCQ_WRITE_PROTECTED                    0x2700
 #define SCSI_SENSE_ASCQ_BUS_RESET                          0x2900
+#define SCSI_SENSE_ASCQ_NEXUS_LOSS                         0x2907
 #define SCSI_SENSE_ASCQ_MODE_PARAMETERS_CHANGED            0x2a01
 #define SCSI_SENSE_ASCQ_CAPACITY_DATA_HAS_CHANGED          0x2a09
 #define SCSI_SENSE_ASCQ_THIN_PROVISION_SOFT_THRES_REACHED  0x3807

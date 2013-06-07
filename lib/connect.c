@@ -49,7 +49,8 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 
 	if (status != 0) {
 		if (task->sense.key == SCSI_SENSE_UNIT_ATTENTION
-		    && task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET) {
+		    && (task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET ||
+			task->sense.ascq == SCSI_SENSE_ASCQ_NEXUS_LOSS)) {
 			/* This is just the normal unitattention/busreset
 			 * you always get just after a fresh login. Try
 			 * again.
