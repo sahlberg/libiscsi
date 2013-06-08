@@ -24,6 +24,17 @@
 #include "iscsi-test-cu.h"
 
 
+static int ilog2(size_t i)
+{
+	int j = -1;
+
+	while (i) {
+		i >>= 1;
+		j++;
+	}
+	return j;
+}
+
 void
 test_read16_beyond_eol(void)
 { 
@@ -57,6 +68,36 @@ test_read16_beyond_eol(void)
 		}
 
 		ret = read16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000,
+					   i * block_size, block_size,
+					   0, 0, 0, 0, 0, NULL);
+		CU_ASSERT_EQUAL(ret, 0);
+	}
+
+
+	logging(LOG_VERBOSE, "Test READ16 1-256 blocks at LBA==2^%d",
+		64 - ilog2(block_size));
+	for (i = 1; i <= 256; i++) {
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
+
+		ret = read16_lbaoutofrange(iscsic, tgt_lun,
+					   1ULL << (64 - ilog2(block_size)),
+					   i * block_size, block_size,
+					   0, 0, 0, 0, 0, NULL);
+		CU_ASSERT_EQUAL(ret, 0);
+	}
+
+
+	logging(LOG_VERBOSE, "Test READ16 1-256 blocks at LBA==2^%d",
+		63 - ilog2(block_size));
+	for (i = 1; i <= 256; i++) {
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
+
+		ret = read16_lbaoutofrange(iscsic, tgt_lun,
+					   1ULL << (63 - ilog2(block_size)),
 					   i * block_size, block_size,
 					   0, 0, 0, 0, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
