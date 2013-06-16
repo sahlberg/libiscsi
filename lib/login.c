@@ -622,6 +622,7 @@ h2i(int h)
 	}
 	return h - '0';
 }
+
 static int
 i2h(int i)
 {

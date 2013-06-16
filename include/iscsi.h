@@ -84,10 +84,10 @@ EXTERN int iscsi_set_timeout(struct iscsi_context *iscsi, int timeout);
 EXTERN int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval);
 
 struct iscsi_url {
-       char portal[MAX_STRING_SIZE+1];
-       char target[MAX_STRING_SIZE+1];
-       char user[MAX_STRING_SIZE+1];
-       char passwd[MAX_STRING_SIZE+1];
+       char portal[MAX_STRING_SIZE + 1];
+       char target[MAX_STRING_SIZE + 1];
+       char user[MAX_STRING_SIZE + 1];
+       char passwd[MAX_STRING_SIZE + 1];
        int lun;
        struct iscsi_context *iscsi;
 };
@@ -124,6 +124,10 @@ iscsi_set_initial_r2t(struct iscsi_context *iscsi, enum iscsi_initial_r2t initia
  * This function is used to parse an iSCSI URL into a iscsi_url structure.
  * iSCSI URL format :
  * iscsi://[<username>[%<password>]@]<host>[:<port>]/<target-iqn>/<lun>
+ *
+ * Target names are url encoded with '%' as a special character.
+ * Example:
+ * "iqn.ronnie.test%3A1234" will be translated to "iqn.ronnie.test:1234"
  *
  * Function will return a pointer to an iscsi url structure if successful,
  * or it will return NULL and set iscsi_get_error() accrodingly if there was a problem
