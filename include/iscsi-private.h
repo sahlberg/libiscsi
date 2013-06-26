@@ -326,7 +326,7 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 int
 iscsi_serial32_compare(uint32_t s1, uint32_t s2);
 
-u_int32_t
+uint32_t
 iscsi_itt_post_increment(struct iscsi_context *iscsi);
 
 void iscsi_timeout_scan(struct iscsi_context *iscsi);
