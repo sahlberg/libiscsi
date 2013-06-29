@@ -239,7 +239,10 @@ test_read10_invalid(void)
 	data.size = sizeof(buf);
 	data.data = (unsigned char *)&buf[0];
 
+	iscsi_set_noautoreconnect(iscsic, 1);
+	iscsi_set_timeout(iscsic, 3);
 	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, &data);
+	iscsi_set_noautoreconnect(iscsic, 0);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
@@ -250,4 +253,5 @@ test_read10_invalid(void)
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 	scsi_free_scsi_task(task);
 	task = NULL;
+
 }
