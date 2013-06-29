@@ -883,7 +883,7 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle _U_, int count
 	return 0;
 }
 
-void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces)
+void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces _U_)
 {
 #if __linux
 	strncpy(iscsi->bind_interfaces,interfaces,MAX_STRING_SIZE);
