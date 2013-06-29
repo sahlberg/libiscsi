@@ -16,6 +16,8 @@ enable_write_strings="yes"
 case $host in
   *solaris*)
     enable_write_strings="no"
+    AC_CHECK_LIB([socket], [main], , [AC_MSG_ERROR([Can not find required library])])
+    AC_CHECK_LIB([nsl],    [main], , [AC_MSG_ERROR([Can not find required library])])
     ;;
   *)
     ;;
