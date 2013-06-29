@@ -11,13 +11,26 @@ AC_CANONICAL_HOST
 AM_CONDITIONAL(LD_ISCSI,
                [expr "$host_os" : linux > /dev/null 2>&1])
 
+enable_write_strings="yes"
+
+case $host in
+  *solaris*)
+    enable_write_strings="no"
+    ;;
+  *)
+    ;;
+esac
+
 AC_ARG_ENABLE([werror], [AS_HELP_STRING([--disable-werror],
               [Disables building with -Werror by default])])
 
 if test "$ac_cv_prog_gcc" = yes; then
-   WARN_CFLAGS="-Wall -W -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-align -Wwrite-strings -Wno-strict-aliasing"
+   WARN_CFLAGS="-Wall -W -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-align -Wno-strict-aliasing"
    if test "x$enable_werror" != "xno"; then
        WARN_CFLAGS="$WARN_CFLAGS -Werror"
+   fi
+   if test "x$enable_write_strings" != "xno"; then
+       WARN_CFLAGS="$WARN_CFLAGS -Wwrite-strings"
    fi
 fi
 AC_SUBST(WARN_CFLAGS)
