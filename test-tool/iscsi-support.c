@@ -917,7 +917,8 @@ prin_verify_reserved_as(struct iscsi_context *iscsi, int lun,
 	}
 	if (rr->reservation_key != key) {
 		logging(LOG_NORMAL,
-		    "[FAILED] Failed to find reservation key 0x%llx: found 0x%lx.",
+		    "[FAILED] Failed to find reservation key 0x%llx: found 0x%"
+		    PRIu64 ".",
 		    key, rr->reservation_key);
 		ret = -1;
 		goto dun;
