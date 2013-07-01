@@ -212,10 +212,10 @@ scsi_get_uint64(const unsigned char *c)
 {
 	uint64_t val;
 
-	val = ntohl(*(uint32_t *)c);
+	val = scsi_get_uint32(c);
 	val <<= 32;
 	c += 4;
-	val |= ntohl(*(uint32_t *)c);
+	val |= scsi_get_uint32(c);
 
 	return val;
 }
@@ -223,13 +223,21 @@ scsi_get_uint64(const unsigned char *c)
 inline uint32_t
 scsi_get_uint32(const unsigned char *c)
 {
-	return ntohl(*(uint32_t *)c);
+	uint32_t val;
+	val = c[0];
+	val = (val << 8) | c[1];
+	val = (val << 8) | c[2];
+	val = (val << 8) | c[3];
+	return val;
 }
 
 inline uint16_t
 scsi_get_uint16(const unsigned char *c)
 {
-	return ntohs(*(uint16_t *)c);
+	uint16_t val;
+	val = c[0];
+	val = (val << 8) | c[1];
+	return val;
 }
 
 static inline uint64_t
@@ -237,14 +245,8 @@ task_get_uint64(struct scsi_task *task, int offset)
 {
 	if (offset <= task->datain.size - 8) {
 		const unsigned char *c = &task->datain.data[offset];
-		uint64_t val;
 
-		val = ntohl(*(uint32_t *)c);
-		val <<= 32;
-		c += 4;
-		val |= ntohl(*(uint32_t *)c);
-
-		return val;
+		return scsi_get_uint64(c);
 	} else {
 		return 0;
 	}
@@ -256,7 +258,7 @@ task_get_uint32(struct scsi_task *task, int offset)
 	if (offset <= task->datain.size - 4) {
 		const unsigned char *c = &task->datain.data[offset];
 
-		return ntohl(*(uint32_t *)c);
+		return scsi_get_uint32(c);
 	} else {
 		return 0;
 	}
@@ -268,7 +270,7 @@ task_get_uint16(struct scsi_task *task, int offset)
 	if (offset <= task->datain.size - 2) {
 		const unsigned char *c = &task->datain.data[offset];
 
-		return ntohs(*(uint16_t *)c);
+		return scsi_get_uint16(c);
 	} else {
 		return 0;
 	}
@@ -300,13 +302,17 @@ scsi_set_uint64(unsigned char *c, uint64_t v)
 inline void
 scsi_set_uint32(unsigned char *c, uint32_t val)
 {
-	*(uint32_t *)c = htonl(val);
+	c[0] = val >> 24;
+	c[1] = val >> 16;
+	c[2] = val >> 8;
+	c[3] = val;
 }
 
 inline void
 scsi_set_uint16(unsigned char *c, uint16_t val)
 {
-	*(uint16_t *)c = htons(val);
+	c[0] = val >> 8;
+	c[1] = val;
 }
 
 /*
