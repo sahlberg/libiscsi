@@ -26,6 +26,85 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test-cu.h"
 
+static void
+check_wabereq(void)
+{
+	struct scsi_task *task_ret;
+
+	logging(LOG_VERBOSE, "Read one block from LBA 0");
+	task_ret = malloc(sizeof(struct scsi_task));
+	CU_ASSERT_PTR_NOT_NULL(task_ret);
+	memset(task_ret, 0, sizeof(struct scsi_task));
+	task_ret->cdb[0] = SCSI_OPCODE_READ10;
+	task_ret->cdb[8] = 1;
+	task_ret->cdb_size = 10;
+	task_ret->xfer_dir = SCSI_XFER_READ;
+	task_ret->expxferlen = 0;
+	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task_ret, NULL);
+	CU_ASSERT_PTR_NOT_NULL(task_ret);
+	CU_ASSERT_NOT_EQUAL(task_ret->status, SCSI_STATUS_CANCELLED);
+
+	switch (inq_bdc->wabereq) {
+	case 0:
+		logging(LOG_NORMAL, "[FAILED] SANITIZE BLOCK ERASE "
+			"opcode is supported but WABEREQ is 0");
+		CU_FAIL("[FAILED] SANITIZE BLOCK ERASE "
+			"opcode is supported but WABEREQ is 0");
+		break;
+	case 1:
+		logging(LOG_VERBOSE, "WABEREQ==1. Reads from the "
+			"device should be successful.");
+		if (task_ret->status == SCSI_STATUS_GOOD) {
+			logging(LOG_VERBOSE, "[SUCCESS] Read was "
+				"successful after SANITIZE");
+			break;
+		}
+		logging(LOG_NORMAL, "[FAILED] Read after "
+			"SANITIZE failed but WABEREQ is 1");
+		CU_FAIL("[FAILED] Read after SANITIZE failed "
+			"but WABEREQ is 1");
+		break;
+	case 2:
+		logging(LOG_VERBOSE, "WABEREQ==2. Reads from the "
+			"device should fail.");
+		if (task_ret->status        == SCSI_STATUS_CHECK_CONDITION
+		    && task_ret->sense.key  == SCSI_SENSE_MEDIUM_ERROR
+		    && task_ret->sense.ascq != SCSI_SENSE_ASCQ_WRITE_AFTER_SANITIZE_REQUIRED) {
+			logging(LOG_VERBOSE, "[SUCCESS] Read failed "
+				"with CHECK_CONDITION/MEDIUM_ERROR/"
+				"!WRITE_AFTER_SANITIZE_REQUIRED");
+			break;
+		}
+		logging(LOG_VERBOSE, "[FAILED] Read should have failed "
+			"with CHECK_CONDITION/MEDIUM_ERROR/"
+			"!WRITE_AFTER_SANITIZE_REQUIRED");
+		CU_FAIL("[FAILED] Read should have failed "
+			"with CHECK_CONDITION/MEDIUM_ERROR/"
+			"!WRITE_AFTER_SANITIZE_REQUIRED");
+		break;
+	case 3:
+		logging(LOG_VERBOSE, "WABEREQ==3. Reads from the "
+			"device should fail.");
+		if (task_ret->status        == SCSI_STATUS_CHECK_CONDITION
+		    && task_ret->sense.key  == SCSI_SENSE_MEDIUM_ERROR
+		    && task_ret->sense.ascq == SCSI_SENSE_ASCQ_WRITE_AFTER_SANITIZE_REQUIRED) {
+			logging(LOG_VERBOSE, "[SUCCESS] Read failed "
+				"with CHECK_CONDITION/MEDIUM_ERROR/"
+				"WRITE_AFTER_SANITIZE_REQUIRED");
+			break;
+		}
+		logging(LOG_VERBOSE, "[FAILED] Read should have failed "
+			"with CHECK_CONDITION/MEDIUM_ERROR/"
+			"WRITE_AFTER_SANITIZE_REQUIRED");
+		CU_FAIL("[FAILED] Read should have failed "
+			"with CHECK_CONDITION/MEDIUM_ERROR/"
+			"WRITE_AFTER_SANITIZE_REQUIRED");
+		break;
+	}
+
+	scsi_free_scsi_task(task_ret);
+}
+
 void
 test_sanitize_block_erase(void)
 { 
@@ -81,14 +160,6 @@ test_sanitize_block_erase(void)
 		logging(LOG_NORMAL, "This is a HDD device");
 	}
 
-	logging(LOG_VERBOSE, "Verify that WABEREQ is specified");
-	if (inq_bdc && !inq_bdc->wabereq) {
-		logging(LOG_NORMAL, "[FAILED] SANITIZE BLOCK ERASE "
-			"opcode is supported but WABEREQ is 0");
-		CU_FAIL("[FAILED] SANITIZE BLOCK ERASE "
-			"opcode is supported but WABEREQ is 0");
-	}
-
 	logging(LOG_VERBOSE, "Test we can perform basic BLOCK ERASE SANITIZE");
 
 	ret = sanitize(iscsic, tgt_lun,
@@ -105,4 +176,10 @@ test_sanitize_block_erase(void)
 	ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
 		       0, 0, SCSI_SANITIZE_BLOCK_ERASE, 8, &data);
 	CU_ASSERT_EQUAL(ret, 0);
+
+	if (inq_bdc) {
+		logging(LOG_VERBOSE, "Check WABEREQ setting and that READ "
+			"after SANITIZE works correctly.");
+		check_wabereq();
+	}
 }
