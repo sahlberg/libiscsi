@@ -225,6 +225,7 @@ int verify_read_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf);
 int verify_write_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf);
 int inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize, struct scsi_task **save_task);
 int inquiry_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize);
+struct scsi_task *get_lba_status_task(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len);
 int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len);
 int get_lba_status_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len);
 int get_lba_status_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len);

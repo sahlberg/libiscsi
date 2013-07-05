@@ -1573,11 +1573,38 @@ testunitready_conflict(struct iscsi_context *iscsi, int lun)
 	return 0;
 }
 
+struct scsi_task *get_lba_status_task(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send GET_LBA_STATUS LBA:%" PRIu64 " alloc_len:%d",
+		lba, len);
+
+	task = iscsi_get_lba_status_sync(iscsi, lun, lba, len);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send GET_LBA_STATUS "
+			"command: %s",
+			iscsi_get_error(iscsi));
+		return NULL;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] GET_LBA_STATUS is not "
+			"implemented on target");
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	logging(LOG_VERBOSE, "[OK] GET_LBA_STATUS returned SUCCESS.");
+	return task;
+}
+
 int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len)
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send GET_LBA_STATUS LBA:%" PRIu64 " blocks:%d",
+	logging(LOG_VERBOSE, "Send GET_LBA_STATUS LBA:%" PRIu64 " alloc_len:%d",
 		lba, len);
 
 	task = iscsi_get_lba_status_sync(iscsi, lun, lba, len);
@@ -1611,7 +1638,7 @@ int get_lba_status_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t 
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send GET_LBA_STATUS (Expecting LBA_OUT_OF_RANGE) LBA:%" PRIu64 " blocks:%d",
+	logging(LOG_VERBOSE, "Send GET_LBA_STATUS (Expecting LBA_OUT_OF_RANGE) LBA:%" PRIu64 " alloc_len:%d",
 		lba, len);
 
 	task = iscsi_get_lba_status_sync(iscsi, lun, lba, len);
@@ -1652,7 +1679,7 @@ int get_lba_status_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, 
 	struct scsi_task *task;
 
 	logging(LOG_VERBOSE, "Send GET_LBA_STATUS (Expecting MEDIUM_NOT_PRESENT) "
-		"LBA:%" PRIu64 " blocks:%d",
+		"LBA:%" PRIu64 " alloc_len:%d",
 		lba, len);
 
 	task = iscsi_get_lba_status_sync(iscsi, lun, lba, len);

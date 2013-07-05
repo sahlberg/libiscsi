@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <alloca.h>
+#include <inttypes.h>
 
 #include <CUnit/CUnit.h>
 
@@ -100,6 +101,96 @@ check_wabereq(void)
 			"with CHECK_CONDITION/MEDIUM_ERROR/"
 			"WRITE_AFTER_SANITIZE_REQUIRED");
 		break;
+	}
+
+	scsi_free_scsi_task(task_ret);
+}
+
+static void
+check_unmap(void)
+{
+	int i;
+	struct scsi_task *task_ret;
+	struct scsi_get_lba_status *lbas;
+	uint64_t lba;
+
+	logging(LOG_VERBOSE, "Read LBA mapping from the target");
+	task_ret = get_lba_status_task(iscsic, tgt_lun, 0, 256);
+	if (task_ret == NULL) {
+		logging(LOG_VERBOSE, "[FAILED] Failed to read LBA mapping "
+			"from the target.");
+		CU_FAIL("[FAILED] Failed to read LBA mapping "
+			"from the target.");
+		return;
+	}
+	if (task_ret->status != SCSI_STATUS_GOOD) {
+		logging(LOG_VERBOSE, "[FAILED] Failed to read LBA mapping "
+			"from the target. Sense: %s",
+			iscsi_get_error(iscsic));
+		CU_FAIL("[FAILED] Failed to read LBA mapping "
+			"from the target.");
+		scsi_free_scsi_task(task_ret);
+		return;
+	}
+
+
+	logging(LOG_VERBOSE, "Unmarshall LBA mapping datain buffer");
+	lbas = scsi_datain_unmarshall(task_ret);
+	if (lbas == NULL) {
+		logging(LOG_VERBOSE, "[FAILED] Failed to unmarshall LBA "
+			"mapping");
+		CU_FAIL("[FAILED] Failed to read unmarshall LBA mapping");
+		scsi_free_scsi_task(task_ret);
+		return;
+	}
+
+	logging(LOG_VERBOSE, "Verify we got at least one status descriptor "
+		"from the target");
+	if (lbas->num_descriptors < 1) {
+		logging(LOG_VERBOSE, "[FAILED] Wrong number of LBA status "
+			"descriptors. Expected >=1 but got %d descriptors",
+			lbas->num_descriptors);
+		CU_FAIL("[FAILED] Wrong number of LBA status descriptors.");
+		scsi_free_scsi_task(task_ret);
+		return;
+	}
+
+	logging(LOG_VERBOSE, "Verify that all descriptors are either "
+		"DEALLOCATED or ANCHORED.");
+	for (i = 0; i < (int)lbas->num_descriptors; i++) {
+		logging(LOG_VERBOSE, "Check descriptor %d LBA:%" PRIu64 "-%"
+			PRIu64 " that it is not MAPPED",
+			i,
+			lbas->descriptors[i].lba,
+			lbas->descriptors[i].lba + lbas->descriptors[i].num_blocks);
+		if (lbas->descriptors[i].provisioning == SCSI_PROVISIONING_TYPE_MAPPED) {
+		  	logging(LOG_VERBOSE, "[FAILED] Descriptor %d is MAPPED."
+				"All descriptors shoudl be either DEALLOCATED "
+				"or ANCHORED after SANITIZE", i);
+		  	CU_FAIL("[FAILED] LBA status descriptor is MAPPED.");
+		}
+	}
+
+	logging(LOG_VERBOSE, "Verify that the descriptors cover the whole LUN");
+	lba = 0;
+	for (i = 0; i < (int)lbas->num_descriptors; i++) {
+		logging(LOG_VERBOSE, "Check descriptor %d LBA:%" PRIu64 "-%"
+			PRIu64 " that it is in order",
+			i,
+			lbas->descriptors[i].lba,
+			lbas->descriptors[i].lba + lbas->descriptors[i].num_blocks);
+		if (lba != lbas->descriptors[i].lba) {
+		  	logging(LOG_VERBOSE, "[FAILED] LBA status descriptors "
+				"are not in order.");
+		  	CU_FAIL("[FAILED] LBA status descriptors not in order");
+		}
+		lba += lbas->descriptors[i].num_blocks;
+	}
+	if (lba != num_blocks) {
+	  	logging(LOG_VERBOSE, "[FAILED] The LUN is not fully"
+			"DEALLOCATED/ANCHORED");
+	  	CU_FAIL("[FAILED] The LUN is not fully"
+			"DEALLOCATED/ANCHORED");
 	}
 
 	scsi_free_scsi_task(task_ret);
@@ -198,4 +289,8 @@ test_sanitize_block_erase(void)
 			"after SANITIZE works correctly.");
 		check_wabereq();
 	}
+
+	logging(LOG_VERBOSE, "Verify that all blocks are unmapped after "
+		"SANITIZE BLOCK_ERASE");
+	check_unmap();
 }
