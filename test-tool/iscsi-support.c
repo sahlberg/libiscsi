@@ -2074,6 +2074,35 @@ read6_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
 	return 0;
 }
 
+struct scsi_task*
+read10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
+       uint32_t datalen, int blocksize, int rdprotect, 
+       int dpo, int fua, int fua_nv, int group,
+       unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send READ10 LBA:%d blocks:%d rdprotect:%d "
+	       "dpo:%d fua:%d fua_nv:%d group:%d",
+	       lba, datalen / blocksize, rdprotect,
+	       dpo, fua, fua_nv, group);
+
+	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blocksize,
+				 rdprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READ10 command: %s",
+		       iscsi_get_error(iscsi));
+		return NULL;
+	}
+
+	if (data != NULL) {
+		memcpy(data, task->datain.data, task->datain.size);
+	}
+
+	logging(LOG_VERBOSE, "[OK] READ10 returned SUCCESS.");
+	return task;
+}
+
 int
 read10(struct iscsi_context *iscsi, int lun, uint32_t lba,
        uint32_t datalen, int blocksize, int rdprotect, 

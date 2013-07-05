@@ -33,15 +33,8 @@ check_wabereq(void)
 	struct scsi_task *task_ret;
 
 	logging(LOG_VERBOSE, "Read one block from LBA 0");
-	task_ret = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
-	memset(task_ret, 0, sizeof(struct scsi_task));
-	task_ret->cdb[0] = SCSI_OPCODE_READ10;
-	task_ret->cdb[8] = 1;
-	task_ret->cdb_size = 10;
-	task_ret->xfer_dir = SCSI_XFER_READ;
-	task_ret->expxferlen = 0;
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task_ret, NULL);
+	task_ret = read10_task(iscsic, tgt_lun, 0, block_size, block_size,
+		0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 	CU_ASSERT_NOT_EQUAL(task_ret->status, SCSI_STATUS_CANCELLED);
 
