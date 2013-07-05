@@ -228,10 +228,13 @@ static CU_TestInfo tests_readonly[] = {
 
 static CU_TestInfo tests_sanitize[] = {
 	{ (char *)"BlockErase", test_sanitize_block_erase },
+	{ (char *)"BlockEraseReserved", test_sanitize_block_erase_reserved },
 	{ (char *)"CryptoErase", test_sanitize_crypto_erase },
+	{ (char *)"CryptoEraseReserved", test_sanitize_crypto_erase_reserved },
 	{ (char *)"ExitFailureMode", test_sanitize_exit_failure_mode },
-	{ (char *)"Overwrite", test_sanitize_overwrite },
 	{ (char *)"InvalidServiceAction", test_sanitize_invalid_serviceaction },
+	{ (char *)"Overwrite", test_sanitize_overwrite },
+	{ (char *)"OverwriteReserved", test_sanitize_overwrite_reserved },
 	CU_TEST_INFO_NULL
 };
 

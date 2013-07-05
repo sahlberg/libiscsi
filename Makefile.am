@@ -268,10 +268,13 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_reserve6_target_cold_reset.c \
 	test-tool/test_reserve6_lun_reset.c \
 	test-tool/test_sanitize_block_erase.c \
+	test-tool/test_sanitize_block_erase_reserved.c \
 	test-tool/test_sanitize_crypto_erase.c \
-	test-tool/test_sanitize_overwrite.c \
+	test-tool/test_sanitize_crypto_erase_reserved.c \
 	test-tool/test_sanitize_exit_failure_mode.c \
 	test-tool/test_sanitize_invalid_serviceaction.c \
+	test-tool/test_sanitize_overwrite.c \
+	test-tool/test_sanitize_overwrite_reserved.c \
 	test-tool/test_startstopunit_simple.c \
 	test-tool/test_startstopunit_pwrcnd.c \
 	test-tool/test_startstopunit_noloej.c \
