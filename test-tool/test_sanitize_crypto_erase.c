@@ -115,6 +115,16 @@ test_sanitize_crypto_erase(void)
 	cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
 				    SCSI_SANITIZE_CRYPTO_ERASE);
 	if (cd == NULL) {
+		logging(LOG_VERBOSE, "Opcode is not supported. Verify that "
+			"WACEREQ is zero.");
+		if (inq_bdc && inq_bdc->wacereq) {
+			logging(LOG_NORMAL, "[FAILED] WACEREQ is not 0 but "
+				"SANITIZE CRYPTO ERASE opcode is not "
+				"supported");
+			CU_FAIL("[FAILED] WACEREQ is not 0 but CRYPTO ERASE "
+				"is not supported.");
+		}
+
 		logging(LOG_NORMAL, "[SKIPPED] SANITIZE CRYPTO_ERASE is not "
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 		CU_PASS("SANITIZE is not implemented.");

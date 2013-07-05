@@ -214,8 +214,7 @@ test_sanitize_block_erase(void)
 			CU_FAIL("[FAILED] WABEREQ is not 0 but BLOCK ERASE "
 				"is not supported.");
 		}
-	}
-	if (cd == NULL) {
+
 		logging(LOG_NORMAL, "[SKIPPED] SANITIZE BLOCK_ERASE is not "
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 		CU_PASS("SANITIZE is not implemented.");
