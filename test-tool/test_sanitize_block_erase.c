@@ -148,6 +148,22 @@ test_sanitize_block_erase(void)
 			"page is missing");
 	}
 
+	logging(LOG_VERBOSE, "Verify that we have READCAPACITY16");
+	if (!rc16) {
+		logging(LOG_NORMAL, "[FAILED] SANITIZE BLOCK ERASE opcode is "
+			"supported but READCAPACITY16 is missing.");
+		CU_FAIL("[FAILED] READCAPACITY16 is missing");
+	}
+
+	logging(LOG_VERBOSE, "Verify that logical block provisioning (LBPME) "
+		"is available.");
+	if (!rc16 || !(rc16->lbpme)) {
+		logging(LOG_NORMAL, "[FAILED] SANITIZE BLOCK ERASE opcode is "
+			"supported but LBPME==0.");
+		CU_FAIL("[FAILED] SANITIZE BLOCK ERASE opcode is "
+			"supported but LBPME==0.");
+	}
+
 	logging(LOG_VERBOSE, "Check MediumRotationRate whether this is a HDD "
 		"or a SSD device.");
 	if (inq_bdc && inq_bdc->medium_rotation_rate != 0) {
