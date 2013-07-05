@@ -61,19 +61,19 @@ int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
  *
  *****************************************************************/
 static CU_TestInfo tests_get_lba_status[] = {
-	{ (char *)"GetLBAStatusSimple", test_get_lba_status_simple },
-	{ (char *)"GetLBAStatusBeyondEol", test_get_lba_status_beyond_eol },
+	{ (char *)"Simple", test_get_lba_status_simple },
+	{ (char *)"BeyondEol", test_get_lba_status_beyond_eol },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_inquiry[] = {
-	{ (char *)"InquiryStandard", test_inquiry_standard },
-	{ (char *)"InquiryAllocLength", test_inquiry_alloc_length},
-	{ (char *)"InquiryEVPD", test_inquiry_evpd},
-	{ (char *)"InquiryBlockLimits", test_inquiry_block_limits},
-	{ (char *)"InquiryMandatoryVPDSBC", test_inquiry_mandatory_vpd_sbc},
-	{ (char *)"InquirySupportedVPD", test_inquiry_supported_vpd},
-	{ (char *)"InquiryVersionDescriptors", test_inquiry_version_descriptors},
+	{ (char *)"Standard", test_inquiry_standard },
+	{ (char *)"AllocLength", test_inquiry_alloc_length},
+	{ (char *)"EVPD", test_inquiry_evpd},
+	{ (char *)"BlockLimits", test_inquiry_block_limits},
+	{ (char *)"MandatoryVPDSBC", test_inquiry_mandatory_vpd_sbc},
+	{ (char *)"SupportedVPD", test_inquiry_supported_vpd},
+	{ (char *)"VersionDescriptors", test_inquiry_version_descriptors},
 	CU_TEST_INFO_NULL
 };
 
@@ -94,130 +94,130 @@ static CU_TestInfo tests_nomedia[] = {
 };
 
 static CU_TestInfo tests_orwrite[] = {
-	{ (char *)"OrWriteSimple", test_orwrite_simple },
-	{ (char *)"OrWriteBeyondEol", test_orwrite_beyond_eol },
-	{ (char *)"OrWriteZeroBlocks", test_orwrite_0blocks },
-	{ (char *)"OrWriteProtect", test_orwrite_wrprotect },
-	{ (char *)"OrWriteFlags", test_orwrite_flags },
-	{ (char *)"OrWriteVerify", test_orwrite_verify },
+	{ (char *)"Simple", test_orwrite_simple },
+	{ (char *)"BeyondEol", test_orwrite_beyond_eol },
+	{ (char *)"ZeroBlocks", test_orwrite_0blocks },
+	{ (char *)"Protect", test_orwrite_wrprotect },
+	{ (char *)"Flags", test_orwrite_flags },
+	{ (char *)"Verify", test_orwrite_verify },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prefetch10[] = {
-	{ (char *)"Prefetch10Simple", test_prefetch10_simple },
-	{ (char *)"Prefetch10BeyondEol", test_prefetch10_beyond_eol },
-	{ (char *)"Prefetch10ZeroBlocks", test_prefetch10_0blocks },
-	{ (char *)"Prefetch10Flags", test_prefetch10_flags },
+	{ (char *)"Simple", test_prefetch10_simple },
+	{ (char *)"BeyondEol", test_prefetch10_beyond_eol },
+	{ (char *)"ZeroBlocks", test_prefetch10_0blocks },
+	{ (char *)"Flags", test_prefetch10_flags },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prefetch16[] = {
-	{ (char *)"Prefetch16Simple", test_prefetch16_simple },
-	{ (char *)"Prefetch16BeyondEol", test_prefetch16_beyond_eol },
-	{ (char *)"Prefetch16ZeroBlocks", test_prefetch16_0blocks },
-	{ (char *)"Prefetch16Flags", test_prefetch16_flags },
+	{ (char *)"Simple", test_prefetch16_simple },
+	{ (char *)"BeyondEol", test_prefetch16_beyond_eol },
+	{ (char *)"ZeroBlocks", test_prefetch16_0blocks },
+	{ (char *)"Flags", test_prefetch16_flags },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_preventallow[] = {
-	{ (char *)"PreventAllowSimple", test_preventallow_simple },
-	{ (char *)"PreventAllowEject", test_preventallow_eject },
-	{ (char *)"PreventAllowITNexusLoss", test_preventallow_itnexus_loss },
-	{ (char *)"PreventAllowLogout", test_preventallow_logout },
-	{ (char *)"PreventAllowWarmReset", test_preventallow_warm_reset },
-	{ (char *)"PreventAllowColdReset", test_preventallow_cold_reset },
-	{ (char *)"PreventAllowLUNReset", test_preventallow_lun_reset },
-	{ (char *)"PreventAllow2ITNexuses", test_preventallow_2_itnexuses },
+	{ (char *)"Simple", test_preventallow_simple },
+	{ (char *)"Eject", test_preventallow_eject },
+	{ (char *)"ITNexusLoss", test_preventallow_itnexus_loss },
+	{ (char *)"Logout", test_preventallow_logout },
+	{ (char *)"WarmReset", test_preventallow_warm_reset },
+	{ (char *)"ColdReset", test_preventallow_cold_reset },
+	{ (char *)"LUNReset", test_preventallow_lun_reset },
+	{ (char *)"2ITNexuses", test_preventallow_2_itnexuses },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prin_read_keys[] = {
-	{ (char *)"PrinReadKeysSimple", test_prin_read_keys_simple },
+	{ (char *)"Simple", test_prin_read_keys_simple },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prout_register[] = {
-	{ (char *)"ProutRegisterSimple", test_prout_register_simple },
+	{ (char *)"Simple", test_prout_register_simple },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prout_reserve[] = {
-	{ (char *)"ProutReserveSimple",
+	{ (char *)"Simple",
 	  test_prout_reserve_simple },
-	{ (char *)"ProutReserveAccessEA",
+	{ (char *)"AccessEA",
 	  test_prout_reserve_access_ea },
-	{ (char *)"ProutReserveAccessWE",
+	{ (char *)"AccessWE",
 	  test_prout_reserve_access_we },
-	{ (char *)"ProutReserveAccessEARO",
+	{ (char *)"AccessEARO",
 	  test_prout_reserve_access_earo },
-	{ (char *)"ProutReserveAccessWERO",
+	{ (char *)"AccessWERO",
 	  test_prout_reserve_access_wero },
-	{ (char *)"ProutReserveAccessEAAR",
+	{ (char *)"AccessEAAR",
 	  test_prout_reserve_access_eaar },
-	{ (char *)"ProutReserveAccessWEAR",
+	{ (char *)"AccessWEAR",
 	  test_prout_reserve_access_wear },
-	{ (char *)"ProutReserveOwnershipEA",
+	{ (char *)"OwnershipEA",
 	  test_prout_reserve_ownership_ea },
-	{ (char *)"ProutReserveOwnershipWE",
+	{ (char *)"OwnershipWE",
 	  test_prout_reserve_ownership_we },
-	{ (char *)"ProutReserveOwnershipEARO",
+	{ (char *)"OwnershipEARO",
 	  test_prout_reserve_ownership_earo },
-	{ (char *)"ProutReserveOwnershipWERO",
+	{ (char *)"OwnershipWERO",
 	  test_prout_reserve_ownership_wero },
-	{ (char *)"ProutReserveOwnershipEAAR",
+	{ (char *)"OwnershipEAAR",
 	  test_prout_reserve_ownership_eaar },
-	{ (char *)"ProutReserveOwnershipWEAR",
+	{ (char *)"OwnershipWEAR",
 	  test_prout_reserve_ownership_wear },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prin_serviceaction_range[] = {
-	{ (char *)"PrinServiceactionRange", test_prin_serviceaction_range },
+	{ (char *)"Range", test_prin_serviceaction_range },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_read6[] = {
-	{ (char *)"Read6Simple", test_read6_simple },
-	{ (char *)"Read6BeyondEol", test_read6_beyond_eol },
+	{ (char *)"Simple", test_read6_simple },
+	{ (char *)"BeyondEol", test_read6_beyond_eol },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_read10[] = {
-	{ (char *)"Read10Simple", test_read10_simple },
-	{ (char *)"Read10BeyondEol", test_read10_beyond_eol },
-	{ (char *)"Read10ZeroBlocks", test_read10_0blocks },
-	{ (char *)"Read10ReadProtect", test_read10_rdprotect },
-	{ (char *)"Read10Flags", test_read10_flags },
+	{ (char *)"Simple", test_read10_simple },
+	{ (char *)"BeyondEol", test_read10_beyond_eol },
+	{ (char *)"ZeroBlocks", test_read10_0blocks },
+	{ (char *)"ReadProtect", test_read10_rdprotect },
+	{ (char *)"Flags", test_read10_flags },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_read12[] = {
-	{ (char *)"Read12Simple", test_read12_simple },
-	{ (char *)"Read12BeyondEol", test_read12_beyond_eol },
-	{ (char *)"Read12ZeroBlocks", test_read12_0blocks },
-	{ (char *)"Read12ReadProtect", test_read12_rdprotect },
-	{ (char *)"Read12Flags", test_read12_flags },
+	{ (char *)"Simple", test_read12_simple },
+	{ (char *)"BeyondEol", test_read12_beyond_eol },
+	{ (char *)"ZeroBlocks", test_read12_0blocks },
+	{ (char *)"ReadProtect", test_read12_rdprotect },
+	{ (char *)"Flags", test_read12_flags },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_read16[] = {
-	{ (char *)"Read16Simple", test_read16_simple },
-	{ (char *)"Read16BeyondEol", test_read16_beyond_eol },
-	{ (char *)"Read16ZeroBlocks", test_read16_0blocks },
-	{ (char *)"Read16ReadProtect", test_read16_rdprotect },
-	{ (char *)"Read16Flags", test_read16_flags },
+	{ (char *)"Simple", test_read16_simple },
+	{ (char *)"BeyondEol", test_read16_beyond_eol },
+	{ (char *)"ZeroBlocks", test_read16_0blocks },
+	{ (char *)"ReadProtect", test_read16_rdprotect },
+	{ (char *)"Flags", test_read16_flags },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_readcapacity10[] = {
-	{ (char *)"ReadCapacity10Simple", test_readcapacity10_simple },
+	{ (char *)"Simple", test_readcapacity10_simple },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_readcapacity16[] = {
-	{ (char *)"ReadCapacity16Simple", test_readcapacity16_simple },
-	{ (char *)"ReadCapacity16Alloclen", test_readcapacity16_alloclen },
-	{ (char *)"ReadCapacity16PI", test_readcapacity16_protection },
+	{ (char *)"Simple", test_readcapacity16_simple },
+	{ (char *)"Alloclen", test_readcapacity16_alloclen },
+	{ (char *)"PI", test_readcapacity16_protection },
 	CU_TEST_INFO_NULL
 };
 
@@ -239,151 +239,151 @@ static CU_TestInfo tests_sanitize[] = {
 };
 
 static CU_TestInfo tests_report_supported_opcodes[] = {
-	{ (char *)"ReportSupportedOpcodesSimple", test_report_supported_opcodes_simple },
-	{ (char *)"ReportSupportedOpcodesOneCommand", test_report_supported_opcodes_one_command },
-	{ (char *)"ReportSupportedOpcodesRCTD", test_report_supported_opcodes_rctd },
-	{ (char *)"ReportSupportedOpcodesSERVACTV", test_report_supported_opcodes_servactv },
+	{ (char *)"Simple", test_report_supported_opcodes_simple },
+	{ (char *)"OneCommand", test_report_supported_opcodes_one_command },
+	{ (char *)"RCTD", test_report_supported_opcodes_rctd },
+	{ (char *)"SERVACTV", test_report_supported_opcodes_servactv },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_reserve6[] = {
-	{ (char *)"Reserve6Simple", test_reserve6_simple },
-	{ (char *)"Reserve6_2Initiators", test_reserve6_2initiators },
-	{ (char *)"Reserve6Logout", test_reserve6_logout },
-	{ (char *)"Reserve6ITNexusLoss", test_reserve6_itnexus_loss },
-	{ (char *)"Reserve6TargetColdReset", test_reserve6_target_cold_reset },
-	{ (char *)"Reserve6TargetWarmReset", test_reserve6_target_warm_reset },
-	{ (char *)"Reserve6LUNReset", test_reserve6_lun_reset },
+	{ (char *)"Simple", test_reserve6_simple },
+	{ (char *)"2Initiators", test_reserve6_2initiators },
+	{ (char *)"Logout", test_reserve6_logout },
+	{ (char *)"ITNexusLoss", test_reserve6_itnexus_loss },
+	{ (char *)"TargetColdReset", test_reserve6_target_cold_reset },
+	{ (char *)"TargetWarmReset", test_reserve6_target_warm_reset },
+	{ (char *)"LUNReset", test_reserve6_lun_reset },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_testunitready[] = {
-	{ (char *)"TurSimple", test_testunitready_simple },
+	{ (char *)"Simple", test_testunitready_simple },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_startstopunit[] = {
-	{ (char *)"StartStopUnitSimple", test_startstopunit_simple },
-	{ (char *)"StartStopUnitPwrCnd", test_startstopunit_pwrcnd },
-	{ (char *)"StartStopUnitNoLoej", test_startstopunit_noloej },
+	{ (char *)"Simple", test_startstopunit_simple },
+	{ (char *)"PwrCnd", test_startstopunit_pwrcnd },
+	{ (char *)"NoLoej", test_startstopunit_noloej },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_unmap[] = {
-	{ (char *)"UnmapSimple", test_unmap_simple },
-	{ (char *)"UnmapVPD", test_unmap_vpd },
-	{ (char *)"UnmapZeroBlocks", test_unmap_0blocks },
+	{ (char *)"Simple", test_unmap_simple },
+	{ (char *)"VPD", test_unmap_vpd },
+	{ (char *)"ZeroBlocks", test_unmap_0blocks },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_verify10[] = {
-	{ (char *)"Verify10Simple", test_verify10_simple },
-	{ (char *)"Verify10BeyondEol", test_verify10_beyond_eol },
-	{ (char *)"Verify10ZeroBlocks", test_verify10_0blocks },
-	{ (char *)"Verify10VerifyProtect", test_verify10_vrprotect },
-	{ (char *)"Verify10Flags", test_verify10_flags },
-	{ (char *)"Verify10mismatch", test_verify10_mismatch },
-	{ (char *)"Verify10mismatch_no_cmp", test_verify10_mismatch_no_cmp },
+	{ (char *)"Simple", test_verify10_simple },
+	{ (char *)"BeyondEol", test_verify10_beyond_eol },
+	{ (char *)"ZeroBlocks", test_verify10_0blocks },
+	{ (char *)"VerifyProtect", test_verify10_vrprotect },
+	{ (char *)"Flags", test_verify10_flags },
+	{ (char *)"Mismatch", test_verify10_mismatch },
+	{ (char *)"MismatchNoCmp", test_verify10_mismatch_no_cmp },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_verify12[] = {
-	{ (char *)"Verify12Simple", test_verify12_simple },
-	{ (char *)"Verify12BeyondEol", test_verify12_beyond_eol },
-	{ (char *)"Verify12ZeroBlocks", test_verify12_0blocks },
-	{ (char *)"Verify12VerifyProtect", test_verify12_vrprotect },
-	{ (char *)"Verify12Flags", test_verify12_flags },
-	{ (char *)"Verify12mismatch", test_verify12_mismatch },
-	{ (char *)"Verify12mismatch_no_cmp", test_verify12_mismatch_no_cmp },
+	{ (char *)"Simple", test_verify12_simple },
+	{ (char *)"BeyondEol", test_verify12_beyond_eol },
+	{ (char *)"ZeroBlocks", test_verify12_0blocks },
+	{ (char *)"VerifyProtect", test_verify12_vrprotect },
+	{ (char *)"Flags", test_verify12_flags },
+	{ (char *)"Mismatch", test_verify12_mismatch },
+	{ (char *)"MismatchNoCmp", test_verify12_mismatch_no_cmp },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_verify16[] = {
-	{ (char *)"Verify16Simple", test_verify16_simple },
-	{ (char *)"Verify16BeyondEol", test_verify16_beyond_eol },
-	{ (char *)"Verify16ZeroBlocks", test_verify16_0blocks },
-	{ (char *)"Verify16VerifyProtect", test_verify16_vrprotect },
-	{ (char *)"Verify16Flags", test_verify16_flags },
-	{ (char *)"Verify16mismatch", test_verify16_mismatch },
-	{ (char *)"Verify16mismatch_no_cmp", test_verify16_mismatch_no_cmp },
+	{ (char *)"Simple", test_verify16_simple },
+	{ (char *)"BeyondEol", test_verify16_beyond_eol },
+	{ (char *)"ZeroBlocks", test_verify16_0blocks },
+	{ (char *)"VerifyProtect", test_verify16_vrprotect },
+	{ (char *)"Flags", test_verify16_flags },
+	{ (char *)"Mismatch", test_verify16_mismatch },
+	{ (char *)"MismatchNoCmp", test_verify16_mismatch_no_cmp },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_write10[] = {
-	{ (char *)"Write10Simple", test_write10_simple },
-	{ (char *)"Write10BeyondEol", test_write10_beyond_eol },
-	{ (char *)"Write10ZeroBlocks", test_write10_0blocks },
-	{ (char *)"Write10WriteProtect", test_write10_wrprotect },
-	{ (char *)"Write10Flags", test_write10_flags },
+	{ (char *)"Simple", test_write10_simple },
+	{ (char *)"BeyondEol", test_write10_beyond_eol },
+	{ (char *)"ZeroBlocks", test_write10_0blocks },
+	{ (char *)"WriteProtect", test_write10_wrprotect },
+	{ (char *)"Flags", test_write10_flags },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_write12[] = {
-	{ (char *)"Write12Simple", test_write12_simple },
-	{ (char *)"Write12BeyondEol", test_write12_beyond_eol },
-	{ (char *)"Write12ZeroBlocks", test_write12_0blocks },
-	{ (char *)"Write12WriteProtect", test_write12_wrprotect },
-	{ (char *)"Write12Flags", test_write12_flags },
+	{ (char *)"Simple", test_write12_simple },
+	{ (char *)"BeyondEol", test_write12_beyond_eol },
+	{ (char *)"ZeroBlocks", test_write12_0blocks },
+	{ (char *)"WriteProtect", test_write12_wrprotect },
+	{ (char *)"Flags", test_write12_flags },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_write16[] = {
-	{ (char *)"Write16Simple", test_write16_simple },
-	{ (char *)"Write16BeyondEol", test_write16_beyond_eol },
-	{ (char *)"Write16ZeroBlocks", test_write16_0blocks },
-	{ (char *)"Write16WriteProtect", test_write16_wrprotect },
-	{ (char *)"Write16Flags", test_write16_flags },
+	{ (char *)"Simple", test_write16_simple },
+	{ (char *)"BeyondEol", test_write16_beyond_eol },
+	{ (char *)"ZeroBlocks", test_write16_0blocks },
+	{ (char *)"WriteProtect", test_write16_wrprotect },
+	{ (char *)"Flags", test_write16_flags },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_writesame10[] = {
-	{ (char *)"WriteSame10Simple", test_writesame10_simple },
-	{ (char *)"WriteSame10BeyondEol", test_writesame10_beyond_eol },
-	{ (char *)"WriteSame10ZeroBlocks", test_writesame10_0blocks },
-	{ (char *)"WriteSame10WriteProtect", test_writesame10_wrprotect },
-	{ (char *)"WriteSame10Unmap", test_writesame10_unmap },
-	{ (char *)"WriteSame10UnmapUnaligned", test_writesame10_unmap_unaligned },
-	{ (char *)"WriteSame10UnmapUntilEnd", test_writesame10_unmap_until_end },
-	{ (char *)"WriteSame10UnmapVPD", test_writesame10_unmap_vpd },
+	{ (char *)"Simple", test_writesame10_simple },
+	{ (char *)"BeyondEol", test_writesame10_beyond_eol },
+	{ (char *)"ZeroBlocks", test_writesame10_0blocks },
+	{ (char *)"WriteProtect", test_writesame10_wrprotect },
+	{ (char *)"Unmap", test_writesame10_unmap },
+	{ (char *)"UnmapUnaligned", test_writesame10_unmap_unaligned },
+	{ (char *)"UnmapUntilEnd", test_writesame10_unmap_until_end },
+	{ (char *)"UnmapVPD", test_writesame10_unmap_vpd },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_writesame16[] = {
-	{ (char *)"WriteSame16Simple", test_writesame16_simple },
-	{ (char *)"WriteSame16BeyondEol", test_writesame16_beyond_eol },
-	{ (char *)"WriteSame16ZeroBlocks", test_writesame16_0blocks },
-	{ (char *)"WriteSame16WriteProtect", test_writesame16_wrprotect },
-	{ (char *)"WriteSame16Unmap", test_writesame16_unmap },
-	{ (char *)"WriteSame16UnmapUnaligned", test_writesame16_unmap_unaligned },
-	{ (char *)"WriteSame16UnmapUntilEnd", test_writesame16_unmap_until_end },
-	{ (char *)"WriteSame16UnmapVPD", test_writesame16_unmap_vpd },
+	{ (char *)"Simple", test_writesame16_simple },
+	{ (char *)"BeyondEol", test_writesame16_beyond_eol },
+	{ (char *)"ZeroBlocks", test_writesame16_0blocks },
+	{ (char *)"WriteProtect", test_writesame16_wrprotect },
+	{ (char *)"Unmap", test_writesame16_unmap },
+	{ (char *)"UnmapUnaligned", test_writesame16_unmap_unaligned },
+	{ (char *)"UnmapUntilEnd", test_writesame16_unmap_until_end },
+	{ (char *)"UnmapVPD", test_writesame16_unmap_vpd },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_writeverify10[] = {
-	{ (char *)"WriteVerify10Simple", test_writeverify10_simple },
-	{ (char *)"WriteVerify10BeyondEol", test_writeverify10_beyond_eol },
-	{ (char *)"WriteVerify10ZeroBlocks", test_writeverify10_0blocks },
-	{ (char *)"WriteVerify10WriteProtect", test_writeverify10_wrprotect },
-	{ (char *)"WriteVerify10Flags", test_writeverify10_flags },
+	{ (char *)"Simple", test_writeverify10_simple },
+	{ (char *)"BeyondEol", test_writeverify10_beyond_eol },
+	{ (char *)"ZeroBlocks", test_writeverify10_0blocks },
+	{ (char *)"WriteProtect", test_writeverify10_wrprotect },
+	{ (char *)"Flags", test_writeverify10_flags },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_writeverify12[] = {
-	{ (char *)"WriteVerify12Simple", test_writeverify12_simple },
-	{ (char *)"WriteVerify12BeyondEol", test_writeverify12_beyond_eol },
-	{ (char *)"WriteVerify12ZeroBlocks", test_writeverify12_0blocks },
-	{ (char *)"WriteVerify12WriteProtect", test_writeverify12_wrprotect },
-	{ (char *)"WriteVerify12Flags", test_writeverify12_flags },
+	{ (char *)"Simple", test_writeverify12_simple },
+	{ (char *)"BeyondEol", test_writeverify12_beyond_eol },
+	{ (char *)"ZeroBlocks", test_writeverify12_0blocks },
+	{ (char *)"WriteProtect", test_writeverify12_wrprotect },
+	{ (char *)"Flags", test_writeverify12_flags },
 	CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_writeverify16[] = {
-	{ (char *)"WriteVerify16Simple", test_writeverify16_simple },
-	{ (char *)"WriteVerify16BeyondEol", test_writeverify16_beyond_eol },
-	{ (char *)"WriteVerify16ZeroBlocks", test_writeverify16_0blocks },
-	{ (char *)"WriteVerify16WriteProtect", test_writeverify16_wrprotect },
-	{ (char *)"WriteVerify16Flags", test_writeverify16_flags },
+	{ (char *)"Simple", test_writeverify16_simple },
+	{ (char *)"BeyondEol", test_writeverify16_beyond_eol },
+	{ (char *)"ZeroBlocks", test_writeverify16_0blocks },
+	{ (char *)"WriteProtect", test_writeverify16_wrprotect },
+	{ (char *)"Flags", test_writeverify16_flags },
 	CU_TEST_INFO_NULL
 };
 
