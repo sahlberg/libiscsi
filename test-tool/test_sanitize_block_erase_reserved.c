@@ -55,6 +55,7 @@ void test_sanitize_block_erase_reserved(void)
 	logging(LOG_VERBOSE, "Test SANITIZE BLOCK_ERASE Reserved bits/bytes");
 
 	CHECK_FOR_SANITIZE;
+	CHECK_FOR_DATALOSS;
 
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
 

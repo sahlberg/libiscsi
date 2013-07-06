@@ -37,6 +37,7 @@ test_sanitize_overwrite(void)
 	logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE");
 
 	CHECK_FOR_SANITIZE;
+	CHECK_FOR_DATALOSS;
 
 	logging(LOG_NORMAL, "Check that SANITIZE OVERWRITE is supported "
 		"in REPORT_SUPPORTED_OPCODES");

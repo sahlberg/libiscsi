@@ -200,6 +200,7 @@ test_sanitize_block_erase(void)
 	logging(LOG_VERBOSE, "Test SANITIZE BLOCK ERASE");
 
 	CHECK_FOR_SANITIZE;
+	CHECK_FOR_DATALOSS;
 
 	logging(LOG_NORMAL, "Check that SANITIZE BLOCK_ERASE is supported "
 		"in REPORT_SUPPORTED_OPCODES");

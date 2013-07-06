@@ -66,6 +66,7 @@ void test_sanitize_overwrite_reserved(void)
 	logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE Reserved bits/bytes");
 
 	CHECK_FOR_SANITIZE;
+	CHECK_FOR_DATALOSS;
 
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
 

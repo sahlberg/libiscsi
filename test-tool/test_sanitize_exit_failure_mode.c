@@ -37,6 +37,7 @@ test_sanitize_exit_failure_mode(void)
 	logging(LOG_VERBOSE, "Test SANITIZE EXIT FAILURE MODE");
 
 	CHECK_FOR_SANITIZE;
+	CHECK_FOR_DATALOSS;
 
 	logging(LOG_NORMAL, "Check that SANITIZE EXIT FAILURE MODE is "
 		"supported in REPORT_SUPPORTED_OPCODES");

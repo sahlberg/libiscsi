@@ -109,6 +109,7 @@ test_sanitize_crypto_erase(void)
 	logging(LOG_VERBOSE, "Test SANITIZE CRYPTO ERASE");
 
 	CHECK_FOR_SANITIZE;
+	CHECK_FOR_DATALOSS;
 
 	logging(LOG_NORMAL, "Check that SANITIZE CRYPTO_ERASE is supported "
 		"in REPORT_SUPPORTED_OPCODES");
