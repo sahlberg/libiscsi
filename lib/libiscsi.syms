@@ -21,6 +21,8 @@ iscsi_login_async
 iscsi_login_sync
 iscsi_logout_async
 iscsi_logout_sync
+iscsi_modeselect6_sync
+iscsi_modeselect6_task
 iscsi_modesense6_sync
 iscsi_modesense6_task
 iscsi_nop_out_async
@@ -149,6 +151,7 @@ iscsi_writesame16_task
 scsi_association_to_str
 scsi_cdb_inquiry
 scsi_cdb_get_lba_status
+scsi_cdb_modeselect6
 scsi_cdb_modesense6
 scsi_cdb_persistent_reserve_in
 scsi_cdb_persistent_reserve_out
@@ -194,6 +197,8 @@ scsi_devtype_to_str
 scsi_free_scsi_task
 scsi_get_task_private_ptr
 scsi_inquiry_pagecode_to_str
+scsi_modesense_dataout_marshall
+scsi_modesense_get_page
 scsi_protocol_identifier_to_str
 scsi_reportluns_cdb
 scsi_sense_ascq_str

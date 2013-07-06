@@ -1205,6 +1205,43 @@ iscsi_verify16_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 }
 
 struct scsi_task *
+iscsi_modeselect6_task(struct iscsi_context *iscsi, int lun,
+		       int pf, int sp, struct scsi_mode_page *mp,
+		       iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+	struct scsi_data *data;
+	struct iscsi_data d;
+
+	task = scsi_cdb_modeselect6(pf, sp, 255); 
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"modeselect6 cdb.");
+		return NULL;
+	}
+	data = scsi_modesense_dataout_marshall(task, mp, 1);
+	if (data == NULL) {
+		iscsi_set_error(iscsi, "Error: Failed to marshall "
+				"modesense dataout buffer.");
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	d.data = data->data;
+	d.size = data->size;
+	task->cdb[4] = data->size;
+	task->expxferlen = data->size;
+
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
+				     &d, private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
 iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd, int pc,
 		       int page_code, int sub_page_code,
 		       unsigned char alloc_len,

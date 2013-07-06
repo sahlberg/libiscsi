@@ -2178,6 +2178,58 @@ scsi_cdb_modesense6(int dbd, enum scsi_modesense_page_control pc,
 }
 
 /*
+ * MODESELECT6
+ */
+struct scsi_task *
+scsi_cdb_modeselect6(int pf, int sp, int param_len)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_MODESELECT6;
+
+	if (pf) {
+		task->cdb[1] |= 0x10;
+	}
+	if (sp) {
+		task->cdb[1] |= 0x01;
+	}
+	task->cdb[4] = param_len;
+
+	task->cdb_size = 6;
+	if (param_len != 0) {
+		task->xfer_dir = SCSI_XFER_WRITE;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = param_len;
+
+	return task;
+}
+
+struct scsi_mode_page *
+scsi_modesense_get_page(struct scsi_mode_sense *ms, 
+			enum scsi_modesense_page_code page_code,
+			int subpage_code)
+{
+	struct scsi_mode_page *mp;
+
+	for (mp = ms->pages; mp; mp = mp->next) {
+		if (mp->page_code == page_code
+		&&  mp->subpage_code == subpage_code) {
+			return mp;
+		}
+	}
+	return NULL;
+}
+
+
+/*
  * parse the data in blob and calculate the size of a full
  * modesense6 datain structure
  */
@@ -2376,6 +2428,201 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
 
 	return ms;
 }
+
+static struct scsi_data *
+scsi_modesense_marshall_caching(struct scsi_task *task,
+				struct scsi_mode_page *mp,
+				int hdr_size)
+{
+	struct scsi_data *data;
+
+	data = scsi_malloc(task, sizeof(struct scsi_data));
+
+	data->size = 20 + hdr_size;
+	data->data = scsi_malloc(task, data->size);
+
+	if (mp->caching.ic)   data->data[hdr_size + 2] |= 0x80;
+	if (mp->caching.abpf) data->data[hdr_size + 2] |= 0x40;
+	if (mp->caching.cap)  data->data[hdr_size + 2] |= 0x20;
+	if (mp->caching.disc) data->data[hdr_size + 2] |= 0x10;
+	if (mp->caching.size) data->data[hdr_size + 2] |= 0x08;
+	if (mp->caching.wce)  data->data[hdr_size + 2] |= 0x04;
+	if (mp->caching.mf)   data->data[hdr_size + 2] |= 0x02;
+	if (mp->caching.rcd)  data->data[hdr_size + 2] |= 0x01;
+
+	data->data[hdr_size + 3] |= (mp->caching.demand_read_retention_priority << 4) & 0xf0;
+	data->data[hdr_size + 3] |= mp->caching.write_retention_priority & 0x0f;
+
+	scsi_set_uint16(&data->data[hdr_size + 4], mp->caching.disable_prefetch_transfer_length);
+	scsi_set_uint16(&data->data[hdr_size + 6], mp->caching.minimum_prefetch);
+	scsi_set_uint16(&data->data[hdr_size + 8], mp->caching.maximum_prefetch);
+	scsi_set_uint16(&data->data[hdr_size + 10], mp->caching.maximum_prefetch_ceiling);
+
+	if (mp->caching.fsw)    data->data[hdr_size + 12] |= 0x80;
+	if (mp->caching.lbcss)  data->data[hdr_size + 12] |= 0x40;
+	if (mp->caching.dra)    data->data[hdr_size + 12] |= 0x20;
+	if (mp->caching.nv_dis) data->data[hdr_size + 12] |= 0x01;
+
+	data->data[hdr_size + 13] = mp->caching.number_of_cache_segments;
+
+	scsi_set_uint16(&data->data[hdr_size + 14], mp->caching.cache_segment_size);
+
+	return data;
+}
+
+static struct scsi_data *
+scsi_modesense_marshall_control(struct scsi_task *task,
+				struct scsi_mode_page *mp,
+				int hdr_size)
+{
+	struct scsi_data *data;
+
+	data = scsi_malloc(task, sizeof(struct scsi_data));
+
+	data->size = 12 + hdr_size;
+	data->data = scsi_malloc(task, data->size);
+
+	data->data[hdr_size + 2] |= (mp->control.tst << 5) & 0xe0;
+	if (mp->control.tmf_only) data->data[hdr_size + 2] |= 0x10;
+	if (mp->control.dpicz)    data->data[hdr_size + 2] |= 0x08;
+	if (mp->control.d_sense)  data->data[hdr_size + 2] |= 0x04;
+	if (mp->control.gltsd)    data->data[hdr_size + 2] |= 0x02;
+	if (mp->control.rlec)     data->data[hdr_size + 2] |= 0x01;
+
+	data->data[hdr_size + 3] |= (mp->control.queue_algorithm_modifier << 4) & 0xf0;
+	if (mp->control.nuar)     data->data[hdr_size + 3] |= 0x08;
+	data->data[hdr_size + 3] |= (mp->control.qerr << 1) & 0x06;
+
+	if (mp->control.vs)       data->data[hdr_size + 4] |= 0x80;
+	if (mp->control.rac)      data->data[hdr_size + 4] |= 0x40;
+	data->data[hdr_size + 4] |= (mp->control.ua_intlck_ctrl << 4) & 0x30;
+	if (mp->control.swp)      data->data[hdr_size + 4] |= 0x08;
+
+	if (mp->control.ato)      data->data[hdr_size + 5] |= 0x80;
+	if (mp->control.tas)      data->data[hdr_size + 5] |= 0x40;
+	if (mp->control.atmpe)    data->data[hdr_size + 5] |= 0x20;
+	if (mp->control.rwwp)     data->data[hdr_size + 5] |= 0x10;
+	data->data[hdr_size + 5] |= mp->control.autoload_mode & 0x07;
+
+	scsi_set_uint16(&data->data[hdr_size + 8], mp->control.busy_timeout_period);
+	scsi_set_uint16(&data->data[hdr_size + 10], mp->control.extended_selftest_completion_time);
+
+	return data;
+}
+
+static struct scsi_data *
+scsi_modesense_marshall_disconnect_reconnect(struct scsi_task *task,
+					struct scsi_mode_page *mp,
+					int hdr_size)
+{
+	struct scsi_data *data;
+
+	data = scsi_malloc(task, sizeof(struct scsi_data));
+
+	data->size = 16 + hdr_size;
+	data->data = scsi_malloc(task, data->size);
+
+	data->data[hdr_size + 2] = mp->disconnect_reconnect.buffer_full_ratio;
+	data->data[hdr_size + 3] = mp->disconnect_reconnect.buffer_empty_ratio;
+	scsi_set_uint16(&data->data[hdr_size + 4], mp->disconnect_reconnect.bus_inactivity_limit);
+	scsi_set_uint16(&data->data[hdr_size + 6], mp->disconnect_reconnect.disconnect_time_limit);
+	scsi_set_uint16(&data->data[hdr_size + 8], mp->disconnect_reconnect.connect_time_limit);
+	scsi_set_uint16(&data->data[hdr_size + 10], mp->disconnect_reconnect.maximum_burst_size);
+
+	if (mp->disconnect_reconnect.emdp) data->data[hdr_size + 12] |= 0x80;
+	data->data[hdr_size + 12] |= (mp->disconnect_reconnect.fair_arbitration << 4) & 0x70;
+	if (mp->disconnect_reconnect.dimm) data->data[hdr_size + 12] |= 0x08;
+	data->data[hdr_size + 12] |= mp->disconnect_reconnect.dtdc & 0x07;
+
+	scsi_set_uint16(&data->data[hdr_size + 14], mp->disconnect_reconnect.first_burst_size);
+
+	return data;
+}
+
+static struct scsi_data *
+scsi_modesense_marshall_informational_exceptions_control(struct scsi_task *task,
+					struct scsi_mode_page *mp,
+					int hdr_size)
+{
+	struct scsi_data *data;
+
+	data = scsi_malloc(task, sizeof(struct scsi_data));
+
+	data->size = 12 + hdr_size;
+	data->data = scsi_malloc(task, data->size);
+
+	if (mp->iec.perf)     data->data[hdr_size + 2] |= 0x80;
+	if (mp->iec.ebf)      data->data[hdr_size + 2] |= 0x20;
+	if (mp->iec.ewasc)    data->data[hdr_size + 2] |= 0x10;
+	if (mp->iec.dexcpt)   data->data[hdr_size + 2] |= 0x08;
+	if (mp->iec.test)     data->data[hdr_size + 2] |= 0x04;
+	if (mp->iec.ebackerr) data->data[hdr_size + 2] |= 0x02;
+	if (mp->iec.logerr)   data->data[hdr_size + 2] |= 0x01;
+
+	data->data[hdr_size + 3] |= mp->iec.mrie & 0x0f;
+
+	scsi_set_uint32(&data->data[hdr_size + 4], mp->iec.interval_timer);
+	scsi_set_uint32(&data->data[hdr_size + 8], mp->iec.report_count);
+
+	return data;
+}
+
+/*
+ * marshall the mode sense data out buffer
+ */
+struct scsi_data *
+scsi_modesense_dataout_marshall(struct scsi_task *task,
+				struct scsi_mode_page *mp,
+				int is_modeselect6)
+{
+	struct scsi_data *data;
+	int hdr_size = is_modeselect6 ? 4 : 8;
+
+	switch (mp->page_code) {
+	case SCSI_MODESENSE_PAGECODE_CACHING:
+		data = scsi_modesense_marshall_caching(task, mp, hdr_size);
+		break;
+	case SCSI_MODESENSE_PAGECODE_CONTROL:
+		data = scsi_modesense_marshall_control(task, mp, hdr_size);
+		break;
+	case SCSI_MODESENSE_PAGECODE_DISCONNECT_RECONNECT:
+		data = scsi_modesense_marshall_disconnect_reconnect(task, mp, hdr_size);
+		break;
+	case SCSI_MODESENSE_PAGECODE_INFORMATIONAL_EXCEPTIONS_CONTROL:
+		data = scsi_modesense_marshall_informational_exceptions_control(task, mp, hdr_size);
+		break;
+	default:
+		/* TODO error reporting ? */
+		return NULL;
+	}
+
+	if (data == NULL) {
+		return NULL;
+	}
+
+	if (is_modeselect6) {
+		data->data[0] = data->size - 1;
+	} else {
+		data->data[0] = (data->size - 2) >> 8;
+		data->data[1] = (data->size - 2) & 0xff;
+	}
+
+
+	data->data[hdr_size + 0] = mp->page_code & 0x3f;
+	if (mp->ps) {
+		data->data[hdr_size + 0] |= 0x80;
+	}
+	if (mp->spf) {
+		data->data[hdr_size + 0] |= 0x40;
+		data->data[hdr_size + 1] = mp->subpage_code;
+		scsi_set_uint16(&data->data[hdr_size + 2], data->size -hdr_size - 4);
+	} else {
+		data->data[hdr_size + 1] = (data->size - hdr_size - 2) & 0xff;
+	}
+
+	return data;
+}
+
 
 /*
  * STARTSTOPUNIT

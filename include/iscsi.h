@@ -635,6 +635,8 @@ EXTERN int
 iscsi_set_isid_reserved(struct iscsi_context *iscsi);
 
 
+struct scsi_mode_page;
+
 
 
 /*
@@ -818,6 +820,10 @@ iscsi_writesame16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		       int anchor, int unmap, int wrprotect, int group,
 		       iscsi_command_cb cb, void *private_data);
 EXTERN struct scsi_task *
+iscsi_modeselect6_task(struct iscsi_context *iscsi, int lun,
+		       int pf, int sp, struct scsi_mode_page *mp,
+		       iscsi_command_cb cb, void *private_data);
+EXTERN struct scsi_task *
 iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd,
 			   int pc, int page_code, int sub_page_code,
 			   unsigned char alloc_len, iscsi_command_cb cb,
@@ -869,6 +875,10 @@ iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi, int lun,
 EXTERN struct scsi_task *
 iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
 			struct scsi_task *task, struct iscsi_data *data);
+
+EXTERN struct scsi_task *
+iscsi_modeselect6_sync(struct iscsi_context *iscsi, int lun,
+		       int pf, int sp, struct scsi_mode_page *mp);
 
 EXTERN struct scsi_task *
 iscsi_modesense6_sync(struct iscsi_context *iscsi, int lun, int dbd,

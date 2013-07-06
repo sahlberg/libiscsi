@@ -33,6 +33,7 @@ enum scsi_opcode {
 	SCSI_OPCODE_TESTUNITREADY      = 0x00,
 	SCSI_OPCODE_READ6              = 0x08,
 	SCSI_OPCODE_INQUIRY            = 0x12,
+	SCSI_OPCODE_MODESELECT6        = 0x15,
 	SCSI_OPCODE_RESERVE6           = 0x16,
 	SCSI_OPCODE_RELEASE6           = 0x17,
 	SCSI_OPCODE_MODESENSE6         = 0x1a,
@@ -747,6 +748,11 @@ struct scsi_mode_sense {
        struct scsi_mode_page *pages;
 };
 
+EXTERN struct scsi_mode_page *
+scsi_modesense_get_page(struct scsi_mode_sense *ms, 
+			enum scsi_modesense_page_code page_code,
+			int subpage_code);
+
 EXTERN struct scsi_task *scsi_cdb_modesense6(int dbd,
 			enum scsi_modesense_page_control pc,
 			enum scsi_modesense_page_code page_code,
@@ -754,6 +760,12 @@ EXTERN struct scsi_task *scsi_cdb_modesense6(int dbd,
 			unsigned char alloc_len);
 
 
+EXTERN struct scsi_task *scsi_cdb_modeselect6(int pf, int sp, int param_len);
+
+EXTERN struct scsi_data *
+scsi_modesense_dataout_marshall(struct scsi_task *task,
+				struct scsi_mode_page *mp,
+				int is_modeselect6);
 
 
 struct scsi_readcapacity16 {
