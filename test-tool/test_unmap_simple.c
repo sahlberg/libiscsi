@@ -25,6 +25,16 @@
 #include "iscsi-support.h"
 #include "iscsi-test-cu.h"
 
+static void
+init_lun_with_data(unsigned char *buf, uint64_t lba)
+{
+	int ret;
+
+	memset(buf, 'a', 256 * block_size);
+	ret = write10(iscsic, tgt_lun, lba, 256 * block_size,
+		    block_size, 0, 0, 0, 0, 0, buf);
+	CU_ASSERT_EQUAL(ret, 0);
+}
 
 void
 test_unmap_simple(void)
@@ -44,12 +54,9 @@ test_unmap_simple(void)
 
 	logging(LOG_VERBOSE, "Test UNMAP of 1-256 blocks at the start of the "
 		"LUN as a single descriptor");
+
 	logging(LOG_VERBOSE, "Write 'a' to the first 256 LBAs");
-	memset(buf, 'a', 256 * block_size);
-	memset(zbuf, 0, 256 * block_size);
-	ret = write10(iscsic, tgt_lun, 0, 256 * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
-	CU_ASSERT_EQUAL(ret, 0);
+	init_lun_with_data(buf, 0);
 
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "UNMAP blocks 0-%d", i);
@@ -80,11 +87,10 @@ test_unmap_simple(void)
 
 	logging(LOG_VERBOSE, "Test UNMAP of 1-256 blocks at the start of the "
 		"LUN with one descriptor per block");
+
 	logging(LOG_VERBOSE, "Write 'a' to the first 256 LBAs");
-	memset(buf, 'a', 256 * block_size);
-	memset(zbuf, 0, 256 * block_size);
-	ret = write10(iscsic, tgt_lun, 0, 256 * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+	init_lun_with_data(buf, 0);
+
 	CU_ASSERT_EQUAL(ret, 0);
 	for (i = 0; i < 256; i++) {
 		list[i].lba = i;

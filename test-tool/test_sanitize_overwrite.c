@@ -26,6 +26,42 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test-cu.h"
 
+static void
+init_lun_with_data(uint64_t lba)
+{
+	int ret;
+	unsigned char *buf = alloca(256 * block_size);
+
+	memset(buf, 'a', 256 * block_size);
+	ret = write16(iscsic, tgt_lun, lba, 256 * block_size,
+		    block_size, 0, 0, 0, 0, 0, buf);
+	CU_ASSERT_EQUAL(ret, 0);
+}
+
+static void
+check_lun_is_wiped(uint64_t lba, char c)
+{
+	int ret;
+	unsigned char *rbuf = alloca(256 * block_size);
+	unsigned char *zbuf = alloca(256 * block_size);
+
+	ret = read16(iscsic, tgt_lun, lba, 256 * block_size,
+		    block_size, 0, 0, 0, 0, 0, rbuf);
+	CU_ASSERT_EQUAL(ret, 0);
+
+	memset(zbuf, c, 256 * block_size);
+
+	if (memcmp(zbuf, rbuf, 256 * block_size)) {
+		logging(LOG_NORMAL, "[FAILED] Blocks did not "
+			"read back as zero");
+		CU_FAIL("[FAILED] Blocks did not read back "
+			"as zero");
+	} else {
+		logging(LOG_VERBOSE, "[SUCCESS] Blocks read "
+			"back as zero");
+	}
+}
+
 void
 test_sanitize_overwrite(void)
 { 
@@ -72,6 +108,11 @@ test_sanitize_overwrite(void)
 		logging(LOG_NORMAL, "This is a SSD device");
 	}
 
+	logging(LOG_VERBOSE, "Write 'a' to the first 256 LBAs");
+	init_lun_with_data(0);
+	logging(LOG_VERBOSE, "Write 'a' to the last 256 LBAs");
+	init_lun_with_data(num_blocks - 256);
+
 	logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE with initialization pattern of one full block");
 	data.size = block_size + 4;
 	data.data = alloca(data.size);
@@ -84,6 +125,11 @@ test_sanitize_overwrite(void)
 	ret = sanitize(iscsic, tgt_lun,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
 	CU_ASSERT_EQUAL(ret, 0);
+
+	logging(LOG_VERBOSE, "Check that the first 256 LBAs are wiped.");
+	check_lun_is_wiped(0, 0xaa);
+	logging(LOG_VERBOSE, "Check that the last 256 LBAs are wiped.");
+	check_lun_is_wiped(num_blocks - 256, 0xaa);
 
 
 	logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE with initialization pattern of one half block");

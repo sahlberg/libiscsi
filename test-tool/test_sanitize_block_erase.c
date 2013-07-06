@@ -189,12 +189,65 @@ check_unmap(void)
 	scsi_free_scsi_task(task_ret);
 }
 
+static void
+init_lun_with_data(unsigned char *buf, uint64_t lba)
+{
+	int ret;
+
+	memset(buf, 'a', 256 * block_size);
+	ret = write16(iscsic, tgt_lun, lba, 256 * block_size,
+		    block_size, 0, 0, 0, 0, 0, buf);
+	CU_ASSERT_EQUAL(ret, 0);
+}
+
+static void
+check_lun_is_wiped(unsigned char *buf, uint64_t lba)
+{
+	int ret;
+	unsigned char *rbuf = alloca(256 * block_size);
+
+	ret = read16(iscsic, tgt_lun, lba, 256 * block_size,
+		    block_size, 0, 0, 0, 0, 0, rbuf);
+	CU_ASSERT_EQUAL(ret, 0);
+
+	if (rc16 == NULL) {
+		return;
+	}
+
+	if (rc16->lbprz) {
+		unsigned char *zbuf = alloca(256 * block_size);
+		memset(zbuf, 0, 256 * block_size);
+
+		logging(LOG_VERBOSE, "LBPRZ==1 All blocks "
+			"should read back as 0");
+		if (memcmp(zbuf, rbuf, 256 * block_size)) {
+			logging(LOG_NORMAL, "[FAILED] Blocks did not "
+				"read back as zero");
+			CU_FAIL("[FAILED] Blocks did not read back "
+				"as zero");
+		} else {
+			logging(LOG_VERBOSE, "[SUCCESS] Blocks read "
+				"back as zero");
+		}
+	} else {
+		logging(LOG_VERBOSE, "LBPRZ==0 Blocks should not read back as "
+			"all 'a' any more");
+		if (!memcmp(buf, rbuf, 256 * block_size)) {
+			logging(LOG_NORMAL, "[FAILED] Blocks were not wiped");
+			CU_FAIL("[FAILED] Blocks were not wiped");
+		} else {
+			logging(LOG_VERBOSE, "[SUCCESS] Blocks were wiped");
+		}
+	}
+}
+
 void
 test_sanitize_block_erase(void)
 { 
 	int ret;
 	struct iscsi_data data;
 	struct scsi_command_descriptor *cd;
+	unsigned char *buf = alloca(256 * block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test SANITIZE BLOCK ERASE");
@@ -260,11 +313,22 @@ test_sanitize_block_erase(void)
 		logging(LOG_NORMAL, "This is a HDD device");
 	}
 
-	logging(LOG_VERBOSE, "Test we can perform basic BLOCK ERASE SANITIZE");
 
+	logging(LOG_VERBOSE, "Write 'a' to the first 256 LBAs");
+	init_lun_with_data(buf, 0);
+	logging(LOG_VERBOSE, "Write 'a' to the last 256 LBAs");
+	init_lun_with_data(buf, num_blocks - 256);
+
+
+	logging(LOG_VERBOSE, "Test we can perform basic BLOCK ERASE SANITIZE");
 	ret = sanitize(iscsic, tgt_lun,
 		       0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
+
+	logging(LOG_VERBOSE, "Check that the first 256 LBAs are wiped.");
+	check_lun_is_wiped(buf, 0);
+	logging(LOG_VERBOSE, "Check that the last 256 LBAs are wiped.");
+	check_lun_is_wiped(buf, num_blocks - 256);
 
 	data.size = 8;
 	data.data = alloca(data.size);
