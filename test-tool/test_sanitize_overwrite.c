@@ -125,11 +125,11 @@ test_sanitize_overwrite(void)
 	}
 
 
-	logging(LOG_VERBOSE, "Test OVERWRITE with ParamLen:%d is an "
-			"error.", i);
+	logging(LOG_VERBOSE, "Test OVERWRITE with ParamLen:%zd (blocksize+5) "
+		"is an error.", block_size + 5);
 
 	data.size = block_size + 8;
-	data.data = alloca(data.size);
+	data.data = alloca(block_size + 8); /* so we can send IP > blocksize */
 	memset(data.data, 0, data.size);
 	ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, block_size + 5, &data);
@@ -141,4 +141,43 @@ test_sanitize_overwrite(void)
 	} else {
 		CU_ASSERT_EQUAL(ret, 0);
 	}
+
+
+	logging(LOG_VERBOSE, "Test OVERWRITE COUNT == 0 is an error");
+	data.size = block_size + 4;
+
+	data.data[0] = 0x00;
+	data.data[1] = 0x00;
+	data.data[2] = block_size >> 8;
+	data.data[3] = block_size & 0xff;
+	ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+	CU_ASSERT_EQUAL(ret, 0);
+
+
+	logging(LOG_VERBOSE, "Test INITIALIZATION PATTERN LENGTH == 0 is an "
+		"error");
+	data.size = block_size + 4;
+
+	data.data[0] = 0x00;
+	data.data[1] = 0x00;
+	data.data[2] = 0x00;
+	data.data[3] = 0x00;
+	ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+	CU_ASSERT_EQUAL(ret, 0);
+
+
+	logging(LOG_VERBOSE, "Test INITIALIZATION PATTERN LENGTH == %zd  > %zd "
+		"(blocksize) is an error", block_size + 4, block_size);
+
+	data.size = block_size + 4;
+
+	data.data[0] = 0x00;
+	data.data[1] = 0x00;
+	data.data[2] = (block_size + 4) >> 8;
+	data.data[3] = (block_size + 4) & 0xff;
+	ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+	CU_ASSERT_EQUAL(ret, 0);
 }
