@@ -2224,6 +2224,39 @@ scsi_parse_mode_caching(struct scsi_task *task, int pos, struct scsi_mode_page *
 }
 
 static void
+scsi_parse_mode_control(struct scsi_task *task, int pos, struct scsi_mode_page *mp)
+{
+	mp->control.tst      = (task_get_uint8(task, pos) >> 5) & 0x07;
+	mp->control.tmf_only = task_get_uint8(task, pos) & 0x10;
+	mp->control.dpicz    = task_get_uint8(task, pos) & 0x08;
+	mp->control.d_sense  = task_get_uint8(task, pos) & 0x04;
+	mp->control.gltsd    = task_get_uint8(task, pos) & 0x02;
+	mp->control.rlec     = task_get_uint8(task, pos) & 0x01;
+
+	mp->control.queue_algorithm_modifier  =
+		(task_get_uint8(task, pos + 1) >> 4) & 0x0f;
+	mp->control.nuar = task_get_uint8(task, pos + 1) & 0x08;
+	mp->control.qerr = (task_get_uint8(task, pos + 1) >> 1) & 0x03;
+
+	mp->control.vs  = task_get_uint8(task, pos + 2) & 0x80;
+	mp->control.rac = task_get_uint8(task, pos + 2) & 0x40;
+	mp->control.ua_intlck_ctrl =
+		(task_get_uint8(task, pos + 2) >> 4) & 0x0f;
+	mp->control.swp = task_get_uint8(task, pos + 2) & 0x08;
+
+	mp->control.ato   = task_get_uint8(task, pos + 3) & 0x80;
+	mp->control.tas   = task_get_uint8(task, pos + 3) & 0x40;
+	mp->control.atmpe = task_get_uint8(task, pos + 3) & 0x20;
+	mp->control.swp   = task_get_uint8(task, pos + 3) & 0x10;
+	mp->control.autoload_mode = task_get_uint8(task, pos + 2) & 0x07;
+
+	mp->control.busy_timeout_period =
+		task_get_uint16(task, pos + 6);
+	mp->control.extended_selftest_completion_time =
+		task_get_uint16(task, pos + 8);
+}
+
+static void
 scsi_parse_mode_disconnect_reconnect(struct scsi_task *task, int pos, struct scsi_mode_page *mp)
 {
 	mp->disconnect_reconnect.buffer_full_ratio =
@@ -2319,6 +2352,9 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
 		switch (mp->page_code) {
 		case SCSI_MODESENSE_PAGECODE_CACHING:
 			scsi_parse_mode_caching(task, pos, mp);
+			break;
+		case SCSI_MODESENSE_PAGECODE_CONTROL:
+			scsi_parse_mode_control(task, pos, mp);
 			break;
 		case SCSI_MODESENSE_PAGECODE_DISCONNECT_RECONNECT:
 			scsi_parse_mode_disconnect_reconnect(task, pos, mp);

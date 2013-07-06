@@ -659,6 +659,33 @@ struct scsi_mode_page_caching {
 	int cache_segment_size;
 };
 
+struct scsi_mode_page_control {
+	int tst;
+	int tmf_only;
+	int dpicz;
+	int d_sense;
+	int gltsd;
+	int rlec;
+
+	int queue_algorithm_modifier;
+	int nuar;
+	int qerr;
+
+	int vs;
+	int rac;
+	int ua_intlck_ctrl;
+	int swp;
+
+	int ato;
+	int tas;
+	int atmpe;
+	int rwwp;
+	int autoload_mode;
+
+	int busy_timeout_period;
+	int extended_selftest_completion_time;
+};
+
 struct scsi_mode_page_disconnect_reconnect {
 	int buffer_full_ratio;
 	int buffer_empty_ratio;
@@ -692,6 +719,7 @@ enum scsi_modesense_page_code {
 	SCSI_MODESENSE_PAGECODE_VERIFY_ERROR_RECOVERY     = 0x07,
 	SCSI_MODESENSE_PAGECODE_CACHING                   = 0x08,
 	SCSI_MODESENSE_PAGECODE_XOR_CONTROL               = 0x10,
+	SCSI_MODESENSE_PAGECODE_CONTROL                   = 0x0a,
 	SCSI_MODESENSE_PAGECODE_INFORMATIONAL_EXCEPTIONS_CONTROL        = 0x1c,
 	SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES          = 0x3f
 };
@@ -705,6 +733,7 @@ struct scsi_mode_page {
        int len;
        union {
               struct scsi_mode_page_caching caching;
+              struct scsi_mode_page_control control;
               struct scsi_mode_page_disconnect_reconnect disconnect_reconnect;
 	      struct scsi_mode_page_informational_exceptions_control iec;
        };
