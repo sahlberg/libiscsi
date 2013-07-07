@@ -152,6 +152,7 @@ EXTERN const char *scsi_sense_key_str(int key);
 #define SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE                   0x2100
 #define SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB               0x2400
 #define SCSI_SENSE_ASCQ_LOGICAL_UNIT_NOT_SUPPORTED         0x2500
+#define SCSI_SENSE_ASCQ_INVALID_FIELD_IN_PARAMETER_LIST    0x2600
 #define SCSI_SENSE_ASCQ_WRITE_PROTECTED                    0x2700
 #define SCSI_SENSE_ASCQ_BUS_RESET                          0x2900
 #define SCSI_SENSE_ASCQ_NEXUS_LOSS                         0x2907
