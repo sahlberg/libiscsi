@@ -9,11 +9,11 @@ LDADD = lib/libiscsi.la
 XSLTPROC = /usr/bin/xsltproc
 
 # Manpages
-man1_MANS = doc/iscsi-inq.1 doc/iscsi-ls.1
+man1_MANS = doc/iscsi-inq.1 doc/iscsi-ls.1 doc/iscsi-swp.1
 
 EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt \
 	     packaging/RPM/libiscsi.spec.in packaging/RPM/makerpms.sh \
-	     doc/iscsi-inq.1.xml doc/iscsi-ls.1.xml
+	     doc/iscsi-inq.1.xml doc/iscsi-ls.1.xml doc/iscsi-swp.1.xml
 
 # Simplify conditions below by declaring variables as empty
 
@@ -50,9 +50,11 @@ lib_libiscsi_la_LDFLAGS = \
 
 # libiscsi utilities
 
-bin_PROGRAMS += bin/iscsi-inq bin/iscsi-ls bin/iscsi-readcapacity16
+bin_PROGRAMS += bin/iscsi-inq bin/iscsi-ls bin/iscsi-readcapacity16 \
+	bin/iscsi-swp
 bin_iscsi_inq_SOURCES = src/iscsi-inq.c
 bin_iscsi_ls_SOURCES = src/iscsi-ls.c
+bin_iscsi_swp_SOURCES = src/iscsi-swp.c
 bin_iscsi_readcapacity16_SOURCES = src/iscsi-readcapacity16.c
 
 # Other examples
@@ -387,3 +389,7 @@ doc/iscsi-ls.1: doc/iscsi-ls.1.xml
 
 doc/iscsi-inq.1: doc/iscsi-inq.1.xml
 	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
+
+doc/iscsi-swp.1: doc/iscsi-swp.1.xml
+	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
+
