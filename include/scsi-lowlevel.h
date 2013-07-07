@@ -147,6 +147,7 @@ EXTERN const char *scsi_sense_key_str(int key);
 
 /* ascq */
 #define SCSI_SENSE_ASCQ_WRITE_AFTER_SANITIZE_REQUIRED      0x1115
+#define SCSI_SENSE_ASCQ_PARAMETER_LIST_LENGTH_ERROR        0x1a00
 #define SCSI_SENSE_ASCQ_MISCOMPARE_DURING_VERIFY           0x1d00
 #define SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE             0x2000
 #define SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE                   0x2100
