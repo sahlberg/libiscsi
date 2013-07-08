@@ -45,7 +45,7 @@ void logging(int level, const char *format, ...) _R_(2,3);
 #define CHECK_FOR_DATALOSS						\
 do {									\
 	if (!data_loss) {						\
-		logging(LOG_VERBOSE, "[SKIPPED] --dataloss flag is not " \
+		logging(LOG_NORMAL, "[SKIPPED] --dataloss flag is not " \
 				"set. Skipping test.");	       	      	\
 		CU_PASS("[SKIPPED] --dataloss flag is not set."		\
 			" Skipping test");				\
@@ -56,7 +56,7 @@ do {									\
 #define CHECK_FOR_SANITIZE						\
 do {									\
 	if (!allow_sanitize) {						\
-		logging(LOG_VERBOSE, "[SKIPPED] --allow-sanitize flag " \
+		logging(LOG_NORMAL, "[SKIPPED] --allow-sanitize flag " \
 			"is not set. Skipping test.");	       	      	\
 		CU_PASS("[SKIPPED] --allow-sanitize flag is not set."	\
 			" Skipping test");				\
@@ -67,7 +67,7 @@ do {									\
 #define CHECK_FOR_READONLY						\
 do {									\
 	if (!readonly) {						\
-		logging(LOG_VERBOSE, "[SKIPPED] Logical unit is not "	\
+		logging(LOG_NORMAL, "[SKIPPED] Logical unit is not "	\
 				"write-protected. Skipping test.");	\
 		CU_PASS("[SKIPPED] Logical unit is not write-"		\
 				   "protected. Skipping test");		\
@@ -78,7 +78,7 @@ do {									\
 #define CHECK_FOR_REMOVABLE						\
 do {									\
 	if (!inq->rmb) {						\
-		logging(LOG_VERBOSE, "[SKIPPED] Logical unit is not "	\
+		logging(LOG_NORMAL, "[SKIPPED] Logical unit is not "	\
 			"removable. Skipping test.");			\
 		CU_PASS("[SKIPPED] Logical unit is not removable"	\
 			" Skipping test");				\
@@ -89,7 +89,7 @@ do {									\
 #define CHECK_FOR_THIN_PROVISIONING					\
 do {									\
 	if (rc16 == NULL || rc16->lbpme == 0) {	       		       	\
-		logging(LOG_VERBOSE, "[SKIPPED] Logical unit is fully"	\
+		logging(LOG_NORMAL, "[SKIPPED] Logical unit is fully"	\
 			" provisioned. Skipping test");			\
 		CU_PASS("[SKIPPED] Logical unit is fully provisioned."	\
 			" Skipping test");				\
@@ -100,7 +100,7 @@ do {									\
 #define CHECK_FOR_LBPWS10						\
 do {									\
 	if (inq_lbp->lbpws10 == 0) {	       				\
-		logging(LOG_VERBOSE, "[SKIPPED] Logical unit does not"	\
+		logging(LOG_NORMAL, "[SKIPPED] Logical unit does not"	\
 			" have LBPWS10. Skipping test");		\
 		CU_PASS("[SKIPPED] Logical unit does not have LBPWS10."	\
 			" Skipping test");				\
@@ -111,7 +111,7 @@ do {									\
 #define CHECK_FOR_LBPWS							\
 do {									\
 	if (inq_lbp->lbpws == 0) {		       			\
-		logging(LOG_VERBOSE, "[SKIPPED] Logical unit does not"	\
+		logging(LOG_NORMAL, "[SKIPPED] Logical unit does not"	\
 			" have LBPWS. Skipping test");	     	  	\
 		CU_PASS("[SKIPPED] Logical unit does not have LBPWS."	\
 			" Skipping test");				\
@@ -122,7 +122,7 @@ do {									\
 #define CHECK_FOR_LBPPB_GT_1						\
 do {									\
 	if (lbppb < 2) {						\
-	  logging(LOG_VERBOSE, "[SKIPPED] LBPPB < 2. Skipping test");	\
+	  logging(LOG_NORMAL, "[SKIPPED] LBPPB < 2. Skipping test");	\
 		CU_PASS("[SKIPPED] LBPPB < 2. Skipping test");		\
 		return;	  	   					\
 	}								\
@@ -131,7 +131,7 @@ do {									\
 #define CHECK_FOR_SBC							\
 do {									\
 	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {\
-		logging(LOG_VERBOSE, "[SKIPPED] Not SBC device."	\
+		logging(LOG_NORMAL, "[SKIPPED] Not SBC device."	\
 			" Skipping test");				\
 		CU_PASS("[SKIPPED] Not SBC device."			\
 			" Skipping test");				\
