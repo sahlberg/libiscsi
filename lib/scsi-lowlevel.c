@@ -2238,11 +2238,15 @@ scsi_modesense_get_page(struct scsi_mode_sense *ms,
  * modesense6 datain structure
  */
 static int
-scsi_modesense6_datain_getfullsize(struct scsi_task *task)
+scsi_modesense_datain_getfullsize(struct scsi_task *task, int is_modesense6)
 {
 	int len;
 
-	len = task_get_uint8(task, 0) + 1;
+	if (is_modesense6) {
+		len = task_get_uint8(task, 0) + 1;
+	} else {
+		len = task_get_uint16(task, 0) + 2;
+	}
 
 	return len;
 }
@@ -2250,14 +2254,14 @@ scsi_modesense6_datain_getfullsize(struct scsi_task *task)
 static void
 scsi_parse_mode_caching(struct scsi_task *task, int pos, struct scsi_mode_page *mp)
 {
-	mp->caching.ic   = task_get_uint8(task, pos) & 0x80;
-	mp->caching.abpf = task_get_uint8(task, pos) & 0x40;
-	mp->caching.cap  = task_get_uint8(task, pos) & 0x20;
-	mp->caching.disc = task_get_uint8(task, pos) & 0x10;
-	mp->caching.size = task_get_uint8(task, pos) & 0x08;
-	mp->caching.wce  = task_get_uint8(task, pos) & 0x04;
-	mp->caching.mf   = task_get_uint8(task, pos) & 0x02;
-	mp->caching.rcd  = task_get_uint8(task, pos) & 0x01;
+	mp->caching.ic   = !!(task_get_uint8(task, pos) & 0x80);
+	mp->caching.abpf = !!(task_get_uint8(task, pos) & 0x40);
+	mp->caching.cap  = !!(task_get_uint8(task, pos) & 0x20);
+	mp->caching.disc = !!(task_get_uint8(task, pos) & 0x10);
+	mp->caching.size = !!(task_get_uint8(task, pos) & 0x08);
+	mp->caching.wce  = !!(task_get_uint8(task, pos) & 0x04);
+	mp->caching.mf   = !!(task_get_uint8(task, pos) & 0x02);
+	mp->caching.rcd  = !!(task_get_uint8(task, pos) & 0x01);
 
 	mp->caching.demand_read_retention_priority =
 		(task_get_uint8(task, pos + 1) >> 4) & 0x0f;
@@ -2270,10 +2274,10 @@ scsi_parse_mode_caching(struct scsi_task *task, int pos, struct scsi_mode_page *
 	mp->caching.maximum_prefetch = task_get_uint16(task, pos + 6);
 	mp->caching.maximum_prefetch_ceiling = task_get_uint16(task, pos + 8);
 
-	mp->caching.fsw    = task_get_uint8(task, pos + 10) & 0x80;
-	mp->caching.lbcss  = task_get_uint8(task, pos + 10) & 0x40;
-	mp->caching.dra    = task_get_uint8(task, pos + 10) & 0x20;
-	mp->caching.nv_dis = task_get_uint8(task, pos + 10) & 0x01;
+	mp->caching.fsw    = !!(task_get_uint8(task, pos + 10) & 0x80);
+	mp->caching.lbcss  = !!(task_get_uint8(task, pos + 10) & 0x40);
+	mp->caching.dra    = !!(task_get_uint8(task, pos + 10) & 0x20);
+	mp->caching.nv_dis = !!(task_get_uint8(task, pos + 10) & 0x01);
 
 	mp->caching.number_of_cache_segments = task_get_uint8(task, pos + 11);
 	mp->caching.cache_segment_size = task_get_uint16(task, pos + 12);
@@ -2283,28 +2287,28 @@ static void
 scsi_parse_mode_control(struct scsi_task *task, int pos, struct scsi_mode_page *mp)
 {
 	mp->control.tst      = (task_get_uint8(task, pos) >> 5) & 0x07;
-	mp->control.tmf_only = task_get_uint8(task, pos) & 0x10;
-	mp->control.dpicz    = task_get_uint8(task, pos) & 0x08;
-	mp->control.d_sense  = task_get_uint8(task, pos) & 0x04;
-	mp->control.gltsd    = task_get_uint8(task, pos) & 0x02;
-	mp->control.rlec     = task_get_uint8(task, pos) & 0x01;
+	mp->control.tmf_only = !!(task_get_uint8(task, pos) & 0x10);
+	mp->control.dpicz    = !!(task_get_uint8(task, pos) & 0x08);
+	mp->control.d_sense  = !!(task_get_uint8(task, pos) & 0x04);
+	mp->control.gltsd    = !!(task_get_uint8(task, pos) & 0x02);
+	mp->control.rlec     = !!(task_get_uint8(task, pos) & 0x01);
 
 	mp->control.queue_algorithm_modifier  =
 		(task_get_uint8(task, pos + 1) >> 4) & 0x0f;
 	mp->control.nuar = task_get_uint8(task, pos + 1) & 0x08;
 	mp->control.qerr = (task_get_uint8(task, pos + 1) >> 1) & 0x03;
 
-	mp->control.vs  = task_get_uint8(task, pos + 2) & 0x80;
-	mp->control.rac = task_get_uint8(task, pos + 2) & 0x40;
+	mp->control.vs  = !!(task_get_uint8(task, pos + 2) & 0x80);
+	mp->control.rac = !!(task_get_uint8(task, pos + 2) & 0x40);
 	mp->control.ua_intlck_ctrl =
 		(task_get_uint8(task, pos + 2) >> 4) & 0x0f;
-	mp->control.swp = task_get_uint8(task, pos + 2) & 0x08;
+	mp->control.swp = !!(task_get_uint8(task, pos + 2) & 0x08);
 
-	mp->control.ato   = task_get_uint8(task, pos + 3) & 0x80;
-	mp->control.tas   = task_get_uint8(task, pos + 3) & 0x40;
-	mp->control.atmpe = task_get_uint8(task, pos + 3) & 0x20;
-	mp->control.swp   = task_get_uint8(task, pos + 3) & 0x10;
-	mp->control.autoload_mode = task_get_uint8(task, pos + 2) & 0x07;
+	mp->control.ato   = !!(task_get_uint8(task, pos + 3) & 0x80);
+	mp->control.tas   = !!(task_get_uint8(task, pos + 3) & 0x40);
+	mp->control.atmpe = !!(task_get_uint8(task, pos + 3) & 0x20);
+	mp->control.rwwp  = !!(task_get_uint8(task, pos + 3) & 0x10);
+	mp->control.autoload_mode = !!(task_get_uint8(task, pos + 3) & 0x07);
 
 	mp->control.busy_timeout_period =
 		task_get_uint16(task, pos + 6);
@@ -2328,11 +2332,11 @@ scsi_parse_mode_disconnect_reconnect(struct scsi_task *task, int pos, struct scs
 	mp->disconnect_reconnect.maximum_burst_size =
 		task_get_uint16(task, pos + 8);
 	mp->disconnect_reconnect.emdp =
-		task_get_uint8(task, pos + 10) & 0x80;
+		!!(task_get_uint8(task, pos + 10) & 0x80);
 	mp->disconnect_reconnect.fair_arbitration =
 		(task_get_uint8(task, pos + 10) >> 4) & 0x0f;
 	mp->disconnect_reconnect.dimm =
-		task_get_uint8(task, pos + 10) & 0x08;
+		!!(task_get_uint8(task, pos + 10) & 0x08);
 	mp->disconnect_reconnect.dtdc =
 		task_get_uint8(task, pos + 10) & 0x07;
 	mp->disconnect_reconnect.first_burst_size =
@@ -2342,13 +2346,13 @@ scsi_parse_mode_disconnect_reconnect(struct scsi_task *task, int pos, struct scs
 static void
 scsi_parse_mode_informational_exceptions_control(struct scsi_task *task, int pos, struct scsi_mode_page *mp)
 {
-	mp->iec.perf           = task_get_uint8(task, pos) & 0x80;
-	mp->iec.ebf            = task_get_uint8(task, pos) & 0x20;
-	mp->iec.ewasc          = task_get_uint8(task, pos) & 0x10;
-	mp->iec.dexcpt         = task_get_uint8(task, pos) & 0x08;
-	mp->iec.test           = task_get_uint8(task, pos) & 0x04;
-	mp->iec.ebackerr       = task_get_uint8(task, pos) & 0x02;
-	mp->iec.logerr         = task_get_uint8(task, pos) & 0x01;
+	mp->iec.perf           = !!(task_get_uint8(task, pos) & 0x80);
+	mp->iec.ebf            = !!(task_get_uint8(task, pos) & 0x20);
+	mp->iec.ewasc          = !!(task_get_uint8(task, pos) & 0x10);
+	mp->iec.dexcpt         = !!(task_get_uint8(task, pos) & 0x08);
+	mp->iec.test           = !!(task_get_uint8(task, pos) & 0x04);
+	mp->iec.ebackerr       = !!(task_get_uint8(task, pos) & 0x02);
+	mp->iec.logerr         = !!(task_get_uint8(task, pos) & 0x01);
 	mp->iec.mrie           = task_get_uint8(task, pos + 1) & 0x0f;
 	mp->iec.interval_timer = task_get_uint32(task, pos + 2);
 	mp->iec.report_count   = task_get_uint32(task, pos + 6);
@@ -2359,12 +2363,19 @@ scsi_parse_mode_informational_exceptions_control(struct scsi_task *task, int pos
  * parse and unmarshall the mode sense data in buffer
  */
 static struct scsi_mode_sense *
-scsi_modesense_datain_unmarshall(struct scsi_task *task)
+scsi_modesense_datain_unmarshall(struct scsi_task *task, int is_modesense6)
 {
 	struct scsi_mode_sense *ms;
+	int hdr_len;
 	int pos;
 
-	if (task->datain.size < 4) {
+	if (is_modesense6) {
+		hdr_len = 4;
+	} else {
+		hdr_len = 8;
+	}
+
+	if (task->datain.size < hdr_len) {
 		return NULL;
 	}
 
@@ -2373,17 +2384,26 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
 		return NULL;
 	}
 
-	ms->mode_data_length          = task_get_uint8(task, 0);
-	ms->medium_type               = task_get_uint8(task, 1);
-	ms->device_specific_parameter = task_get_uint8(task, 2);
-	ms->block_descriptor_length   = task_get_uint8(task, 3);
-	ms->pages                     = NULL;
+	if (is_modesense6) {
+		ms->mode_data_length          = task_get_uint8(task, 0);
+		ms->medium_type               = task_get_uint8(task, 1);
+		ms->device_specific_parameter = task_get_uint8(task, 2);
+		ms->block_descriptor_length   = task_get_uint8(task, 3);
+		ms->pages                     = NULL;
+	} else {
+		ms->mode_data_length          = task_get_uint16(task, 0);
+		ms->medium_type               = task_get_uint8(task, 2);
+		ms->device_specific_parameter = task_get_uint8(task, 3);
+		ms->longlba = task_get_uint8(task, 4) & 0x01;
+		ms->block_descriptor_length   = task_get_uint16(task, 6);
+		ms->pages                     = NULL;
+	}
 
 	if (ms->mode_data_length + 1 > task->datain.size) {
 		return NULL;
 	}
 
-	pos = 4 + ms->block_descriptor_length;
+	pos = hdr_len + ms->block_descriptor_length;
 	while (pos < task->datain.size) {
 		struct scsi_mode_page *mp;
 
@@ -2397,12 +2417,13 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task)
 		pos++;
 
 		if (mp->spf) {
-			mp->subpage_code = task_get_uint8(task, pos++);
-			mp->len = task_get_uint16(task, pos);
-			pos += 2;
+			mp->subpage_code = task_get_uint8(task, pos);
+			mp->len = task_get_uint16(task, pos + 1);
+			pos += 3;
 		} else {
 			mp->subpage_code = 0;
-			mp->len          = task_get_uint8(task, pos++);
+			mp->len          = task_get_uint8(task, pos);
+			pos++;
 		}
 
 		switch (mp->page_code) {
@@ -3022,7 +3043,7 @@ scsi_datain_getfullsize(struct scsi_task *task)
 	case SCSI_OPCODE_INQUIRY:
 		return scsi_inquiry_datain_getfullsize(task);
 	case SCSI_OPCODE_MODESENSE6:
-		return scsi_modesense6_datain_getfullsize(task);
+	  return scsi_modesense_datain_getfullsize(task, 1);
 	case SCSI_OPCODE_READCAPACITY10:
 		return scsi_readcapacity10_datain_getfullsize(task);
 	case SCSI_OPCODE_SYNCHRONIZECACHE10:
@@ -3048,7 +3069,7 @@ scsi_datain_unmarshall(struct scsi_task *task)
 	case SCSI_OPCODE_INQUIRY:
 		return scsi_inquiry_datain_unmarshall(task);
 	case SCSI_OPCODE_MODESENSE6:
-		return scsi_modesense_datain_unmarshall(task);
+	  return scsi_modesense_datain_unmarshall(task, 1);
 	case SCSI_OPCODE_READCAPACITY10:
 		return scsi_readcapacity10_datain_unmarshall(task);
 	case SCSI_OPCODE_SYNCHRONIZECACHE10:

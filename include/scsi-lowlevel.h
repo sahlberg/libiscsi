@@ -743,9 +743,10 @@ struct scsi_mode_page {
 };
 
 struct scsi_mode_sense {
-       uint8_t mode_data_length;
+       uint16_t mode_data_length;
        uint8_t medium_type;
        uint8_t device_specific_parameter;
+       uint8_t longlba;
        uint8_t block_descriptor_length;
        struct scsi_mode_page *pages;
 };

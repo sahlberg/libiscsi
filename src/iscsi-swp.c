@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
 
 
 	sense_task = iscsi_modesense6_sync(iscsi, iscsi_url->lun,
-		0, SCSI_MODESENSE_PC_CURRENT,
+		1, SCSI_MODESENSE_PC_CURRENT,
 		SCSI_MODESENSE_PAGECODE_CONTROL,
 		0, 255);
 	if (sense_task == NULL) {
