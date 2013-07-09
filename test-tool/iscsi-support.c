@@ -1418,13 +1418,60 @@ int sanitize_conflict(struct iscsi_context *iscsi, int lun, int immed, int ause,
 			iscsi_get_error(iscsi));
 		return -1;
 	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL,
+			"[FAILED] SANITIZE successful but should have failed with RESERVATION_CONFLICT");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
 	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
-		logging(LOG_NORMAL, "[FAILED] Expected RESERVATION CONFLICT");
+		logging(LOG_NORMAL, "[FAILED] Expected RESERVATION CONFLICT. "
+			"Sense:%s", iscsi_get_error(iscsi));
 		return -1;
 	}
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] SANITIZE returned RESERVATION_CONFLICT.");
+	return 0;
+}
+
+int sanitize_writeprotected(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send SANITIZE (Expecting RESERVATION_CONFLICT) "
+		"IMMED:%d AUSE:%d SA:%d "
+		"PARAM_LEN:%d",
+		immed, ause, sa, param_len);
+
+	task = iscsi_sanitize_sync(iscsi, lun, immed, ause, sa, param_len,
+				   data);
+	if (task == NULL) {
+		logging(LOG_NORMAL,
+			"[FAILED] Failed to send SANITIZE command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] SANITIZE successful but should "
+			"have failed with DATA_PROTECTION/WRITE_PROTECTED");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
+		logging(LOG_NORMAL, "[FAILED] SANITIZE failed with wrong "
+			"sense. Should have failed with DATA_PRTOTECTION/"
+			"WRITE_PROTECTED. Sense:%s\n",
+			iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] SANITIZE returned DATA_PROTECTION/WRITE_PROTECTED.");
 	return 0;
 }
 
@@ -5968,4 +6015,138 @@ get_command_descriptor(int opcode, int sa)
 	}
 	
 	return NULL;
+}
+
+int set_swp(struct iscsi_context *iscsi, int lun)
+{
+	int ret = 0;
+	struct scsi_task *sense_task = NULL;
+	struct scsi_task *select_task = NULL;
+	struct scsi_mode_sense *ms;
+	struct scsi_mode_page *mp;
+
+	logging(LOG_VERBOSE, "Read CONTROL page");
+	sense_task = iscsi_modesense6_sync(iscsi, lun,
+		1, SCSI_MODESENSE_PC_CURRENT,
+		SCSI_MODESENSE_PAGECODE_CONTROL,
+		0, 255);
+	if (sense_task == NULL) {
+		logging(LOG_NORMAL, "Failed to send MODE_SENSE6 command: %s",
+			iscsi_get_error(iscsi));
+		ret = -1;
+		goto finished;
+	}
+	if (sense_task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "MODE_SENSE6 failed: %s",
+			iscsi_get_error(iscsi));
+		ret = -1;
+		goto finished;
+	}
+	ms = scsi_datain_unmarshall(sense_task);
+	if (ms == NULL) {
+		logging(LOG_NORMAL, "failed to unmarshall mode sense datain "
+			"blob");
+		ret = -1;
+		goto finished;
+	}
+	mp = scsi_modesense_get_page(ms, SCSI_MODESENSE_PAGECODE_CONTROL, 0);
+	if (mp == NULL) {
+		logging(LOG_NORMAL, "failed to read control mode page");
+		ret = -1;
+		goto finished;
+	}
+
+	logging(LOG_VERBOSE, "Turn SWP ON");
+	mp->control.swp = 1;
+
+	select_task = iscsi_modeselect6_sync(iscsi, lun,
+		    1, 0, mp);
+	if (select_task == NULL) {
+		logging(LOG_NORMAL, "Failed to send MODE_SELECT6 command: %s",
+			iscsi_get_error(iscsi));
+		ret = -1;
+		goto finished;
+	}
+	if (select_task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "MODE_SELECT6 failed: %s",
+			iscsi_get_error(iscsi));
+		ret = -1;
+		goto finished;
+	}
+
+finished:
+	if (sense_task != NULL) {
+		scsi_free_scsi_task(sense_task);
+	}
+	if (select_task != NULL) {
+		scsi_free_scsi_task(select_task);
+	}
+	return ret;
+}
+
+int clear_swp(struct iscsi_context *iscsi, int lun)
+{
+	int ret = 0;
+	struct scsi_task *sense_task = NULL;
+	struct scsi_task *select_task = NULL;
+	struct scsi_mode_sense *ms;
+	struct scsi_mode_page *mp;
+
+	logging(LOG_VERBOSE, "Read CONTROL page");
+	sense_task = iscsi_modesense6_sync(iscsi, lun,
+		1, SCSI_MODESENSE_PC_CURRENT,
+		SCSI_MODESENSE_PAGECODE_CONTROL,
+		0, 255);
+	if (sense_task == NULL) {
+		logging(LOG_NORMAL, "Failed to send MODE_SENSE6 command: %s",
+			iscsi_get_error(iscsi));
+		ret = -1;
+		goto finished;
+	}
+	if (sense_task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "MODE_SENSE6 failed: %s",
+			iscsi_get_error(iscsi));
+		ret = -1;
+		goto finished;
+	}
+	ms = scsi_datain_unmarshall(sense_task);
+	if (ms == NULL) {
+		logging(LOG_NORMAL, "failed to unmarshall mode sense datain "
+			"blob");
+		ret = -1;
+		goto finished;
+	}
+	mp = scsi_modesense_get_page(ms, SCSI_MODESENSE_PAGECODE_CONTROL, 0);
+	if (mp == NULL) {
+		logging(LOG_NORMAL, "failed to read control mode page");
+		ret = -1;
+		goto finished;
+	}
+
+	logging(LOG_VERBOSE, "Turn SWP OFF");
+	mp->control.swp = 0;
+
+	select_task = iscsi_modeselect6_sync(iscsi, lun,
+		    1, 0, mp);
+	if (select_task == NULL) {
+		logging(LOG_NORMAL, "Failed to send MODE_SELECT6 command: %s",
+			iscsi_get_error(iscsi));
+		ret = -1;
+		goto finished;
+	}
+	if (select_task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "MODE_SELECT6 failed: %s",
+			iscsi_get_error(iscsi));
+		ret = -1;
+		goto finished;
+	}
+
+finished:
+	if (sense_task != NULL) {
+		scsi_free_scsi_task(sense_task);
+	}
+	if (select_task != NULL) {
+		scsi_free_scsi_task(select_task);
+	}
+	return ret;
 }

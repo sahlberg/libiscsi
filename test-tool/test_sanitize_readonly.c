@@ -27,14 +27,14 @@
 #include "iscsi-test-cu.h"
 
 void
-test_sanitize_reservations(void)
+test_sanitize_readonly(void)
 {
 	int ret;
 	struct iscsi_data data;
 	struct scsi_command_descriptor *cd;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test SANITIZE with RESERVATIONS");
+	logging(LOG_VERBOSE, "Test SANITIZE with READONLY devices");
 
 	CHECK_FOR_SANITIZE;
 	CHECK_FOR_DATALOSS;
@@ -46,11 +46,12 @@ test_sanitize_reservations(void)
 		return;
 	}
 
-	logging(LOG_VERBOSE, "Take out a RESERVE6 from the second "
-			     "initiator");
-	ret = reserve6(iscsic2, tgt_lun);
+	logging(LOG_VERBOSE, "Set Software Write Protect on the second connection");
+	ret = set_swp(iscsic2, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
-
+	if (ret != 0) {
+		return;
+	}
 
 	logging(LOG_VERBOSE, "Check if SANITIZE OVERWRITE is supported "
 		"in REPORT_SUPPORTED_OPCODES");
@@ -70,7 +71,7 @@ test_sanitize_reservations(void)
 		data.data[1] = 0x00;
 		data.data[2] = block_size >> 8;
 		data.data[3] = block_size & 0xff;
-		ret = sanitize_conflict(iscsic, tgt_lun,
+		ret = sanitize_writeprotected(iscsic, tgt_lun,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -85,7 +86,7 @@ test_sanitize_reservations(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE BLOCK_ERASE");
-		ret = sanitize_conflict(iscsic, tgt_lun,
+		ret = sanitize_writeprotected(iscsic, tgt_lun,
 		       0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -99,11 +100,14 @@ test_sanitize_reservations(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE CRYPTO_ERASE");
-		ret = sanitize_conflict(iscsic, tgt_lun,
+		ret = sanitize_writeprotected(iscsic, tgt_lun,
 		       0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
+
+	logging(LOG_VERBOSE, "Clear Software Write Protect on the second connection");
+	ret = clear_swp(iscsic2, tgt_lun);
 
 	iscsi_destroy_context(iscsic2);
 	iscsic2 = NULL;

@@ -268,6 +268,7 @@ int reserve6_conflict(struct iscsi_context *iscsi, int lun);
 int sanitize(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data);
 int sanitize_conflict(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data);
 int sanitize_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data);
+int sanitize_writeprotected(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data);
 int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start);
 int startstopunit_preventremoval(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start);
 int synchronizecache10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int sync_nv, int immed);
@@ -337,6 +338,8 @@ int writeverify16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t l
 int writeverify16_writeprotected(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
 int writeverify16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int bytchk, int group, unsigned char *data);
 
+int set_swp(struct iscsi_context *iscsi, int lun);
+int clear_swp(struct iscsi_context *iscsi, int lun);
 
 
 #endif	/* _ISCSI_SUPPORT_H_ */
