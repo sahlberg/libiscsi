@@ -75,7 +75,7 @@ test_sanitize_overwrite(void)
 	CHECK_FOR_SANITIZE;
 	CHECK_FOR_DATALOSS;
 
-	logging(LOG_NORMAL, "Check that SANITIZE OVERWRITE is supported "
+	logging(LOG_VERBOSE, "Check that SANITIZE OVERWRITE is supported "
 		"in REPORT_SUPPORTED_OPCODES");
 	cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
 				    SCSI_SANITIZE_OVERWRITE);

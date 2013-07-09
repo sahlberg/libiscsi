@@ -161,6 +161,7 @@ void test_sanitize_exit_failure_mode(void);
 void test_sanitize_invalid_serviceaction(void);
 void test_sanitize_overwrite(void);
 void test_sanitize_overwrite_reserved(void);
+void test_sanitize_reservations(void);
 
 void test_startstopunit_simple(void);
 void test_startstopunit_pwrcnd(void);

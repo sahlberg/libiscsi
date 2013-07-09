@@ -277,6 +277,7 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_sanitize_invalid_serviceaction.c \
 	test-tool/test_sanitize_overwrite.c \
 	test-tool/test_sanitize_overwrite_reserved.c \
+	test-tool/test_sanitize_reservations.c \
 	test-tool/test_startstopunit_simple.c \
 	test-tool/test_startstopunit_pwrcnd.c \
 	test-tool/test_startstopunit_noloej.c \

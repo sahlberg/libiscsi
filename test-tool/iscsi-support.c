@@ -1401,6 +1401,33 @@ int sanitize_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int immed, 
 	return 0;
 }
 
+int sanitize_conflict(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send SANITIZE (Expecting RESERVATION_CONFLICT) "
+		"IMMED:%d AUSE:%d SA:%d "
+		"PARAM_LEN:%d",
+		immed, ause, sa, param_len);
+
+	task = iscsi_sanitize_sync(iscsi, lun, immed, ause, sa, param_len,
+				   data);
+	if (task == NULL) {
+		logging(LOG_NORMAL,
+			"[FAILED] Failed to send SANITIZE command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
+		logging(LOG_NORMAL, "[FAILED] Expected RESERVATION CONFLICT");
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] SANITIZE returned RESERVATION_CONFLICT.");
+	return 0;
+}
+
 int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start)
 {
 	struct scsi_task *task;

@@ -142,7 +142,7 @@ test_sanitize_crypto_erase(void)
 	CHECK_FOR_SANITIZE;
 	CHECK_FOR_DATALOSS;
 
-	logging(LOG_NORMAL, "Check that SANITIZE CRYPTO_ERASE is supported "
+	logging(LOG_VERBOSE, "Check that SANITIZE CRYPTO_ERASE is supported "
 		"in REPORT_SUPPORTED_OPCODES");
 	cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
 				    SCSI_SANITIZE_CRYPTO_ERASE);

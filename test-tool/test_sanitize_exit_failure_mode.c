@@ -39,7 +39,7 @@ test_sanitize_exit_failure_mode(void)
 	CHECK_FOR_SANITIZE;
 	CHECK_FOR_DATALOSS;
 
-	logging(LOG_NORMAL, "Check that SANITIZE EXIT FAILURE MODE is "
+	logging(LOG_VERBOSE, "Check that SANITIZE EXIT FAILURE MODE is "
 		"supported in REPORT_SUPPORTED_OPCODES");
 	cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
 				    SCSI_SANITIZE_EXIT_FAILURE_MODE);
