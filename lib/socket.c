@@ -756,9 +756,15 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 	}
 
 	if (revents & POLLOUT && (iscsi->outqueue != NULL || iscsi->outqueue_current != NULL)) {
+#ifdef TCP_CORK
+		set_tcp_sockopt(iscsi->fd, TCP_CORK, 1);
+#endif
 		if (iscsi_write_to_socket(iscsi) != 0) {
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
+#ifdef TCP_CORK
+		set_tcp_sockopt(iscsi->fd, TCP_CORK, 0);
+#endif
 	}
 	if (revents & POLLIN) {
 		if (iscsi_read_from_socket(iscsi) != 0) {
