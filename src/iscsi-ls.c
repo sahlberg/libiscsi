@@ -39,6 +39,7 @@
 #endif
 
 int showluns;
+int useurls;
 const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-ls";
 
 struct client_state {
@@ -254,8 +255,12 @@ void discovery_cb(struct iscsi_context *iscsi, int status, void *command_data, v
 		exit(10);
 	}
 
-	for(addr=command_data; addr; addr=addr->next) {	
-		printf("Target:%s Portal:%s\n", addr->target_name, addr->target_address);
+	for(addr=command_data; addr; addr=addr->next) {
+		if (useurls == 1 && showluns == 0) {
+			printf("iscsi://%s/%s/0\n", addr->target_address, addr->target_name);
+		} else {
+			printf("Target:%s Portal:%s\n", addr->target_name, addr->target_address);
+		}
 		if (showluns != 0) {
 			list_luns(private_data, addr->target_name, addr->target_address);
 		}
@@ -305,6 +310,8 @@ void print_help(void)
 	fprintf(stderr, "Usage: iscsi-ls [OPTION...] <iscsi-url>\n");
 	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
 	fprintf(stderr, "  -s, --show-luns                   Show the luns for each target\n");
+	fprintf(stderr, "      --url                         Output targets in URL format\n");
+	fprintf(stderr, "                                    (does not work with -s)\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Help options:\n");
 	fprintf(stderr, "  -?, --help                        Show this help message\n");
@@ -332,12 +339,13 @@ int main(int argc, char *argv[])
 		{"usage",          no_argument,          NULL,        'u'},
 		{"debug",          no_argument,          NULL,        'd'},
 		{"show-luns",      no_argument,          NULL,        's'},
+		{"url",            no_argument,          NULL,        'U'},
 		{"initiator_name", required_argument,    NULL,        'i'},
 		{0, 0, 0, 0}
 	};
 	int option_index;
 
-	while ((c = getopt_long(argc, argv, "h?udi:s", long_options,
+	while ((c = getopt_long(argc, argv, "h?uUdi:s", long_options,
 			&option_index)) != -1) {
 		switch (c) {
 		case 'h':
@@ -346,6 +354,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'u':
 			show_usage = 1;
+			break;
+		case 'U':
+			useurls = 1;
 			break;
 		case 'd':
 			debug = 1;
