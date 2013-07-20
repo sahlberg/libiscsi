@@ -396,7 +396,9 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-	url = strdup(argv[optind]);
+	if (argv[optind] != NULL) {
+		url = strdup(argv[optind]);
+	}
 	if (url == NULL) {
 		fprintf(stderr, "You must specify the URL\n");
 		print_usage();

@@ -138,7 +138,9 @@ int main(int argc, char *argv[])
 		iscsi_set_log_fn(iscsi, iscsi_log_to_stderr);
 	}
 
-	url = strdup(argv[optind]);
+	if (argv[optind] != NULL) {
+		url = strdup(argv[optind]);
+	}
 	if (url == NULL) {
 		fprintf(stderr, "You must specify the URL\n");
 		print_usage();

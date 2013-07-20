@@ -380,7 +380,9 @@ int main(int argc, char *argv[])
 
 	memset(&state, 0, sizeof(state));
 
-	url = strdup(argv[optind]);
+	if (argv[optind] != NULL) {
+		url = strdup(argv[optind]);
+	}
 	if (url == NULL) {
 		fprintf(stderr, "You must specify iscsi target portal.\n");
 		print_usage();
