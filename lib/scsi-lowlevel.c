@@ -2393,6 +2393,42 @@ scsi_parse_mode_control(struct scsi_task *task, int pos, struct scsi_mode_page *
 }
 
 static void
+scsi_parse_mode_power_condition(struct scsi_task *task, int pos, struct scsi_mode_page *mp)
+{
+	mp->power_condition.pm_bg_precedence = 
+		(task_get_uint8(task, pos) >> 6) & 0x03;
+	mp->power_condition.standby_y =
+		!!(task_get_uint8(task, pos) & 0x01);
+
+	mp->power_condition.idle_c =
+		!!(task_get_uint8(task, pos + 1) & 0x08);
+	mp->power_condition.idle_b =
+		!!(task_get_uint8(task, pos + 1) & 0x04);
+	mp->power_condition.idle_a =
+		!!(task_get_uint8(task, pos + 1) & 0x02);
+	mp->power_condition.standby_z =
+		!!(task_get_uint8(task, pos + 1) & 0x01);
+
+	mp->power_condition.idle_a_condition_timer =
+		task_get_uint32(task, pos + 2);
+	mp->power_condition.standby_z_condition_timer =
+		task_get_uint32(task, pos + 6);
+	mp->power_condition.idle_b_condition_timer =
+		task_get_uint32(task, pos + 10);
+	mp->power_condition.idle_c_condition_timer =
+		task_get_uint32(task, pos + 14);
+	mp->power_condition.standby_y_condition_timer =
+		task_get_uint32(task, pos + 18);
+
+	mp->power_condition.ccf_idle =
+		(task_get_uint8(task, pos + 37) >> 6) & 0x03;
+	mp->power_condition.ccf_standby =
+		(task_get_uint8(task, pos + 37) >> 4) & 0x03;
+	mp->power_condition.ccf_stopped =
+		(task_get_uint8(task, pos + 37) >> 2) & 0x03;
+}
+
+static void
 scsi_parse_mode_disconnect_reconnect(struct scsi_task *task, int pos, struct scsi_mode_page *mp)
 {
 	mp->disconnect_reconnect.buffer_full_ratio =
@@ -2503,17 +2539,20 @@ scsi_modesense_datain_unmarshall(struct scsi_task *task, int is_modesense6)
 		}
 
 		switch (mp->page_code) {
-		case SCSI_MODESENSE_PAGECODE_CACHING:
+		case SCSI_MODEPAGE_CACHING:
 			scsi_parse_mode_caching(task, pos, mp);
 			break;
-		case SCSI_MODESENSE_PAGECODE_CONTROL:
+		case SCSI_MODEPAGE_CONTROL:
 			scsi_parse_mode_control(task, pos, mp);
 			break;
-		case SCSI_MODESENSE_PAGECODE_DISCONNECT_RECONNECT:
+		case SCSI_MODEPAGE_DISCONNECT_RECONNECT:
 			scsi_parse_mode_disconnect_reconnect(task, pos, mp);
 			break;
-		case SCSI_MODESENSE_PAGECODE_INFORMATIONAL_EXCEPTIONS_CONTROL:
+		case SCSI_MODEPAGE_INFORMATIONAL_EXCEPTIONS_CONTROL:
 			scsi_parse_mode_informational_exceptions_control(task, pos, mp);
+			break;
+		case SCSI_MODEPAGE_POWER_CONDITION:
+			scsi_parse_mode_power_condition(task, pos, mp);
 			break;
 		default:
 			/* TODO: process other pages, or add raw data to struct
@@ -2612,6 +2651,48 @@ scsi_modesense_marshall_control(struct scsi_task *task,
 }
 
 static struct scsi_data *
+scsi_modesense_marshall_power_condition(struct scsi_task *task,
+					struct scsi_mode_page *mp,
+					int hdr_size)
+{
+	struct scsi_data *data;
+
+	data = scsi_malloc(task, sizeof(struct scsi_data));
+
+	data->size = 40 + hdr_size;
+	data->data = scsi_malloc(task, data->size);
+
+	data->data[hdr_size + 2] |=
+		(mp->power_condition.pm_bg_precedence << 6) & 0xc0;
+	if (mp->power_condition.standby_y) data->data[hdr_size + 2] |= 0x01;
+
+	if (mp->power_condition.idle_c) data->data[hdr_size + 3] |= 0x08;
+	if (mp->power_condition.idle_b) data->data[hdr_size + 3] |= 0x04;
+	if (mp->power_condition.idle_a) data->data[hdr_size + 3] |= 0x02;
+	if (mp->power_condition.standby_z) data->data[hdr_size + 3] |= 0x01;
+
+	scsi_set_uint32(&data->data[hdr_size + 4],
+		mp->power_condition.idle_a_condition_timer);
+	scsi_set_uint32(&data->data[hdr_size + 8],
+		mp->power_condition.standby_z_condition_timer);
+	scsi_set_uint32(&data->data[hdr_size + 12],
+		mp->power_condition.idle_b_condition_timer);
+	scsi_set_uint32(&data->data[hdr_size + 16],
+		mp->power_condition.idle_c_condition_timer);
+	scsi_set_uint32(&data->data[hdr_size + 20],
+		mp->power_condition.standby_y_condition_timer);
+
+	data->data[hdr_size + 39] |=
+		(mp->power_condition.ccf_idle << 6) & 0xc0;
+	data->data[hdr_size + 39] |=
+		(mp->power_condition.ccf_standby << 4) & 0x30;
+	data->data[hdr_size + 39] |=
+		(mp->power_condition.ccf_stopped << 2) & 0x0c;
+
+	return data;
+}
+
+static struct scsi_data *
 scsi_modesense_marshall_disconnect_reconnect(struct scsi_task *task,
 					struct scsi_mode_page *mp,
 					int hdr_size)
@@ -2680,17 +2761,20 @@ scsi_modesense_dataout_marshall(struct scsi_task *task,
 	int hdr_size = is_modeselect6 ? 4 : 8;
 
 	switch (mp->page_code) {
-	case SCSI_MODESENSE_PAGECODE_CACHING:
+	case SCSI_MODEPAGE_CACHING:
 		data = scsi_modesense_marshall_caching(task, mp, hdr_size);
 		break;
-	case SCSI_MODESENSE_PAGECODE_CONTROL:
+	case SCSI_MODEPAGE_CONTROL:
 		data = scsi_modesense_marshall_control(task, mp, hdr_size);
 		break;
-	case SCSI_MODESENSE_PAGECODE_DISCONNECT_RECONNECT:
+	case SCSI_MODEPAGE_DISCONNECT_RECONNECT:
 		data = scsi_modesense_marshall_disconnect_reconnect(task, mp, hdr_size);
 		break;
-	case SCSI_MODESENSE_PAGECODE_INFORMATIONAL_EXCEPTIONS_CONTROL:
+	case SCSI_MODEPAGE_INFORMATIONAL_EXCEPTIONS_CONTROL:
 		data = scsi_modesense_marshall_informational_exceptions_control(task, mp, hdr_size);
+		break;
+	case SCSI_MODEPAGE_POWER_CONDITION:
+		data = scsi_modesense_marshall_power_condition(task, mp, hdr_size);
 		break;
 	default:
 		/* TODO error reporting ? */

@@ -6028,7 +6028,7 @@ int set_swp(struct iscsi_context *iscsi, int lun)
 	logging(LOG_VERBOSE, "Read CONTROL page");
 	sense_task = iscsi_modesense6_sync(iscsi, lun,
 		1, SCSI_MODESENSE_PC_CURRENT,
-		SCSI_MODESENSE_PAGECODE_CONTROL,
+		SCSI_MODEPAGE_CONTROL,
 		0, 255);
 	if (sense_task == NULL) {
 		logging(LOG_NORMAL, "Failed to send MODE_SENSE6 command: %s",
@@ -6049,7 +6049,7 @@ int set_swp(struct iscsi_context *iscsi, int lun)
 		ret = -1;
 		goto finished;
 	}
-	mp = scsi_modesense_get_page(ms, SCSI_MODESENSE_PAGECODE_CONTROL, 0);
+	mp = scsi_modesense_get_page(ms, SCSI_MODEPAGE_CONTROL, 0);
 	if (mp == NULL) {
 		logging(LOG_NORMAL, "failed to read control mode page");
 		ret = -1;
@@ -6095,7 +6095,7 @@ int clear_swp(struct iscsi_context *iscsi, int lun)
 	logging(LOG_VERBOSE, "Read CONTROL page");
 	sense_task = iscsi_modesense6_sync(iscsi, lun,
 		1, SCSI_MODESENSE_PC_CURRENT,
-		SCSI_MODESENSE_PAGECODE_CONTROL,
+		SCSI_MODEPAGE_CONTROL,
 		0, 255);
 	if (sense_task == NULL) {
 		logging(LOG_NORMAL, "Failed to send MODE_SENSE6 command: %s",
@@ -6116,7 +6116,7 @@ int clear_swp(struct iscsi_context *iscsi, int lun)
 		ret = -1;
 		goto finished;
 	}
-	mp = scsi_modesense_get_page(ms, SCSI_MODESENSE_PAGECODE_CONTROL, 0);
+	mp = scsi_modesense_get_page(ms, SCSI_MODEPAGE_CONTROL, 0);
 	if (mp == NULL) {
 		logging(LOG_NORMAL, "failed to read control mode page");
 		ret = -1;

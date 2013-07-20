@@ -72,7 +72,7 @@ int T0300_readonly(const char *initiator, const char *url)
 
 	/* verify the device is readonly */
 	task = iscsi_modesense6_sync(iscsi, lun, 0, SCSI_MODESENSE_PC_CURRENT,
-				     SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES, 0,
+				     SCSI_MODEPAGE_RETURN_ALL_PAGES, 0,
 				     4);
 	if (task == NULL) {
 		printf("Failed to send modesense6 command: %s\n", iscsi_get_error(iscsi));
@@ -82,7 +82,7 @@ int T0300_readonly(const char *initiator, const char *url)
 	if (full_size > task->datain.size) {
 		scsi_free_scsi_task(task);
 		task = iscsi_modesense6_sync(iscsi, lun, 0, SCSI_MODESENSE_PC_CURRENT,
-					     SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES, 0,
+					     SCSI_MODEPAGE_RETURN_ALL_PAGES, 0,
 					     full_size);
 		if (task == NULL) {
 			printf("Failed to send modesense6 command: %s\n", iscsi_get_error(iscsi));

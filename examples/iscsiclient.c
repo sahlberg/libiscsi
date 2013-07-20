@@ -342,7 +342,7 @@ void modesense6_cb(struct iscsi_context *iscsi, int status, void *command_data, 
 		full_size = scsi_datain_getfullsize(task);
 		if (full_size > task->datain.size) {
 			printf("did not get enough data for mode sense, sening modesense again asking for bigger buffer\n");
-			if (iscsi_modesense6_task(iscsi, clnt->lun, 0, SCSI_MODESENSE_PC_CURRENT, SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES, 0, full_size, modesense6_cb, private_data) == NULL) {
+			if (iscsi_modesense6_task(iscsi, clnt->lun, 0, SCSI_MODESENSE_PC_CURRENT, SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, full_size, modesense6_cb, private_data) == NULL) {
 				printf("failed to send modesense6 command\n");
 				scsi_free_scsi_task(task);
 				exit(10);
@@ -391,7 +391,7 @@ void inquiry_cb(struct iscsi_context *iscsi, int status, void *command_data, voi
 
 	printf("Device Type is %d. VendorId:%s ProductId:%s\n", inq->device_type, inq->vendor_identification, inq->product_identification);
 	printf("Send MODESENSE6\n");
-	if (iscsi_modesense6_task(iscsi, clnt->lun, 0, SCSI_MODESENSE_PC_CURRENT, SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES, 0, 4, modesense6_cb, private_data) == NULL) {
+	if (iscsi_modesense6_task(iscsi, clnt->lun, 0, SCSI_MODESENSE_PC_CURRENT, SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 4, modesense6_cb, private_data) == NULL) {
 		printf("failed to send modesense6 command\n");
 		scsi_free_scsi_task(task);
 		exit(10);

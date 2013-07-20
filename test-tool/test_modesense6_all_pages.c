@@ -41,7 +41,7 @@ test_modesense6_all_pages(void)
 	logging(LOG_VERBOSE, "Send MODESENSE6 command to fetch AllPages");
 	task = iscsi_modesense6_sync(iscsic, tgt_lun, 0,
 				     SCSI_MODESENSE_PC_CURRENT,
-				     SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES,
+				     SCSI_MODEPAGE_RETURN_ALL_PAGES,
 				     0, 255);
 	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Failed to send MODE_SENSE6 "

@@ -664,6 +664,26 @@ struct scsi_mode_page_caching {
 	int cache_segment_size;
 };
 
+struct scsi_mode_page_power_condition {
+       int pm_bg_precedence;
+       int standby_y;
+
+       int idle_c;
+       int idle_b;
+       int idle_a;
+       int standby_z;
+
+       uint32_t idle_a_condition_timer;
+       uint32_t standby_z_condition_timer;
+       uint32_t idle_b_condition_timer;
+       uint32_t idle_c_condition_timer;
+       uint32_t standby_y_condition_timer;
+
+       int ccf_idle;
+       int ccf_standby;
+       int ccf_stopped;
+};
+
 struct scsi_mode_page_control {
 	int tst;
 	int tmf_only;
@@ -719,15 +739,29 @@ struct scsi_mode_page_informational_exceptions_control {
 };
 
 enum scsi_modesense_page_code {
-	SCSI_MODESENSE_PAGECODE_READ_WRITE_ERROR_RECOVERY = 0x01,
-	SCSI_MODESENSE_PAGECODE_DISCONNECT_RECONNECT      = 0x02,
-	SCSI_MODESENSE_PAGECODE_VERIFY_ERROR_RECOVERY     = 0x07,
-	SCSI_MODESENSE_PAGECODE_CACHING                   = 0x08,
-	SCSI_MODESENSE_PAGECODE_XOR_CONTROL               = 0x10,
-	SCSI_MODESENSE_PAGECODE_CONTROL                   = 0x0a,
-	SCSI_MODESENSE_PAGECODE_INFORMATIONAL_EXCEPTIONS_CONTROL        = 0x1c,
-	SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES          = 0x3f
+	SCSI_MODEPAGE_READ_WRITE_ERROR_RECOVERY = 0x01,
+	SCSI_MODEPAGE_DISCONNECT_RECONNECT      = 0x02,
+	SCSI_MODEPAGE_VERIFY_ERROR_RECOVERY     = 0x07,
+	SCSI_MODEPAGE_CACHING                   = 0x08,
+	SCSI_MODEPAGE_XOR_CONTROL               = 0x10,
+	SCSI_MODEPAGE_CONTROL                   = 0x0a,
+	SCSI_MODEPAGE_POWER_CONDITION           = 0x1a,
+	SCSI_MODEPAGE_INFORMATIONAL_EXCEPTIONS_CONTROL        = 0x1c,
+	SCSI_MODEPAGE_RETURN_ALL_PAGES          = 0x3f
 };
+
+
+/* Do not use in new code.
+ * Backward compatibility macros
+ */
+#define SCSI_MODESENSE_PAGECODE_READ_WRITE_ERROR_RECOVERY SCSI_MODEPAGE_READ_WRITE_ERROR_RECOVERY
+#define SCSI_MODESENSE_PAGECODE_DISCONNECT_RECONNECT SCSI_MODEPAGE_DISCONNECT_RECONNECT
+#define SCSI_MODESENSE_PAGECODE_VERIFY_ERROR_RECOVERY SCSI_MODEPAGE_VERIFY_ERROR_RECOVERY
+#define SCSI_MODESENSE_PAGECODE_CACHING SCSI_MODEPAGE_CACHING
+#define SCSI_MODESENSE_PAGECODE_XOR_CONTROL SCSI_MODEPAGE_XOR_CONTROL
+#define SCSI_MODESENSE_PAGECODE_CONTROL SCSI_MODEPAGE_CONTROL
+#define SCSI_MODESENSE_PAGECODE_INFORMATIONAL_EXCEPTIONS_CONTROL SCSI_MODEPAGE_INFORMATIONAL_EXCEPTIONS_CONTROL
+#define SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES SCSI_MODEPAGE_RETURN_ALL_PAGES
 
 struct scsi_mode_page {
        struct scsi_mode_page *next;
@@ -741,6 +775,7 @@ struct scsi_mode_page {
               struct scsi_mode_page_control control;
               struct scsi_mode_page_disconnect_reconnect disconnect_reconnect;
 	      struct scsi_mode_page_informational_exceptions_control iec;
+              struct scsi_mode_page_power_condition power_condition;
        };
 };
 

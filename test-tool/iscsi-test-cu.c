@@ -1185,7 +1185,7 @@ main(int argc, char *argv[])
 
 	/* check if the device is write protected or not */
 	task = iscsi_modesense6_sync(iscsic, lun, 0, SCSI_MODESENSE_PC_CURRENT,
-				     SCSI_MODESENSE_PAGECODE_RETURN_ALL_PAGES,
+				     SCSI_MODEPAGE_RETURN_ALL_PAGES,
 				     0, 255);
 	if (task == NULL) {
 		printf("Failed to send MODE_SENSE6 command: %s\n",

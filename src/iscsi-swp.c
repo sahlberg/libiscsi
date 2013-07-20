@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
 
 	sense_task = iscsi_modesense10_sync(iscsi, iscsi_url->lun,
 		0, 1, SCSI_MODESENSE_PC_CURRENT,
-		SCSI_MODESENSE_PAGECODE_CONTROL,
+		SCSI_MODEPAGE_CONTROL,
 		0, 255);
 	if (sense_task == NULL) {
 		printf("Failed to send MODE_SENSE10 command: %s\n",
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
 		ret = 10;
 		goto finished;
 	}
-	mp = scsi_modesense_get_page(ms, SCSI_MODESENSE_PAGECODE_CONTROL, 0);
+	mp = scsi_modesense_get_page(ms, SCSI_MODEPAGE_CONTROL, 0);
 	if (mp == NULL) {
 		printf("failed to read control mode page\n");
 		ret = 10;
