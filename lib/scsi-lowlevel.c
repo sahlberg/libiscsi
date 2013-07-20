@@ -2625,14 +2625,6 @@ scsi_modesense_dataout_marshall(struct scsi_task *task,
 		return NULL;
 	}
 
-	if (is_modeselect6) {
-		data->data[0] = data->size - 1;
-	} else {
-		data->data[0] = (data->size - 2) >> 8;
-		data->data[1] = (data->size - 2) & 0xff;
-	}
-
-
 	data->data[hdr_size + 0] = mp->page_code & 0x3f;
 	if (mp->ps) {
 		data->data[hdr_size + 0] |= 0x80;
