@@ -177,18 +177,18 @@ int main(int argc, char *argv[])
 	}
 
 
-	sense_task = iscsi_modesense6_sync(iscsi, iscsi_url->lun,
-		1, SCSI_MODESENSE_PC_CURRENT,
+	sense_task = iscsi_modesense10_sync(iscsi, iscsi_url->lun,
+		0, 1, SCSI_MODESENSE_PC_CURRENT,
 		SCSI_MODESENSE_PAGECODE_CONTROL,
 		0, 255);
 	if (sense_task == NULL) {
-		printf("Failed to send MODE_SENSE6 command: %s\n",
+		printf("Failed to send MODE_SENSE10 command: %s\n",
 			iscsi_get_error(iscsi));
 		ret = 10;
 		goto finished;
 	}
 	if (sense_task->status != SCSI_STATUS_GOOD) {
-		printf("MODE_SENSE6 failed: %s\n",
+		printf("MODE_SENSE10 failed: %s\n",
 			iscsi_get_error(iscsi));
 		ret = 10;
 		goto finished;
@@ -220,16 +220,16 @@ int main(int argc, char *argv[])
 	}
 
 	printf("Turning SWP %s\n", (swp == 1) ? "ON" : "OFF"); 
-	select_task = iscsi_modeselect6_sync(iscsi, iscsi_url->lun,
+	select_task = iscsi_modeselect10_sync(iscsi, iscsi_url->lun,
 		    1, 0, mp);
 	if (select_task == NULL) {
-		printf("Failed to send MODE_SELECT6 command: %s\n",
+		printf("Failed to send MODE_SELECT10 command: %s\n",
 			iscsi_get_error(iscsi));
 		ret = 10;
 		goto finished;
 	}
 	if (select_task->status != SCSI_STATUS_GOOD) {
-		printf("MODE_SELECT6 failed: %s\n",
+		printf("MODE_SELECT10 failed: %s\n",
 			iscsi_get_error(iscsi));
 		ret = 10;
 		goto finished;

@@ -2182,6 +2182,46 @@ scsi_cdb_modesense6(int dbd, enum scsi_modesense_page_control pc,
 }
 
 /*
+ * MODESENSE10
+ */
+struct scsi_task *
+scsi_cdb_modesense10(int llbaa, int dbd, enum scsi_modesense_page_control pc,
+		    enum scsi_modesense_page_code page_code,
+		    int sub_page_code, unsigned char alloc_len)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_MODESENSE10;
+
+	if (llbaa) {
+		task->cdb[1] |= 0x10;
+	}
+	if (dbd) {
+		task->cdb[1] |= 0x08;
+	}
+	task->cdb[2] = pc<<6 | page_code;
+	task->cdb[3] = sub_page_code;
+
+	scsi_set_uint16(&task->cdb[7], alloc_len);
+
+	task->cdb_size = 10;
+	if (alloc_len != 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = alloc_len;
+
+	return task;
+}
+
+/*
  * MODESELECT6
  */
 struct scsi_task *
@@ -2206,6 +2246,42 @@ scsi_cdb_modeselect6(int pf, int sp, int param_len)
 	task->cdb[4] = param_len;
 
 	task->cdb_size = 6;
+	if (param_len != 0) {
+		task->xfer_dir = SCSI_XFER_WRITE;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = param_len;
+
+	return task;
+}
+
+/*
+ * MODESELECT10
+ */
+struct scsi_task *
+scsi_cdb_modeselect10(int pf, int sp, int param_len)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_MODESELECT10;
+
+	if (pf) {
+		task->cdb[1] |= 0x10;
+	}
+	if (sp) {
+		task->cdb[1] |= 0x01;
+	}
+
+	scsi_set_uint16(&task->cdb[7], param_len);
+
+	task->cdb_size = 10;
 	if (param_len != 0) {
 		task->xfer_dir = SCSI_XFER_WRITE;
 	} else {
@@ -3062,6 +3138,8 @@ scsi_datain_unmarshall(struct scsi_task *task)
 		return scsi_inquiry_datain_unmarshall(task);
 	case SCSI_OPCODE_MODESENSE6:
 	  return scsi_modesense_datain_unmarshall(task, 1);
+	case SCSI_OPCODE_MODESENSE10:
+	  return scsi_modesense_datain_unmarshall(task, 0);
 	case SCSI_OPCODE_READCAPACITY10:
 		return scsi_readcapacity10_datain_unmarshall(task);
 	case SCSI_OPCODE_SYNCHRONIZECACHE10:

@@ -1242,6 +1242,45 @@ iscsi_modeselect6_task(struct iscsi_context *iscsi, int lun,
 }
 
 struct scsi_task *
+iscsi_modeselect10_task(struct iscsi_context *iscsi, int lun,
+			int pf, int sp, struct scsi_mode_page *mp,
+			iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+	struct scsi_data *data;
+	struct iscsi_data d;
+
+	task = scsi_cdb_modeselect10(pf, sp, 255); 
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"modeselect10 cdb.");
+		return NULL;
+	}
+	data = scsi_modesense_dataout_marshall(task, mp, 0);
+	if (data == NULL) {
+		iscsi_set_error(iscsi, "Error: Failed to marshall "
+				"modesense dataout buffer.");
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	d.data = data->data;
+	d.size = data->size;
+	task->cdb[7] = data->size >> 8;
+	task->cdb[8] = data->size & 0xff;
+
+	task->expxferlen = data->size;
+
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
+				     &d, private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
 iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd, int pc,
 		       int page_code, int sub_page_code,
 		       unsigned char alloc_len,
@@ -1254,6 +1293,31 @@ iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd, int pc,
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"modesense6 cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
+				     NULL, private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
+iscsi_modesense10_task(struct iscsi_context *iscsi, int lun,
+		       int llbaa, int dbd, int pc,
+		       int page_code, int sub_page_code,
+		       unsigned char alloc_len,
+		       iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_modesense10(llbaa, dbd, pc, page_code, sub_page_code,
+				   alloc_len);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"modesense10 cdb.");
 		return NULL;
 	}
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,

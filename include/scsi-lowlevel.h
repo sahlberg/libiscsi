@@ -50,6 +50,8 @@ enum scsi_opcode {
 	SCSI_OPCODE_UNMAP              = 0x42,
 	SCSI_OPCODE_READTOC            = 0x43,
 	SCSI_OPCODE_SANITIZE           = 0x48,
+	SCSI_OPCODE_MODESELECT10       = 0x55,
+	SCSI_OPCODE_MODESENSE10        = 0x5A,
 	SCSI_OPCODE_PERSISTENT_RESERVE_IN  = 0x5E,
 	SCSI_OPCODE_PERSISTENT_RESERVE_OUT = 0x5F,
 	SCSI_OPCODE_READ16             = 0x88,
@@ -626,7 +628,7 @@ struct scsi_inquiry_device_identification {
 };
 
 /*
- * MODESENSE6
+ * MODESENSE
  */
 enum scsi_modesense_page_control {
 	SCSI_MODESENSE_PC_CURRENT    = 0x00,
@@ -762,8 +764,16 @@ EXTERN struct scsi_task *scsi_cdb_modesense6(int dbd,
 			int sub_page_code,
 			unsigned char alloc_len);
 
+EXTERN struct scsi_task *scsi_cdb_modesense10(int llbaa, int dbd,
+			enum scsi_modesense_page_control pc,
+			enum scsi_modesense_page_code page_code,
+			int sub_page_code,
+			unsigned char alloc_len);
+
 
 EXTERN struct scsi_task *scsi_cdb_modeselect6(int pf, int sp, int param_len);
+
+EXTERN struct scsi_task *scsi_cdb_modeselect10(int pf, int sp, int param_len);
 
 EXTERN struct scsi_data *
 scsi_modesense_dataout_marshall(struct scsi_task *task,

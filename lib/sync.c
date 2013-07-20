@@ -1177,6 +1177,26 @@ iscsi_modeselect6_sync(struct iscsi_context *iscsi, int lun,
 }
 
 struct scsi_task *
+iscsi_modeselect10_sync(struct iscsi_context *iscsi, int lun,
+			int pf, int sp, struct scsi_mode_page *mp)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_modeselect10_task(iscsi, lun, pf, sp, mp,
+				  scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi,
+				"Failed to send MODE_SELECT10 command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
 iscsi_modesense6_sync(struct iscsi_context *iscsi, int lun, int dbd,
 		      int pc, int page_code, int sub_page_code,
 		      unsigned char alloc_len)
@@ -1189,6 +1209,28 @@ iscsi_modesense6_sync(struct iscsi_context *iscsi, int lun, int dbd,
 				  scsi_sync_cb, &state) == NULL) {
 		iscsi_set_error(iscsi,
 				"Failed to send MODE_SENSE6 command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
+iscsi_modesense10_sync(struct iscsi_context *iscsi, int lun, int llbaa, int dbd,
+		      int pc, int page_code, int sub_page_code,
+		      unsigned char alloc_len)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_modesense10_task(iscsi, lun, llbaa, dbd, pc,
+				   page_code, sub_page_code, alloc_len,
+				   scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi,
+				"Failed to send MODE_SENSE10 command");
 		return NULL;
 	}
 

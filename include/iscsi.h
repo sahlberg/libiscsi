@@ -824,7 +824,16 @@ iscsi_modeselect6_task(struct iscsi_context *iscsi, int lun,
 		       int pf, int sp, struct scsi_mode_page *mp,
 		       iscsi_command_cb cb, void *private_data);
 EXTERN struct scsi_task *
+iscsi_modeselect10_task(struct iscsi_context *iscsi, int lun,
+			int pf, int sp, struct scsi_mode_page *mp,
+			iscsi_command_cb cb, void *private_data);
+EXTERN struct scsi_task *
 iscsi_modesense6_task(struct iscsi_context *iscsi, int lun, int dbd,
+			   int pc, int page_code, int sub_page_code,
+			   unsigned char alloc_len, iscsi_command_cb cb,
+			   void *private_data);
+EXTERN struct scsi_task *
+iscsi_modesense10_task(struct iscsi_context *iscsi, int lun, int llbaa, int dbd,
 			   int pc, int page_code, int sub_page_code,
 			   unsigned char alloc_len, iscsi_command_cb cb,
 			   void *private_data);
@@ -881,7 +890,16 @@ iscsi_modeselect6_sync(struct iscsi_context *iscsi, int lun,
 		       int pf, int sp, struct scsi_mode_page *mp);
 
 EXTERN struct scsi_task *
+iscsi_modeselect10_sync(struct iscsi_context *iscsi, int lun,
+			int pf, int sp, struct scsi_mode_page *mp);
+
+EXTERN struct scsi_task *
 iscsi_modesense6_sync(struct iscsi_context *iscsi, int lun, int dbd,
+		      int pc, int page_code, int sub_page_code,
+		      unsigned char alloc_len);
+
+EXTERN struct scsi_task *
+iscsi_modesense10_sync(struct iscsi_context *iscsi, int lun, int llbaa, int dbd,
 		      int pc, int page_code, int sub_page_code,
 		      unsigned char alloc_len);
 

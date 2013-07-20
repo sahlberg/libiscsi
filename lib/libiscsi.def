@@ -25,8 +25,12 @@ iscsi_logout_async
 iscsi_logout_sync
 iscsi_modeselect6_sync
 iscsi_modeselect6_task
+iscsi_modeselect10_sync
+iscsi_modeselect10_task
 iscsi_modesense6_sync
 iscsi_modesense6_task
+iscsi_modesense10_sync
+iscsi_modesense10_task
 iscsi_nop_out_async
 iscsi_parse_full_url
 iscsi_parse_portal_url
@@ -154,7 +158,9 @@ scsi_association_to_str
 scsi_cdb_inquiry
 scsi_cdb_get_lba_status
 scsi_cdb_modeselect6
+scsi_cdb_modeselect10
 scsi_cdb_modesense6
+scsi_cdb_modesense10
 scsi_cdb_persistent_reserve_in
 scsi_cdb_persistent_reserve_out
 scsi_cdb_prefetch10
