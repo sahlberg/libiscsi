@@ -148,6 +148,7 @@ enum scsi_sense_key {
 EXTERN const char *scsi_sense_key_str(int key);
 
 /* ascq */
+#define SCSI_SENSE_ASCQ_SANITIZE_IN_PROGRESS               0x041b
 #define SCSI_SENSE_ASCQ_WRITE_AFTER_SANITIZE_REQUIRED      0x1115
 #define SCSI_SENSE_ASCQ_PARAMETER_LIST_LENGTH_ERROR        0x1a00
 #define SCSI_SENSE_ASCQ_MISCOMPARE_DURING_VERIFY           0x1d00
