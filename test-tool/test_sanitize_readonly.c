@@ -53,6 +53,10 @@ test_sanitize_readonly(void)
 		return;
 	}
 
+	logging(LOG_VERBOSE, "Use TESTUNITREADY to clear unit attention on "
+		"first connection");
+	while (testunitready_clear_ua(iscsic, tgt_lun));
+
 	logging(LOG_VERBOSE, "Check if SANITIZE OVERWRITE is supported "
 		"in REPORT_SUPPORTED_OPCODES");
 	cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
@@ -108,6 +112,10 @@ test_sanitize_readonly(void)
 
 	logging(LOG_VERBOSE, "Clear Software Write Protect on the second connection");
 	ret = clear_swp(iscsic2, tgt_lun);
+
+	logging(LOG_VERBOSE, "Use TESTUNITREADY to clear unit attention on "
+		"first connection");
+	while (testunitready_clear_ua(iscsic, tgt_lun));
 
 	iscsi_destroy_context(iscsic2);
 	iscsic2 = NULL;

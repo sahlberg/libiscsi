@@ -1440,7 +1440,7 @@ int sanitize_writeprotected(struct iscsi_context *iscsi, int lun, int immed, int
 {
 	struct scsi_task *task;
 
-	logging(LOG_VERBOSE, "Send SANITIZE (Expecting RESERVATION_CONFLICT) "
+	logging(LOG_VERBOSE, "Send SANITIZE (Expecting WRITE_PROTECTED) "
 		"IMMED:%d AUSE:%d SA:%d "
 		"PARAM_LEN:%d",
 		immed, ause, sa, param_len);
@@ -1588,8 +1588,11 @@ testunitready_clear_ua(struct iscsi_context *iscsi, int lun)
 		logging(LOG_NORMAL,
 			"[INFO] TESTUNITREADY command: failed with sense. %s",
 			iscsi_get_error(iscsi));
+			return -1;
 	}
 	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] TESTUNITREADY does not return unit "
+		"attention.");
 	return 0;
 }
 
