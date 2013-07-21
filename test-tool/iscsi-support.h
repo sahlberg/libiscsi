@@ -279,6 +279,7 @@ int testunitready_clear_ua(struct iscsi_context *iscsi, int lun);
 int testunitready(struct iscsi_context *iscsi, int lun);
 int testunitready_nomedium(struct iscsi_context *iscsi, int lun);
 int testunitready_conflict(struct iscsi_context *iscsi, int lun);
+int testunitready_sanitize(struct iscsi_context *iscsi, int lun);
 int unmap(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len);
 int unmap_writeprotected(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len);
 int unmap_nomedium(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len);

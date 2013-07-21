@@ -163,6 +163,7 @@ void test_sanitize_overwrite(void);
 void test_sanitize_overwrite_reserved(void);
 void test_sanitize_readonly(void);
 void test_sanitize_reservations(void);
+void test_sanitize_reset(void);
 
 void test_startstopunit_simple(void);
 void test_startstopunit_pwrcnd(void);

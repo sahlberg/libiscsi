@@ -55,7 +55,9 @@ test_sanitize_readonly(void)
 
 	logging(LOG_VERBOSE, "Use TESTUNITREADY to clear unit attention on "
 		"first connection");
-	while (testunitready_clear_ua(iscsic, tgt_lun));
+	while (testunitready_clear_ua(iscsic, tgt_lun)) {
+		sleep(1);
+	}
 
 	logging(LOG_VERBOSE, "Check if SANITIZE OVERWRITE is supported "
 		"in REPORT_SUPPORTED_OPCODES");
@@ -115,7 +117,9 @@ test_sanitize_readonly(void)
 
 	logging(LOG_VERBOSE, "Use TESTUNITREADY to clear unit attention on "
 		"first connection");
-	while (testunitready_clear_ua(iscsic, tgt_lun));
+	while (testunitready_clear_ua(iscsic, tgt_lun)) {
+		sleep(1);
+	}
 
 	iscsi_destroy_context(iscsic2);
 	iscsic2 = NULL;

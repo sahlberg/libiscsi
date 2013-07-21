@@ -1630,6 +1630,37 @@ testunitready_nomedium(struct iscsi_context *iscsi, int lun)
 }
 
 int
+testunitready_sanitize(struct iscsi_context *iscsi, int lun)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send TESTUNITREADY (Expecting SANITIZE_IN_PROGRESS)");
+	task = iscsi_testunitready_sync(iscsi, lun);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send TESTUNITREADY "
+			"command: %s", iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+	  logging(LOG_NORMAL, "[FAILED] TESTUNITREADY command successful. But should have failed with NOT_READY/SANITIZE_IN_PROGRESS");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_SANITIZE_IN_PROGRESS) {
+		logging(LOG_NORMAL, "[FAILED] TESTUNITREADY Should have failed "
+			"with NOT_READY/SANITIZE_IN_PROGRESS But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] TESTUNITREADY returned SANITIZE_IN_PROGRESS.");
+	return 0;
+}
+
+int
 testunitready_conflict(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
