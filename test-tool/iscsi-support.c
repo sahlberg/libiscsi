@@ -1536,6 +1536,42 @@ int startstopunit_preventremoval(struct iscsi_context *iscsi, int lun, int immed
 	return 0;
 }
 
+int startstopunit_sanitize(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send STARTSTOPUNIT (Expecting SANITIZE_IN_PROGRESS) "
+		"IMMED:%d PCM:%d PC:%d NO_FLUSH:%d LOEJ:%d START:%d",
+		immed, pcm, pc, no_flush, loej, start);
+
+	task = iscsi_startstopunit_sync(iscsi, lun, immed, pcm, pc, no_flush,
+					loej, start);
+	if (task == NULL) {
+		logging(LOG_NORMAL,
+			"[FAILED] Failed to send STARTSTOPUNIT command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL,
+			"[FAILED] STARTSTOPUNIT successful but should have failed with NOT_READY/SANITIZE_IN_PROGRESS");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_SANITIZE_IN_PROGRESS) {
+		logging(LOG_NORMAL, "[FAILED] STARTSTOPUNIT Should have failed "
+			"with NOT_READY/SANITIZE_IN_PROGRESS But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] STARTSTOPUNIT returned SANITIZE_IN_PROGRESS.");
+	return 0;
+}
+
 int
 testunitready(struct iscsi_context *iscsi, int lun)
 {
@@ -2815,6 +2851,52 @@ read16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba,
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] READ16 returned MEDIUM_NOT_PRESENT.");
+	return 0;
+}
+
+int
+read16_sanitize(struct iscsi_context *iscsi, int lun, uint64_t lba,
+		uint32_t datalen, int blocksize, int rdprotect, 
+		int dpo, int fua, int fua_nv, int group,
+		unsigned char *data)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send READ16 (Expecting SANITIZE_IN_PROGRESS) "
+		"LBA:%" PRId64 " blocks:%d rdprotect:%d "
+		"dpo:%d fua:%d fua_nv:%d group:%d",
+		lba, datalen / blocksize, rdprotect,
+		dpo, fua, fua_nv, group);
+
+	task = iscsi_read16_sync(iscsi, lun, lba, datalen, blocksize,
+				 rdprotect, dpo, fua, fua_nv, group);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send READ16 command: %s",
+		       iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] READ16 successful but should "
+			"have failed with NOT_READY/SANITIZE_IN_PROGRESS");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+	    || task->sense.key  != SCSI_SENSE_NOT_READY
+	    || task->sense.ascq != SCSI_SENSE_ASCQ_SANITIZE_IN_PROGRESS) {
+		logging(LOG_NORMAL, "[FAILED] READ16 Should have failed "
+			"with NOT_READY/SANITIZE_IN_PROGRESS But failed "
+			"with %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}	
+
+	if (data != NULL) {
+		memcpy(data, task->datain.data, task->datain.size);
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] READ16 returned SANITIZE_IN_PROGRESS");
 	return 0;
 }
 

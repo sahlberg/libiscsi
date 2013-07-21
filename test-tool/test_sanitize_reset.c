@@ -84,10 +84,21 @@ test_sanitize_reset(void)
 		"slow to start the SANITIZE");
 	sleep(3);
 
-	logging(LOG_VERBOSE, "Verify that the SANITIZE has started.");
+	logging(LOG_VERBOSE, "Verify that the SANITIZE has started and that "
+		"TESTUNITREADY fails with SANITIZE_IN_PROGRESS");
 	ret = testunitready_sanitize(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
+	logging(LOG_VERBOSE, "Verify that STARTSTOPUNIT fails with "
+		"SANITIZE_IN_PROGRESS");
+	ret = startstopunit_sanitize(iscsic, tgt_lun, 1, 0, 1, 0, 1, 0);
+	CU_ASSERT_EQUAL(ret, 0);
+
+	logging(LOG_VERBOSE, "Verify that READ16 fails with "
+		"SANITIZE_IN_PROGRESS");
+	ret = read16_sanitize(iscsic, tgt_lun, 0, block_size,
+			block_size, 0, 0, 0, 0, 0, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify that INQUIRY is still allowed while "
 		"SANITIZE is in progress");
