@@ -88,6 +88,13 @@ test_sanitize_reset(void)
 	ret = testunitready_sanitize(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
+
+	logging(LOG_VERBOSE, "Verify that INQUIRY is still allowed while "
+		"SANITIZE is in progress");
+	ret = inquiry(iscsic, tgt_lun, 0, 0, 255, NULL);
+	CU_ASSERT_EQUAL(ret, 0);
+
+
 	logging(LOG_VERBOSE, "Send an ABORT TASK");
 	ret = iscsi_task_mgmt_abort_task_sync(iscsic, sanitize_task);
 	if (ret != 0) {
