@@ -1891,7 +1891,7 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 {
 	struct iscsi_pdu *pdu;
 
-	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
+	while ((pdu = iscsi->waitpdu)) {
 		SLIST_REMOVE(&iscsi->waitpdu, pdu);
 		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
@@ -1899,7 +1899,7 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 		}
 		iscsi_free_pdu(iscsi, pdu);
 	}
-	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
+	while ((pdu = iscsi->outqueue)) {
 		SLIST_REMOVE(&iscsi->outqueue, pdu);
 		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
