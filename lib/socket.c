@@ -171,6 +171,12 @@ int set_tcp_syncnt(struct iscsi_context *iscsi)
 	return 0;
 }
 
+union socket_address {
+	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
+	struct sockaddr sa;
+};
+
 int
 iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		    iscsi_command_cb cb, void *private_data)
@@ -179,6 +185,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	char *str;
 	char *addr, *host;
 	struct addrinfo *ai = NULL;
+	union socket_address sa;
 	int socksize;
 
 	ISCSI_LOG(iscsi, 2, "connecting to portal %s",portal);
@@ -235,20 +242,23 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
  	}
 	iscsi_free(iscsi, addr);
 
+	memset(&sa, 0, sizeof(sa));
 	switch (ai->ai_family) {
 	case AF_INET:
 		socksize = sizeof(struct sockaddr_in);
-		((struct sockaddr_in *)(ai->ai_addr))->sin_port = htons(port);
+		memcpy(&sa.sin, ai->ai_addr, socksize);
+		sa.sin.sin_port = htons(port);
 #ifdef HAVE_SOCK_SIN_LEN
-		((struct sockaddr_in *)(ai->ai_addr))->sin_len = socksize;
+		sa.sin.sin_len = socksize;
 #endif
 		break;
 #ifdef HAVE_SOCKADDR_IN6
 	case AF_INET6:
 		socksize = sizeof(struct sockaddr_in6);
-		((struct sockaddr_in6 *)(ai->ai_addr))->sin6_port = htons(port);
+		memcpy(&sa.sin6, ai->ai_addr, socksize);
+		sa.sin6.sin6_port = htons(port);
 #ifdef HAVE_SOCK_SIN_LEN
-		((struct sockaddr_in6 *)(ai->ai_addr))->sin6_len = socksize;
+		sa.sin6.sin6_len = socksize;
 #endif
 		break;
 #endif
@@ -316,7 +326,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		ISCSI_LOG(iscsi,3,"TCP_NODELAY set to 1");
 	}
 
-	if (connect(iscsi->fd, ai->ai_addr, socksize) != 0
+	if (connect(iscsi->fd, &sa.sa, socksize) != 0
 	    && errno != EINPROGRESS) {
 		iscsi_set_error(iscsi, "Connect failed with errno : "
 				"%s(%d)", strerror(errno), errno);
