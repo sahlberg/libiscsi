@@ -42,7 +42,7 @@ if !HAVE_LIBGCRYPT
 lib_libiscsi_la_SOURCES += lib/md5.c
 endif
 
-SONAME=$(firstword $(subst ., ,$(VERSION)))
+SONAME=3
 SOREL=$(shell printf "%d%02d%02d" $(subst ., ,$(VERSION)))
 lib_libiscsi_la_LDFLAGS = \
 	-version-info $(SONAME):$(SOREL):0 -bindir $(bindir) -no-undefined \
