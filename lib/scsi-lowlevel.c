@@ -300,11 +300,11 @@ scsi_set_uint64(unsigned char *c, uint64_t v)
 	uint32_t val;
 
 	val = (v >> 32) & 0xffffffff;
-	*(uint32_t *)c = htonl(val);
+	scsi_set_uint32(c, val);
 
 	c += 4;
 	val = v & 0xffffffff;
-	*(uint32_t *)c = htonl(val);
+	scsi_set_uint32(c, val);
 }
 
 inline void
