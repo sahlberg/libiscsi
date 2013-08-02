@@ -37,7 +37,7 @@ static int my_queue_immediate_data(struct iscsi_context *iscsi _U_, struct iscsi
 			pdu_was_valid = 0;
 			return 0;
 		}
-		if ( *(uint32_t *)&pdu->outdata.data[4] & 0x00ffffff ) {
+		if ( scsi_get_uint32(&pdu->outdata.data[4]) & 0x00ffffff ) {
 			printf("SCSI-Command PDU had non-zero datasegmentsize.\n");
 			pdu_was_valid = 0;
 			return 0;
@@ -50,7 +50,7 @@ static int my_queue_immediate_data(struct iscsi_context *iscsi _U_, struct iscsi
 			pdu_was_valid = 0;
 			return 0;
 		}
-		if ( (*(uint32_t *)&pdu->outdata.data[4] & 0x00ffffff) != htonl(block_size)) {
+		if ( (scsi_get_uint32(&pdu->outdata.data[4]) & 0x00ffffff) != block_size) {
 			printf("The DATA-OUT PDU did not carry a full block.\n");
 			pdu_was_valid = 0;
 			return 0;
