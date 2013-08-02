@@ -84,15 +84,14 @@ iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opcode
 {
 	struct iscsi_pdu *pdu;
 
-	pdu = iscsi_zmalloc(iscsi, sizeof(struct iscsi_pdu));
+	pdu = iscsi_szmalloc(iscsi, sizeof(struct iscsi_pdu));
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate pdu");
 		return NULL;
 	}
 
 	pdu->outdata.size = ISCSI_HEADER_SIZE;
-       	pdu->outdata.data = iscsi_malloc(iscsi, pdu->outdata.size);
-	memset(pdu->outdata.data, 0, ISCSI_HEADER_SIZE);
+	pdu->outdata.data = iscsi_szmalloc(iscsi, pdu->outdata.size);
 
 	if (pdu->outdata.data == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate pdu header");
@@ -134,13 +133,21 @@ iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return;
 	}
 
-	iscsi_free(iscsi, pdu->outdata.data);
+	if (pdu->outdata.size <= iscsi->smalloc_size) {
+		iscsi_sfree(iscsi, pdu->outdata.data);
+	} else {
+		iscsi_free(iscsi, pdu->outdata.data);
+	}
 	pdu->outdata.data = NULL;
 
-	iscsi_free(iscsi, pdu->indata.data);
+	if (pdu->indata.size <= iscsi->smalloc_size) {
+		iscsi_sfree(iscsi, pdu->indata.data);
+	} else {
+		iscsi_free(iscsi, pdu->indata.data);
+	}
 	pdu->indata.data = NULL;
 
-	iscsi_free(iscsi, pdu);
+	iscsi_sfree(iscsi, pdu);
 }
 
 
@@ -164,9 +171,15 @@ iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 	}
 
 	if (data->size == 0) {
-		data->data = iscsi_malloc(iscsi, aligned);
+		if (aligned <= iscsi->smalloc_size) {
+			data->data = iscsi_szmalloc(iscsi, aligned);
+		} else {
+			data->data = iscsi_malloc(iscsi, aligned);
+		}
 	} else {
-		data->data = iscsi_realloc(iscsi, data->data, aligned);
+		if (aligned > iscsi->smalloc_size) {
+			data->data = iscsi_realloc(iscsi, data->data, aligned);
+		}
 	}
 	if (data->data == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate buffer for %d "
