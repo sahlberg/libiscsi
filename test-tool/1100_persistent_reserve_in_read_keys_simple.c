@@ -90,7 +90,7 @@ int T1100_persistent_reserve_in_read_keys_simple(const char *initiator, const ch
 
 	/* Verify that ADDITIONAL_LENGTH matches DATA-IN size */
 	printf("Verify that ADDITIONAL_LENGTH matches DATA-IN size ... ");
-	al = ntohl(*(uint32_t *)&task->datain.data[4]);
+	al = scsi_get_uint32(&task->datain.data[4]);
 	if (al != task->datain.size - 8) {
 	        printf("[FAILED]\n");
 		printf("ADDITIONAL_LENGTH was %d bytes but %d was expected.\n",
