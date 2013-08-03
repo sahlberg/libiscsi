@@ -202,6 +202,9 @@ scsi_devqualifier_to_str
 scsi_devtype_to_str
 scsi_free_scsi_task
 scsi_get_task_private_ptr
+scsi_get_uint16
+scsi_get_uint32
+scsi_get_uint64
 scsi_inquiry_pagecode_to_str
 scsi_modesense_dataout_marshall
 scsi_modesense_get_page
@@ -211,6 +214,9 @@ scsi_sense_ascq_str
 scsi_pr_type_str
 scsi_sense_key_str
 scsi_set_task_private_ptr
+scsi_set_uint16
+scsi_set_uint32
+scsi_set_uint64
 scsi_task_add_data_in_buffer
 scsi_task_add_data_out_buffer
 scsi_task_set_iov_in

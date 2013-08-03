@@ -74,8 +74,7 @@ my_iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	}
 
 	/* update data segment length */
-	*(uint32_t *)&pdu->outdata.data[4] = htonl(pdu->outdata.size
-						   - ISCSI_HEADER_SIZE);
+	scsi_set_uint32(&pdu->outdata.data[4], pdu->outdata.size - ISCSI_HEADER_SIZE);
 
 	return 0;
 }
@@ -83,13 +82,13 @@ my_iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 static void
 my_iscsi_pdu_set_itt(struct iscsi_pdu *pdu, uint32_t itt)
 {
-	*(uint32_t *)&pdu->outdata.data[16] = htonl(itt);
+	scsi_set_uint32(&pdu->outdata.data[16], itt);
 }
 
 static void
 my_iscsi_pdu_set_expstatsn(struct iscsi_pdu *pdu, uint32_t expstatsnsn)
 {
-	*(uint32_t *)&pdu->outdata.data[28] = htonl(expstatsnsn);
+	scsi_set_uint32(&pdu->outdata.data[28], expstatsnsn);
 }
 
 static void

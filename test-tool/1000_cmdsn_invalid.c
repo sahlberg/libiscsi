@@ -29,11 +29,11 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 	switch (change_cmdsn) {
 	case 1:
 		/* change the cmdsn so it becomes too big */
-		*(uint32_t *)&pdu->outdata.data[24] = htonl(iscsi->maxcmdsn + 1);
+		scsi_set_uint32(&pdu->outdata.data[24], iscsi->maxcmdsn + 1);
 		break;
 	case 2:
 		/* change the cmdsn so it becomes too small */
-		*(uint32_t *)&pdu->outdata.data[24] = 0;
+		scsi_set_uint32(&pdu->outdata.data[24], 0);
 		break;
 	}
 
