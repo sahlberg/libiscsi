@@ -292,6 +292,13 @@ struct scsi_task {
 	struct scsi_iovector iovector_out;
 };
 
+
+/* Create a task using a pre-built CDB which can later be passed to
+   iscsi_scsi_command_[a]sync()
+ */
+EXTERN struct scsi_task *scsi_create_task(int cdb_size, unsigned char *cdb,
+       int xfer_dir, int expxferlen);
+
 /* This function will free a scsi task structure.
    You may NOT cancel a task until the callback has been invoked
    and the command has completed on the transport layer.

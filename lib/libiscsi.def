@@ -196,6 +196,7 @@ scsi_cdb_writeverify16
 scsi_cdb_writesame10
 scsi_cdb_writesame16
 scsi_codeset_to_str
+scsi_create_task
 scsi_datain_getfullsize
 scsi_datain_unmarshall
 scsi_cdb_unmarshall

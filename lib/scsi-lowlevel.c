@@ -73,6 +73,26 @@ scsi_free_scsi_task(struct scsi_task *task)
 	free(task);
 }
 
+struct scsi_task *
+scsi_create_task(int cdb_size, unsigned char *cdb, int xfer_dir, int expxferlen)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+
+	memcpy(&task->cdb[0], cdb, cdb_size);
+	task->xfer_dir   = xfer_dir;
+	task->expxferlen = expxferlen;
+
+	return task;
+}
+
+
 void *
 scsi_malloc(struct scsi_task *task, size_t size)
 {
