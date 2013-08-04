@@ -30,7 +30,7 @@ void
 test_verify16_mismatch(void)
 {
 	int i, ret;
-	unsigned char *buf = malloc(256 * block_size);
+	unsigned char *buf = alloca(256 * block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 for blocks 1-255");
