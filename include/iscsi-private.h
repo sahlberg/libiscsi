@@ -224,9 +224,9 @@ struct iscsi_pdu {
 	struct iscsi_data outdata; /* Header for PDU to send */
 	size_t outdata_written;	   /* How much of the header we have written */
 
-	uint32_t out_offset;       /* Offset into data-out iovector */
-	uint32_t out_len;          /* Amount of data to sent starting at out_offset */
-	uint32_t out_written;      /* Number of bytes written to socket */
+	uint32_t payload_offset;   /* Offset of payload data to write */
+	uint32_t payload_len;      /* Amount of payload data to write */
+	uint32_t payload_written;  /* How much of the payload we have written */
 
 	struct iscsi_data indata;
 

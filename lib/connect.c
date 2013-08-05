@@ -344,7 +344,7 @@ try_again:
 		iscsi->statsn++;
 
 		pdu->outdata_written = 0;
-		pdu->out_written = 0;
+		pdu->payload_written = 0;
 		iscsi_add_to_outqueue(iscsi, pdu);
 	}
 

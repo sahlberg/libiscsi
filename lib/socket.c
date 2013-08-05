@@ -638,7 +638,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		}
 
 		/* Write any iovectors that might have been passed to us */
-		while (pdu->out_written < pdu->out_len) {
+		while (pdu->payload_written < pdu->payload_len) {
 			struct scsi_iovector* iovector_out;
 
 			iovector_out = iscsi_get_scsi_task_iovector_out(iscsi, pdu);
@@ -648,8 +648,10 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 				return -1;
 			}
 
-			count = iscsi_iovector_readv_writev(iscsi, iovector_out, pdu->out_offset + pdu->out_written, pdu->out_len - pdu->out_written, 1);
-
+			count = iscsi_iovector_readv_writev(iscsi,
+				iovector_out,
+				pdu->payload_offset + pdu->payload_written,
+				pdu->payload_len - pdu->payload_written, 1);
 			if (count == -1) {
 				if (errno == EAGAIN || errno == EWOULDBLOCK) {
 					return 0;
@@ -659,7 +661,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 				return -1;
 			}
 
-			pdu->out_written += count;
+			pdu->payload_written += count;
 		}
 
 		if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {

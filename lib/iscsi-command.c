@@ -121,11 +121,11 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		/* buffer offset */
 		iscsi_pdu_set_bufferoffset(pdu, offset);
 
-		pdu->out_offset = offset;
-		pdu->out_len    = len;
+		pdu->payload_offset = offset;
+		pdu->payload_len    = len;
 
 		/* update data segment length */
-		scsi_set_uint32(&pdu->outdata.data[4], pdu->out_len);
+		scsi_set_uint32(&pdu->outdata.data[4], pdu->payload_len);
 
 		pdu->callback     = cmd_pdu->callback;
 		pdu->private_data = cmd_pdu->private_data;
@@ -237,8 +237,8 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	pdu->scsi_cbdata.callback     = cb;
 	pdu->scsi_cbdata.private_data = private_data;
 
-	pdu->out_offset = 0;
-	pdu->out_len    = 0;
+	pdu->payload_offset = 0;
+	pdu->payload_len    = 0;
 
 	scsi_set_task_private_ptr(task, &pdu->scsi_cbdata);
 	
@@ -265,11 +265,11 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 				len = iscsi->target_max_recv_data_segment_length;
 			}
 
-			pdu->out_offset = 0;
-			pdu->out_len    = len;
+			pdu->payload_offset = 0;
+			pdu->payload_len    = len;
 
 			/* update data segment length */
-			scsi_set_uint32(&pdu->outdata.data[4], pdu->out_len);
+			scsi_set_uint32(&pdu->outdata.data[4], pdu->payload_len);
 		}
 		/* We have (more) data to send and we are allowed to send
 		 * it as unsolicited data-out segments.
@@ -277,8 +277,8 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		 * of data-out further below.
 		 */
 		if (iscsi->use_initial_r2t == ISCSI_INITIAL_R2T_NO
-		    && pdu->out_len < (uint32_t)task->expxferlen
-		    && pdu->out_len < iscsi->first_burst_length) {
+		    && pdu->payload_len < (uint32_t)task->expxferlen
+		    && pdu->payload_len < iscsi->first_burst_length) {
 			/* We have more data to send, and we are allowed to send
 			 * unsolicited data, so dont flag this PDU as final.
 			 */
@@ -324,11 +324,11 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	if (!(flags & ISCSI_PDU_SCSI_FINAL)) {
 		uint32_t len = task->expxferlen;
 
-		if (len + pdu->out_len > iscsi->first_burst_length) {
-			len = iscsi->first_burst_length - pdu->out_len;
+		if (len + pdu->payload_len > iscsi->first_burst_length) {
+			len = iscsi->first_burst_length - pdu->payload_len;
 		}
 		iscsi_send_data_out(iscsi, pdu, 0xffffffff,
-				    pdu->out_len, len);
+				    pdu->payload_len, len);
 	}
 
 	/* remember cmdsn and itt so we can use task management */
