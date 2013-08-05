@@ -221,9 +221,9 @@ struct iscsi_pdu {
 	iscsi_command_cb callback;
 	void *private_data;
 
-	int written;
-
 	struct iscsi_data outdata; /* Header for PDU to send */
+	size_t outdata_written;	   /* How much of the header we have written */
+
 	uint32_t out_offset;       /* Offset into data-out iovector */
 	uint32_t out_len;          /* Amount of data to sent starting at out_offset */
 	uint32_t out_written;      /* Number of bytes written to socket */

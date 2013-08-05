@@ -596,8 +596,6 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 	}
 
 	while (iscsi->outqueue != NULL || iscsi->outqueue_current != NULL) {
-		ssize_t total;
-
 		if (iscsi->outqueue_current == NULL) {
 			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0) {
 				/* stop sending. maxcmdsn is reached */
@@ -616,15 +614,13 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		}
 
 		pdu = iscsi->outqueue_current;
-
-		total = pdu->outdata.size;
-		total = (total + 3) & 0xfffffffc;
+		pdu->outdata.size = (pdu->outdata.size + 3) & 0xfffffffc;
 
 		/* Write header and any immediate data */
-		if (pdu->written < total) {
+		if (pdu->outdata_written < pdu->outdata.size) {
 			count = send(iscsi->fd,
-				     pdu->outdata.data + pdu->written,
-				     total - pdu->written,
+				     pdu->outdata.data + pdu->outdata_written,
+				     pdu->outdata.size - pdu->outdata_written,
 				     0);
 			if (count == -1) {
 				if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -634,10 +630,10 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 						"socket :%d", errno);
 				return -1;
 			}
-			pdu->written += count;
+			pdu->outdata_written += count;
 		}
 		/* if we havent written the full header yet. */
-		if (pdu->written != total) {
+		if (pdu->outdata_written != pdu->outdata.size) {
 			return 0;
 		}
 
