@@ -38,12 +38,10 @@ test_writesame10_unmap_vpd(void)
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, "Check if WRITESAME10 can be used for UNMAP.");
-
 	logging(LOG_VERBOSE, "Unmap 1 block using WRITESAME10");
 	ret = writesame10(iscsic, tgt_lun, 0,
 			  block_size, 1,
 			  0, 1, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
 
 	if (ret != 0) {
 		logging(LOG_VERBOSE, "WRITESAME10 UNMAP is not available. "

@@ -43,7 +43,6 @@ test_writesame16_unmap_vpd(void)
 	ret = writesame16(iscsic, tgt_lun, 0,
 			  block_size, 1,
 			  0, 1, 0, 0, NULL);
-	CU_ASSERT_EQUAL(ret, 0);
 
 	if (ret != 0) {
 		logging(LOG_VERBOSE, "WRITESAME16 UNMAP is not available. "
