@@ -30,8 +30,7 @@ test_writesame16_unmap(void)
 {
 	int i, ret;
 	unsigned int j;
-	unsigned char *buf = malloc(block_size * 65536);
-
+	unsigned char *buf = malloc(65536 * block_size);
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_THIN_PROVISIONING;
@@ -42,19 +41,19 @@ test_writesame16_unmap(void)
 	logging(LOG_VERBOSE, "Test WRITESAME16 of 1-256 blocks at the start of the LUN");
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
-		memset(buf, 0xff, block_size * i);
+		memset(buf, 0xff, i * block_size);
 		ret = write16(iscsic, tgt_lun, 0,
 			      i * block_size, block_size,
 			      0, 0, 0, 0, 0, buf);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
+		memset(buf, 0, block_size);
 		ret = writesame16(iscsic, tgt_lun, 0,
 				  block_size, i,
-				  0, 1, 0, 0, NULL);
+				  0, 1, 0, 0, buf);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support WRITESAME16. Skipping test");
-			free(buf);
 			return;
 		}
 		CU_ASSERT_EQUAL(ret, 0);
@@ -82,13 +81,14 @@ test_writesame16_unmap(void)
 	logging(LOG_VERBOSE, "Test WRITESAME16 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
-		memset(buf, 0xff, block_size * i);
+		memset(buf, 0xff, i * block_size);
 		ret = write16(iscsic, tgt_lun, num_blocks - i,
 			      i * block_size, block_size,
 			      0, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
+		memset(buf, 0, block_size);
 		ret = writesame16(iscsic, tgt_lun, num_blocks - i,
 				  block_size, i,
 				  0, 1, 0, 0, buf);
@@ -116,21 +116,22 @@ test_writesame16_unmap(void)
 	logging(LOG_VERBOSE, "Verify that WRITESAME16 ANCHOR==1 + UNMAP==0 is invalid");
 	ret = writesame16_invalidfieldincdb(iscsic, tgt_lun, 0,
 					    block_size, 1,
-					    1, 0, 0, 0, NULL);
+					    1, 0, 0, 0, buf);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 
 	if (inq_lbp->anc_sup) {
 		logging(LOG_VERBOSE, "Test WRITESAME16 ANCHOR==1 + UNMAP==0");
+		memset(buf, 0, block_size);
 		ret = writesame16(iscsic, tgt_lun, 0,
 				  block_size, 1,
-				  1, 1, 0, 0, NULL);
+				  1, 1, 0, 0, buf);
 	} else {
 		logging(LOG_VERBOSE, "Test WRITESAME16 ANCHOR==1 + UNMAP==0 no ANC_SUP so expecting to fail");
 		ret = writesame16_invalidfieldincdb(iscsic, tgt_lun, 0,
 						    block_size, 1,
-						    1, 1, 0, 0, NULL);
+						    1, 1, 0, 0, buf);
 	}
 
 	CU_ASSERT_EQUAL(ret, 0);
@@ -141,7 +142,6 @@ test_writesame16_unmap(void)
 			"BlockLimits VPD is missing.");
 		CU_FAIL("[FAILED] WRITESAME16 works but "
 			"BlockLimits VPD is missing.");
-		free(buf);
 		return;
 	}
 
@@ -153,16 +153,17 @@ test_writesame16_unmap(void)
 			"lengths");
 
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
-		memset(buf, 0xff, block_size * i);
+		memset(buf, 0xff, i * block_size);
 		ret = write16(iscsic, tgt_lun, 0,
 			      i * block_size, block_size,
 			      0, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
+		memset(buf, 0, block_size);
 		ret = writesame16(iscsic, tgt_lun, 0,
 				  block_size, i,
-				  0, 1, 0, 0, NULL);
+				  0, 1, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		if (rc16->lbprz) {
@@ -191,10 +192,9 @@ test_writesame16_unmap(void)
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
 		ret = writesame16_invalidfieldincdb(iscsic, tgt_lun, 0,
 				  block_size, i,
-				  0, 1, 0, 0, NULL);
+				  0, 1, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
-
 
 
 	i = 65536;
@@ -205,16 +205,17 @@ test_writesame16_unmap(void)
 			"lengths");
 
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
-		memset(buf, 0xff, block_size * i);
+		memset(buf, 0xff, i * block_size);
 		ret = write16(iscsic, tgt_lun, 0,
 			      i * block_size, block_size,
 			      0, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
+		memset(buf, 0, block_size);
 		ret = writesame16(iscsic, tgt_lun, 0,
 				  block_size, i,
-				  0, 1, 0, 0, NULL);
+				  0, 1, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		if (rc16->lbprz) {
@@ -243,9 +244,8 @@ test_writesame16_unmap(void)
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
 		ret = writesame16_invalidfieldincdb(iscsic, tgt_lun, 0,
 				  block_size, i,
-				  0, 1, 0, 0, NULL);
+				  0, 1, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
-
 	free(buf);
 }

@@ -1539,7 +1539,6 @@ iscsi_writesame10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		scsi_free_scsi_task(task);
 		return NULL;
 	}
-
 	return task;
 }
 

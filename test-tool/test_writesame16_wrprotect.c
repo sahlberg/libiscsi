@@ -41,6 +41,7 @@ test_writesame16_wrprotect(void)
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
+	memset(buf, 0, block_size);
 	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {

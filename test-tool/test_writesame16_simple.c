@@ -31,7 +31,6 @@ test_writesame16_simple(void)
 {
 	int i, ret;
 	unsigned char *buf = alloca(block_size);
-
 	
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -39,6 +38,7 @@ test_writesame16_simple(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME16 of 1-256 blocks at the start of the LUN");
 
+	memset(buf, 0, block_size);
 	for (i = 1; i <= 256; i++) {
 		ret = writesame16(iscsic, tgt_lun, 0,
 				  block_size, i,

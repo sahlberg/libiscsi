@@ -29,14 +29,14 @@ void
 test_writesame16_beyond_eol(void)
 { 
 	int i, ret;
-	unsigned char *buf = alloca(256 * block_size);
-
+	unsigned char *buf = alloca(block_size);
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME16 1-256 blocks one block beyond the end");
+	memset(buf, 0, block_size);
 	for (i = 1; i <= 256; i++) {
 		ret = writesame16_lbaoutofrange(iscsic, tgt_lun, num_blocks - i + 1,
 						block_size, i,
