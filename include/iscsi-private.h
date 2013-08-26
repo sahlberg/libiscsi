@@ -269,6 +269,7 @@ struct scsi_task;
 void iscsi_pdu_set_cdb(struct iscsi_pdu *pdu, struct scsi_task *task);
 
 int iscsi_get_pdu_data_size(const unsigned char *hdr);
+int iscsi_get_pdu_padding_size(const unsigned char *hdr);
 int iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 
 int iscsi_process_login_reply(struct iscsi_context *iscsi,
