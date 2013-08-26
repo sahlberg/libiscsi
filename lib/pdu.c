@@ -230,9 +230,20 @@ iscsi_get_pdu_data_size(const unsigned char *hdr)
 	int size;
 
 	size = scsi_get_uint32(&hdr[4]) & 0x00ffffff;
-	size = (size+3) & 0xfffffffc;
 
 	return size;
+}
+
+
+int
+iscsi_get_pdu_padding_size(const unsigned char *hdr)
+{
+	int data_size, padded_size;
+
+	data_size = scsi_get_uint32(&hdr[4]) & 0x00ffffff;
+	padded_size = (data_size+3) & 0xfffffffc;
+
+	return padded_size - data_size;
 }
 
 enum iscsi_reject_reason {

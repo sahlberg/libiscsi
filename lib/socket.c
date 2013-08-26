@@ -482,7 +482,7 @@ static int
 iscsi_read_from_socket(struct iscsi_context *iscsi)
 {
 	struct iscsi_in_pdu *in;
-	ssize_t data_size, count;
+	ssize_t data_size, count, padding_size;
 
 	if (iscsi->incoming == NULL) {
 		iscsi->incoming = iscsi_szmalloc(iscsi, sizeof(struct iscsi_in_pdu));
@@ -519,31 +519,36 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		return 0;
 	}
 
-	data_size = iscsi_get_pdu_data_size(&in->hdr[0]);
+	padding_size = iscsi_get_pdu_padding_size(&in->hdr[0]);
+	data_size = iscsi_get_pdu_data_size(&in->hdr[0]) + padding_size;
+
 	if (data_size < 0 || data_size > (ssize_t)iscsi->initiator_max_recv_data_segment_length) {
 		iscsi_set_error(iscsi, "Invalid data size received from target (%d)", (int)data_size);
 		return -1;
 	}
 	if (data_size != 0) {
-		unsigned char *buf = NULL;
+		unsigned char padding_buf[3];
+		unsigned char *buf = padding_buf;
 		struct scsi_iovector * iovector_in;
 
 		count = data_size - in->data_pos;
 
 		/* first try to see if we already have a user buffer */
 		iovector_in = iscsi_get_scsi_task_iovector_in(iscsi, in);
-		if (iovector_in != NULL) {
+		if (iovector_in != NULL && count > padding_size) {
 			uint32_t offset = scsi_get_uint32(&in->hdr[40]);
-			count = iscsi_iovector_readv_writev(iscsi, iovector_in, in->data_pos + offset, count, 0);
+			count = iscsi_iovector_readv_writev(iscsi, iovector_in, in->data_pos + offset, count - padding_size, 0);
 		} else {
-			if (in->data == NULL) {
-				in->data = iscsi_malloc(iscsi, data_size);
+			if (iovector_in == NULL) {
 				if (in->data == NULL) {
-					iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu->data(%d)", (int)data_size);
-					return -1;
+					in->data = iscsi_malloc(iscsi, data_size);
+					if (in->data == NULL) {
+						iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu->data(%d)", (int)data_size);
+						return -1;
+					}
 				}
+				buf = &in->data[in->data_pos];
 			}
-			buf = &in->data[in->data_pos];
 			count = recv(iscsi->fd, buf, count, 0);
 		}
 		
@@ -588,7 +593,9 @@ static int
 iscsi_write_to_socket(struct iscsi_context *iscsi)
 {
 	ssize_t count;
+	size_t total;
 	struct iscsi_pdu *pdu;
+	static char padding_buf[3];
 
 	if (iscsi->fd == -1) {
 		iscsi_set_error(iscsi, "trying to write but not connected");
@@ -662,6 +669,27 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			}
 
 			pdu->payload_written += count;
+		}
+
+		total = pdu->payload_len;
+		total = (total + 3) & 0xfffffffc;
+
+		/* Write padding */
+		if (pdu->payload_written < total) {
+			count = send(iscsi->fd, padding_buf, total - pdu->payload_written, 0);
+			if (count == -1) {
+				if (errno == EAGAIN || errno == EWOULDBLOCK) {
+					return 0;
+				}
+				iscsi_set_error(iscsi, "Error when writing to "
+						"socket :%d", errno);
+				return -1;
+			}
+			pdu->payload_written += count;
+		}
+		/* if we havent written the full padding yet. */
+		if (pdu->payload_written != total) {
+			return 0;
 		}
 
 		if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
