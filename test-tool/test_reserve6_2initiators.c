@@ -51,7 +51,7 @@ test_reserve6_2initiators(void)
 
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	iscsic2 = iscsi_context_login(initiatorname1, tgt_url, &tgt_lun);
+	iscsic2 = iscsi_context_login(initiatorname2, tgt_url, &tgt_lun);
 	if (iscsic2 == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
