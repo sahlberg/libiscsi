@@ -21,6 +21,14 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test.h"
 
+static void bitwise_invert(unsigned char data[], int len) {
+	int j;
+
+	for (j = 0; j < len; j++) {
+		data[j] = ~data[j];
+	}
+}
+
 int T0340_compareandwrite_simple(const char *initiator, const char *url)
 { 
 	struct iscsi_context *iscsi;
@@ -80,9 +88,11 @@ int T0340_compareandwrite_simple(const char *initiator, const char *url)
 			goto finished;
 		}
 		memcpy(data, task->datain.data, i * block_size);
+		memcpy(data + (i * block_size), task->datain.data, i * block_size);
+		bitwise_invert(data + (i * block_size), i * block_size);
 		scsi_free_scsi_task(task);
 
-		task = iscsi_compareandwrite_sync(iscsi, lun, 0, data, i * block_size, block_size, 0, 0, 0, 0, 0);
+		task = iscsi_compareandwrite_sync(iscsi, lun, 0, data, i * 2 * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send COMPAREANDWRITE command: %s\n", iscsi_get_error(iscsi));
@@ -136,9 +146,11 @@ int T0340_compareandwrite_simple(const char *initiator, const char *url)
 			goto finished;
 		}
 		memcpy(data, task->datain.data, i * block_size);
+		memcpy(data + (i * block_size), task->datain.data, i * block_size);
+		bitwise_invert(data + (i * block_size), i * block_size);
 		scsi_free_scsi_task(task);
 
-		task = iscsi_compareandwrite_sync(iscsi, lun, num_blocks + 1 - i, data, i * block_size, block_size, 0, 0, 0, 0, 0);
+		task = iscsi_compareandwrite_sync(iscsi, lun, num_blocks + 1 - i, data, i * 2 * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send COMPAREANDWRITE command: %s\n", iscsi_get_error(iscsi));
