@@ -981,9 +981,9 @@ iscsi_compareandwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 	struct scsi_task *task;
 	struct iscsi_data d;
 
-	if (datalen % blocksize != 0) {
+	if (datalen % (blocksize * 2) != 0) {
 		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
-				"blocksize:%d.", datalen, blocksize);
+				"blocksize * 2:%d.", datalen, blocksize * 2);
 		return NULL;
 	}
 

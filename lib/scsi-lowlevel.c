@@ -1802,7 +1802,7 @@ scsi_cdb_compareandwrite(uint64_t lba, uint32_t xferlen, int blocksize, int wrpr
 
 	scsi_set_uint32(&task->cdb[2], lba >> 32);
 	scsi_set_uint32(&task->cdb[6], lba & 0xffffffff);
-	task->cdb[13] = xferlen/blocksize;
+	task->cdb[13] = xferlen/blocksize/2;
 
 	task->cdb[14] |= (group_number & 0x1f);
 	task->cdb_size = 16;
