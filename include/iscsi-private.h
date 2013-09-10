@@ -305,13 +305,13 @@ void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
 struct scsi_iovector *iscsi_get_scsi_task_iovector_in(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 struct scsi_iovector *iscsi_get_scsi_task_iovector_out(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
-inline void* iscsi_malloc(struct iscsi_context *iscsi, size_t size);
-inline void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);
-inline void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size);
-inline void iscsi_free(struct iscsi_context *iscsi, void* ptr);
-inline char* iscsi_strdup(struct iscsi_context *iscsi, const char* str);
-inline void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size);
-inline void iscsi_sfree(struct iscsi_context *iscsi, void* ptr);
+void* iscsi_malloc(struct iscsi_context *iscsi, size_t size);
+void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);
+void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size);
+void iscsi_free(struct iscsi_context *iscsi, void* ptr);
+char* iscsi_strdup(struct iscsi_context *iscsi, const char* str);
+void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size);
+void iscsi_sfree(struct iscsi_context *iscsi, void* ptr);
 
 unsigned long crc32c(char *buf, int len);
 
