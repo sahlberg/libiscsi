@@ -57,7 +57,7 @@ int T0343_compareandwrite_beyondeol(const char *initiator, const char *url)
 	/* read 1 - 255 blocks beyond the end of the device */
 	printf("Writing 1-255 blocks with one block beyond end-of-device ... ");
 	for (i = 1; i <= 255; i++) {
-		task = iscsi_compareandwrite_sync(iscsi, lun, num_blocks + 2 - i, data, i * block_size, block_size, 0, 0, 0, 0, 0);
+		task = iscsi_compareandwrite_sync(iscsi, lun, num_blocks + 2 - i, data, i * 2 * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send COMPAREANDWRITE command: %s\n", iscsi_get_error(iscsi));
@@ -97,7 +97,7 @@ int T0343_compareandwrite_beyondeol(const char *initiator, const char *url)
 	/* read 1 - 255 blocks at lba 2^63 */
 	printf("Writing 1-255 blocks at LBA 2^63 ... ");
 	for (i = 1; i < 256; i++) {
-		task = iscsi_compareandwrite_sync(iscsi, lun, 0x8000000000000000, data, i * block_size, block_size, 0, 0, 0, 0, 0);
+		task = iscsi_compareandwrite_sync(iscsi, lun, 0x8000000000000000, data, i * 2 * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send COMPAREANDWRITE command: %s\n", iscsi_get_error(iscsi));
@@ -128,7 +128,7 @@ int T0343_compareandwrite_beyondeol(const char *initiator, const char *url)
 	/* read 1 - 255 blocks at lba -1 */
 	printf("Writing 1-255 blocks at LBA -1 ... ");
 	for (i = 1; i < 256; i++) {
-		task = iscsi_compareandwrite_sync(iscsi, lun, 0xffffffffffffffff, data, i * block_size, block_size, 0, 0, 0, 0, 0);
+		task = iscsi_compareandwrite_sync(iscsi, lun, 0xffffffffffffffff, data, i * 2 * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send COMPAREANDWRITE command: %s\n", iscsi_get_error(iscsi));
@@ -159,7 +159,7 @@ int T0343_compareandwrite_beyondeol(const char *initiator, const char *url)
 	/* read 2-255 blocks, all but one block beyond the eol */
 	printf("Writing 1-255 blocks beyond eol starting at last block ... ");
 	for (i = 2; i < 256; i++) {
-		task = iscsi_compareandwrite_sync(iscsi, lun, num_blocks, data, i * block_size, block_size, 0, 0, 0, 0, 0);
+		task = iscsi_compareandwrite_sync(iscsi, lun, num_blocks, data, i * 2 * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 			printf("[FAILED]\n");
 			printf("Failed to send COMPAREANDWRITE command: %s\n", iscsi_get_error(iscsi));
