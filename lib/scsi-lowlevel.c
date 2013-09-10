@@ -235,7 +235,7 @@ scsi_pr_type_str(enum scsi_persistent_out_type pr_type)
 	return value_string_find(pr_type_strings, pr_type);
 }
 
-inline uint64_t
+uint64_t
 scsi_get_uint64(const unsigned char *c)
 {
 	uint64_t val;
@@ -248,7 +248,7 @@ scsi_get_uint64(const unsigned char *c)
 	return val;
 }
 
-inline uint32_t
+uint32_t
 scsi_get_uint32(const unsigned char *c)
 {
 	uint32_t val;
@@ -259,7 +259,7 @@ scsi_get_uint32(const unsigned char *c)
 	return val;
 }
 
-inline uint16_t
+uint16_t
 scsi_get_uint16(const unsigned char *c)
 {
 	uint16_t val;
@@ -314,7 +314,7 @@ task_get_uint8(struct scsi_task *task, int offset)
 	}
 }
 
-inline void
+void
 scsi_set_uint64(unsigned char *c, uint64_t v)
 {
 	uint32_t val;
@@ -327,7 +327,7 @@ scsi_set_uint64(unsigned char *c, uint64_t v)
 	scsi_set_uint32(c, val);
 }
 
-inline void
+void
 scsi_set_uint32(unsigned char *c, uint32_t val)
 {
 	c[0] = val >> 24;
@@ -336,7 +336,7 @@ scsi_set_uint32(unsigned char *c, uint32_t val)
 	c[3] = val;
 }
 
-inline void
+void
 scsi_set_uint16(unsigned char *c, uint16_t val)
 {
 	c[0] = val >> 8;
