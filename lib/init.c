@@ -33,13 +33,13 @@
 #include "iscsi-private.h"
 #include "slist.h"
 
-inline void* iscsi_malloc(struct iscsi_context *iscsi, size_t size) {
+void* iscsi_malloc(struct iscsi_context *iscsi, size_t size) {
 	void * ptr = malloc(size);
 	if (ptr != NULL) iscsi->mallocs++;
 	return ptr;
 }
 
-inline void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size) {
+void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size) {
 	void * ptr = malloc(size);
 	if (ptr != NULL) {
 		memset(ptr,0x00,size);
@@ -48,7 +48,7 @@ inline void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size) {
 	return ptr;
 }
 
-inline void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size) {
+void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size) {
 	void * _ptr = realloc(ptr, size);
 	if (_ptr != NULL) {
 		iscsi->reallocs++;
@@ -56,19 +56,19 @@ inline void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size) 
 	return _ptr;
 }
 
-inline void iscsi_free(struct iscsi_context *iscsi, void* ptr) {
+void iscsi_free(struct iscsi_context *iscsi, void* ptr) {
 	if (ptr == NULL) return;
 	free(ptr);
 	iscsi->frees++;
 }
 
-inline char* iscsi_strdup(struct iscsi_context *iscsi, const char* str) {
+char* iscsi_strdup(struct iscsi_context *iscsi, const char* str) {
 	char *str2 = strdup(str);
 	if (str2 != NULL) iscsi->mallocs++;
 	return str2;
 }
 
-inline void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size) {
+void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size) {
 	void *ptr;
 	if (size > iscsi->smalloc_size) return NULL;
 	if (iscsi->smalloc_free > 0) {
@@ -81,7 +81,7 @@ inline void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size) {
 	return ptr;
 }
 
-inline void iscsi_sfree(struct iscsi_context *iscsi, void* ptr) {
+void iscsi_sfree(struct iscsi_context *iscsi, void* ptr) {
 	if (ptr == NULL) return;
 	if (iscsi->smalloc_free == SMALL_ALLOC_MAX_FREE) {
 		/* SMALL_ALLOC_MAX_FREE should be adjusted that this happens rarely */

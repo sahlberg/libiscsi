@@ -159,6 +159,7 @@ Libiscsi has been tested on:
 * Windows (Win7-VisualStudio10)
 * OpenSolaris
 * Solaris 11 : Use "gmake" to build.
+* OS X
 
 RELEASE TARBALLS
 ================

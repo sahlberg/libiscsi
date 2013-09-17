@@ -58,7 +58,7 @@ int T0341_compareandwrite_mismatch(const char *initiator, const char *url)
 	/* write the first 1 - 255 blocks at the start of the LUN */
 	printf("Compare and write first 1-255 blocks (data is not matching) ... ");
 	for (i = 1; i < 256; i++) {
-		task = iscsi_read16_sync(iscsi, lun, 0, i * block_size, block_size, 0, 0, 0, 0, 0);
+		task = iscsi_read16_sync(iscsi, lun, 0, i * 2 * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send READ16 command: %s\n", iscsi_get_error(iscsi));
@@ -85,8 +85,10 @@ int T0341_compareandwrite_mismatch(const char *initiator, const char *url)
 
 		/* flip some bits */
 		data[ (i - 1) * block_size] ^= 0xa5;
+		/* set the write part of the data-out buffer to 1s */
+		memset(data + (i * block_size), 0xff, (i * block_size));
 
-		task = iscsi_compareandwrite_sync(iscsi, lun, 0, data, i * block_size, block_size, 0, 0, 0, 0, 0);
+		task = iscsi_compareandwrite_sync(iscsi, lun, 0, data, i * 2 * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send COMPAREANDWRITE command: %s\n", iscsi_get_error(iscsi));
@@ -153,8 +155,10 @@ int T0341_compareandwrite_mismatch(const char *initiator, const char *url)
 
 		/* flip some bits */
 		data[ (i - 1) * block_size] ^= 0xa5;
+		/* set the write part of the data-out buffer to 1s */
+		memset(data + (i * block_size), 0xff, (i * block_size));
 
-		task = iscsi_compareandwrite_sync(iscsi, lun, num_blocks + 1 - i, data, i * block_size, block_size, 0, 0, 0, 0, 0);
+		task = iscsi_compareandwrite_sync(iscsi, lun, num_blocks + 1 - i, data, i * 2 * block_size, block_size, 0, 0, 0, 0, 0);
 		if (task == NULL) {
 		        printf("[FAILED]\n");
 			printf("Failed to send COMPAREANDWRITE command: %s\n", iscsi_get_error(iscsi));

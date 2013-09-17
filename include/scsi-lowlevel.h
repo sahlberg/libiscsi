@@ -1074,10 +1074,10 @@ EXTERN struct scsi_task *scsi_cdb_writeverify16(uint64_t lba, uint32_t xferlen, 
 
 void *scsi_malloc(struct scsi_task *task, size_t size);
 
-inline uint32_t scsi_get_uint32(const unsigned char *c);
-inline uint16_t scsi_get_uint16(const unsigned char *c);
-inline void scsi_set_uint32(unsigned char *c, uint32_t val);
-inline void scsi_set_uint16(unsigned char *c, uint16_t val);
+uint32_t scsi_get_uint32(const unsigned char *c);
+uint16_t scsi_get_uint16(const unsigned char *c);
+void scsi_set_uint32(unsigned char *c, uint32_t val);
+void scsi_set_uint16(unsigned char *c, uint16_t val);
 
 #ifdef __cplusplus
 }
