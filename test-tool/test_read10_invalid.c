@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <alloca.h>
 
 #include <CUnit/CUnit.h>
 
@@ -31,7 +32,7 @@ void
 test_read10_invalid(void)
 {
 	struct iscsi_data data;
-	char buf[4096];
+	char *buf = alloca(block_size);
 	struct scsi_task *task_ret;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -234,10 +235,10 @@ test_read10_invalid(void)
 	task->cdb[8] = 1;
 	task->cdb_size = 10;
 	task->xfer_dir = SCSI_XFER_WRITE;
-	task->expxferlen = sizeof(buf);
+	task->expxferlen = block_size;
 
-	data.size = sizeof(buf);
-	data.data = (unsigned char *)&buf[0];
+	data.size = block_size;
+	data.data = (unsigned char *)buf;
 
 	iscsi_set_noautoreconnect(iscsic, 1);
 	iscsi_set_timeout(iscsic, 3);
