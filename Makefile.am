@@ -43,12 +43,13 @@ lib_libiscsi_la_SOURCES += lib/md5.c
 endif
 
 SONAME=3
+version_split = $(subst ., ,$(VERSION))
 SOMAJOR = $(firstword $(version_split))
 SOMINOR = $(word 2, $(version_split))
 SOREVISION = $(word 3, $(version_split))
-SOREL = $(shell echo $(SOMINOR) + $(SOREVISION))
+SOREL = $(shell echo $(SOMINOR) + $(SOREVISION) | bc)
 lib_libiscsi_la_LDFLAGS = \
-	-version-info $(SONAME):$(SOMAJOR):$(SOREL) -bindir $(bindir) -no-undefined \
+	-version-info $(SONAME):$(SOREL):0 -bindir $(bindir) -no-undefined \
 	-export-symbols $(srcdir)/lib/libiscsi.syms
 
 # libiscsi utilities
