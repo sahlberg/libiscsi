@@ -39,7 +39,7 @@ int T1120_persistent_register_simple(const char *initiator, const char *url)
 		printf("1, Register with a target using REGISTER_AND_IGNORE.\n");
 		printf("2, Make sure READ_KEYS sees the registration.\n");
 		printf("3, Make sure we cannot REGISTER again\n");
-		printf("4, Remove the registraion using REGISTER\n");
+		printf("4, Remove the registration using REGISTER\n");
 		printf("5, Make sure READ_KEYS shows the registration is gone.\n");
 		printf("\n");
 		return 0;
