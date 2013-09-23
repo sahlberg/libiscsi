@@ -16,7 +16,7 @@
 */
 
 #include <stdio.h>
-#include <alloca.h>
+#include <stdlib.h>
 #include <arpa/inet.h>
 #include <CUnit/CUnit.h>
 
