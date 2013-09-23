@@ -17,7 +17,7 @@
 
 #include <stdio.h>
 #include <inttypes.h>
-#include <alloca.h>
+#include <stdlib.h>
 
 #include <CUnit/CUnit.h>
 
