@@ -60,6 +60,11 @@ int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
  * list of tests and test suites
  *
  *****************************************************************/
+static CU_TestInfo tests_compareandwrite[] = {
+	{ (char *)"Simple", test_compareandwrite_simple },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_get_lba_status[] = {
 	{ (char *)"Simple", test_get_lba_status_simple },
 	{ (char *)"BeyondEol", test_get_lba_status_beyond_eol },
@@ -393,6 +398,8 @@ static CU_TestInfo tests_writeverify16[] = {
 
 /* SCSI protocol tests */
 static CU_SuiteInfo scsi_suites[] = {
+	{ (char *)"CompareAndWrite", test_setup, test_teardown,
+	  tests_compareandwrite },
 	{ (char *)"GetLBAStatus", test_setup, test_teardown,
 	  tests_get_lba_status },
 	{ (char *)"Inquiry", test_setup, test_teardown,
@@ -501,6 +508,8 @@ static CU_SuiteInfo iscsi_suites[] = {
 
 /* All tests */
 static CU_SuiteInfo all_suites[] = {
+	{ (char *)"CompareAndWrite", test_setup, test_teardown,
+	  tests_compareandwrite },
 	{ (char *)"GetLBAStatus", test_setup, test_teardown,
 	  tests_get_lba_status },
 	{ (char *)"Inquiry", test_setup, test_teardown,
@@ -583,6 +592,8 @@ static CU_SuiteInfo all_suites[] = {
 };
 
 static CU_SuiteInfo scsi_usb_sbc_suites[] = {
+	{ (char *)"CompareAndWrite", test_setup, test_teardown,
+	  tests_compareandwrite },
 	{ (char *)"GetLBAStatus", test_setup, test_teardown,
 	  tests_get_lba_status },
 	{ (char *)"Inquiry", test_setup, test_teardown,

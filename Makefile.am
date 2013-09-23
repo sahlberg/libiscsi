@@ -193,6 +193,7 @@ bin_iscsi_test_cu_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/test-tool
 bin_iscsi_test_cu_LDFLAGS = -ldl -lcunit
 bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/iscsi-support.c \
+	test-tool/test_compareandwrite_simple.c \
 	test-tool/test_get_lba_status_simple.c \
 	test-tool/test_get_lba_status_beyond_eol.c \
 	test-tool/test_inquiry_alloc_length.c \

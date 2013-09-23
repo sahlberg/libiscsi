@@ -40,6 +40,8 @@ int test_teardown(void);
 int test_setup_pgr(void);
 int test_teardown_pgr(void);
 
+void test_compareandwrite_simple(void);
+
 void test_get_lba_status_simple(void);
 void test_get_lba_status_beyond_eol(void);
 
