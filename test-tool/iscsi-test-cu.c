@@ -62,6 +62,7 @@ int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
  *****************************************************************/
 static CU_TestInfo tests_compareandwrite[] = {
 	{ (char *)"Simple", test_compareandwrite_simple },
+	{ (char *)"Miscompare", test_compareandwrite_miscompare },
 	CU_TEST_INFO_NULL
 };
 
