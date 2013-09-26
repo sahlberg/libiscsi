@@ -50,6 +50,10 @@ iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 	case SCSI_STATUS_CHECK_CONDITION:
 	case SCSI_STATUS_GOOD:
 	case SCSI_STATUS_BUSY:
+	case SCSI_STATUS_CONDITION_MET:
+	case SCSI_STATUS_TASK_SET_FULL:
+	case SCSI_STATUS_ACA_ACTIVE:
+	case SCSI_STATUS_TASK_ABORTED:
 	case SCSI_STATUS_ERROR:
 	case SCSI_STATUS_CANCELLED:
 		scsi_cbdata->callback(iscsi, status, scsi_cbdata->task,
@@ -381,6 +385,7 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 	switch (status) {
 	case SCSI_STATUS_GOOD:
+	case SCSI_STATUS_CONDITION_MET:
 		task->datain.data = pdu->indata.data;
 		task->datain.size = pdu->indata.size;
 
@@ -446,6 +451,21 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	case SCSI_STATUS_RESERVATION_CONFLICT:
 		iscsi_set_error(iscsi, "RESERVATION CONFLICT");
 		pdu->callback(iscsi, SCSI_STATUS_RESERVATION_CONFLICT,
+			task, pdu->private_data);
+		break;
+	case SCSI_STATUS_TASK_SET_FULL:
+		iscsi_set_error(iscsi, "TASK_SET_FULL");
+		pdu->callback(iscsi, SCSI_STATUS_TASK_SET_FULL,
+			task, pdu->private_data);
+		break;
+	case SCSI_STATUS_ACA_ACTIVE:
+		iscsi_set_error(iscsi, "ACA_ACTIVE");
+		pdu->callback(iscsi, SCSI_STATUS_ACA_ACTIVE,
+			task, pdu->private_data);
+		break;
+	case SCSI_STATUS_TASK_ABORTED:
+		iscsi_set_error(iscsi, "TASK_ABORTED");
+		pdu->callback(iscsi, SCSI_STATUS_TASK_ABORTED,
 			task, pdu->private_data);
 		break;
 	case SCSI_STATUS_BUSY:
