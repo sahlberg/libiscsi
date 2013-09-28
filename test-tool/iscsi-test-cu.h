@@ -35,10 +35,20 @@ extern struct iscsi_context *iscsic2;
 extern int tgt_lun2;
 extern unsigned char *read_write_buf;
 
-int test_setup(void);
-int test_teardown(void);
-int test_setup_pgr(void);
-int test_teardown_pgr(void);
+#ifdef HAVE_CU_SUITEINFO_PSETUPFUNC
+/* libcunit version 2 */
+#define CU_ST_RETTYPE void
+#define CU_ST_RETURN(v) return
+#else
+/* libcunit version 1 */
+#define CU_ST_RETTYPE int
+#define CU_ST_RETURN(v) return v
+#endif
+
+CU_ST_RETTYPE test_setup(void);
+CU_ST_RETTYPE test_teardown(void);
+CU_ST_RETTYPE test_setup_pgr(void);
+CU_ST_RETTYPE test_teardown_pgr(void);
 
 void test_compareandwrite_simple(void);
 void test_compareandwrite_miscompare(void);
