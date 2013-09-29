@@ -66,7 +66,7 @@ test_reserve6_itnexus_loss(void)
 	iscsic = iscsi_context_login(initiatorname1, tgt_url, &tgt_lun);
 	if (iscsic == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
-		return;
+		goto finished;
 	}
 
 	logging(LOG_NORMAL, "RESERVE6 from the second initiator should work now");
@@ -76,4 +76,9 @@ test_reserve6_itnexus_loss(void)
 	logging(LOG_NORMAL, "RELEASE6 from the second initiator");
 	ret = release6(iscsic2, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
+
+finished:
+	iscsi_logout_sync(iscsic2);
+	iscsi_destroy_context(iscsic2);
+	iscsic2 = NULL;
 }
