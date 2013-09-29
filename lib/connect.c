@@ -369,13 +369,13 @@ try_again:
 	iscsi->mallocs+=old_iscsi->mallocs;
 	iscsi->frees+=old_iscsi->frees;
 
+	ISCSI_LOG(iscsi, 2, "reconnect was successful");
+
 	memcpy(old_iscsi, iscsi, sizeof(struct iscsi_context));
-	memset(iscsi, 0, sizeof(struct iscsi_context));
 	free(iscsi);
 
 	old_iscsi->is_reconnecting = 0;
 	old_iscsi->last_reconnect = time(NULL);
-	ISCSI_LOG(iscsi, 2, "reconnect was successful");
 
 	return 0;
 }
