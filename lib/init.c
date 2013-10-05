@@ -82,17 +82,19 @@ void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size) {
 }
 
 void iscsi_sfree(struct iscsi_context *iscsi, void* ptr) {
-	if (ptr == NULL) return;
+	if (ptr == NULL) {
+		return;
+	}
 	if (iscsi->smalloc_free == SMALL_ALLOC_MAX_FREE) {
-		/* SMALL_ALLOC_MAX_FREE should be adjusted that this happens rarely */
-		ISCSI_LOG(iscsi,6,"smalloc free == SMALLOC_MAX_FREE");
 		int i;
+		/* SMALL_ALLOC_MAX_FREE should be adjusted that this happens rarely */
+		ISCSI_LOG(iscsi, 6, "smalloc free == SMALLOC_MAX_FREE");
 		/* remove oldest half of free pointers and copy
 		 * upper half to lower half */
-		iscsi->smalloc_free>>=1;
-		for (i=0; i<iscsi->smalloc_free; i++) {
+		iscsi->smalloc_free >>= 1;
+		for (i = 0; i < iscsi->smalloc_free; i++) {
 			iscsi_free(iscsi, iscsi->smalloc_ptrs[i]);
-			iscsi->smalloc_ptrs[i] = iscsi->smalloc_ptrs[i+iscsi->smalloc_free];
+			iscsi->smalloc_ptrs[i] = iscsi->smalloc_ptrs[i + iscsi->smalloc_free];
 		}
 	}
 	iscsi->smalloc_ptrs[iscsi->smalloc_free++] = ptr;
@@ -102,6 +104,7 @@ struct iscsi_context *
 iscsi_create_context(const char *initiator_name)
 {
 	struct iscsi_context *iscsi;
+	size_t required = ISCSI_RAW_HEADER_SIZE + ISCSI_DIGEST_SIZE;
 
 	if (!initiator_name[0]) {
 		return NULL;
@@ -177,10 +180,15 @@ iscsi_create_context(const char *initiator_name)
 	   max(ISCSI_HEADER_SIZE, sizeof(struct iscsi_pdu), sizeof(struct iscsi_in_pdu))
 	   rounded up to the next power of 2. */
 	iscsi->smalloc_size = 1;
-	size_t required = ISCSI_RAW_HEADER_SIZE + ISCSI_DIGEST_SIZE;
-	if (sizeof(struct iscsi_pdu) > required) required = sizeof(struct iscsi_pdu);
-	if (sizeof(struct iscsi_in_pdu) > required) required = sizeof(struct iscsi_in_pdu);
-	while (iscsi->smalloc_size < required) iscsi->smalloc_size <<= 1;
+	if (sizeof(struct iscsi_pdu) > required) {
+		required = sizeof(struct iscsi_pdu);
+	}
+	if (sizeof(struct iscsi_in_pdu) > required) {
+		required = sizeof(struct iscsi_in_pdu);
+	}
+	while (iscsi->smalloc_size < required) {
+		iscsi->smalloc_size <<= 1;
+	}
 	ISCSI_LOG(iscsi,5,"small allocation size is %d byte", iscsi->smalloc_size);
 
 	return iscsi;
