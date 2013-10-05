@@ -73,7 +73,11 @@ void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data) {
 	char dump[ISCSI_RAW_HEADER_SIZE*3+1]={0};
 	int i;
 	for (i=0;i<ISCSI_RAW_HEADER_SIZE;i++) {
-		snprintf(&dump[i*3], 4," %02x",data[i]);
+#if defined(WIN32)
+		_snprintf_s(&dump[i * 3], 4, 4, " %02x", data[i]);
+#else
+		snprintf(&dump[i * 3], 4, " %02x", data[i]);
+#endif
 	}
 	ISCSI_LOG(iscsi, 0, "PDU header:%s",dump);
 }

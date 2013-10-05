@@ -39,6 +39,7 @@
 
 #if defined(WIN32)
 #include <winsock2.h>
+#include "win32/win32_compat.h"
 #else
 #include <strings.h>
 #endif
