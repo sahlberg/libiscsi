@@ -638,7 +638,7 @@ typedef struct MD5Context *gcry_md_hd_t;
 #define gcry_md_write MD5Update
 #define GCRY_MD_MD5 1
 
-static inline void gcry_md_open(gcry_md_hd_t *hd, int algo, unsigned int flags)
+static void gcry_md_open(gcry_md_hd_t *hd, int algo, unsigned int flags)
 {
 	assert(algo == GCRY_MD_MD5 && flags == 0);
 	*hd = malloc(sizeof(struct MD5Context));
@@ -647,12 +647,12 @@ static inline void gcry_md_open(gcry_md_hd_t *hd, int algo, unsigned int flags)
 	}
 }
 
-static inline void gcry_md_putc(gcry_md_hd_t h, unsigned char c)
+static void gcry_md_putc(gcry_md_hd_t h, unsigned char c)
 {
 	MD5Update(h, &c, 1);
 }
 
-static inline char *gcry_md_read(gcry_md_hd_t h, int algo)
+static char *gcry_md_read(gcry_md_hd_t h, int algo)
 {
 	unsigned char digest[16];
 	assert(algo == 0 || algo == GCRY_MD_MD5);
@@ -661,7 +661,7 @@ static inline char *gcry_md_read(gcry_md_hd_t h, int algo)
 	return memcpy(h->buf, digest, sizeof(digest));
 }
 
-static inline void gcry_md_close(gcry_md_hd_t h)
+static void gcry_md_close(gcry_md_hd_t h)
 {
 	memset(h, 0, sizeof(*h));
 	free(h);
