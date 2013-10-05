@@ -321,10 +321,10 @@ void iscsi_set_noautoreconnect(struct iscsi_context *iscsi, int state);
 
 void iscsi_decrement_iface_rr(void);
 
-#define ISCSI_LOG(iscsi, level, format, args...) \
+#define ISCSI_LOG(iscsi, level, format, ...) \
 	do { \
 		if (level <= iscsi->log_level && iscsi->log_fn) { \
-			iscsi_log_message(iscsi, level, format, ## args); \
+			iscsi_log_message(iscsi, level, format, ## __VA_ARGS__); \
 		} \
 	} while (0)
 
