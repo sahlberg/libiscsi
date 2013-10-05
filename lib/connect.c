@@ -231,6 +231,7 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
 	struct iscsi_context *iscsi = old_iscsi;
+	int retry = 0;
 
 	/* if there is already a deferred reconnect do not try again */
 	if (iscsi->reconnect_deferred) {
@@ -248,8 +249,6 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 		iscsi_defer_reconnect(iscsi);
 		return 0;
 	}
-
-	int retry = 0;
 
 	if (old_iscsi->last_reconnect) {
 		if (time(NULL) - old_iscsi->last_reconnect < 5) sleep(5);
@@ -288,20 +287,21 @@ try_again:
 	iscsi->reconnect_max_retries = old_iscsi->reconnect_max_retries;
 
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
+		int backoff = retry;
+
 		if (iscsi->reconnect_max_retries != -1 && retry >= iscsi->reconnect_max_retries) {
 			iscsi_defer_reconnect(old_iscsi);
 			iscsi_destroy_context(iscsi);
 			return -1;
 		}
-		int backoff=retry;
 		if (backoff > 10) {
-			backoff+=rand()%10;
-			backoff-=5;
+			backoff += rand() % 10;
+			backoff -= 5;
 		}
 		if (backoff > 30) {
-			backoff=30;
+			backoff = 30;
 		}
-		ISCSI_LOG(iscsi, 1, "reconnect try %d failed, waiting %d seconds",retry,backoff);
+		ISCSI_LOG(iscsi, 1, "reconnect try %d failed, waiting %d seconds", retry, backoff);
 		iscsi_destroy_context(iscsi);
 		sleep(backoff);
 		retry++;
