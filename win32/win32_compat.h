@@ -48,7 +48,7 @@ typedef int socklen_t;
 #define poll(x, y, z)        win32_poll(x, y, z)
 #define inet_pton(x,y,z)     win32_inet_pton(x,y,z)
 #define sleep(x)             Sleep(x * 1000)
-#define snprintf(a, b, c, ...) _snprintf_s(a, b, b, c, ## __VA_ARGS)
+#define snprintf(a, b, c, ...) _snprintf_s(a, b, b, c, ## __VA_ARGS__)
 int     win32_inet_pton(int af, const char * src, void * dst);
 int     win32_poll(struct pollfd *fds, unsigned int nfsd, int timeout);
 int     win32_gettimeofday(struct timeval *tv, struct timezone *tz);
