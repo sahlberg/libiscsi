@@ -33,6 +33,7 @@
 
 #if defined(WIN32)
 #include <winsock2.h>
+#include "win32/win32_compat.h"
 #endif
 
 #include <stdio.h>
@@ -58,11 +59,7 @@ iscsi_login_add_initiatorname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return 0;
 	}
 
-#if defined(WIN32)
-	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "InitiatorName=%s", iscsi->initiator_name) == -1) {
-#else
 	if (snprintf(str, MAX_STRING_SIZE, "InitiatorName=%s", iscsi->initiator_name) == -1) {
-#endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
 		return -1;
 	}
@@ -85,11 +82,7 @@ iscsi_login_add_alias(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return 0;
 	}
 
-#if defined(WIN32)
-	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "InitiatorAlias=%s", iscsi->alias) == -1) {
-#else
 	if (snprintf(str, MAX_STRING_SIZE, "InitiatorAlias=%s", iscsi->alias) == -1) {
-#endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
 		return -1;
 	}
@@ -119,11 +112,7 @@ iscsi_login_add_targetname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return -1;
 	}
 
-#if defined(WIN32)
-	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "TargetName=%s", iscsi->target_name) == -1) {
-#else
 	if (snprintf(str, MAX_STRING_SIZE, "TargetName=%s", iscsi->target_name) == -1) {
-#endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
 		return -1;
 	}
@@ -235,11 +224,7 @@ iscsi_login_add_initialr2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return 0;
 	}
 
-#if defined(WIN32)
-	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "InitialR2T=%s", iscsi->want_initial_r2t == ISCSI_INITIAL_R2T_NO ?
-#else
 	if (snprintf(str, MAX_STRING_SIZE, "InitialR2T=%s", iscsi->want_initial_r2t == ISCSI_INITIAL_R2T_NO ?
-#endif
 		       "No" : "Yes") == -1) {
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
 		return -1;
@@ -264,11 +249,7 @@ iscsi_login_add_immediatedata(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return 0;
 	}
 
-#if defined(WIN32)
-	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "ImmediateData=%s", iscsi->want_immediate_data == ISCSI_IMMEDIATE_DATA_NO ?
-#else
 	if (snprintf(str, MAX_STRING_SIZE, "ImmediateData=%s", iscsi->want_immediate_data == ISCSI_IMMEDIATE_DATA_NO ?
-#endif
 		       "No" : "Yes") == -1) {
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
 		return -1;
@@ -293,11 +274,7 @@ iscsi_login_add_maxburstlength(struct iscsi_context *iscsi, struct iscsi_pdu *pd
 		return 0;
 	}
 
-#if defined(WIN32)
-	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "MaxBurstLength=%d", iscsi->max_burst_length) == -1) {
-#else
 	if (snprintf(str, MAX_STRING_SIZE, "MaxBurstLength=%d", iscsi->max_burst_length) == -1) {
-#endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
 		return -1;
 	}
@@ -320,11 +297,7 @@ iscsi_login_add_firstburstlength(struct iscsi_context *iscsi, struct iscsi_pdu *
 		return 0;
 	}
 
-#if defined(WIN32)
-	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "FirstBurstLength=%d", iscsi->first_burst_length) == -1) {
-#else
 	if (snprintf(str, MAX_STRING_SIZE, "FirstBurstLength=%d", iscsi->first_burst_length) == -1) {
-#endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
 		return -1;
 	}
@@ -347,11 +320,7 @@ iscsi_login_add_maxrecvdatasegmentlength(struct iscsi_context *iscsi, struct isc
 		return 0;
 	}
 
-#if defined(WIN32)
-	if (_snprintf_s(str, MAX_STRING_SIZE, MAX_STRING_SIZE, "MaxRecvDataSegmentLength=%d", iscsi->initiator_max_recv_data_segment_length) == -1) {
-#else
 	if (snprintf(str, MAX_STRING_SIZE, "MaxRecvDataSegmentLength=%d", iscsi->initiator_max_recv_data_segment_length) == -1) {
-#endif
 		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
 		return -1;
 	}

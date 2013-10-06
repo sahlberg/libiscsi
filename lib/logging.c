@@ -30,6 +30,10 @@
 #include <unistd.h>
 #endif
 
+#if defined(WIN32)
+#include "win32/win32_compat.h"
+#endif
+
 #include <stdio.h>
 #include <stdarg.h>
 #include "iscsi.h"
@@ -69,11 +73,8 @@ iscsi_log_message(struct iscsi_context *iscsi, int level, const char *format, ..
 
 	if (iscsi->target_name[0]) {
 		static char message2[1024];
-#if defined(WIN32)
-		_snprintf_s(message2, 1024, 1024, "%s [%s]", message, iscsi->target_name);
-#else
+
 		snprintf(message2, 1024, "%s [%s]", message, iscsi->target_name);
-#endif
 		iscsi->log_fn(level, message2);
 	}
 	else
