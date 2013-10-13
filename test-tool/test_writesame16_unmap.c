@@ -54,7 +54,7 @@ test_writesame16_unmap(void)
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support WRITESAME16. Skipping test");
-			return;
+			goto finished;
 		}
 		CU_ASSERT_EQUAL(ret, 0);
 
@@ -142,7 +142,7 @@ test_writesame16_unmap(void)
 			"BlockLimits VPD is missing.");
 		CU_FAIL("[FAILED] WRITESAME16 works but "
 			"BlockLimits VPD is missing.");
-		return;
+		goto finished;
 	}
 
 	i = 256;
@@ -247,5 +247,7 @@ test_writesame16_unmap(void)
 				  0, 1, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
+
+finished:
 	free(buf);
 }

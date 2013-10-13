@@ -299,8 +299,13 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 				struct iscsi_in_pdu *in);
 int iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt);
 
+#if defined(WIN32)
+void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
+		     ...);
+#else
 void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
 		     ...) __attribute__((format(printf, 2, 3)));
+#endif
 
 struct scsi_iovector *iscsi_get_scsi_task_iovector_in(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 struct scsi_iovector *iscsi_get_scsi_task_iovector_out(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
@@ -321,10 +326,10 @@ void iscsi_set_noautoreconnect(struct iscsi_context *iscsi, int state);
 
 void iscsi_decrement_iface_rr(void);
 
-#define ISCSI_LOG(iscsi, level, format, args...) \
+#define ISCSI_LOG(iscsi, level, format, ...) \
 	do { \
 		if (level <= iscsi->log_level && iscsi->log_fn) { \
-			iscsi_log_message(iscsi, level, format, ## args); \
+			iscsi_log_message(iscsi, level, format, ## __VA_ARGS__); \
 		} \
 	} while (0)
 

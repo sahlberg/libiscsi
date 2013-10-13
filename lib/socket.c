@@ -41,6 +41,7 @@
 #if defined(WIN32)
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include "win32/win32_compat.h"
 #define ioctl ioctlsocket
 #define close closesocket
 #else
@@ -56,6 +57,7 @@
 #include <sys/filio.h>
 #endif
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -140,7 +142,7 @@ int set_tcp_sockopt(int sockfd, int optname, int value)
 		level = SOL_TCP;
 	#endif
 
-	return setsockopt(sockfd, level, optname, &value, sizeof(value));
+	return setsockopt(sockfd, level, optname, (char *)&value, sizeof(value));
 }
 
 #ifndef TCP_USER_TIMEOUT
@@ -327,7 +329,11 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	}
 
 	if (connect(iscsi->fd, &sa.sa, socksize) != 0
+#if defined(WIN32)
+	    && WSAGetLastError() != WSAEWOULDBLOCK) {
+#else
 	    && errno != EINPROGRESS) {
+#endif
 		iscsi_set_error(iscsi, "Connect failed with errno : "
 				"%s(%d)", strerror(errno), errno);
 		close(iscsi->fd);
@@ -700,7 +706,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 	return 0;
 }
 
-static inline int
+static int
 iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 {
 	if (iscsi->is_loggedin) {
@@ -719,7 +725,7 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 		socklen_t err_size = sizeof(err);
 
 		if (getsockopt(iscsi->fd, SOL_SOCKET, SO_ERROR,
-			       &err, &err_size) != 0 || err != 0) {
+			       (char *)&err, &err_size) != 0 || err != 0) {
 			if (err == 0) {
 				err = errno;
 			}
@@ -751,8 +757,11 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 	if (iscsi->is_connected == 0 && iscsi->fd != -1 && revents&POLLOUT) {
 		int err = 0;
 		socklen_t err_size = sizeof(err);
+		struct sockaddr_in local;
+		socklen_t local_l = sizeof(local);
+
 		if (getsockopt(iscsi->fd, SOL_SOCKET, SO_ERROR,
-			       &err, &err_size) != 0 || err != 0) {
+			       (char *)&err, &err_size) != 0 || err != 0) {
 			if (err == 0) {
 				err = errno;
 			}
@@ -768,8 +777,6 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 
-		struct sockaddr_in local;
-		socklen_t local_l = sizeof(local);
 		if (getsockname(iscsi->fd, (struct sockaddr *) &local, &local_l) == 0) {
 			ISCSI_LOG(iscsi, 2, "connection established (%s:%u -> %s)", inet_ntoa(local.sin_addr),
 						(unsigned)ntohs(local.sin_port),iscsi->connected_portal);
@@ -881,7 +888,7 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle _U_, int count
 {
 #ifdef SO_KEEPALIVE
 	int value = 1;
-	if (setsockopt(iscsi->fd, SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value)) != 0) {
+	if (setsockopt(iscsi->fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&value, sizeof(value)) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set socket option SO_KEEPALIVE. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}

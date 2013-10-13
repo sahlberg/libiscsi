@@ -70,7 +70,6 @@ test_read6_simple(void)
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] READ6 command: "
 			"failed with sense. %s", iscsi_get_error(iscsic));
-		scsi_free_scsi_task(task);
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 

@@ -50,6 +50,7 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 	if (status != 0) {
 		if (task->sense.key == SCSI_SENSE_UNIT_ATTENTION
 		    && (task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET ||
+			task->sense.ascq == SCSI_SENSE_ASCQ_POWER_ON_OCCURED ||
 			task->sense.ascq == SCSI_SENSE_ASCQ_NEXUS_LOSS)) {
 			/* This is just the normal unitattention/busreset
 			 * you always get just after a fresh login. Try
@@ -231,6 +232,7 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
 	struct iscsi_context *iscsi = old_iscsi;
+	int retry = 0;
 
 	/* if there is already a deferred reconnect do not try again */
 	if (iscsi->reconnect_deferred) {
@@ -248,8 +250,6 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 		iscsi_defer_reconnect(iscsi);
 		return 0;
 	}
-
-	int retry = 0;
 
 	if (old_iscsi->last_reconnect) {
 		if (time(NULL) - old_iscsi->last_reconnect < 5) sleep(5);
@@ -288,20 +288,21 @@ try_again:
 	iscsi->reconnect_max_retries = old_iscsi->reconnect_max_retries;
 
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
+		int backoff = retry;
+
 		if (iscsi->reconnect_max_retries != -1 && retry >= iscsi->reconnect_max_retries) {
 			iscsi_defer_reconnect(old_iscsi);
 			iscsi_destroy_context(iscsi);
 			return -1;
 		}
-		int backoff=retry;
 		if (backoff > 10) {
-			backoff+=rand()%10;
-			backoff-=5;
+			backoff += rand() % 10;
+			backoff -= 5;
 		}
 		if (backoff > 30) {
-			backoff=30;
+			backoff = 30;
 		}
-		ISCSI_LOG(iscsi, 1, "reconnect try %d failed, waiting %d seconds",retry,backoff);
+		ISCSI_LOG(iscsi, 1, "reconnect try %d failed, waiting %d seconds", retry, backoff);
 		iscsi_destroy_context(iscsi);
 		sleep(backoff);
 		retry++;
@@ -345,7 +346,7 @@ try_again:
 
 		pdu->outdata_written = 0;
 		pdu->payload_written = 0;
-		iscsi_add_to_outqueue(iscsi, pdu);
+		iscsi_queue_pdu(iscsi, pdu);
 	}
 
 	if (dup2(iscsi->fd, old_iscsi->fd) == -1) {
@@ -369,13 +370,13 @@ try_again:
 	iscsi->mallocs+=old_iscsi->mallocs;
 	iscsi->frees+=old_iscsi->frees;
 
+	ISCSI_LOG(iscsi, 2, "reconnect was successful");
+
 	memcpy(old_iscsi, iscsi, sizeof(struct iscsi_context));
-	memset(iscsi, 0, sizeof(struct iscsi_context));
 	free(iscsi);
 
 	old_iscsi->is_reconnecting = 0;
 	old_iscsi->last_reconnect = time(NULL);
-	ISCSI_LOG(iscsi, 2, "reconnect was successful");
 
 	return 0;
 }

@@ -198,4 +198,14 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz)
   return 0;
 }
 
+ssize_t win32_readv(int fd, const struct iovec *iov, int iovcnt)
+{
+	return read(fd, iov[0].iov_base, iov[0].iov_len);
+}
+
+ssize_t win32_writev(int fd, const struct iovec *iov, int iovcnt)
+{
+	return write(fd, iov[0].iov_base, iov[0].iov_len);
+}
+
 #endif

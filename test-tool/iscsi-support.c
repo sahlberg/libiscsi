@@ -1757,6 +1757,58 @@ int compareandwrite(struct iscsi_context *iscsi, int lun, uint64_t lba,
 	return 0;
 }
 
+int compareandwrite_miscompare(struct iscsi_context *iscsi, int lun,
+			       uint64_t lba, unsigned char *data,
+			       uint32_t len, int blocksize,
+			       int wrprotect, int dpo,
+			       int fua, int group_number)
+{
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send COMPARE_AND_WRITE LBA:%" PRIu64
+		" LEN:%d WRPROTECT:%d (expecting MISCOMPARE)",
+		lba, len, wrprotect);
+
+	task = iscsi_compareandwrite_sync(iscsi, lun, lba,
+		   data, len, blocksize,
+		   wrprotect, dpo, fua, 0, group_number);
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send COMPARE_AND_WRITE "
+			"command: %s",
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] COMPARE_AND_WRITE is not "
+			"implemented on target");
+		scsi_free_scsi_task(task);
+		return -2;
+	}
+	if (task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] COMPARE_AND_WRITE successful "
+			"but should have failed with MISCOMPARE.");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	if (task->status        != SCSI_STATUS_CHECK_CONDITION
+		|| task->sense.key  != SCSI_SENSE_MISCOMPARE
+		|| task->sense.ascq != SCSI_SENSE_ASCQ_MISCOMPARE_DURING_VERIFY) {
+		logging(LOG_NORMAL, "[FAILED] COMPARE_AND_WRITE failed with "
+			"the wrong sense code. Should have failed with "
+			"MISCOMPARE/MISCOMPARE_DURING_VERIFY but failed with "
+			"sense:%s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "[OK] COMPARE_AND_WRITE returned MISCOMPARE.");
+	return 0;
+}
+
 struct scsi_task *get_lba_status_task(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len)
 {
 	struct scsi_task *task;

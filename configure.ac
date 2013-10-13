@@ -111,5 +111,14 @@ fi
 AM_CONDITIONAL(ISCSITEST, [test "$ac_cv_have_cunit" = yes])
 
 
+AC_CHECK_MEMBER([struct CU_SuiteInfo.pSetUpFunc],
+		[AC_DEFINE([HAVE_CU_SUITEINFO_PSETUPFUNC], 1,
+		 [Define to 1 if struct CU_SuiteInfo has a member called pSetUpFunc])],
+		 [], [[
+#include <CUnit/CUnit.h>
+#include <CUnit/TestDB.h>
+]])
+
+
 AC_CONFIG_FILES(Makefile libiscsi.pc)
 AC_OUTPUT

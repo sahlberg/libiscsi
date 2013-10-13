@@ -32,19 +32,33 @@ THE SOFTWARE.
 #include <Ws2ipdef.h>
 #include <basetsd.h>
 #include <io.h>
+#include <malloc.h>
 #include <sys/stat.h>
 
+#define SOL_TCP IPPROTO_TCP
+
+typedef int ssize_t;
 typedef int uid_t;
 typedef int gid_t;
 typedef int socklen_t;
 
 /* Wrapper macros to call misc. functions win32 is missing */
+#define writev win32_writev
+#define readv win32_readv
 #define poll(x, y, z)        win32_poll(x, y, z)
 #define inet_pton(x,y,z)     win32_inet_pton(x,y,z)
 #define sleep(x)             Sleep(x * 1000)
+#define snprintf(a, b, c, ...) _snprintf_s(a, b, b, c, ## __VA_ARGS__)
 int     win32_inet_pton(int af, const char * src, void * dst);
 int     win32_poll(struct pollfd *fds, unsigned int nfsd, int timeout);
 int     win32_gettimeofday(struct timeval *tv, struct timezone *tz);
+
+struct iovec {
+    void *iov_base;
+    size_t iov_len;
+};
+
+#define inline
 
 #endif//win32_COMPAT_H_
 #endif//WIN32
