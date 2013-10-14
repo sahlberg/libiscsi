@@ -161,11 +161,15 @@ test_write10_residuals(void)
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
-	if (task->status != SCSI_STATUS_GOOD) {
+	if (task->status != SCSI_STATUS_GOOD
+	    && !(task->status == SCSI_STATUS_CHECK_CONDITION
+		 && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
+		 && task->sense.ascq ==
+		 SCSI_SENSE_ASCQ_INVALID_FIELD_IN_INFORMATION_UNIT)) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
 			iscsi_get_error(iscsic));
+		CU_ASSERT(0);
 	}
-	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Verify residual overflow flag is set");
 	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW) {

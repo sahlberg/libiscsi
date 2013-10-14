@@ -177,6 +177,7 @@ EXTERN const char *scsi_sense_key_str(int key);
 #define SCSI_SENSE_ASCQ_INTERNAL_TARGET_FAILURE            0x4400
 #define SCSI_SENSE_ASCQ_MEDIUM_LOAD_OR_EJECT_FAILED        0x5300
 #define SCSI_SENSE_ASCQ_MEDIUM_REMOVAL_PREVENTED           0x5302
+#define SCSI_SENSE_ASCQ_INVALID_FIELD_IN_INFORMATION_UNIT  0x0e03
 
 EXTERN const char *scsi_sense_ascq_str(int ascq);
 
