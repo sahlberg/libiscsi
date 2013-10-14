@@ -43,6 +43,10 @@ test_inquiry_block_limits(void)
 		      1, SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS,
 		      64, &bl_task);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret != 0) {
+		logging(LOG_NORMAL, "[FAILURE] failed to send inquiry.");
+		goto finished;
+	}
 
 	bl = scsi_datain_unmarshall(bl_task);
 	if (bl == NULL) {
