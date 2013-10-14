@@ -74,9 +74,11 @@ int T0184_writesame10_0blocks(const char *initiator, const char *url)
 		ret = -2;
 		goto finished;
 	}
-	if (task->status != SCSI_STATUS_GOOD) {
+	if ((!inq_bl->wsnz && task->status != SCSI_STATUS_GOOD) ||
+	    (inq_bl->wsnz && task->status != SCSI_STATUS_CHECK_CONDITION)) {
 	        printf("[FAILED]\n");
-		printf("WRITESAME10 command: failed with sense. %s\n", iscsi_get_error(iscsi));
+		printf("WRITESAME10 command: failed with sense and WSNZ = %d. "
+		       "%s\n", inq_bl->wsnz, iscsi_get_error(iscsi));
 		ret = -1;
 		scsi_free_scsi_task(task);
 		goto finished;
