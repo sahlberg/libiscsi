@@ -57,6 +57,7 @@
 #include <sys/filio.h>
 #endif
 
+#include <sys/uio.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
