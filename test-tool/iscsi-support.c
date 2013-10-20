@@ -1607,7 +1607,7 @@ int
 testunitready_clear_ua(struct iscsi_context *iscsi, int lun)
 {
 	struct scsi_task *task;
-
+	int ret = -1;
 
 	logging(LOG_VERBOSE,
 	    "Send TESTUNITREADY (To Clear Possible UA) init=%s",
@@ -1618,18 +1618,21 @@ testunitready_clear_ua(struct iscsi_context *iscsi, int lun)
 		logging(LOG_NORMAL,
 			"[FAILED] Failed to send TESTUNITREADY command: %s",
 			iscsi_get_error(iscsi));
-		return -1;
+		goto out;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 			"[INFO] TESTUNITREADY command: failed with sense. %s",
 			iscsi_get_error(iscsi));
-			return -1;
+		goto out;
 	}
-	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] TESTUNITREADY does not return unit "
 		"attention.");
-	return 0;
+	ret = 0;
+
+out:
+	scsi_free_scsi_task(task);
+	return ret;
 }
 
 int
