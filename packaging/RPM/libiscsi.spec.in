@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.9.0
+Version: 1.10.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -94,6 +94,16 @@ The libiscsi-devel package includes the header files for libiscsi.
 %{_libdir}/pkgconfig/libiscsi.pc
 
 %changelog
+* Sun Oct 20 2013 : 1.10.0
+ - Add manpages for iscsi-ls/iscsi-inq and iscsi-swp
+ - Many new tests and updates to the testsuite.
+ - Fix memory leak in iscsi_reconnect
+ - Fixes to the persistent reservation tests
+ - AROS support
+ - Fix/restore windows support
+ - Switch to libgcrypt for the MD5 support.
+ - Fix buffer overflow in the persistent reserver unmarshalling code.
+ - And many more minor fixes.
 * Sun Feb 24 2013 : 1.9.0
  - Add new CUnit based test tool: iscsi-test-cu to replace iscsi-test
  - Add tests for persistent reservation
