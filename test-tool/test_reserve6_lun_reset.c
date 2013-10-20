@@ -70,4 +70,8 @@ test_reserve6_lun_reset(void)
 	logging(LOG_VERBOSE, "RELEASE6 from the second initiator");
 	ret = release6(iscsic2, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
+
+	iscsi_logout_sync(iscsic2);
+	iscsi_destroy_context(iscsic2);
+	iscsic2 = NULL;
 }
