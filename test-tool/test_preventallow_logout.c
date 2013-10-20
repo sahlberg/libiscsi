@@ -50,6 +50,7 @@ test_preventallow_logout(void)
 	
 	logging(LOG_VERBOSE, "Logout from target");
 	iscsi_logout_sync(iscsic);
+	iscsi_destroy_context(iscsic);
 
 	logging(LOG_VERBOSE, "Relogin to target");
 	iscsic = iscsi_context_login(initiatorname1, tgt_url, &tgt_lun);
