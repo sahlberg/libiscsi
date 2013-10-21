@@ -66,6 +66,9 @@ scsi_free_scsi_task(struct scsi_task *task)
 {
 	struct scsi_allocated_memory *mem;
 
+	if (!task)
+		return;
+
 	while ((mem = task->mem)) {
 		   SLIST_REMOVE(&task->mem, mem);
 		   free(mem);
