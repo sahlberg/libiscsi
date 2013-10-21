@@ -25,6 +25,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "iscsi-support.h"
 
 /* globals between setup, tests, and teardown */
@@ -35,20 +39,18 @@ extern struct iscsi_context *iscsic2;
 extern int tgt_lun2;
 extern unsigned char *read_write_buf;
 
-#ifdef HAVE_CU_SUITEINFO_PSETUPFUNC
-/* libcunit version 2 */
-#define CU_ST_RETTYPE void
-#define CU_ST_RETURN(v) return
-#else
+#ifndef HAVE_CU_SUITEINFO_PSETUPFUNC
 /* libcunit version 1 */
-#define CU_ST_RETTYPE int
-#define CU_ST_RETURN(v) return v
+typedef void (*CU_SetUpFunc)(void);
+typedef void (*CU_TearDownFunc)(void);
 #endif
 
-CU_ST_RETTYPE test_setup(void);
-CU_ST_RETTYPE test_teardown(void);
-CU_ST_RETTYPE test_setup_pgr(void);
-CU_ST_RETTYPE test_teardown_pgr(void);
+int suite_init(void);
+int suite_cleanup(void);
+int suite_init_pgr(void);
+int suite_cleanup_pgr(void);
+void test_setup(void);
+void test_teardown(void);
 
 void test_compareandwrite_simple(void);
 void test_compareandwrite_miscompare(void);

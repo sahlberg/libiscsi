@@ -400,88 +400,56 @@ typedef struct libiscsi_suite_info {
         const char       *pName;         /**< Suite name. */
         CU_InitializeFunc pInitFunc;     /**< Suite initialization function. */
         CU_CleanupFunc    pCleanupFunc;  /**< Suite cleanup function */
+        CU_SetUpFunc      pSetUpFunc;    /**< Test setup function. */
+        CU_TearDownFunc   pTearDownFunc; /**< Test tear down function */
         CU_TestInfo      *pTests;        /**< Test case array - must be NULL terminated. */
 } libiscsi_suite_info;
 
+#define NON_PGR_FUNCS suite_init, suite_cleanup, test_setup, test_teardown
+#define PGR_FUNCS suite_init_pgr, suite_cleanup_pgr, test_setup, test_teardown
+
 /* SCSI protocol tests */
 static libiscsi_suite_info scsi_suites[] = {
-	{ "CompareAndWrite", test_setup, test_teardown,
-	  tests_compareandwrite },
-	{ "GetLBAStatus", test_setup, test_teardown,
-	  tests_get_lba_status },
-	{ "Inquiry", test_setup, test_teardown,
-	  tests_inquiry },
-	{ "Mandatory", test_setup, test_teardown,
-	  tests_mandatory },
-	{ "ModeSense6", test_setup, test_teardown,
-	  tests_modesense6 },
-	{ "NoMedia", test_setup, test_teardown,
-	  tests_nomedia },
-	{ "OrWrite", test_setup, test_teardown,
-	  tests_orwrite },
-	{ "Prefetch10", test_setup, test_teardown,
-	  tests_prefetch10 },
-	{ "Prefetch16", test_setup, test_teardown,
-	  tests_prefetch16 },
-	{ "PreventAllow", test_setup, test_teardown,
-	  tests_preventallow },
-	{ "PrinReadKeys", test_setup, test_teardown,
-	  tests_prin_read_keys },
-	{ "PrinServiceactionRange", test_setup, test_teardown,
-	  tests_prin_serviceaction_range },
-	{ "ProutRegister", test_setup, test_teardown,
-	  tests_prout_register },
-	{ "ProutReserve", test_setup_pgr, test_teardown_pgr,
-	  tests_prout_reserve },
-	{ "Read6", test_setup, test_teardown,
-	  tests_read6 },
-	{ "Read10", test_setup, test_teardown,
-	  tests_read10 },
-	{ "Read12", test_setup, test_teardown,
-	  tests_read12 },
-	{ "Read16", test_setup, test_teardown,
-	  tests_read16 },
-	{ "ReadCapacity10", test_setup, test_teardown,
-	  tests_readcapacity10 },
-	{ "ReadCapacity16", test_setup, test_teardown,
-	  tests_readcapacity16 },
-	{ "ReadOnly", test_setup, test_teardown,
-	  tests_readonly },
-	{ "ReportSupportedOpcodes", test_setup, test_teardown,
+	{ "CompareAndWrite", NON_PGR_FUNCS, tests_compareandwrite },
+	{ "GetLBAStatus", NON_PGR_FUNCS, tests_get_lba_status },
+	{ "Inquiry", NON_PGR_FUNCS, tests_inquiry },
+	{ "Mandatory", NON_PGR_FUNCS, tests_mandatory },
+	{ "ModeSense6", NON_PGR_FUNCS, tests_modesense6 },
+	{ "NoMedia", NON_PGR_FUNCS, tests_nomedia },
+	{ "OrWrite", NON_PGR_FUNCS, tests_orwrite },
+	{ "Prefetch10", NON_PGR_FUNCS, tests_prefetch10 },
+	{ "Prefetch16", NON_PGR_FUNCS, tests_prefetch16 },
+	{ "PreventAllow", NON_PGR_FUNCS, tests_preventallow },
+	{ "PrinReadKeys", NON_PGR_FUNCS, tests_prin_read_keys },
+	{ "PrinServiceactionRange", NON_PGR_FUNCS, tests_prin_serviceaction_range },
+	{ "ProutRegister", NON_PGR_FUNCS, tests_prout_register },
+	{ "ProutReserve", PGR_FUNCS, tests_prout_reserve },
+	{ "Read6", NON_PGR_FUNCS, tests_read6 },
+	{ "Read10", NON_PGR_FUNCS, tests_read10 },
+	{ "Read12", NON_PGR_FUNCS, tests_read12 },
+	{ "Read16", NON_PGR_FUNCS, tests_read16 },
+	{ "ReadCapacity10", NON_PGR_FUNCS, tests_readcapacity10 },
+	{ "ReadCapacity16", NON_PGR_FUNCS, tests_readcapacity16 },
+	{ "ReadOnly", NON_PGR_FUNCS, tests_readonly },
+	{ "ReportSupportedOpcodes", NON_PGR_FUNCS,
 	  tests_report_supported_opcodes },
-	{ "Reserve6", test_setup, test_teardown,
-	  tests_reserve6 },
-	{ "Sanitize", test_setup, test_teardown,
-	  tests_sanitize },
-	{ "StartStopUnit", test_setup, test_teardown,
-	  tests_startstopunit },
-	{ "UnitReady", test_setup, test_teardown,
-	  tests_testunitready },
-	{ "Unmap", test_setup, test_teardown,
-	  tests_unmap },
-	{ "Verify10", test_setup, test_teardown,
-	  tests_verify10 },
-	{ "Verify12", test_setup, test_teardown,
-	  tests_verify12 },
-	{ "Verify16", test_setup, test_teardown,
-	  tests_verify16 },
-	{ "Write10", test_setup, test_teardown,
-	  tests_write10 },
-	{ "Write12", test_setup, test_teardown,
-	  tests_write12 },
-	{ "Write16", test_setup, test_teardown,
-	  tests_write16 },
-	{ "WriteSame10", test_setup, test_teardown,
-	  tests_writesame10 },
-	{ "WriteSame16", test_setup, test_teardown,
-	  tests_writesame16 },
-	{ "WriteVerify10", test_setup, test_teardown,
-	  tests_writeverify10 },
-	{ "WriteVerify12", test_setup, test_teardown,
-	  tests_writeverify12 },
-	{ "WriteVerify16", test_setup, test_teardown,
-	  tests_writeverify16 },
-	{ NULL, NULL, NULL, NULL }
+	{ "Reserve6", NON_PGR_FUNCS, tests_reserve6 },
+	{ "Sanitize", NON_PGR_FUNCS, tests_sanitize },
+	{ "StartStopUnit", NON_PGR_FUNCS, tests_startstopunit },
+	{ "UnitReady", NON_PGR_FUNCS, tests_testunitready },
+	{ "Unmap", NON_PGR_FUNCS, tests_unmap },
+	{ "Verify10", NON_PGR_FUNCS, tests_verify10 },
+	{ "Verify12", NON_PGR_FUNCS, tests_verify12 },
+	{ "Verify16", NON_PGR_FUNCS, tests_verify16 },
+	{ "Write10", NON_PGR_FUNCS, tests_write10 },
+	{ "Write12", NON_PGR_FUNCS, tests_write12 },
+	{ "Write16", NON_PGR_FUNCS, tests_write16 },
+	{ "WriteSame10", NON_PGR_FUNCS, tests_writesame10 },
+	{ "WriteSame16", NON_PGR_FUNCS, tests_writesame16 },
+	{ "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
+	{ "WriteVerify12", NON_PGR_FUNCS, tests_writeverify12 },
+	{ "WriteVerify16", NON_PGR_FUNCS, tests_writeverify16 },
+	{ NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
 static CU_TestInfo tests_iscsi_cmdsn[] = {
@@ -506,168 +474,98 @@ static CU_TestInfo tests_iscsi_residuals[] = {
 
 /* iSCSI protocol tests */
 static libiscsi_suite_info iscsi_suites[] = {
-	{ "iSCSIcmdsn", test_setup, test_teardown,
+	{ "iSCSIcmdsn", NON_PGR_FUNCS,
 	  tests_iscsi_cmdsn },
-	{ "iSCSIResiduals", test_setup, test_teardown,
+	{ "iSCSIResiduals", NON_PGR_FUNCS,
 	  tests_iscsi_residuals },
-	{ NULL, NULL, NULL, NULL }
+	{ NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
 /* All tests */
 static libiscsi_suite_info all_suites[] = {
-	{ "CompareAndWrite", test_setup, test_teardown,
-	  tests_compareandwrite },
-	{ "GetLBAStatus", test_setup, test_teardown,
-	  tests_get_lba_status },
-	{ "Inquiry", test_setup, test_teardown,
-	  tests_inquiry },
-	{ "Mandatory", test_setup, test_teardown,
-	  tests_mandatory },
-	{ "ModeSense6", test_setup, test_teardown,
-	  tests_modesense6 },
-	{ "NoMedia", test_setup, test_teardown,
-	  tests_nomedia },
-	{ "OrWrite", test_setup, test_teardown,
-	  tests_orwrite },
-	{ "Prefetch10", test_setup, test_teardown,
-	  tests_prefetch10 },
-	{ "Prefetch16", test_setup, test_teardown,
-	  tests_prefetch16 },
-	{ "PreventAllow", test_setup, test_teardown,
-	  tests_preventallow },
-	{ "PrinReadKeys", test_setup, test_teardown,
-	  tests_prin_read_keys },
-	{ "PrinServiceactionRange", test_setup, test_teardown,
+	{ "CompareAndWrite", NON_PGR_FUNCS, tests_compareandwrite },
+	{ "GetLBAStatus", NON_PGR_FUNCS, tests_get_lba_status },
+	{ "Inquiry", NON_PGR_FUNCS, tests_inquiry },
+	{ "Mandatory", NON_PGR_FUNCS, tests_mandatory },
+	{ "ModeSense6", NON_PGR_FUNCS, tests_modesense6 },
+	{ "NoMedia", NON_PGR_FUNCS, tests_nomedia },
+	{ "OrWrite", NON_PGR_FUNCS, tests_orwrite },
+	{ "Prefetch10", NON_PGR_FUNCS, tests_prefetch10 },
+	{ "Prefetch16", NON_PGR_FUNCS, tests_prefetch16 },
+	{ "PreventAllow", NON_PGR_FUNCS, tests_preventallow },
+	{ "PrinReadKeys", NON_PGR_FUNCS, tests_prin_read_keys },
+	{ "PrinServiceactionRange", NON_PGR_FUNCS,
 	  tests_prin_serviceaction_range },
-	{ "ProutRegister", test_setup, test_teardown,
-	  tests_prout_register },
-	{ "ProutReserve", test_setup_pgr, test_teardown_pgr,
-	  tests_prout_reserve },
-	{ "Read6", test_setup, test_teardown,
-	  tests_read6 },
-	{ "Read10", test_setup, test_teardown,
-	  tests_read10 },
-	{ "Read12", test_setup, test_teardown,
-	  tests_read12 },
-	{ "Read16", test_setup, test_teardown,
-	  tests_read16 },
-	{ "ReadCapacity10", test_setup, test_teardown,
-	  tests_readcapacity10 },
-	{ "ReadCapacity16", test_setup, test_teardown,
-	  tests_readcapacity16 },
-	{ "ReadOnly", test_setup, test_teardown,
-	  tests_readonly },
-	{ "ReportSupportedOpcodes", test_setup, test_teardown,
+	{ "ProutRegister", NON_PGR_FUNCS, tests_prout_register },
+	{ "ProutReserve", PGR_FUNCS, tests_prout_reserve },
+	{ "Read6", NON_PGR_FUNCS, tests_read6 },
+	{ "Read10", NON_PGR_FUNCS, tests_read10 },
+	{ "Read12", NON_PGR_FUNCS, tests_read12 },
+	{ "Read16", NON_PGR_FUNCS, tests_read16 },
+	{ "ReadCapacity10", NON_PGR_FUNCS, tests_readcapacity10 },
+	{ "ReadCapacity16", NON_PGR_FUNCS, tests_readcapacity16 },
+	{ "ReadOnly", NON_PGR_FUNCS, tests_readonly },
+	{ "ReportSupportedOpcodes", NON_PGR_FUNCS,
 	  tests_report_supported_opcodes },
-	{ "Reserve6", test_setup, test_teardown,
-	  tests_reserve6 },
-	{ "Sanitize", test_setup, test_teardown,
-	  tests_sanitize },
-	{ "StartStopUnit", test_setup, test_teardown,
-	  tests_startstopunit },
-	{ "TestUnitReady", test_setup, test_teardown,
-	  tests_testunitready },
-	{ "Unmap", test_setup, test_teardown,
-	  tests_unmap },
-	{ "Verify10", test_setup, test_teardown,
-	  tests_verify10 },
-	{ "Verify12", test_setup, test_teardown,
-	  tests_verify12 },
-	{ "Verify16", test_setup, test_teardown,
-	  tests_verify16 },
-	{ "Write10", test_setup, test_teardown,
-	  tests_write10 },
-	{ "Write12", test_setup, test_teardown,
-	  tests_write12 },
-	{ "Write16", test_setup, test_teardown,
-	  tests_write16 },
-	{ "WriteSame10", test_setup, test_teardown,
-	  tests_writesame10 },
-	{ "WriteSame16", test_setup, test_teardown,
-	  tests_writesame16 },
-	{ "WriteVerify10", test_setup, test_teardown,
-	  tests_writeverify10 },
-	{ "WriteVerify12", test_setup, test_teardown,
-	  tests_writeverify12 },
-	{ "WriteVerify16", test_setup, test_teardown,
-	  tests_writeverify16 },
-	{ "iSCSIcmdsn", test_setup, test_teardown,
-	  tests_iscsi_cmdsn },
-	{ "iSCSIResiduals", test_setup, test_teardown,
-	  tests_iscsi_residuals },
-	{ NULL, NULL, NULL, NULL },
+	{ "Reserve6", NON_PGR_FUNCS, tests_reserve6 },
+	{ "Sanitize", NON_PGR_FUNCS, tests_sanitize },
+	{ "StartStopUnit", NON_PGR_FUNCS, tests_startstopunit },
+	{ "TestUnitReady", NON_PGR_FUNCS, tests_testunitready },
+	{ "Unmap", NON_PGR_FUNCS, tests_unmap },
+	{ "Verify10", NON_PGR_FUNCS, tests_verify10 },
+	{ "Verify12", NON_PGR_FUNCS, tests_verify12 },
+	{ "Verify16", NON_PGR_FUNCS, tests_verify16 },
+	{ "Write10", NON_PGR_FUNCS, tests_write10 },
+	{ "Write12", NON_PGR_FUNCS, tests_write12 },
+	{ "Write16", NON_PGR_FUNCS, tests_write16 },
+	{ "WriteSame10", NON_PGR_FUNCS, tests_writesame10 },
+	{ "WriteSame16", NON_PGR_FUNCS, tests_writesame16 },
+	{ "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
+	{ "WriteVerify12", NON_PGR_FUNCS, tests_writeverify12 },
+	{ "WriteVerify16", NON_PGR_FUNCS, tests_writeverify16 },
+	{ "iSCSIcmdsn", NON_PGR_FUNCS, tests_iscsi_cmdsn },
+	{ "iSCSIResiduals", NON_PGR_FUNCS, tests_iscsi_residuals },
+	{ NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 static libiscsi_suite_info scsi_usb_sbc_suites[] = {
-	{ "CompareAndWrite", test_setup, test_teardown,
-	  tests_compareandwrite },
-	{ "GetLBAStatus", test_setup, test_teardown,
-	  tests_get_lba_status },
-	{ "Inquiry", test_setup, test_teardown,
-	  tests_inquiry },
-	{ "Mandatory", test_setup, test_teardown,
-	  tests_mandatory },
-	{ "ModeSense6", test_setup, test_teardown,
-	  tests_modesense6 },
-	{ "OrWrite", test_setup, test_teardown,
-	  tests_orwrite },
-	{ "Prefetch10", test_setup, test_teardown,
-	  tests_prefetch10 },
-	{ "Prefetch16", test_setup, test_teardown,
-	  tests_prefetch16 },
-	{ "PrinReadKeys", test_setup, test_teardown,
-	  tests_prin_read_keys },
-	{ "PrinServiceactionRange", test_setup, test_teardown,
+	{ "CompareAndWrite", NON_PGR_FUNCS, tests_compareandwrite },
+	{ "GetLBAStatus", NON_PGR_FUNCS, tests_get_lba_status },
+	{ "Inquiry", NON_PGR_FUNCS, tests_inquiry },
+	{ "Mandatory", NON_PGR_FUNCS, tests_mandatory },
+	{ "ModeSense6", NON_PGR_FUNCS, tests_modesense6 },
+	{ "OrWrite", NON_PGR_FUNCS, tests_orwrite },
+	{ "Prefetch10", NON_PGR_FUNCS, tests_prefetch10 },
+	{ "Prefetch16", NON_PGR_FUNCS, tests_prefetch16 },
+	{ "PrinReadKeys", NON_PGR_FUNCS, tests_prin_read_keys },
+	{ "PrinServiceactionRange", NON_PGR_FUNCS,
 	  tests_prin_serviceaction_range },
-	{ "ProutRegister", test_setup, test_teardown,
-	  tests_prout_register },
-	{ "ProutReserve", test_setup_pgr, test_teardown_pgr,
-	  tests_prout_reserve },
-	{ "Read6", test_setup, test_teardown,
-	  tests_read6 },
-	{ "Read10", test_setup, test_teardown,
-	  tests_read10 },
-	{ "Read12", test_setup, test_teardown,
-	  tests_read12 },
-	{ "Read16", test_setup, test_teardown,
-	  tests_read16 },
-	{ "ReadCapacity10", test_setup, test_teardown,
-	  tests_readcapacity10 },
-	{ "ReadCapacity16", test_setup, test_teardown,
-	  tests_readcapacity16 },
-	{ "ReadOnly", test_setup, test_teardown,
-	  tests_readonly },
-	{ "ReportSupportedOpcodes", test_setup, test_teardown,
+	{ "ProutRegister", NON_PGR_FUNCS, tests_prout_register },
+	{ "ProutReserve", PGR_FUNCS, tests_prout_reserve },
+	{ "Read6", NON_PGR_FUNCS, tests_read6 },
+	{ "Read10", NON_PGR_FUNCS, tests_read10 },
+	{ "Read12", NON_PGR_FUNCS, tests_read12 },
+	{ "Read16", NON_PGR_FUNCS, tests_read16 },
+	{ "ReadCapacity10", NON_PGR_FUNCS, tests_readcapacity10 },
+	{ "ReadCapacity16", NON_PGR_FUNCS, tests_readcapacity16 },
+	{ "ReadOnly", NON_PGR_FUNCS, tests_readonly },
+	{ "ReportSupportedOpcodes", NON_PGR_FUNCS,
 	  tests_report_supported_opcodes },
-	{ "Reserve6", test_setup, test_teardown,
-	  tests_reserve6 },
-	{ "TestUnitReady", test_setup, test_teardown,
-	  tests_testunitready },
-	{ "Unmap", test_setup, test_teardown,
-	  tests_unmap },
-	{ "Verify10", test_setup, test_teardown,
-	  tests_verify10 },
-	{ "Verify12", test_setup, test_teardown,
-	  tests_verify12 },
-	{ "Verify16", test_setup, test_teardown,
-	  tests_verify16 },
-	{ "Write10", test_setup, test_teardown,
-	  tests_write10 },
-	{ "Write12", test_setup, test_teardown,
-	  tests_write12 },
-	{ "Write16", test_setup, test_teardown,
-	  tests_write16 },
-	{ "WriteSame10", test_setup, test_teardown,
-	  tests_writesame10 },
-	{ "WriteSame16", test_setup, test_teardown,
-	  tests_writesame16 },
-	{ "WriteVerify10", test_setup, test_teardown,
-	  tests_writeverify10 },
-	{ "WriteVerify12", test_setup, test_teardown,
-	  tests_writeverify12 },
-	{ "WriteVerify16", test_setup, test_teardown,
-	  tests_writeverify16 },
-	{ NULL, NULL, NULL, NULL },
+	{ "Reserve6", NON_PGR_FUNCS, tests_reserve6 },
+	{ "TestUnitReady", NON_PGR_FUNCS, tests_testunitready },
+	{ "Unmap", NON_PGR_FUNCS, tests_unmap },
+	{ "Verify10", NON_PGR_FUNCS, tests_verify10 },
+	{ "Verify12", NON_PGR_FUNCS, tests_verify12 },
+	{ "Verify16", NON_PGR_FUNCS, tests_verify16 },
+	{ "Write10", NON_PGR_FUNCS, tests_write10 },
+	{ "Write12", NON_PGR_FUNCS, tests_write12 },
+	{ "Write16", NON_PGR_FUNCS, tests_write16 },
+	{ "WriteSame10", NON_PGR_FUNCS, tests_writesame10 },
+	{ "WriteSame16", NON_PGR_FUNCS, tests_writesame16 },
+	{ "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
+	{ "WriteVerify12", NON_PGR_FUNCS, tests_writeverify12 },
+	{ "WriteVerify16", NON_PGR_FUNCS, tests_writeverify16 },
+	{ NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 struct test_family {
@@ -753,68 +651,77 @@ print_usage(void)
 	fprintf(stderr, "\n");
 }
 
-CU_ST_RETTYPE
+void
 test_setup(void)
-{
-	iscsic = iscsi_context_login(initiatorname1, tgt_url, &tgt_lun);
-	if (iscsic == NULL) {
-		fprintf(stderr,
-		    "error: Failed to login to target for test set-up\n");
-		CU_ST_RETURN(1);
-	}
-	task = NULL;
-	CU_ST_RETURN(0);
-}
-
-CU_ST_RETTYPE
-test_setup_pgr(void)
 {
 	task = NULL;
 	read_write_buf = NULL;
+}
 
+void
+test_teardown(void)
+{
+	free(read_write_buf);
+	read_write_buf = NULL;
+	scsi_free_scsi_task(task);
+	task = NULL;
+}
+
+int
+suite_init(void)
+{
 	iscsic = iscsi_context_login(initiatorname1, tgt_url, &tgt_lun);
 	if (iscsic == NULL) {
 		fprintf(stderr,
 		    "error: Failed to login to target for test set-up\n");
-		CU_ST_RETURN(1);
+		return 1;
 	}
-
-	iscsic2 = iscsi_context_login(initiatorname2, tgt_url, &tgt_lun2);
-	if (iscsic2 == NULL) {
-		fprintf(stderr,
-		    "error: Failed to login to target for test set-up\n");
-		iscsi_logout_sync(iscsic);
-		iscsi_destroy_context(iscsic);
-		iscsic = NULL;
-		CU_ST_RETURN(1);
-	}
-	CU_ST_RETURN(0);
+#ifndef HAVE_CU_SUITEINFO_PSETUPFUNC
+	/* libcunit version 1 */
+	test_setup();
+#endif
+	return 0;
 }
 
-CU_ST_RETTYPE
-test_teardown(void)
+int
+suite_cleanup(void)
 {
-	if (task) {
-		scsi_free_scsi_task(task);
-		task = NULL;
-	}
+#ifndef HAVE_CU_SUITEINFO_PSETUPFUNC
+	/* libcunit version 1 */
+	test_teardown();
+#endif
 	if (iscsic) {
 		iscsi_logout_sync(iscsic);
 		iscsi_destroy_context(iscsic);
 		iscsic = NULL;
 	}
-	CU_ST_RETURN(0);
+	return 0;
 }
 
-CU_ST_RETTYPE
-test_teardown_pgr(void)
+int
+suite_init_pgr(void)
 {
-	test_teardown();
-	if (read_write_buf != NULL) {
-		free(read_write_buf);
-		read_write_buf = NULL;
+	suite_init();
+	iscsic2 = iscsi_context_login(initiatorname2, tgt_url, &tgt_lun2);
+	if (iscsic2 == NULL) {
+		fprintf(stderr,
+		    "error: Failed to login to target for test set-up\n");
+		suite_cleanup();
+		return 1;
 	}
-	CU_ST_RETURN(0);
+	return 0;
+}
+
+int
+suite_cleanup_pgr(void)
+{
+	if (iscsic2) {
+		iscsi_logout_sync(iscsic2);
+		iscsi_destroy_context(iscsic2);
+		iscsic2 = NULL;
+	}
+	suite_cleanup();
+	return 0;
 }
 
 static void
@@ -902,8 +809,14 @@ add_tests(const char *testname_re)
 				}
 				if (!suite_added) {
 					suite_added++;
+#ifdef HAVE_CU_SUITEINFO_PSETUPFUNC
+		pSuite = CU_add_suite_with_setup_and_teardown(sp->pName,
+					sp->pInitFunc, sp->pCleanupFunc,
+					sp->pSetUpFunc, sp->pTearDownFunc);
+#else
 					pSuite = CU_add_suite(sp->pName,
 						sp->pInitFunc, sp->pCleanupFunc);
+#endif
 				}
 				CU_add_test(pSuite, tp->pName, tp->pTestFunc);
 			}
