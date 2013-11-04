@@ -48,16 +48,13 @@ test_read6_simple(void)
 	logging(LOG_VERBOSE, "Test READ6 of 1-255 blocks at the end of the LUN");
 	if (num_blocks >= 0x1fffff) {
 		CU_PASS("LUN is too big for read-at-eol tests with READ6. Skipping test.\n");
-		return;
+	} else {
+		for (i = 1; i <= 255; i++) {
+			ret = read6(iscsic, tgt_lun, num_blocks - i,
+				i * block_size, block_size, NULL);
+			CU_ASSERT_EQUAL(ret, 0);
+		}
 	}
-
-	for (i = 1; i <= 255; i++) {
-		ret = read6(iscsic, tgt_lun, num_blocks - i,
-			    i * block_size, block_size, NULL);
-		CU_ASSERT_EQUAL(ret, 0);
-	}
-
-
 
 	logging(LOG_VERBOSE, "Transfer length == 0 means we want to transfer "
 		"256 blocks");
