@@ -231,23 +231,23 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 
 int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
-	struct iscsi_context *iscsi = old_iscsi;
+	struct iscsi_context *iscsi;
 	int retry = 0;
 
 	/* if there is already a deferred reconnect do not try again */
-	if (iscsi->reconnect_deferred) {
-		ISCSI_LOG(iscsi, 2, "reconnect initiated, but reconnect is already deferred");
+	if (old_iscsi->reconnect_deferred) {
+		ISCSI_LOG(old_iscsi, 2, "reconnect initiated, but reconnect is already deferred");
 		return -1;
 	}
 
-	ISCSI_LOG(iscsi, 2, "reconnect initiated");
+	ISCSI_LOG(old_iscsi, 2, "reconnect initiated");
 
 	/* This is mainly for tests, where we do not want to automatically
 	   reconnect but rather want the commands to fail with an error
 	   if the target drops the session.
 	 */
-	if (iscsi->no_auto_reconnect) {
-		iscsi_defer_reconnect(iscsi);
+	if (old_iscsi->no_auto_reconnect) {
+		iscsi_defer_reconnect(old_iscsi);
 		return 0;
 	}
 
@@ -302,7 +302,7 @@ try_again:
 		if (backoff > 30) {
 			backoff = 30;
 		}
-		ISCSI_LOG(iscsi, 1, "reconnect try %d failed, waiting %d seconds", retry, backoff);
+		ISCSI_LOG(old_iscsi, 1, "reconnect try %d failed, waiting %d seconds", retry, backoff);
 		iscsi_destroy_context(iscsi);
 		sleep(backoff);
 		retry++;
@@ -370,10 +370,10 @@ try_again:
 	iscsi->mallocs+=old_iscsi->mallocs;
 	iscsi->frees+=old_iscsi->frees;
 
-	ISCSI_LOG(iscsi, 2, "reconnect was successful");
-
 	memcpy(old_iscsi, iscsi, sizeof(struct iscsi_context));
 	free(iscsi);
+
+	ISCSI_LOG(old_iscsi, 2, "reconnect was successful");
 
 	old_iscsi->is_reconnecting = 0;
 	old_iscsi->last_reconnect = time(NULL);
