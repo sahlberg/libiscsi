@@ -175,6 +175,14 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			target->next = targets;
 			targets = target;
 		} else if (!strncmp((char *)ptr, "TargetAddress=", 14)) {
+			if (targets == NULL || targets->target_address != NULL) {
+				iscsi_set_error(iscsi, "Invalid discovery "
+						"reply");
+				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					      pdu->private_data);
+				iscsi_free_discovery_addresses(iscsi, targets);
+				return -1;
+			}
 			targets->target_address = iscsi_strdup(iscsi, (char *)ptr+14);
 			if (targets->target_address == NULL) {
 				iscsi_set_error(iscsi, "Failed to allocate "
