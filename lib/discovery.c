@@ -118,23 +118,32 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			      pdu->private_data);
 		return -1;
 	}
+	if (size == 0) {
+		iscsi_set_error(iscsi, "size == 0 when parsing "
+				"discovery data");
+		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			      pdu->private_data);
+		return -1;
+	}
 
-	while (size > 0) {
+	do {
+		unsigned char *end;
 		int len;
 
-		len = strlen((char *)ptr);
-
-		if (len == 0) {
-			break;
-		}
-
-		if (len > size) {
-			iscsi_set_error(iscsi, "len > size when parsing "
-					"discovery data %d>%d", len, size);
+		end = memchr(ptr, 0, size);
+		if (end == NULL) {
+			iscsi_set_error(iscsi, "NUL not found after offset %ld "
+					"when parsing discovery data",
+					ptr - in->data);
 			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 				      pdu->private_data);
 			iscsi_free_discovery_addresses(iscsi, targets);
 			return -1;
+		}
+
+		len = end - ptr;
+		if (len == 0) {
+			break;
 		}
 
 		/* parse the strings */
@@ -166,6 +175,14 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			target->next = targets;
 			targets = target;
 		} else if (!strncmp((char *)ptr, "TargetAddress=", 14)) {
+			if (targets == NULL || targets->target_address != NULL) {
+				iscsi_set_error(iscsi, "Invalid discovery "
+						"reply");
+				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					      pdu->private_data);
+				iscsi_free_discovery_addresses(iscsi, targets);
+				return -1;
+			}
 			targets->target_address = iscsi_strdup(iscsi, (char *)ptr+14);
 			if (targets->target_address == NULL) {
 				iscsi_set_error(iscsi, "Failed to allocate "
@@ -187,7 +204,7 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 		ptr  += len + 1;
 		size -= len + 1;
-	}
+	} while (size > 0);
 
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, targets, pdu->private_data);
 	iscsi_free_discovery_addresses(iscsi, targets);

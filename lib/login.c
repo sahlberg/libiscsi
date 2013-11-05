@@ -780,7 +780,7 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	}
 
 	/* optional alias */
-	if (iscsi->alias) {
+	if (iscsi->alias[0]) {
 		if (iscsi_login_add_alias(iscsi, pdu) != 0) {
 			iscsi_free_pdu(iscsi, pdu);
 			return -1;
@@ -981,28 +981,38 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
 		iscsi->expcmdsn = expcmdsn;
 	}
-	
+
+	if (size == 0) {
+	       iscsi_set_error(iscsi, "size == 0 when parsing "
+			       "login data");
+	       pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			     pdu->private_data);
+	       return -1;
+	}
+
 	/* XXX here we should parse the data returned in case the target
 	 * renegotiated some some parameters.
 	 *  we should also do proper handshaking if the target is not yet
 	 * prepared to transition to the next stage
 	 */
 
-	while (size > 0) {
+	do {
+		char *end;
 		int len;
 
-		len = strlen(ptr);
-
-		if (len == 0) {
-			break;
-		}
-
-		if (len > size) {
-			iscsi_set_error(iscsi, "len > size when parsing "
-					"login data %d>%d", len, size);
+		end = memchr(ptr, 0, size);
+		if (end == NULL) {
+			iscsi_set_error(iscsi, "NUL not found after offset %ld "
+					"when parsing login data",
+					(unsigned char *)ptr - in->data);
 			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 				      pdu->private_data);
 			return -1;
+		}
+
+		len = end - ptr;
+		if (len == 0) {
+			break;
 		}
 
 		/* parse the strings */
@@ -1077,9 +1087,9 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 		ptr  += len + 1;
 		size -= len + 1;
-	}
+	} while (size > 0);
 
-	if (status == SCSI_STATUS_REDIRECT && iscsi->target_address) {
+	if (status == SCSI_STATUS_REDIRECT && iscsi->target_address[0]) {
 		ISCSI_LOG(iscsi, 2, "target requests redirect to %s",iscsi->target_address);
 		pdu->callback(iscsi, SCSI_STATUS_REDIRECT, NULL,
 				  pdu->private_data);

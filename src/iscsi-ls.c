@@ -425,7 +425,7 @@ int main(int argc, char *argv[])
 
 	iscsi_set_session_type(iscsi, ISCSI_SESSION_DISCOVERY);
 
-	if (iscsi_url->user != NULL) {
+	if (iscsi_url->user[0]) {
 		state.username = iscsi_url->user;
 		state.password = iscsi_url->passwd;
 		if (iscsi_set_initiator_username_pwd(iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
