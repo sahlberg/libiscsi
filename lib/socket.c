@@ -721,6 +721,9 @@ iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 int
 iscsi_service(struct iscsi_context *iscsi, int revents)
 {
+	if (iscsi->fd < 0)
+		return 0;
+
 	if (revents & POLLERR) {
 		int err = 0;
 		socklen_t err_size = sizeof(err);
@@ -755,7 +758,7 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 		return iscsi_service_reconnect_if_loggedin(iscsi);
 	}
 
-	if (iscsi->is_connected == 0 && iscsi->fd != -1 && revents&POLLOUT) {
+	if (iscsi->is_connected == 0 && revents&POLLOUT) {
 		int err = 0;
 		socklen_t err_size = sizeof(err);
 		struct sockaddr_in local;
