@@ -258,7 +258,7 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 try_again:
 
 	iscsi = iscsi_create_context(old_iscsi->initiator_name);
-	if (!iscsi) {
+	if (iscsi == NULL) {
 		ISCSI_LOG(old_iscsi, 2, "failed to create new context for reconnection");
 		return -1;
 	}
