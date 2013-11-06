@@ -721,8 +721,9 @@ iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 int
 iscsi_service(struct iscsi_context *iscsi, int revents)
 {
-	if (iscsi->fd < 0)
+	if (iscsi->fd < 0) {
 		return 0;
+	}
 
 	if (revents & POLLERR) {
 		int err = 0;
