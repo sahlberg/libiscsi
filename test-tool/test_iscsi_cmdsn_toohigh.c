@@ -58,7 +58,7 @@ void test_iscsi_cmdsn_toohigh(void)
 	iscsic->target_max_recv_data_segment_length = block_size;
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
 	change_cmdsn = 1;
-	/* we dont want autoreconnect since some targets will incorrectly
+	/* we don't want autoreconnect since some targets will incorrectly
 	 * drop the connection on this condition.
 	 */
 	iscsi_set_noautoreconnect(iscsic, 1);

@@ -161,7 +161,7 @@ wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_state *
 				state->finished     = 1;
 				state->status       = SCSI_STATUS_CANCELLED;
 				state->task->status = SCSI_STATUS_CANCELLED;
-				/* this may leak memory since we dont free the pdu */
+				/* this may leak memory since we don't free the pdu */
 				while ((pdu = iscsi->outqueue)) {
 					SLIST_REMOVE(&iscsi->outqueue, pdu);
 				}

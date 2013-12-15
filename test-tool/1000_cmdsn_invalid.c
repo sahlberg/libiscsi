@@ -96,7 +96,7 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url)
 
 	printf("Write 2 blocks with CMDSN > MAXCMDSN ... ");
 	change_cmdsn = 1;
-	/* we dont want autoreconnect since some targets will drop the
+	/* we don't want autoreconnect since some targets will drop the
 	 * on this condition.
 	 */
 	iscsi_set_noautoreconnect(iscsi, 1);
@@ -132,7 +132,7 @@ int T1000_cmdsn_invalid(const char *initiator, const char *url)
 
 	printf("Write 2 blocks with CMDSN == 0 ... ");fflush(stdout);
 	change_cmdsn = 2;
-	/* we dont want autoreconnect since some targets will drop the
+	/* we don't want autoreconnect since some targets will drop the
 	 * on this condition.
 	 */
 

@@ -78,7 +78,7 @@ int T1030_unsolicited_data_overflow(const char *initiator, const char *url)
 	buf = malloc(iscsi->first_burst_length);
 
 	printf("Write too much unsolicited data ... ");
-	/* we dont want autoreconnect since some targets will drop the session
+	/* we don't want autoreconnect since some targets will drop the session
 	 * on this condition.
 	 */
 	iscsi_set_noautoreconnect(iscsi, 1);

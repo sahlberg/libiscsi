@@ -187,7 +187,7 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				return -1;
 			}
 		} else {
-			iscsi_set_error(iscsi, "Dont know how to handle "
+			iscsi_set_error(iscsi, "Don't know how to handle "
 					"discovery string : %s", ptr);
 			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 				      pdu->private_data);

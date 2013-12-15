@@ -284,7 +284,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		    && pdu->payload_len < (uint32_t)task->expxferlen
 		    && pdu->payload_len < iscsi->first_burst_length) {
 			/* We have more data to send, and we are allowed to send
-			 * unsolicited data, so dont flag this PDU as final.
+			 * unsolicited data, so don't flag this PDU as final.
 			 */
 			flags &= ~ISCSI_PDU_SCSI_FINAL;
 		}
@@ -518,7 +518,7 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	}
 	dsl = scsi_get_uint32(&in->hdr[4]) & 0x00ffffff;
 
-	/* Dont add to reassembly buffer if we already have a user buffer */
+	/* Don't add to reassembly buffer if we already have a user buffer */
 	if (task->iovector_in.iov == NULL) {
 		if (iscsi_add_data(iscsi, &pdu->indata, in->data, dsl, 0) != 0) {
 		    iscsi_set_error(iscsi, "Out-of-memory: failed to add data "

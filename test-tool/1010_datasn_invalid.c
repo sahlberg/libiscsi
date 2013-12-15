@@ -108,7 +108,7 @@ int T1010_datasn_invalid(const char *initiator, const char *url)
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
 
 	printf("Write 2 DATA-IN with DATASN == 0 ... ");
-	/* we dont want autoreconnect since some targets will drop the
+	/* we don't want autoreconnect since some targets will drop the
 	 * on this condition.
 	 */
 	iscsi_set_noautoreconnect(iscsi, 1);
@@ -145,7 +145,7 @@ int T1010_datasn_invalid(const char *initiator, const char *url)
 	iscsi->target_max_recv_data_segment_length = block_size;
 
 	printf("Write 2 DATA-IN with DATASN == 27 ... ");
-	/* we dont want autoreconnect since some targets will drop the
+	/* we don't want autoreconnect since some targets will drop the
 	 * on this condition.
 	 */
 	iscsi_set_noautoreconnect(iscsi, 1);
@@ -182,7 +182,7 @@ int T1010_datasn_invalid(const char *initiator, const char *url)
 	iscsi->target_max_recv_data_segment_length = block_size;
 
 	printf("Write 2 DATA-IN with DATASN == -1 ... ");
-	/* we dont want autoreconnect since some targets will drop the
+	/* we don't want autoreconnect since some targets will drop the
 	 * on this condition.
 	 */
 	iscsi_set_noautoreconnect(iscsi, 1);
@@ -222,7 +222,7 @@ int T1010_datasn_invalid(const char *initiator, const char *url)
 	iscsi->target_max_recv_data_segment_length = block_size;
 
 	printf("Write 2 DATA-IN with DATASN in reverse order (1, 0) ... ");
-	/* we dont want autoreconnect since some targets will drop the
+	/* we don't want autoreconnect since some targets will drop the
 	 * on this condition.
 	 */
 	iscsi_set_noautoreconnect(iscsi, 1);

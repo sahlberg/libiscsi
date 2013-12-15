@@ -42,7 +42,7 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		return -1;
 	}
 
-	/* We dont want to requeue these on reconnect */
+	/* We don't want to requeue these on reconnect */
 	pdu->flags |= ISCSI_PDU_DROP_ON_RECONNECT;
 
 	/* immediate flag */

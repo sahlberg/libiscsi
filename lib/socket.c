@@ -522,7 +522,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 	}
 
 	if (in->hdr_pos < ISCSI_HEADER_SIZE) {
-		/* we dont have the full header yet, so return */
+		/* we don't have the full header yet, so return */
 		return 0;
 	}
 

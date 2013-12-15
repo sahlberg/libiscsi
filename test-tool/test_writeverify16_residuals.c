@@ -64,7 +64,7 @@ test_writeverify16_residuals(void)
 	task->expxferlen = 0;
 
 	/*
-	 * we dont want autoreconnect since some targets will drop the session
+	 * we don't want autoreconnect since some targets will drop the session
 	 * on this condition.
 	 */
 	iscsi_set_noautoreconnect(iscsic, 1);

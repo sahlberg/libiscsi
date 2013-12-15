@@ -70,7 +70,7 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 		}
 	}
 
-	/* Dont fail the login just because there is no medium in the device */
+	/* Don't fail the login just because there is no medium in the device */
 	if (status != 0
 	&& task->sense.key == SCSI_SENSE_NOT_READY
 	&& (task->sense.ascq == SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
@@ -79,12 +79,12 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 		status = 0;
 	}
 
-	/* Dont fail the login just because the medium is reserved */
+	/* Don't fail the login just because the medium is reserved */
 	if (status == SCSI_STATUS_RESERVATION_CONFLICT) {
 		status = 0;
 	}
 
-	/* Dont fail the login just because there is a sanitize in progress */
+	/* Don't fail the login just because there is a sanitize in progress */
 	if (status != 0
 	&& task->sense.key == SCSI_SENSE_NOT_READY
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_SANITIZE_IN_PROGRESS) {
@@ -207,7 +207,7 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 		SLIST_REMOVE(&iscsi->outqueue, pdu);
 		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 			/* If an error happened during connect/login,
-			   we dont want to call any of the callbacks.
+			   we don't want to call any of the callbacks.
 			 */
 			if (iscsi->is_loggedin) {
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
@@ -219,7 +219,7 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 	while ((pdu = iscsi->waitpdu)) {
 		SLIST_REMOVE(&iscsi->waitpdu, pdu);
 		/* If an error happened during connect/login,
-		   we dont want to call any of the callbacks.
+		   we don't want to call any of the callbacks.
 		 */
 		if (iscsi->is_loggedin) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
@@ -329,10 +329,10 @@ try_again:
 		}
 
 		if (pdu->flags & ISCSI_PDU_DROP_ON_RECONNECT) {
-			/* We dont want to requeue things like DATA-OUT since these guys
+			/* We don't want to requeue things like DATA-OUT since these guys
 			 * will be reissued automatically anyway once the corresponding
 			 * write command is replayed.
-			 * Similarly we dont want to requeue NOPs. 
+			 * Similarly we don't want to requeue NOPs. 
 		 	 */
 			iscsi_free_pdu(old_iscsi, pdu);
 			continue;

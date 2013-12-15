@@ -80,7 +80,7 @@ int T1040_saturate_maxcmdsn(const char *initiator, const char *url)
 
 	ret = 0;
 
-	/* we dont want autoreconnect since some targets will drop the
+	/* we don't want autoreconnect since some targets will drop the
 	 * on this condition.
 	 */
 	iscsi_set_noautoreconnect(iscsi, 1);

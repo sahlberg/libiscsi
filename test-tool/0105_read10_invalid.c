@@ -70,7 +70,7 @@ int T0105_read10_invalid(const char *initiator, const char *url)
 	task->xfer_dir = SCSI_XFER_READ;
 	task->expxferlen = 0;
 
-	/* we dont want autoreconnect since some targets will drop the session
+	/* we don't want autoreconnect since some targets will drop the session
 	 * on this condition.
 	 */
 	iscsi_set_noautoreconnect(iscsi, 1);

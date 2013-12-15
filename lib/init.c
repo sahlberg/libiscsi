@@ -296,7 +296,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	while ((pdu = iscsi->outqueue)) {
 		SLIST_REMOVE(&iscsi->outqueue, pdu);
 		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
-			/* If an error happened during connect/login, we dont want to
+			/* If an error happened during connect/login, we don't want to
 			   call any of the callbacks.
 			 */
 			if (iscsi->is_loggedin) {
@@ -308,7 +308,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	}
 	while ((pdu = iscsi->waitpdu)) {
 		SLIST_REMOVE(&iscsi->waitpdu, pdu);
-		/* If an error happened during connect/login, we dont want to
+		/* If an error happened during connect/login, we don't want to
 		   call any of the callbacks.
 		 */
 		if (iscsi->is_loggedin) {

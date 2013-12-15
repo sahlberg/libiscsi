@@ -498,7 +498,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 			is_finished = 0;
 			break;
 		default:
-			iscsi_set_error(iscsi, "Dont know how to handle "
+			iscsi_set_error(iscsi, "Don't know how to handle "
 					"opcode 0x%02x", opcode);
 			return -1;
 		}

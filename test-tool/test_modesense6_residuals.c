@@ -35,7 +35,7 @@ test_modesense6_residuals(void)
 
 	
 	logging(LOG_VERBOSE, "Try a MODESENSE6 command with 4 bytes of "
-		"transfer length and verify that we dont get residuals.");
+		"transfer length and verify that we don't get residuals.");
 	if (task != NULL) {
 		scsi_free_scsi_task(task);
 		task = NULL;
