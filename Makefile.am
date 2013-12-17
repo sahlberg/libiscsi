@@ -14,7 +14,13 @@ CLEANFILES = $(man1_MANS)
 
 EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt \
 	     packaging/RPM/libiscsi.spec.in packaging/RPM/makerpms.sh \
-	     doc/iscsi-inq.1.xml doc/iscsi-ls.1.xml doc/iscsi-swp.1.xml
+	     doc/iscsi-inq.1.xml doc/iscsi-ls.1.xml doc/iscsi-swp.1.xml \
+	     aros/aros_compat.c aros/aros_compat.h aros/iscsi-ls.c \
+	     aros/Makefile.AROS \
+	     win32/vsbuild.bat win32/win32_compat.c win32/win32_compat.h \
+	     lib/libiscsi.def \
+	     test-tool/README \
+	     patches/mtx-iscsi.diff patches/README patches/sg3_utils-1.32.patch
 
 # Simplify conditions below by declaring variables as empty
 
