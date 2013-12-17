@@ -118,15 +118,8 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			      pdu->private_data);
 		return -1;
 	}
-	if (size == 0) {
-		iscsi_set_error(iscsi, "size == 0 when parsing "
-				"discovery data");
-		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-			      pdu->private_data);
-		return -1;
-	}
 
-	do {
+	while (size > 0) {
 		unsigned char *end;
 		int len;
 
@@ -204,7 +197,7 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 		ptr  += len + 1;
 		size -= len + 1;
-	} while (size > 0);
+	}
 
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, targets, pdu->private_data);
 	iscsi_free_discovery_addresses(iscsi, targets);

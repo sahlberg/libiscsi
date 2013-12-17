@@ -982,21 +982,13 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		iscsi->expcmdsn = expcmdsn;
 	}
 
-	if (size == 0) {
-	       iscsi_set_error(iscsi, "size == 0 when parsing "
-			       "login data");
-	       pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-			     pdu->private_data);
-	       return -1;
-	}
-
 	/* XXX here we should parse the data returned in case the target
 	 * renegotiated some some parameters.
 	 *  we should also do proper handshaking if the target is not yet
 	 * prepared to transition to the next stage
 	 */
 
-	do {
+	while (size > 0) {
 		char *end;
 		int len;
 
@@ -1087,7 +1079,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 		ptr  += len + 1;
 		size -= len + 1;
-	} while (size > 0);
+	}
 
 	if (status == SCSI_STATUS_REDIRECT && iscsi->target_address[0]) {
 		ISCSI_LOG(iscsi, 2, "target requests redirect to %s",iscsi->target_address);
