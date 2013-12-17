@@ -10,6 +10,7 @@ XSLTPROC = /usr/bin/xsltproc
 
 # Manpages
 man1_MANS = doc/iscsi-inq.1 doc/iscsi-ls.1 doc/iscsi-swp.1
+CLEANFILES = $(man1_MANS)
 
 EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt \
 	     packaging/RPM/libiscsi.spec.in packaging/RPM/makerpms.sh \
@@ -373,7 +374,7 @@ endif
 
 if LD_ISCSI
 EXTRA_PROGRAMS += bin/ld_iscsi
-CLEANFILES = bin/ld_iscsi.o bin/ld_iscsi.so
+CLEANFILES += bin/ld_iscsi.o bin/ld_iscsi.so
 
 # This gets a bit messy:
 #
