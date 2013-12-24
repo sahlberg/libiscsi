@@ -49,14 +49,11 @@ if !HAVE_LIBGCRYPT
 lib_libiscsi_la_SOURCES += lib/md5.c
 endif
 
-SONAME=3
-version_split = $(subst ., ,$(VERSION))
-SOMAJOR = $(firstword $(version_split))
-SOMINOR = $(word 2, $(version_split))
-SOREVISION = $(word 3, $(version_split))
-SOREL = $(shell echo $(SOMINOR) + $(SOREVISION) | bc)
+SOCURRENT=3
+SOREVISON=10
+SOAGE=0
 lib_libiscsi_la_LDFLAGS = \
-	-version-info $(SONAME):$(SOREL):0 -bindir $(bindir) -no-undefined \
+	-version-info $(SOCURRENT):$(SOREVISON):$(SOAGE) -bindir $(bindir) -no-undefined \
 	-export-symbols $(srcdir)/lib/libiscsi.syms
 
 # libiscsi utilities
