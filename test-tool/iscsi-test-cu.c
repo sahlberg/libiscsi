@@ -1045,7 +1045,7 @@ main(int argc, char *argv[])
 	if (inq_bl_task) {
 		full_size = scsi_datain_getfullsize(inq_bl_task);
 		if (full_size > inq_bl_task->datain.size) {
-			scsi_free_scsi_task(inq_lbp_task);
+			scsi_free_scsi_task(inq_bl_task);
 
 			if ((inq_bl_task = iscsi_inquiry_sync(iscsic, lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS, full_size)) == NULL) {
 				printf("Inquiry command failed : %s\n", iscsi_get_error(iscsic));
