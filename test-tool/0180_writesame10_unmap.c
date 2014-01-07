@@ -50,10 +50,14 @@ int T0180_writesame10_unmap(const char *initiator, const char *url)
 	ret = 0;
 
 	if (rc16 == NULL || rc16->lbpme == 0){
-		printf("Logical unit is fully provisioned. All commands should fail with check condition.\n");
+		printf("Logical unit is fully provisioned.\n");
+		printf("[SKIPPED]\n");
+		printf("LUN does not use thin provisioning. LBPME==0.\n");
+		ret = -2;
+		goto finished;
 	}
 
-	/* Check that id we have logical block provisioning we also have the VPD page for it */
+	/* Check that if we have logical block provisioning we also have the VPD page for it */
 	printf("Logical Block Provisioning is available. Check that VPD page 0xB2 exists ... ");
 
 	/* See how big this inquiry data is */
