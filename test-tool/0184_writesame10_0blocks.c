@@ -74,6 +74,12 @@ int T0184_writesame10_0blocks(const char *initiator, const char *url)
 		ret = -2;
 		goto finished;
 	}
+	if (inq_bl == NULL) {
+		printf("[SKIPPED]\n");
+		printf("Target does not support block limits VPD\n");
+		ret = -2;
+		goto finished;
+	}
 	if ((!inq_bl->wsnz && task->status != SCSI_STATUS_GOOD) ||
 	    (inq_bl->wsnz && task->status != SCSI_STATUS_CHECK_CONDITION)) {
 	        printf("[FAILED]\n");

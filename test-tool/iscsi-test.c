@@ -315,6 +315,7 @@ int main(int argc, char *argv[])
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
 	struct scsi_task *inq_task;
+	struct scsi_task *inq_bl_task;
 	struct scsi_task *rc16_task;
 	struct scsi_readcapacity10 *rc10;
 	int full_size;
@@ -481,6 +482,30 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+	/* try reading block limits vpd */
+	inq_bl_task = iscsi_inquiry_sync(iscsi, lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS, 64);
+	if (inq_bl_task && inq_bl_task->status != SCSI_STATUS_GOOD) {
+		scsi_free_scsi_task(inq_bl_task);
+		inq_bl_task = NULL;
+	}
+	if (inq_bl_task) {
+		full_size = scsi_datain_getfullsize(inq_bl_task);
+		if (full_size > inq_bl_task->datain.size) {
+			scsi_free_scsi_task(inq_bl_task);
+
+			if ((inq_bl_task = iscsi_inquiry_sync(iscsi, lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS, full_size)) == NULL) {
+				printf("Inquiry command failed : %s\n", iscsi_get_error(iscsi));
+				return -1;
+			}
+		}
+
+		inq_bl = scsi_datain_unmarshall(inq_bl_task);
+		if (inq_bl == NULL) {
+			printf("failed to unmarshall inquiry datain blob\n");
+			return -1;
+		}
+	}
+
 
 	num_failed = num_skipped = 0;
 	for (test = &tests[0]; test->name; test++) {
@@ -518,6 +543,7 @@ int main(int argc, char *argv[])
 
 	scsi_free_scsi_task(inq_task);
 	scsi_free_scsi_task(rc16_task);
+	scsi_free_scsi_task(inq_bl_task);
 	iscsi_logout_sync(iscsi);
 	iscsi_destroy_context(iscsi);
 
