@@ -44,8 +44,13 @@ test_writesame10_0blocks(void)
 	if (ret == -2) {
 		CU_PASS("[SKIPPED] Target does not support WRITESAME10. Skipping test");
 		return;
+	} else if (ret == -3) {
+		CU_PASS("[SKIPPED] Target does not support WRITESAME10 with NUMBER OF LOGICAL BLOCKS == 0");
+	} else if (ret == -4) {
+		CU_PASS("[SKIPPED] Number of WRITESAME10 logical blocks to be written exceeds MAXIMUM WRITE SAME LENGTH");
+	} else {
+		CU_ASSERT_EQUAL(ret, 0);
 	}
-	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks one block past end-of-LUN");
 	ret = writesame10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1,
