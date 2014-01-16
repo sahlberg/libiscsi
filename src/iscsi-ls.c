@@ -256,13 +256,18 @@ void discovery_cb(struct iscsi_context *iscsi, int status, void *command_data, v
 	}
 
 	for(addr=command_data; addr; addr=addr->next) {
-		if (useurls == 1 && showluns == 0) {
-			printf("iscsi://%s/%s/0\n", addr->target_address, addr->target_name);
-		} else {
-			printf("Target:%s Portal:%s\n", addr->target_name, addr->target_address);
-		}
-		if (showluns != 0) {
-			list_luns(private_data, addr->target_name, addr->target_address);
+		struct iscsi_target_portal *portal = addr->portals;
+
+		while (portal != NULL) {
+			if (useurls == 1 && showluns == 0) {
+				printf("iscsi://%s/%s/0\n", portal->portal, addr->target_name);
+			} else {
+				printf("Target:%s Portal:%s\n", addr->target_name, portal->portal);
+			}
+			if (showluns != 0) {
+				list_luns(private_data, addr->target_name, portal->portal);
+			}
+			portal = portal->next;
 		}
 	}
 

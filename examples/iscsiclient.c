@@ -566,13 +566,13 @@ void discovery_cb(struct iscsi_context *iscsi, int status, void *command_data, v
 	}
 
 	for(addr=command_data; addr; addr=addr->next) {	
-		printf("Target:%s Address:%s\n", addr->target_name, addr->target_address);
+		printf("Target:%s Address:%s\n", addr->target_name, addr->portals->portal);
 	}
 
 	addr=command_data;
 	clnt->has_discovered_target = 1;
 	clnt->target_name    = strdup(addr->target_name);
-	clnt->target_address = strdup(addr->target_address);
+	clnt->target_address = strdup(addr->portals->portal);
 
 
 	printf("discovery complete, send logout command\n");

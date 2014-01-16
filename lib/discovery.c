@@ -93,8 +93,15 @@ iscsi_free_discovery_addresses(struct iscsi_context *iscsi, struct iscsi_discove
 		iscsi_free(iscsi, discard_const(addresses->target_name));
 		addresses->target_name = NULL;
 
-		iscsi_free(iscsi, discard_const(addresses->target_address));
-		addresses->target_address = NULL;
+		while (addresses->portals != NULL) {
+			struct iscsi_target_portal *next_portal = addresses->portals->next;
+
+			iscsi_free(iscsi, discard_const(addresses->portals->portal));
+			iscsi_free(iscsi, discard_const(addresses->portals));
+
+			addresses->portals = next_portal;
+		}
+		addresses->portals = NULL;
 
 		addresses->next = NULL;
 		iscsi_free(iscsi, addresses);
@@ -168,7 +175,9 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			target->next = targets;
 			targets = target;
 		} else if (!strncmp((char *)ptr, "TargetAddress=", 14)) {
-			if (targets == NULL || targets->target_address != NULL) {
+			struct iscsi_target_portal *portal;
+
+			if (targets == NULL) {
 				iscsi_set_error(iscsi, "Invalid discovery "
 						"reply");
 				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
@@ -176,8 +185,21 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				iscsi_free_discovery_addresses(iscsi, targets);
 				return -1;
 			}
-			targets->target_address = iscsi_strdup(iscsi, (char *)ptr+14);
-			if (targets->target_address == NULL) {
+			portal = iscsi_zmalloc(iscsi, sizeof(struct iscsi_target_portal));
+			if (portal == NULL) {
+				iscsi_set_error(iscsi, "Failed to malloc "
+						"portal structure");
+				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					      pdu->private_data);
+				iscsi_free_discovery_addresses(iscsi, targets);
+				return -1;
+			}
+
+			portal->next = targets->portals;
+			targets->portals = portal;
+
+			portal->portal = iscsi_strdup(iscsi, (char *)ptr+14);
+			if (portal->portal == NULL) {
 				iscsi_set_error(iscsi, "Failed to allocate "
 						"data for new discovered "
 						"target address");

@@ -474,10 +474,15 @@ EXTERN int iscsi_logout_sync(struct iscsi_context *iscsi);
 EXTERN int iscsi_discovery_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 			  void *private_data);
 
+struct iscsi_target_portal {
+       struct iscsi_target_portal *next;
+       const char *portal;
+};
+
 struct iscsi_discovery_address {
        struct iscsi_discovery_address *next;
        const char *target_name;
-       const char *target_address;
+       struct iscsi_target_portal *portals;
 };
 
 /*
