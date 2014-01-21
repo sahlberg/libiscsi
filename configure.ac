@@ -3,7 +3,7 @@ AC_INIT(libiscsi, m4_esyscmd([grep 'Version:' ./packaging/RPM/libiscsi.spec.in 2
 AC_CONFIG_SRCDIR([lib/init.c])
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([-Wall -Werror subdir-objects])
 AM_SILENT_RULES
 AM_PROG_AR
 LT_INIT
