@@ -93,6 +93,7 @@ int T1041_unsolicited_immediate_data(const char *initiator, const char *url)
 	 */ 	
 	printf("Login to target with IMMEDIATE_DATA=YES and INITIAL_R2T=YES ... ");
 	iscsi_destroy_context(iscsi);
+	iscsi_url->iscsi = NULL;
 	iscsi = iscsi_create_context(initiator);
 	iscsi_set_targetname(iscsi, iscsi_url->target);
 	iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
@@ -154,8 +155,8 @@ int T1041_unsolicited_immediate_data(const char *initiator, const char *url)
 
 
 finished:
-	iscsi_destroy_context(iscsi);
 	iscsi_destroy_url(iscsi_url);
+	iscsi_destroy_context(iscsi);
 
 	return ret;
 }
