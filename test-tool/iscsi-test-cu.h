@@ -69,6 +69,8 @@ void test_inquiry_version_descriptors(void);
 void test_iscsi_cmdsn_toohigh(void);
 void test_iscsi_cmdsn_toolow(void);
 
+void test_iscsi_datasn_invalid(void);
+
 void test_mandatory_sbc(void);
 
 void test_modesense6_all_pages(void);

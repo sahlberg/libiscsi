@@ -458,6 +458,11 @@ static CU_TestInfo tests_iscsi_cmdsn[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_iscsi_datasn[] = {
+	{ (char *)"iSCSIDataSnInvalid", test_iscsi_datasn_invalid },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_iscsi_residuals[] = {
 	{ (char *)"Read10Invalid", test_read10_invalid },
 	{ (char *)"Read10Residuals", test_read10_residuals },
@@ -476,6 +481,8 @@ static CU_TestInfo tests_iscsi_residuals[] = {
 static libiscsi_suite_info iscsi_suites[] = {
 	{ "iSCSIcmdsn", NON_PGR_FUNCS,
 	  tests_iscsi_cmdsn },
+	{ "iSCSIdatasn", NON_PGR_FUNCS,
+	  tests_iscsi_datasn },
 	{ "iSCSIResiduals", NON_PGR_FUNCS,
 	  tests_iscsi_residuals },
 	{ NULL, NULL, NULL, NULL, NULL, NULL }
@@ -524,6 +531,7 @@ static libiscsi_suite_info all_suites[] = {
 	{ "WriteVerify12", NON_PGR_FUNCS, tests_writeverify12 },
 	{ "WriteVerify16", NON_PGR_FUNCS, tests_writeverify16 },
 	{ "iSCSIcmdsn", NON_PGR_FUNCS, tests_iscsi_cmdsn },
+	{ "iSCSIdatasn", NON_PGR_FUNCS, tests_iscsi_datasn },
 	{ "iSCSIResiduals", NON_PGR_FUNCS, tests_iscsi_residuals },
 	{ NULL, NULL, NULL, NULL, NULL, NULL },
 };

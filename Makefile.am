@@ -210,6 +210,7 @@ bin_iscsi_test_cu_SOURCES = test-tool/iscsi-test-cu.c \
 	test-tool/test_inquiry_version_descriptors.c \
 	test-tool/test_iscsi_cmdsn_toohigh.c \
 	test-tool/test_iscsi_cmdsn_toolow.c \
+	test-tool/test_iscsi_datasn_invalid.c \
 	test-tool/test_mandatory_sbc.c \
 	test-tool/test_modesense6_all_pages.c \
 	test-tool/test_modesense6_residuals.c \
