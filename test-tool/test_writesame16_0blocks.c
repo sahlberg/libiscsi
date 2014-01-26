@@ -37,11 +37,16 @@ test_writesame16_0blocks(void)
 			  block_size, 0,
 			  0, 0, 0, 0, NULL);
 	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
+		logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
 		CU_PASS("[SKIPPED] Target does not support WRITESAME16. Skipping test");
 		return;
+	} else if (ret == -3) {
+		CU_PASS("[SKIPPED] Target does not support WRITESAME16 with NUMBER OF LOGICAL BLOCKS == 0");
+	} else if (ret == -4) {
+		CU_PASS("[SKIPPED] Number of WRITESAME16 logical blocks to be written exceeds MAXIMUM WRITE SAME LENGTH");
+	} else {
+		CU_ASSERT_EQUAL(ret, 0);
 	}
-	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks one block past end-of-LUN");
 	ret = writesame16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1,

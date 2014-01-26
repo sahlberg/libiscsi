@@ -4848,6 +4848,7 @@ int
 writesame10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data)
 {
 	struct scsi_task *task;
+	uint64_t realdatalen;
 
 	logging(LOG_VERBOSE, "Send WRITESAME10 LBA:%d blocks:%d "
 	       "wrprotect:%d anchor:%d unmap:%d group:%d",
@@ -4873,6 +4874,26 @@ writesame10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen
 		logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		if (inq_bl->wsnz == 1 && datalen == 0) {
+			logging(LOG_NORMAL, "[SKIPPED] Target does not support WRITESAME10 with NUMBER OF LOGICAL BLOCKS == 0");
+			scsi_free_scsi_task(task);
+			return -3;
+		}
+
+		if (datalen == 0) {
+			realdatalen = num_blocks;
+		} else {
+			realdatalen = datalen;
+		}
+		if (inq_bl->max_ws_len > 0 && realdatalen > inq_bl->max_ws_len) {
+			logging(LOG_NORMAL, "[SKIPPED] Number of WRITESAME10 logical blocks to be written exceeds MAXIMUM WRITE SAME LENGTH");
+			scsi_free_scsi_task(task);
+			return -4;
+		}
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITESAME10 command: "
@@ -5100,6 +5121,7 @@ int
 writesame16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data)
 {
 	struct scsi_task *task;
+	uint64_t realdatalen;
 
 	logging(LOG_VERBOSE, "Send WRITESAME16 LBA:%" PRIu64 " blocks:%d "
 	       "wrprotect:%d anchor:%d unmap:%d group:%d",
@@ -5125,6 +5147,26 @@ writesame16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen
 		logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+		if (inq_bl->wsnz == 1 && datalen == 0) {
+			logging(LOG_NORMAL, "[SKIPPED] Target does not support WRITESAME16 with NUMBER OF LOGICAL BLOCKS == 0");
+			scsi_free_scsi_task(task);
+			return -3;
+		}
+
+		if (datalen == 0) {
+			realdatalen = num_blocks;
+		} else {
+			realdatalen = datalen;
+		}
+		if (inq_bl->max_ws_len > 0 && realdatalen > inq_bl->max_ws_len) {
+			logging(LOG_NORMAL, "[SKIPPED] Number of WRITESAME16 logical blocks to be written exceeds MAXIMUM WRITE SAME LENGTH");
+			scsi_free_scsi_task(task);
+			return -4;
+		}
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] WRITESAME16 command: "
