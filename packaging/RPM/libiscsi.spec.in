@@ -74,8 +74,10 @@ to iSCSI servers without having to set up the Linux iSCSI initiator.
 %{_bindir}/iscsi-ls
 %{_bindir}/iscsi-inq
 %{_bindir}/iscsi-readcapacity16
+%{_bindir}/iscsi-swp
 %{_mandir}/man1/iscsi-inq.1.gz
 %{_mandir}/man1/iscsi-ls.1.gz
+%{_mandir}/man1/iscsi-swp.1.gz
 
 %package devel
 Summary: iSCSI client development libraries
