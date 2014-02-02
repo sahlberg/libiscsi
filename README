@@ -83,11 +83,22 @@ Patches for other packages would be welcome.
 
 ISCSI-TEST-CU
 =============
-iscsi-test-cu is a CUnit based test tool for scsi and iscsi.
+./bin/iscsi-test-cu is a CUnit based test tool for scsi and iscsi.
 
-iscsi-test-cu -l to list all tests.
-iscsi-test-cu -t <test-suite> <iscsi-url> to run a test suite
-iscsi-test-cu -t <test-suite>.<test> <iscsi-url> to run a specific test
+iscsi-test-cu depends on the CUnit library and will only build
+if libcunit can be found during configure.
+
+The configure script will check if a suitable libcunit is available
+and only build the test tool iff it can find libcunit.
+This test is done toward the end of the configure phase and should result
+in a line simlar to :
+
+checking whether libcunit is available... yes
+
+Some example commands:
+./bin/iscsi-test-cu -l to list all tests.
+./bin/iscsi-test-cu -t <test-suite> <iscsi-url> to run a test suite
+./bin/iscsi-test-cu -t <test-suite>.<test> <iscsi-url> to run a specific test
 
 The tests are all self-documented to describe what they test and how they test.
 Use -V with a test to print the documentation for a test.
@@ -102,13 +113,12 @@ The test-tool subdirectory contains a iscsi/scsi test tool.
 This is a tool that is aimed at providing a comprehensive iscsi and scsi
 emulation test suite. 
 
-Run 'make iscsi-test' to compile it.
-Run ./test-tool/iscsi-test --help and
-Run ./test-tool/iscsi-test --list
+Run ./bin/iscsi-test --help and
+Run ./bin/iscsi-test --list
 for instructions
 
 Example:
-$ ./test-tool/iscsi-test --initiator-name=iqn.ronnie.test --test=T0105_read10_invalid iscsi://127.0.0.1/iqn.ronnie.test/1
+$ ./bin/iscsi-test --initiator-name=iqn.ronnie.test --test=T0105_read10_invalid iscsi://127.0.0.1/iqn.ronnie.test/1
 =========
 Running test T0105_read10_invalid
 Read10 1 block but with iscsi ExpectedDataTransferLength==0 ... [FAILED]
