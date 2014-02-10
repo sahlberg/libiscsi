@@ -95,6 +95,18 @@ The libiscsi-devel package includes the header files for libiscsi.
 %{_libdir}/libiscsi.so
 %{_libdir}/pkgconfig/libiscsi.pc
 
+%package testsuite
+Summary: iSCSI test suite
+Group: Development/Tools
+
+%description testsuite
+Test tool for iSCSI/SCSI targets
+
+%files testsuite
+%defattr(-,root,root)
+%{_bindir}/iscsi-test-cu
+
+
 %changelog
 * Sun Oct 20 2013 : 1.10.0
  - Add manpages for iscsi-ls/iscsi-inq and iscsi-swp
