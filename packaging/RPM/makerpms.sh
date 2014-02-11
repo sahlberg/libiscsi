@@ -80,7 +80,9 @@ fi
 ##
 ## copy additional source files
 ##
+mkdir -p ${SRCDIR}
 cp -p ${TOPDIR}/libiscsi-${VERSION}.tar.gz ${SRCDIR}
+mkdir -p ${SPECDIR}
 cp -p ${DIRNAME}/${SPECFILE} ${SPECDIR}
 
 ##
