@@ -66,6 +66,7 @@ fi
 pushd ${TOPDIR}
 echo -n "Creating libiscsi-${VERSION}.tar.gz ... "
 sh autogen.sh
+sh configure --prefix=/usr
 make dist GZIP_ENV="\"$GZIP_ENV\""
 RC=$?
 popd
