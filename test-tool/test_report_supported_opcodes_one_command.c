@@ -136,11 +136,15 @@ test_report_supported_opcodes_one_command(void)
 			logging(LOG_NORMAL, "[FAILED] CDB length is 0");
 		}
 		
-		logging(LOG_VERBOSE, "Verify CDB[0] Usage Data is 0xFF");
-		CU_ASSERT_EQUAL(rsoc_one->cdb_usage_data[0], 0xff);
-		if (rsoc_one->cdb_usage_data[0] != 0xff) {
-			logging(LOG_NORMAL, "[FAILED] CDB[0] Usage Data is "
-				"not 0xFF");
+		logging(LOG_VERBOSE, "Verify CDB[0] Usage Data == <opcode>");
+		CU_ASSERT_EQUAL(rsoc_one->cdb_usage_data[0],
+				rsoc->descriptors[i].opcode);
+		if (rsoc_one->cdb_usage_data[0] != rsoc->descriptors[i].opcode) {
+			logging(LOG_NORMAL, "[FAILED] CDB[0] Usage Data was "
+				"0x%02x, expected 0x%02x for opcode 0x%02x",
+				rsoc_one->cdb_usage_data[0],
+				rsoc->descriptors[i].opcode,
+				rsoc->descriptors[i].opcode);
 		}
 
 		scsi_free_scsi_task(one_task);
