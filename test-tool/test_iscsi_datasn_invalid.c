@@ -80,6 +80,7 @@ void test_iscsi_datasn_invalid(void)
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
 		CU_PASS("WRITE10 is not implemented.");
+		local_iscsi_queue_pdu = NULL;
 		return;
 	}	
 	CU_ASSERT_NOT_EQUAL(ret, 0);
@@ -101,6 +102,7 @@ void test_iscsi_datasn_invalid(void)
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
 		CU_PASS("WRITE10 is not implemented.");
+		local_iscsi_queue_pdu = NULL;
 		return;
 	}	
 	CU_ASSERT_NOT_EQUAL(ret, 0);
@@ -122,6 +124,7 @@ void test_iscsi_datasn_invalid(void)
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
 		CU_PASS("WRITE10 is not implemented.");
+		local_iscsi_queue_pdu = NULL;
 		return;
 	}	
 	CU_ASSERT_NOT_EQUAL(ret, 0);
@@ -144,9 +147,11 @@ void test_iscsi_datasn_invalid(void)
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
 		CU_PASS("WRITE10 is not implemented.");
+		local_iscsi_queue_pdu = NULL;
 		return;
 	}	
 	CU_ASSERT_NOT_EQUAL(ret, 0);
 
+	local_iscsi_queue_pdu = NULL;
 	iscsi_set_noautoreconnect(iscsic, 0);
 }
