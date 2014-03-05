@@ -32,7 +32,8 @@ test_writesame16_0blocks(void)
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks at LBA==0");
+	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks at LBA==0 (WSNZ=%d)",
+		inq_bl->wsnz);
 	ret = writesame16(iscsic, tgt_lun, 0,
 			  block_size, 0,
 			  0, 0, 0, 0, NULL);
@@ -45,7 +46,11 @@ test_writesame16_0blocks(void)
 	} else if (ret == -4) {
 		CU_PASS("[SKIPPED] Number of WRITESAME16 logical blocks to be written exceeds MAXIMUM WRITE SAME LENGTH");
 	} else {
-		CU_ASSERT_EQUAL(ret, 0);
+		if (inq_bl->wsnz) {
+			CU_ASSERT_EQUAL(ret, -1);
+		} else {
+			CU_ASSERT_EQUAL(ret, 0);
+		}
 	}
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks one block past end-of-LUN");
