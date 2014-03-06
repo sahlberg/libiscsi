@@ -33,10 +33,17 @@ test_compareandwrite_miscompare(void)
 	int i, ret;
 	unsigned j;
 	unsigned char *buf = alloca(2 * 256 * block_size);
+	int maxbl;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
+	if (inq_bl && inq_bl->max_cmp) {
+		maxbl = inq_bl->max_cmp;
+	} else {
+		/* Assume we are not limited */
+		maxbl = 256;
+	}
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1-256 blocks at the "
 		"start of the LUN. One Byte miscompare in the final block.");
@@ -59,6 +66,23 @@ test_compareandwrite_miscompare(void)
 		logging(LOG_VERBOSE, "Change byte 27 from the end to 'C' so that it does not match.");
 		buf[i * block_size - 27] = 'C';
 
+		if (i > maxbl) {
+			logging(LOG_VERBOSE, "Number of blocks %d is greater than "
+				"BlockLimits.MaximumCompareAndWriteLength(%d). "
+				"Command should fail with INVALID_FIELD_IN_CDB",
+				i, maxbl);
+			ret = compareandwrite_invalidfieldincdb(iscsic, tgt_lun, 0,
+				buf, 2 * i * block_size, block_size,
+				0, 0, 0, 0);
+			if (ret == -2) {
+				CU_PASS("[SKIPPED] Target does not support "
+					"COMPARE_AND_WRITE. Skipping test");
+				return;
+			}
+			CU_ASSERT_EQUAL(ret, 0);
+
+			continue;
+		}
 
 		memset(buf + i * block_size, 'B', i * block_size);
 
@@ -107,6 +131,18 @@ test_compareandwrite_miscompare(void)
 		buf[i * block_size - 27] = 'C';
 
 
+		if (i > maxbl) {
+			logging(LOG_VERBOSE, "Number of blocks %d is greater than "
+				"BlockLimits.MaximumCompareAndWriteLength(%d). "
+				"Command should fail with INVALID_FIELD_IN_CDB",
+				i, maxbl);
+			ret = compareandwrite_invalidfieldincdb(iscsic, tgt_lun, 0,
+				buf, 2 * i * block_size, block_size,
+				0, 0, 0, 0);
+			CU_ASSERT_EQUAL(ret, 0);
+
+			continue;
+		}
 		memset(buf + i * block_size, 'B', i * block_size);
 
 		logging(LOG_VERBOSE, "Overwrite %d blocks with 'B' "
