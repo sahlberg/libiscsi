@@ -1849,7 +1849,7 @@ int compareandwrite_invalidfieldincdb(struct iscsi_context *iscsi, int lun,
 	}
 
 	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		|| task->sense.key  != SCSI_SENSE_MISCOMPARE
+		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
 		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
 		logging(LOG_NORMAL, "[FAILED] COMPARE_AND_WRITE failed with "
 			"the wrong sense code. Should have failed with "
