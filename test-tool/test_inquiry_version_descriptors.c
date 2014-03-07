@@ -65,9 +65,8 @@ test_inquiry_version_descriptors(void)
 				break;
 			}
 		}
-		CU_ASSERT_EQUAL(claimed_ok, 1);
 		if (claimed_ok == 0) {
-			logging(LOG_VERBOSE, "[FAILURE] Block device "
+			logging(LOG_NORMAL, "[WARNING] Block device "
 				"did not claim any version of SPC");
 		} else {
 			logging(LOG_VERBOSE, "[SUCCESS] Block device "
@@ -92,9 +91,8 @@ test_inquiry_version_descriptors(void)
 				break;
 			}
 		}
-		CU_ASSERT_EQUAL(claimed_ok, 1);
 		if (claimed_ok == 0) {
-			logging(LOG_VERBOSE, "[FAILURE] Block device "
+			logging(LOG_NORMAL, "[WARNING] Block device "
 				"did not claim any version of SBC");
 		} else {
 			logging(LOG_VERBOSE, "[SUCCESS] Block device "
