@@ -29,7 +29,7 @@ test_read6_beyond_eol(void)
 { 
 	int i, ret;
 
-	if (num_blocks >= 0x1fffff) {
+	if (num_blocks > 0x1fffff) {
 		CU_PASS("LUN is too big for read-beyond-eol tests with READ6. Skipping test.\n");
 		return;
 	}
