@@ -31,6 +31,7 @@
 
 #include <CUnit/CUnit.h>
 #include <CUnit/Basic.h>
+#include <CUnit/Automated.h>
 
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
@@ -640,6 +641,8 @@ print_usage(void)
 	fprintf(stderr,
 	    "  -v|--verbose                     Test Mode: Verbose [DEFAULT]\n");
 	fprintf(stderr,
+	    "  -x|--xml                         Test Mode: XML\n");
+	fprintf(stderr,
 	    "  -V|--Verbose-scsi                Enable verbose SCSI logging [default SILENT]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr,
@@ -857,6 +860,7 @@ main(int argc, char *argv[])
 	struct scsi_task *rsop_task = NULL;
 	int full_size;
 	int is_usb = 0;
+	int xml_mode = 0;
 	static struct option long_opts[] = {
 		{ "help", no_argument, 0, '?' },
 		{ "list", no_argument, 0, 'l' },
@@ -872,13 +876,14 @@ main(int argc, char *argv[])
 		{ "normal", no_argument, 0, 'n' },
 		{ "usb", no_argument, 0, 'u' },
 		{ "verbose", no_argument, 0, 'v' },
+		{ "xml", no_argument, 0, 'x' },
 		{ "Verbose-scsi", no_argument, 0, 'V' },
 		{ NULL, 0, 0, 0 }
 	};
 	int i, c;
 	int opt_idx = 0;
 
-	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsSnuvV", long_opts,
+	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsSnuvxV", long_opts,
 		    &opt_idx)) > 0) {
 		switch (c) {
 		case 'h':
@@ -923,6 +928,9 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			mode = CU_BRM_VERBOSE;	/* default */
+			break;
+		case 'x':
+		        xml_mode = 1;
 			break;
 		case 'V':
 			loglevel = LOG_VERBOSE;
@@ -1176,9 +1184,14 @@ main(int argc, char *argv[])
 	/*
 	 * this actually runs the tests ...
 	 */
-	res = CU_basic_run_tests();
 
-	printf("Tests completed with return value: %d\n", res);
+	if (xml_mode) {
+	  CU_list_tests_to_file();
+	  CU_automated_run_tests();
+	} else {
+	  res = CU_basic_run_tests();
+	  printf("Tests completed with return value: %d\n", res);
+	}
 
 	CU_cleanup_registry();
 	if (testname_re)
