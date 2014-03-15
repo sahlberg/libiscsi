@@ -3704,7 +3704,7 @@ verify10_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba, u
 		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] VERIFY10 successful but should have failed with LBA_OUT_OF_RANGE");
+		logging(LOG_NORMAL, "[FAILED] VERIFY10 successful but should have failed with ILLEGAL_REQUEST");
 		scsi_free_scsi_task(task);
 		return -1;
 	}
@@ -3894,7 +3894,7 @@ verify12_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba, u
 		return -2;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] VERIFY12 successful but should have failed with LBA_OUT_OF_RANGE");
+		logging(LOG_NORMAL, "[FAILED] VERIFY12 successful but should have failed with ILLEGAL_REQUEST");
 		scsi_free_scsi_task(task);
 		return -1;
 	}
