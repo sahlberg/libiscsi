@@ -1,25 +1,20 @@
-Libiscsi is a clientside library to implement the iSCSI protocol
-that can be used to access resource of an iSCSI Target.
+Libiscsi is a client-side library to implement the iSCSI protocol that can be used
+to access the resources of an iSCSI target.
 
-The library is fully async with regards to iscsi commands and scsi
-tasks, but a sync layer is also provided for ease of use for simpler
+The library is fully asynchronous with regards to iSCSI commands and SCSI tasks,
+but a synchronous layer is also provided for ease of use for simpler
 applications.
 
+The src directory contains a handful of useful iSCSI utilities such as logging in
+to and enumerating all targets on a portal and all devices of a target.
 
-The src directory contain a handful of useful iscsi utilities
-such as logging in to and enumerating all targets on a portal
-and all devices of a target.
-
-The examples directory contain example implementation of how to
-access both the sync and acync api of libiscsi.
-
-
+The examples directory contains example implementation of how to access both the
+synchronous and asynchronous APIs of libiscsi.
 
 Libiscsi is a work in progress.
-It aims to become a full async library for iscsi functionality,
-including all features required to establish and maintain a iscsi
-session, as well as a low level scsi library to create scsi cdb's
-and parse/unmarshall data-in structures.
+It aims to become a fully asynchronous library for iSCSI functionality, including
+all features required to establish and maintain an iSCSI session, as well as a
+low-level SCSI library to create SCSI CDBs and parse/unmarshall data-in structures.
 
 
 Installation
@@ -29,6 +24,7 @@ Installation
 make
 sudo make install
 
+
 Build RPM
 =========
 To build RPMs run the following script from the libiscsi root directory
@@ -36,7 +32,7 @@ To build RPMs run the following script from the libiscsi root directory
 
 iSCSI URL Format
 ================
-iSCSI devices are specified by a URL format on the following form :
+iSCSI devices are specified by a URL format of the following form :
     iscsi://[<username>[%<password>]@]<host>[:<port>]/<target-iqn>/<lun>
 Example:
     iscsi://server/iqn.ronnie.test/1
@@ -57,7 +53,7 @@ IPv6 support
 ============
 Libiscsi supports IPv6, either as names resolving into IPv6 addresses or when
 IPv6 addresses are explicitely set in the URL.
-When specifying IPv6 addresses in the URL, they have to be specified in 
+When specifying IPv6 addresses in the URL, they have to be specified in
 [...] bracket form.
 
 Example:
@@ -67,7 +63,7 @@ Example:
 Header Digest
 =============
 Libiscsi supports HeaderDigest.
-By default, libiscsi will offer None,CRC32C and let the target pick whether 
+By default, libiscsi will offer None,CRC32C and let the target pick whether
 Header digest is to be used or not.
 This can be overridden by an application by calling iscsi_set_header_digest()
 if the application wants to force a specific setting.
@@ -75,8 +71,8 @@ if the application wants to force a specific setting.
 
 Patches
 =======
-The patches subdirectory contains patches to make some external packages iscsi 
-aware and make them use libiscsi.
+The patches subdirectory contains patches to make some external packages
+iSCSI-aware and make them use libiscsi.
 Currently we have SG3-UTILS and MTX.
 Patches for other packages would be welcome.
 
@@ -85,13 +81,13 @@ ISCSI-TEST-CU
 =============
 ./bin/iscsi-test-cu is a CUnit based test tool for scsi and iscsi.
 
-iscsi-test-cu depends on the CUnit library and will only build
-if libcunit can be found during configure.
+iscsi-test-cu depends on the CUnit library and will only build if libcunit can be
+found during configure.
 
-The configure script will check if a suitable libcunit is available
-and only build the test tool iff it can find libcunit.
+The configure script will check if a suitable libcunit is available and only
+build the test tool if it can find libcunit.
 This test is done toward the end of the configure phase and should result
-in a line simlar to :
+in a line similar to :
 
 checking whether libcunit is available... yes
 
@@ -113,11 +109,11 @@ http://git.cyrusimap.org/cyrus-imapd/plain/cunit/cunit-to-junit.pl
 
 ISCSI-TEST
 ==========
-iscsi-test is depreciated and is being replaced by iscsi-test-cu.
+iscsi-test is deprecated and is being replaced by iscsi-test-cu.
 No new tests will be developed for iscsi-test.
 
-The test-tool subdirectory contains a iscsi/scsi test tool.
-This is a tool that is aimed at providing a comprehensive iscsi and scsi
+The test-tool subdirectory contains an iSCSI/SCSI test tool.
+This is a tool that is aimed at providing a comprehensive iSCSI and SCSI
 emulation test suite. 
 
 Run ./bin/iscsi-test --help and
@@ -137,9 +133,10 @@ TEST T0105_read10_invalid [FAILED]
 LD_PRELOAD FUN
 ==============
 There is a small LD_PRELOAD hack in the src directory that intercepts a handful
-of system calls and converts ISCSI URLs to look and behave as if they are 
-normal read-only files.
-This allows using standard unix tools to become iscsi aware with no modifications.
+of system calls and converts iSCSI URLs to look and behave as if they are normal
+read-only files.
+This allows using standard UNIX tools to become iSCSI-aware with no
+modifications.
 
 For example:
 The stat command: this shows the size of the iSCSI LUN as if it was a normal file:
@@ -156,18 +153,20 @@ The cat command, which allows you to read/dump a iSCSI LUN to a file :
 $ LD_PRELOAD=./bin/ld_iscsi.so cat iscsi://127.0.0.1:3262/iqn.ronnie.test/2 >copy_of_iscsi_lun
 
 Or using dd even :
-LD_PRELOAD=./bin/ld_iscsi.so dd if=iscsi://127.0.0.1:3262/iqn.ronnie.test/2 of=copy_of_LUN bs=10M count=1
+$ LD_PRELOAD=./bin/ld_iscsi.so dd if=iscsi://127.0.0.1:3262/iqn.ronnie.test/2 of=copy_of_LUN bs=10M count=1
 
-The LD_PRELOAD hack is incomplete and needs more functions to be intercepted before becomming fully functional. Patches welcome!
+The LD_PRELOAD hack is incomplete and needs more functions to be intercepted
+before becoming fully functional. Patches welcome!
 
 For now, it is sufficiently complete for trivial commands like stat and cat.
-You probably need to implement at least lseek, pread, pwrite before it becomes really useful.
+You probably need to implement at least lseek, pread, pwrite before it becomes
+really useful.
 
 
 SUPPORTED PLATFORMS
 ===================
-libiscsi is pure posix and should with some tweaks run on any host that
-provides a posix-like environment.
+libiscsi is pure POSIX and should with some tweaks run on any host that
+provides a POSIX-like environment.
 
 Libiscsi has been tested on:
 * Linux (32 and 64 bit)
@@ -185,6 +184,5 @@ Release tarballs are available at https://sites.google.com/site/libiscsitarballs
 
 MAILINGLIST
 ===========
-A libiscsi mailinglist is available at http://groups.google.com/group/libiscsi
+A libiscsi mailing list is available at http://groups.google.com/group/libiscsi
 Announcements of new versions of libiscsi will be posted to this list.
-
