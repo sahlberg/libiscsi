@@ -1,5 +1,7 @@
 # Generic definitions
+SUBDIRS = doc
 
+CLEANFILES=
 ACLOCAL_AMFLAGS =-I m4
 AUTOMAKE_OPTIONS = foreign subdir-objects
 AM_CPPFLAGS=-I. -I$(srcdir)/include "-D_U_=__attribute__((unused))" \
@@ -7,13 +9,8 @@ AM_CPPFLAGS=-I. -I$(srcdir)/include "-D_U_=__attribute__((unused))" \
 AM_CFLAGS=$(WARN_CFLAGS)
 LDADD = lib/libiscsi.la
 
-# Manpages
-man1_MANS = doc/iscsi-inq.1 doc/iscsi-ls.1 doc/iscsi-swp.1
-CLEANFILES = $(man1_MANS)
-
 EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt \
 	     packaging/RPM/libiscsi.spec.in packaging/RPM/makerpms.sh \
-	     doc/iscsi-inq.xml doc/iscsi-ls.xml doc/iscsi-swp.xml \
 	     aros/aros_compat.c aros/aros_compat.h aros/iscsi-ls.c \
 	     aros/Makefile.AROS \
 	     win32/vsbuild.bat win32/win32_compat.c win32/win32_compat.h \
@@ -395,14 +392,5 @@ bin/ld_iscsi.o: src/bin_ld_iscsi-ld_iscsi.o lib/libiscsi_convenience.la
 bin_SCRIPTS = bin/ld_iscsi.so
 bin/ld_iscsi.so: bin/ld_iscsi.o
 	$(CC) -shared -o bin/ld_iscsi.so bin/ld_iscsi.o -ldl
-endif
-
-XSLTPROC = /usr/bin/xsltproc
-
-.xml.1:
-if BUILD_MANPAGES
-	$(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
-else
-	echo "Building without manpages"
 endif
 
