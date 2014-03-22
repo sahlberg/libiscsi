@@ -1,0 +1,113 @@
+'\" t
+.\"     Title: iscsi-swp
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 03/22/2014
+.\"    Manual: iscsi-swp: get/set software write protect
+.\"    Source: iscsi-swp
+.\"  Language: English
+.\"
+.TH "ISCSI\-SWP" "1" "03/22/2014" "iscsi\-swp" "iscsi\-swp: get/set software w"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+iscsi-swp \- Utility to get/set software write protect on an iSCSI LUN
+.SH "SYNOPSIS"
+.HP \w'\fBiscsi\-swp\ [\ OPTIONS\ ]\ <ISCSI\-PORTAL>\fR\ 'u
+\fBiscsi\-swp [ OPTIONS ] <ISCSI\-PORTAL>\fR
+.HP \w'\fBiscsi\-ls\fR\ 'u
+\fBiscsi\-ls\fR [\-i\ \-\-initiator\-name=<IQN>] [\-s\ \-\-swp\ {on|off}] [\-d\ \-\-debug=<INTEGER>] [\-?\ \-\-help] [\-\-usage]
+.SH "DESCRIPTION"
+.PP
+iscsi\-swp is a utility to get or set the software write protect on an iSCSI LUN\&.
+.SH "ISCSI PORTAL URL FORMAT"
+.PP
+iSCSI portal format is \*(Aqiscsi://[<username>[%<password>]@]<host>[:<port>]\*(Aq
+.PP
+Username and password are only required if the target requires CHAP authentication\&. Optionally you can specify the username and password via the environment variables LIBISCSI_CHAP_USERNAME and LIBISCSI_CHAP_PASSWORD\&.
+.PP
+Host can be specified either as a hostname, an IPv4 address or an IPv6 address\&. Examples:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	iscsi://192\&.0\&.2\&.1
+	iscsi://[2001:DB8::1]:3261
+	iscsi://ronnie%password@iscsi\&.example\&.com
+      
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+Port is the TCP port on the target to connect to\&. Default is 3260\&.
+.SH "OPTIONS"
+.PP
+\-i \-\-initiator\-name=<IQN>
+.RS 4
+This specifies the initiator\-name that iscsi\-ls will use when logging in to the target\&.
+.sp
+The default name is \*(Aqiqn\&.2007\-10\&.com\&.github:sahlberg:libiscsi:iscsi\-ls\*(Aq but you can use this argument to override this\&. This is mainly needed for cases where the target is configured with access\-control to only allow discovery logins from known initiator\-names\&.
+.RE
+.PP
+\-s \-\-swp {on|off}
+.RS 4
+By default iscsi\-swp will only print the current setting of the software write protect bit\&. By using this argument iscsi\-swp will also try to set/clear the flag on the target LUN\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+iscsi\-swp iscsi://127\&.0\&.0\&.1/iqn\&.ronnie\&.test/1
+SWP:0
+
+iscsi\-swp iscsi://127\&.0\&.0\&.1/iqn\&.ronnie\&.test/1 \-\-swp on
+SWP:0
+Turning SWP ON
+
+iscsi\-swp iscsi://127\&.0\&.0\&.1/iqn\&.ronnie\&.test/1 \-\-swp off
+SWP:0
+Turning SWP OFF
+	  
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-d \-\-debug=<INTEGER>
+.RS 4
+Debug level\&.
+.RE
+.PP
+\-? \-\-help
+.RS 4
+Display basic help text\&.
+.RE
+.PP
+\-\-usage
+.RS 4
+Display basic usage text\&.
+.RE
+.SH "SEE ALSO"
+.PP
+iscsi\-inq(1), iscsi\-ls(1)
+\m[blue]\fB\%http://github.com/sahlberg/libiscsi\fR\m[]

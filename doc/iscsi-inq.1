@@ -1,0 +1,145 @@
+'\" t
+.\"     Title: iscsi-inq
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 03/22/2014
+.\"    Manual: iscsi-inq: Perform INQUIRY on an iSCSI LUN
+.\"    Source: iscsi-inq
+.\"  Language: English
+.\"
+.TH "ISCSI\-INQ" "1" "03/22/2014" "iscsi\-inq" "iscsi\-inq: Perform INQUIRY on"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+iscsi-inq \- Utility to request INQUIRY data from an iSCSI LUN
+.SH "SYNOPSIS"
+.HP \w'\fBiscsi\-inq\ [\ OPTIONS\ ]\ <ISCSI\-URL>\fR\ 'u
+\fBiscsi\-inq [ OPTIONS ] <ISCSI\-URL>\fR
+.HP \w'\fBiscsi\-inq\fR\ 'u
+\fBiscsi\-inq\fR [\-i\ \-\-initiator\-name=<IQN>] [\-e\ \-\-evpd=<INTEGER>] [\-c\ \-\-pagecode=<INTEGER>] [\-d\ \-\-debug=<INTEGER>] [\-?\ \-\-help] [\-\-usage] [<ISCSI\-URL>]
+.SH "DESCRIPTION"
+.PP
+iscsi\-inq is a utility to request INQUIRY data from an iSCSI LUN\&.
+.SH "ISCSI URL FORMAT"
+.PP
+iSCSI URL format is \*(Aqiscsi://[<username>[%<password>]@]<host>[:<port>]/<target\-iqn\-name>/<lun>\*(Aq
+.PP
+Username and password are only required if the target requires CHAP authentication\&. Optionally you can specify the username and password via the environment variables LIBISCSI_CHAP_USERNAME and LIBISCSI_CHAP_PASSWORD\&.
+.PP
+Host can be specified either as a hostname, an IPv4 address or an IPv6 address\&. Examples:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	iscsi://192\&.0\&.2\&.1/iqn\&.ronnie\&.test/1
+	iscsi://[2001:DB8::1]:3261/iqn\&.ronnie\&.test/1
+	iscsi://ronnie%password@iscsi\&.example\&.com/iqn\&.ronnie\&.test/1
+      
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+Port is the TCP port on the target to connect to\&. Default is 3260\&.
+.PP
+Target\-iqn\-name is the iqn name of the target\&. An iSCSI portal can have multiple targets defined\&. Use iscsi\-ls to list all targets available on one specific portal\&.
+.PP
+LUN is the LUN number to report the INQUIRY data for\&.
+.SH "OPTIONS"
+.PP
+\-i \-\-initiator\-name=<IQN>
+.RS 4
+This specifies the initiator\-name that iscsi\-inq will use when logging in to the target\&.
+.sp
+The default name is \*(Aqiqn\&.2007\-10\&.com\&.github:sahlberg:libiscsi:iscsi\-inq\*(Aq but you can use this argument to override this\&. This is mainly needed for cases where the target is configured with access\-control to only allow discovery logins from known initiator\-names\&.
+.RE
+.PP
+\-e \-\-evpd=<INTEGER>
+.RS 4
+By default iscsi\-inq will display the standard inquiry data\&. Specify evpd as 1 to display extended VPD pages\&.
+.RE
+.PP
+\-c \-\-pagecode=<INTEGER>
+.RS 4
+This argument specifies which VPD page to display when evpd is requested\&. Default is 0x00 which represents SUPPORTED VPD PAGES\&.
+.sp
+This argument can only be used when evpd is set to 1\&.
+.RE
+.PP
+\-d \-\-debug=<INTEGER>
+.RS 4
+Debug level\&.
+.RE
+.PP
+\-? \-\-help
+.RS 4
+Display basic help text\&.
+.RE
+.PP
+\-\-usage
+.RS 4
+Display basic usage text\&.
+.RE
+.SH "EXAMPLES"
+.PP
+To print the standard INQUIRY page:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	iscsi\-inq iscsi://192\&.0\&.2\&.1/iqn\&.ronnie\&.test/1
+      
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+To list available pages:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	iscsi\-inq \-e 1 iscsi://192\&.0\&.2\&.1/iqn\&.ronnie\&.test/1
+      
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+To show a specific page:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	iscsi\-inq \-e 1 \-c 0x80 iscsi://192\&.0\&.2\&.1/iqn\&.ronnie\&.test/1
+      
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.SH "SEE ALSO"
+.PP
+iscsi\-ls(1)
+\m[blue]\fB\%http://github.com/sahlberg/libiscsi\fR\m[]
