@@ -10,6 +10,7 @@ LT_INIT
 AC_CANONICAL_HOST
 AM_CONDITIONAL(LD_ISCSI,
                [expr "$host_os" : linux > /dev/null 2>&1])
+AM_PROG_CC_C_O
 
 enable_write_strings="yes"
 
@@ -132,5 +133,6 @@ AC_CONFIG_FILES([Makefile]
 		[lib/Makefile]
 		[doc/Makefile]
 		[utils/Makefile]
+		[test-tool/Makefile]
 		[libiscsi.pc])
 AC_OUTPUT
