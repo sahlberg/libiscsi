@@ -37,6 +37,14 @@ if test "$ac_cv_prog_gcc" = yes; then
 fi
 AC_SUBST(WARN_CFLAGS)
 
+AC_ARG_ENABLE([manpages],
+              [AC_HELP_STRING([--enable-manpages],
+                              [Enable building the manpages])],
+	      [ENABLE_MANPAGES=$enableval],
+	      [ENABLE_MANPAGES="no"])
+AM_CONDITIONAL(BUILD_MANPAGES,
+               [expr "$ENABLE_MANPAGES" : yes > /dev/null 2>&1])
+
 AC_CONFIG_HEADER(config.h)
 
 AC_CHECK_LIB([gcrypt], [gcry_control])

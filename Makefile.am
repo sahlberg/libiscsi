@@ -6,7 +6,6 @@ AM_CPPFLAGS=-I. -I$(srcdir)/include "-D_U_=__attribute__((unused))" \
 	"-D_R_(A,B)=__attribute__((format(printf,A,B)))"
 AM_CFLAGS=$(WARN_CFLAGS)
 LDADD = lib/libiscsi.la
-XSLTPROC = /usr/bin/xsltproc
 
 # Manpages
 man1_MANS = doc/iscsi-inq.1 doc/iscsi-ls.1 doc/iscsi-swp.1
@@ -398,6 +397,12 @@ bin/ld_iscsi.so: bin/ld_iscsi.o
 	$(CC) -shared -o bin/ld_iscsi.so bin/ld_iscsi.o -ldl
 endif
 
+XSLTPROC = /usr/bin/xsltproc
+
 .xml.1:
-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
+if BUILD_MANPAGES
+	$(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
+else
+	echo "Building without manpages"
+endif
 
