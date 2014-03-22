@@ -1,5 +1,5 @@
 # Generic definitions
-SUBDIRS = lib doc
+SUBDIRS = lib doc utils
 
 CLEANFILES=
 ACLOCAL_AMFLAGS =-I m4
@@ -33,16 +33,7 @@ iscsi_includedir = $(includedir)/iscsi
 dist_iscsi_include_HEADERS = include/iscsi.h include/scsi-lowlevel.h
 dist_noinst_HEADERS = include/iscsi-private.h include/md5.h include/slist.h
 
-# libiscsi utilities
-bin_PROGRAMS += bin/iscsi-inq bin/iscsi-ls bin/iscsi-readcapacity16 \
-	bin/iscsi-swp
-bin_iscsi_inq_SOURCES = src/iscsi-inq.c
-bin_iscsi_ls_SOURCES = src/iscsi-ls.c
-bin_iscsi_swp_SOURCES = src/iscsi-swp.c
-bin_iscsi_readcapacity16_SOURCES = src/iscsi-readcapacity16.c
-
 # Other examples
-
 noinst_PROGRAMS += bin/iscsiclient
 bin_iscsiclient_SOURCES = examples/iscsiclient.c
 
