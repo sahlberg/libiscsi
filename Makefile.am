@@ -1,5 +1,5 @@
 # Generic definitions
-SUBDIRS = doc
+SUBDIRS = lib doc
 
 CLEANFILES=
 ACLOCAL_AMFLAGS =-I m4
@@ -32,28 +32,8 @@ EXTRA_PROGRAMS =
 iscsi_includedir = $(includedir)/iscsi
 dist_iscsi_include_HEADERS = include/iscsi.h include/scsi-lowlevel.h
 dist_noinst_HEADERS = include/iscsi-private.h include/md5.h include/slist.h
-dist_noinst_DATA = lib/libiscsi.syms
-
-lib_LTLIBRARIES = lib/libiscsi.la
-lib_libiscsi_la_SOURCES = \
-	lib/connect.c lib/crc32c.c lib/discovery.c lib/init.c \
-	lib/login.c lib/nop.c lib/pdu.c lib/iscsi-command.c \
-	lib/scsi-lowlevel.c lib/socket.c lib/sync.c lib/task_mgmt.c \
-	lib/logging.c
-
-if !HAVE_LIBGCRYPT
-lib_libiscsi_la_SOURCES += lib/md5.c
-endif
-
-SOCURRENT=3
-SOREVISON=10
-SOAGE=0
-lib_libiscsi_la_LDFLAGS = \
-	-version-info $(SOCURRENT):$(SOREVISON):$(SOAGE) -bindir $(bindir) -no-undefined \
-	-export-symbols $(srcdir)/lib/libiscsi.syms
 
 # libiscsi utilities
-
 bin_PROGRAMS += bin/iscsi-inq bin/iscsi-ls bin/iscsi-readcapacity16 \
 	bin/iscsi-swp
 bin_iscsi_inq_SOURCES = src/iscsi-inq.c

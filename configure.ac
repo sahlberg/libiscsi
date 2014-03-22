@@ -129,6 +129,7 @@ AC_CHECK_MEMBER([struct CU_SuiteInfo.pSetUpFunc],
 
 
 AC_CONFIG_FILES([Makefile]
+		[lib/Makefile]
 		[doc/Makefile]
 		[libiscsi.pc])
 AC_OUTPUT
