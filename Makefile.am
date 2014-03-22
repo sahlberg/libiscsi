@@ -14,7 +14,7 @@ CLEANFILES = $(man1_MANS)
 
 EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt \
 	     packaging/RPM/libiscsi.spec.in packaging/RPM/makerpms.sh \
-	     doc/iscsi-inq.1.xml doc/iscsi-ls.1.xml doc/iscsi-swp.1.xml \
+	     doc/iscsi-inq.xml doc/iscsi-ls.xml doc/iscsi-swp.xml \
 	     aros/aros_compat.c aros/aros_compat.h aros/iscsi-ls.c \
 	     aros/Makefile.AROS \
 	     win32/vsbuild.bat win32/win32_compat.c win32/win32_compat.h \
@@ -398,12 +398,6 @@ bin/ld_iscsi.so: bin/ld_iscsi.o
 	$(CC) -shared -o bin/ld_iscsi.so bin/ld_iscsi.o -ldl
 endif
 
-doc/iscsi-ls.1: doc/iscsi-ls.1.xml
-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
-
-doc/iscsi-inq.1: doc/iscsi-inq.1.xml
-	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
-
-doc/iscsi-swp.1: doc/iscsi-swp.1.xml
+.xml.1:
 	-test -z "$(XSLTPROC)" || $(XSLTPROC) -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
 
