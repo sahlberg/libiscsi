@@ -23,5 +23,5 @@ libiscsi_la_CPPFLAGS = -I../include -I$(srcdir)/include \
 
 AM_CFLAGS=$(WARN_CFLAGS)
 
-dist_noinst_DATA = libiscsi.syms
+dist_noinst_DATA = libiscsi.syms libiscsi.def
 

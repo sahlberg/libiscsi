@@ -1,7 +1,6 @@
 # Generic definitions
 SUBDIRS = lib doc utils test-tool examples
 
-CLEANFILES=
 ACLOCAL_AMFLAGS =-I m4
 AUTOMAKE_OPTIONS = foreign subdir-objects
 AM_CPPFLAGS=-I. -I$(srcdir)/include "-D_U_=__attribute__((unused))" \
@@ -14,19 +13,10 @@ EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt \
 	     aros/aros_compat.c aros/aros_compat.h aros/iscsi-ls.c \
 	     aros/Makefile.AROS \
 	     win32/vsbuild.bat win32/win32_compat.c win32/win32_compat.h \
-	     lib/libiscsi.def \
 	     patches/mtx-iscsi.diff patches/README patches/sg3_utils-1.32.patch
-
-# Simplify conditions below by declaring variables as empty
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libiscsi.pc
-
-bin_PROGRAMS =
-noinst_PROGRAMS =
-EXTRA_PROGRAMS =
-
-# libiscsi shared library
 
 iscsi_includedir = $(includedir)/iscsi
 dist_iscsi_include_HEADERS = include/iscsi.h include/scsi-lowlevel.h
