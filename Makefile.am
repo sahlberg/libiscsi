@@ -32,27 +32,3 @@ iscsi_includedir = $(includedir)/iscsi
 dist_iscsi_include_HEADERS = include/iscsi.h include/scsi-lowlevel.h
 dist_noinst_HEADERS = include/iscsi-private.h include/md5.h include/slist.h
 
-# LD_PRELOAD library.
-
-if LD_ISCSI
-EXTRA_PROGRAMS += bin/ld_iscsi
-CLEANFILES += bin/ld_iscsi.o bin/ld_iscsi.so
-
-# This gets a bit messy:
-#
-# 1) let automake compile the sources
-bin_ld_iscsi_SOURCES = src/ld_iscsi.c
-bin_ld_iscsi_CFLAGS = $(AM_CFLAGS) -fPIC
-
-# 2) let libtool link in the static version of the library
-noinst_LTLIBRARIES = lib/libiscsi_convenience.la
-lib_libiscsi_convenience_la_SOURCES = $(lib_libiscsi_la_SOURCES)
-bin/ld_iscsi.o: src/bin_ld_iscsi-ld_iscsi.o lib/libiscsi_convenience.la
-	$(LIBTOOL) --mode=link $(CC) -o $@ $^
-
-# 3) Manually create the .so file.
-bin_SCRIPTS = bin/ld_iscsi.so
-bin/ld_iscsi.so: bin/ld_iscsi.o
-	$(CC) -shared -o bin/ld_iscsi.so bin/ld_iscsi.o -ldl
-endif
-
