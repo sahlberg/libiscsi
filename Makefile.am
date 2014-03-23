@@ -1,5 +1,5 @@
 # Generic definitions
-SUBDIRS = lib doc utils test-tool
+SUBDIRS = lib doc utils test-tool examples
 
 CLEANFILES=
 ACLOCAL_AMFLAGS =-I m4
@@ -31,13 +31,6 @@ EXTRA_PROGRAMS =
 iscsi_includedir = $(includedir)/iscsi
 dist_iscsi_include_HEADERS = include/iscsi.h include/scsi-lowlevel.h
 dist_noinst_HEADERS = include/iscsi-private.h include/md5.h include/slist.h
-
-# Other examples
-noinst_PROGRAMS += bin/iscsiclient
-bin_iscsiclient_SOURCES = examples/iscsiclient.c
-
-EXTRA_PROGRAMS += bin/iscsi-dd
-bin_iscsi_dd_SOURCES = examples/iscsi-dd.c
 
 # LD_PRELOAD library.
 

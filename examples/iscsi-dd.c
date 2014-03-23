@@ -140,7 +140,7 @@ void fill_read_queue(struct client *client)
 	}
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
 	char *src_url = NULL;
 	char *dst_url = NULL;
@@ -163,17 +163,16 @@ int main(int argc, const char *argv[])
 			&option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			dst = optarg;
+			dst_url = optarg;
 			break;
 		case 's':
-			src = optarg;
+			src_url = optarg;
 			break;
 		case 'i':
 			initiator = optarg;
 			break;
 		default:
 			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
-			print_help();
 			exit(0);
 		}
 	}

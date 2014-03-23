@@ -134,5 +134,6 @@ AC_CONFIG_FILES([Makefile]
 		[doc/Makefile]
 		[utils/Makefile]
 		[test-tool/Makefile]
+		[examples/Makefile]
 		[libiscsi.pc])
 AC_OUTPUT
