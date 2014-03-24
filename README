@@ -96,6 +96,16 @@ Some example commands:
 ./bin/iscsi-test-cu -t <test-suite> <iscsi-url> to run a test suite
 ./bin/iscsi-test-cu -t <test-suite>.<test> <iscsi-url> to run a specific test
 
+Most tests only require a single login to the target, but some tests,
+for example the it nexus loss tests may need to login two separate sessions.
+By default the initiator names use for the logins will be
+	"iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test";
+for the primary connection for all tests, and
+	"iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test-2"
+for the secondary connection for the test that needs two sessions.
+These names can be controlled by using the arguments
+--initiator-name and --initiator-name-2
+
 The tests are all self-documented to describe what they test and how they test.
 Use -V with a test to print the documentation for a test.
 
