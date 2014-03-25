@@ -105,6 +105,7 @@ Test tool for iSCSI/SCSI targets
 %files testsuite
 %defattr(-,root,root)
 %{_bindir}/iscsi-test-cu
+%{_mandir}/man1/iscsi-test-cu.1.gz
 
 
 %changelog

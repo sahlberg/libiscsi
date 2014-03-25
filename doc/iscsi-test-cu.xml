@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<refentry id="iscsi-test-cu.1">
+
+<refmeta>
+	<refentrytitle>iscsi-test-cu</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">iscsi-test-cu</refmiscinfo>
+	<refmiscinfo class="manual">iscsi-test-cu: iSCSI/SCSI protocol test suite</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>iscsi-test-cu</refname>
+        <refpurpose>iSCSI/SCSI test suite</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>iscsi-test-cu [ OPTIONS ] &lt;ISCSI-PORTAL&gt;</command>
+	</cmdsynopsis>
+	
+	<cmdsynopsis>
+		<command>iscsi-test-cu</command>
+		<arg choice="opt">-i --initiator-name=&lt;IQN&gt;</arg>
+		<arg choice="opt">-I --initiator-name-2=&lt;IQN&gt;</arg>
+		<arg choice="opt">-l --list</arg>
+		<arg choice="opt">-t --test=&lt;family&gt;|*[.&lt;suite&gt;|*[.&lt;test&gt;|*]]</arg>
+		<arg choice="opt">-d --dataloss</arg>
+		<arg choice="opt">-s --allow-sanitize</arg>
+		<arg choice="opt">-u --usb</arg>
+		<arg choice="opt">-V --Verbose-scsi</arg>
+		<arg choice="opt">-x --xml</arg>
+		<arg choice="opt">-? --help</arg>
+	</cmdsynopsis>
+	
+</refsynopsisdiv>
+
+  <refsect1><title>DESCRIPTION</title>
+    <para>
+      iscsi-test-cu is a test suite for iSCSI/SCSI.
+    </para>
+  </refsect1>
+
+  <refsect1><title>ISCSI PORTAL URL FORMAT</title>
+    <para>
+      iSCSI portal format is 'iscsi://[&lt;username&gt;[%&lt;password&gt;]@]&lt;host&gt;[:&lt;port&gt;]/&lt;iqn-name&gt;/&lt;lun&gt;'
+    </para>
+    <para>
+      Port is the TCP port on the target to connect to. Default is 3260.
+    </para>
+    <para>
+      Username and password are only required if the target requires CHAP
+      authentication. Optionally you can specify the username and password via
+      the environment variables LIBISCSI_CHAP_USERNAME and
+      LIBISCSI_CHAP_PASSWORD.
+    </para>
+    <para>
+      Host can be specified either as a hostname, an IPv4 address or an
+      IPv6 address.
+
+      Examples:
+      <screen format="linespecific">
+	iscsi://192.0.2.1/iqn.ronnie.test/1
+	iscsi://[2001:DB8::1]:3261/iqn.ronnie.test/1
+	iscsi://ronnie%password@iscsi.example.com/iqn.ronnie.test/1
+      </screen>
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <variablelist>
+
+      <varlistentry><term>-i --initiator-name=&lt;IQN&gt;</term>
+        <listitem>
+	  <para>
+	    All tests use at least one iSCSI connection to the target
+	    and this is the initiator name used for that primary session and
+	    it defaults to 
+	    'iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test'
+	  </para>
+	  <para>
+	    This argument is used to change what initiator name to use
+	    for the primary session.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-I --initiator-name-2=&lt;IQN&gt;</term>
+        <listitem>
+	  <para>
+	    Some tests use a second connection to the target, such
+	    as the 'it nexus loss tests'.
+	    The default name used for this second connection is
+	    'iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test-2'
+	  </para>
+	  <para>
+	    This argument is used to change what initiator name to use
+	    for the secondary session.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-l --list</term>
+        <listitem>
+          <para>
+	    This argument lists all available tests.
+	  </para>
+	  <para>
+	    The tests are divided up into 'families', 'suites' and 'tests'
+	    separated by '.'.
+
+	    <screen format="linespecific">
+iscsi-test-cu -l
+ALL
+ALL.CompareAndWrite
+ALL.CompareAndWrite.Simple
+ALL.CompareAndWrite.Miscompare
+ALL.GetLBAStatus
+ALL.GetLBAStatus.Simple
+ALL.GetLBAStatus.BeyondEol
+...
+	    </screen>
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-t --test=&lt;family&gt;|*[.&lt;suite&gt;|*[.&lt;test&gt;|*]]</term>
+        <listitem>
+	  <para>
+	    <screen format="linespecific">
+To run all tests:
+iscsi-test-cu --test=ALL iscsi://192.0.2.1/iqn.ronnie/test/1
+
+To run the READ16 test suite:
+iscsi-test-cu --test=SCSI.Read16.* \
+  iscsi://192.0.2.1/iqn.ronnie/test/1
+
+To just run a single specific test:
+iscsi-test-cu --test=iSCSI.iSCSIResiduals.Read10Invalid \
+  iscsi://192.0.2.1/iqn.ronnie/test/1
+...
+	    </screen>
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-d --dataloss</term>
+        <listitem>
+          <para>
+	    By default the test tool will only run non-destructive tests.
+	    To test commands that mutates the data, such as the Write* tests
+	    you must specify the --dataloss flag.
+	  </para>
+	  <para>
+	    The tests that requre --dataloss will overwrite the data on the
+	    LUN and any and all data on that LUN will be destroyed when running
+	    these tests.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-s --allow-sanitize</term>
+        <listitem>
+          <para>
+	    The SBC SANITIZE opcode is expected to take significant time
+	    before it completes and thus tests for this opcode are not
+	    suitable for normal test runs.
+	  </para>
+	  <para>
+	    By default any SBC SANITIZE tests will be skipped. Use these
+	    arguments if you really want to perform SANITIZE tests.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-u --usb</term>
+        <listitem>
+          <para>
+	    SCSI devices that sit behind a USB bus are on linux limited
+	    to maximum 120k for any single SCSI Read*/Write*.
+	  </para>
+	  <para>
+	    When testing against a USB SCSI device you need to specify these
+	    arguments so that the tests will clamp the read/write size to
+	    a maximum of 120k.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-V --Verbose-scsi</term>
+        <listitem>
+          <para>
+	    The tests aims to be self-documenting. By specifying the -V
+	    flag the test tool will print all SCSI commands that are sent
+	    to the device, the arguments and the expected result.
+	  </para>
+	  <para>
+	    If a test fails, re-run the failing test with the -V argument
+	    to see why it failed. If that also fails it is time to pull out
+	    wireshark and have a look at what happened.
+	    <screen format="linespecific">
+iscsi-test-cu --test SCSI.Read10.BeyondEol iscsi://192.0.2.1/iqn.ronnie.test/1 -V
+Suite: Read10
+  Test: BeyondEol ... 
+    Test READ10 1-256 blocks one block beyond the end
+    Send READ10 (Expecting LBA_OUT_OF_RANGE) LBA:2097152 blocks:1 rdprotect:0 dpo:0 fua:0 fua_nv:0 group:0
+    [OK] READ10 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.
+...
+	    </screen>
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-x --xml</term>
+        <listitem>
+          <para>
+	    This option to produce test results in machine readable format
+	    for automated testing.
+	  </para>
+	  <para>
+iscsi-test-cu can produce machine-readable test results for consumption by your
+CI server. Use the --xml option with any test suite(s), and a file called
+CUnitAutomated-Results.xml will be written to your current working directory.
+These results can be converted to JUnit format using this script:
+
+http://git.cyrusimap.org/cyrus-imapd/plain/cunit/cunit-to-junit.pl
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-? --help</term>
+        <listitem>
+          <para>
+	    Display basic help text.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+  </refsect1>
+
+  <refsect1><title>SEE ALSO</title>
+    <para>
+      <ulink url="http://github.com/sahlberg/libiscsi"/>
+    </para>
+  </refsect1>
+
+</refentry>

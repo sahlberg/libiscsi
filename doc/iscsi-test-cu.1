@@ -1,0 +1,191 @@
+'\" t
+.\"     Title: iscsi-test-cu
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 03/24/2014
+.\"    Manual: iscsi-test-cu: iSCSI/SCSI protocol test suite
+.\"    Source: iscsi-test-cu
+.\"  Language: English
+.\"
+.TH "ISCSI\-TEST\-CU" "1" "03/24/2014" "iscsi\-test\-cu" "iscsi\-test\-cu: iSCSI/SCSI pr"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+iscsi-test-cu \- iSCSI/SCSI test suite
+.SH "SYNOPSIS"
+.HP \w'\fBiscsi\-test\-cu\ [\ OPTIONS\ ]\ <ISCSI\-PORTAL>\fR\ 'u
+\fBiscsi\-test\-cu [ OPTIONS ] <ISCSI\-PORTAL>\fR
+.HP \w'\fBiscsi\-test\-cu\fR\ 'u
+\fBiscsi\-test\-cu\fR [\-i\ \-\-initiator\-name=<IQN>] [\-I\ \-\-initiator\-name\-2=<IQN>] [\-l\ \-\-list] [\-t\ \-\-test=<family>|*[\&.<suite>|*[\&.<test>|*]]] [\-d\ \-\-dataloss] [\-s\ \-\-allow\-sanitize] [\-u\ \-\-usb] [\-V\ \-\-Verbose\-scsi] [\-x\ \-\-xml] [\-?\ \-\-help]
+.SH "DESCRIPTION"
+.PP
+iscsi\-test\-cu is a test suite for iSCSI/SCSI\&.
+.SH "ISCSI PORTAL URL FORMAT"
+.PP
+iSCSI portal format is \*(Aqiscsi://[<username>[%<password>]@]<host>[:<port>]/<iqn\-name>/<lun>\*(Aq
+.PP
+Port is the TCP port on the target to connect to\&. Default is 3260\&.
+.PP
+Username and password are only required if the target requires CHAP authentication\&. Optionally you can specify the username and password via the environment variables LIBISCSI_CHAP_USERNAME and LIBISCSI_CHAP_PASSWORD\&.
+.PP
+Host can be specified either as a hostname, an IPv4 address or an IPv6 address\&. Examples:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	iscsi://192\&.0\&.2\&.1/iqn\&.ronnie\&.test/1
+	iscsi://[2001:DB8::1]:3261/iqn\&.ronnie\&.test/1
+	iscsi://ronnie%password@iscsi\&.example\&.com/iqn\&.ronnie\&.test/1
+      
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.SH "OPTIONS"
+.PP
+\-i \-\-initiator\-name=<IQN>
+.RS 4
+All tests use at least one iSCSI connection to the target and this is the initiator name used for that primary session and it defaults to \*(Aqiqn\&.2007\-10\&.com\&.github:sahlberg:libiscsi:iscsi\-test\*(Aq
+.sp
+This argument is used to change what initiator name to use for the primary session\&.
+.RE
+.PP
+\-I \-\-initiator\-name\-2=<IQN>
+.RS 4
+Some tests use a second connection to the target, such as the \*(Aqit nexus loss tests\*(Aq\&. The default name used for this second connection is \*(Aqiqn\&.2007\-10\&.com\&.github:sahlberg:libiscsi:iscsi\-test\-2\*(Aq
+.sp
+This argument is used to change what initiator name to use for the secondary session\&.
+.RE
+.PP
+\-l \-\-list
+.RS 4
+This argument lists all available tests\&.
+.sp
+The tests are divided up into \*(Aqfamilies\*(Aq, \*(Aqsuites\*(Aq and \*(Aqtests\*(Aq separated by \*(Aq\&.\*(Aq\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+iscsi\-test\-cu \-l
+ALL
+ALL\&.CompareAndWrite
+ALL\&.CompareAndWrite\&.Simple
+ALL\&.CompareAndWrite\&.Miscompare
+ALL\&.GetLBAStatus
+ALL\&.GetLBAStatus\&.Simple
+ALL\&.GetLBAStatus\&.BeyondEol
+\&.\&.\&.
+	    
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RE
+.PP
+\-t \-\-test=<family>|*[\&.<suite>|*[\&.<test>|*]]
+.RS 4
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+To run all tests:
+iscsi\-test\-cu \-\-test=ALL iscsi://192\&.0\&.2\&.1/iqn\&.ronnie/test/1
+
+To run the READ16 test suite:
+iscsi\-test\-cu \-\-test=SCSI\&.Read16\&.* \e
+  iscsi://192\&.0\&.2\&.1/iqn\&.ronnie/test/1
+
+To just run a single specific test:
+iscsi\-test\-cu \-\-test=iSCSI\&.iSCSIResiduals\&.Read10Invalid \e
+  iscsi://192\&.0\&.2\&.1/iqn\&.ronnie/test/1
+\&.\&.\&.
+	    
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RE
+.PP
+\-d \-\-dataloss
+.RS 4
+By default the test tool will only run non\-destructive tests\&. To test commands that mutates the data, such as the Write* tests you must specify the \-\-dataloss flag\&.
+.sp
+The tests that requre \-\-dataloss will overwrite the data on the LUN and any and all data on that LUN will be destroyed when running these tests\&.
+.RE
+.PP
+\-s \-\-allow\-sanitize
+.RS 4
+The SBC SANITIZE opcode is expected to take significant time before it completes and thus tests for this opcode are not suitable for normal test runs\&.
+.sp
+By default any SBC SANITIZE tests will be skipped\&. Use these arguments if you really want to perform SANITIZE tests\&.
+.RE
+.PP
+\-u \-\-usb
+.RS 4
+SCSI devices that sit behind a USB bus are on linux limited to maximum 120k for any single SCSI Read*/Write*\&.
+.sp
+When testing against a USB SCSI device you need to specify these arguments so that the tests will clamp the read/write size to a maximum of 120k\&.
+.RE
+.PP
+\-V \-\-Verbose\-scsi
+.RS 4
+The tests aims to be self\-documenting\&. By specifying the \-V flag the test tool will print all SCSI commands that are sent to the device, the arguments and the expected result\&.
+.sp
+If a test fails, re\-run the failing test with the \-V argument to see why it failed\&. If that also fails it is time to pull out wireshark and have a look at what happened\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+iscsi\-test\-cu \-\-test SCSI\&.Read10\&.BeyondEol iscsi://192\&.0\&.2\&.1/iqn\&.ronnie\&.test/1 \-V
+Suite: Read10
+  Test: BeyondEol \&.\&.\&. 
+    Test READ10 1\-256 blocks one block beyond the end
+    Send READ10 (Expecting LBA_OUT_OF_RANGE) LBA:2097152 blocks:1 rdprotect:0 dpo:0 fua:0 fua_nv:0 group:0
+    [OK] READ10 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE\&.
+\&.\&.\&.
+	    
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RE
+.PP
+\-x \-\-xml
+.RS 4
+This option to produce test results in machine readable format for automated testing\&.
+.sp
+iscsi\-test\-cu can produce machine\-readable test results for consumption by your CI server\&. Use the \-\-xml option with any test suite(s), and a file called CUnitAutomated\-Results\&.xml will be written to your current working directory\&. These results can be converted to JUnit format using this script: http://git\&.cyrusimap\&.org/cyrus\-imapd/plain/cunit/cunit\-to\-junit\&.pl
+.RE
+.PP
+\-? \-\-help
+.RS 4
+Display basic help text\&.
+.RE
+.SH "SEE ALSO"
+.PP
+\m[blue]\fB\%http://github.com/sahlberg/libiscsi\fR\m[]
