@@ -275,15 +275,15 @@ static struct scsi_test tests[] = {
 static void print_usage(void)
 {
 	fprintf(stderr, "Usage: iscsi-test [-?] [-?|--help] [--usage] [-t|--test=<test>] [-s|--skip=<test>]\n"
-			"\t\t[-l|--list] [--info] [-i|--initiator_name=<iqn-name>]\n"
+			"\t\t[-l|--list] [--info] [-i|--initiator-name=<iqn-name>]\n"
 			"\t\t<iscsi-url>\n");
 }
 
 static void print_help(void)
 {
 	fprintf(stderr, "Usage: iscsi-test [OPTION...] <iscsi-url>\n");
-	fprintf(stderr, "  -i, --initiator_name=iqn-name     Initiatorname to use\n");
-	fprintf(stderr, "  -I, --initiator_name-2=iqn-name   Second initiatorname to use\n");
+	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
+	fprintf(stderr, "  -I, --initiator-name-2=iqn-name   Second initiatorname to use\n");
 	fprintf(stderr, "  -t, --test=test-name              Which test to run. Default is to run all tests.\n");
 	fprintf(stderr, "  -s, --skip=test-name              Which test to skip. Default is to run all tests.\n");
 	fprintf(stderr, "  -l, --list                        List all tests.\n");
@@ -329,8 +329,8 @@ int main(int argc, char *argv[])
 		{"list",             no_argument,          NULL,        'l'},
 		{"test",             required_argument,    NULL,        't'},
 		{"skip",             required_argument,    NULL,        's'},
-		{"initiator_name",   required_argument,    NULL,        'i'},
-		{"initiator_name-2", required_argument,    NULL,        'I'},
+		{"initiator-name",   required_argument,    NULL,        'i'},
+		{"initiator-name-2", required_argument,    NULL,        'I'},
 		{0, 0, 0, 0}
 	};
 	int option_index;
