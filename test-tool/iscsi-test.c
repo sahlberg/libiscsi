@@ -329,8 +329,8 @@ int main(int argc, char *argv[])
 		{"list",             no_argument,          NULL,        'l'},
 		{"test",             required_argument,    NULL,        't'},
 		{"skip",             required_argument,    NULL,        's'},
-		{"initiator_name",   required_argument,    NULL,        'i'},
-		{"initiator_name-2", required_argument,    NULL,        'I'},
+		{"initiator-name",   required_argument,    NULL,        'i'},
+		{"initiator-name-2", required_argument,    NULL,        'I'},
 		{0, 0, 0, 0}
 	};
 	int option_index;
