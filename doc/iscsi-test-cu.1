@@ -2,12 +2,12 @@
 .\"     Title: iscsi-test-cu
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 03/24/2014
+.\"      Date: 03/25/2014
 .\"    Manual: iscsi-test-cu: iSCSI/SCSI protocol test suite
 .\"    Source: iscsi-test-cu
 .\"  Language: English
 .\"
-.TH "ISCSI\-TEST\-CU" "1" "03/24/2014" "iscsi\-test\-cu" "iscsi\-test\-cu: iSCSI/SCSI pr"
+.TH "ISCSI\-TEST\-CU" "1" "03/25/2014" "iscsi\-test\-cu" "iscsi\-test\-cu: iSCSI/SCSI pr"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -180,6 +180,29 @@ Suite: Read10
 This option to produce test results in machine readable format for automated testing\&.
 .sp
 iscsi\-test\-cu can produce machine\-readable test results for consumption by your CI server\&. Use the \-\-xml option with any test suite(s), and a file called CUnitAutomated\-Results\&.xml will be written to your current working directory\&. These results can be converted to JUnit format using this script: http://git\&.cyrusimap\&.org/cyrus\-imapd/plain/cunit/cunit\-to\-junit\&.pl
+.sp
+The return status of the script reflects whether the tests were successful or not\&. If you would rather have the script return a status to reflect whether the conversion from cunit to junit was successful you can patch the script with this:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+diff \-\-git a/cunit\-to\-junit\&.pl\&.orig b/cunit\-to\-junit\&.pl
+index 7cf9320\&.\&.9182ff0 100644
+\-\-\- a/cunit\-to\-junit\&.pl\&.orig
++++ b/cunit\-to\-junit\&.pl
+@@ \-226,4 +226,4 @@ foreach my $s (@suites)
+ }
+
+ print "$0: ran $nrun tests, $nfailed failed\en";
+\-exit(1) if ($nfailed > 0);
++#exit(1) if ($nfailed > 0);
+	    
+.fi
+.if n \{\
+.RE
+.\}
+.sp
 .RE
 .PP
 \-? \-\-help

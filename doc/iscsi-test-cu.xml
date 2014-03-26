@@ -227,6 +227,23 @@ These results can be converted to JUnit format using this script:
 
 http://git.cyrusimap.org/cyrus-imapd/plain/cunit/cunit-to-junit.pl
 	  </para>
+	  <para>
+The return status of the script reflects whether the tests were successful or not.
+If you would rather have the script return a status to reflect whether the conversion from cunit to junit was successful you can patch the script with this:
+
+	    <screen format="linespecific">
+diff --git a/cunit-to-junit.pl.orig b/cunit-to-junit.pl
+index 7cf9320..9182ff0 100644
+--- a/cunit-to-junit.pl.orig
++++ b/cunit-to-junit.pl
+@@ -226,4 +226,4 @@ foreach my $s (@suites)
+ }
+
+ print "$0: ran $nrun tests, $nfailed failed\n";
+-exit(1) if ($nfailed > 0);
++#exit(1) if ($nfailed > 0);
+	    </screen>
+	  </para>
         </listitem>
       </varlistentry>
 
