@@ -437,7 +437,7 @@ static libiscsi_suite_info scsi_suites[] = {
 	{ "Reserve6", NON_PGR_FUNCS, tests_reserve6 },
 	{ "Sanitize", NON_PGR_FUNCS, tests_sanitize },
 	{ "StartStopUnit", NON_PGR_FUNCS, tests_startstopunit },
-	{ "UnitReady", NON_PGR_FUNCS, tests_testunitready },
+	{ "TestUnitReady", NON_PGR_FUNCS, tests_testunitready },
 	{ "Unmap", NON_PGR_FUNCS, tests_unmap },
 	{ "Verify10", NON_PGR_FUNCS, tests_verify10 },
 	{ "Verify12", NON_PGR_FUNCS, tests_verify12 },
