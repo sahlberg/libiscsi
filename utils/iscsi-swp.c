@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 		{"help",           no_argument,          NULL,        'h'},
 		{"usage",          no_argument,          NULL,        'u'},
 		{"debug",          no_argument,          NULL,        'd'},
-		{"initiator_name", required_argument,    NULL,        'i'},
+		{"initiator-name", required_argument,    NULL,        'i'},
 		{"swp",            required_argument,    NULL,        's'},
 		{0, 0, 0, 0}
 	};

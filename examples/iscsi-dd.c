@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 	static struct option long_options[] = {
 		{"dst",            required_argument,    NULL,        'd'},
 		{"src",            required_argument,    NULL,        's'},
-		{"initiator_name", required_argument,    NULL,        'i'},
+		{"initiator-name", required_argument,    NULL,        'i'},
 		{0, 0, 0, 0}
 	};
 	int option_index;

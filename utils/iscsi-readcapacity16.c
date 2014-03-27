@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 		{"usage",          no_argument,          NULL,        'u'},
 		{"debug",          no_argument,          NULL,        'd'},
 		{"size",           no_argument,          NULL,        's'},
-		{"initiator_name", required_argument,    NULL,        'i'},
+		{"initiator-name", required_argument,    NULL,        'i'},
 		{"evpd",           required_argument,    NULL,        'e'},
 		{"pagecode",       required_argument,    NULL,        'c'},
 		{0, 0, 0, 0}

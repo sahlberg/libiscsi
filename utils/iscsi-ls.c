@@ -345,7 +345,7 @@ int main(int argc, char *argv[])
 		{"debug",          no_argument,          NULL,        'd'},
 		{"show-luns",      no_argument,          NULL,        's'},
 		{"url",            no_argument,          NULL,        'U'},
-		{"initiator_name", required_argument,    NULL,        'i'},
+		{"initiator-name", required_argument,    NULL,        'i'},
 		{0, 0, 0, 0}
 	};
 	int option_index;
