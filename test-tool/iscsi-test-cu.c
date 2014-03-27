@@ -846,7 +846,7 @@ add_tests(const char *testname_re)
 int
 main(int argc, char *argv[])
 {
-	char *testname_re = NULL;
+	char *testname_re = NULL, *testname;
 	int lun;
 	CU_BasicRunMode mode = CU_BRM_VERBOSE;
 	CU_ErrorAction error_action = CUEA_IGNORE;
@@ -1172,11 +1172,25 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if (testname_re != NULL) {
+		while ((testname = strrchr(testname_re, ',')) != NULL) {
+			if (add_tests(testname + 1) != CUE_SUCCESS) {
+				fprintf(stderr, "error: suite registration "
+					"failed: %s\n", CU_get_error_msg());
+				exit(1);
+			}
+			*testname = 0;
+		}
+	}
 	if (add_tests(testname_re) != CUE_SUCCESS) {
 		fprintf(stderr, "error: suite registration failed: %s\n",
 		    CU_get_error_msg());
 		exit(1);
 	}
+	if (testname_re) {
+		free(testname_re);
+	}
+
 	CU_basic_set_mode(mode);
 	CU_set_error_action(error_action);
 	printf("\n");
@@ -1194,8 +1208,6 @@ main(int argc, char *argv[])
 	}
 
 	CU_cleanup_registry();
-	if (testname_re)
-		free(testname_re);
 	free(discard_const(tgt_url));
 
 	if (inq_task != NULL) {

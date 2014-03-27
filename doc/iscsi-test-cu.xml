@@ -129,6 +129,9 @@ ALL.GetLBAStatus.BeyondEol
       <varlistentry><term>-t --test=&lt;family&gt;|*[.&lt;suite&gt;|*[.&lt;test&gt;|*]]</term>
         <listitem>
 	  <para>
+	    This argument specifies a comma-separated list of the test
+	    expressions to run. If this argument is omitted then all tests
+	    will be executed.
 	    <screen format="linespecific">
 To run all tests:
 iscsi-test-cu --test=ALL iscsi://192.0.2.1/iqn.ronnie/test/1
@@ -140,7 +143,10 @@ iscsi-test-cu --test=SCSI.Read16.* \
 To just run a single specific test:
 iscsi-test-cu --test=iSCSI.iSCSIResiduals.Read10Invalid \
   iscsi://192.0.2.1/iqn.ronnie/test/1
-...
+
+Run all tests in the TestUnitReady suite and also the Reaqd16.Flags test
+iscsi-test-cu --test=SCSI.TestUnitReady.*,SCSI.Read16.Flags \
+  iscsi://192.0.2.1/iqn.ronnie/test/1
 	    </screen>
 	  </para>
         </listitem>

@@ -2,12 +2,12 @@
 .\"     Title: iscsi-test-cu
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 03/25/2014
+.\"      Date: 03/26/2014
 .\"    Manual: iscsi-test-cu: iSCSI/SCSI protocol test suite
 .\"    Source: iscsi-test-cu
 .\"  Language: English
 .\"
-.TH "ISCSI\-TEST\-CU" "1" "03/25/2014" "iscsi\-test\-cu" "iscsi\-test\-cu: iSCSI/SCSI pr"
+.TH "ISCSI\-TEST\-CU" "1" "03/26/2014" "iscsi\-test\-cu" "iscsi\-test\-cu: iSCSI/SCSI pr"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -105,6 +105,7 @@ ALL\&.GetLBAStatus\&.BeyondEol
 .PP
 \-t \-\-test=<family>|*[\&.<suite>|*[\&.<test>|*]]
 .RS 4
+This argument specifies a comma\-separated list of the test expressions to run\&. If this argument is omitted then all tests will be executed\&.
 .sp
 .if n \{\
 .RS 4
@@ -120,7 +121,10 @@ iscsi\-test\-cu \-\-test=SCSI\&.Read16\&.* \e
 To just run a single specific test:
 iscsi\-test\-cu \-\-test=iSCSI\&.iSCSIResiduals\&.Read10Invalid \e
   iscsi://192\&.0\&.2\&.1/iqn\&.ronnie/test/1
-\&.\&.\&.
+
+Run all tests in the TestUnitReady suite and also the Reaqd16\&.Flags test
+iscsi\-test\-cu \-\-test=SCSI\&.TestUnitReady\&.*,SCSI\&.Read16\&.Flags \e
+  iscsi://192\&.0\&.2\&.1/iqn\&.ronnie/test/1
 	    
 .fi
 .if n \{\
