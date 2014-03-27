@@ -28,6 +28,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <fnmatch.h>
+#include <ctype.h>
 
 #include <CUnit/CUnit.h>
 #include <CUnit/Basic.h>
@@ -842,11 +843,59 @@ add_tests(const char *testname_re)
 	return CUE_SUCCESS;
 }
 
+static void parse_and_add_tests(char *testname_re);
+
+static void parse_and_add_test(char *test)
+{
+	if (access(test, F_OK) == 0) {
+		FILE *fh;
+		char t[256];
+
+		if ((fh = fopen(test, "r")) == NULL) {
+			printf("Failed to open test-list file %s\n", test);
+			exit(10);
+		}
+		while (fgets(t, sizeof(t), fh) != NULL) {
+			while (1) {
+				int len = strlen(t);
+				if (len == 0) {
+					break;
+				}
+				if (!isprint(t[--len])) {
+					t[len] = 0;
+					continue;
+				}
+				break;	
+			}
+			parse_and_add_tests(t);
+		}
+		fclose(fh);
+		return;
+	}
+
+	if (add_tests(test) != CUE_SUCCESS) {
+		fprintf(stderr, "error: suite registration failed: %s\n",
+		    CU_get_error_msg());
+		exit(1);
+	}
+}
+
+static void parse_and_add_tests(char *testname_re)
+{
+	if (testname_re != NULL) {
+		char *testname;
+		while ((testname = strrchr(testname_re, ',')) != NULL) {
+			parse_and_add_test(testname + 1);
+			*testname = 0;
+		}
+	}
+	parse_and_add_test(testname_re);
+}
 
 int
 main(int argc, char *argv[])
 {
-	char *testname_re = NULL, *testname;
+	char *testname_re = NULL;
 	int lun;
 	CU_BasicRunMode mode = CU_BRM_VERBOSE;
 	CU_ErrorAction error_action = CUEA_IGNORE;
@@ -1172,24 +1221,9 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (testname_re != NULL) {
-		while ((testname = strrchr(testname_re, ',')) != NULL) {
-			if (add_tests(testname + 1) != CUE_SUCCESS) {
-				fprintf(stderr, "error: suite registration "
-					"failed: %s\n", CU_get_error_msg());
-				exit(1);
-			}
-			*testname = 0;
-		}
-	}
-	if (add_tests(testname_re) != CUE_SUCCESS) {
-		fprintf(stderr, "error: suite registration failed: %s\n",
-		    CU_get_error_msg());
-		exit(1);
-	}
-	if (testname_re) {
+	parse_and_add_tests(testname_re);
+	if (testname_re)
 		free(testname_re);
-	}
 
 	CU_basic_set_mode(mode);
 	CU_set_error_action(error_action);
