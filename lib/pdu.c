@@ -172,6 +172,10 @@ iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	}
 	pdu->indata.data = NULL;
 
+	if (iscsi->outqueue_current == pdu) {
+		iscsi->outqueue_current = NULL;
+	}
+
 	iscsi_sfree(iscsi, pdu);
 }
 
