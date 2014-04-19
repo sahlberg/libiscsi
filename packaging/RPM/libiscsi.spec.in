@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.10.0
+Version: 1.11.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -109,6 +109,15 @@ Test tool for iSCSI/SCSI targets
 
 
 %changelog
+* Sat Apr 19 2014 : 1.11.0
+ - Fix memory leaks in persistent reserve out.
+ - Fix various leaks in the testsuite.
+ - Add additional READ16 tests
+ - Better logging when reconnect fails.
+ - Discovery and Login fixes.
+ - Various fixes found by coverity.
+ - WRITESAME test updates.
+ - Add XML oputput support for the testsuite.
 * Sun Oct 20 2013 : 1.10.0
  - Add manpages for iscsi-ls/iscsi-inq and iscsi-swp
  - Many new tests and updates to the testsuite.
