@@ -78,6 +78,9 @@ AC_CHECK_HEADERS([arpa/inet.h])
 dnl Check for poll.h
 AC_CHECK_HEADERS([poll.h])
 
+# check for epoll.h
+dnl Check for epoll.h
+AC_CHECK_HEADERS([sys/epoll.h])
 
 AC_CACHE_CHECK([for sockaddr_in6 support],libiscsi_cv_HAVE_SOCKADDR_IN6,[
 AC_TRY_COMPILE([#include <sys/types.h>
