@@ -433,21 +433,23 @@ int
 iscsi_which_events(struct iscsi_context *iscsi)
 {
 #ifdef HAVE_SYS_EPOLL_H
-	unsigned int saved_events  = iscsi->epoll_event->events;
+       for (; iscsi; iscsi = iscsi->next_context) {
+		unsigned int saved_events  = iscsi->epoll_event->events;
 
-	iscsi->epoll_event->events = iscsi->is_connected ? POLLIN : POLLOUT;
+		iscsi->epoll_event->events = iscsi->is_connected ?
+			POLLIN : POLLOUT;
 
-	if (iscsi->outqueue_current != NULL || (iscsi->outqueue != NULL && iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0)) {
-		iscsi->epoll_event->events |= POLLOUT;
-	}
+		if (iscsi->outqueue_current != NULL || (iscsi->outqueue != NULL && iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0)) {
+			iscsi->epoll_event->events |= POLLOUT;
+		}
 
-	if (saved_events == iscsi->epoll_event->events) {
-		return POLLIN;
-	}
-
-	if (epoll_ctl(iscsi->epoll_fd, EPOLL_CTL_MOD, iscsi->socket_fd, iscsi->epoll_event) == -1) {
-		iscsi_set_error(iscsi, "Failed to update epoll");
-		ISCSI_LOG(iscsi, 1, "failed to update socket for epoll");
+		if (saved_events == iscsi->epoll_event->events) {
+			continue;
+		}
+		if (epoll_ctl(iscsi->epoll_fd, EPOLL_CTL_MOD, iscsi->socket_fd, iscsi->epoll_event) == -1) {
+			iscsi_set_error(iscsi, "Failed to update epoll");
+			ISCSI_LOG(iscsi, 1, "failed to update socket for epoll");
+		}
 	}
 	return POLLIN;
 #else
@@ -1036,5 +1038,42 @@ void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces _U
 	if (!iface_rr) iface_rr=rand()%iscsi->bind_interfaces_cnt+1;
 #else
 	ISCSI_LOG(iscsi,1,"binding to an interface is not supported on your OS");
+#endif
+}
+
+int iscsi_add_slave_context(struct iscsi_context *master, struct iscsi_context *slave)
+{
+#ifdef HAVE_SYS_EPOLL_H
+	if (slave->next_context != NULL) {
+		iscsi_set_error(master, "Failed to attach slave context. "
+			"Salve context is already attahced to a master.");
+		return -1;
+	}
+	if (slave->socket_fd == -1) {
+		iscsi_set_error(master, "Failed to attach slave context. "
+			"Slave is not connected.");
+		return -1;
+	}
+	if (slave->epoll_fd == -1) {
+		iscsi_set_error(master, "Failed to attach slave context. "
+			"Slave does not have an epoll fd.");
+		return -1;
+	}
+
+	if (epoll_ctl(master->epoll_fd, EPOLL_CTL_ADD, slave->socket_fd, slave->epoll_event) == -1) {
+		iscsi_set_error(master, "Could not add slave socket to epoll");
+		return -1;
+	}
+
+	close(slave->epoll_fd);
+	slave->epoll_fd = master->epoll_fd;
+
+	slave->next_context = master->next_context;
+	master->next_context = slave;
+
+	return 0;
+#else
+	iscsi_set_error(master, "iscsi_add_slave_context is not available");
+	return -1;
 #endif
 }

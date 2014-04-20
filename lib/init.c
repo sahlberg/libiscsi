@@ -305,6 +305,12 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		return 0;
 	}
 
+	if (iscsi->next_context != NULL) {
+		iscsi->next_context->epoll_fd = -1;
+		iscsi_destroy_context(iscsi->next_context);
+		iscsi->next_context = NULL;
+	}
+
 	if (iscsi->socket_fd != -1) {
 		iscsi_disconnect(iscsi);
 	}

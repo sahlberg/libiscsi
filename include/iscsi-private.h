@@ -83,6 +83,7 @@ struct iscsi_context {
 #ifdef HAVE_SYS_EPOLL_H
 	int epoll_fd;
 	struct epoll_event *epoll_event;
+	struct iscsi_context *next_context;
 #endif
 	int socket_fd;
 	int is_connected;

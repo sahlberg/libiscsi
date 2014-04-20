@@ -1,3 +1,4 @@
+iscsi_add_slave_context
 iscsi_connect_async
 iscsi_connect_sync
 iscsi_create_context

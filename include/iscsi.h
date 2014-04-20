@@ -193,6 +193,38 @@ EXTERN struct iscsi_context *iscsi_create_context(const char *initiator_name);
 EXTERN int iscsi_destroy_context(struct iscsi_context *iscsi);
 
 /*
+ * This adds a slave to the master context.
+ * Slave contexts are serviced from the same file descriptor as the master
+ * context. This simplifies using multiple contexts since you can slave
+ * all contexts off a master context and then only have to deal with
+ * polling a single file descriptor using
+ *
+ * iscsi_get_fd(master) iscsi_which_events(master) iscsi_service(master)
+ *
+ * instead of having to manage one descriptor for each context.
+ *
+ * There is no limit on how many slave contexts you can attach.
+ * When the master context is destroyed all slave contexts will also be
+ * destroyed.
+ *
+ * This function is only available on platforms that support epoll.
+ *
+ * Returns:
+ *  0: success
+ * <0: error
+ *
+ * Example:
+ *    master = iscsi_create_context(...);
+ *    iscsi_connect_async(master, ...);
+ *
+ *    slave = iscsi_create_context(...);
+ *    iscsi_connect_async(slave, ...);
+ *
+ *    iscsi_add_slave_context(master, slave);
+ */
+EXTERN int iscsi_add_slave_context(struct iscsi_context *master, struct iscsi_context *slave);
+
+/*
  * Set an optional alias name to identify with when connecting to the target
  *
  * Returns:
