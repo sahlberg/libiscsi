@@ -16,6 +16,14 @@
 */
 #define _GNU_SOURCE
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_SYS_EPOLL_H
+#include <sys/epoll.h>
+#endif
+
 #if defined(WIN32)
 #else
 #include <strings.h>
@@ -119,7 +127,15 @@ iscsi_create_context(const char *initiator_name)
 
 	strncpy(iscsi->initiator_name,initiator_name,MAX_STRING_SIZE);
 
-	iscsi->fd = -1;
+	iscsi->socket_fd = -1;
+#ifdef HAVE_SYS_EPOLL_H
+	iscsi->epoll_fd = -1;
+	iscsi->epoll_event = malloc(sizeof(struct epoll_event));
+	if (iscsi->epoll_event == NULL) {
+		iscsi_destroy_context(iscsi);
+		return NULL;
+	}
+#endif
 	
 	srand(time(NULL) ^ getpid() ^ (uint32_t) ((uintptr_t) iscsi));
 
@@ -289,9 +305,17 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		return 0;
 	}
 
-	if (iscsi->fd != -1) {
+	if (iscsi->socket_fd != -1) {
 		iscsi_disconnect(iscsi);
 	}
+#ifdef HAVE_SYS_EPOLL_H
+	if (iscsi->epoll_fd != -1) {
+		close(iscsi->epoll_fd);
+	}
+	if (iscsi->epoll_event != NULL) {
+		free(iscsi->epoll_event);
+	}
+#endif
 
 	while ((pdu = iscsi->outqueue)) {
 		SLIST_REMOVE(&iscsi->outqueue, pdu);

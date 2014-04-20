@@ -205,7 +205,7 @@ int close(int fd)
 			memset(&iscsi_fd_list[fd], 0, sizeof(struct iscsi_fd_list));
 			iscsi_fd_list[fd].dup2fd = -1;
 
-			iscsi_fd_list[i].iscsi->fd = i;
+			iscsi_fd_list[i].iscsi->socket_fd = i;
 			real_close(fd);
 
 			for(j = 0; j < ISCSI_MAX_FD; j++) {

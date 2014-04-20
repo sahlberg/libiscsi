@@ -14,6 +14,14 @@
    You should have received a copy of the GNU Lesser General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_SYS_EPOLL_H
+#include <sys/epoll.h>
+#endif
+
 #if defined(WIN32)
 #include "win32/win32_compat.h"
 #else
@@ -354,7 +362,14 @@ try_again:
 		iscsi_queue_pdu(iscsi, pdu);
 	}
 
-	if (dup2(iscsi->fd, old_iscsi->fd) == -1) {
+#ifdef HAVE_SYS_EPOLL_H
+	if (epoll_ctl(old_iscsi->epoll_fd, EPOLL_CTL_DEL, old_iscsi->socket_fd,
+		      old_iscsi->epoll_event)) {
+		ISCSI_LOG(old_iscsi, 1, "Failed to remove old socket from "
+			  "epoll during reconnect.");
+	}
+#endif
+	if (dup2(iscsi->socket_fd, old_iscsi->socket_fd) == -1) {
 		iscsi_destroy_context(iscsi);
 		goto try_again;
 	}
@@ -370,10 +385,22 @@ try_again:
 		iscsi_free_pdu(old_iscsi, old_iscsi->outqueue_current);
 	}
 
-	close(iscsi->fd);
-	iscsi->fd = old_iscsi->fd;
-	iscsi->mallocs+=old_iscsi->mallocs;
-	iscsi->frees+=old_iscsi->frees;
+	close(iscsi->socket_fd);
+	iscsi->socket_fd = old_iscsi->socket_fd;
+#ifdef HAVE_SYS_EPOLL_H
+	close(iscsi->epoll_fd);
+	iscsi->epoll_fd = old_iscsi->epoll_fd;
+	iscsi->epoll_event = old_iscsi->epoll_event;
+	if (epoll_ctl(iscsi->epoll_fd, EPOLL_CTL_ADD, iscsi->socket_fd, iscsi->epoll_event)) {
+		ISCSI_LOG(old_iscsi, 1, "Failed to add new socket to "
+			  "epoll during reconnect.");
+		free(iscsi);
+		return -1;
+	}
+#endif
+
+	iscsi->mallocs += old_iscsi->mallocs;
+	iscsi->frees   += old_iscsi->frees;
 
 	memcpy(old_iscsi, iscsi, sizeof(struct iscsi_context));
 	free(iscsi);

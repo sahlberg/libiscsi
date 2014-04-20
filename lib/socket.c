@@ -22,6 +22,10 @@
 #include <sys/types.h>
 #endif
 
+#ifdef HAVE_SYS_EPOLL_H
+#include <sys/epoll.h>
+#endif
+
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
@@ -152,7 +156,7 @@ int set_tcp_sockopt(int sockfd, int optname, int value)
 
 int set_tcp_user_timeout(struct iscsi_context *iscsi)
 {
-	if (set_tcp_sockopt(iscsi->fd, TCP_USER_TIMEOUT, iscsi->tcp_user_timeout) != 0) {
+	if (set_tcp_sockopt(iscsi->socket_fd, TCP_USER_TIMEOUT, iscsi->tcp_user_timeout) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp user timeout. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
@@ -166,7 +170,7 @@ int set_tcp_user_timeout(struct iscsi_context *iscsi)
 
 int set_tcp_syncnt(struct iscsi_context *iscsi)
 {
-	if (set_tcp_sockopt(iscsi->fd, TCP_SYNCNT, iscsi->tcp_syncnt) != 0) {
+	if (set_tcp_sockopt(iscsi->socket_fd, TCP_SYNCNT, iscsi->tcp_syncnt) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp syn retries. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
@@ -193,11 +197,18 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	ISCSI_LOG(iscsi, 2, "connecting to portal %s",portal);
 
-	if (iscsi->fd != -1) {
+	if (iscsi->socket_fd != -1) {
 		iscsi_set_error(iscsi,
 				"Trying to connect but already connected.");
 		return -1;
 	}
+#ifdef HAVE_SYS_EPOLL_H
+	if (iscsi->epoll_fd != -1) {
+		iscsi_set_error(iscsi,
+				"Trying to connect but epoll already created.");
+		return -1;
+	}
+#endif
 
 	addr = iscsi_strdup(iscsi, portal);
 	if (addr == NULL) {
@@ -274,19 +285,40 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	}
 
-	iscsi->fd = socket(ai->ai_family, SOCK_STREAM, 0);
-	if (iscsi->fd == -1) {
+	iscsi->socket_fd = socket(ai->ai_family, SOCK_STREAM, 0);
+	if (iscsi->socket_fd == -1) {
 		freeaddrinfo(ai);
 		iscsi_set_error(iscsi, "Failed to open iscsi socket. "
 				"Errno:%s(%d).", strerror(errno), errno);
 		return -1;
-
 	}
+#ifdef HAVE_SYS_EPOLL_H
+	iscsi->epoll_fd = epoll_create1(EPOLL_CLOEXEC);
+	if (iscsi->epoll_fd == -1) {
+		close(iscsi->socket_fd);
+		iscsi->socket_fd = -1;
+		iscsi_set_error(iscsi,
+				"Failed to create epoll instance.");
+		return -1;
+	}
+	iscsi->epoll_event->events   = POLLOUT;
+	iscsi->epoll_event->data.ptr = iscsi;
+
+	if (epoll_ctl(iscsi->epoll_fd, EPOLL_CTL_ADD, iscsi->socket_fd, iscsi->epoll_event) == -1) {
+		close(iscsi->socket_fd);
+		iscsi->socket_fd = -1;
+		close(iscsi->epoll_fd);
+		iscsi->epoll_fd = -1;
+		iscsi_set_error(iscsi,
+				"Failed to add socket to epoll instance.");
+		return -1;
+	}
+#endif
 
 	iscsi->socket_status_cb  = cb;
 	iscsi->connect_data      = private_data;
 
-	set_nonblocking(iscsi->fd);
+	set_nonblocking(iscsi->socket_fd);
 
 	iscsi_set_tcp_keepalive(iscsi, iscsi->tcp_keepidle, iscsi->tcp_keepcnt, iscsi->tcp_keepintvl);
 
@@ -313,7 +345,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 			iface_c++;
 		} while (pchr2);
 		
-		int res = setsockopt(iscsi->fd, SOL_SOCKET, SO_BINDTODEVICE, pchr, strlen(pchr));
+		int res = setsockopt(iscsi->socket_fd, SOL_SOCKET, SO_BINDTODEVICE, pchr, strlen(pchr));
 		if (res < 0) {
 			ISCSI_LOG(iscsi,1,"failed to bind to interface '%s': %s",pchr,strerror(errno));
 		} else {
@@ -323,13 +355,13 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	}
 #endif
 
-	if (set_tcp_sockopt(iscsi->fd, TCP_NODELAY, 1) != 0) {
+	if (set_tcp_sockopt(iscsi->socket_fd, TCP_NODELAY, 1) != 0) {
 		ISCSI_LOG(iscsi,1,"failed to set TCP_NODELAY sockopt: %s",strerror(errno));
 	} else {
 		ISCSI_LOG(iscsi,3,"TCP_NODELAY set to 1");
 	}
 
-	if (connect(iscsi->fd, &sa.sa, socksize) != 0
+	if (connect(iscsi->socket_fd, &sa.sa, socksize) != 0
 #if defined(WIN32)
 	    && WSAGetLastError() != WSAEWOULDBLOCK) {
 #else
@@ -337,8 +369,10 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 #endif
 		iscsi_set_error(iscsi, "Connect failed with errno : "
 				"%s(%d)", strerror(errno), errno);
-		close(iscsi->fd);
-		iscsi->fd = -1;
+		close(iscsi->socket_fd);
+		iscsi->socket_fd = -1;
+		close(iscsi->epoll_fd);
+		iscsi->epoll_fd = -1;
 		freeaddrinfo(ai);
 		return -1;
 	}
@@ -353,39 +387,77 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 int
 iscsi_disconnect(struct iscsi_context *iscsi)
 {
-	if (iscsi->fd == -1) {
+#ifdef HAVE_SYS_EPOLL_H
+	if (iscsi->epoll_fd == -1) {
+		iscsi_set_error(iscsi, "Trying to disconnect "
+				"but epoll is not connected");
+		return -1;
+	}	
+	if (epoll_ctl(iscsi->epoll_fd, EPOLL_CTL_DEL, iscsi->socket_fd, iscsi->epoll_event) == -1) {
+		iscsi_set_error(iscsi, "Failed to remove socket from epoll");
+	}
+#endif
+
+	if (iscsi->socket_fd == -1) {
 		iscsi_set_error(iscsi, "Trying to disconnect "
 				"but not connected");
 		return -1;
 	}
+	close(iscsi->socket_fd);
+	iscsi->socket_fd  = -1;
 
-	close(iscsi->fd);
+#ifdef HAVE_SYS_EPOLL_H
+	close(iscsi->epoll_fd);
+	iscsi->epoll_fd = -1;
+#endif
 
 	if (iscsi->connected_portal[0]) {
 		ISCSI_LOG(iscsi, 2, "disconnected from portal %s",iscsi->connected_portal);
 	}
 
-	iscsi->fd  = -1;
 	iscsi->is_connected = 0;
-
 	return 0;
 }
 
 int
 iscsi_get_fd(struct iscsi_context *iscsi)
 {
-	return iscsi->fd;
+#ifdef HAVE_SYS_EPOLL_H
+	return iscsi->epoll_fd;
+#else
+	return iscsi->socket_fd;
+#endif
 }
 
 int
 iscsi_which_events(struct iscsi_context *iscsi)
 {
+#ifdef HAVE_SYS_EPOLL_H
+	unsigned int saved_events  = iscsi->epoll_event->events;
+
+	iscsi->epoll_event->events = iscsi->is_connected ? POLLIN : POLLOUT;
+
+	if (iscsi->outqueue_current != NULL || (iscsi->outqueue != NULL && iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0)) {
+		iscsi->epoll_event->events |= POLLOUT;
+	}
+
+	if (saved_events == iscsi->epoll_event->events) {
+		return POLLIN;
+	}
+
+	if (epoll_ctl(iscsi->epoll_fd, EPOLL_CTL_MOD, iscsi->socket_fd, iscsi->epoll_event) == -1) {
+		iscsi_set_error(iscsi, "Failed to update epoll");
+		ISCSI_LOG(iscsi, 1, "failed to update socket for epoll");
+	}
+	return POLLIN;
+#else
 	int events = iscsi->is_connected ? POLLIN : POLLOUT;
 
 	if (iscsi->outqueue_current != NULL || (iscsi->outqueue != NULL && iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0)) {
 	 	events |= POLLOUT;
 	}
 	return events;
+#endif
 }
 
 int
@@ -477,9 +549,9 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 	niov = last_iov - first_iov + 1;
 
 	if (do_write) {
-		count = writev(iscsi->fd, first_iov, niov);
+		count = writev(iscsi->socket_fd, first_iov, niov);
 	} else {
-		count = readv(iscsi->fd, first_iov, niov);
+		count = readv(iscsi->socket_fd, first_iov, niov);
 	}
 
 	return count;
@@ -506,7 +578,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		 * no need to limit the read to what is available in the socket
 		 */
 		count = ISCSI_HEADER_SIZE - in->hdr_pos;
-		count = recv(iscsi->fd, &in->hdr[in->hdr_pos], count, 0);
+		count = recv(iscsi->socket_fd, &in->hdr[in->hdr_pos], count, 0);
 		if (count == 0) {
 			return -1;
 		}
@@ -556,7 +628,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 				}
 				buf = &in->data[in->data_pos];
 			}
-			count = recv(iscsi->fd, buf, count, 0);
+			count = recv(iscsi->socket_fd, buf, count, 0);
 		}
 		
 		if (count == 0) {
@@ -604,7 +676,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 	struct iscsi_pdu *pdu;
 	static char padding_buf[3];
 
-	if (iscsi->fd == -1) {
+	if (iscsi->socket_fd == -1) {
 		iscsi_set_error(iscsi, "trying to write but not connected");
 		return -1;
 	}
@@ -632,7 +704,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 
 		/* Write header and any immediate data */
 		if (pdu->outdata_written < pdu->outdata.size) {
-			count = send(iscsi->fd,
+			count = send(iscsi->socket_fd,
 				     pdu->outdata.data + pdu->outdata_written,
 				     pdu->outdata.size - pdu->outdata_written,
 				     0);
@@ -683,7 +755,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 
 		/* Write padding */
 		if (pdu->payload_written < total) {
-			count = send(iscsi->fd, padding_buf, total - pdu->payload_written, 0);
+			count = send(iscsi->socket_fd, padding_buf, total - pdu->payload_written, 0);
 			if (count == -1) {
 				if (errno == EAGAIN || errno == EWOULDBLOCK) {
 					return 0;
@@ -718,10 +790,10 @@ iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 	return -1;
 }
 
-int
-iscsi_service(struct iscsi_context *iscsi, int revents)
+static int
+iscsi_service_internal(struct iscsi_context *iscsi, int revents)
 {
-	if (iscsi->fd < 0) {
+	if (iscsi->socket_fd < 0) {
 		return 0;
 	}
 
@@ -729,7 +801,7 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 		int err = 0;
 		socklen_t err_size = sizeof(err);
 
-		if (getsockopt(iscsi->fd, SOL_SOCKET, SO_ERROR,
+		if (getsockopt(iscsi->socket_fd, SOL_SOCKET, SO_ERROR,
 			       (char *)&err, &err_size) != 0 || err != 0) {
 			if (err == 0) {
 				err = errno;
@@ -759,13 +831,13 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 		return iscsi_service_reconnect_if_loggedin(iscsi);
 	}
 
-	if (iscsi->is_connected == 0 && revents&POLLOUT) {
+	if (iscsi->is_connected == 0 && revents & POLLOUT) {
 		int err = 0;
 		socklen_t err_size = sizeof(err);
 		struct sockaddr_in local;
 		socklen_t local_l = sizeof(local);
 
-		if (getsockopt(iscsi->fd, SOL_SOCKET, SO_ERROR,
+		if (getsockopt(iscsi->socket_fd, SOL_SOCKET, SO_ERROR,
 			       (char *)&err, &err_size) != 0 || err != 0) {
 			if (err == 0) {
 				err = errno;
@@ -782,7 +854,7 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 
-		if (getsockname(iscsi->fd, (struct sockaddr *) &local, &local_l) == 0) {
+		if (getsockname(iscsi->socket_fd, (struct sockaddr *) &local, &local_l) == 0) {
 			ISCSI_LOG(iscsi, 2, "connection established (%s:%u -> %s)", inet_ntoa(local.sin_addr),
 						(unsigned)ntohs(local.sin_port),iscsi->connected_portal);
 		}
@@ -808,6 +880,30 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 	}
 
 	return 0;
+}
+
+int
+iscsi_service(struct iscsi_context *iscsi, int revents _U_)
+{
+#ifdef HAVE_SYS_EPOLL_H
+	int i, num_events;
+	struct epoll_event events[8];
+
+	memset(events, 0, sizeof(events));
+	num_events = epoll_wait(iscsi->epoll_fd, events, 8, 0);
+	if (num_events == -1) {
+		iscsi_set_error(iscsi, "epoll_wait failed");
+		return -1;
+	}
+	for (i = 0; i < num_events; i++) {
+		if (iscsi_service_internal(events[i].data.ptr, events[i].events)) {
+			return -1;
+		}
+	}
+	return 0;
+#else
+	return iscsi_service_internal(iscsi, events);
+#endif
 }
 
 int
@@ -893,27 +989,27 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle _U_, int count
 {
 #ifdef SO_KEEPALIVE
 	int value = 1;
-	if (setsockopt(iscsi->fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&value, sizeof(value)) != 0) {
+	if (setsockopt(iscsi->socket_fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&value, sizeof(value)) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set socket option SO_KEEPALIVE. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
 	ISCSI_LOG(iscsi, 3, "SO_KEEPALIVE set to %d",value);
 #ifdef TCP_KEEPCNT
-	if (set_tcp_sockopt(iscsi->fd, TCP_KEEPCNT, count) != 0) {
+	if (set_tcp_sockopt(iscsi->socket_fd, TCP_KEEPCNT, count) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive count. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
 	ISCSI_LOG(iscsi, 3, "TCP_KEEPCNT set to %d",count);
 #endif
 #ifdef TCP_KEEPINTVL
-	if (set_tcp_sockopt(iscsi->fd, TCP_KEEPINTVL, interval) != 0) {
+	if (set_tcp_sockopt(iscsi->socket_fd, TCP_KEEPINTVL, interval) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive interval. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}
 	ISCSI_LOG(iscsi, 3, "TCP_KEEPINTVL set to %d",interval);
 #endif
 #ifdef TCP_KEEPIDLE
-	if (set_tcp_sockopt(iscsi->fd, TCP_KEEPIDLE, idle) != 0) {
+	if (set_tcp_sockopt(iscsi->socket_fd, TCP_KEEPIDLE, idle) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp keepalive idle. Error %s(%d)", strerror(errno), errno);
 		return -1;
 	}

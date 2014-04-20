@@ -53,6 +53,8 @@ struct iscsi_in_pdu {
 void iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 void iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *inqueue);
 
+struct epoll_event;
+
 struct iscsi_context {
 	char initiator_name[MAX_STRING_SIZE+1];
 	char target_name[MAX_STRING_SIZE+1];
@@ -78,7 +80,11 @@ struct iscsi_context {
 	enum iscsi_header_digest want_header_digest;
 	enum iscsi_header_digest header_digest;
 
-	int fd;
+#ifdef HAVE_SYS_EPOLL_H
+	int epoll_fd;
+	struct epoll_event *epoll_event;
+#endif
+	int socket_fd;
 	int is_connected;
 
 	int tcp_user_timeout;

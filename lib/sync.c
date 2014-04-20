@@ -95,7 +95,6 @@ iscsi_connect_sync(struct iscsi_context *iscsi, const char *portal)
 	struct iscsi_sync_state state;
 
 	memset(&state, 0, sizeof(state));
-
 	if (iscsi_connect_async(iscsi, portal,
 				iscsi_sync_cb, &state) != 0) {
 		iscsi_set_error(iscsi,
