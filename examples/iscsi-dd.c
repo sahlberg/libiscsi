@@ -24,7 +24,8 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
-const char *initiator = "iqn.2010-11.ronnie:iscsi-inq";
+const char *initiator_r = "iqn.2010-11.ronnie:iscsi-dd-read";
+const char *initiator_w = "iqn.2010-11.ronnie:iscsi-dd-write";
 int max_in_flight = 50;
 int blocks_per_io = 200;
 
@@ -154,12 +155,13 @@ int main(int argc, char *argv[])
 	static struct option long_options[] = {
 		{"dst",            required_argument,    NULL,        'd'},
 		{"src",            required_argument,    NULL,        's'},
-		{"initiator-name", required_argument,    NULL,        'i'},
+		{"initiator-name-src", required_argument,    NULL,        'i'},
+		{"initiator-name-dst", required_argument,    NULL,        'I'},
 		{0, 0, 0, 0}
 	};
 	int option_index;
 
-	while ((c = getopt_long(argc, argv, "d:s:i:", long_options,
+	while ((c = getopt_long(argc, argv, "d:s:i:I:", long_options,
 			&option_index)) != -1) {
 		switch (c) {
 		case 'd':
@@ -169,7 +171,10 @@ int main(int argc, char *argv[])
 			src_url = optarg;
 			break;
 		case 'i':
-			initiator = optarg;
+			initiator_r = optarg;
+			break;
+		case 'I':
+			initiator_w = optarg;
 			break;
 		default:
 			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
@@ -193,7 +198,7 @@ int main(int argc, char *argv[])
 	memset(&client, 0, sizeof(client));
 
 
-	client.src_iscsi = iscsi_create_context(initiator);
+	client.src_iscsi = iscsi_create_context(initiator_r);
 	if (client.src_iscsi == NULL) {
 		fprintf(stderr, "Failed to create context\n");
 		exit(10);
@@ -240,7 +245,7 @@ int main(int argc, char *argv[])
 
 
 
-	client.dst_iscsi = iscsi_create_context(initiator);
+	client.dst_iscsi = iscsi_create_context(initiator_w);
 	if (client.dst_iscsi == NULL) {
 		fprintf(stderr, "Failed to create context\n");
 		exit(10);
