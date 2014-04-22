@@ -99,7 +99,11 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 		status = 0;
 	}
 
-	ct->cb(iscsi, status?SCSI_STATUS_ERROR:SCSI_STATUS_GOOD, NULL,
+	if (iscsi->plugin_post_open != NULL) {
+		iscsi->plugin_post_open(iscsi);
+	}
+
+	ct->cb(iscsi, status ? SCSI_STATUS_ERROR : SCSI_STATUS_GOOD, NULL,
 	       ct->private_data);
 	scsi_free_scsi_task(task);
 	iscsi_free(iscsi, ct);
@@ -113,7 +117,9 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 
 	if (status == SCSI_STATUS_REDIRECT && iscsi->target_address[0]) {
 		iscsi_disconnect(iscsi);
-		if (iscsi->bind_interfaces[0]) iscsi_decrement_iface_rr();
+		if (iscsi->bind_interfaces[0]) {
+			iscsi_decrement_iface_rr();
+		}
 		if (iscsi_connect_async(iscsi, iscsi->target_address, iscsi_connect_cb, iscsi->connect_data) != 0) {
 			iscsi_free(iscsi, ct);
 			return;
@@ -163,8 +169,9 @@ iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
 	struct connect_task *ct;
 
 	iscsi->lun = lun;
-	if (iscsi->portal != portal)
-	 strncpy(iscsi->portal,portal,MAX_STRING_SIZE);
+	if (iscsi->portal != portal) {
+		strncpy(iscsi->portal, portal, MAX_STRING_SIZE);
+	}
 
 	ct = iscsi_malloc(iscsi, sizeof(struct connect_task));
 	if (ct == NULL) {
@@ -175,7 +182,8 @@ iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
 	ct->cb           = cb;
 	ct->lun          = lun;
 	ct->private_data = private_data;
-	if (iscsi_connect_async(iscsi, portal, iscsi_connect_cb, ct) != 0) {
+
+	if (iscsi_connect_async(iscsi, iscsi->portal, iscsi_connect_cb, ct) != 0) {
 		iscsi_free(iscsi, ct);
 		return -ENOMEM;
 	}
@@ -284,7 +292,6 @@ try_again:
 	iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
 
 	iscsi->lun = old_iscsi->lun;
-
 	strncpy(iscsi->portal,old_iscsi->portal,MAX_STRING_SIZE);
 	
 	strncpy(iscsi->bind_interfaces,old_iscsi->bind_interfaces,MAX_STRING_SIZE);

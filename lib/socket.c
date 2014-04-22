@@ -195,6 +195,10 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	union socket_address sa;
 	int socksize;
 
+	if (iscsi->plugin_pre_open != NULL) {
+		iscsi->plugin_pre_open(iscsi);
+	}
+
 	ISCSI_LOG(iscsi, 2, "connecting to portal %s",portal);
 
 	if (iscsi->socket_fd != -1) {

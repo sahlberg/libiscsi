@@ -55,6 +55,11 @@ void iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *
 
 struct epoll_event;
 
+typedef int (*iscsi_plugin_pre_open)(struct iscsi_context *iscsi);
+typedef int (*iscsi_plugin_post_open)(struct iscsi_context *iscsi);
+typedef struct iscsi_context *(*iscsi_plugin_select_scsi_path)(struct iscsi_context *iscsi, struct scsi_task *task);
+typedef int (*iscsi_plugin_destroy_context)(struct iscsi_context *iscsi);
+
 struct iscsi_context {
 	char initiator_name[MAX_STRING_SIZE+1];
 	char target_name[MAX_STRING_SIZE+1];
@@ -146,6 +151,14 @@ struct iscsi_context {
 
 	time_t last_reconnect;
 	int scsi_timeout;
+
+	/* Plugin path scheduler */
+	void *dl_handle;
+	void *plugin_data;
+	iscsi_plugin_pre_open plugin_pre_open;
+	iscsi_plugin_post_open plugin_post_open;
+	iscsi_plugin_select_scsi_path plugin_select_scsi_path;
+	iscsi_plugin_destroy_context plugin_destroy_context;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40

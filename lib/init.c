@@ -24,6 +24,10 @@
 #include <sys/epoll.h>
 #endif
 
+#ifdef HAVE_DLFCN_H
+#include <dlfcn.h>
+#endif
+
 #if defined(WIN32)
 #else
 #include <strings.h>
@@ -290,7 +294,7 @@ iscsi_set_targetname(struct iscsi_context *iscsi, const char *target_name)
 		return -1;
 	}
 
-	strncpy(iscsi->target_name,target_name,MAX_STRING_SIZE);
+	strncpy(iscsi->target_name, target_name, MAX_STRING_SIZE);
 
 	return 0;
 }
@@ -303,6 +307,10 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 
 	if (iscsi == NULL) {
 		return 0;
+	}
+
+	if (iscsi->plugin_destroy_context) {
+		iscsi->plugin_destroy_context(iscsi);
 	}
 
 	if (iscsi->next_context != NULL) {
@@ -361,7 +369,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 
 	iscsi->connect_data = NULL;
 
-	for (i=0;i<iscsi->smalloc_free;i++) {
+	for (i = 0; i < iscsi->smalloc_free; i++) {
 		iscsi_free(iscsi, iscsi->smalloc_ptrs[i]);
 	}
 
@@ -370,7 +378,13 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	} else {
 		ISCSI_LOG(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs, %d realloc(s), %d free(s) and %d reused small allocations",iscsi->mallocs,iscsi->reallocs,iscsi->frees,iscsi->smallocs);
 	}
-	
+
+#ifdef HAVE_DLFCN_H
+	if (iscsi->dl_handle != NULL) {
+		dlclose(iscsi->dl_handle);
+	}
+#endif
+
 	memset(iscsi, 0, sizeof(struct iscsi_context));
 	free(iscsi);
 
@@ -666,3 +680,43 @@ iscsi_set_timeout(struct iscsi_context *iscsi, int timeout)
 	iscsi->scsi_timeout = timeout;
 	return 0;
 }
+
+int
+iscsi_load_plugin(struct iscsi_context *iscsi, const char *name)
+{
+#ifdef HAVE_DLFCN_H
+	char *error;
+	iscsi->dl_handle = dlopen(name, RTLD_NOW);
+	if (iscsi->dl_handle == NULL) {
+		iscsi_set_error(iscsi, "Failed to dlopen %s\n", name);
+		return -1;
+	}
+
+	error = dlerror();	
+	iscsi->plugin_pre_open = dlsym(iscsi->dl_handle, "plugin_pre_open");
+	error = dlerror();
+	if (error != NULL) {
+		iscsi->plugin_pre_open = NULL;
+	}
+
+	error = dlerror();	
+	iscsi->plugin_post_open = dlsym(iscsi->dl_handle, "plugin_post_open");
+	error = dlerror();
+	if (error != NULL) {
+		iscsi->plugin_post_open = NULL;
+	}
+
+	error = dlerror();	
+	iscsi->plugin_select_scsi_path = dlsym(iscsi->dl_handle, "plugin_select_scsi_path");
+	error = dlerror();
+	if (error != NULL) {
+		iscsi->plugin_select_scsi_path = NULL;
+	}
+
+	return 0;
+#else
+	iscsi_set_error(master, "Failed to load plugin: no dlopen support");
+	return -1;
+#endif
+}
+

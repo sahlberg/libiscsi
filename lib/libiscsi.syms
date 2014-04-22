@@ -17,6 +17,7 @@ iscsi_get_nops_in_flight
 iscsi_inquiry_sync
 iscsi_inquiry_task
 iscsi_is_logged_in
+iscsi_load_plugin
 iscsi_log_to_stderr
 iscsi_login_async
 iscsi_login_sync

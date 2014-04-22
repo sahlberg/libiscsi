@@ -203,6 +203,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Failed to create context\n");
 		exit(10);
 	}
+	iscsi_load_plugin(client.src_iscsi, "/usr/lib/libiscsi/plugins/roundrobin.so");
 	iscsi_url = iscsi_parse_full_url(client.src_iscsi, src_url);
 	if (iscsi_url == NULL) {
 		fprintf(stderr, "Failed to parse URL: %s\n", 

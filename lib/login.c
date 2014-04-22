@@ -138,10 +138,10 @@ iscsi_login_add_sessiontype(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 
 	switch (iscsi->session_type) {
 	case ISCSI_SESSION_DISCOVERY:
-		strncpy(str,"SessionType=Discovery",MAX_STRING_SIZE);
+		strncpy(str, "SessionType=Discovery", MAX_STRING_SIZE);
 		break;
 	case ISCSI_SESSION_NORMAL:
-		strncpy(str,"SessionType=Normal",MAX_STRING_SIZE);
+		strncpy(str, "SessionType=Normal", MAX_STRING_SIZE);
 		break;
 	default:
 		iscsi_set_error(iscsi, "Can not handle sessions %d yet.",

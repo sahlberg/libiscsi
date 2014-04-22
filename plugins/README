@@ -1,0 +1,28 @@
+Example path scheduler.
+
+This example path scheduler is invoked from the iscsi-dd tool
+by the call to
+	iscsi_load_plugin(client.src_iscsi,
+		"/usr/lib/libiscsi/plugins/roundrobin.so");
+
+The module is simple.
+It intercepts the open call that iscsi-dd does for the src/read lun,
+then open a secondary connection to
+the same target and installs it as a "slave context" so that it
+is serviced by the same epoll fd as the master context.
+(this only works on epoll capable hosts)
+
+Then it intercepts each scsi command we try to send to the 
+master context and roundrobin schedules so every second scsi
+read goes to the master context and every second read goes
+to the slave context.
+
+To compile it :
+gcc -shared -Wall -fPIC -I . -I include -o plugins/roundrobin.so plugins/roundrobin.c
+
+then copy it to /usr/lib/libiscsi/plugins/
+
+
+Lots of work to do still but see it as an example
+
+

@@ -225,6 +225,15 @@ EXTERN int iscsi_destroy_context(struct iscsi_context *iscsi);
 EXTERN int iscsi_add_slave_context(struct iscsi_context *master, struct iscsi_context *slave);
 
 /*
+ * Dynamically load a plugin to a context.
+ *
+ * Returns:
+ *  0: success
+ * <0: error
+ */
+EXTERN int iscsi_load_plugin(struct iscsi_context *iscsi, const char *name);
+
+/*
  * Set an optional alias name to identify with when connecting to the target
  *
  * Returns:

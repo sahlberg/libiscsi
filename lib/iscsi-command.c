@@ -202,6 +202,10 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	struct iscsi_pdu *pdu;
 	int flags;
 
+	if (iscsi->plugin_select_scsi_path) {
+		iscsi = iscsi->plugin_select_scsi_path(iscsi, task);
+	}
+
 	if (iscsi->session_type != ISCSI_SESSION_NORMAL) {
 		iscsi_set_error(iscsi, "Trying to send command on "
 				"discovery session.");
