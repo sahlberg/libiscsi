@@ -29,14 +29,18 @@
 void
 test_writesame16_unmap_until_end(void)
 {
-	int i, ret;
-	unsigned int j;
+	int ret;
+	unsigned int i, j;
 	unsigned char *buf = alloca(256 * block_size);
+	unsigned char *zeroBlock;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_THIN_PROVISIONING;
 	CHECK_FOR_LBPWS;
 	CHECK_FOR_SBC;
+
+	zeroBlock = malloc(block_size);
+	memset(zeroBlock, 0, block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME16 of 1-256 blocks at the end of the LUN by setting number-of-blocks==0");
@@ -67,14 +71,13 @@ test_writesame16_unmap_until_end(void)
 			ret = read16(iscsic, tgt_lun, num_blocks - i,
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf);
-			for (j = 0; j < block_size * i; j++) {
-				if (buf[j] != 0) {
-					CU_ASSERT_EQUAL(buf[j], 0);
-				}
+			for (j = 0; j < i; j++) {
+				CU_ASSERT_EQUAL(memcmp(buf + j*block_size, zeroBlock, block_size), 0);
 			}
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
 				"and verify zero test");
 		}
 	}
+	free(zeroBlock);
 }
