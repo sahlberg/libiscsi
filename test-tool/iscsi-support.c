@@ -4930,7 +4930,7 @@ writesame10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
-		if (inq_bl->wsnz == 1 && datalen == 0) {
+		if (inq_bl->wsnz == 1 && num == 0) {
 			logging(LOG_NORMAL, "[SKIPPED] Target does not support WRITESAME10 with NUMBER OF LOGICAL BLOCKS == 0");
 			scsi_free_scsi_task(task);
 			return -3;
@@ -5203,7 +5203,7 @@ writesame16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
 	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
 	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
-		if (inq_bl->wsnz == 1 && datalen == 0) {
+		if (inq_bl->wsnz == 1 && num == 0) {
 			logging(LOG_NORMAL, "[SKIPPED] Target does not support WRITESAME16 with NUMBER OF LOGICAL BLOCKS == 0");
 			scsi_free_scsi_task(task);
 			return -3;
