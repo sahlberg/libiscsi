@@ -18,15 +18,15 @@
 #ifndef __iscsi_slist_h__
 #define __iscsi_slist_h__
 
-#define SLIST_ADD(list, item) \
+#define ISCSI_LIST_ADD(list, item) \
 	do {							\
 		(item)->next = (*list);				\
 		(*list) = (item);				\
 	} while (0);
 
-#define SLIST_ADD_END(list, item)				\
+#define ISCSI_LIST_ADD_END(list, item)	\
 	if ((*list) == NULL) {	 				\
-	   SLIST_ADD((list), (item));				\
+	   ISCSI_LIST_ADD((list), (item));				\
 	} else {						\
 	   void *head = (*list);				\
 	   while ((*list)->next)				\
@@ -36,7 +36,7 @@
 	   (*list) = head;					\
 	}
 
-#define SLIST_REMOVE(list, item) \
+#define ISCSI_LIST_REMOVE(list, item) \
 	if ((*list) == (item)) { 				\
 	   (*list) = (item)->next;				\
 	} else {						\
@@ -49,7 +49,7 @@
 	   (*list) = head;					\
 	}
 
-#define SLIST_LENGTH(list,length) \
+#define ISCSI_LIST_LENGTH(list,length) \
 	do { \
 	    (length) = 0; \
 		void *head = (*list); \

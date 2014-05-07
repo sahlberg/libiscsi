@@ -578,7 +578,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		return 0;
 	}
 
-	SLIST_ADD_END(&iscsi->inqueue, in);
+	ISCSI_LIST_ADD_END(&iscsi->inqueue, in);
 	iscsi->incoming = NULL;
 
 
@@ -588,7 +588,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		if (iscsi_process_pdu(iscsi, current) != 0) {
 			return -1;
 		}
-		SLIST_REMOVE(&iscsi->inqueue, current);
+		ISCSI_LIST_REMOVE(&iscsi->inqueue, current);
 		iscsi_free_iscsi_in_pdu(iscsi, current);
 	}
 
@@ -617,13 +617,13 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			}
 			/* pop first element of the outqueue */
 			iscsi->outqueue_current = iscsi->outqueue;
-			SLIST_REMOVE(&iscsi->outqueue, iscsi->outqueue_current);
+			ISCSI_LIST_REMOVE(&iscsi->outqueue, iscsi->outqueue_current);
 			if (!(iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT)) {
 				/* we have to add the pdu to the waitqueue already here
 				   since the storage might sent a R2T as soon as it has
 				   received the header. if we sent immediate data in a
 				   cmd PDU the R2T might get lost otherwise. */
-				SLIST_ADD_END(&iscsi->waitpdu, iscsi->outqueue_current);
+				ISCSI_LIST_ADD_END(&iscsi->waitpdu, iscsi->outqueue_current);
 			}
 		}
 

@@ -70,7 +70,7 @@ scsi_free_scsi_task(struct scsi_task *task)
 		return;
 
 	while ((mem = task->mem)) {
-		   SLIST_REMOVE(&task->mem, mem);
+		   ISCSI_LIST_REMOVE(&task->mem, mem);
 		   free(mem);
 	}
 
@@ -108,7 +108,7 @@ scsi_malloc(struct scsi_task *task, size_t size)
 		return NULL;
 	}
 	memset(mem, 0, sizeof(struct scsi_allocated_memory) + size);
-	SLIST_ADD(&task->mem, mem);
+	ISCSI_LIST_ADD(&task->mem, mem);
 	return &mem->buf[0];
 }
 

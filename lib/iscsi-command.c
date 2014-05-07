@@ -87,8 +87,8 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		if (pdu == NULL) {
 			iscsi_set_error(iscsi, "Out-of-memory, Failed to allocate "
 				"scsi data out pdu.");
-			SLIST_REMOVE(&iscsi->outqueue, cmd_pdu);
-			SLIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
+			ISCSI_LIST_REMOVE(&iscsi->outqueue, cmd_pdu);
+			ISCSI_LIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
 			cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 				     cmd_pdu->private_data);
 			iscsi_free_pdu(iscsi, cmd_pdu);
@@ -137,8 +137,8 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 			iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"scsi pdu.");
-			SLIST_REMOVE(&iscsi->outqueue, cmd_pdu);
-			SLIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
+			ISCSI_LIST_REMOVE(&iscsi->outqueue, cmd_pdu);
+			ISCSI_LIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
 			cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 				     cmd_pdu->private_data);
 			iscsi_free_pdu(iscsi, cmd_pdu);
@@ -180,7 +180,7 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 		scsi_cbdata = &pdu->scsi_cbdata;
 		task = scsi_cbdata->task;
 
-		SLIST_REMOVE(&iscsi->waitpdu, pdu);
+		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
 		pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
 				task, pdu->private_data);
 		iscsi_set_error(iscsi, "SCSI command timed out");
@@ -1883,7 +1883,7 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		if (pdu->itt == task->itt) {
-			SLIST_REMOVE(&iscsi->waitpdu, pdu);
+			ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
 			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
@@ -1894,7 +1894,7 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 	}
 	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
 		if (pdu->itt == task->itt) {
-			SLIST_REMOVE(&iscsi->outqueue, pdu);
+			ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
 			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
@@ -1912,7 +1912,7 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 	struct iscsi_pdu *pdu;
 
 	while ((pdu = iscsi->waitpdu)) {
-		SLIST_REMOVE(&iscsi->waitpdu, pdu);
+		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
 		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
@@ -1920,7 +1920,7 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 		iscsi_free_pdu(iscsi, pdu);
 	}
 	while ((pdu = iscsi->outqueue)) {
-		SLIST_REMOVE(&iscsi->outqueue, pdu);
+		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
 		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);

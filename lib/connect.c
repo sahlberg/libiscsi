@@ -204,7 +204,7 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 	ISCSI_LOG(iscsi, 2, "reconnect deferred, cancelling all tasks");
 
 	while ((pdu = iscsi->outqueue)) {
-		SLIST_REMOVE(&iscsi->outqueue, pdu);
+		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
 		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
 			/* If an error happened during connect/login,
 			   we don't want to call any of the callbacks.
@@ -217,7 +217,7 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 		iscsi_free_pdu(iscsi, pdu);
 	}
 	while ((pdu = iscsi->waitpdu)) {
-		SLIST_REMOVE(&iscsi->waitpdu, pdu);
+		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
 		/* If an error happened during connect/login,
 		   we don't want to call any of the callbacks.
 		 */
@@ -316,14 +316,14 @@ try_again:
 
 	while (old_iscsi->outqueue) {
 		struct iscsi_pdu *pdu = old_iscsi->outqueue;
-		SLIST_REMOVE(&old_iscsi->outqueue, pdu);
-		SLIST_ADD_END(&old_iscsi->waitpdu, pdu);
+		ISCSI_LIST_REMOVE(&old_iscsi->outqueue, pdu);
+		ISCSI_LIST_ADD_END(&old_iscsi->waitpdu, pdu);
 	}
 
 	while (old_iscsi->waitpdu) {
 		struct iscsi_pdu *pdu = old_iscsi->waitpdu;
 
-		SLIST_REMOVE(&old_iscsi->waitpdu, pdu);
+		ISCSI_LIST_REMOVE(&old_iscsi->waitpdu, pdu);
 		if (pdu->itt == 0xffffffff) {
 			continue;
 		}
