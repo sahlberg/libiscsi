@@ -28,9 +28,10 @@
 void
 test_writesame16_unmap(void)
 {
-	int i, ret;
-	unsigned int j;
+	int ret;
+	unsigned int i, j;
 	unsigned char *buf;
+	unsigned char *zeroBlock;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_THIN_PROVISIONING;
@@ -40,6 +41,8 @@ test_writesame16_unmap(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME16 of 1-256 blocks at the start of the LUN");
 	buf = malloc(65536 * block_size);
+	zeroBlock = malloc(block_size);
+	memset(zeroBlock, 0, block_size);
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);
@@ -67,10 +70,8 @@ test_writesame16_unmap(void)
 			ret = read16(iscsic, tgt_lun, 0,
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf);
-			for (j = 0; j < block_size * i; j++) {
-				if (buf[j] != 0) {
-					CU_ASSERT_EQUAL(buf[j], 0);
-				}
+			for (j = 0; j < i; j++) {
+				CU_ASSERT_EQUAL(memcmp(buf + j*block_size, zeroBlock, block_size), 0);
 			}
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
@@ -103,10 +104,8 @@ test_writesame16_unmap(void)
 			ret = read16(iscsic, tgt_lun, num_blocks - i,
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf);
-			for (j = 0; j < block_size * i; j++) {
-				if (buf[j] != 0) {
-					CU_ASSERT_EQUAL(buf[j], 0);
-				}
+			for (j = 0; j < i; j++) {
+				CU_ASSERT_EQUAL(memcmp(buf + j*block_size, zeroBlock, block_size), 0);
 			}
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
@@ -176,10 +175,8 @@ test_writesame16_unmap(void)
 			ret = read16(iscsic, tgt_lun, 0,
 				i * block_size, block_size,
 				0, 0, 0, 0, 0, buf);
-			for (j = 0; j < block_size * i; j++) {
-				if (buf[j] != 0) {
-					CU_ASSERT_EQUAL(buf[j], 0);
-				}
+			for (j = 0; j < i; j++) {
+				CU_ASSERT_EQUAL(memcmp(buf + j*block_size, zeroBlock, block_size), 0);
 			}
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
@@ -228,10 +225,8 @@ test_writesame16_unmap(void)
 			ret = read16(iscsic, tgt_lun, 0,
 				i * block_size, block_size,
 				0, 0, 0, 0, 0, buf);
-			for (j = 0; j < block_size * i; j++) {
-				if (buf[j] != 0) {
-					CU_ASSERT_EQUAL(buf[j], 0);
-				}
+			for (j = 0; j < i; j++) {
+				CU_ASSERT_EQUAL(memcmp(buf + j*block_size, zeroBlock, block_size), 0);
 			}
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
@@ -251,4 +246,5 @@ test_writesame16_unmap(void)
 
 finished:
 	free(buf);
+	free(zeroBlock);
 }
