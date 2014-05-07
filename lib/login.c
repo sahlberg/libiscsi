@@ -996,7 +996,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		if (end == NULL) {
 			iscsi_set_error(iscsi, "NUL not found after offset %ld "
 					"when parsing login data",
-					(unsigned char *)ptr - in->data);
+					(long)((unsigned char *)ptr - in->data));
 			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 				      pdu->private_data);
 			return -1;

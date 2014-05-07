@@ -134,7 +134,7 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		if (end == NULL) {
 			iscsi_set_error(iscsi, "NUL not found after offset %ld "
 					"when parsing discovery data",
-					ptr - in->data);
+					(long)(ptr - in->data));
 			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 				      pdu->private_data);
 			iscsi_free_discovery_addresses(iscsi, targets);
