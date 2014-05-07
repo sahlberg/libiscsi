@@ -32,6 +32,7 @@
 
 #include <sys/syscall.h>
 #include <dlfcn.h>
+#include <inttypes.h>
 
 static const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:ld-iscsi";
 
@@ -131,7 +132,7 @@ int open(const char *path, int flags, mode_t mode)
 			return -1;
 		}
       
-        LD_ISCSI_DPRINTF(4,"readcapacity16_sync: block_size: %d, num_blocks: %lu",rc16->block_length,rc16->returned_lba + 1);
+        LD_ISCSI_DPRINTF(4,"readcapacity16_sync: block_size: %d, num_blocks: %"PRIu64,rc16->block_length,rc16->returned_lba + 1);
 
 		fd = iscsi_get_fd(iscsi);
 		if (fd >= ISCSI_MAX_FD) {
@@ -340,17 +341,17 @@ ssize_t read(int fd, void *buf, size_t count)
 			uint32_t _num_blocks=0;
 
 			if (iscsi_fd_list[fd].lbasd_cache_valid==1) {
-				LD_ISCSI_DPRINTF(5,"cached get_lba_status_descriptor is lba %lu, num_blocks %d, provisioning %d",iscsi_fd_list[fd].lbasd_cached.lba,iscsi_fd_list[fd].lbasd_cached.num_blocks,iscsi_fd_list[fd].lbasd_cached.provisioning);
+				LD_ISCSI_DPRINTF(5,"cached get_lba_status_descriptor is lba %"PRIu64", num_blocks %d, provisioning %d",iscsi_fd_list[fd].lbasd_cached.lba,iscsi_fd_list[fd].lbasd_cached.num_blocks,iscsi_fd_list[fd].lbasd_cached.provisioning);
 			    if (iscsi_fd_list[fd].lbasd_cached.provisioning != 0x00 && lba >= iscsi_fd_list[fd].lbasd_cached.lba && lba+num_blocks < iscsi_fd_list[fd].lbasd_cached.lba+iscsi_fd_list[fd].lbasd_cached.num_blocks)
 			    {
-					LD_ISCSI_DPRINTF(4,"skipped read16_sync for non-allocated blocks: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
+					LD_ISCSI_DPRINTF(4,"skipped read16_sync for non-allocated blocks: lun %d, lba %"PRIu64", num_blocks: %"PRIu64", block_size: %d, offset: %"PRIu64" count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,(unsigned long)count);
 					memset(buf, 0x00, count);
 					iscsi_fd_list[fd].offset += count;
 					iscsi_fd_list[fd].in_flight = 0;
 					return count;
 				}
 			}
-			LD_ISCSI_DPRINTF(4,"get_lba_status_sync: lun %d, lba %lu, num_blocks: %lu",iscsi_fd_list[fd].lun,lba,num_blocks);
+			LD_ISCSI_DPRINTF(4,"get_lba_status_sync: lun %d, lba %"PRIu64", num_blocks: %"PRIu64,iscsi_fd_list[fd].lun,lba,num_blocks);
 			task = iscsi_get_lba_status_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, 8+16);
 			if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 				LD_ISCSI_DPRINTF(0,"failed to send get_lba_status command");
@@ -370,7 +371,7 @@ ssize_t read(int fd, void *buf, size_t count)
 			LD_ISCSI_DPRINTF(5,"get_lba_status: num_descriptors: %d",lbas->num_descriptors);
 			for (i=0;i<lbas->num_descriptors;i++) {
 				struct scsi_lba_status_descriptor *lbasd = &lbas->descriptors[i];
-				LD_ISCSI_DPRINTF(5,"get_lba_status_descriptor %d, lba %lu, num_blocks %d, provisioning %d",i,lbasd->lba,lbasd->num_blocks,lbasd->provisioning);
+				LD_ISCSI_DPRINTF(5,"get_lba_status_descriptor %d, lba %"PRIu64", num_blocks %d, provisioning %d",i,lbasd->lba,lbasd->num_blocks,lbasd->provisioning);
 				if (lbasd->lba != _num_blocks+lba) {
 					LD_ISCSI_DPRINTF(0,"get_lba_status response is non-continuous");
 					scsi_free_scsi_task(task);
@@ -385,7 +386,7 @@ ssize_t read(int fd, void *buf, size_t count)
 			}
 			scsi_free_scsi_task(task);
             if (_num_allocated == 0 && _num_blocks >= num_blocks) {
-		        LD_ISCSI_DPRINTF(4,"skipped read16_sync for non-allocated blocks: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
+		        LD_ISCSI_DPRINTF(4,"skipped read16_sync for non-allocated blocks: lun %d, lba %"PRIu64", num_blocks: %"PRIu64", block_size: %d, offset: %"PRIu64" count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,(unsigned long)count);
 				memset(buf, 0x00, count);
 		        iscsi_fd_list[fd].offset += count;
 		        iscsi_fd_list[fd].in_flight = 0;
@@ -393,7 +394,7 @@ ssize_t read(int fd, void *buf, size_t count)
 			}
 		}
 
-		LD_ISCSI_DPRINTF(4,"read16_sync: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
+		LD_ISCSI_DPRINTF(4,"read16_sync: lun %d, lba %"PRIu64", num_blocks: %"PRIu64", block_size: %d, offset: %"PRIu64" count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,(unsigned long)count);
 
 		task = iscsi_read16_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, num_blocks * iscsi_fd_list[fd].block_size, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
 		iscsi_fd_list[fd].in_flight = 0;
@@ -473,7 +474,7 @@ ssize_t write(int fd, const void *buf, size_t count)
 		}
 
 		iscsi_fd_list[fd].in_flight = 1;
-		LD_ISCSI_DPRINTF(4,"write16_sync: lun %d, lba %lu, num_blocks: %lu, block_size: %d, offset: %lu count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,count);
+		LD_ISCSI_DPRINTF(4,"write16_sync: lun %d, lba %"PRIu64", num_blocks: %"PRIu64", block_size: %d, offset: %"PRIu64" count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,(unsigned long)count);
 		task = iscsi_write16_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, (unsigned char *) buf, count, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
 		iscsi_fd_list[fd].in_flight = 0;
 		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
