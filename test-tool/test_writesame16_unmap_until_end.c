@@ -39,7 +39,7 @@ test_writesame16_unmap_until_end(void)
 	CHECK_FOR_LBPWS;
 	CHECK_FOR_SBC;
 
-	zeroBlock = malloc(block_size);
+	zeroBlock = alloca(block_size);
 	memset(zeroBlock, 0, block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -79,5 +79,4 @@ test_writesame16_unmap_until_end(void)
 				"and verify zero test");
 		}
 	}
-	free(zeroBlock);
 }

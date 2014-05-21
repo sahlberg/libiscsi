@@ -41,7 +41,7 @@ test_writesame16_unmap(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME16 of 1-256 blocks at the start of the LUN");
 	buf = malloc(65536 * block_size);
-	zeroBlock = malloc(block_size);
+	zeroBlock = alloca(block_size);
 	memset(zeroBlock, 0, block_size);
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
@@ -246,5 +246,4 @@ test_writesame16_unmap(void)
 
 finished:
 	free(buf);
-	free(zeroBlock);
 }
