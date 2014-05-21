@@ -43,6 +43,7 @@ test_unmap_simple(void)
 	struct unmap_list list[257];
 	unsigned char *buf = alloca(256 * block_size);
 	unsigned char *zbuf = alloca(256 * block_size);
+        memset(zbuf, 0, 256 * block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test basic UNMAP");
