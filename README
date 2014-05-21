@@ -117,29 +117,6 @@ These results can be converted to JUnit format using this script:
 http://git.cyrusimap.org/cyrus-imapd/plain/cunit/cunit-to-junit.pl
 
 
-ISCSI-TEST
-==========
-iscsi-test is deprecated and is being replaced by iscsi-test-cu.
-No new tests will be developed for iscsi-test.
-
-The test-tool subdirectory contains an iSCSI/SCSI test tool.
-This is a tool that is aimed at providing a comprehensive iSCSI and SCSI
-emulation test suite. 
-
-Run ./bin/iscsi-test --help and
-Run ./bin/iscsi-test --list
-for instructions
-
-Example:
-$ ./bin/iscsi-test --initiator-name=iqn.ronnie.test --test=T0105_read10_invalid iscsi://127.0.0.1/iqn.ronnie.test/1
-=========
-Running test T0105_read10_invalid
-Read10 1 block but with iscsi ExpectedDataTransferLength==0 ... [FAILED]
-Read10 of 1 block with iscsi ExpectedDataTransferLength==0 should fail.
-TEST T0105_read10_invalid [FAILED]
-
-
-
 LD_PRELOAD FUN
 ==============
 There is a small LD_PRELOAD hack in the src directory that intercepts a handful
