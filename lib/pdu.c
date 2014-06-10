@@ -376,6 +376,21 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 		return -1;
 	}
 
+	if (opcode == ISCSI_PDU_ASYNC_MSG) {
+		uint8_t event = in->hdr[36];
+		uint16_t param1 = scsi_get_uint16(&in->hdr[38]); 
+		uint16_t param2 = scsi_get_uint16(&in->hdr[40]); 
+		uint16_t param3 = scsi_get_uint16(&in->hdr[42]); 
+		switch (event) {
+		case 0x1:
+			ISCSI_LOG(iscsi, 1, "target requests logout within %u seconds", param3);
+			/* this will cause an immediate reconnect */
+			return -1;
+		default:
+			ISCSI_LOG(iscsi, 2, "unhandled async event %u: param1 %u param2 %u param3 %u", event, param1, param2, param3);
+		}
+	}
+
 	if (opcode == ISCSI_PDU_REJECT) {
 		iscsi_set_error(iscsi, "Request was rejected with reason: 0x%02x (%s)", in->hdr[2], iscsi_reject_reason_str(in->hdr[2]));
 
