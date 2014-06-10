@@ -323,6 +323,7 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 	int size = in->data_pos;
 	uint32_t itt;
 	struct iscsi_pdu *pdu;
+	uint8_t reason = in->hdr[2];
 
 	if (size < ISCSI_RAW_HEADER_SIZE) {
 		iscsi_set_error(iscsi, "size of REJECT payload is too small."
@@ -330,6 +331,14 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 				       ISCSI_RAW_HEADER_SIZE, (int)size);
 		return -1;
 	}
+
+	if (reason == ISCSI_REJECT_WAITING_FOR_LOGOUT) {
+		ISCSI_LOG(iscsi, 1, "target rejects request with reason: %s",  iscsi_reject_reason_str(reason));
+		/* this will cause an immediate reconnect */
+		return -1;
+	}
+
+	iscsi_set_error(iscsi, "Request was rejected with reason: 0x%02x (%s)", reason, iscsi_reject_reason_str(reason));
 
 	itt = scsi_get_uint32(&in->data[16]);
 
@@ -376,13 +385,23 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 		return -1;
 	}
 
-	if (opcode == ISCSI_PDU_REJECT) {
-		iscsi_set_error(iscsi, "Request was rejected with reason: 0x%02x (%s)", in->hdr[2], iscsi_reject_reason_str(in->hdr[2]));
-
-		if (iscsi_process_reject(iscsi, in) != 0) {
+	if (opcode == ISCSI_PDU_ASYNC_MSG) {
+		uint8_t event = in->hdr[36];
+		uint16_t param1 = scsi_get_uint16(&in->hdr[38]); 
+		uint16_t param2 = scsi_get_uint16(&in->hdr[40]); 
+		uint16_t param3 = scsi_get_uint16(&in->hdr[42]); 
+		switch (event) {
+		case 0x1:
+			ISCSI_LOG(iscsi, 1, "target requests logout within %u seconds", param3);
+			/* this will cause an immediate reconnect */
 			return -1;
+		default:
+			ISCSI_LOG(iscsi, 2, "unhandled async event %u: param1 %u param2 %u param3 %u", event, param1, param2, param3);
 		}
-		return 0;
+	}
+
+	if (opcode == ISCSI_PDU_REJECT) {
+		return iscsi_process_reject(iscsi, in);
 	}
 
 	if (opcode == ISCSI_PDU_NOP_IN && itt == 0xffffffff) {
