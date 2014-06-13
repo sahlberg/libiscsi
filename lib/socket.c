@@ -611,8 +611,9 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 
 	while (iscsi->outqueue != NULL || iscsi->outqueue_current != NULL) {
 		if (iscsi->outqueue_current == NULL) {
-			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0) {
-				/* stop sending. maxcmdsn is reached */
+			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0
+				&& !(iscsi->outqueue->outdata.data[0] & ISCSI_PDU_IMMEDIATE)) {
+				/* stop sending for non-immediate PDUs. maxcmdsn is reached */
 				return 0;
 			}
 			/* pop first element of the outqueue */
