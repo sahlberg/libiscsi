@@ -80,6 +80,7 @@ struct iscsi_context {
 
 	int fd;
 	int is_connected;
+	int is_corked;
 
 	int tcp_user_timeout;
 	int tcp_keepcnt;
@@ -209,6 +210,8 @@ struct iscsi_pdu {
  * This includes any DATA-OUT PDU as well as all NOPs.
  */
 #define ISCSI_PDU_DROP_ON_RECONNECT	0x00000004
+/* stop sending after this PDU has been sent */
+#define ISCSI_PDU_CORK_WHEN_SENT	0x00000008
 
 	uint32_t flags;
 

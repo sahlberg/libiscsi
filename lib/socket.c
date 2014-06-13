@@ -611,6 +611,12 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 
 	while (iscsi->outqueue != NULL || iscsi->outqueue_current != NULL) {
 		if (iscsi->outqueue_current == NULL) {
+			if (iscsi->is_corked) {
+				/* connection is corked we are not allowed to send
+				 * additional PDUs */
+				return 0;
+			}
+			
 			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0
 				&& !(iscsi->outqueue->outdata.data[0] & ISCSI_PDU_IMMEDIATE)) {
 				/* stop sending for non-immediate PDUs. maxcmdsn is reached */
@@ -699,9 +705,11 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		if (pdu->payload_written != total) {
 			return 0;
 		}
-
 		if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
 			iscsi_free_pdu(iscsi, pdu);
+		}
+		if (pdu->flags & ISCSI_PDU_CORK_WHEN_SENT) {
+			iscsi->is_corked = 1;
 		}
 		iscsi->outqueue_current = NULL;
 	}
