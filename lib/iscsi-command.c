@@ -208,7 +208,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		return -1;
 	}
 
-	if (iscsi->is_loggedin == 0) {
+	if (iscsi->is_loggedin == 0 && !iscsi->pending_reconnect) {
 		iscsi_set_error(iscsi, "Trying to send command while "
 				"not logged in.");
 		return -1;
