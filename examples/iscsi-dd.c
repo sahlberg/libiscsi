@@ -44,6 +44,7 @@ struct client {
 	uint64_t dst_num_blocks;
 	int use_16_for_rw;
 	int progress;
+	int ignore_errors;
 };
 
 
@@ -65,10 +66,13 @@ void write_cb(struct iscsi_context *iscsi, int status, void *command_data, void 
 		scsi_free_scsi_task(task);
 		exit(10);
 	}
+
 	if (status != SCSI_STATUS_GOOD) {
 		printf("Write10/16 failed with %s\n", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		exit(10);
+		if (!client->ignore_errors) {
+			scsi_free_scsi_task(task);
+			exit(10);
+		}
 	}
 
 	client->in_flight--;
@@ -100,7 +104,16 @@ void read_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, vo
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
 		printf("Read10/16 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
+		scsi_free_scsi_task(task);
 		exit(10);
+	}
+
+	if (status != SCSI_STATUS_GOOD) {
+		printf("Read10/16 failed with %s\n", iscsi_get_error(iscsi));
+		if (!client->ignore_errors) {
+			scsi_free_scsi_task(task);
+			exit(10);
+		}
 	}
 
 	wt = malloc(sizeof(struct write_task));
@@ -190,13 +203,14 @@ int main(int argc, char *argv[])
 		{"16",             no_argument,          NULL,        '6'},
 		{"max",            required_argument,    NULL,        'm'},
 		{"blocks",         required_argument,    NULL,        'b'},
+		{"ignore-errors",  no_argument,          NULL,        'n'},
 		{0, 0, 0, 0}
 	};
 	int option_index;
 
 	memset(&client, 0, sizeof(client));
 
-	while ((c = getopt_long(argc, argv, "d:s:i:m:b:p6", long_options,
+	while ((c = getopt_long(argc, argv, "d:s:i:m:b:p6n", long_options,
 			&option_index)) != -1) {
 		switch (c) {
 		case 'd':
@@ -219,6 +233,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'b':
 			blocks_per_io = atoi(optarg);
+			break;
+		case 'n':
+			client.ignore_errors = 1;
 			break;
 		default:
 			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
