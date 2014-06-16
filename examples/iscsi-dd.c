@@ -42,6 +42,8 @@ struct client {
 	int dst_lun;
 	int dst_blocksize;
 	uint64_t dst_num_blocks;
+	int use_16_for_rw;
+	int progress;
 };
 
 
@@ -52,19 +54,19 @@ struct write_task {
        struct client *client;
 };
 
-void write10_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
+void write_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	struct write_task *wt = (struct write_task *)private_data;
 	struct scsi_task *task = command_data;
 	struct client *client = wt->client;
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
-		printf("Write10 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
+		printf("Write10/16 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
 		scsi_free_scsi_task(task);
 		exit(10);
 	}
 	if (status != SCSI_STATUS_GOOD) {
-		printf("Write10 failed with %s\n", iscsi_get_error(iscsi));
+		printf("Write10/16 failed with %s\n", iscsi_get_error(iscsi));
 		scsi_free_scsi_task(task);
 		exit(10);
 	}
@@ -72,23 +74,32 @@ void write10_cb(struct iscsi_context *iscsi, int status, void *command_data, voi
 	client->in_flight--;
 	fill_read_queue(client);
 
+	if (client->progress) {
+		printf("\r%lu of %lu blocks transferred.", client->pos, client->src_num_blocks);
+	}
+
 	if ((client->in_flight == 0) && (client->pos == client->src_num_blocks)) {
 		client->finished = 1;
+		if (client->progress) {
+			printf("\n");
+		}
 	}
 	scsi_free_scsi_task(wt->rt);
 	scsi_free_scsi_task(task);
 	free(wt);
 }
 
-void read10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *private_data)
+void read_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *private_data)
 {
 	struct client *client = (struct client *)private_data;
 	struct scsi_task *task = command_data;
 	struct write_task *wt;
-	struct scsi_read10_cdb *read10_cdb;
+	struct scsi_read10_cdb *read10_cdb = NULL;
+	struct scsi_read16_cdb *read16_cdb = NULL;
+	struct scsi_task *task2;
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
-		printf("Read10 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
+		printf("Read10/16 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
 		exit(10);
 	}
 
@@ -96,20 +107,29 @@ void read10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, 
 	wt->rt = task;
 	wt->client = client;
 
-	read10_cdb = scsi_cdb_unmarshall(task, SCSI_OPCODE_READ10);
-	if (read10_cdb == NULL) {
-		printf("Failed to unmarshall READ10 CDB.\n");
-		exit(10);
+	if (client->use_16_for_rw) {
+		read16_cdb = scsi_cdb_unmarshall(task, SCSI_OPCODE_READ16);
+		if (read16_cdb == NULL) {
+			printf("Failed to unmarshall READ16 CDB.\n");
+			exit(10);
+		}
+		task2 = iscsi_write16_task(client->dst_iscsi, client->dst_lun,
+									read16_cdb->lba, task->datain.data, task->datain.size,
+									client->dst_blocksize, 0, 0, 0, 0, 0,
+									write_cb, wt);
+	} else {
+		read10_cdb = scsi_cdb_unmarshall(task, SCSI_OPCODE_READ10);
+		if (read10_cdb == NULL) {
+			printf("Failed to unmarshall READ16 CDB.\n");
+			exit(10);
+		}
+		task2 = iscsi_write10_task(client->dst_iscsi, client->dst_lun,
+									read10_cdb->lba, task->datain.data, task->datain.size,
+									client->dst_blocksize, 0, 0, 0, 0, 0,
+									write_cb, wt);
 	}
-	if (iscsi_write10_task(client->dst_iscsi,
-			client->dst_lun,
-			read10_cdb->lba,
-			task->datain.data,
-			task->datain.size,
-			client->dst_blocksize,
-			0, 0, 0, 0, 0,
-			write10_cb, wt) == NULL) {
-		printf("failed to send read10 command\n");
+	if (task2 == NULL) {
+		printf("failed to send read16 command\n");
 		scsi_free_scsi_task(task);
 		exit(10);
 	}
@@ -121,6 +141,7 @@ void fill_read_queue(struct client *client)
 	int num_blocks;
 
 	while(client->in_flight < max_in_flight && client->pos < client->src_num_blocks) {
+		struct scsi_task *task;
 		client->in_flight++;
 
 		num_blocks = client->src_num_blocks - client->pos;
@@ -128,12 +149,21 @@ void fill_read_queue(struct client *client)
 			num_blocks = blocks_per_io;
 		}
 
-		if (iscsi_read10_task(client->src_iscsi,
-				client->src_lun, client->pos,
-				num_blocks * client->src_blocksize,
-				client->src_blocksize, 0, 0, 0, 0, 0,
-				read10_cb, client) == NULL) {
-			printf("failed to send read10 command\n");
+		if (client->use_16_for_rw) {
+			task = iscsi_read16_task(client->src_iscsi,
+									client->src_lun, client->pos,
+									num_blocks * client->src_blocksize,
+									client->src_blocksize, 0, 0, 0, 0, 0,
+									read_cb, client);
+		} else {
+			task = iscsi_read10_task(client->src_iscsi,
+									client->src_lun, client->pos,
+									num_blocks * client->src_blocksize,
+									client->src_blocksize, 0, 0, 0, 0, 0,
+									read_cb, client);
+		}
+		if (task == NULL) {
+			printf("failed to send read10/16 command\n");
 			exit(10);
 		}
 		client->pos += num_blocks;
@@ -147,6 +177,7 @@ int main(int argc, char *argv[])
 	struct iscsi_url *iscsi_url;
 	struct scsi_task *task;
 	struct scsi_readcapacity10 *rc10;
+	struct scsi_readcapacity16 *rc16;
 	int c;
 	struct pollfd pfd[2];
 	struct client client;
@@ -155,11 +186,17 @@ int main(int argc, char *argv[])
 		{"dst",            required_argument,    NULL,        'd'},
 		{"src",            required_argument,    NULL,        's'},
 		{"initiator-name", required_argument,    NULL,        'i'},
+		{"progress",       no_argument,          NULL,        'p'},
+		{"16",             no_argument,          NULL,        '6'},
+		{"max",            required_argument,    NULL,        'm'},
+		{"blocks",         required_argument,    NULL,        'b'},
 		{0, 0, 0, 0}
 	};
 	int option_index;
 
-	while ((c = getopt_long(argc, argv, "d:s:i:", long_options,
+	memset(&client, 0, sizeof(client));
+
+	while ((c = getopt_long(argc, argv, "d:s:i:m:b:p6", long_options,
 			&option_index)) != -1) {
 		switch (c) {
 		case 'd':
@@ -171,12 +208,23 @@ int main(int argc, char *argv[])
 		case 'i':
 			initiator = optarg;
 			break;
+		case 'p':
+			client.progress = 1;
+			break;
+		case '6':
+			client.use_16_for_rw = 1;
+			break;
+		case 'm':
+			max_in_flight = atoi(optarg);
+			break;
+		case 'b':
+			blocks_per_io = atoi(optarg);
+			break;
 		default:
 			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
-			exit(0);
+			exit(1);
 		}
 	}
-
 
 	if (src_url == NULL) {
 		fprintf(stderr, "You must specify source url\n");
@@ -188,10 +236,6 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "  --dst iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
 		exit(10);
 	}
-
-
-	memset(&client, 0, sizeof(client));
-
 
 	client.src_iscsi = iscsi_create_context(initiator);
 	if (client.src_iscsi == NULL) {
@@ -222,23 +266,35 @@ int main(int argc, char *argv[])
 	client.src_lun = iscsi_url->lun;
 	iscsi_destroy_url(iscsi_url);
 
-	task = iscsi_readcapacity10_sync(client.src_iscsi, client.src_lun, 0, 0);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-		fprintf(stderr, "failed to send readcapacity command\n");
-		exit(10);
+	if (client.use_16_for_rw) {
+		task = iscsi_readcapacity16_sync(client.src_iscsi, client.src_lun);
+		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+			fprintf(stderr, "failed to send readcapacity command\n");
+			exit(10);
+		}
+		rc16 = scsi_datain_unmarshall(task);
+		if (rc16 == NULL) {
+			fprintf(stderr, "failed to unmarshall readcapacity16 data\n");
+			exit(10);
+		}
+		client.src_blocksize  = rc16->block_length;
+		client.src_num_blocks  = rc16->returned_lba + 1;
+		scsi_free_scsi_task(task);
+	} else {
+		task = iscsi_readcapacity10_sync(client.src_iscsi, client.src_lun, 0, 0);
+		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+			fprintf(stderr, "failed to send readcapacity command\n");
+			exit(10);
+		}
+		rc10 = scsi_datain_unmarshall(task);
+		if (rc10 == NULL) {
+			fprintf(stderr, "failed to unmarshall readcapacity10 data\n");
+			exit(10);
+		}
+		client.src_blocksize  = rc10->block_size;
+		client.src_num_blocks  = rc10->lba;
+		scsi_free_scsi_task(task);
 	}
-	rc10 = scsi_datain_unmarshall(task);
-	if (rc10 == NULL) {
-		fprintf(stderr, "failed to unmarshall readcapacity10 data\n");
-		exit(10);
-	}
-	client.src_blocksize  = rc10->block_size;
-	client.src_num_blocks  = rc10->lba;
-	scsi_free_scsi_task(task);
-
-
-
-
 
 	client.dst_iscsi = iscsi_create_context(initiator);
 	if (client.dst_iscsi == NULL) {
@@ -269,19 +325,45 @@ int main(int argc, char *argv[])
 	client.dst_lun = iscsi_url->lun;
 	iscsi_destroy_url(iscsi_url);
 
-	task = iscsi_readcapacity10_sync(client.dst_iscsi, client.dst_lun, 0, 0);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-		fprintf(stderr, "failed to send readcapacity command\n");
+	if (client.use_16_for_rw) {
+		task = iscsi_readcapacity16_sync(client.dst_iscsi, client.dst_lun);
+		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+			fprintf(stderr, "failed to send readcapacity command\n");
+			exit(10);
+		}
+		rc16 = scsi_datain_unmarshall(task);
+		if (rc16 == NULL) {
+			fprintf(stderr, "failed to unmarshall readcapacity16 data\n");
+			exit(10);
+		}
+		client.dst_blocksize  = rc16->block_length;
+		client.dst_num_blocks  = rc16->returned_lba + 1;
+		scsi_free_scsi_task(task);
+	} else {
+		task = iscsi_readcapacity10_sync(client.dst_iscsi, client.dst_lun, 0, 0);
+		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+			fprintf(stderr, "failed to send readcapacity command\n");
+			exit(10);
+		}
+		rc10 = scsi_datain_unmarshall(task);
+		if (rc10 == NULL) {
+			fprintf(stderr, "failed to unmarshall readcapacity10 data\n");
+			exit(10);
+		}
+		client.dst_blocksize  = rc10->block_size;
+		client.dst_num_blocks  = rc10->lba;
+		scsi_free_scsi_task(task);
+	}
+
+	if (client.src_blocksize != client.dst_blocksize) {
+		fprintf(stderr, "source LUN has different blocksize than destination than destination (%d != %d sectors)\n", client.src_blocksize, client.dst_blocksize);
 		exit(10);
 	}
-	rc10 = scsi_datain_unmarshall(task);
-	if (rc10 == NULL) {
-		fprintf(stderr, "failed to unmarshall readcapacity10 data\n");
+
+	if (client.src_num_blocks > client.dst_num_blocks) {
+		fprintf(stderr, "source LUN is bigger than destination (%lu > %lu sectors)\n", client.src_num_blocks, client.dst_num_blocks);
 		exit(10);
 	}
-	client.dst_blocksize  = rc10->block_size;
-	client.dst_num_blocks  = rc10->lba;
-	scsi_free_scsi_task(task);
 
 	fill_read_queue(&client);
 
