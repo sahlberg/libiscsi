@@ -350,6 +350,10 @@ iscsi_itt_post_increment(struct iscsi_context *iscsi);
 
 void iscsi_timeout_scan(struct iscsi_context *iscsi);
 
+int
+iscsi_logout_async_internal(struct iscsi_context *iscsi, iscsi_command_cb cb,
+		  void *private_data, uint32_t flags);
+
 #ifdef __cplusplus
 }
 #endif
