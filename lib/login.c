@@ -1117,10 +1117,9 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	return 0;
 }
 
-
 int
-iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
-		   void *private_data)
+iscsi_logout_async_internal(struct iscsi_context *iscsi, iscsi_command_cb cb,
+		   void *private_data, uint32_t flags)
 {
 	struct iscsi_pdu *pdu;
 
@@ -1154,6 +1153,7 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
+	pdu->flags |= ISCSI_PDU_CORK_WHEN_SENT | flags;
 
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
@@ -1163,6 +1163,13 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	}
 
 	return 0;
+}
+
+int
+iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
+		   void *private_data)
+{
+	return iscsi_logout_async_internal(iscsi, cb, private_data, 0);
 }
 
 int

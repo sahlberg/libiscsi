@@ -80,6 +80,7 @@ struct iscsi_context {
 
 	int fd;
 	int is_connected;
+	int is_corked;
 
 	int tcp_user_timeout;
 	int tcp_keepcnt;
@@ -125,6 +126,7 @@ struct iscsi_context {
 	int no_auto_reconnect;
 	int reconnect_deferred;
 	int reconnect_max_retries;
+	int pending_reconnect;
 
 	int log_level;
 	iscsi_log_fn log_fn;
@@ -188,8 +190,9 @@ enum iscsi_opcode {
 	ISCSI_PDU_DATA_IN                        = 0x25,
 	ISCSI_PDU_LOGOUT_RESPONSE                = 0x26,
 	ISCSI_PDU_R2T                            = 0x31,
+	ISCSI_PDU_ASYNC_MSG                      = 0x32,
 	ISCSI_PDU_REJECT                         = 0x3f,
-	ISCSI_PDU_NO_PDU	                 = 0xff
+	ISCSI_PDU_NO_PDU                         = 0xff
 };
 
 struct iscsi_scsi_cbdata {
@@ -209,6 +212,8 @@ struct iscsi_pdu {
  * This includes any DATA-OUT PDU as well as all NOPs.
  */
 #define ISCSI_PDU_DROP_ON_RECONNECT	0x00000004
+/* stop sending after this PDU has been sent */
+#define ISCSI_PDU_CORK_WHEN_SENT	0x00000008
 
 	uint32_t flags;
 
@@ -346,6 +351,10 @@ uint32_t
 iscsi_itt_post_increment(struct iscsi_context *iscsi);
 
 void iscsi_timeout_scan(struct iscsi_context *iscsi);
+
+int
+iscsi_logout_async_internal(struct iscsi_context *iscsi, iscsi_command_cb cb,
+		  void *private_data, uint32_t flags);
 
 #ifdef __cplusplus
 }

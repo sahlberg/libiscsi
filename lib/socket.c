@@ -92,9 +92,12 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	
 	/* queue pdus in ascending order of CmdSN. 
 	 * ensure that pakets with the same CmdSN are kept in FIFO order.
+	 * queue PDUs flagged for immediate delivery in front.
 	 */
 	do {
-		if (iscsi_serial32_compare(pdu->cmdsn, current->cmdsn) < 0) {
+		if (iscsi_serial32_compare(pdu->cmdsn, current->cmdsn) < 0 ||
+			((pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE) &&
+			 !(current->outdata.data[0] & ISCSI_PDU_IMMEDIATE))) {
 			/* insert PDU before the current */
 			if (last != NULL) {
 				last->next=pdu;
@@ -611,8 +614,15 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 
 	while (iscsi->outqueue != NULL || iscsi->outqueue_current != NULL) {
 		if (iscsi->outqueue_current == NULL) {
-			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0) {
-				/* stop sending. maxcmdsn is reached */
+			if (iscsi->is_corked) {
+				/* connection is corked we are not allowed to send
+				 * additional PDUs */
+				return 0;
+			}
+			
+			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0
+				&& !(iscsi->outqueue->outdata.data[0] & ISCSI_PDU_IMMEDIATE)) {
+				/* stop sending for non-immediate PDUs. maxcmdsn is reached */
 				return 0;
 			}
 			/* pop first element of the outqueue */
@@ -698,9 +708,11 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		if (pdu->payload_written != total) {
 			return 0;
 		}
-
 		if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
 			iscsi_free_pdu(iscsi, pdu);
+		}
+		if (pdu->flags & ISCSI_PDU_CORK_WHEN_SENT) {
+			iscsi->is_corked = 1;
 		}
 		iscsi->outqueue_current = NULL;
 	}
@@ -723,6 +735,10 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 {
 	if (iscsi->fd < 0) {
 		return 0;
+	}
+
+	if (iscsi->pending_reconnect) {
+		iscsi_reconnect(iscsi);
 	}
 
 	if (revents & POLLERR) {
