@@ -371,8 +371,10 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 		return -1;
 	}
 
-	pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-			      pdu->private_data);
+	if (pdu->callback) {
+		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					pdu->private_data);
+	}
 
 	ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
 	iscsi_free_pdu(iscsi, pdu);
