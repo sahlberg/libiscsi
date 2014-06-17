@@ -317,12 +317,25 @@ int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
 }
 
 
+static void iscsi_reconnect_after_logout(struct iscsi_context *iscsi, int status,
+                        void *command_data _U_, void *opaque _U_)
+{
+	if (status) {
+		ISCSI_LOG(iscsi, 1, "logout failed: %s", iscsi_get_error(iscsi));
+	} else {
+		ISCSI_LOG(iscsi, 2, "logout was successful");
+	}
+	iscsi->pending_reconnect = 1;
+}
+
+
 int iscsi_process_reject(struct iscsi_context *iscsi,
 				struct iscsi_in_pdu *in)
 {
 	int size = in->data_pos;
 	uint32_t itt;
 	struct iscsi_pdu *pdu;
+	uint8_t reason = in->hdr[2];
 
 	if (size < ISCSI_RAW_HEADER_SIZE) {
 		iscsi_set_error(iscsi, "size of REJECT payload is too small."
@@ -330,6 +343,14 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 				       ISCSI_RAW_HEADER_SIZE, (int)size);
 		return -1;
 	}
+
+	if (reason == ISCSI_REJECT_WAITING_FOR_LOGOUT) {
+		ISCSI_LOG(iscsi, 1, "target rejects request with reason: %s",  iscsi_reject_reason_str(reason));
+		iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_URGENT_DELIVERY);
+		return 0;
+	}
+
+	iscsi_set_error(iscsi, "Request was rejected with reason: 0x%02x (%s)", reason, iscsi_reject_reason_str(reason));
 
 	itt = scsi_get_uint32(&in->data[16]);
 
@@ -358,17 +379,6 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 	return 0;
 }
 
-
-static void iscsi_reconnect_after_logout(struct iscsi_context *iscsi, int status,
-                        void *command_data _U_, void *opaque _U_)
-{
-	if (status) {
-		ISCSI_LOG(iscsi, 1, "logout failed: %s", iscsi_get_error(iscsi));
-	} else {
-		ISCSI_LOG(iscsi, 2, "logout was successful");
-	}
-	iscsi->pending_reconnect = 1;
-}
 
 int
 iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
@@ -404,12 +414,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 	}
 
 	if (opcode == ISCSI_PDU_REJECT) {
-		iscsi_set_error(iscsi, "Request was rejected with reason: 0x%02x (%s)", in->hdr[2], iscsi_reject_reason_str(in->hdr[2]));
-
-		if (iscsi_process_reject(iscsi, in) != 0) {
-			return -1;
-		}
-		return 0;
+		return iscsi_process_reject(iscsi, in);
 	}
 
 	if (opcode == ISCSI_PDU_NOP_IN && itt == 0xffffffff) {
