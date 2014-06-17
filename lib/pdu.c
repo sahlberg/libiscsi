@@ -407,6 +407,18 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 			ISCSI_LOG(iscsi, 2, "target requests logout within %u seconds", param3);
 			iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_URGENT_DELIVERY);
 			return 0;
+		case 0x2:
+			ISCSI_LOG(iscsi, 2, "target will drop this connection. Time2Wait is %u seconds", param2);
+			iscsi->last_reconnect = time(NULL) + param2;
+			return 0;
+		case 0x3:
+			ISCSI_LOG(iscsi, 2, "target will drop all connections of this session. Time2Wait is %u seconds", param2);
+			iscsi->last_reconnect = time(NULL) + param2;
+			return 0;
+		case 0x4:
+			ISCSI_LOG(iscsi, 2, "target requests parameter renogitiation.");
+			iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_DROP_ON_RECONNECT);
+			return 0;
 		default:
 			ISCSI_LOG(iscsi, 1, "unhandled async event %u: param1 %u param2 %u param3 %u", event, param1, param2, param3);
 			return -1;
