@@ -94,7 +94,8 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	 * ensure that pakets with the same CmdSN are kept in FIFO order.
 	 */
 	do {
-		if (iscsi_serial32_compare(pdu->cmdsn, current->cmdsn) < 0) {
+		if (iscsi_serial32_compare(pdu->cmdsn, current->cmdsn) < 0 ||
+			pdu->flags & ISCSI_PDU_URGENT_DELIVERY) {
 			/* insert PDU before the current */
 			if (last != NULL) {
 				last->next=pdu;
