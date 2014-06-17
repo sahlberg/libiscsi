@@ -735,6 +735,10 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 		return 0;
 	}
 
+	if (iscsi->pending_reconnect) {
+		iscsi_reconnect(iscsi);
+	}
+
 	if (revents & POLLERR) {
 		int err = 0;
 		socklen_t err_size = sizeof(err);

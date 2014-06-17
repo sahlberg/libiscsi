@@ -359,6 +359,17 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 }
 
 
+static void iscsi_reconnect_after_logout(struct iscsi_context *iscsi, int status,
+                        void *command_data _U_, void *opaque _U_)
+{
+	if (status) {
+		ISCSI_LOG(iscsi, 1, "logout failed: %s", iscsi_get_error(iscsi));
+	} else {
+		ISCSI_LOG(iscsi, 2, "logout was successful");
+	}
+	iscsi->pending_reconnect = 1;
+}
+
 int
 iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 {
@@ -374,6 +385,22 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 	if (ahslen != 0) {
 		iscsi_set_error(iscsi, "cant handle expanded headers yet");
 		return -1;
+	}
+
+	if (opcode == ISCSI_PDU_ASYNC_MSG) {
+		uint8_t event = in->hdr[36];
+		uint16_t param1 = scsi_get_uint16(&in->hdr[38]); 
+		uint16_t param2 = scsi_get_uint16(&in->hdr[40]); 
+		uint16_t param3 = scsi_get_uint16(&in->hdr[42]); 
+		switch (event) {
+		case 0x1:
+			ISCSI_LOG(iscsi, 2, "target requests logout within %u seconds", param3);
+			iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_URGENT_DELIVERY);
+			return 0;
+		default:
+			ISCSI_LOG(iscsi, 1, "unhandled async event %u: param1 %u param2 %u param3 %u", event, param1, param2, param3);
+			return -1;
+		}
 	}
 
 	if (opcode == ISCSI_PDU_REJECT) {

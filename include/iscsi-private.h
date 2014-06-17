@@ -126,6 +126,7 @@ struct iscsi_context {
 	int no_auto_reconnect;
 	int reconnect_deferred;
 	int reconnect_max_retries;
+	int pending_reconnect;
 
 	int log_level;
 	iscsi_log_fn log_fn;
@@ -189,8 +190,9 @@ enum iscsi_opcode {
 	ISCSI_PDU_DATA_IN                        = 0x25,
 	ISCSI_PDU_LOGOUT_RESPONSE                = 0x26,
 	ISCSI_PDU_R2T                            = 0x31,
+	ISCSI_PDU_ASYNC_MSG                      = 0x32,
 	ISCSI_PDU_REJECT                         = 0x3f,
-	ISCSI_PDU_NO_PDU	                 = 0xff
+	ISCSI_PDU_NO_PDU                         = 0xff
 };
 
 struct iscsi_scsi_cbdata {
