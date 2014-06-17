@@ -347,23 +347,12 @@ int
 iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			 struct iscsi_in_pdu *in)
 {
-	uint32_t statsn, maxcmdsn, expcmdsn, flags, status;
+	uint32_t flags, status;
 	struct iscsi_scsi_cbdata *scsi_cbdata = &pdu->scsi_cbdata;
 	struct scsi_task *task = scsi_cbdata->task;
 
-	statsn = scsi_get_uint32(&in->hdr[24]);
-	if (statsn > iscsi->statsn) {
-		iscsi->statsn = statsn;
-	}
-
-	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
-		iscsi->maxcmdsn = maxcmdsn;
-	}
-	expcmdsn = scsi_get_uint32(&in->hdr[28]);
-	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
-		iscsi->expcmdsn = expcmdsn;
-	}
+	iscsi_adjust_statsn(iscsi, in);
+	iscsi_adjust_maxexpcmdsn(iscsi, in);
 
 	flags = in->hdr[1];
 	if ((flags&ISCSI_PDU_DATA_FINAL) == 0) {
@@ -489,24 +478,13 @@ int
 iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			   struct iscsi_in_pdu *in, int *is_finished)
 {
-	uint32_t statsn, maxcmdsn, expcmdsn, flags, status;
+	uint32_t flags, status;
 	struct iscsi_scsi_cbdata *scsi_cbdata = &pdu->scsi_cbdata;
 	struct scsi_task *task = scsi_cbdata->task;
 	int dsl;
 
-	statsn = scsi_get_uint32(&in->hdr[24]);
-	if (statsn > iscsi->statsn) {
-		iscsi->statsn = statsn;
-	}
-
-	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
-		iscsi->maxcmdsn = maxcmdsn;
-	}
-	expcmdsn = scsi_get_uint32(&in->hdr[28]);
-	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
-		iscsi->expcmdsn = expcmdsn;
-	}
+	iscsi_adjust_statsn(iscsi, in);
+	iscsi_adjust_maxexpcmdsn(iscsi, in);
 
 	flags = in->hdr[1];
 	if ((flags&ISCSI_PDU_DATA_ACK_REQUESTED) != 0) {
@@ -579,20 +557,13 @@ int
 iscsi_process_r2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			 struct iscsi_in_pdu *in)
 {
-	uint32_t ttt, offset, len, maxcmdsn, expcmdsn;
+	uint32_t ttt, offset, len;
 
 	ttt    = scsi_get_uint32(&in->hdr[20]);
 	offset = scsi_get_uint32(&in->hdr[40]);
 	len    = scsi_get_uint32(&in->hdr[44]);
 
-	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
-		iscsi->maxcmdsn = maxcmdsn;
-	}
-	expcmdsn = scsi_get_uint32(&in->hdr[28]);
-	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
-		iscsi->expcmdsn = expcmdsn;
-	}
+	iscsi_adjust_maxexpcmdsn(iscsi, in);
 
 	pdu->datasn = 0;
 	iscsi_send_data_out(iscsi, pdu, ttt, offset, len);

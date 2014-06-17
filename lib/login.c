@@ -965,22 +965,14 @@ int
 iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			  struct iscsi_in_pdu *in)
 {
-  uint32_t status, maxcmdsn, expcmdsn;
+	uint32_t status;
 	char *ptr = (char *)in->data;
 	int size = in->data_pos;
 
 	status = scsi_get_uint16(&in->hdr[36]);
 
-	iscsi->statsn = scsi_get_uint16(&in->hdr[24]);
-
-	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
-		iscsi->maxcmdsn = maxcmdsn;
-	}
-	expcmdsn = scsi_get_uint32(&in->hdr[28]);
-	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
-		iscsi->expcmdsn = expcmdsn;
-	}
+	iscsi_adjust_statsn(iscsi, in);
+	iscsi_adjust_maxexpcmdsn(iscsi, in);
 
 	/* XXX here we should parse the data returned in case the target
 	 * renegotiated some some parameters.
@@ -1169,16 +1161,7 @@ int
 iscsi_process_logout_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 struct iscsi_in_pdu *in)
 {
-  uint32_t maxcmdsn, expcmdsn;
-
-	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
-		iscsi->maxcmdsn = maxcmdsn;
-	}
-	expcmdsn = scsi_get_uint32(&in->hdr[28]);
-	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
-		iscsi->expcmdsn = expcmdsn;
-	}
+	iscsi_adjust_maxexpcmdsn(iscsi, in);
 
 	iscsi->is_loggedin = 0;
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
