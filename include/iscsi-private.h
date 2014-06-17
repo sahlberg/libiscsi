@@ -349,11 +349,11 @@ iscsi_log_message(struct iscsi_context *iscsi, int level, const char *format, ..
 void
 iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
-int
-iscsi_serial32_compare(uint32_t s1, uint32_t s2);
+int iscsi_serial32_compare(uint32_t s1, uint32_t s2);
+void iscsi_adjust_statsn(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
+void iscsi_adjust_maxexpcmdsn(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 
-uint32_t
-iscsi_itt_post_increment(struct iscsi_context *iscsi);
+uint32_t iscsi_itt_post_increment(struct iscsi_context *iscsi);
 
 void iscsi_timeout_scan(struct iscsi_context *iscsi);
 
