@@ -69,6 +69,31 @@ iscsi_itt_post_increment(struct iscsi_context *iscsi) {
 	return old_itt;
 }
 
+void iscsi_adjust_statsn(struct iscsi_context *iscsi, struct iscsi_in_pdu *in) {
+	uint32_t statsn = scsi_get_uint32(&in->hdr[24]);
+	uint32_t itt = scsi_get_uint32(&in->hdr[16]);
+	
+	if (itt == 0xffffffff) {
+		/* target will not increase statsn if itt == 0xffffffff */
+		statsn--;
+	}
+	
+	if (iscsi_serial32_compare(statsn, iscsi->statsn) > 0) {
+		iscsi->statsn = statsn;
+	}
+}
+
+void iscsi_adjust_maxexpcmdsn(struct iscsi_context *iscsi, struct iscsi_in_pdu *in) {
+	uint32_t maxcmdsn = scsi_get_uint32(&in->hdr[32]);
+	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
+		iscsi->maxcmdsn = maxcmdsn;
+	}
+	uint32_t expcmdsn = scsi_get_uint32(&in->hdr[28]);
+	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
+		iscsi->expcmdsn = expcmdsn;
+	}
+}
+
 void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data) {
 	char dump[ISCSI_RAW_HEADER_SIZE*3+1]={0};
 	int i;
@@ -297,14 +322,10 @@ int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
 				struct iscsi_in_pdu *in)
 {
 	uint32_t ttt;
-	uint32_t statsn;
 
 	ttt = scsi_get_uint32(&in->hdr[20]);
 
-	statsn = scsi_get_uint32(&in->hdr[24]);
-	if (statsn > iscsi->statsn) {
-		iscsi->statsn = statsn;
-	}
+	iscsi_adjust_statsn(iscsi, in);
 
 	/* if the server does not want a response */
 	if (ttt == 0xffffffff) {
