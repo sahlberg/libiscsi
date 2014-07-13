@@ -1894,6 +1894,8 @@ struct scsi_task *get_lba_status_task(struct iscsi_context *iscsi, int lun, uint
 int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len)
 {
 	struct scsi_task *task;
+	struct scsi_get_lba_status *lbas = NULL;
+	struct scsi_lba_status_descriptor *lbasd = NULL;
 
 	logging(LOG_VERBOSE, "Send GET_LBA_STATUS LBA:%" PRIu64 " alloc_len:%d",
 		lba, len);
@@ -1916,6 +1918,21 @@ int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t 
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] GET_LBA_STATUS command: "
 			"failed with sense. %s", iscsi_get_error(iscsi));
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	lbas = scsi_datain_unmarshall(task);
+	if (lbas == NULL) {
+		logging(LOG_NORMAL, "[FAILED] GET_LBA_STATUS command: "
+			"failed to unmarschall data.");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+	lbasd = &lbas->descriptors[0];
+	if (lbasd->lba != lba) {
+		logging(LOG_NORMAL, "[FAILED] GET_LBA_STATUS command: "
+			"lba offset in first descriptor does not match request (0x%" PRIx64 " != 0x%" PRIx64 ").",
+			lbasd->lba, lba);
 		scsi_free_scsi_task(task);
 		return -1;
 	}
