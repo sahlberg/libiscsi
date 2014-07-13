@@ -965,22 +965,14 @@ int
 iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			  struct iscsi_in_pdu *in)
 {
-  uint32_t status, maxcmdsn, expcmdsn;
+	uint32_t status;
 	char *ptr = (char *)in->data;
 	int size = in->data_pos;
 
 	status = scsi_get_uint16(&in->hdr[36]);
 
-	iscsi->statsn = scsi_get_uint16(&in->hdr[24]);
-
-	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
-		iscsi->maxcmdsn = maxcmdsn;
-	}
-	expcmdsn = scsi_get_uint32(&in->hdr[28]);
-	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
-		iscsi->expcmdsn = expcmdsn;
-	}
+	iscsi_adjust_statsn(iscsi, in);
+	iscsi_adjust_maxexpcmdsn(iscsi, in);
 
 	/* XXX here we should parse the data returned in case the target
 	 * renegotiated some some parameters.
@@ -1117,10 +1109,9 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	return 0;
 }
 
-
 int
-iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
-		   void *private_data)
+iscsi_logout_async_internal(struct iscsi_context *iscsi, iscsi_command_cb cb,
+		   void *private_data, uint32_t flags)
 {
 	struct iscsi_pdu *pdu;
 
@@ -1154,6 +1145,7 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
+	pdu->flags |= ISCSI_PDU_CORK_WHEN_SENT | flags;
 
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
@@ -1166,19 +1158,17 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 }
 
 int
+iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
+		   void *private_data)
+{
+	return iscsi_logout_async_internal(iscsi, cb, private_data, 0);
+}
+
+int
 iscsi_process_logout_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 struct iscsi_in_pdu *in)
 {
-  uint32_t maxcmdsn, expcmdsn;
-
-	maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
-		iscsi->maxcmdsn = maxcmdsn;
-	}
-	expcmdsn = scsi_get_uint32(&in->hdr[28]);
-	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
-		iscsi->expcmdsn = expcmdsn;
-	}
+	iscsi_adjust_maxexpcmdsn(iscsi, in);
 
 	iscsi->is_loggedin = 0;
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);

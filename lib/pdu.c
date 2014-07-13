@@ -69,6 +69,31 @@ iscsi_itt_post_increment(struct iscsi_context *iscsi) {
 	return old_itt;
 }
 
+void iscsi_adjust_statsn(struct iscsi_context *iscsi, struct iscsi_in_pdu *in) {
+	uint32_t statsn = scsi_get_uint32(&in->hdr[24]);
+	uint32_t itt = scsi_get_uint32(&in->hdr[16]);
+	
+	if (itt == 0xffffffff) {
+		/* target will not increase statsn if itt == 0xffffffff */
+		statsn--;
+	}
+	
+	if (iscsi_serial32_compare(statsn, iscsi->statsn) > 0) {
+		iscsi->statsn = statsn;
+	}
+}
+
+void iscsi_adjust_maxexpcmdsn(struct iscsi_context *iscsi, struct iscsi_in_pdu *in) {
+	uint32_t maxcmdsn = scsi_get_uint32(&in->hdr[32]);
+	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
+		iscsi->maxcmdsn = maxcmdsn;
+	}
+	uint32_t expcmdsn = scsi_get_uint32(&in->hdr[28]);
+	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
+		iscsi->expcmdsn = expcmdsn;
+	}
+}
+
 void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data) {
 	char dump[ISCSI_RAW_HEADER_SIZE*3+1]={0};
 	int i;
@@ -146,6 +171,10 @@ iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		iscsi_free(iscsi, pdu->indata.data);
 	}
 	pdu->indata.data = NULL;
+
+	if (iscsi->outqueue_current == pdu) {
+		iscsi->outqueue_current = NULL;
+	}
 
 	iscsi_sfree(iscsi, pdu);
 }
@@ -297,14 +326,10 @@ int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
 				struct iscsi_in_pdu *in)
 {
 	uint32_t ttt;
-	uint32_t statsn;
 
 	ttt = scsi_get_uint32(&in->hdr[20]);
 
-	statsn = scsi_get_uint32(&in->hdr[24]);
-	if (statsn > iscsi->statsn) {
-		iscsi->statsn = statsn;
-	}
+	iscsi_adjust_statsn(iscsi, in);
 
 	/* if the server does not want a response */
 	if (ttt == 0xffffffff) {
@@ -317,12 +342,25 @@ int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
 }
 
 
+static void iscsi_reconnect_after_logout(struct iscsi_context *iscsi, int status,
+                        void *command_data _U_, void *opaque _U_)
+{
+	if (status) {
+		ISCSI_LOG(iscsi, 1, "logout failed: %s", iscsi_get_error(iscsi));
+	} else {
+		ISCSI_LOG(iscsi, 2, "logout was successful");
+	}
+	iscsi->pending_reconnect = 1;
+}
+
+
 int iscsi_process_reject(struct iscsi_context *iscsi,
 				struct iscsi_in_pdu *in)
 {
 	int size = in->data_pos;
 	uint32_t itt;
 	struct iscsi_pdu *pdu;
+	uint8_t reason = in->hdr[2];
 
 	if (size < ISCSI_RAW_HEADER_SIZE) {
 		iscsi_set_error(iscsi, "size of REJECT payload is too small."
@@ -330,6 +368,14 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 				       ISCSI_RAW_HEADER_SIZE, (int)size);
 		return -1;
 	}
+
+	if (reason == ISCSI_REJECT_WAITING_FOR_LOGOUT) {
+		ISCSI_LOG(iscsi, 1, "target rejects request with reason: %s",  iscsi_reject_reason_str(reason));
+		iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_URGENT_DELIVERY);
+		return 0;
+	}
+
+	iscsi_set_error(iscsi, "Request was rejected with reason: 0x%02x (%s)", reason, iscsi_reject_reason_str(reason));
 
 	itt = scsi_get_uint32(&in->data[16]);
 
@@ -350,8 +396,10 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 		return -1;
 	}
 
-	pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-			      pdu->private_data);
+	if (pdu->callback) {
+		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					pdu->private_data);
+	}
 
 	ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
 	iscsi_free_pdu(iscsi, pdu);
@@ -376,13 +424,36 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 		return -1;
 	}
 
-	if (opcode == ISCSI_PDU_REJECT) {
-		iscsi_set_error(iscsi, "Request was rejected with reason: 0x%02x (%s)", in->hdr[2], iscsi_reject_reason_str(in->hdr[2]));
-
-		if (iscsi_process_reject(iscsi, in) != 0) {
+	if (opcode == ISCSI_PDU_ASYNC_MSG) {
+		uint8_t event = in->hdr[36];
+		uint16_t param1 = scsi_get_uint16(&in->hdr[38]); 
+		uint16_t param2 = scsi_get_uint16(&in->hdr[40]); 
+		uint16_t param3 = scsi_get_uint16(&in->hdr[42]); 
+		switch (event) {
+		case 0x1:
+			ISCSI_LOG(iscsi, 2, "target requests logout within %u seconds", param3);
+			iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_URGENT_DELIVERY);
+			return 0;
+		case 0x2:
+			ISCSI_LOG(iscsi, 2, "target will drop this connection. Time2Wait is %u seconds", param2);
+			iscsi->last_reconnect = time(NULL) + param2;
+			return 0;
+		case 0x3:
+			ISCSI_LOG(iscsi, 2, "target will drop all connections of this session. Time2Wait is %u seconds", param2);
+			iscsi->last_reconnect = time(NULL) + param2;
+			return 0;
+		case 0x4:
+			ISCSI_LOG(iscsi, 2, "target requests parameter renogitiation.");
+			iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_DROP_ON_RECONNECT);
+			return 0;
+		default:
+			ISCSI_LOG(iscsi, 1, "unhandled async event %u: param1 %u param2 %u param3 %u", event, param1, param2, param3);
 			return -1;
 		}
-		return 0;
+	}
+
+	if (opcode == ISCSI_PDU_REJECT) {
+		return iscsi_process_reject(iscsi, in);
 	}
 
 	if (opcode == ISCSI_PDU_NOP_IN && itt == 0xffffffff) {
