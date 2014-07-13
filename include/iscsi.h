@@ -34,7 +34,7 @@ struct iscsi_context;
 struct sockaddr;
 
 /* API VERSION */
-#define LIBISCSI_API_VERSION (20131020)
+#define LIBISCSI_API_VERSION (20140713)
 
 /* FEATURES */
 #define LIBISCSI_FEATURE_IOVECTOR (1)
