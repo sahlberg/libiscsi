@@ -383,8 +383,10 @@ iscsi_which_events(struct iscsi_context *iscsi)
 {
 	int events = iscsi->is_connected ? POLLIN : POLLOUT;
 
-	if (iscsi->outqueue_current != NULL || (iscsi->outqueue != NULL && iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0)) {
-	 	events |= POLLOUT;
+	if (iscsi->outqueue_current != NULL ||
+	    (iscsi->outqueue != NULL && !iscsi->is_corked &&
+	     iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0)) {
+		events |= POLLOUT;
 	}
 	return events;
 }
