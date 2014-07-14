@@ -409,7 +409,7 @@ iscsi_queue_length(struct iscsi_context *iscsi)
 }
 
 ssize_t
-iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *iovector, uint32_t pos, ssize_t max_read, int do_write)
+iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *iovector, uint32_t pos, ssize_t count, int do_write)
 {
 	if (iovector->iov == NULL) {
 		errno = EINVAL;
@@ -450,10 +450,10 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 	struct scsi_iovec *iov2 = iov;
 
 	int niov=1; /* number of iovectors to pass */
-	uint32_t len2 = pos + max_read; /* adjust length of iov2 */
+	uint32_t len2 = pos + count; /* adjust length of iov2 */
 	
 	/* forward until iov2 points to the last iovec we pass later. it might
-	   happen that we have a lot of iovectors but are limited by max_read */
+	   happen that we have a lot of iovectors but are limited by count */
 	while (len2 > iov2->iov_len) {
 		if (iovector->niov <= iovector->consumed+niov-1) {
 			errno = EINVAL;
@@ -485,7 +485,7 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 	iov->iov_len += pos;
 	iov2->iov_len = _len2;
 
-	if (n > max_read) {
+	if (n > count) {
 		/* we read/write more bytes than expected, this MUST not happen */
 		errno = EINVAL;
 		return -1;
