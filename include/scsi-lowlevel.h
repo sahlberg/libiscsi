@@ -270,9 +270,8 @@ struct scsi_iovector {
 	struct scsi_iovec *iov;
 	int niov;
 	int nalloc;
-
-	size_t reserved_1;
-	int reserved_2;
+	size_t offset;
+	int consumed;
 };
 
 struct scsi_task {
