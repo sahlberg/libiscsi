@@ -91,7 +91,7 @@ test_get_lba_status_unmap_single(void)
 				lbasd->lba, i);
 			CU_FAIL("[FAILED] GET_LBA_STATUS command: "
 				"LBA offset in first descriptor does not match "
-				"teh LBA in the CDB.");
+				"the LBA in the CDB.");
 			scsi_free_scsi_task(task_ret);
 			return;
 		}
@@ -160,7 +160,7 @@ test_get_lba_status_unmap_single(void)
 				lbasd->lba, i);
 			CU_FAIL("[FAILED] GET_LBA_STATUS command: "
 				"LBA offset in first descriptor does not match "
-				"teh LBA in the CDB.");
+				"the LBA in the CDB.");
 			scsi_free_scsi_task(task_ret);
 			return;
 		}
@@ -215,7 +215,7 @@ test_get_lba_status_unmap_single(void)
 				lbasd->lba, i);
 			CU_FAIL("[FAILED] GET_LBA_STATUS command: "
 				"LBA offset in first descriptor does not match "
-				"teh LBA in the CDB.");
+				"the LBA in the CDB.");
 			scsi_free_scsi_task(task_ret);
 			return;
 		}
