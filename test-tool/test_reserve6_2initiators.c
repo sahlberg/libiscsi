@@ -67,13 +67,13 @@ test_reserve6_2initiators(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_NORMAL, "Test we can still TESTUNITREADY from the first initiator");
-	ret = testunitready(iscsic, tgt_lun);
+	logging(LOG_NORMAL, "Test we can still send MODE SENSE from the first initiator");
+	ret = mode_sense(iscsic, tgt_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_NORMAL, "TESTUNITREADY should fail from the second initiator");
-	ret = testunitready_conflict(iscsic2, tgt_lun);
-	CU_ASSERT_EQUAL(ret, 0);
+	logging(LOG_NORMAL, "MODE SENSE should fail from the second initiator");
+	ret = mode_sense(iscsic2, tgt_lun);
+	CU_ASSERT_EQUAL(ret, SCSI_STATUS_RESERVATION_CONFLICT);
 
 
 	logging(LOG_NORMAL, "RESERVE6 from the second initiator should still fail");

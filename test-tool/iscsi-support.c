@@ -1720,6 +1720,24 @@ testunitready_conflict(struct iscsi_context *iscsi, int lun)
 	return 0;
 }
 
+/*
+ * Returns -1 if allocating a SCSI task failed or if a communication error
+ * occurred and a SCSI status if a SCSI response has been received.
+ */
+int mode_sense(struct iscsi_context *iscsi, int lun)
+{
+	struct scsi_task *t;
+	enum scsi_status ret = -1;
+
+	t = iscsi_modesense6_sync(iscsi, lun, 0, SCSI_MODESENSE_PC_CURRENT,
+				  SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255);
+	if (t) {
+		ret = t->status;
+		scsi_free_scsi_task(t);
+	}
+	return ret;
+}
+
 int compareandwrite(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		    unsigned char *data, uint32_t len, int blocksize,
 		    int wrprotect, int dpo,
