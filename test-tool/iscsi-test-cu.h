@@ -57,6 +57,7 @@ void test_compareandwrite_miscompare(void);
 
 void test_get_lba_status_simple(void);
 void test_get_lba_status_beyond_eol(void);
+void test_get_lba_status_unmap_single(void);
 
 void test_inquiry_alloc_length(void);
 void test_inquiry_block_limits(void);

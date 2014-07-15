@@ -18,6 +18,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_compareandwrite_miscompare.c \
 	test_get_lba_status_simple.c \
 	test_get_lba_status_beyond_eol.c \
+	test_get_lba_status_unmap_single.c \
 	test_inquiry_alloc_length.c \
 	test_inquiry_block_limits.c \
 	test_inquiry_evpd.c \

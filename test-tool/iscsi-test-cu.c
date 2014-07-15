@@ -71,6 +71,7 @@ static CU_TestInfo tests_compareandwrite[] = {
 static CU_TestInfo tests_get_lba_status[] = {
 	{ (char *)"Simple", test_get_lba_status_simple },
 	{ (char *)"BeyondEol", test_get_lba_status_beyond_eol },
+	{ (char *)"UnmapSingle", test_get_lba_status_unmap_single },
 	CU_TEST_INFO_NULL
 };
 
