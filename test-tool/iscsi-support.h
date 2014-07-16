@@ -119,6 +119,17 @@ do {									\
 	}								\
 } while (0);
 
+#define CHECK_FOR_LBPU							\
+do {									\
+	if (inq_lbp->lbpu == 0) {		       			\
+		logging(LOG_NORMAL, "[SKIPPED] Logical unit does not"	\
+			" have LBPU. Skipping test");	     	  	\
+		CU_PASS("[SKIPPED] Logical unit does not have LBPU."	\
+			" Skipping test");				\
+		return;	  	   					\
+	}								\
+} while (0);
+
 #define CHECK_FOR_LBPPB_GT_1						\
 do {									\
 	if (lbppb < 2) {						\

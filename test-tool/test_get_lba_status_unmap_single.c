@@ -38,27 +38,27 @@ test_get_lba_status_unmap_single(void)
 	struct scsi_lba_status_descriptor *lbasd = NULL;
 
 	CHECK_FOR_DATALOSS;
+	CHECK_FOR_THIN_PROVISIONING;
+	CHECK_FOR_LBPU;
 
 	memset(buf, 'A', 257 * block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test GET_LBA_STATUS for a single unmapped block "
 		"at offset 0-255");
-	for (i = 0; i < 256; i++) {
+	logging(LOG_VERBOSE, "We have %d logical blocks per physical block",
+		lbppb);
+	for (i = 0; i + lbppb <= 256; i += lbppb) {
 		logging(LOG_VERBOSE, "Write the first 257 blocks with a known "
 			"pattern and thus map the blocks");
 		ret = write10(iscsic, tgt_lun, 0, 257 * block_size,
 			block_size, 0, 0, 0, 0, 0, buf);
 
-		logging(LOG_VERBOSE, "Unmap a single block at LBA:%" PRIu64 "", i);
+		logging(LOG_VERBOSE, "Unmap a single physical block at LBA:%"
+			PRIu64 " (number of logical blocks: %d)", i, lbppb);
 		list[0].lba = i;
-		list[0].num = 1;
+		list[0].num = lbppb;
 		ret = unmap(iscsic, tgt_lun, 0, list, 1);
-		if (ret == -2) {
-			CU_PASS("[SKIPPED] Target does not support UNMAP. "
-				"Skipping test");
-			return;
-		}
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:%"
@@ -97,8 +97,8 @@ test_get_lba_status_unmap_single(void)
 		}
 
 		logging(LOG_VERBOSE, "Verify that the first descriptor is for "
-			"a single block");
-		if (lbasd->num_blocks != 1) {
+			"a single physical block (%d logical blocks)", lbppb);
+		if (lbasd->num_blocks != (uint32_t)lbppb) {
 			logging(LOG_NORMAL, "[FAILED] GET_LBA_STATUS command: "
 				"The returned range is not for a single block");
 			CU_FAIL("[FAILED] GET_LBA_STATUS command: "
@@ -125,7 +125,7 @@ test_get_lba_status_unmap_single(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test GET_LBA_STATUS for a single range of 1-255 "
 		"blocks at offset 0");
-	for (i = 1; i < 256; i++) {
+	for (i = lbppb; i + lbppb <= 256; i += lbppb) {
 		logging(LOG_VERBOSE, "Write the first 257 blocks with a known "
 			"pattern and thus map the blocks");
 		ret = write10(iscsic, tgt_lun, 0, 257 * block_size,
