@@ -347,7 +347,7 @@ int
 iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			 struct iscsi_in_pdu *in)
 {
-	uint32_t flags, status;
+	uint8_t flags, response, status;
 	struct iscsi_scsi_cbdata *scsi_cbdata = &pdu->scsi_cbdata;
 	struct scsi_task *task = scsi_cbdata->task;
 
@@ -370,6 +370,28 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		return -1;
 	}
 
+	response = in->hdr[2];
+
+	task->residual_status = SCSI_RESIDUAL_NO_RESIDUAL;
+	task->residual = 0;
+
+	if (flags & (ISCSI_PDU_DATA_RESIDUAL_OVERFLOW|
+		     ISCSI_PDU_DATA_RESIDUAL_UNDERFLOW)) {
+		if (response != 0) {
+			iscsi_set_error(iscsi, "protocol error: flags %#02x;"
+					" response %#02x.", flags, response);
+			pdu->callback(iscsi, SCSI_STATUS_ERROR, task,
+				      pdu->private_data);
+			return -1;
+		}
+		task->residual = scsi_get_uint32(&in->hdr[44]);
+		if (flags & ISCSI_PDU_DATA_RESIDUAL_UNDERFLOW) {
+			task->residual_status = SCSI_RESIDUAL_UNDERFLOW;
+		} else {
+			task->residual_status = SCSI_RESIDUAL_OVERFLOW;
+		}
+	}
+
 	status = in->hdr[3];
 
 	switch (status) {
@@ -377,21 +399,6 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	case SCSI_STATUS_CONDITION_MET:
 		task->datain.data = pdu->indata.data;
 		task->datain.size = pdu->indata.size;
-
-		task->residual_status = SCSI_RESIDUAL_NO_RESIDUAL;
-		task->residual = 0;
-
-		/*
-		 * These flags should only be set if the S flag is also set
-		 */
-		if (flags & (ISCSI_PDU_DATA_RESIDUAL_OVERFLOW|ISCSI_PDU_DATA_RESIDUAL_UNDERFLOW)) {
-			task->residual = scsi_get_uint32(&in->hdr[44]);
-			if (flags & ISCSI_PDU_DATA_RESIDUAL_UNDERFLOW) {
-				task->residual_status = SCSI_RESIDUAL_UNDERFLOW;
-			} else {
-				task->residual_status = SCSI_RESIDUAL_OVERFLOW;
-			}
-		}
 
 		/* the pdu->datain.data was malloc'ed by iscsi_malloc,
 		   as long as we have no struct iscsi_task we cannot track
