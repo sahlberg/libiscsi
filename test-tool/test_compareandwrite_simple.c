@@ -104,7 +104,8 @@ test_compareandwrite_simple(void)
 		for (j = 0; j < i * block_size; j++) {
 			if (buf[j] != 'B') {
 				logging(LOG_VERBOSE, "[FAILED] Data did not "
-					"read back as 'B'");
+					"read back as 'B' (buf[%d] = %#02x)",
+					j, buf[j]);
 				CU_FAIL("Block was not written correctly");
 				return;
 			}
@@ -156,7 +157,8 @@ test_compareandwrite_simple(void)
 		for (j = 0; j < i * block_size; j++) {
 			if (buf[j] != 'B') {
 				logging(LOG_VERBOSE, "[FAILED] Data did not "
-					"read back as 'B'");
+					"read back as 'B' (buf[%d] = %#02x)",
+					j, buf[j]);
 				CU_FAIL("Block was not written correctly");
 				return;
 			}
