@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 #include <poll.h>
 #include <getopt.h>
@@ -79,7 +80,7 @@ void write_cb(struct iscsi_context *iscsi, int status, void *command_data, void 
 	fill_read_queue(client);
 
 	if (client->progress) {
-		printf("\r%lu of %lu blocks transferred.", client->pos, client->src_num_blocks);
+		printf("\r%"PRIu64" of %"PRIu64" blocks transferred.", client->pos, client->src_num_blocks);
 	}
 
 	if ((client->in_flight == 0) && (client->pos == client->src_num_blocks)) {
@@ -378,7 +379,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (client.src_num_blocks > client.dst_num_blocks) {
-		fprintf(stderr, "source LUN is bigger than destination (%lu > %lu sectors)\n", client.src_num_blocks, client.dst_num_blocks);
+		fprintf(stderr, "source LUN is bigger than destination (%"PRIu64" > %"PRIu64" sectors)\n", client.src_num_blocks, client.dst_num_blocks);
 		exit(10);
 	}
 
