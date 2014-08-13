@@ -33,7 +33,7 @@ test_get_lba_status_simple(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test GET_LBA_STATUS of 1-256 blocks at the start of the LUN");
 	for (i = 1; i <= 256; i++) {
-		ret = get_lba_status(iscsic, tgt_lun, 0, 24);
+		ret = get_lba_status(iscsic, tgt_lun, 0, 24, NULL);
 		if (ret == -2) {
 			CU_PASS("[SKIPPED] Target does not support GET_LBA_STATUS. Skipping test");
 			return;
@@ -44,7 +44,7 @@ test_get_lba_status_simple(void)
 
 	logging(LOG_VERBOSE, "Test GET_LBA_STATUS of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
-		ret = get_lba_status(iscsic, tgt_lun, num_blocks - i, 24);
+		ret = get_lba_status(iscsic, tgt_lun, num_blocks - i, 24, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

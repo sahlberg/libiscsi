@@ -1909,7 +1909,8 @@ struct scsi_task *get_lba_status_task(struct iscsi_context *iscsi, int lun, uint
 	return task;
 }
 
-int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len)
+int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len,
+                   enum scsi_provisioning_type *provisioning0)
 {
 	struct scsi_task *task;
 	struct scsi_get_lba_status *lbas = NULL;
@@ -1953,6 +1954,9 @@ int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t 
 			lbasd->lba, lba);
 		scsi_free_scsi_task(task);
 		return -1;
+	}
+	if (provisioning0 != NULL) {
+		*provisioning0 = lbasd->provisioning;
 	}
 
 	scsi_free_scsi_task(task);
