@@ -35,8 +35,8 @@ test_inquiry_alloc_length(void)
 	logging(LOG_VERBOSE, "Test of the INQUIRY allocation length");
 
 
-	logging(LOG_VERBOSE, "Verify we can read standard INQUIRY page with alloc length from 0-255");
-	for (i = 0; i < 256 ; i++) {
+	logging(LOG_VERBOSE, "Verify we can read standard INQUIRY page with alloc length from 5-255");
+	for (i = 5; i < 256 ; i++) {
 		if (task != NULL) {
 			scsi_free_scsi_task(task);
 			task = NULL;
@@ -77,6 +77,9 @@ test_inquiry_alloc_length(void)
 		CU_PASS("[SKIPPED] Not SPC-3 or later");
 		goto finished;
 	}
+
+	scsi_free_scsi_task(task);
+	task = NULL;
 
 	logging(LOG_VERBOSE, "Version is SPC-3 or later. Read INQUIRY data using 16-bit allocation length");
 	logging(LOG_VERBOSE, "Read INQUIRY data with allocation length 511 (low order byte is 0xff)");
