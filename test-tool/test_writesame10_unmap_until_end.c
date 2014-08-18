@@ -54,8 +54,8 @@ test_writesame10_unmap_until_end(void)
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
 		ret = writesame10(iscsic, tgt_lun, num_blocks - i,
-				  0, i,
-				  0, 1, 0, 0, NULL);
+				  block_size, i,
+				  0, 1, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		if (rc16->lbprz) {

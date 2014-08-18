@@ -1518,7 +1518,8 @@ iscsi_writesame10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 	struct scsi_task *task;
 	struct iscsi_data d;
 
-	task = scsi_cdb_writesame10(wrprotect, anchor, unmap, lba, group, num_blocks);
+	task = scsi_cdb_writesame10(wrprotect, anchor, unmap, lba, group,
+				    num_blocks, datalen);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"writesame10 cdb.");
@@ -1551,7 +1552,8 @@ iscsi_writesame16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 	struct scsi_task *task;
 	struct iscsi_data d;
 
-	task = scsi_cdb_writesame16(wrprotect, anchor, unmap, lba, group, num_blocks);
+	task = scsi_cdb_writesame16(wrprotect, anchor, unmap, lba, group,
+				    num_blocks, datalen);
 	if (task == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
 				"writesame16 cdb.");

@@ -2106,7 +2106,7 @@ err:
  * WRITE_SAME10
  */
 struct scsi_task *
-scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, uint32_t lba, int group, uint16_t num_blocks)
+scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, uint32_t lba, int group, uint16_t num_blocks, uint32_t datalen)
 {
 	struct scsi_task *task;
 
@@ -2135,7 +2135,7 @@ scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, uint32_t lba, int gro
 
 	task->cdb_size = 10;
 	task->xfer_dir = SCSI_XFER_WRITE;
-	task->expxferlen = 512;
+	task->expxferlen = datalen;
 
 	return task;
 }
@@ -2144,7 +2144,7 @@ scsi_cdb_writesame10(int wrprotect, int anchor, int unmap, uint32_t lba, int gro
  * WRITE_SAME16
  */
 struct scsi_task *
-scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, uint64_t lba, int group, uint32_t num_blocks)
+scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, uint64_t lba, int group, uint32_t num_blocks, uint32_t datalen)
 {
 	struct scsi_task *task;
 
@@ -2165,6 +2165,9 @@ scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, uint64_t lba, int gro
 	if (unmap) {
 		task->cdb[1] |= 0x08;
 	}
+	if (datalen == 0) {
+		task->cdb[1] |= 0x01;
+	}
 	scsi_set_uint32(&task->cdb[2], lba >> 32);
 	scsi_set_uint32(&task->cdb[6], lba & 0xffffffff);
 	scsi_set_uint32(&task->cdb[10], num_blocks);
@@ -2174,7 +2177,7 @@ scsi_cdb_writesame16(int wrprotect, int anchor, int unmap, uint64_t lba, int gro
 
 	task->cdb_size = 16;
 	task->xfer_dir = SCSI_XFER_WRITE;
-	task->expxferlen = 512;
+	task->expxferlen = datalen;
 
 	return task;
 }

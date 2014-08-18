@@ -29,6 +29,7 @@ void
 test_writesame10_unmap_unaligned(void)
 {
 	int i, ret;
+	unsigned char *buf = alloca(block_size);
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_THIN_PROVISIONING;
@@ -42,7 +43,7 @@ test_writesame10_unmap_unaligned(void)
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10 at LBA:%d", lbppb - i, i);
 		ret = writesame10_invalidfieldincdb(iscsic, tgt_lun, i,
 						    block_size, lbppb - i,
-						    0, 1, 0, 0, NULL);
+						    0, 1, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }
