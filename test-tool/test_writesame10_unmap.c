@@ -29,8 +29,8 @@
 void
 test_writesame10_unmap(void)
 {
-	int i, ret;
-	unsigned int j;
+	int ret;
+	unsigned int i, j;
 	unsigned char *buf = alloca(256 * block_size);
 
 	CHECK_FOR_DATALOSS;
@@ -148,11 +148,12 @@ test_writesame10_unmap(void)
 	}
 
 	i = 256;
-	if (inq_bl->max_ws_len == 0 || inq_bl->max_ws_len >= 256) {
+	if (i <= num_blocks
+	    && (inq_bl->max_ws_len == 0 || inq_bl->max_ws_len >= i)) {
 		logging(LOG_VERBOSE, "Block Limits VPD page reports MAX_WS_LEN "
-			"as either 0 (==no limit) or >= 256. Test Unmapping "
-			"256 blocks to verify that it can handle 2-byte "
-			"lengths");
+			"as either 0 (==no limit) or >= %d. Test Unmapping "
+			"%d blocks to verify that it can handle 2-byte "
+			"lengths", i, i);
 
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);
@@ -186,7 +187,7 @@ test_writesame10_unmap(void)
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
 				"and verify zero test");
 		}
-	} else {
+	} else if (i <= num_blocks) {
 		logging(LOG_VERBOSE, "Block Limits VPD page reports MAX_WS_LEN "
 			"as <256. Verify that a 256 block unmap fails with "
 			"INVALID_FIELD_IN_CDB.");
