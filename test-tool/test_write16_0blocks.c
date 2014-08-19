@@ -49,7 +49,7 @@ test_write16_0blocks(void)
 
 
 	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==2^63");
-	ret = write16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000, 0,
+	ret = write16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000ULL, 0,
 				    block_size, 0, 0, 0, 0, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 

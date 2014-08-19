@@ -45,7 +45,7 @@ test_prefetch16_beyond_eol(void)
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 1-256 blocks at LBA==2^63");
 	for (i = 1; i <= 256; i++) {
-		ret = prefetch16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000,
+		ret = prefetch16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000ULL,
 					       i, 0, 0);
 		CU_ASSERT_EQUAL(ret, 0);
 	}

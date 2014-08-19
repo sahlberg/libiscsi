@@ -59,7 +59,7 @@ test_write16_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = write16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000,
+		ret = write16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000ULL,
 					   i * block_size, block_size,
 					   0, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);

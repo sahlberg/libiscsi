@@ -57,7 +57,7 @@ test_verify16_beyond_eol(void)
 			break;
 		}
 
-		ret = verify16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000,
+		ret = verify16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000ULL,
 					   i * block_size, block_size,
 					   0, 0, 1, buf);
 		CU_ASSERT_EQUAL(ret, 0);
