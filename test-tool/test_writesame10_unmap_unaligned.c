@@ -38,12 +38,12 @@ test_writesame10_unmap_unaligned(void)
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test that unaligned WRITESAME10 Unmap fails. LBPPB==%d", lbppb);
+	logging(LOG_VERBOSE, "Test that unaligned WRITESAME10 Unmap succeeds. LBPPB==%d", lbppb);
 	for (i = 1; i < lbppb; i++) {
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10 at LBA:%d", lbppb - i, i);
-		ret = writesame10_invalidfieldincdb(iscsic, tgt_lun, i,
-						    block_size, lbppb - i,
-						    0, 1, 0, 0, buf);
+		ret = writesame10(iscsic, tgt_lun, i,
+				  block_size, lbppb - i,
+				  0, 1, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }
