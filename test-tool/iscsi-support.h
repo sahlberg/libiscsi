@@ -240,7 +240,7 @@ struct scsi_task *get_lba_status_task(struct iscsi_context *iscsi, int lun, uint
 int compareandwrite(struct iscsi_context *iscsi, int lun, uint64_t lba, unsigned char *data, uint32_t len, int blocksize, int wrprotect, int dpo, int fua, int group_number);
 int compareandwrite_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba, unsigned char *data, uint32_t len, int blocksize, int wrprotect, int dpo, int fua, int group_number);
 int compareandwrite_miscompare(struct iscsi_context *iscsi, int lun, uint64_t lba, unsigned char *data, uint32_t len, int blocksize, int wrprotect, int dpo, int fua, int group_number);
-int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len);
+int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len, enum scsi_provisioning_type *provisioning0);
 int get_lba_status_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len);
 int get_lba_status_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len);
 int orwrite(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data);
