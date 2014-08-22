@@ -59,7 +59,7 @@ test_orwrite_beyond_eol(void)
 			break;
 		}
 		ret = orwrite_lbaoutofrange(iscsic, tgt_lun,
-					    0x8000000000000000,
+					    0x8000000000000000ULL,
 					    i * block_size, block_size,
 					    0, 0, 0, 0, 0, buf);
 		CU_ASSERT_EQUAL(ret, 0);

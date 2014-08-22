@@ -46,7 +46,7 @@ test_prefetch16_0blocks(void)
 
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks at LBA==2^63");
-	ret = prefetch16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000,
+	ret = prefetch16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000ULL,
 				       0, 0, 0);
 	CU_ASSERT_EQUAL(ret, 0);
 

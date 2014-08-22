@@ -46,7 +46,7 @@ test_verify16_0blocks(void)
 
 
 	logging(LOG_VERBOSE, "Test VERIFY16 0-blocks at LBA==2^63");
-	ret = verify16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000, 0,
+	ret = verify16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000ULL, 0,
 				   block_size, 0, 0, 1, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 

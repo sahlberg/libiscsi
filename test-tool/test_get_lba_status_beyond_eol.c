@@ -42,11 +42,11 @@ test_get_lba_status_beyond_eol(void)
 
 	logging(LOG_VERBOSE, "Test GET_LBA_STATUS at LBA 2^63");
 
-	ret = get_lba_status_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000, 24);
+	ret = get_lba_status_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000ULL, 24);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test GET_LBA_STATUS at LBA -1");
 
-	ret = get_lba_status_lbaoutofrange(iscsic, tgt_lun, 0xffffffffffffffff, 24);
+	ret = get_lba_status_lbaoutofrange(iscsic, tgt_lun, 0xffffffffffffffffULL, 24);
 	CU_ASSERT_EQUAL(ret, 0);
 }
