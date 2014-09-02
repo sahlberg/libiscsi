@@ -91,25 +91,14 @@ if test x"$libiscsi_cv_HAVE_SOCKADDR_IN6" = x"yes"; then
     AC_DEFINE(HAVE_SOCKADDR_IN6,1,[Whether we have IPv6 support])
 fi
 
-
 AC_MSG_CHECKING(whether libcunit is available)
 ac_save_CFLAGS="$CFLAGS"
 ac_save_LIBS="$LIBS"
 CFLAGS="$CFLAGS $GLIB_CFLAGS"
 LIBS="$GLIB_LIBS $LIBS -lcunit"
-AC_TRY_RUN([
-/*
- * Just see if we can compile/link with libcunit
- */
+AC_TRY_LINK([
 #include <CUnit/CUnit.h>
-
-int main(int argc, const char *argv[])
-{
-	return 0;
-}
-], ac_cv_have_cunit=yes, ac_cv_have_cunit=no,
-   [echo $ac_n "compile with CUNIT. Assuming OK... $ac_c"
-    ac_cv_have_cunit=yes])
+], [], [ac_cv_have_cunit=yes], [ac_cv_have_cunit=no])
 CFLAGS="$ac_save_CFLAGS"
 LIBS="$ac_save_LIBS"
 if test "$ac_cv_have_cunit" = yes ; then
