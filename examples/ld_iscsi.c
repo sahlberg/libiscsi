@@ -543,6 +543,7 @@ int dup2(int oldfd, int newfd)
 	return real_dup2(oldfd, newfd);
 }
 
+#if defined(_LARGEFILE64_SOURCE) && _FILE_OFFSET_BITS != 64
 
 int (*real_fxstat64)(int ver, int fd, struct stat64 *buf);
 
@@ -591,6 +592,7 @@ int __xstat64(int ver, const char *path, struct stat64 *buf)
 	return __lxstat64(ver, path, buf);
 }
 
+#endif
 
 static void __attribute__((constructor)) _init(void)
 {
@@ -669,6 +671,7 @@ static void __attribute__((constructor)) _init(void)
 		exit(10);
 	}
 
+#if defined(_LARGEFILE64_SOURCE) && _FILE_OFFSET_BITS != 64
 	real_fxstat64 = dlsym(RTLD_NEXT, "__fxstat64");
 	if (real_fxstat64 == NULL) {
 		LD_ISCSI_DPRINTF(0,"Failed to dlsym(__fxstat64)");
@@ -683,4 +686,5 @@ static void __attribute__((constructor)) _init(void)
 	if (real_xstat64 == NULL) {
 		LD_ISCSI_DPRINTF(0,"Failed to dlsym(__xstat64)");
 	}
+#endif
 }
