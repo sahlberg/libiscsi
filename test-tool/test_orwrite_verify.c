@@ -48,7 +48,8 @@ test_orwrite_verify(void)
 		logging(LOG_VERBOSE, "Write %d blocks of all-zero", i);
 		memset(buf, 0, block_size * i);
 		ret = write10(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0xa5", i);
@@ -99,7 +100,8 @@ test_orwrite_verify(void)
 		logging(LOG_VERBOSE, "Write %d blocks of all-zero", i);
 		memset(buf, 0, block_size * i);
 		ret = write16(iscsic, tgt_lun, num_blocks - i, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0xa5", i);

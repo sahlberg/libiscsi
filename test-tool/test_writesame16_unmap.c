@@ -47,9 +47,8 @@ test_writesame16_unmap(void)
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);
 		ret = write16(iscsic, tgt_lun, 0,
-			      i * block_size, block_size,
-			      0, 0, 0, 0, 0, buf);
-
+			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
 		memset(buf, 0, block_size);
 		ret = writesame16(iscsic, tgt_lun, 0,
@@ -85,8 +84,8 @@ test_writesame16_unmap(void)
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);
 		ret = write16(iscsic, tgt_lun, num_blocks - i,
-			      i * block_size, block_size,
-			      0, 0, 0, 0, 0, buf);
+			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
@@ -156,8 +155,8 @@ test_writesame16_unmap(void)
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);
 		ret = write16(iscsic, tgt_lun, 0,
-			      i * block_size, block_size,
-			      0, 0, 0, 0, 0, buf);
+			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
@@ -207,8 +206,8 @@ test_writesame16_unmap(void)
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);
 		ret = write16(iscsic, tgt_lun, 0,
-			      i * block_size, block_size,
-			      0, 0, 0, 0, 0, buf);
+			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);

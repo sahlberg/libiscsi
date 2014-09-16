@@ -247,7 +247,8 @@ test_writeverify16_residuals(void)
 	logging(LOG_VERBOSE, "Write two blocks of 'a'");
 	memset(buf, 'a', 10000);
 	ret = write16(iscsic, tgt_lun, 0, 2 * block_size,
-	    block_size, 0, 0, 0, 0, 0, buf);
+		      block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Write one block of 'b' but set iSCSI EDTL to 2 blocks.");
@@ -321,7 +322,8 @@ test_writeverify16_residuals(void)
 	logging(LOG_VERBOSE, "Write two blocks of 'a'");
 	memset(buf, 'a', 10000);
 	ret = write16(iscsic, tgt_lun, 0, 2 * block_size,
-	    block_size, 0, 0, 0, 0, 0, buf);
+		      block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Write two blocks of 'b' but set iSCSI EDTL to 1 blocks.");

@@ -44,9 +44,9 @@ test_write12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = write12_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
-					   i * block_size, block_size,
-					   0, 0, 0, 0, 0, buf);
+		ret = write12(iscsic, tgt_lun, num_blocks + 1 - i,
+			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_LBA_OOB);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITE12 is not implemented.");
 			CU_PASS("WRITE12 is not implemented.");
@@ -61,9 +61,9 @@ test_write12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = write12_lbaoutofrange(iscsic, tgt_lun, 0x80000000,
-					   i * block_size, block_size,
-					   0, 0, 0, 0, 0, buf);
+		ret = write12(iscsic, tgt_lun, 0x80000000,
+			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -73,8 +73,9 @@ test_write12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = write12_lbaoutofrange(iscsic, tgt_lun, -1, i * block_size,
-					   block_size, 0, 0, 0, 0, 0, buf);
+		ret = write12(iscsic, tgt_lun, -1, i * block_size,
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -84,9 +85,9 @@ test_write12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = write12_lbaoutofrange(iscsic, tgt_lun, num_blocks - 1,
-					   i * block_size, block_size,
-					    0, 0, 0, 0, 0, buf);
+		ret = write12(iscsic, tgt_lun, num_blocks - 1,
+			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

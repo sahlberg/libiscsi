@@ -76,7 +76,8 @@ void test_iscsi_datasn_invalid(void)
 	iscsi_set_timeout(iscsic, 3);
 
 	ret = write10(iscsic, tgt_lun, 100, 2 * block_size,
-		      block_size, 0, 0, 0, 0, 0, buf);
+		      block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
 		CU_PASS("WRITE10 is not implemented.");
@@ -98,7 +99,8 @@ void test_iscsi_datasn_invalid(void)
 	iscsi_set_timeout(iscsic, 3);
 
 	ret = write10(iscsic, tgt_lun, 100, block_size,
-		      block_size, 0, 0, 0, 0, 0, buf);
+		      block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
 		CU_PASS("WRITE10 is not implemented.");
@@ -120,7 +122,8 @@ void test_iscsi_datasn_invalid(void)
 	iscsi_set_timeout(iscsic, 3);
 
 	ret = write10(iscsic, tgt_lun, 100, block_size,
-		      block_size, 0, 0, 0, 0, 0, buf);
+		      block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
 		CU_PASS("WRITE10 is not implemented.");
@@ -143,7 +146,8 @@ void test_iscsi_datasn_invalid(void)
 	iscsi_set_timeout(iscsic, 3);
 
 	ret = write10(iscsic, tgt_lun, 100, 2 * block_size,
-		      block_size, 0, 0, 0, 0, 0, buf);
+		      block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
 		CU_PASS("WRITE10 is not implemented.");

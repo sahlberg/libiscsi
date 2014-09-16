@@ -196,7 +196,8 @@ init_lun_with_data(unsigned char *buf, uint64_t lba)
 
 	memset(buf, 'a', 256 * block_size);
 	ret = write16(iscsic, tgt_lun, lba, 256 * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+		      block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 }
 

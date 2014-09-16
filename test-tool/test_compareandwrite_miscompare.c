@@ -54,7 +54,8 @@ test_compareandwrite_miscompare(void)
 			break;
 		}
 		ret = write16(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
 			CU_PASS("WRITE16 is not implemented.");
@@ -124,7 +125,8 @@ test_compareandwrite_miscompare(void)
 			break;
 		}
 		ret = write16(iscsic, tgt_lun, num_blocks - i, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Change byte 27 from the end to 'C' so that it does not match.");

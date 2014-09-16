@@ -166,18 +166,21 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test WRITE10 when medium is ejected.");
-	ret = write10_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			       0, 0, 0, 0, 0, buf);
+	ret = write10(iscsic, tgt_lun, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE12 when medium is ejected.");
-	ret = write12_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			       0, 0, 0, 0, 0, buf);
+	ret = write12(iscsic, tgt_lun, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE16 when medium is ejected.");
-	ret = write16_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			       0, 0, 0, 0, 0, buf);
+	ret = write16(iscsic, tgt_lun, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 when medium is ejected.");

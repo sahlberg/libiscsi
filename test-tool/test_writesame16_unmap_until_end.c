@@ -48,9 +48,8 @@ test_writesame16_unmap_until_end(void)
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, block_size * i);
 		ret = write16(iscsic, tgt_lun, num_blocks - i,
-			      i * block_size, block_size,
-			      0, 0, 0, 0, 0, buf);
-
+			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
 		ret = writesame16(iscsic, tgt_lun, num_blocks - i,
 				  0, i,

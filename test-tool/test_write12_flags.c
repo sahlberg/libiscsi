@@ -39,8 +39,8 @@ test_write12_flags(void)
 
 	logging(LOG_VERBOSE, "Test WRITE12 with DPO==1");
 	ret = write12(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 1, 0, 0, 0, buf);
+		      block_size, block_size, 0, 1, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITE12 is not implemented.");
 		CU_PASS("WRITE12 is not implemented.");
@@ -51,28 +51,28 @@ test_write12_flags(void)
 
 	logging(LOG_VERBOSE, "Test WRITE12 with FUA==1 FUA_NV==0");
 	ret = write12(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 0, 1, 0, 0, buf);
+		      block_size, block_size, 0, 0, 1, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITE12 with FUA==1 FUA_NV==1");
 	ret = write12(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 0, 1, 1, 0, buf);
+		      block_size, block_size, 0, 0, 1, 1, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITE12 with FUA==0 FUA_NV==1");
 	ret = write12(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 0, 0, 1, 0, buf);
+		      block_size, block_size, 0, 0, 0, 1, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITE12 with DPO==1 FUA==1 FUA_NV==1");
 	ret = write12(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 1, 1, 1, 0, buf);
+		      block_size, block_size, 0, 1, 1, 1, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 }

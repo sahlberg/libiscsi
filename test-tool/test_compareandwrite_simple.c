@@ -55,7 +55,8 @@ test_compareandwrite_simple(void)
 			break;
 		}
 		ret = write16(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
 			CU_PASS("WRITE16 is not implemented.");
@@ -123,7 +124,8 @@ test_compareandwrite_simple(void)
 			break;
 		}
 		ret = write16(iscsic, tgt_lun, num_blocks - i, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		if (i > maxbl) {

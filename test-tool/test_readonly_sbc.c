@@ -41,18 +41,21 @@ test_readonly_sbc(void)
 
 
 	logging(LOG_VERBOSE, "Test WRITE10 fails with WRITE_PROTECTED");
-	ret = write10_writeprotected(iscsic, tgt_lun, 0, block_size, block_size,
-				     0, 0, 0, 0, 0, buf);
+	ret = write10(iscsic, tgt_lun, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_WRITE_PROTECTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE12 fails with WRITE_PROTECTED");
-	ret = write12_writeprotected(iscsic, tgt_lun, 0, block_size, block_size,
-				     0, 0, 0, 0, 0, buf);
+	ret = write12(iscsic, tgt_lun, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_WRITE_PROTECTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE16 fails with WRITE_PROTECTED");
-	ret = write16_writeprotected(iscsic, tgt_lun, 0, block_size, block_size,
-				     0, 0, 0, 0, 0, buf);
+	ret = write16(iscsic, tgt_lun, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_WRITE_PROTECTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE_SAME10 fails with WRITE_PROTECTED");

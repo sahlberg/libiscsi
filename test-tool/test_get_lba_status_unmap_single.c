@@ -50,7 +50,8 @@ test_get_lba_status_unmap_single(void)
 	logging(LOG_VERBOSE, "Write the first %i blocks with a known "
 		"pattern and thus map the blocks", 256 + lbppb);
 	ret = write10(iscsic, tgt_lun, 0, (256 + lbppb) * block_size,
-		block_size, 0, 0, 0, 0, 0, buf);
+		      block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	for (i = 0; i + lbppb <= 256; i += lbppb) {
@@ -92,7 +93,8 @@ test_get_lba_status_unmap_single(void)
 		logging(LOG_VERBOSE, "Write the first %i blocks with a known "
 			"pattern and thus map the blocks", (256 + lbppb));
 		ret = write10(iscsic, tgt_lun, 0, (256 + lbppb) * block_size,
-			block_size, 0, 0, 0, 0, 0, buf);
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmap %" PRIu64 " blocks at LBA 0", i);
 		list[0].lba = 0;

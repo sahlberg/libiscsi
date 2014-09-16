@@ -43,7 +43,8 @@ test_write10_simple(void)
 			break;
 		}
 		ret = write10(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
 			CU_PASS("WRITE10 is not implemented.");
@@ -58,7 +59,8 @@ test_write10_simple(void)
 			break;
 		}
 		ret = write10(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 0, 0, 0, buf);
+			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
