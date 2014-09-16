@@ -255,11 +255,7 @@ int compareandwrite_miscompare(struct iscsi_context *iscsi, int lun, uint64_t lb
 int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len, enum scsi_provisioning_type *provisioning0);
 int get_lba_status_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len);
 int get_lba_status_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len);
-int orwrite(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data);
-int orwrite_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data);
-int orwrite_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data);
-int orwrite_writeprotected(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data);
-int orwrite_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data);
+int orwrite(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int prefetch10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group);
 int prefetch10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group);
 int prefetch10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int immed, int group);

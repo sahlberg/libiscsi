@@ -135,9 +135,9 @@ test_readonly_sbc(void)
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test ORWRITE fails with WRITE_PROTECTED");
-	ret = orwrite_writeprotected(iscsic, tgt_lun, 0,
-				     block_size, block_size,
-				     0, 0, 0, 0, 0, buf);
+	ret = orwrite(iscsic, tgt_lun, 0,
+		      block_size, block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "ORWRITE not supported on target. Skipped.");
 	}

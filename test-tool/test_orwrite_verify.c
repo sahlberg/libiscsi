@@ -54,7 +54,8 @@ test_orwrite_verify(void)
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0xa5", i);
 		memset(buf, 0xa5, block_size * i);
 		ret = orwrite(iscsic, tgt_lun, 0, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf);
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
 			CU_PASS("ORWRITE is not implemented.");
@@ -74,7 +75,8 @@ test_orwrite_verify(void)
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0x5a", i);
 		memset(buf, 0x5a, block_size * i);
 		ret = orwrite(iscsic, tgt_lun, 0, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf);
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
@@ -103,7 +105,8 @@ test_orwrite_verify(void)
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0xa5", i);
 		memset(buf, 0xa5, block_size * i);
 		ret = orwrite(iscsic, tgt_lun, num_blocks - i, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf);
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
@@ -118,7 +121,8 @@ test_orwrite_verify(void)
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0x5a", i);
 		memset(buf, 0x5a, block_size * i);
 		ret = orwrite(iscsic, tgt_lun, num_blocks - i, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf);
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);

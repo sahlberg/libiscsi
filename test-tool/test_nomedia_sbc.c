@@ -208,8 +208,9 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test ORWRITE when medium is ejected.");
-	ret = orwrite_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			       0, 0, 0, 0, 0, buf);
+	ret = orwrite(iscsic, tgt_lun, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"ORWRITE");
