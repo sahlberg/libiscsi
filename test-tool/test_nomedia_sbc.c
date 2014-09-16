@@ -128,8 +128,9 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test VERIFY10 when medium is ejected.");
-	ret = verify10_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-				0, 0, 1, buf);
+	ret = verify10(iscsic, tgt_lun, 0, block_size, block_size,
+		       0, 0, 1, buf,
+		       EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"VERIFY10");
@@ -138,8 +139,9 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test VERIFY12 when medium is ejected.");
-	ret = verify12_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-				0, 0, 1, buf);
+	ret = verify12(iscsic, tgt_lun, 0, block_size, block_size,
+		       0, 0, 1, buf,
+		       EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"VERIFY102");
@@ -148,8 +150,9 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test VERIFY16 when medium is ejected.");
-	ret = verify16_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-				0, 0, 1, buf);
+	ret = verify16(iscsic, tgt_lun, 0, block_size, block_size,
+		       0, 0, 1, buf,
+		       EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"VERIFY16");

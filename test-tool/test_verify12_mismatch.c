@@ -47,8 +47,9 @@ test_verify12_mismatch(void)
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify12_miscompare(iscsic, tgt_lun, 0, i * block_size,
-					  block_size, 0, 0, 1, buf);
+		ret = verify12(iscsic, tgt_lun, 0, i * block_size,
+			       block_size, 0, 0, 1, buf,
+			       EXPECT_MISCOMPARE);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support VERIFY12. Skipping test");
@@ -72,8 +73,9 @@ test_verify12_mismatch(void)
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify12_miscompare(iscsic, tgt_lun, num_blocks - i,
-					  i * block_size, block_size, 0, 0, 1, buf);
+		ret = verify12(iscsic, tgt_lun, num_blocks - i,
+			       i * block_size, block_size, 0, 0, 1, buf,
+			       EXPECT_MISCOMPARE);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

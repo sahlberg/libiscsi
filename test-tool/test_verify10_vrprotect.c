@@ -32,7 +32,6 @@ test_verify10_vrprotect(void)
 	int i, ret;
 	unsigned char *buf = alloca(block_size);
 
-
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY10 with non-zero VRPROTECT");
 
@@ -45,8 +44,9 @@ test_verify10_vrprotect(void)
 			    block_size, 0, 0, 0, 0, 0, buf);
 			CU_ASSERT_EQUAL(ret, 0);
 	
-			ret = verify10_invalidfieldincdb(iscsic, tgt_lun, 0, block_size,
-							 block_size, i, 0, 1, buf);
+			ret = verify10(iscsic, tgt_lun, 0, block_size,
+				       block_size, i, 0, 1, buf,
+				       EXPECT_INVALID_FIELD_IN_CDB);
 			if (ret == -2) {
 				logging(LOG_NORMAL, "[SKIPPED] VERIFY10 is not implemented.");
 				CU_PASS("[SKIPPED] Target does not support VERIFY10. Skipping test");

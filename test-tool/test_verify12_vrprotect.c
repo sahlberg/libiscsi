@@ -44,8 +44,9 @@ test_verify12_vrprotect(void)
 			ret = read10(iscsic, tgt_lun, 0, block_size,
 			    block_size, 0, 0, 0, 0, 0, buf);
 	
-			ret = verify12_invalidfieldincdb(iscsic, tgt_lun, 0, block_size,
-							 block_size, i, 0, 1, buf);
+			ret = verify12(iscsic, tgt_lun, 0, block_size,
+				       block_size, i, 0, 1, buf,
+				       EXPECT_INVALID_FIELD_IN_CDB);
 			if (ret == -2) {
 				logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented.");
 				CU_PASS("[SKIPPED] Target does not support VERIFY12. Skipping test");

@@ -31,7 +31,8 @@ test_verify16_0blocks(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 0-blocks at LBA==0");
 	ret = verify16(iscsic, tgt_lun, 0, 0, block_size,
-		     0, 0, 1, NULL);
+		       0, 0, 1, NULL,
+		       EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented.");
 		CU_PASS("[SKIPPED] Target does not support VERIFY16. Skipping test");
@@ -40,19 +41,22 @@ test_verify16_0blocks(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test VERIFY16 0-blocks one block past end-of-LUN");
-	ret = verify16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
-				   block_size, 0, 0, 1, NULL);
+	ret = verify16(iscsic, tgt_lun, num_blocks + 1, 0,
+		       block_size, 0, 0, 1, NULL,
+		       EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test VERIFY16 0-blocks at LBA==2^63");
-	ret = verify16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000ULL, 0,
-				   block_size, 0, 0, 1, NULL);
+	ret = verify16(iscsic, tgt_lun, 0x8000000000000000ULL, 0,
+		       block_size, 0, 0, 1, NULL,
+		       EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test VERIFY16 0-blocks at LBA==-1");
-	ret = verify16_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
-				   0, 0, 1, NULL);
+	ret = verify16(iscsic, tgt_lun, -1, 0, block_size,
+		       0, 0, 1, NULL,
+		       EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 }

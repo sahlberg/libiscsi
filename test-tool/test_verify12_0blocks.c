@@ -31,7 +31,8 @@ test_verify12_0blocks(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY12 0-blocks at LBA==0");
 	ret = verify12(iscsic, tgt_lun, 0, 0, block_size,
-		     0, 0, 1, NULL);
+		       0, 0, 1, NULL,
+		       EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented.");
 		CU_PASS("[SKIPPED] Target does not support VERIFY12. Skipping test");
@@ -40,19 +41,22 @@ test_verify12_0blocks(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test VERIFY12 0-blocks one block past end-of-LUN");
-	ret = verify12_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
-				   block_size, 0, 0, 1, NULL);
+	ret = verify12(iscsic, tgt_lun, num_blocks + 1, 0,
+		       block_size, 0, 0, 1, NULL,
+		       EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test VERIFY12 0-blocks at LBA==2^31");
-	ret = verify12_lbaoutofrange(iscsic, tgt_lun, 0x80000000, 0,
-				   block_size, 0, 0, 1, NULL);
+	ret = verify12(iscsic, tgt_lun, 0x80000000, 0,
+		       block_size, 0, 0, 1, NULL,
+		       EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test VERIFY12 0-blocks at LBA==-1");
-	ret = verify12_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
-				   0, 0, 1, NULL);
+	ret = verify12(iscsic, tgt_lun, -1, 0, block_size,
+		       0, 0, 1, NULL,
+		       EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 }

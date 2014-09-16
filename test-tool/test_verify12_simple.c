@@ -43,7 +43,8 @@ test_verify12_simple(void)
 		CU_ASSERT_EQUAL(ret, 0);
 
 		ret = verify12(iscsic, tgt_lun, 0, i * block_size,
-			       block_size, 0, 0, 1, buf);
+			       block_size, 0, 0, 1, buf,
+			       EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support VERIFY12. Skipping test");
@@ -62,7 +63,8 @@ test_verify12_simple(void)
 		CU_ASSERT_EQUAL(ret, 0);
 
 		ret = verify12(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 1, buf);
+			       i * block_size, block_size, 0, 0, 1, buf,
+			       EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }
