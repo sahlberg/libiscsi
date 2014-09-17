@@ -41,7 +41,8 @@ test_verify10_mismatch(void)
 			break;
 		}
 		ret = read10(iscsic, tgt_lun, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, buf);
+			     block_size, 0, 0, 0, 0, 0, buf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		/* flip a random byte in the data */
@@ -66,7 +67,8 @@ test_verify10_mismatch(void)
 			break;
 		}
 		ret = read10(iscsic, tgt_lun, num_blocks - i,
-			     i * block_size, block_size, 0, 0, 0, 0, 0, buf);
+			     i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		/* flip a random byte in the data */

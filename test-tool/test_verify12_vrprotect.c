@@ -42,8 +42,8 @@ test_verify12_vrprotect(void)
 		for (i = 1; i < 8; i++) {
 	
 			ret = read10(iscsic, tgt_lun, 0, block_size,
-			    block_size, 0, 0, 0, 0, 0, buf);
-	
+				     block_size, 0, 0, 0, 0, 0, buf,
+				     EXPECT_STATUS_GOOD);
 			ret = verify12(iscsic, tgt_lun, 0, block_size,
 				       block_size, i, 0, 1, buf,
 				       EXPECT_INVALID_FIELD_IN_CDB);

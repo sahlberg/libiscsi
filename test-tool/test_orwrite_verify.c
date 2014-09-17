@@ -66,7 +66,8 @@ test_orwrite_verify(void)
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
 		ret = read10(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, readbuf);
+			     block_size, 0, 0, 0, 0, 0, readbuf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Verify that the blocks are all 0xa5");
@@ -82,7 +83,8 @@ test_orwrite_verify(void)
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
 		ret = read10(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, readbuf);
+			     block_size, 0, 0, 0, 0, 0, readbuf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Verify that the blocks are all 0xff");
@@ -113,7 +115,8 @@ test_orwrite_verify(void)
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
 		ret = read16(iscsic, tgt_lun, num_blocks - i, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, readbuf);
+			     block_size, 0, 0, 0, 0, 0, readbuf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Verify that the blocks are all 0xa5");
@@ -129,7 +132,8 @@ test_orwrite_verify(void)
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
 		ret = read16(iscsic, tgt_lun, num_blocks - i, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, readbuf);
+			     block_size, 0, 0, 0, 0, 0, readbuf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Verify that the blocks are all 0xff");

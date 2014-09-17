@@ -39,7 +39,8 @@ test_verify12_simple(void)
 			break;
 		}
 		ret = read10(iscsic, tgt_lun, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, buf);
+			     block_size, 0, 0, 0, 0, 0, buf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		ret = verify12(iscsic, tgt_lun, 0, i * block_size,
@@ -59,7 +60,8 @@ test_verify12_simple(void)
 			break;
 		}
 		ret = read12(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 0, 0, 0, buf);
+			     i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		ret = verify12(iscsic, tgt_lun, num_blocks - i,

@@ -69,7 +69,8 @@ test_unmap_simple(void)
 
 		logging(LOG_VERBOSE, "Read blocks 0-%d", i);
 		ret = read10(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+			     block_size, 0, 0, 0, 0, 0, buf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		if (rc16 && rc16->lbprz) {
@@ -102,7 +103,8 @@ test_unmap_simple(void)
 
 		logging(LOG_VERBOSE, "Read blocks 0-%d", i);
 		ret = read10(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+			     block_size, 0, 0, 0, 0, 0, buf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		if (rc16 && rc16->lbprz) {

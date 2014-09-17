@@ -38,7 +38,8 @@ test_read12_simple(void)
 			break;
 		}
 		ret = read12(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, NULL);
+			     block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
 			CU_PASS("READ12 is not implemented.");
@@ -54,7 +55,8 @@ test_read12_simple(void)
 			break;
 		}
 		ret = read12(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 0, 0, 0, NULL);
+			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

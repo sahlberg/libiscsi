@@ -69,18 +69,21 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test READ10 when medium is ejected.");
-	ret = read10_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			      0, 0, 0, 0, 0, NULL);
+	ret = read10(iscsic, tgt_lun, 0, block_size, block_size,
+		     0, 0, 0, 0, 0, NULL,
+		     EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READ12 when medium is ejected.");
-	ret = read12_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			      0, 0, 0, 0, 0, NULL);
+	ret = read12(iscsic, tgt_lun, 0, block_size, block_size,
+		     0, 0, 0, 0, 0, NULL,
+		     EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READ16 when medium is ejected.");
-	ret = read16_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			      0, 0, 0, 0, 0, NULL);
+	ret = read16(iscsic, tgt_lun, 0, block_size, block_size,
+		     0, 0, 0, 0, 0, NULL,
+		     EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READCAPACITY10 when medium is ejected.");

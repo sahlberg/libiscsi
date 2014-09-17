@@ -68,7 +68,8 @@ test_writesame16_unmap(void)
 				"are now zero", i);
 			ret = read16(iscsic, tgt_lun, 0,
 				     i * block_size, block_size,
-				     0, 0, 0, 0, 0, buf);
+				     0, 0, 0, 0, 0, buf,
+				     EXPECT_STATUS_GOOD);
 			for (j = 0; j < i; j++) {
 				CU_ASSERT_EQUAL(memcmp(buf + j*block_size, zeroBlock, block_size), 0);
 			}
@@ -102,7 +103,8 @@ test_writesame16_unmap(void)
 				"are now zero", i);
 			ret = read16(iscsic, tgt_lun, num_blocks - i,
 				     i * block_size, block_size,
-				     0, 0, 0, 0, 0, buf);
+				     0, 0, 0, 0, 0, buf,
+				     EXPECT_STATUS_GOOD);
 			for (j = 0; j < i; j++) {
 				CU_ASSERT_EQUAL(memcmp(buf + j*block_size, zeroBlock, block_size), 0);
 			}
@@ -173,8 +175,9 @@ test_writesame16_unmap(void)
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
 			ret = read16(iscsic, tgt_lun, 0,
-				i * block_size, block_size,
-				0, 0, 0, 0, 0, buf);
+				     i * block_size, block_size,
+				     0, 0, 0, 0, 0, buf,
+				     EXPECT_STATUS_GOOD);
 			for (j = 0; j < i; j++) {
 				CU_ASSERT_EQUAL(memcmp(buf + j*block_size, zeroBlock, block_size), 0);
 			}
@@ -224,8 +227,9 @@ test_writesame16_unmap(void)
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
 			ret = read16(iscsic, tgt_lun, 0,
-				i * block_size, block_size,
-				0, 0, 0, 0, 0, buf);
+				     i * block_size, block_size,
+				     0, 0, 0, 0, 0, buf,
+				     EXPECT_STATUS_GOOD);
 			for (j = 0; j < i; j++) {
 				CU_ASSERT_EQUAL(memcmp(buf + j*block_size, zeroBlock, block_size), 0);
 			}

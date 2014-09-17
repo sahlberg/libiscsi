@@ -36,8 +36,8 @@ test_verify16_flags(void)
 	logging(LOG_VERBOSE, "Test VERIFY16 flags");
 
 	ret = read16(iscsic, tgt_lun, 0, block_size,
-		     block_size, 0, 0, 0, 0, 0, buf);
-
+		     block_size, 0, 0, 0, 0, 0, buf,
+		     EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test VERIFY16 with DPO==1");
 	ret = verify16(iscsic, tgt_lun, 0, block_size,

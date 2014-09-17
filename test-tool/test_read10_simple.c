@@ -38,7 +38,8 @@ test_read10_simple(void)
 			break;
 		}
 		ret = read10(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, NULL);
+			     block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -49,7 +50,8 @@ test_read10_simple(void)
 			break;
 		}
 		ret = read10(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 0, 0, 0, NULL);
+			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

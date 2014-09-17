@@ -49,9 +49,9 @@ test_read16_beyond_eol(void)
 			break;
 		}
 
-		ret = read16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
-					   i * block_size, block_size,
-					   0, 0, 0, 0, 0, NULL);
+		ret = read16(iscsic, tgt_lun, num_blocks + 1 - i,
+			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_LBA_OOB);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented on this target and it does not claim SBC-3 support.");
 			CU_PASS("READ16 is not implemented and no SBC-3 support claimed.");
@@ -67,9 +67,9 @@ test_read16_beyond_eol(void)
 			break;
 		}
 
-		ret = read16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000ULL,
-					   i * block_size, block_size,
-					   0, 0, 0, 0, 0, NULL);
+		ret = read16(iscsic, tgt_lun, 0x8000000000000000ULL,
+			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -81,10 +81,10 @@ test_read16_beyond_eol(void)
 			break;
 		}
 
-		ret = read16_lbaoutofrange(iscsic, tgt_lun,
-					   1ULL << (64 - ilog2(block_size)),
-					   i * block_size, block_size,
-					   0, 0, 0, 0, 0, NULL);
+		ret = read16(iscsic, tgt_lun,
+			     1ULL << (64 - ilog2(block_size)),
+			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -96,10 +96,10 @@ test_read16_beyond_eol(void)
 			break;
 		}
 
-		ret = read16_lbaoutofrange(iscsic, tgt_lun,
-					   1ULL << (63 - ilog2(block_size)),
-					   i * block_size, block_size,
-					   0, 0, 0, 0, 0, NULL);
+		ret = read16(iscsic, tgt_lun,
+			     1ULL << (63 - ilog2(block_size)),
+			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -110,8 +110,9 @@ test_read16_beyond_eol(void)
 			break;
 		}
 
-		ret = read16_lbaoutofrange(iscsic, tgt_lun, -1, i * block_size,
-					   block_size, 0, 0, 0, 0, 0, NULL);
+		ret = read16(iscsic, tgt_lun, -1, i * block_size,
+			     block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -122,9 +123,9 @@ test_read16_beyond_eol(void)
 			break;
 		}
 
-		ret = read16_lbaoutofrange(iscsic, tgt_lun, num_blocks - 1,
-					   i * block_size, block_size,
-					   0, 0, 0, 0, 0, NULL);
+		ret = read16(iscsic, tgt_lun, num_blocks - 1,
+			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

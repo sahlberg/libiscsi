@@ -295,7 +295,8 @@ test_writeverify12_residuals(void)
 
 	logging(LOG_VERBOSE, "Read the two blocks");
 	ret = read12(iscsic, tgt_lun, 0, 2* block_size,
-		     block_size, 0, 0, 0, 0, 0, buf);
+		     block_size, 0, 0, 0, 0, 0, buf,
+		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify that the first block was changed to 'b'");
@@ -370,7 +371,8 @@ test_writeverify12_residuals(void)
 
 	logging(LOG_VERBOSE, "Read the two blocks");
 	ret = read12(iscsic, tgt_lun, 0, 2* block_size,
-		     block_size, 0, 0, 0, 0, 0, buf);
+		     block_size, 0, 0, 0, 0, 0, buf,
+		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify that the first block was changed to 'b'");

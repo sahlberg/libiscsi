@@ -96,8 +96,9 @@ test_sanitize_reset(void)
 
 	logging(LOG_VERBOSE, "Verify that READ16 fails with "
 		"SANITIZE_IN_PROGRESS");
-	ret = read16_sanitize(iscsic, tgt_lun, 0, block_size,
-			block_size, 0, 0, 0, 0, 0, NULL);
+	ret = read16(iscsic, tgt_lun, 0, block_size,
+		     block_size, 0, 0, 0, 0, 0, NULL,
+		     EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify that INQUIRY is still allowed while "

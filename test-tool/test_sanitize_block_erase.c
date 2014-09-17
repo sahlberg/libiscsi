@@ -208,7 +208,8 @@ check_lun_is_wiped(unsigned char *buf, uint64_t lba)
 	unsigned char *rbuf = alloca(256 * block_size);
 
 	ret = read16(iscsic, tgt_lun, lba, 256 * block_size,
-		    block_size, 0, 0, 0, 0, 0, rbuf);
+		     block_size, 0, 0, 0, 0, 0, rbuf,
+		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	if (rc16 == NULL) {

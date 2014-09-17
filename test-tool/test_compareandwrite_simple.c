@@ -99,7 +99,8 @@ test_compareandwrite_simple(void)
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:0 and verify "
 			"they are all 'B'", i);
 		ret = read16(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+			     block_size, 0, 0, 0, 0, 0, buf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		for (j = 0; j < i * block_size; j++) {
@@ -153,7 +154,8 @@ test_compareandwrite_simple(void)
 			" and verify they are all 'B'",
 			i, num_blocks - i);
 		ret = read16(iscsic, tgt_lun, num_blocks - i, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+			     block_size, 0, 0, 0, 0, 0, buf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		for (j = 0; j < i * block_size; j++) {

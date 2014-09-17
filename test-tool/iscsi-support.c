@@ -62,6 +62,9 @@ int invalid_cdb_ascqs[1] = {
 int write_protect_ascqs[1] = {
 	SCSI_SENSE_ASCQ_WRITE_PROTECTED
 };
+int sanitize_ascqs[1] = {
+	SCSI_SENSE_ASCQ_SANITIZE_IN_PROGRESS
+};
 
 struct scsi_inquiry_standard *inq;
 struct scsi_inquiry_logical_block_provisioning *inq_lbp;
@@ -2114,653 +2117,96 @@ int
 read10(struct iscsi_context *iscsi, int lun, uint32_t lba,
        uint32_t datalen, int blocksize, int rdprotect, 
        int dpo, int fua, int fua_nv, int group,
-       unsigned char *data)
+       unsigned char *data,
+       int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
+	int ret;
 
-	logging(LOG_VERBOSE, "Send READ10 LBA:%d blocks:%d rdprotect:%d "
-	       "dpo:%d fua:%d fua_nv:%d group:%d",
-	       lba, datalen / blocksize, rdprotect,
-	       dpo, fua, fua_nv, group);
-
-	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ10 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ10 command: "
-			"failed with sense. %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-
-	if (data != NULL) {
-		memcpy(data, task->datain.data, task->datain.size);
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ10 returned SUCCESS.");
-	return 0;
-}
-
-int
-read10_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba,
-       uint32_t datalen, int blocksize, int rdprotect, 
-       int dpo, int fua, int fua_nv, int group,
-       unsigned char *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send READ10 (Expecting INVALID_FIELD_IN_CDB) "
-		"LBA:%d blocks:%d rdprotect:%d "
-		"dpo:%d fua:%d fua_nv:%d group:%d",
+	logging(LOG_VERBOSE, "Send READ10 (Expecting %s) LBA:%d"
+		" blocks:%d rdprotect:%d dpo:%d fua:%d fua_nv:%d group:%d",
+		scsi_status_str(status),
 		lba, datalen / blocksize, rdprotect,
 		dpo, fua, fua_nv, group);
 
-	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ10 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ10 successful but should "
-			"have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
-		logging(LOG_NORMAL, "[FAILED] READ10 failed with wrong sense. "
-			"Should have failed with ILLEGAL_REQUEST/"
-			"INVALID_FIELD_IN_CDB. Sense:%s\n",
-			iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
+	task = scsi_cdb_read10(lba, datalen, blocksize, rdprotect,
+				dpo, fua, fua_nv, group);
+	assert(task != NULL);
 
-	if (data != NULL) {
+	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+
+	ret = check_result("READ10", iscsi, task, status, key, ascq, num_ascq);
+	if (data) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ10 returned ILLEGAL_REQUEST/INVALID_FIELD_IB_CDB.");
-	return 0;
-}
-
-int
-read10_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
-       uint32_t datalen, int blocksize, int rdprotect, 
-       int dpo, int fua, int fua_nv, int group,
-       unsigned char *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send READ10 (Expecting LBA_OUT_OF_RANGE) "
-		"LBA:%d blocks:%d rdprotect:%d "
-		"dpo:%d fua:%d fua_nv:%d group:%d",
-		lba, datalen / blocksize, rdprotect,
-		dpo, fua, fua_nv, group);
-
-	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ10 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ10 successful but should "
-			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
+	if (task) {
 		scsi_free_scsi_task(task);
-		return -1;
 	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-		logging(LOG_NORMAL, "[FAILED] READ10 failed with wrong sense. "
-			"Should have failed with ILLEGAL_REQUEST/"
-			"LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-
-	if (data != NULL) {
-		memcpy(data, task->datain.data, task->datain.size);
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ10 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
-	return 0;
-}
-
-int
-read10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba,
-		uint32_t datalen, int blocksize, int rdprotect, 
-		int dpo, int fua, int fua_nv, int group,
-		unsigned char *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send READ10  (Expecting MEDIUM_NOT_PRESENT) "
-		"LBA:%d blocks:%d rdprotect:%d "
-		"dpo:%d fua:%d fua_nv:%d group:%d",
-		lba, datalen / blocksize, rdprotect,
-		dpo, fua, fua_nv, group);
-
-	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ10 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ10 successful but should "
-			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		logging(LOG_NORMAL, "[FAILED] READ10 Should have failed "
-			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
-			"with %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}	
-
-	if (data != NULL) {
-		memcpy(data, task->datain.data, task->datain.size);
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ10 returned MEDIUM_NOT_PRESENT.");
-	return 0;
+	return ret;
 }
 
 int
 read12(struct iscsi_context *iscsi, int lun, uint32_t lba,
        uint32_t datalen, int blocksize, int rdprotect, 
        int dpo, int fua, int fua_nv, int group,
-       unsigned char *data)
+       unsigned char *data,
+       int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
+	int ret;
 
-	logging(LOG_VERBOSE, "Send READ12 LBA:%d blocks:%d rdprotect:%d "
-	       "dpo:%d fua:%d fua_nv:%d group:%d",
-	       lba, datalen / blocksize, rdprotect,
-	       dpo, fua, fua_nv, group);
-
-	task = iscsi_read12_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ12 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		scsi_free_scsi_task(task);
-		logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
-		return -2;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ12 command: "
-			"failed with sense. %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-
-	if (data != NULL) {
-		memcpy(data, task->datain.data, task->datain.size);
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ12 returned SUCCESS.");
-	return 0;
-}
-
-int
-read12_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint32_t lba,
-       uint32_t datalen, int blocksize, int rdprotect, 
-       int dpo, int fua, int fua_nv, int group,
-       unsigned char *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send READ12 (Expecting INVALID_FIELD_IN_CDB) "
-		"LBA:%d blocks:%d rdprotect:%d "
-		"dpo:%d fua:%d fua_nv:%d group:%d",
+	logging(LOG_VERBOSE, "Send READ12 (Expecting %s) LBA:%d"
+		" blocks:%d rdprotect:%d dpo:%d fua:%d fua_nv:%d group:%d",
+		scsi_status_str(status),
 		lba, datalen / blocksize, rdprotect,
 		dpo, fua, fua_nv, group);
 
-	task = iscsi_read12_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ12 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		scsi_free_scsi_task(task);
-		logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
-		return -2;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ12 successful but should "
-			"have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
-		logging(LOG_NORMAL, "[FAILED] READ12 failed with wrong sense. "
-			"Should have failed with ILLEGAL_REQUEST/"
-			"INVALID_FIELD_IN_CDB. Sense:%s\n",
-			iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
+	task = scsi_cdb_read12(lba, datalen, blocksize, rdprotect,
+				dpo, fua, fua_nv, group);
+	assert(task != NULL);
 
-	if (data != NULL) {
+	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+
+	ret = check_result("READ12", iscsi, task, status, key, ascq, num_ascq);
+	if (data) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ12 returned ILLEGAL_REQUEST/INVALID_FIELD_IB_CDB.");
-	return 0;
-}
-
-int
-read12_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
-       uint32_t datalen, int blocksize, int rdprotect, 
-       int dpo, int fua, int fua_nv, int group,
-       unsigned char *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send READ12 (Expecting LBA_OUT_OF_RANGE) "
-		"LBA:%d blocks:%d rdprotect:%d "
-		"dpo:%d fua:%d fua_nv:%d group:%d",
-		lba, datalen / blocksize, rdprotect,
-		dpo, fua, fua_nv, group);
-
-	task = iscsi_read12_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ12 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (task) {
 		scsi_free_scsi_task(task);
-		logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
-		return -2;
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ12 successful but should "
-			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-		logging(LOG_NORMAL, "[FAILED] READ12 failed with wrong sense. "
-			"Should have failed with ILLEGAL_REQUEST/"
-			"LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-
-	if (data != NULL) {
-		memcpy(data, task->datain.data, task->datain.size);
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ12 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
-	return 0;
-}
-
-int
-read12_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba,
-		uint32_t datalen, int blocksize, int rdprotect, 
-		int dpo, int fua, int fua_nv, int group,
-		unsigned char *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send READ12 (Expecting MEDIUM_NOT_PRESENT) "
-		"LBA:%d blocks:%d rdprotect:%d "
-		"dpo:%d fua:%d fua_nv:%d group:%d",
-		lba, datalen / blocksize, rdprotect,
-		dpo, fua, fua_nv, group);
-
-	task = iscsi_read12_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ12 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		scsi_free_scsi_task(task);
-		logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
-		return -2;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ12 successful but should "
-			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		logging(LOG_NORMAL, "[FAILED] READ12 Should have failed "
-			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
-			"with %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}	
-
-	if (data != NULL) {
-		memcpy(data, task->datain.data, task->datain.size);
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ12 returned MEDIUM_NOT_PRESENT*.");
-	return 0;
+	return ret;
 }
 
 int
 read16(struct iscsi_context *iscsi, int lun, uint64_t lba,
        uint32_t datalen, int blocksize, int rdprotect, 
        int dpo, int fua, int fua_nv, int group,
-       unsigned char *data)
+       unsigned char *data,
+       int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
+	int ret;
 
-	logging(LOG_VERBOSE, "Send READ16 LBA:%" PRId64 " blocks:%d "
-	       "rdprotect:%d dpo:%d fua:%d fua_nv:%d group:%d",
-	       lba, datalen / blocksize, rdprotect,
-	       dpo, fua, fua_nv, group);
-
-	task = iscsi_read16_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ16 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		scsi_free_scsi_task(task);
-		if (sbc3_support) {
-			logging(LOG_NORMAL, "[FAILED] READ16 is not available but the device claims SBC-3 support.");
-			return -1;
-		} else {
-			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented and SBC-3 is not claimed.");
-			return -2;
-		}
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ16 command: "
-			"failed with sense. %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-
-	if (data != NULL) {
-		memcpy(data, task->datain.data, task->datain.size);
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ16 returned SUCCESS.");
-	return 0;
-}
-
-int
-read16_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba,
-       uint32_t datalen, int blocksize, int rdprotect, 
-       int dpo, int fua, int fua_nv, int group,
-       unsigned char *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send READ16 (Expecting INVALID_FIELD_IN_CDB) "
-		"LBA:%" PRId64 " blocks:%d rdprotect:%d "
-		"dpo:%d fua:%d fua_nv:%d group:%d",
+	logging(LOG_VERBOSE, "Send READ16 (Expecting %s) LBA:%" PRIu64
+		" blocks:%d rdprotect:%d dpo:%d fua:%d fua_nv:%d group:%d",
+		scsi_status_str(status),
 		lba, datalen / blocksize, rdprotect,
 		dpo, fua, fua_nv, group);
 
-	task = iscsi_read16_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ16 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		scsi_free_scsi_task(task);
-		if (sbc3_support) {
-			logging(LOG_NORMAL, "[FAILED] READ16 is not available but the device claims SBC-3 support.");
-			return -1;
-		} else {
-			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented and SBC-3 is not claimed.");
-			return -2;
-		}
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ16 successful but should "
-			"have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
-		logging(LOG_NORMAL, "[FAILED] READ16 failed with wrong sense. "
-			"Should have failed with ILLEGAL_REQUEST/"
-			"INVALID_FIELD_IN_CDB. Sense:%s\n",
-			iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
+	task = scsi_cdb_read16(lba, datalen, blocksize, rdprotect,
+				dpo, fua, fua_nv, group);
+	assert(task != NULL);
 
-	if (data != NULL) {
+	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+
+	ret = check_result("READ16", iscsi, task, status, key, ascq, num_ascq);
+	if (data) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ16 returned ILLEGAL_REQUEST/INVALID_FIELD_IB_CDB.");
-	return 0;
-}
-
-int
-read16_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba,
-       uint32_t datalen, int blocksize, int rdprotect, 
-       int dpo, int fua, int fua_nv, int group,
-       unsigned char *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send READ16 (Expecting LBA_OUT_OF_RANGE) "
-		"LBA:%" PRId64 " blocks:%d rdprotect:%d "
-		"dpo:%d fua:%d fua_nv:%d group:%d",
-		lba, datalen / blocksize, rdprotect,
-		dpo, fua, fua_nv, group);
-
-	task = iscsi_read16_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ16 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (task) {
 		scsi_free_scsi_task(task);
-		if (sbc3_support) {
-			logging(LOG_NORMAL, "[FAILED] READ16 is not available but the device claims SBC-3 support.");
-			return -1;
-		} else {
-			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented and SBC-3 is not claimed.");
-			return -2;
-		}
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ16 successful but should "
-			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-		logging(LOG_NORMAL, "[FAILED] READ16 failed with wrong sense. "
-			"Should have failed with ILLEGAL_REQUEST/"
-			"LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-
-	if (data != NULL) {
-		memcpy(data, task->datain.data, task->datain.size);
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ16 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
-	return 0;
-}
-
-int
-read16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba,
-		uint32_t datalen, int blocksize, int rdprotect, 
-		int dpo, int fua, int fua_nv, int group,
-		unsigned char *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send READ16 (Expecting MEDIUM_NOT_PRESENT) "
-		"LBA:%" PRId64 " blocks:%d rdprotect:%d "
-		"dpo:%d fua:%d fua_nv:%d group:%d",
-		lba, datalen / blocksize, rdprotect,
-		dpo, fua, fua_nv, group);
-
-	task = iscsi_read16_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ16 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		scsi_free_scsi_task(task);
-		if (sbc3_support) {
-			logging(LOG_NORMAL, "[FAILED] READ16 is not available but the device claims SBC-3 support.");
-			return -1;
-		} else {
-			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented and SBC-3 is not claimed.");
-			return -2;
-		}
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ16 successful but should "
-			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		logging(LOG_NORMAL, "[FAILED] READ16 Should have failed "
-			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
-			"with %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}	
-
-	if (data != NULL) {
-		memcpy(data, task->datain.data, task->datain.size);
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ16 returned MEDIUM_NOT_PRESENT.");
-	return 0;
-}
-
-int
-read16_sanitize(struct iscsi_context *iscsi, int lun, uint64_t lba,
-		uint32_t datalen, int blocksize, int rdprotect, 
-		int dpo, int fua, int fua_nv, int group,
-		unsigned char *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send READ16 (Expecting SANITIZE_IN_PROGRESS) "
-		"LBA:%" PRId64 " blocks:%d rdprotect:%d "
-		"dpo:%d fua:%d fua_nv:%d group:%d",
-		lba, datalen / blocksize, rdprotect,
-		dpo, fua, fua_nv, group);
-
-	task = iscsi_read16_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ16 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ16 successful but should "
-			"have failed with NOT_READY/SANITIZE_IN_PROGRESS");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || task->sense.ascq != SCSI_SENSE_ASCQ_SANITIZE_IN_PROGRESS) {
-		logging(LOG_NORMAL, "[FAILED] READ16 Should have failed "
-			"with NOT_READY/SANITIZE_IN_PROGRESS But failed "
-			"with %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}	
-
-	if (data != NULL) {
-		memcpy(data, task->datain.data, task->datain.size);
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ16 returned SANITIZE_IN_PROGRESS");
-	return 0;
+	return ret;
 }
 
 int

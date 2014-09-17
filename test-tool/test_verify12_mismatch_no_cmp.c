@@ -40,8 +40,9 @@ test_verify12_mismatch_no_cmp(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read10(iscsic, tgt_lun, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, buf);
+		ret = read12(iscsic, tgt_lun, 0, i * block_size,
+			     block_size, 0, 0, 0, 0, 0, buf,
+			     EXPECT_STATUS_GOOD);
 
 		/* flip a random byte in the data */
 		buf[offset] ^= 'X';
@@ -66,7 +67,8 @@ test_verify12_mismatch_no_cmp(void)
 			break;
 		}
 		ret = read12(iscsic, tgt_lun, num_blocks - i,
-			     i * block_size, block_size, 0, 0, 0, 0, 0, buf);
+			     i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		/* flip a random byte in the data */

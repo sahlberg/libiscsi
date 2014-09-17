@@ -35,7 +35,8 @@ test_verify10_flags(void)
 	logging(LOG_VERBOSE, "Test VERIFY10 flags");
 
 	ret = read10(iscsic, tgt_lun, 0, block_size,
-		     block_size, 0, 0, 0, 0, 0, buf);
+		     block_size, 0, 0, 0, 0, 0, buf,
+		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
