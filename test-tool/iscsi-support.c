@@ -1036,163 +1036,49 @@ verify_write_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 }
 
 int
-synchronizecache10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, int sync_nv, int immed)
+synchronizecache10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, int sync_nv, int immed, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
+	int ret;
 
-	logging(LOG_VERBOSE, "Send SYNCHRONIZECACHE10 LBA:%d blocks:%d"
-		" sync_nv:%d immed:%d",
+	logging(LOG_VERBOSE, "Send SYNCHRONIZECACHE10 (Expecting %s) LBA:%d"
+		" blocks:%d sync_nv:%d immed:%d",
+		scsi_status_str(status),
 		lba, num, sync_nv, immed);
 
-	task = iscsi_synchronizecache10_sync(iscsi, lun, lba, num,
-					     sync_nv, immed);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send SYNCHRONIZECAHCE10 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		logging(LOG_NORMAL, "[SKIPPED] SYNCHRONIZECAHCE10 is not implemented on target");
-		scsi_free_scsi_task(task);
-		return -2;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] SYNCHRONIZECACHE10 command: "
-			"failed with sense. %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
+	task = scsi_cdb_synchronizecache10(lba, num_blocks, sync_nv, immed);
+	assert(task != NULL);
 
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] SYNCHRONIZECAHCE10 returned SUCCESS.");
-	return 0;
+	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+
+	ret = check_result("SYNCHRONIZECACHE10", iscsi, task, status, key, ascq, num_ascq);
+	if (task) {
+		scsi_free_scsi_task(task);
+	}
+	return ret;
 }
 
 int
-synchronizecache10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, int sync_nv, int immed)
+synchronizecache16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num, int sync_nv, int immed, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
+	int ret;
 
-	logging(LOG_VERBOSE, "Send SYNCHRONIZECACHE10 (Expecting MEDIUM_NOT_PRESENT) LBA:%d blocks:%d"
-		" sync_nv:%d immed:%d",
+	logging(LOG_VERBOSE, "Send SYNCHRONIZECACHE16 (Expecting %s) LBA:%"
+		PRIu64 " blocks:%d sync_nv:%d immed:%d",
+		scsi_status_str(status),
 		lba, num, sync_nv, immed);
 
-	task = iscsi_synchronizecache10_sync(iscsi, lun, lba, num,
-					     sync_nv, immed);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send SYNCHRONIZECAHCE10 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		logging(LOG_NORMAL, "[SKIPPED] SYNCHRONIZECAHCE10 is not implemented on target");
+	task = scsi_cdb_synchronizecache16(lba, num_blocks, sync_nv, immed);
+	assert(task != NULL);
+
+	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+
+	ret = check_result("SYNCHRONIZECACHE16", iscsi, task, status, key, ascq, num_ascq);
+	if (task) {
 		scsi_free_scsi_task(task);
-		return -2;
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
-	  logging(LOG_NORMAL, "[FAILED] SYNCHRONIZECACHE10 command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		logging(LOG_NORMAL, "[FAILED] SYNCHRONIZECAHCE10 Should have failed "
-			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
-			"with %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}	
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] SYNCHRONIZECAHCE10 returned MEDIUM_NOT_PRESENT.");
-	return 0;
-}
-
-int
-synchronizecache16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num, int sync_nv, int immed)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send SYNCHRONIZECACHE16 LBA:%" PRIu64 " blocks:%d"
-		" sync_nv:%d immed:%d",
-		lba, num, sync_nv, immed);
-
-	task = iscsi_synchronizecache16_sync(iscsi, lun, lba, num,
-					     sync_nv, immed);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send SYNCHRONIZECAHCE16 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		logging(LOG_NORMAL, "[SKIPPED] SYNCHRONIZECAHCE16 is not implemented on target");
-		scsi_free_scsi_task(task);
-		return -2;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] SYNCHRONIZECACHE16 command: "
-			"failed with sense. %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] SYNCHRONIZECAHCE16 returned SUCCESS.");
-	return 0;
-}
-
-int
-synchronizecache16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, int num, int sync_nv, int immed)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send SYNCHRONIZECACHE16 (Expecting MEDIUM_NOT_PRESENT) LBA:%" PRIu64 " blocks:%d"
-		" sync_nv:%d immed:%d",
-		lba, num, sync_nv, immed);
-
-	task = iscsi_synchronizecache16_sync(iscsi, lun, lba, num,
-					     sync_nv, immed);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send SYNCHRONIZECAHCE16 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		logging(LOG_NORMAL, "[SKIPPED] SYNCHRONIZECAHCE16 is not implemented on target");
-		scsi_free_scsi_task(task);
-		return -2;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-	  logging(LOG_NORMAL, "[FAILED] SYNCHRONIZECACHE16 command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		logging(LOG_NORMAL, "[FAILED] SYNCHRONIZECACHE16 Should have failed "
-			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
-			"with %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}	
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] SYNCHRONIZECAHCE16 returned MEDIUM_NOT_PRESENT.");
-	return 0;
+	return ret;
 }
 
 int sanitize(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data)

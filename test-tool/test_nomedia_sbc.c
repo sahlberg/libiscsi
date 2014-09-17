@@ -53,7 +53,8 @@ test_nomedia_sbc(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test SYNCHRONIZECACHE10 when medium is ejected.");
-	ret = synchronizecache10_nomedium(iscsic, tgt_lun, 0, 1, 1, 1);
+	ret = synchronizecache10(iscsic, tgt_lun, 0, 1, 1, 1,
+				 EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"SYNCHRONIZECACHE10");
@@ -62,7 +63,8 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test SYNCHRONIZECACHE16 when medium is ejected.");
-	ret = synchronizecache16_nomedium(iscsic, tgt_lun, 0, 1, 1, 1);
+	ret = synchronizecache16(iscsic, tgt_lun, 0, 1, 1, 1,
+				 EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"SYNCHRONIZECACHE16");
