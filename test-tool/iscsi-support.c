@@ -1764,171 +1764,47 @@ read16(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 int
-readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi)
+readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
+	int ret;
 
-	logging(LOG_VERBOSE, "Send READCAPACITY10 LBA:%d pmi:%d",
+	logging(LOG_VERBOSE, "Send READCAPACITY10 (Expecting %s) LBA:%d"
+		" pmi:%d",
+		scsi_status_str(status),
 		lba, pmi);
 
-	task = iscsi_readcapacity10_sync(iscsi, lun, lba, pmi);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READCAPACITY10 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READCAPACITY10 command: "
-			"failed with sense. %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
+	task = scsi_cdb_readcapacity10(lba, pmi);
+	assert(task != NULL);
 
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READCAPACITY10 returned SUCCESS.");
-	return 0;
+	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+
+	ret = check_result("READCAPACITY10", iscsi, task, status, key, ascq, num_ascq);
+	if (task) {
+		scsi_free_scsi_task(task);
+	}
+	return ret;
 }
 
 int
-readcapacity10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi)
+readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
+	int ret;
 
-	logging(LOG_VERBOSE, "Send READCAPACITY10 (Expecting MEDIUM_NOT_PRESENT) "
-		"LBA:%d pmi:%d",
-		lba, pmi);
-
-	task = iscsi_readcapacity10_sync(iscsi, lun, lba, pmi);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READCAPACITY10 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-	  logging(LOG_NORMAL, "[FAILED] READCAPACITY10 command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		logging(LOG_NORMAL, "[FAILED] READCAPACITY10 Should have failed "
-			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
-			"with %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}	
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READCAPACITY10 returned  MEDIUM_NOT_PRESENT.");
-	return 0;
-}
-
-int
-readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len)
-{
-	struct scsi_task *task;
-
-
-	logging(LOG_VERBOSE, "Send READCAPACITY16 alloc_len:%d", alloc_len);
+	logging(LOG_VERBOSE, "Send READCAPACITY16 (Expecting %s)",
+		scsi_status_str(status));
 
 	task = scsi_cdb_serviceactionin16(SCSI_READCAPACITY16, alloc_len);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "Out-of-memory: Failed to create "
-				"READCAPACITY16 cdb.");
-		return -1;
-	}
+	assert(task != NULL);
+
 	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READCAPACITY16 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		scsi_free_scsi_task(task);
-		if (inq->protect) {
-			logging(LOG_NORMAL, "[FAILED] READCAPACITY16 is not "
-				"available but INQ->PROTECT is set. "
-				"ReadCapacity16 is mandatory when INQ->PROTECT "
-				"is set.");
-			return -1;
-		}
-		if (sbc3_support) {
-			logging(LOG_NORMAL, "[FAILED] READCAPACITY16 is not available but the device claims SBC-3 support.");
-			return -1;
-		} else {
-			logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented and SBC-3 is not claimed.");
-			return -2;
-		}
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READCAPACITY16 command: "
-			"failed with sense. %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
 
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READCAPACITY16 returned SUCCESS.");
-	return 0;
-}
-
-int
-readcapacity16_nomedium(struct iscsi_context *iscsi, int lun, int alloc_len)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send READCAPACITY16 (Expecting MEDIUM_NOT_PRESENT) "
-		"alloc_len:%d", alloc_len);
-
-	task = scsi_cdb_serviceactionin16(SCSI_READCAPACITY16, alloc_len);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READCAPACITY16 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READCAPACITY16 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	ret = check_result("READCAPACITY16", iscsi, task, status, key, ascq, num_ascq);
+	if (task) {
 		scsi_free_scsi_task(task);
-		if (sbc3_support) {
-			logging(LOG_NORMAL, "[FAILED] READCAPACITY16 is not available but the device claims SBC-3 support.");
-			return -1;
-		} else {
-			logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented and SBC-3 is not claimed.");
-			return -2;
-		}
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
-	  logging(LOG_NORMAL, "[FAILED] READCAPACITY16 command successful. But should have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		logging(LOG_NORMAL, "[FAILED] READCAPACITY16 Should have failed "
-			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
-			"with %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}	
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READCAPACITY16 returned  MEDIUM_NOT_PRESENT.");
-	return 0;
+	return ret;
 }
 
 int

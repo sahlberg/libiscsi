@@ -91,11 +91,13 @@ test_nomedia_sbc(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READCAPACITY10 when medium is ejected.");
-	ret = readcapacity10_nomedium(iscsic, tgt_lun, 0, 0);
+	ret = readcapacity10(iscsic, tgt_lun, 0, 0,
+			     EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READCAPACITY16 when medium is ejected.");
-	ret = readcapacity16_nomedium(iscsic, tgt_lun, 15);
+	ret = readcapacity16(iscsic, tgt_lun, 15,
+			     EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		if (sbc3_support) {
 			logging(LOG_NORMAL, "[FAILED] READCAPACITY16 is not available but the device claims SBC-3 support.");
