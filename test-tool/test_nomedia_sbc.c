@@ -43,7 +43,8 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Eject the medium.");
-	ret = startstopunit(iscsic, tgt_lun, 1, 0, 0, 0, 1, 0);
+	ret = startstopunit(iscsic, tgt_lun, 1, 0, 0, 0, 1, 0,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY when medium is ejected.");
@@ -270,6 +271,7 @@ test_nomedia_sbc(void)
 
 finished:
 	logging(LOG_VERBOSE, "Load the medium again.");
-	ret = startstopunit(iscsic, tgt_lun, 1, 0, 0, 0, 1, 1);
+	ret = startstopunit(iscsic, tgt_lun, 1, 0, 0, 0, 1, 1,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 }

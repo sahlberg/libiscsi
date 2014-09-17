@@ -91,7 +91,8 @@ test_sanitize_reset(void)
 
 	logging(LOG_VERBOSE, "Verify that STARTSTOPUNIT fails with "
 		"SANITIZE_IN_PROGRESS");
-	ret = startstopunit_sanitize(iscsic, tgt_lun, 1, 0, 1, 0, 1, 0);
+	ret = startstopunit(iscsic, tgt_lun, 1, 0, 1, 0, 1, 0,
+			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify that READ16 fails with "

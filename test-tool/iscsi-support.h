@@ -36,12 +36,14 @@ extern const char *tgt_url;
 #define EXPECT_MISCOMPARE SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_MISCOMPARE, 0, 0
 #define EXPECT_WRITE_PROTECTED SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_DATA_PROTECTION, write_protect_ascqs, 1
 #define EXPECT_SANITIZE SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_NOT_READY, sanitize_ascqs, 1
+#define EXPECT_REMOVAL_PREVENTED SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, removal_ascqs, 1
 
 int no_medium_ascqs[3];
 int lba_oob_ascqs[1];
 int invalid_cdb_ascqs[1];
 int write_protect_ascqs[1];
 int sanitize_ascqs[1];
+int removal_ascqs[1];
 
 extern int loglevel;
 #define LOG_SILENT  0
@@ -280,9 +282,7 @@ int sanitize(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, 
 int sanitize_conflict(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data);
 int sanitize_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data);
 int sanitize_writeprotected(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data);
-int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start);
-int startstopunit_sanitize(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start);
-int startstopunit_preventremoval(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start);
+int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int synchronizecache10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int sync_nv, int immed);
 int synchronizecache10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t lba, int num_blocks, int sync_nv, int immed);
 int synchronizecache16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num_blocks, int sync_nv, int immed);

@@ -65,6 +65,9 @@ int write_protect_ascqs[1] = {
 int sanitize_ascqs[1] = {
 	SCSI_SENSE_ASCQ_SANITIZE_IN_PROGRESS
 };
+int removal_ascqs[1] = {
+	SCSI_SENSE_ASCQ_MEDIUM_REMOVAL_PREVENTED
+};
 
 struct scsi_inquiry_standard *inq;
 struct scsi_inquiry_logical_block_provisioning *inq_lbp;
@@ -1347,101 +1350,27 @@ int sanitize_writeprotected(struct iscsi_context *iscsi, int lun, int immed, int
 	return 0;
 }
 
-int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start)
+int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
+	int ret;
 
-	logging(LOG_VERBOSE, "Send STARTSTOPUNIT IMMED:%d PCM:%d PC:%d NO_FLUSH:%d LOEJ:%d START:%d", immed, pcm, pc, no_flush, loej, start);
-	task = iscsi_startstopunit_sync(iscsi, lun, immed, pcm, pc, no_flush,
-					loej, start);
-	if (task == NULL) {
-		logging(LOG_NORMAL,
-			"[FAILED] Failed to send STARTSTOPUNIT command: %s",
-			iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL,
-			"[FAILED] STARTSTOPUNIT command: failed with sense. %s",
-			iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] STARTSTOPUNIT returned SUCCESS.");
-	return 0;
-}
-
-int startstopunit_preventremoval(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send STARTSTOPUNIT (Expecting MEDIUM_REMOVAL_PREVENTED) "
-		"IMMED:%d PCM:%d PC:%d NO_FLUSH:%d LOEJ:%d START:%d",
+	logging(LOG_VERBOSE, "Send STARTSTOPUNIT (Expecting %s) IMMED:%d "
+		"PCM:%d PC:%d NO_FLUSH:%d LOEJ:%d START:%d",
+		scsi_status_str(status),
 		immed, pcm, pc, no_flush, loej, start);
 
-	task = iscsi_startstopunit_sync(iscsi, lun, immed, pcm, pc, no_flush,
-					loej, start);
-	if (task == NULL) {
-		logging(LOG_NORMAL,
-			"[FAILED] Failed to send STARTSTOPUNIT command: %s",
-			iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL,
-			"[FAILED] STARTSTOPUNIT successful but should have failed with ILLEGAL_REQUEST/MEDIUM_REMOVAL_PREVENTED");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-	    || task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_REMOVAL_PREVENTED) {
-		logging(LOG_NORMAL, "[FAILED] STARTSTOPUNIT Should have failed "
-			"with ILLEGAL_REQUEST/MEDIUM_REMOVAL_PREVENTED But failed "
-			"with %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}	
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] STARTSTOPUNIT returned MEDIUM_REMOVAL_PREVENTED.");
-	return 0;
-}
+	task = scsi_cdb_startstopunit(immed, pcm, pc, no_flush, loej, start);
+	assert(task != NULL);
 
-int startstopunit_sanitize(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start)
-{
-	struct scsi_task *task;
+	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
 
-	logging(LOG_VERBOSE, "Send STARTSTOPUNIT (Expecting SANITIZE_IN_PROGRESS) "
-		"IMMED:%d PCM:%d PC:%d NO_FLUSH:%d LOEJ:%d START:%d",
-		immed, pcm, pc, no_flush, loej, start);
-
-	task = iscsi_startstopunit_sync(iscsi, lun, immed, pcm, pc, no_flush,
-					loej, start);
-	if (task == NULL) {
-		logging(LOG_NORMAL,
-			"[FAILED] Failed to send STARTSTOPUNIT command: %s",
-			iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL,
-			"[FAILED] STARTSTOPUNIT successful but should have failed with NOT_READY/SANITIZE_IN_PROGRESS");
+	ret = check_result("STARTSTOPUNIT", iscsi, task, status, key, ascq,
+			   num_ascq);
+	if (task) {
 		scsi_free_scsi_task(task);
-		return -1;
 	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || task->sense.ascq != SCSI_SENSE_ASCQ_SANITIZE_IN_PROGRESS) {
-		logging(LOG_NORMAL, "[FAILED] STARTSTOPUNIT Should have failed "
-			"with NOT_READY/SANITIZE_IN_PROGRESS But failed "
-			"with %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}	
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] STARTSTOPUNIT returned SANITIZE_IN_PROGRESS.");
-	return 0;
+	return ret;
 }
 
 int

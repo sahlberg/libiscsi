@@ -41,7 +41,8 @@ test_startstopunit_pwrcnd(void)
 	logging(LOG_VERBOSE, "Test that media is not ejected when PC!=0");
 	for (i = 1; i < 16; i++) {
 		ret = startstopunit(iscsic, tgt_lun,
-				    1, 0, i, 0, 1, 0);
+				    1, 0, i, 0, 1, 0,
+				    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
@@ -50,5 +51,6 @@ test_startstopunit_pwrcnd(void)
 	}
 
 	logging(LOG_VERBOSE, "In case the target did eject the medium, load it again.");
-	startstopunit(iscsic, tgt_lun, 1, 0, 0, 0, 1, 1);
+	startstopunit(iscsic, tgt_lun, 1, 0, 0, 0, 1, 1,
+		      EXPECT_STATUS_GOOD);
 }

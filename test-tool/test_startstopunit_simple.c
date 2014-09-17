@@ -42,7 +42,8 @@ test_startstopunit_simple(void)
 	}
 
 	ret = startstopunit(iscsic, tgt_lun,
-			    1, 0, 0, 0, 1, 0);
+			    1, 0, 0, 0, 1, 0,
+			    EXPECT_STATUS_GOOD);
 	if (!inq->rmb) {
 		CU_ASSERT_NOT_EQUAL(ret, 0);
 		return;
@@ -57,7 +58,8 @@ test_startstopunit_simple(void)
 
 	logging(LOG_VERBOSE, "Test we can load the removable the media with IMMED==1");
 	ret = startstopunit(iscsic, tgt_lun,
-			    1, 0, 0, 0, 1, 1);
+			    1, 0, 0, 0, 1, 1,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can read from the media.");
@@ -68,7 +70,8 @@ test_startstopunit_simple(void)
 
 	logging(LOG_VERBOSE, "Test we can eject removable the media with IMMED==1");
 	ret = startstopunit(iscsic, tgt_lun,
-			    0, 0, 0, 0, 1, 0);
+			    0, 0, 0, 0, 1, 0,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
@@ -79,7 +82,8 @@ test_startstopunit_simple(void)
 
 	logging(LOG_VERBOSE, "Test we can load the removable the media with IMMED==1");
 	ret = startstopunit(iscsic, tgt_lun,
-			    0, 0, 0, 0, 1, 1);
+			    0, 0, 0, 0, 1, 1,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can access the media again.");

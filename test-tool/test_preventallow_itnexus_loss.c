@@ -40,7 +40,8 @@ test_preventallow_itnexus_loss(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
-	ret = startstopunit_preventremoval(iscsic, tgt_lun, 0, 0, 0, 0, 1, 0);
+	ret = startstopunit(iscsic, tgt_lun, 0, 0, 0, 0, 1, 0,
+			    EXPECT_REMOVAL_PREVENTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can still access the media.");
@@ -59,7 +60,8 @@ test_preventallow_itnexus_loss(void)
 	}
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
-	ret = startstopunit(iscsic, tgt_lun, 0, 0, 0, 0, 1, 0);
+	ret = startstopunit(iscsic, tgt_lun, 0, 0, 0, 0, 1, 0,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can not access the media.");
@@ -67,7 +69,8 @@ test_preventallow_itnexus_loss(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Load the medium");
-	ret = startstopunit(iscsic, tgt_lun, 0, 0, 0, 0, 1, 0);
+	ret = startstopunit(iscsic, tgt_lun, 0, 0, 0, 0, 1, 0,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
@@ -77,7 +80,8 @@ test_preventallow_itnexus_loss(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Load the medium");
-	ret = startstopunit(iscsic, tgt_lun, 0, 0, 0, 0, 1, 1);
+	ret = startstopunit(iscsic, tgt_lun, 0, 0, 0, 0, 1, 1,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 }
