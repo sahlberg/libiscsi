@@ -2,6 +2,7 @@
    iscsi-test tool support
 
    Copyright (C) 2012 by Lee Duncan <leeman.duncan@gmail.com>
+   Copyright (C) 2014 Ronnie Sahlberg <ronniesahlberg@gmail.com>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -63,7 +64,101 @@ int readonly;
 int sbc3_support;
 int maximum_transfer_length;
 
+int no_medium_ascqs[3] = {
+	SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT,
+	SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN,
+	SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED
+};
+int lba_oob_ascqs[1] = {
+	SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE
+};
+int invalid_cdb_ascqs[1] = {
+	SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB
+};
+int write_protect_ascqs[1] = {
+	SCSI_SENSE_ASCQ_WRITE_PROTECTED
+};
+
 int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+
+static const char *scsi_status_str(int status)
+{
+	switch(status) {
+	case SCSI_STATUS_GOOD:			return "SUCCESS";
+	case SCSI_STATUS_CHECK_CONDITION:	return "CHECK_CONDITION";
+	case SCSI_STATUS_CONDITION_MET:		return "CONDITIONS_MET";
+	case SCSI_STATUS_BUSY:			return "BUSY";
+	case SCSI_STATUS_RESERVATION_CONFLICT:	return "RESERVATION_CONFLICT";
+	case SCSI_STATUS_TASK_SET_FULL:		return "TASK_SET_FULL";
+	case SCSI_STATUS_ACA_ACTIVE:		return "ACA_ACTIVE";
+	case SCSI_STATUS_TASK_ABORTED:		return "TASK_ABORTED";
+	}
+	return "UNKNOWN";
+}
+
+static int check_result(const char *opcode, struct iscsi_context *iscsi,
+			struct scsi_task *task,
+			int status, enum scsi_sense_key key,
+			int *ascq, int num_ascq)
+{
+	int ascq_ok;
+
+	if (task == NULL) {
+		logging(LOG_NORMAL, "[FAILED] Failed to send %s command: "
+			"%s", opcode, iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (task->status        == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		logging(LOG_NORMAL, "[SKIPPED] %s is not implemented.",
+			opcode);
+		return -2;
+	}
+	if (status == SCSI_STATUS_GOOD && task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] %s command failed with "
+			"sense. %s", opcode, iscsi_get_error(iscsi));
+		return -1;
+	}
+	if (status != SCSI_STATUS_GOOD && task->status == SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL, "[FAILED] %s successful but should "
+			"have failed with %s(0x%02x)/%s(0x%04x)",
+			opcode,
+			scsi_sense_key_str(key), key,
+			scsi_sense_ascq_str(ascq[0]), ascq[0]);
+		return -1;
+	}
+	/* did we get any of the expected ASCQs ?*/
+	if (status == SCSI_STATUS_CHECK_CONDITION) {
+		int i;
+		for (i = 0; i < num_ascq; i++) {
+			if (ascq[i] == task->sense.ascq) {
+				ascq_ok = 1;
+			}
+		}
+		if (num_ascq == 0) {
+			ascq_ok = 1;
+		}
+	}
+	if (status == SCSI_STATUS_CHECK_CONDITION &&
+	    (task->status != status
+	     || task->sense.key  != key
+	     || !ascq_ok)) {
+		logging(LOG_NORMAL, "[FAILED] %s failed with wrong sense. "
+			"Should have failed with %s(0x%02x)/%s(0x%04x)"
+			"but failed with Sense:%s\n",
+			opcode,
+			scsi_sense_key_str(key), key,
+			scsi_sense_ascq_str(ascq[0]), ascq[0],
+			iscsi_get_error(iscsi));
+		return -1;
+	}
+	logging(LOG_VERBOSE, "[OK] %s returned %s %s(0x%02x) %s(0x%04x)",
+		opcode, scsi_status_str(status),
+		scsi_sense_key_str(task->sense.key), task->sense.key,
+		scsi_sense_ascq_str(task->sense.ascq), task->sense.ascq);
+	return 0;
+}
 
 void logging(int level, const char *format, ...)
 {

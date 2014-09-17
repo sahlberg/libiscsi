@@ -29,6 +29,18 @@ extern const char *initiatorname1;
 extern const char *initiatorname2;
 extern const char *tgt_url;
 
+#define EXPECT_STATUS_GOOD SCSI_STATUS_GOOD, SCSI_SENSE_NO_SENSE, NULL, 0
+#define EXPECT_NO_MEDIUM SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_NOT_READY, no_medium_ascqs, 3
+#define EXPECT_LBA_OOB SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, lba_oob_ascqs, 1
+#define EXPECT_INVALID_FIELD_IN_CDB SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, invalid_cdb_ascqs, 1
+#define EXPECT_MISCOMPARE SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_MISCOMPARE, 0, 0
+#define EXPECT_WRITE_PROTECTED SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_DATA_PROTECTION, write_protect_ascqs, 1
+
+int no_medium_ascqs[3];
+int lba_oob_ascqs[1];
+int invalid_cdb_ascqs[1];
+int write_protect_ascqs[1];
+
 extern int loglevel;
 #define LOG_SILENT  0
 #define LOG_NORMAL  1
