@@ -68,6 +68,9 @@ int sanitize_ascqs[1] = {
 int removal_ascqs[1] = {
 	SCSI_SENSE_ASCQ_MEDIUM_REMOVAL_PREVENTED
 };
+int miscompare_ascqs[1] = {
+	SCSI_SENSE_ASCQ_MISCOMPARE_DURING_VERIFY
+};
 
 struct scsi_inquiry_standard *inq;
 struct scsi_inquiry_logical_block_provisioning *inq_lbp;
