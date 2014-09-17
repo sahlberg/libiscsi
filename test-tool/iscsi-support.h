@@ -254,9 +254,7 @@ int verify_write_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 int inquiry(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize, struct scsi_task **save_task);
 int inquiry_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int evpd, int page_code, int maxsize);
 struct scsi_task *get_lba_status_task(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len);
-int compareandwrite(struct iscsi_context *iscsi, int lun, uint64_t lba, unsigned char *data, uint32_t len, int blocksize, int wrprotect, int dpo, int fua, int group_number);
-int compareandwrite_invalidfieldincdb(struct iscsi_context *iscsi, int lun, uint64_t lba, unsigned char *data, uint32_t len, int blocksize, int wrprotect, int dpo, int fua, int group_number);
-int compareandwrite_miscompare(struct iscsi_context *iscsi, int lun, uint64_t lba, unsigned char *data, uint32_t len, int blocksize, int wrprotect, int dpo, int fua, int group_number);
+int compareandwrite(struct iscsi_context *iscsi, int lun, uint64_t lba, unsigned char *data, uint32_t len, int blocksize, int wrprotect, int dpo, int fua, int group_number, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int get_lba_status(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len, enum scsi_provisioning_type *provisioning0);
 int get_lba_status_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len);
 int get_lba_status_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t len);

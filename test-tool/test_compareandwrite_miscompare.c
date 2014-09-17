@@ -72,9 +72,10 @@ test_compareandwrite_miscompare(void)
 				"BlockLimits.MaximumCompareAndWriteLength(%d). "
 				"Command should fail with INVALID_FIELD_IN_CDB",
 				i, maxbl);
-			ret = compareandwrite_invalidfieldincdb(iscsic, tgt_lun, 0,
-				buf, 2 * i * block_size, block_size,
-				0, 0, 0, 0);
+			ret = compareandwrite(iscsic, tgt_lun, 0,
+					      buf, 2 * i * block_size,
+					      block_size, 0, 0, 0, 0,
+					      EXPECT_INVALID_FIELD_IN_CDB);
 			if (ret == -2) {
 				CU_PASS("[SKIPPED] Target does not support "
 					"COMPARE_AND_WRITE. Skipping test");
@@ -89,8 +90,10 @@ test_compareandwrite_miscompare(void)
 
 		logging(LOG_VERBOSE, "Overwrite %d blocks with 'B' "
 			"at LBA:0 (if they all contain 'A')", i);
-		ret = compareandwrite_miscompare(iscsic, tgt_lun, 0,
-			buf, 2 * i * block_size, block_size, 0, 0, 0, 0);
+		ret = compareandwrite(iscsic, tgt_lun, 0,
+				      buf, 2 * i * block_size, block_size,
+				      0, 0, 0, 0,
+				      EXPECT_MISCOMPARE);
 		if (ret == -2) {
 			CU_PASS("[SKIPPED] Target does not support "
 				"COMPARE_AND_WRITE. Skipping test");
@@ -139,9 +142,10 @@ test_compareandwrite_miscompare(void)
 				"BlockLimits.MaximumCompareAndWriteLength(%d). "
 				"Command should fail with INVALID_FIELD_IN_CDB",
 				i, maxbl);
-			ret = compareandwrite_invalidfieldincdb(iscsic, tgt_lun, 0,
-				buf, 2 * i * block_size, block_size,
-				0, 0, 0, 0);
+			ret = compareandwrite(iscsic, tgt_lun, 0,
+					      buf, 2 * i * block_size,
+					      block_size, 0, 0, 0, 0,
+					      EXPECT_INVALID_FIELD_IN_CDB);
 			CU_ASSERT_EQUAL(ret, 0);
 
 			continue;
@@ -151,9 +155,10 @@ test_compareandwrite_miscompare(void)
 		logging(LOG_VERBOSE, "Overwrite %d blocks with 'B' "
 			"at LBA:%" PRIu64 " (if they all contain 'A')",
 			i, num_blocks - i);
-		ret = compareandwrite_miscompare(iscsic, tgt_lun,
-			num_blocks - i,
-			buf, 2 * i * block_size, block_size, 0, 0, 0, 0);
+		ret = compareandwrite(iscsic, tgt_lun, num_blocks - i,
+				      buf, 2 * i * block_size, block_size,
+				      0, 0, 0, 0,
+				      EXPECT_MISCOMPARE);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:%" PRIu64 
