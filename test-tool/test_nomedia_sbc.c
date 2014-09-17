@@ -110,7 +110,8 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test PREFETCH10 when medium is ejected.");
-	ret = prefetch10_nomedium(iscsic, tgt_lun, 0, 1, 1, 0);
+	ret = prefetch10(iscsic, tgt_lun, 0, 1, 1, 0, EXPECT_NO_MEDIUM);
+
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"PREFETCH10");
@@ -119,7 +120,7 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 when medium is ejected.");
-	ret = prefetch16_nomedium(iscsic, tgt_lun, 0, 1, 1, 0);
+	ret = prefetch16(iscsic, tgt_lun, 0, 1, 1, 0, EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"PREFETCH16");
