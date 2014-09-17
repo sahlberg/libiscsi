@@ -33,7 +33,8 @@ test_get_lba_status_beyond_eol(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test GET_LBA_STATUS one block beyond the end of the LUN");
 
-	ret = get_lba_status_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 24);
+	ret = get_lba_status(iscsic, NULL, tgt_lun, num_blocks + 1, 24,
+			     EXPECT_LBA_OOB);
 	if (ret == -2) {
 		CU_PASS("[SKIPPED] Target does not support GET_LBA_STATUS. Skipping test");
 		return;
@@ -42,11 +43,13 @@ test_get_lba_status_beyond_eol(void)
 
 	logging(LOG_VERBOSE, "Test GET_LBA_STATUS at LBA 2^63");
 
-	ret = get_lba_status_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000ULL, 24);
+	ret = get_lba_status(iscsic, NULL, tgt_lun, 0x8000000000000000ULL, 24,
+			     EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test GET_LBA_STATUS at LBA -1");
 
-	ret = get_lba_status_lbaoutofrange(iscsic, tgt_lun, 0xffffffffffffffffULL, 24);
+	ret = get_lba_status(iscsic, NULL, tgt_lun, 0xffffffffffffffffULL, 24,
+			     EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 }

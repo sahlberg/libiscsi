@@ -103,12 +103,13 @@ static void
 check_unmap(void)
 {
 	int i;
-	struct scsi_task *task_ret;
+	struct scsi_task *task_ret = NULL;
 	struct scsi_get_lba_status *lbas;
 	uint64_t lba;
 
 	logging(LOG_VERBOSE, "Read LBA mapping from the target");
-	task_ret = get_lba_status_task(iscsic, tgt_lun, 0, 256);
+	get_lba_status(iscsic, &task_ret, tgt_lun, 0, 256,
+		       EXPECT_STATUS_GOOD);
 	if (task_ret == NULL) {
 		logging(LOG_VERBOSE, "[FAILED] Failed to read LBA mapping "
 			"from the target.");

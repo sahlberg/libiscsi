@@ -25,7 +25,6 @@
 #include "iscsi-support.h"
 #include "iscsi-test-cu.h"
 
-
 void
 test_get_lba_status_unmap_single(void)
 {
@@ -33,7 +32,9 @@ test_get_lba_status_unmap_single(void)
 	uint64_t i;
 	unsigned char *buf = alloca(257 * block_size);
 	struct unmap_list list[1];
-	enum scsi_provisioning_type provisioning;
+	struct scsi_task *t = NULL;
+	struct scsi_get_lba_status *lbas = NULL;
+	struct scsi_lba_status_descriptor *lbasd = NULL;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_THIN_PROVISIONING;
@@ -64,7 +65,8 @@ test_get_lba_status_unmap_single(void)
 
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:%"
 			PRIu64, i);
-		ret = get_lba_status(iscsic, tgt_lun, i, 24, NULL);
+		ret = get_lba_status(iscsic, NULL, tgt_lun, i, 24,
+				     EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			CU_PASS("[SKIPPED] Target does not support GET_LBA_STATUS. Skipping test");
 			return;
@@ -75,15 +77,36 @@ test_get_lba_status_unmap_single(void)
 		}
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:%"
 			PRIu64, i + lbppb);
-		ret = get_lba_status(iscsic, tgt_lun, i + lbppb, 24, &provisioning);
+		ret = get_lba_status(iscsic, &t, tgt_lun, i + lbppb, 24,
+				     EXPECT_STATUS_GOOD);
 		if (ret != 0) {
 			CU_FAIL("[FAILED] GET_LBA_STATUS command failed");
 			return;
 		}
-		if (provisioning != SCSI_PROVISIONING_TYPE_MAPPED) {
+		if (t == NULL) {
+			CU_FAIL("[FAILED] GET_LBA_STATUS task is NULL");
+			return;
+		}
+		lbas = scsi_datain_unmarshall(t);
+		if (lbas == NULL) {
+			CU_FAIL("[FAILED] GET_LBA_STATUS command: failed "
+				"to unmarshall data.");
+			scsi_free_scsi_task(t);
+			return;
+		}
+		lbasd = &lbas->descriptors[0];
+		if (lbasd->lba != i + lbppb) {
+			CU_FAIL("[FAILED] GET_LBA_STATUS command: "
+				"lba offset in first descriptor does not "
+				"match request.");
+			scsi_free_scsi_task(t);
+			return;
+		}
+		if (lbasd->provisioning != SCSI_PROVISIONING_TYPE_MAPPED) {
 			CU_FAIL("[FAILED] LBA should be mapped but isn't");
 			return;
 		}
+		scsi_free_scsi_task(t);
 	}
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -104,7 +127,8 @@ test_get_lba_status_unmap_single(void)
 
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:0");
 
-		ret = get_lba_status(iscsic, tgt_lun, 0, 24, NULL);
+		ret = get_lba_status(iscsic, NULL, tgt_lun, 0, 24,
+				     EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			CU_PASS("[SKIPPED] Target does not support GET_LBA_STATUS. Skipping test");
 			return;
@@ -114,14 +138,35 @@ test_get_lba_status_unmap_single(void)
 			return;
 		}
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:%" PRIu64, i + 1);
-		ret = get_lba_status(iscsic, tgt_lun, i + 1, 24, &provisioning);
+		ret = get_lba_status(iscsic, &t, tgt_lun, i + 1, 24,
+				     EXPECT_STATUS_GOOD);
 		if (ret != 0) {
 			CU_FAIL("[FAILED] GET_LBA_STATUS command failed");
 			return;
 		}
-		if (provisioning != SCSI_PROVISIONING_TYPE_MAPPED) {
+		if (t == NULL) {
+			CU_FAIL("[FAILED] GET_LBA_STATUS task is NULL");
+			return;
+		}
+		lbas = scsi_datain_unmarshall(t);
+		if (lbas == NULL) {
+			CU_FAIL("[FAILED] GET_LBA_STATUS command: failed "
+				"to unmarshall data.");
+			scsi_free_scsi_task(t);
+			return;
+		}
+		lbasd = &lbas->descriptors[0];
+		if (lbasd->lba != i + lbppb) {
+			CU_FAIL("[FAILED] GET_LBA_STATUS command: "
+				"lba offset in first descriptor does not "
+				"match request.");
+			scsi_free_scsi_task(t);
+			return;
+		}
+		if (lbasd->provisioning != SCSI_PROVISIONING_TYPE_MAPPED) {
 			CU_FAIL("[FAILED] LBA should be mapped but isn't");
 			return;
 		}
+		scsi_free_scsi_task(t);
 	}
 }

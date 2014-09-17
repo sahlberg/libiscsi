@@ -110,7 +110,8 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test GET_LBA_STATUS when medium is ejected.");
-	ret = get_lba_status_nomedium(iscsic, tgt_lun, 0, 24);
+	ret = get_lba_status(iscsic, NULL, tgt_lun, 0, 24,
+			     EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"GET_LBA_STATUS");
