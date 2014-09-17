@@ -65,7 +65,7 @@ test_orwrite_verify(void)
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read10(iscsic, tgt_lun, 0, i * block_size,
+		ret = read10(iscsic, NULL, tgt_lun, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, readbuf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -82,7 +82,7 @@ test_orwrite_verify(void)
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read10(iscsic, tgt_lun, 0, i * block_size,
+		ret = read10(iscsic, NULL, tgt_lun, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, readbuf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

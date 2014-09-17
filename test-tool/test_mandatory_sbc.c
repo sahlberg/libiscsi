@@ -53,7 +53,7 @@ test_mandatory_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test READ10.");
-	ret = read10(iscsic, tgt_lun, 0, block_size, block_size,
+	ret = read10(iscsic, NULL, tgt_lun, 0, block_size, block_size,
 		     0, 0, 0, 0, 0, NULL,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);

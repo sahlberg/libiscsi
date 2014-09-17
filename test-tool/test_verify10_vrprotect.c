@@ -40,7 +40,7 @@ test_verify10_vrprotect(void)
 	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
-			ret = read10(iscsic, tgt_lun, 0, block_size,
+			ret = read10(iscsic, NULL, tgt_lun, 0, block_size,
 				     block_size, 0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
 			CU_ASSERT_EQUAL(ret, 0);

@@ -1497,37 +1497,9 @@ read6(struct iscsi_context *iscsi, int lun, uint32_t lba,
 	return ret;
 }
 
-struct scsi_task*
-read10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
-       uint32_t datalen, int blocksize, int rdprotect, 
-       int dpo, int fua, int fua_nv, int group,
-       unsigned char *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send READ10 LBA:%d blocks:%d rdprotect:%d "
-	       "dpo:%d fua:%d fua_nv:%d group:%d",
-	       lba, datalen / blocksize, rdprotect,
-	       dpo, fua, fua_nv, group);
-
-	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blocksize,
-				 rdprotect, dpo, fua, fua_nv, group);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ10 command: %s",
-		       iscsi_get_error(iscsi));
-		return NULL;
-	}
-
-	if (data != NULL) {
-		memcpy(data, task->datain.data, task->datain.size);
-	}
-
-	logging(LOG_VERBOSE, "[OK] READ10 returned SUCCESS.");
-	return task;
-}
-
 int
-read10(struct iscsi_context *iscsi, int lun, uint32_t lba,
+read10(struct iscsi_context *iscsi, struct scsi_task **out_task,
+       int lun, uint32_t lba,
        uint32_t datalen, int blocksize, int rdprotect, 
        int dpo, int fua, int fua_nv, int group,
        unsigned char *data,
@@ -1552,7 +1524,9 @@ read10(struct iscsi_context *iscsi, int lun, uint32_t lba,
 	if (data) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
-	if (task) {
+	if (out_task) {
+		*out_task = task;
+	} else if (task) {
 		scsi_free_scsi_task(task);
 	}
 	return ret;

@@ -289,7 +289,7 @@ test_write10_residuals(void)
 	task = NULL;
 
 	logging(LOG_VERBOSE, "Read the two blocks");
-	ret = read10(iscsic, tgt_lun, 0, 2* block_size,
+	ret = read10(iscsic, NULL, tgt_lun, 0, 2* block_size,
 		     block_size, 0, 0, 0, 0, 0, buf,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -365,7 +365,7 @@ test_write10_residuals(void)
 	task = NULL;
 
 	logging(LOG_VERBOSE, "Read the two blocks");
-	ret = read10(iscsic, tgt_lun, 0, 2* block_size,
+	ret = read10(iscsic, NULL, tgt_lun, 0, 2* block_size,
 		     block_size, 0, 0, 0, 0, 0, buf,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);

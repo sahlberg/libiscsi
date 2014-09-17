@@ -30,11 +30,12 @@
 static void
 check_wabereq(void)
 {
-	struct scsi_task *task_ret;
+	struct scsi_task *task_ret = NULL;
 
 	logging(LOG_VERBOSE, "Read one block from LBA 0");
-	task_ret = read10_task(iscsic, tgt_lun, 0, block_size, block_size,
-		0, 0, 0, 0, 0, NULL);
+	read10(iscsic, &task_ret, tgt_lun, 0, block_size, block_size,
+	       0, 0, 0, 0, 0, NULL,
+	       EXPECT_STATUS_GOOD);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 	CU_ASSERT_NOT_EQUAL(task_ret->status, SCSI_STATUS_CANCELLED);
 

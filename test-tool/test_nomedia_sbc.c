@@ -73,7 +73,7 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test READ10 when medium is ejected.");
-	ret = read10(iscsic, tgt_lun, 0, block_size, block_size,
+	ret = read10(iscsic, NULL, tgt_lun, 0, block_size, block_size,
 		     0, 0, 0, 0, 0, NULL,
 		     EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);

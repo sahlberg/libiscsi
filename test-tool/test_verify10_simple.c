@@ -38,7 +38,7 @@ test_verify10_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read10(iscsic, tgt_lun, 0, i * block_size,
+		ret = read10(iscsic, NULL, tgt_lun, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -59,7 +59,7 @@ test_verify10_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read10(iscsic, tgt_lun, num_blocks - i,
+		ret = read10(iscsic, NULL, tgt_lun, num_blocks - i,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

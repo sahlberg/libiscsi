@@ -62,7 +62,7 @@ test_writesame10_unmap(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			ret = read10(iscsic, tgt_lun, 0,
+			ret = read10(iscsic, NULL, tgt_lun, 0,
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
@@ -101,7 +101,7 @@ test_writesame10_unmap(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			ret = read10(iscsic, tgt_lun, num_blocks - i,
+			ret = read10(iscsic, NULL, tgt_lun, num_blocks - i,
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
@@ -177,7 +177,7 @@ test_writesame10_unmap(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			ret = read10(iscsic, tgt_lun, 0,
+			ret = read10(iscsic, NULL, tgt_lun, 0,
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
