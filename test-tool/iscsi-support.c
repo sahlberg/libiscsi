@@ -1835,90 +1835,30 @@ preventallow(struct iscsi_context *iscsi, int lun, int prevent)
 
 int
 read6(struct iscsi_context *iscsi, int lun, uint32_t lba,
-       uint32_t datalen, int blocksize,
-       unsigned char *data)
+      uint32_t datalen, int blocksize,
+      unsigned char *data,
+      int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
+	int ret;
 
-	logging(LOG_VERBOSE, "Send READ6 LBA:%d blocks:%d",
+	logging(LOG_VERBOSE, "Send READ6 (Expecting %s) LBA:%d blocks:%d",
+		scsi_status_str(status),
 		lba, datalen / blocksize);
 
-	task = iscsi_read6_sync(iscsi, lun, lba, datalen, blocksize);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ6 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		scsi_free_scsi_task(task);
-		logging(LOG_NORMAL, "[SKIPPED] READ6 is not implemented.");
-		return -2;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ6 command: "
-			"failed with sense. %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
+	task = scsi_cdb_read6(lba, datalen, blocksize);
+	assert(task != NULL);
 
-	if (data != NULL) {
+	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+
+	ret = check_result("READ6", iscsi, task, status, key, ascq, num_ascq);
+	if (data) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ6 returned SUCCESS.");
-	return 0;
-}
-
-int
-read6_lbaoutofrange(struct iscsi_context *iscsi, int lun, uint32_t lba,
-		    uint32_t datalen, int blocksize,
-		    unsigned char *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send READ6 (Expecting LBA_OUT_OF_RANGE) "
-		"LBA:%d blocks:%d",
-		lba, datalen / blocksize);
-
-	task = iscsi_read6_sync(iscsi, lun, lba, datalen, blocksize);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send READ6 command: %s",
-		       iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (task) {
 		scsi_free_scsi_task(task);
-		logging(LOG_NORMAL, "[SKIPPED] READ6 is not implemented.");
-		return -2;
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ6 successful but should "
-			"have failed with ILLEGAL_REQUEST/LBA_OUT_OF_RANGE");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		|| task->sense.ascq != SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE) {
-		logging(LOG_NORMAL, "[FAILED] READ6 failed with wrong sense. "
-			"Should have failed with ILLEGAL_REQUEST/"
-			"LBA_OUT_OF_RANGE. Sense:%s\n", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-
-	if (data != NULL) {
-		memcpy(data, task->datain.data, task->datain.size);
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] READ6 returned ILLEGAL_REQUEST/LBA_OUT_OF_RANGE.");
-	return 0;
+	return ret;
 }
 
 struct scsi_task*

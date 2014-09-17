@@ -35,7 +35,8 @@ test_read6_simple(void)
 	logging(LOG_VERBOSE, "Test READ6 of 1-255 blocks at the start of the LUN");
 	for (i = 1; i <= 255; i++) {
 		ret = read6(iscsic, tgt_lun, 0, i * block_size,
-			    block_size, NULL);
+			    block_size, NULL,
+			    EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] READ6 is not implemented.");
 			CU_PASS("READ6 is not implemented.");
@@ -51,7 +52,8 @@ test_read6_simple(void)
 	} else {
 		for (i = 1; i <= 255; i++) {
 			ret = read6(iscsic, tgt_lun, num_blocks - i,
-				i * block_size, block_size, NULL);
+				    i * block_size, block_size, NULL,
+				    EXPECT_STATUS_GOOD);
 			CU_ASSERT_EQUAL(ret, 0);
 		}
 	}
