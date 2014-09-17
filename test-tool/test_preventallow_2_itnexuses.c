@@ -45,7 +45,8 @@ test_preventallow_2_itnexuses(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can still access the media.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");

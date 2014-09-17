@@ -30,6 +30,7 @@ test_testunitready_simple(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test TESTUNITREADY");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 }

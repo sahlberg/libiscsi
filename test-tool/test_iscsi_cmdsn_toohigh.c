@@ -64,7 +64,8 @@ void test_iscsi_cmdsn_toohigh(void)
 	iscsi_set_noautoreconnect(iscsic, 1);
 	iscsi_set_timeout(iscsic, 3);
 
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, -1);
 	if (ret == -1) {
 		logging(LOG_VERBOSE, "[SUCCESS] We did not receive a reply");
@@ -75,7 +76,8 @@ void test_iscsi_cmdsn_toohigh(void)
 	
 	iscsi_set_noautoreconnect(iscsic, 0);
 	logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == EXPCMDSN. should work again");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 }

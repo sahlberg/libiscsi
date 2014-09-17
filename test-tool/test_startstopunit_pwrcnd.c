@@ -46,7 +46,8 @@ test_startstopunit_pwrcnd(void)
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-		ret = testunitready(iscsic, tgt_lun);
+		ret = testunitready(iscsic, tgt_lun,
+				    EXPECT_SANITIZE);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

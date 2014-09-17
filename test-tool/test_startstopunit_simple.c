@@ -52,7 +52,8 @@ test_startstopunit_simple(void)
 
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is ejected.");
-	ret = testunitready_nomedium(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
@@ -63,7 +64,8 @@ test_startstopunit_simple(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can read from the media.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
@@ -76,7 +78,8 @@ test_startstopunit_simple(void)
 
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is ejected.");
-	ret = testunitready_nomedium(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
@@ -87,6 +90,7 @@ test_startstopunit_simple(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can access the media again.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 }

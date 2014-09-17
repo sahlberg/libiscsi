@@ -45,7 +45,8 @@ test_preventallow_eject(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can still access the media.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
@@ -58,7 +59,8 @@ test_preventallow_eject(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can not access the media.");
-	ret = testunitready_nomedium(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Set the PREVENT flag");

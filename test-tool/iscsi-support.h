@@ -289,10 +289,7 @@ int synchronizecache10_nomedium(struct iscsi_context *iscsi, int lun, uint32_t l
 int synchronizecache16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num_blocks, int sync_nv, int immed);
 int synchronizecache16_nomedium(struct iscsi_context *iscsi, int lun, uint64_t lba, int num_blocks, int sync_nv, int immed);
 int testunitready_clear_ua(struct iscsi_context *iscsi, int lun);
-int testunitready(struct iscsi_context *iscsi, int lun);
-int testunitready_nomedium(struct iscsi_context *iscsi, int lun);
-int testunitready_conflict(struct iscsi_context *iscsi, int lun);
-int testunitready_sanitize(struct iscsi_context *iscsi, int lun);
+int testunitready(struct iscsi_context *iscsi, int lun, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int mode_sense(struct iscsi_context *iscsi, int lun);
 int unmap(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len);
 int unmap_writeprotected(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len);

@@ -45,7 +45,8 @@ test_startstopunit_noloej(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==0 NO_FLUSH==0 START==1");
@@ -55,7 +56,8 @@ test_startstopunit_noloej(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==1 NO_FLUSH==0 START==0");
@@ -65,7 +67,8 @@ test_startstopunit_noloej(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==1 NO_FLUSH==0 START==1");
@@ -75,7 +78,8 @@ test_startstopunit_noloej(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==0 NO_FLUSH==1 START==0");
@@ -85,7 +89,8 @@ test_startstopunit_noloej(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==0 NO_FLUSH==1 START==1");
@@ -95,7 +100,8 @@ test_startstopunit_noloej(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==1 NO_FLUSH==1 START==0");
@@ -105,7 +111,8 @@ test_startstopunit_noloej(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==1 NO_FLUSH==1 START==1");
@@ -115,7 +122,8 @@ test_startstopunit_noloej(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 

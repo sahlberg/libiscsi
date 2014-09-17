@@ -45,7 +45,8 @@ test_preventallow_warm_reset(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can still access the media.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	
@@ -53,7 +54,7 @@ test_preventallow_warm_reset(void)
 	ret = iscsi_task_mgmt_target_warm_reset_sync(iscsic);
 	CU_ASSERT_EQUAL(ret, 0);
 	logging(LOG_VERBOSE, "Wait until all unit attentions clear");
-	while (testunitready(iscsic, tgt_lun) != 0);
+	while (testunitready(iscsic, tgt_lun, EXPECT_STATUS_GOOD) != 0);
 
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
@@ -62,7 +63,8 @@ test_preventallow_warm_reset(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can not access the media.");
-	ret = testunitready_nomedium(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Load the medium");

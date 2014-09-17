@@ -48,7 +48,8 @@ test_nomedia_sbc(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY when medium is ejected.");
-	ret = testunitready_nomedium(iscsic, tgt_lun);
+	ret = testunitready(iscsic, tgt_lun,
+			    EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test SYNCHRONIZECACHE10 when medium is ejected.");
