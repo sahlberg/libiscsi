@@ -59,34 +59,36 @@ test_readonly_sbc(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE_SAME10 fails with WRITE_PROTECTED");
-	ret = writesame10_writeprotected(iscsic, tgt_lun, 0, block_size, 1,
-					 0, 0, 0, 0, buf);
+	ret = writesame10(iscsic, tgt_lun, 0, block_size, 1,
+			  0, 0, 0, 0, buf,
+			  EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITE_SAME10 not supported on target. Skipped.");
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITE_SAME16 fails with WRITE_PROTECTED");
-	ret = writesame16_writeprotected(iscsic, tgt_lun, 0, block_size, 1,
-					 0, 0, 0, 0, buf);
+	ret = writesame16(iscsic, tgt_lun, 0, block_size, 1,
+			  0, 0, 0, 0, buf,
+			  EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITE_SAME16 not supported on target. Skipped.");
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITE_SAME10 UNMAP fails with WRITE_PROTECTED");
-	ret = writesame10_writeprotected(iscsic, tgt_lun, 0,
-					 block_size, 1,
-					 0, 1, 0, 0, NULL);
+	ret = writesame10(iscsic, tgt_lun, 0,
+			  block_size, 1, 0, 1, 0, 0, NULL,
+			  EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITE_SAME10 not supported on target. Skipped.");
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITE_SAME16 UNMAP fails with WRITE_PROTECTED");
-	ret = writesame16_writeprotected(iscsic, tgt_lun, 0,
-					 block_size, 1,
-					 0, 1, 0, 0, NULL);
+	ret = writesame16(iscsic, tgt_lun, 0,
+			  block_size, 1, 0, 1, 0, 0, NULL,
+			  EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITE_SAME16 not supported on target. Skipped.");
 	}

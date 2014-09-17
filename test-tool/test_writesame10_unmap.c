@@ -52,8 +52,8 @@ test_writesame10_unmap(void)
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
 		memset(buf, 0, block_size);
 		ret = writesame10(iscsic, tgt_lun, 0,
-				  block_size, i,
-				  0, 1, 0, 0, buf);
+				  block_size, i, 0, 1, 0, 0, buf,
+				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		if (rc16->lbprz) {
@@ -90,8 +90,8 @@ test_writesame10_unmap(void)
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
 		memset(buf, 0, block_size);
 		ret = writesame10(iscsic, tgt_lun, num_blocks - i,
-				  block_size, i,
-				  0, 1, 0, 0, buf);
+				  block_size, i, 0, 1, 0, 0, buf,
+				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		if (rc16->lbprz) {
@@ -116,9 +116,9 @@ test_writesame10_unmap(void)
 
 	logging(LOG_VERBOSE, "Verify that WRITESAME10 ANCHOR==1 + UNMAP==0 is "
 		"invalid");
-	ret = writesame10_invalidfieldincdb(iscsic, tgt_lun, 0,
-					    block_size, 1,
-					    1, 0, 0, 0, buf);
+	ret = writesame10(iscsic, tgt_lun, 0,
+			  block_size, 1, 1, 0, 0, 0, buf,
+			  EXPECT_INVALID_FIELD_IN_CDB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
@@ -127,14 +127,14 @@ test_writesame10_unmap(void)
 		logging(LOG_VERBOSE, "Test WRITESAME10 ANCHOR==1 + UNMAP==0");
 		memset(buf, 0, block_size);
 		ret = writesame10(iscsic, tgt_lun, 0,
-				  block_size, 1,
-				  1, 1, 0, 0, buf);
+				  block_size, 1, 1, 1, 0, 0, buf,
+				  EXPECT_STATUS_GOOD);
 	} else {
 		logging(LOG_VERBOSE, "Test WRITESAME10 ANCHOR==1 + UNMAP==0 no "
 			"ANC_SUP so expecting to fail");
-		ret = writesame10_invalidfieldincdb(iscsic, tgt_lun, 0,
-						    block_size, 1,
-						    1, 1, 0, 0, buf);
+		ret = writesame10(iscsic, tgt_lun, 0,
+				  block_size, 1, 1, 1, 0, 0, buf,
+				  EXPECT_INVALID_FIELD_IN_CDB);
 	}
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -165,8 +165,8 @@ test_writesame10_unmap(void)
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
 		memset(buf, 0, block_size);
 		ret = writesame10(iscsic, tgt_lun, 0,
-				  block_size, i,
-				  0, 1, 0, 0, buf);
+				  block_size, i, 0, 1, 0, 0, buf,
+				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		if (rc16->lbprz) {
@@ -193,9 +193,9 @@ test_writesame10_unmap(void)
 			"INVALID_FIELD_IN_CDB.");
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
-		ret = writesame10_invalidfieldincdb(iscsic, tgt_lun, 0,
-				  block_size, i,
-				  0, 1, 0, 0, buf);
+		ret = writesame10(iscsic, tgt_lun, 0,
+				  block_size, i, 0, 1, 0, 0, buf,
+				  EXPECT_INVALID_FIELD_IN_CDB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

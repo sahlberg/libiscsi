@@ -41,8 +41,8 @@ test_writesame16_simple(void)
 	memset(buf, 0, block_size);
 	for (i = 1; i <= 256; i++) {
 		ret = writesame16(iscsic, tgt_lun, 0,
-				  block_size, i,
-				  0, 0, 0, 0, buf);
+				  block_size, i, 0, 0, 0, 0, buf,
+				  EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support WRITESAME16. Skipping test");
@@ -54,8 +54,8 @@ test_writesame16_simple(void)
 	logging(LOG_VERBOSE, "Test WRITESAME16 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
 		ret = writesame16(iscsic, tgt_lun, num_blocks - i,
-				  block_size, i,
-				  0, 0, 0, 0, buf);
+				  block_size, i, 0, 0, 0, 0, buf,
+				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

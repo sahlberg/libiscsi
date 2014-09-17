@@ -231,8 +231,9 @@ test_nomedia_sbc(void)
 	logging(LOG_VERBOSE, "[SKIPPED] Test not implemented yet");
 
 	logging(LOG_VERBOSE, "Test WRITESAME10 when medium is ejected.");
-	ret = writesame10_nomedium(iscsic, tgt_lun, 0, block_size,
-				   1, 0, 0, 0, 0, buf);
+	ret = writesame10(iscsic, tgt_lun, 0, block_size,
+			  1, 0, 0, 0, 0, buf,
+			  EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"WRITESAME10");
@@ -241,8 +242,9 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 when medium is ejected.");
-	ret = writesame16_nomedium(iscsic, tgt_lun, 0, block_size,
-				   1, 0, 0, 0, 0, buf);
+	ret = writesame16(iscsic, tgt_lun, 0, block_size,
+			  1, 0, 0, 0, 0, buf,
+			  EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"WRITESAME16");

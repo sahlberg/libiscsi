@@ -52,8 +52,8 @@ test_writesame16_unmap_until_end(void)
 			      EXPECT_STATUS_GOOD);
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
 		ret = writesame16(iscsic, tgt_lun, num_blocks - i,
-				  0, i,
-				  0, 1, 0, 0, NULL);
+				  0, i, 0, 1, 0, 0, NULL,
+				  EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support WRITESAME16. Skipping test");
