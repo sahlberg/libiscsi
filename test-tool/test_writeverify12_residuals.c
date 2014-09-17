@@ -45,7 +45,8 @@ test_writeverify12_residuals(void)
 
 	/* check if writeverify12 is supported */
 	ret = writeverify12(iscsic, tgt_lun, 0, 0,
-			    block_size, 0, 0, 0, 0, NULL);
+			    block_size, 0, 0, 0, 0, NULL,
+			    EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		CU_PASS("[SKIPPED] Target does not support WRITEVERIFY12. Skipping test");
 		return;

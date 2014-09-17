@@ -45,7 +45,8 @@ test_writeverify10_residuals(void)
 
 	/* check if writeverify10 is supported */
 	ret = writeverify10(iscsic, tgt_lun, 0, 0,
-			    block_size, 0, 0, 0, 0, NULL);
+			    block_size, 0, 0, 0, 0, NULL,
+			    EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		CU_PASS("[SKIPPED] Target does not support WRITEVERIFY10. Skipping test");
 		return;

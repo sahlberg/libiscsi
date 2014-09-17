@@ -38,7 +38,8 @@ test_writeverify10_0blocks(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks at LBA==0");
 	ret = writeverify10(iscsic, tgt_lun, 0, 0, block_size,
-			    0, 0, 0, 0, NULL);
+			    0, 0, 0, 0, NULL,
+			    EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY10 is not implemented.");
 		CU_PASS("WRITEVERIFY10 is not implemented.");
@@ -47,19 +48,22 @@ test_writeverify10_0blocks(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks one block past end-of-LUN");
-	ret = writeverify10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
-					  block_size, 0, 0, 0, 0, NULL);
+	ret = writeverify10(iscsic, tgt_lun, num_blocks + 1, 0,
+			    block_size, 0, 0, 0, 0, NULL,
+			    EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks at LBA==2^31");
-	ret = writeverify10_lbaoutofrange(iscsic, tgt_lun, 0x80000000, 0,
-					  block_size, 0, 0, 0, 0, NULL);
+	ret = writeverify10(iscsic, tgt_lun, 0x80000000, 0,
+			    block_size, 0, 0, 0, 0, NULL,
+			    EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks at LBA==-1");
-	ret = writeverify10_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
-					  0, 0, 0, 0, NULL);
+	ret = writeverify10(iscsic, tgt_lun, -1, 0, block_size,
+			    0, 0, 0, 0, NULL,
+			    EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 }

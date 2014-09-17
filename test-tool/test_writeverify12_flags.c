@@ -39,8 +39,8 @@ test_writeverify12_flags(void)
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY12 with DPO==1");
 	ret = writeverify12(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 1, 0, 0, buf);
+			    block_size, block_size, 0, 1, 0, 0, buf,
+			    EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY12 is not implemented.");
 		CU_PASS("WRITEVERIFY12 is not implemented.");
@@ -50,7 +50,7 @@ test_writeverify12_flags(void)
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY12 with BYTCHK==1");
 	ret = writeverify12(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 0, 1, 0, buf);
+			    block_size, block_size, 0, 0, 1, 0, buf,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 }

@@ -42,7 +42,8 @@ test_writeverify10_simple(void)
 			break;
 		}
 		ret = writeverify10(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, buf);
+				    block_size, 0, 0, 0, 0, buf,
+				    EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY10 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support WRITEVERIFY10. Skipping test");
@@ -57,7 +58,8 @@ test_writeverify10_simple(void)
 			break;
 		}
 		ret = writeverify10(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 0, 0, buf);
+				    i * block_size, block_size, 0, 0, 0, 0, buf,
+				    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

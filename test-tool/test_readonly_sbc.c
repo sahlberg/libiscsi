@@ -111,27 +111,27 @@ test_readonly_sbc(void)
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 fails with WRITE_PROTECTED");
-	ret = writeverify10_writeprotected(iscsic, tgt_lun, 0,
-					   block_size, block_size,
-					   0, 0, 0, 0, buf);
+	ret = writeverify10(iscsic, tgt_lun, 0,
+			    block_size, block_size, 0, 0, 0, 0, buf,
+			    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITEVERIFY10 not supported on target. Skipped.");
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY12 fails with WRITE_PROTECTED");
-	ret = writeverify12_writeprotected(iscsic, tgt_lun, 0,
-					   block_size, block_size,
-					   0, 0, 0, 0, buf);
+	ret = writeverify12(iscsic, tgt_lun, 0,
+			    block_size, block_size, 0, 0, 0, 0, buf,
+			    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITEVERIFY12 not supported on target. Skipped.");
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 fails with WRITE_PROTECTED");
-	ret = writeverify16_writeprotected(iscsic, tgt_lun, 0,
-					   block_size, block_size,
-					   0, 0, 0, 0, buf);
+	ret = writeverify16(iscsic, tgt_lun, 0,
+			    block_size, block_size, 0, 0, 0, 0, buf,
+			    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITEVERIFY16 not supported on target. Skipped.");
 	}
