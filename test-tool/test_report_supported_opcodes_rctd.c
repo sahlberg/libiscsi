@@ -38,9 +38,11 @@ test_report_supported_opcodes_rctd(void)
 
 	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES report ALL opcodes "
 		"without timeout descriptors");
-	ret = report_supported_opcodes(iscsic, tgt_lun,
+	ret = report_supported_opcodes(
+		iscsic, &rso_task, tgt_lun,
 		0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
-		65535, &rso_task);
+		65535,
+		EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] READ_SUPPORTED_OPCODES is not "
 			"implemented.");
@@ -73,9 +75,11 @@ test_report_supported_opcodes_rctd(void)
 
 	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES report ALL opcodes "
 		"with timeout descriptors");
-	ret = report_supported_opcodes(iscsic, tgt_lun,
+	ret = report_supported_opcodes(
+		iscsic, &rso_task, tgt_lun,
 		1, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
-		65535, &rso_task);
+		65535,
+		EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 	if (ret != 0) {
 		return;

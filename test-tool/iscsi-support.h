@@ -265,8 +265,7 @@ int read12(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen,
 int read16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
-int report_supported_opcodes(struct iscsi_context *iscsi, int lun, int rctd, int options, int opcode, int sa, int alloc_len, struct scsi_task **save_task);
-int report_supported_opcodes_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int rctd, int options, int opcode, int sa, int alloc_len, struct scsi_task **save_task);
+int report_supported_opcodes(struct iscsi_context *iscsi, struct scsi_task **save_task, int lun, int rctd, int options, int opcode, int sa, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int release6(struct iscsi_context *iscsi, int lun);
 int reserve6(struct iscsi_context *iscsi, int lun);
 int reserve6_conflict(struct iscsi_context *iscsi, int lun);
