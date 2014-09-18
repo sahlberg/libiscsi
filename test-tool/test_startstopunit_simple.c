@@ -41,7 +41,7 @@ test_startstopunit_simple(void)
 		logging(LOG_VERBOSE, "Media is not removable. STARTSTOPUNIT should fail");
 	}
 
-	ret = startstopunit(iscsic, tgt_lun,
+	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun,
 			    1, 0, 0, 0, 1, 0,
 			    EXPECT_STATUS_GOOD);
 	if (!inq->rmb) {
@@ -52,45 +52,45 @@ test_startstopunit_simple(void)
 
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is ejected.");
-	ret = testunitready(iscsic, tgt_lun,
+	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
 			    EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test we can load the removable the media with IMMED==1");
-	ret = startstopunit(iscsic, tgt_lun,
+	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun,
 			    1, 0, 0, 0, 1, 1,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can read from the media.");
-	ret = testunitready(iscsic, tgt_lun,
+	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
 			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 
 	logging(LOG_VERBOSE, "Test we can eject removable the media with IMMED==1");
-	ret = startstopunit(iscsic, tgt_lun,
+	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun,
 			    0, 0, 0, 0, 1, 0,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is ejected.");
-	ret = testunitready(iscsic, tgt_lun,
+	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
 			    EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test we can load the removable the media with IMMED==1");
-	ret = startstopunit(iscsic, tgt_lun,
+	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun,
 			    0, 0, 0, 0, 1, 1,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can access the media again.");
-	ret = testunitready(iscsic, tgt_lun,
+	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
 			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 }

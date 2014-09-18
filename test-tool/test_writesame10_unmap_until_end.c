@@ -47,13 +47,13 @@ test_writesame10_unmap_until_end(void)
 
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, block_size * i);
-		ret = write10(iscsic, tgt_lun, num_blocks - i,
+		ret = write10(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
 			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
-		ret = writesame10(iscsic, tgt_lun, num_blocks - i,
+		ret = writesame10(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
 				  block_size, i, 0, 1, 0, 0, buf,
 				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -64,7 +64,7 @@ test_writesame10_unmap_until_end(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			ret = read10(iscsic, NULL, tgt_lun, num_blocks - i,
+			ret = read10(sd->iscsi_ctx, NULL, sd->iscsi_lun, num_blocks - i,
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);

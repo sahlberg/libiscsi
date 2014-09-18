@@ -42,7 +42,7 @@ test_writesame10_unmap_vpd(void)
 	logging(LOG_VERBOSE, "Check if WRITESAME10 can be used for UNMAP.");
 	logging(LOG_VERBOSE, "Unmap 1 block using WRITESAME10");
 	memset(buf, 0, block_size);
-	ret = writesame10(iscsic, tgt_lun, 0,
+	ret = writesame10(sd->iscsi_ctx, sd->iscsi_lun, 0,
 			  block_size, 1, 0, 1, 0, 0, buf,
 			  EXPECT_STATUS_GOOD);
 	if (ret != 0) {

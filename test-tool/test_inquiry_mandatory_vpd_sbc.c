@@ -36,13 +36,13 @@ test_inquiry_mandatory_vpd_sbc(void)
 
 
 	logging(LOG_VERBOSE, "SUPPORTED_VPD_PAGES is mandatory for SBC devices. Verify we can read it.");
-	ret = inquiry(iscsic, NULL, tgt_lun,
+	ret = inquiry(sd->iscsi_ctx, NULL, sd->iscsi_lun,
 		      1, SCSI_INQUIRY_PAGECODE_SUPPORTED_VPD_PAGES, 255,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "DEVICE_IDENTIFICATION is mandatory for SBC devices. Verify we can read it.");
-	ret = inquiry(iscsic, NULL, tgt_lun,
+	ret = inquiry(sd->iscsi_ctx, NULL, sd->iscsi_lun,
 		      1, SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION, 255,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);

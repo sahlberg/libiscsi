@@ -36,7 +36,7 @@ test_reserve6_2initiators(void)
 
 
 	logging(LOG_NORMAL, "Take out a RESERVE6 from the first initiator");
-	ret = reserve6(iscsic, tgt_lun);
+	ret = reserve6(sd->iscsi_ctx, sd->iscsi_lun);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "[SKIPPED] Target does not support RESERVE6. Skipping test");
 		CU_PASS("[SKIPPED] Target does not support RESERVE6. Skipping test");
@@ -46,50 +46,50 @@ test_reserve6_2initiators(void)
 
 
 	logging(LOG_NORMAL, "Verify that the first initiator can re-RESERVE6 the same reservation");
-	ret = reserve6(iscsic, tgt_lun);
+	ret = reserve6(sd->iscsi_ctx, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	iscsic2 = iscsi_context_login(initiatorname2, tgt_url, &tgt_lun);
+	iscsic2 = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd->iscsi_lun);
 	if (iscsic2 == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
 	}
 
 	logging(LOG_NORMAL, "Try to take out a RESERVE6 from the second initiator");
-	ret = reserve6_conflict(iscsic2, tgt_lun);
+	ret = reserve6_conflict(iscsic2, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_NORMAL, "Try to RELEASE from the second initiator. Should be a nop");
-	ret = release6(iscsic2, tgt_lun);
+	ret = release6(iscsic2, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_NORMAL, "Test we can still send MODE SENSE from the first initiator");
-	ret = mode_sense(iscsic, tgt_lun);
+	ret = mode_sense(sd->iscsi_ctx, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_NORMAL, "MODE SENSE should fail from the second initiator");
-	ret = mode_sense(iscsic2, tgt_lun);
+	ret = mode_sense(iscsic2, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, SCSI_STATUS_RESERVATION_CONFLICT);
 
 
 	logging(LOG_NORMAL, "RESERVE6 from the second initiator should still fail");
-	ret = reserve6_conflict(iscsic2, tgt_lun);
+	ret = reserve6_conflict(iscsic2, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_NORMAL, "RELEASE6 from the first initiator");
-	ret = release6(iscsic, tgt_lun);
+	ret = release6(sd->iscsi_ctx, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_NORMAL, "RESERVE6 from the second initiator should work now");
-	ret = reserve6(iscsic2, tgt_lun);
+	ret = reserve6(iscsic2, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_NORMAL, "RELEASE6 from the second initiator");
-	ret = release6(iscsic2, tgt_lun);
+	ret = release6(iscsic2, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	iscsi_logout_sync(iscsic2);

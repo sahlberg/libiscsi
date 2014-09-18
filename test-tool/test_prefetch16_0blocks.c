@@ -30,7 +30,7 @@ test_prefetch16_0blocks(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks at LBA==0");
-	ret = prefetch16(iscsic, tgt_lun, 0, 0, 0, 0,
+	ret = prefetch16(sd->iscsi_ctx, sd->iscsi_lun, 0, 0, 0, 0,
 			 EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] PREFETCH16 is not implemented.");
@@ -40,19 +40,19 @@ test_prefetch16_0blocks(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks one block past end-of-LUN");
-	ret = prefetch16(iscsic, tgt_lun, num_blocks + 1, 0, 0, 0,
+	ret = prefetch16(sd->iscsi_ctx, sd->iscsi_lun, num_blocks + 1, 0, 0, 0,
 			 EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks at LBA==2^63");
-	ret = prefetch16(iscsic, tgt_lun, 0x8000000000000000ULL, 0, 0, 0,
+	ret = prefetch16(sd->iscsi_ctx, sd->iscsi_lun, 0x8000000000000000ULL, 0, 0, 0,
 			 EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks at LBA==-1");
-	ret = prefetch16(iscsic, tgt_lun, -1, 0, 0, 0,
+	ret = prefetch16(sd->iscsi_ctx, sd->iscsi_lun, -1, 0, 0, 0,
 			 EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 }

@@ -41,7 +41,7 @@ test_writeverify10_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeverify10(iscsic, tgt_lun, 0, i * block_size,
+		ret = writeverify10(sd->iscsi_ctx, sd->iscsi_lun, 0, i * block_size,
 				    block_size, 0, 0, 0, 0, buf,
 				    EXPECT_STATUS_GOOD);
 		if (ret == -2) {
@@ -57,7 +57,7 @@ test_writeverify10_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeverify10(iscsic, tgt_lun, num_blocks - i,
+		ret = writeverify10(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
 				    i * block_size, block_size, 0, 0, 0, 0, buf,
 				    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

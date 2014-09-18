@@ -34,7 +34,7 @@ test_prefetch16_flags(void)
 	logging(LOG_VERBOSE, "Test PREFETCH16 flags");
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 with IMMED==1");
-	ret = prefetch16(iscsic, tgt_lun, 0, 1, 1, 0,
+	ret = prefetch16(sd->iscsi_ctx, sd->iscsi_lun, 0, 1, 1, 0,
 			 EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] PREFETCH16 is not implemented.");
@@ -44,12 +44,12 @@ test_prefetch16_flags(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 with GROUP==3");
-	ret = prefetch16(iscsic, tgt_lun, 0, 1, 0, 3,
+	ret = prefetch16(sd->iscsi_ctx, sd->iscsi_lun, 0, 1, 0, 3,
 			 EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 with IMMED=1 and GROUP==3");
-	ret = prefetch16(iscsic, tgt_lun, 0, 1, 1, 3,
+	ret = prefetch16(sd->iscsi_ctx, sd->iscsi_lun, 0, 1, 1, 3,
 			 EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 }

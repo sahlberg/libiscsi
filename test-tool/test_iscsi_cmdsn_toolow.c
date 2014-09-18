@@ -54,17 +54,17 @@ void test_iscsi_cmdsn_toolow(void)
 	logging(LOG_VERBOSE, "RFC3720:3.2.2.1 CMDSN < EXPCMDSN must be silently ignored by the target");
 	logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == EXPCMDSN-1. Should be ignored by the target.");
 
-	iscsic->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsic->target_max_recv_data_segment_length = block_size;
+	sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+	sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
 	change_cmdsn = 1;
 	/* we don't want autoreconnect since some targets will incorrectly
 	 * drop the connection on this condition.
 	 */
-	iscsi_set_noautoreconnect(iscsic, 1);
-	iscsi_set_timeout(iscsic, 3);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
+	iscsi_set_timeout(sd->iscsi_ctx, 3);
 
-	ret = testunitready(iscsic, tgt_lun,
+	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, -1);
 	if (ret == -1) {
@@ -75,9 +75,9 @@ void test_iscsi_cmdsn_toolow(void)
 
 	
 
-	iscsi_set_noautoreconnect(iscsic, 0);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 	logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == EXPCMDSN. should work again");
-	ret = testunitready(iscsic, tgt_lun,
+	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 

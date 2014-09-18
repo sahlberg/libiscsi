@@ -37,7 +37,7 @@ test_writeverify10_0blocks(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks at LBA==0");
-	ret = writeverify10(iscsic, tgt_lun, 0, 0, block_size,
+	ret = writeverify10(sd->iscsi_ctx, sd->iscsi_lun, 0, 0, block_size,
 			    0, 0, 0, 0, NULL,
 			    EXPECT_STATUS_GOOD);
 	if (ret == -2) {
@@ -48,21 +48,21 @@ test_writeverify10_0blocks(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks one block past end-of-LUN");
-	ret = writeverify10(iscsic, tgt_lun, num_blocks + 1, 0,
+	ret = writeverify10(sd->iscsi_ctx, sd->iscsi_lun, num_blocks + 1, 0,
 			    block_size, 0, 0, 0, 0, NULL,
 			    EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks at LBA==2^31");
-	ret = writeverify10(iscsic, tgt_lun, 0x80000000, 0,
+	ret = writeverify10(sd->iscsi_ctx, sd->iscsi_lun, 0x80000000, 0,
 			    block_size, 0, 0, 0, 0, NULL,
 			    EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks at LBA==-1");
-	ret = writeverify10(iscsic, tgt_lun, -1, 0, block_size,
+	ret = writeverify10(sd->iscsi_ctx, sd->iscsi_lun, -1, 0, block_size,
 			    0, 0, 0, 0, NULL,
 			    EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);

@@ -97,41 +97,41 @@ verify_persistent_reserve_ownership(struct iscsi_context *iscsi1, int lun1,
 void
 test_prout_reserve_ownership_ea(void)
 {
-	verify_persistent_reserve_ownership(iscsic, tgt_lun, iscsic2, tgt_lun2,
+	verify_persistent_reserve_ownership(sd->iscsi_ctx, sd->iscsi_lun, iscsic2, tgt_lun2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS, 0);
 }
 
 void
 test_prout_reserve_ownership_we(void)
 {
-	verify_persistent_reserve_ownership(iscsic, tgt_lun, iscsic2, tgt_lun2,
+	verify_persistent_reserve_ownership(sd->iscsi_ctx, sd->iscsi_lun, iscsic2, tgt_lun2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE, 0);
 }
 
 void
 test_prout_reserve_ownership_earo(void)
 {
-	verify_persistent_reserve_ownership(iscsic, tgt_lun, iscsic2, tgt_lun2,
+	verify_persistent_reserve_ownership(sd->iscsi_ctx, sd->iscsi_lun, iscsic2, tgt_lun2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY, 0);
 }
 
 void
 test_prout_reserve_ownership_wero(void)
 {
-	verify_persistent_reserve_ownership(iscsic, tgt_lun, iscsic2, tgt_lun2,
+	verify_persistent_reserve_ownership(sd->iscsi_ctx, sd->iscsi_lun, iscsic2, tgt_lun2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY, 0);
 }
 
 void
 test_prout_reserve_ownership_eaar(void)
 {
-	verify_persistent_reserve_ownership(iscsic, tgt_lun, iscsic2, tgt_lun2,
+	verify_persistent_reserve_ownership(sd->iscsi_ctx, sd->iscsi_lun, iscsic2, tgt_lun2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS, 1);
 }
 
 void
 test_prout_reserve_ownership_wear(void)
 {
-	verify_persistent_reserve_ownership(iscsic, tgt_lun, iscsic2, tgt_lun2,
+	verify_persistent_reserve_ownership(sd->iscsi_ctx, sd->iscsi_lun, iscsic2, tgt_lun2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS, 1);
 }

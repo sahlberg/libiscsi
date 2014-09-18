@@ -63,7 +63,7 @@ void test_sanitize_crypto_erase_reserved(void)
 	logging(LOG_VERBOSE, "Send SANITIZE command with the reserved "
 		"bit in byte 1 set to 1");
 	change_num = 1;
-	ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+	ret = sanitize_invalidfieldincdb(sd->iscsi_ctx, sd->iscsi_lun,
 		       0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] SANITIZE CRYPTO_ERASE is not "
@@ -79,7 +79,7 @@ void test_sanitize_crypto_erase_reserved(void)
 			"byte %d set to non-zero", i);
 		change_num = i;
 
-		ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+		ret = sanitize_invalidfieldincdb(sd->iscsi_ctx, sd->iscsi_lun,
 			0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
 	}

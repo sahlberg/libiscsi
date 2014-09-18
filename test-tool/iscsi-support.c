@@ -46,8 +46,6 @@ const char *initiatorname1 =
 const char *initiatorname2 =
 	"iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-test-2";
 
-const char *tgt_url;
-
 int no_medium_ascqs[3] = {
 	SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT,
 	SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN,

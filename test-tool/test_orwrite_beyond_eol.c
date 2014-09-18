@@ -40,7 +40,7 @@ test_orwrite_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = orwrite(iscsic, tgt_lun, num_blocks + 1 - i,
+		ret = orwrite(sd->iscsi_ctx, sd->iscsi_lun, num_blocks + 1 - i,
 			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			      EXPECT_LBA_OOB);
 		if (ret == -2) {
@@ -57,7 +57,7 @@ test_orwrite_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = orwrite(iscsic, tgt_lun, 0x8000000000000000ULL,
+		ret = orwrite(sd->iscsi_ctx, sd->iscsi_lun, 0x8000000000000000ULL,
 			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			      EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -69,7 +69,7 @@ test_orwrite_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = orwrite(iscsic, tgt_lun, -1,
+		ret = orwrite(sd->iscsi_ctx, sd->iscsi_lun, -1,
 			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			      EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -81,7 +81,7 @@ test_orwrite_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = orwrite(iscsic, tgt_lun, num_blocks - 1,
+		ret = orwrite(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - 1,
 			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			      EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);

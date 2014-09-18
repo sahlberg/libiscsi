@@ -41,25 +41,25 @@ test_readonly_sbc(void)
 
 
 	logging(LOG_VERBOSE, "Test WRITE10 fails with WRITE_PROTECTED");
-	ret = write10(iscsic, tgt_lun, 0, block_size, block_size,
+	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 0, block_size, block_size,
 		      0, 0, 0, 0, 0, buf,
 		      EXPECT_WRITE_PROTECTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE12 fails with WRITE_PROTECTED");
-	ret = write12(iscsic, tgt_lun, 0, block_size, block_size,
+	ret = write12(sd->iscsi_ctx, sd->iscsi_lun, 0, block_size, block_size,
 		      0, 0, 0, 0, 0, buf,
 		      EXPECT_WRITE_PROTECTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE16 fails with WRITE_PROTECTED");
-	ret = write16(iscsic, tgt_lun, 0, block_size, block_size,
+	ret = write16(sd->iscsi_ctx, sd->iscsi_lun, 0, block_size, block_size,
 		      0, 0, 0, 0, 0, buf,
 		      EXPECT_WRITE_PROTECTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE_SAME10 fails with WRITE_PROTECTED");
-	ret = writesame10(iscsic, tgt_lun, 0, block_size, 1,
+	ret = writesame10(sd->iscsi_ctx, sd->iscsi_lun, 0, block_size, 1,
 			  0, 0, 0, 0, buf,
 			  EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
@@ -68,7 +68,7 @@ test_readonly_sbc(void)
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITE_SAME16 fails with WRITE_PROTECTED");
-	ret = writesame16(iscsic, tgt_lun, 0, block_size, 1,
+	ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, 0, block_size, 1,
 			  0, 0, 0, 0, buf,
 			  EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
@@ -77,7 +77,7 @@ test_readonly_sbc(void)
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITE_SAME10 UNMAP fails with WRITE_PROTECTED");
-	ret = writesame10(iscsic, tgt_lun, 0,
+	ret = writesame10(sd->iscsi_ctx, sd->iscsi_lun, 0,
 			  block_size, 1, 0, 1, 0, 0, NULL,
 			  EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
@@ -86,7 +86,7 @@ test_readonly_sbc(void)
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITE_SAME16 UNMAP fails with WRITE_PROTECTED");
-	ret = writesame16(iscsic, tgt_lun, 0,
+	ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 			  block_size, 1, 0, 1, 0, 0, NULL,
 			  EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
@@ -97,7 +97,7 @@ test_readonly_sbc(void)
 	logging(LOG_VERBOSE, "Test UNMAP of one physical block fails with WRITE_PROTECTED");
 	list[0].lba = 0;
 	list[0].num = lbppb;
-	ret = unmap(iscsic, tgt_lun, 0, list, 1,
+	ret = unmap(sd->iscsi_ctx, sd->iscsi_lun, 0, list, 1,
 		    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "UNMAP not supported on target. Skipped.");
@@ -107,7 +107,7 @@ test_readonly_sbc(void)
 	logging(LOG_VERBOSE, "Test UNMAP of one logical block fails with WRITE_PROTECTED");
 	list[0].lba = 0;
 	list[0].num = 1;
-	ret = unmap(iscsic, tgt_lun, 0, list, 1,
+	ret = unmap(sd->iscsi_ctx, sd->iscsi_lun, 0, list, 1,
 		    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "UNMAP not supported on target. Skipped.");
@@ -115,7 +115,7 @@ test_readonly_sbc(void)
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 fails with WRITE_PROTECTED");
-	ret = writeverify10(iscsic, tgt_lun, 0,
+	ret = writeverify10(sd->iscsi_ctx, sd->iscsi_lun, 0,
 			    block_size, block_size, 0, 0, 0, 0, buf,
 			    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
@@ -124,7 +124,7 @@ test_readonly_sbc(void)
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY12 fails with WRITE_PROTECTED");
-	ret = writeverify12(iscsic, tgt_lun, 0,
+	ret = writeverify12(sd->iscsi_ctx, sd->iscsi_lun, 0,
 			    block_size, block_size, 0, 0, 0, 0, buf,
 			    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
@@ -133,7 +133,7 @@ test_readonly_sbc(void)
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 fails with WRITE_PROTECTED");
-	ret = writeverify16(iscsic, tgt_lun, 0,
+	ret = writeverify16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 			    block_size, block_size, 0, 0, 0, 0, buf,
 			    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
@@ -142,7 +142,7 @@ test_readonly_sbc(void)
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test ORWRITE fails with WRITE_PROTECTED");
-	ret = orwrite(iscsic, tgt_lun, 0,
+	ret = orwrite(sd->iscsi_ctx, sd->iscsi_lun, 0,
 		      block_size, block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {

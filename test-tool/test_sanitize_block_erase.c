@@ -33,7 +33,7 @@ check_wabereq(void)
 	struct scsi_task *task_ret = NULL;
 
 	logging(LOG_VERBOSE, "Read one block from LBA 0");
-	read10(iscsic, &task_ret, tgt_lun, 0, block_size, block_size,
+	read10(sd->iscsi_ctx, &task_ret, sd->iscsi_lun, 0, block_size, block_size,
 	       0, 0, 0, 0, 0, NULL,
 	       EXPECT_STATUS_GOOD);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
@@ -109,7 +109,7 @@ check_unmap(void)
 	uint64_t lba;
 
 	logging(LOG_VERBOSE, "Read LBA mapping from the target");
-	get_lba_status(iscsic, &task_ret, tgt_lun, 0, 256,
+	get_lba_status(sd->iscsi_ctx, &task_ret, sd->iscsi_lun, 0, 256,
 		       EXPECT_STATUS_GOOD);
 	if (task_ret == NULL) {
 		logging(LOG_VERBOSE, "[FAILED] Failed to read LBA mapping "
@@ -121,7 +121,7 @@ check_unmap(void)
 	if (task_ret->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Failed to read LBA mapping "
 			"from the target. Sense: %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 		CU_FAIL("[FAILED] Failed to read LBA mapping "
 			"from the target.");
 		scsi_free_scsi_task(task_ret);
@@ -197,7 +197,7 @@ init_lun_with_data(unsigned char *buf, uint64_t lba)
 	int ret;
 
 	memset(buf, 'a', 256 * block_size);
-	ret = write16(iscsic, tgt_lun, lba, 256 * block_size,
+	ret = write16(sd->iscsi_ctx, sd->iscsi_lun, lba, 256 * block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -209,7 +209,7 @@ check_lun_is_wiped(unsigned char *buf, uint64_t lba)
 	int ret;
 	unsigned char *rbuf = alloca(256 * block_size);
 
-	ret = read16(iscsic, tgt_lun, lba, 256 * block_size,
+	ret = read16(sd->iscsi_ctx, sd->iscsi_lun, lba, 256 * block_size,
 		     block_size, 0, 0, 0, 0, 0, rbuf,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -325,7 +325,7 @@ test_sanitize_block_erase(void)
 
 
 	logging(LOG_VERBOSE, "Test we can perform basic BLOCK ERASE SANITIZE");
-	ret = sanitize(iscsic, tgt_lun,
+	ret = sanitize(sd->iscsi_ctx, sd->iscsi_lun,
 		       0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -341,7 +341,7 @@ test_sanitize_block_erase(void)
 	logging(LOG_VERBOSE, "BLOCK_ERASE parameter list length must be 0");
 	logging(LOG_VERBOSE, "Test that non-zero param length is an error for "
 		"BLOCK ERASE");
-	ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+	ret = sanitize_invalidfieldincdb(sd->iscsi_ctx, sd->iscsi_lun,
 		       0, 0, SCSI_SANITIZE_BLOCK_ERASE, 8, &data);
 	CU_ASSERT_EQUAL(ret, 0);
 

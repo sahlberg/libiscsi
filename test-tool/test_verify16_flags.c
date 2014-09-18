@@ -35,12 +35,12 @@ test_verify16_flags(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 flags");
 
-	ret = read16(iscsic, tgt_lun, 0, block_size,
+	ret = read16(sd->iscsi_ctx, sd->iscsi_lun, 0, block_size,
 		     block_size, 0, 0, 0, 0, 0, buf,
 		     EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test VERIFY16 with DPO==1");
-	ret = verify16(iscsic, tgt_lun, 0, block_size,
+	ret = verify16(sd->iscsi_ctx, sd->iscsi_lun, 0, block_size,
 		       block_size, 0, 1, 0, buf,
 		       EXPECT_STATUS_GOOD);
 	if (ret == -2) {
@@ -52,7 +52,7 @@ test_verify16_flags(void)
 
 
 	logging(LOG_VERBOSE, "Test VERIFY16 with BYTCHK==1");
-	ret = verify16(iscsic, tgt_lun, 0, block_size,
+	ret = verify16(sd->iscsi_ctx, sd->iscsi_lun, 0, block_size,
 		       block_size, 0, 0, 1, buf,
 		       EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);

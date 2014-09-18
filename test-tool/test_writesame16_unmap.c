@@ -46,12 +46,12 @@ test_writesame16_unmap(void)
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);
-		ret = write16(iscsic, tgt_lun, 0,
+		ret = write16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			      EXPECT_STATUS_GOOD);
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
 		memset(buf, 0, block_size);
-		ret = writesame16(iscsic, tgt_lun, 0,
+		ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 				  block_size, i, 0, 1, 0, 0, buf,
 				  EXPECT_STATUS_GOOD);
 		if (ret == -2) {
@@ -66,7 +66,7 @@ test_writesame16_unmap(void)
 				"blocks back and verify they are all zero");
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			ret = read16(iscsic, tgt_lun, 0,
+			ret = read16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
@@ -84,14 +84,14 @@ test_writesame16_unmap(void)
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);
-		ret = write16(iscsic, tgt_lun, num_blocks - i,
+		ret = write16(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
 			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
 		memset(buf, 0, block_size);
-		ret = writesame16(iscsic, tgt_lun, num_blocks - i,
+		ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
 				  block_size, i, 0, 1, 0, 0, buf,
 				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -101,7 +101,7 @@ test_writesame16_unmap(void)
 				"blocks back and verify they are all zero");
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			ret = read16(iscsic, tgt_lun, num_blocks - i,
+			ret = read16(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
@@ -115,7 +115,7 @@ test_writesame16_unmap(void)
 	}
 
 	logging(LOG_VERBOSE, "Verify that WRITESAME16 ANCHOR==1 + UNMAP==0 is invalid");
-	ret = writesame16(iscsic, tgt_lun, 0,
+	ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 			  block_size, 1, 1, 0, 0, 0, buf,
 			  EXPECT_INVALID_FIELD_IN_CDB);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -125,12 +125,12 @@ test_writesame16_unmap(void)
 	if (inq_lbp->anc_sup) {
 		logging(LOG_VERBOSE, "Test WRITESAME16 ANCHOR==1 + UNMAP==0");
 		memset(buf, 0, block_size);
-		ret = writesame16(iscsic, tgt_lun, 0,
+		ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 				  block_size, 1, 1, 1, 0, 0, buf,
 				  EXPECT_STATUS_GOOD);
 	} else {
 		logging(LOG_VERBOSE, "Test WRITESAME16 ANCHOR==1 + UNMAP==0 no ANC_SUP so expecting to fail");
-		ret = writesame16(iscsic, tgt_lun, 0,
+		ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 				  block_size, 1, 1, 1, 0, 0, buf,
 				  EXPECT_INVALID_FIELD_IN_CDB);
 	}
@@ -156,14 +156,14 @@ test_writesame16_unmap(void)
 
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);
-		ret = write16(iscsic, tgt_lun, 0,
+		ret = write16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
 		memset(buf, 0, block_size);
-		ret = writesame16(iscsic, tgt_lun, 0,
+		ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 				  block_size, i, 0, 1, 0, 0, buf,
 				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -174,7 +174,7 @@ test_writesame16_unmap(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			ret = read16(iscsic, tgt_lun, 0,
+			ret = read16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
@@ -191,7 +191,7 @@ test_writesame16_unmap(void)
 			"INVALID_FIELD_IN_CDB.");
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
-		ret = writesame16(iscsic, tgt_lun, 0,
+		ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 				  block_size, i, 0, 1, 0, 0, buf,
 				  EXPECT_INVALID_FIELD_IN_CDB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -208,14 +208,14 @@ test_writesame16_unmap(void)
 
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);
-		ret = write16(iscsic, tgt_lun, 0,
+		ret = write16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
 		memset(buf, 0, block_size);
-		ret = writesame16(iscsic, tgt_lun, 0,
+		ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 				  block_size, i, 0, 1, 0, 0, buf,
 				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -226,7 +226,7 @@ test_writesame16_unmap(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			ret = read16(iscsic, tgt_lun, 0,
+			ret = read16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
@@ -243,7 +243,7 @@ test_writesame16_unmap(void)
 			"INVALID_FIELD_IN_CDB.");
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
-		ret = writesame16(iscsic, tgt_lun, 0,
+		ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, 0,
 				  block_size, i, 0, 1, 0, 0, buf,
 				  EXPECT_INVALID_FIELD_IN_CDB);
 		CU_ASSERT_EQUAL(ret, 0);

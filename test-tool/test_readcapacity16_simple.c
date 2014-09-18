@@ -34,7 +34,7 @@ test_readcapacity16_simple(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that READCAPACITY16 works");
 
-	ret = readcapacity16(iscsic, tgt_lun, 16,
+	ret = readcapacity16(sd->iscsi_ctx, sd->iscsi_lun, 16,
 			     EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented on this target and it does not claim support.");

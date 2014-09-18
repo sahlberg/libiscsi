@@ -50,7 +50,7 @@ test_get_lba_status_unmap_single(void)
 
 	logging(LOG_VERBOSE, "Write the first %i blocks with a known "
 		"pattern and thus map the blocks", 256 + lbppb);
-	ret = write10(iscsic, tgt_lun, 0, (256 + lbppb) * block_size,
+	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 0, (256 + lbppb) * block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -60,13 +60,13 @@ test_get_lba_status_unmap_single(void)
 			PRIu64 " (number of logical blocks: %d)", i, lbppb);
 		list[0].lba = i;
 		list[0].num = lbppb;
-		ret = unmap(iscsic, tgt_lun, 0, list, 1,
+		ret = unmap(sd->iscsi_ctx, sd->iscsi_lun, 0, list, 1,
 			    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:%"
 			PRIu64, i);
-		ret = get_lba_status(iscsic, NULL, tgt_lun, i, 24,
+		ret = get_lba_status(sd->iscsi_ctx, NULL, sd->iscsi_lun, i, 24,
 				     EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			CU_PASS("[SKIPPED] Target does not support GET_LBA_STATUS. Skipping test");
@@ -78,7 +78,7 @@ test_get_lba_status_unmap_single(void)
 		}
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:%"
 			PRIu64, i + lbppb);
-		ret = get_lba_status(iscsic, &t, tgt_lun, i + lbppb, 24,
+		ret = get_lba_status(sd->iscsi_ctx, &t, sd->iscsi_lun, i + lbppb, 24,
 				     EXPECT_STATUS_GOOD);
 		if (ret != 0) {
 			CU_FAIL("[FAILED] GET_LBA_STATUS command failed");
@@ -116,20 +116,20 @@ test_get_lba_status_unmap_single(void)
 	for (i = lbppb; i + lbppb <= 256; i += lbppb) {
 		logging(LOG_VERBOSE, "Write the first %i blocks with a known "
 			"pattern and thus map the blocks", (256 + lbppb));
-		ret = write10(iscsic, tgt_lun, 0, (256 + lbppb) * block_size,
+		ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 0, (256 + lbppb) * block_size,
 			      block_size, 0, 0, 0, 0, 0, buf,
 			      EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmap %" PRIu64 " blocks at LBA 0", i);
 		list[0].lba = 0;
 		list[0].num = i;
-		ret = unmap(iscsic, tgt_lun, 0, list, 1,
+		ret = unmap(sd->iscsi_ctx, sd->iscsi_lun, 0, list, 1,
 			    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:0");
 
-		ret = get_lba_status(iscsic, NULL, tgt_lun, 0, 24,
+		ret = get_lba_status(sd->iscsi_ctx, NULL, sd->iscsi_lun, 0, 24,
 				     EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			CU_PASS("[SKIPPED] Target does not support GET_LBA_STATUS. Skipping test");
@@ -140,7 +140,7 @@ test_get_lba_status_unmap_single(void)
 			return;
 		}
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:%" PRIu64, i + 1);
-		ret = get_lba_status(iscsic, &t, tgt_lun, i + 1, 24,
+		ret = get_lba_status(sd->iscsi_ctx, &t, sd->iscsi_lun, i + 1, 24,
 				     EXPECT_STATUS_GOOD);
 		if (ret != 0) {
 			CU_FAIL("[FAILED] GET_LBA_STATUS command failed");

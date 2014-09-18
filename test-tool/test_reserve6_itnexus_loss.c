@@ -36,7 +36,7 @@ test_reserve6_itnexus_loss(void)
 
 
 	logging(LOG_NORMAL, "Take out a RESERVE6 from the first initiator");
-	ret = reserve6(iscsic, tgt_lun);
+	ret = reserve6(sd->iscsi_ctx, sd->iscsi_lun);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "[SKIPPED] Target does not support RESERVE6. Skipping test");
 		CU_PASS("[SKIPPED] Target does not support RESERVE6. Skipping test");
@@ -46,35 +46,35 @@ test_reserve6_itnexus_loss(void)
 
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	iscsic2 = iscsi_context_login(initiatorname2, tgt_url, &tgt_lun);
+	iscsic2 = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd->iscsi_lun);
 	if (iscsic2 == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
 	}
 
 	logging(LOG_NORMAL, "Try to take out a RESERVE6 from the second initiator");
-	ret = reserve6_conflict(iscsic2, tgt_lun);
+	ret = reserve6_conflict(iscsic2, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Disconnect from the target.");
-	iscsi_destroy_context(iscsic);
+	iscsi_destroy_context(sd->iscsi_ctx);
 
 	logging(LOG_VERBOSE, "Sleep for three seconds incase the target is slow to reset");
 	sleep(3);
 
 	logging(LOG_VERBOSE, "Reconnect to target");
-	iscsic = iscsi_context_login(initiatorname1, tgt_url, &tgt_lun);
-	if (iscsic == NULL) {
+	sd->iscsi_ctx = iscsi_context_login(initiatorname1, sd->iscsi_url, &sd->iscsi_lun);
+	if (sd->iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		goto finished;
 	}
 
 	logging(LOG_NORMAL, "RESERVE6 from the second initiator should work now");
-	ret = reserve6(iscsic2, tgt_lun);
+	ret = reserve6(iscsic2, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_NORMAL, "RELEASE6 from the second initiator");
-	ret = release6(iscsic2, tgt_lun);
+	ret = release6(iscsic2, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
 finished:

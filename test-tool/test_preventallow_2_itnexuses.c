@@ -36,28 +36,28 @@ test_preventallow_2_itnexuses(void)
 	logging(LOG_VERBOSE, "Test that PREVENT MEDIUM REMOVAL are seen on other nexuses as well");
 
 	logging(LOG_VERBOSE, "Set the PREVENT flag");
-	ret = preventallow(iscsic, tgt_lun, 1);
+	ret = preventallow(sd->iscsi_ctx, sd->iscsi_lun, 1);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
-	ret = startstopunit(iscsic, tgt_lun, 0, 0, 0, 0, 1, 0,
+	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun, 0, 0, 0, 0, 1, 0,
 			    EXPECT_REMOVAL_PREVENTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can still access the media.");
-	ret = testunitready(iscsic, tgt_lun,
+	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	iscsic2 = iscsi_context_login(initiatorname2, tgt_url, &tgt_lun);
+	iscsic2 = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd->iscsi_lun);
 	if (iscsic2 == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
 	}
 
 	logging(LOG_VERBOSE, "Try to eject the medium on the second connection");
-	ret = startstopunit(iscsic2, tgt_lun, 0, 0, 0, 0, 1, 0,
+	ret = startstopunit(iscsic2, sd->iscsi_lun, 0, 0, 0, 0, 1, 0,
 			    EXPECT_REMOVAL_PREVENTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -70,11 +70,11 @@ test_preventallow_2_itnexuses(void)
 
 	logging(LOG_VERBOSE, "Clear PREVENT and load medium in case target failed");
 	logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
-	ret = preventallow(iscsic, tgt_lun, 0);
+	ret = preventallow(sd->iscsi_ctx, sd->iscsi_lun, 0);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Load the medium");
-	ret = startstopunit(iscsic, tgt_lun, 0, 0, 0, 0, 1, 1,
+	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun, 0, 0, 0, 0, 1, 1,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 

@@ -28,7 +28,6 @@
 
 extern const char *initiatorname1;
 extern const char *initiatorname2;
-extern const char *tgt_url;
 
 #define EXPECT_STATUS_GOOD SCSI_STATUS_GOOD, SCSI_SENSE_NO_SENSE, NULL, 0
 #define EXPECT_NO_MEDIUM SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_NOT_READY, no_medium_ascqs, 3
@@ -183,6 +182,13 @@ extern int allow_sanitize;
 extern int readonly;
 extern int sbc3_support;
 extern int maximum_transfer_length;
+
+struct scsi_device {
+	struct iscsi_context *iscsi_ctx;
+	int iscsi_lun;
+	const char *iscsi_url;
+};
+extern struct scsi_device *sd;
 
 struct iscsi_context *iscsi_context_login(const char *initiatorname, const char *url, int *lun);
 

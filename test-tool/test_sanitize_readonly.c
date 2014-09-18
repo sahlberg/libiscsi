@@ -40,14 +40,14 @@ test_sanitize_readonly(void)
 	CHECK_FOR_DATALOSS;
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	iscsic2 = iscsi_context_login(initiatorname2, tgt_url, &tgt_lun);
+	iscsic2 = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd->iscsi_lun);
 	if (iscsic2 == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
 	}
 
 	logging(LOG_VERBOSE, "Set Software Write Protect on the second connection");
-	ret = set_swp(iscsic2, tgt_lun);
+	ret = set_swp(iscsic2, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 	if (ret != 0) {
 		return;
@@ -55,7 +55,7 @@ test_sanitize_readonly(void)
 
 	logging(LOG_VERBOSE, "Use TESTUNITREADY to clear unit attention on "
 		"first connection");
-	while (testunitready_clear_ua(iscsic, tgt_lun)) {
+	while (testunitready_clear_ua(sd->iscsi_ctx, sd->iscsi_lun)) {
 		sleep(1);
 	}
 
@@ -77,7 +77,7 @@ test_sanitize_readonly(void)
 		data.data[1] = 0x00;
 		data.data[2] = block_size >> 8;
 		data.data[3] = block_size & 0xff;
-		ret = sanitize_writeprotected(iscsic, tgt_lun,
+		ret = sanitize_writeprotected(sd->iscsi_ctx, sd->iscsi_lun,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -92,7 +92,7 @@ test_sanitize_readonly(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE BLOCK_ERASE");
-		ret = sanitize_writeprotected(iscsic, tgt_lun,
+		ret = sanitize_writeprotected(sd->iscsi_ctx, sd->iscsi_lun,
 		       0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -106,18 +106,18 @@ test_sanitize_readonly(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE CRYPTO_ERASE");
-		ret = sanitize_writeprotected(iscsic, tgt_lun,
+		ret = sanitize_writeprotected(sd->iscsi_ctx, sd->iscsi_lun,
 		       0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 
 	logging(LOG_VERBOSE, "Clear Software Write Protect on the second connection");
-	ret = clear_swp(iscsic2, tgt_lun);
+	ret = clear_swp(iscsic2, sd->iscsi_lun);
 
 	logging(LOG_VERBOSE, "Use TESTUNITREADY to clear unit attention on "
 		"first connection");
-	while (testunitready_clear_ua(iscsic, tgt_lun)) {
+	while (testunitready_clear_ua(sd->iscsi_ctx, sd->iscsi_lun)) {
 		sleep(1);
 	}
 

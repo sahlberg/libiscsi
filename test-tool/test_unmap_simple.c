@@ -31,7 +31,7 @@ init_lun_with_data(unsigned char *buf, uint64_t lba)
 	int ret;
 
 	memset(buf, 'a', 256 * block_size);
-	ret = write10(iscsic, tgt_lun, lba, 256 * block_size,
+	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, lba, 256 * block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -64,12 +64,12 @@ test_unmap_simple(void)
 		logging(LOG_VERBOSE, "UNMAP blocks 0-%d", i);
 		list[0].lba = 0;
 		list[0].num = i;
-		ret = unmap(iscsic, tgt_lun, 0, list, 1,
+		ret = unmap(sd->iscsi_ctx, sd->iscsi_lun, 0, list, 1,
 			    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read blocks 0-%d", i);
-		ret = read10(iscsic, NULL, tgt_lun, 0, i * block_size,
+		ret = read10(sd->iscsi_ctx, NULL, sd->iscsi_lun, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -99,12 +99,12 @@ test_unmap_simple(void)
 	for (i = 0; i < 256; i++) {
 		list[i].lba = i;
 		list[i].num = 1;
-		ret = unmap(iscsic, tgt_lun, 0, list, i + 1,
+		ret = unmap(sd->iscsi_ctx, sd->iscsi_lun, 0, list, i + 1,
 			    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read blocks 0-%d", i);
-		ret = read10(iscsic, NULL, tgt_lun, 0, i * block_size,
+		ret = read10(sd->iscsi_ctx, NULL, sd->iscsi_lun, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

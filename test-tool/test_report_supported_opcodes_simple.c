@@ -34,7 +34,7 @@ test_report_supported_opcodes_simple(void)
 	logging(LOG_VERBOSE, "Test basic READ_SUPPORTED_OPCODES");
 
 	ret = report_supported_opcodes(
-		iscsic, NULL, tgt_lun,
+		sd->iscsi_ctx, NULL, sd->iscsi_lun,
 		0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
 		1024,
 		EXPECT_STATUS_GOOD);

@@ -34,14 +34,14 @@ test_verify10_flags(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY10 flags");
 
-	ret = read10(iscsic, NULL, tgt_lun, 0, block_size,
+	ret = read10(sd->iscsi_ctx, NULL, sd->iscsi_lun, 0, block_size,
 		     block_size, 0, 0, 0, 0, 0, buf,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test VERIFY10 with DPO==1");
-	ret = verify10(iscsic, tgt_lun, 0, block_size,
+	ret = verify10(sd->iscsi_ctx, sd->iscsi_lun, 0, block_size,
 		       block_size, 0, 1, 0, buf,
 		       EXPECT_STATUS_GOOD);
 	if (ret == -2) {
@@ -54,7 +54,7 @@ test_verify10_flags(void)
 
 
 	logging(LOG_VERBOSE, "Test VERIFY10 with BYTCHK==1");
-	ret = verify10(iscsic, tgt_lun, 0, block_size,
+	ret = verify10(sd->iscsi_ctx, sd->iscsi_lun, 0, block_size,
 		       block_size, 0, 0, 1, buf,
 		       EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);

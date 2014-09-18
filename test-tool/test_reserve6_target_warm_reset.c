@@ -36,7 +36,7 @@ test_reserve6_target_warm_reset(void)
 
 
 	logging(LOG_VERBOSE, "Take out a RESERVE6 from the first initiator");
-	ret = reserve6(iscsic, tgt_lun);
+	ret = reserve6(sd->iscsi_ctx, sd->iscsi_lun);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "[SKIPPED] Target does not support RESERVE6. Skipping test");
 		CU_PASS("[SKIPPED] Target does not support RESERVE6. Skipping test");
@@ -46,9 +46,9 @@ test_reserve6_target_warm_reset(void)
 
 
 	logging(LOG_VERBOSE, "Send a Warm Reset to the target");
-	ret = iscsi_task_mgmt_target_warm_reset_sync(iscsic);
+	ret = iscsi_task_mgmt_target_warm_reset_sync(sd->iscsi_ctx);
 	if (ret != 0) {
-		logging(LOG_NORMAL, "Warm reset failed. %s", iscsi_get_error(iscsic));
+		logging(LOG_NORMAL, "Warm reset failed. %s", iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -57,7 +57,7 @@ test_reserve6_target_warm_reset(void)
 
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	iscsic2 = iscsi_context_login(initiatorname2, tgt_url, &tgt_lun);
+	iscsic2 = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd->iscsi_lun);
 	if (iscsic2 == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
@@ -65,11 +65,11 @@ test_reserve6_target_warm_reset(void)
 
 
 	logging(LOG_VERBOSE, "RESERVE6 from the second initiator should work now");
-	ret = reserve6(iscsic2, tgt_lun);
+	ret = reserve6(iscsic2, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "RELEASE6 from the second initiator");
-	ret = release6(iscsic2, tgt_lun);
+	ret = release6(iscsic2, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	iscsi_logout_sync(iscsic2);

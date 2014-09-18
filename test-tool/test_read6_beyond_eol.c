@@ -38,7 +38,7 @@ test_read6_beyond_eol(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ6 1-255 blocks one block beyond the end");
 	for (i = 1; i <= 255; i++) {
-		ret = read6(iscsic, tgt_lun, num_blocks + 1 - i,
+		ret = read6(sd->iscsi_ctx, sd->iscsi_lun, num_blocks + 1 - i,
 			    i * block_size, block_size, NULL,
 			    EXPECT_LBA_OOB);
 		if (ret == -2) {
@@ -52,7 +52,7 @@ test_read6_beyond_eol(void)
 
 	logging(LOG_VERBOSE, "Test READ6 1-255 blocks at LBA==0x1fffff");
 	for (i = 1; i <= 255; i++) {
-		ret = read6(iscsic, tgt_lun, 0x1fffff,
+		ret = read6(sd->iscsi_ctx, sd->iscsi_lun, 0x1fffff,
 			    i * block_size, block_size, NULL,
 			    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -61,7 +61,7 @@ test_read6_beyond_eol(void)
 
 	logging(LOG_VERBOSE, "Test READ6 2-255 blocks all but one block beyond the end");
 	for (i = 2; i <= 255; i++) {
-		ret = read6(iscsic, tgt_lun, num_blocks - 1,
+		ret = read6(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - 1,
 			    i * block_size, block_size, NULL,
 			    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);

@@ -40,14 +40,14 @@ test_modesense6_residuals(void)
 		scsi_free_scsi_task(task);
 		task = NULL;
 	}
-	task = iscsi_modesense6_sync(iscsic, tgt_lun, 0,
+	task = iscsi_modesense6_sync(sd->iscsi_ctx, sd->iscsi_lun, 0,
 				     SCSI_MODESENSE_PC_CURRENT,
 				     SCSI_MODEPAGE_RETURN_ALL_PAGES,
 				     0, 4);
 	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Failed to send MODE_SENSE6 "
 			"command:%s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 		CU_FAIL("[FAILED] Failed to fetch the All Pages page.");
 		return;
 	}
@@ -80,14 +80,14 @@ test_modesense6_residuals(void)
 		scsi_free_scsi_task(task);
 		task = NULL;
 	}
-	task = iscsi_modesense6_sync(iscsic, tgt_lun, 0,
+	task = iscsi_modesense6_sync(sd->iscsi_ctx, sd->iscsi_lun, 0,
 				     SCSI_MODESENSE_PC_CURRENT,
 				     SCSI_MODEPAGE_RETURN_ALL_PAGES,
 				     0, 255);
 	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Failed to send MODE_SENSE6 "
 			"command:%s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 		CU_FAIL("[FAILED] Failed to fetch the All Pages page.");
 		return;
 	}

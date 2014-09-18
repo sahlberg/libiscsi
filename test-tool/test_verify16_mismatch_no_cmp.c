@@ -41,7 +41,7 @@ test_verify16_mismatch_no_cmp(void)
 			break;
 		}
 
-		ret = read16(iscsic, tgt_lun, 0, i * block_size,
+		ret = read16(sd->iscsi_ctx, sd->iscsi_lun, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 
@@ -49,7 +49,7 @@ test_verify16_mismatch_no_cmp(void)
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify16(iscsic, tgt_lun, 0, i * block_size,
+		ret = verify16(sd->iscsi_ctx, sd->iscsi_lun, 0, i * block_size,
 			       block_size, 0, 0, 0, buf,
 			       EXPECT_STATUS_GOOD);
 		if (ret == -2) {
@@ -68,7 +68,7 @@ test_verify16_mismatch_no_cmp(void)
 			break;
 		}
 
-		ret = read16(iscsic, tgt_lun, num_blocks - i,
+		ret = read16(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -77,7 +77,7 @@ test_verify16_mismatch_no_cmp(void)
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify16(iscsic, tgt_lun, num_blocks - i,
+		ret = verify16(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
 			       i * block_size, block_size, 0, 0, 0, buf,
 			       EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

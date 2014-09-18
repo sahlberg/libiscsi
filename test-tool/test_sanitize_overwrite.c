@@ -33,7 +33,7 @@ init_lun_with_data(uint64_t lba)
 	unsigned char *buf = alloca(256 * block_size);
 
 	memset(buf, 'a', 256 * block_size);
-	ret = write16(iscsic, tgt_lun, lba, 256 * block_size,
+	ret = write16(sd->iscsi_ctx, sd->iscsi_lun, lba, 256 * block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -46,7 +46,7 @@ check_lun_is_wiped(uint64_t lba, char c)
 	unsigned char *rbuf = alloca(256 * block_size);
 	unsigned char *zbuf = alloca(256 * block_size);
 
-	ret = read16(iscsic, tgt_lun, lba, 256 * block_size,
+	ret = read16(sd->iscsi_ctx, sd->iscsi_lun, lba, 256 * block_size,
 		     block_size, 0, 0, 0, 0, 0, rbuf,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -124,7 +124,7 @@ test_sanitize_overwrite(void)
 	data.data[1] = 0x00;
 	data.data[2] = block_size >> 8;
 	data.data[3] = block_size & 0xff;
-	ret = sanitize(iscsic, tgt_lun,
+	ret = sanitize(sd->iscsi_ctx, sd->iscsi_lun,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -140,7 +140,7 @@ test_sanitize_overwrite(void)
 	data.data[2] = (block_size / 2) >> 8;
 	data.data[3] = (block_size / 2 ) & 0xff;
 
-	ret = sanitize(iscsic, tgt_lun,
+	ret = sanitize(sd->iscsi_ctx, sd->iscsi_lun,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -151,7 +151,7 @@ test_sanitize_overwrite(void)
 	data.data[2] = 0;
 	data.data[3] = 4;
 
-	ret = sanitize(iscsic, tgt_lun,
+	ret = sanitize(sd->iscsi_ctx, sd->iscsi_lun,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -161,7 +161,7 @@ test_sanitize_overwrite(void)
 		logging(LOG_VERBOSE, "Test OVERWRITE with ParamLen:%d is an "
 			"error.", i);
 
-		ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+		ret = sanitize_invalidfieldincdb(sd->iscsi_ctx, sd->iscsi_lun,
 			       0, 0, SCSI_SANITIZE_OVERWRITE, i, &data);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
@@ -180,7 +180,7 @@ test_sanitize_overwrite(void)
 	data.size = block_size + 8;
 	data.data = alloca(block_size + 8); /* so we can send IP > blocksize */
 	memset(data.data, 0, data.size);
-	ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+	ret = sanitize_invalidfieldincdb(sd->iscsi_ctx, sd->iscsi_lun,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, block_size + 5, &data);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
@@ -199,7 +199,7 @@ test_sanitize_overwrite(void)
 	data.data[1] = 0x00;
 	data.data[2] = block_size >> 8;
 	data.data[3] = block_size & 0xff;
-	ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+	ret = sanitize_invalidfieldincdb(sd->iscsi_ctx, sd->iscsi_lun,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -212,7 +212,7 @@ test_sanitize_overwrite(void)
 	data.data[1] = 0x00;
 	data.data[2] = 0x00;
 	data.data[3] = 0x00;
-	ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+	ret = sanitize_invalidfieldincdb(sd->iscsi_ctx, sd->iscsi_lun,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -226,7 +226,7 @@ test_sanitize_overwrite(void)
 	data.data[1] = 0x00;
 	data.data[2] = (block_size + 4) >> 8;
 	data.data[3] = (block_size + 4) & 0xff;
-	ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+	ret = sanitize_invalidfieldincdb(sd->iscsi_ctx, sd->iscsi_lun,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
 	CU_ASSERT_EQUAL(ret, 0);
 }

@@ -51,7 +51,7 @@ test_sanitize_invalid_serviceaction(void)
 		logging(LOG_VERBOSE, "Verify that ServiceAction:0x%02d is "
 			"an error.", i);
 
-		ret = sanitize_invalidfieldincdb(iscsic, tgt_lun,
+		ret = sanitize_invalidfieldincdb(sd->iscsi_ctx, sd->iscsi_lun,
 			       0, 0, i, 0, NULL);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "

@@ -37,7 +37,7 @@ test_read12_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12(iscsic, tgt_lun, 0, i * block_size,
+		ret = read12(sd->iscsi_ctx, sd->iscsi_lun, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, NULL,
 			     EXPECT_STATUS_GOOD);
 		if (ret == -2) {
@@ -54,7 +54,7 @@ test_read12_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12(iscsic, tgt_lun, num_blocks - i,
+		ret = read12(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

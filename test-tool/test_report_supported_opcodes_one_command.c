@@ -39,7 +39,7 @@ test_report_supported_opcodes_one_command(void)
 
 
 	logging(LOG_VERBOSE, "Fetch list of all supported opcodes");
-	ret = report_supported_opcodes(iscsic, &rso_task, tgt_lun,
+	ret = report_supported_opcodes(sd->iscsi_ctx, &rso_task, sd->iscsi_lun,
 				       0, SCSI_REPORT_SUPPORTING_OPS_ALL,
 				       0, 0, 65535,
 				       EXPECT_STATUS_GOOD);
@@ -68,7 +68,7 @@ test_report_supported_opcodes_one_command(void)
 		if (rsoc->descriptors[i].servactv) {
 			logging(LOG_VERBOSE, "This opcode has service actions. "
 				"Reporting Options 001b should fail");
-			ret = report_supported_opcodes(iscsic, NULL, tgt_lun,
+			ret = report_supported_opcodes(sd->iscsi_ctx, NULL, sd->iscsi_lun,
 				0, SCSI_REPORT_SUPPORTING_OPCODE,
 				rsoc->descriptors[i].opcode,
 				rsoc->descriptors[i].sa,
@@ -79,7 +79,7 @@ test_report_supported_opcodes_one_command(void)
 				"service actions. Reporting Options 001b "
 				"should work");
 			ret = report_supported_opcodes(
-				iscsic, NULL, tgt_lun,
+				sd->iscsi_ctx, NULL, sd->iscsi_lun,
 				0, SCSI_REPORT_SUPPORTING_OPCODE,
 				rsoc->descriptors[i].opcode,
 				rsoc->descriptors[i].sa,
@@ -92,7 +92,7 @@ test_report_supported_opcodes_one_command(void)
 			logging(LOG_VERBOSE, "This opcode has service actions. "
 				"Reporting Options 002b should work");
 			ret = report_supported_opcodes(
-				iscsic, NULL, tgt_lun,
+				sd->iscsi_ctx, NULL, sd->iscsi_lun,
 				0, SCSI_REPORT_SUPPORTING_SERVICEACTION,
 				rsoc->descriptors[i].opcode,
 				rsoc->descriptors[i].sa,
@@ -103,7 +103,7 @@ test_report_supported_opcodes_one_command(void)
 				"service actions. Reporting Options 002b "
 				"should fail");
 			ret = report_supported_opcodes(
-				iscsic, NULL, tgt_lun,
+				sd->iscsi_ctx, NULL, sd->iscsi_lun,
 				0, SCSI_REPORT_SUPPORTING_SERVICEACTION,
 				rsoc->descriptors[i].opcode,
 				rsoc->descriptors[i].sa,
@@ -121,7 +121,7 @@ test_report_supported_opcodes_one_command(void)
 			rsoc->descriptors[i].opcode,
 			rsoc->descriptors[i].sa);
 		ret = report_supported_opcodes(
-			iscsic, &one_task, tgt_lun,
+			sd->iscsi_ctx, &one_task, sd->iscsi_lun,
 			0,
 			rsoc->descriptors[i].servactv ?
 				SCSI_REPORT_SUPPORTING_SERVICEACTION :

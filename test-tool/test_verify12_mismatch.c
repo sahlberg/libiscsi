@@ -40,7 +40,7 @@ test_verify12_mismatch(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12(iscsic, tgt_lun, 0, i * block_size,
+		ret = read12(sd->iscsi_ctx, sd->iscsi_lun, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 
@@ -48,7 +48,7 @@ test_verify12_mismatch(void)
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify12(iscsic, tgt_lun, 0, i * block_size,
+		ret = verify12(sd->iscsi_ctx, sd->iscsi_lun, 0, i * block_size,
 			       block_size, 0, 0, 1, buf,
 			       EXPECT_MISCOMPARE);
 		if (ret == -2) {
@@ -66,7 +66,7 @@ test_verify12_mismatch(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12(iscsic, tgt_lun, num_blocks - i,
+		ret = read12(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -75,7 +75,7 @@ test_verify12_mismatch(void)
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify12(iscsic, tgt_lun, num_blocks - i,
+		ret = verify12(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
 			       i * block_size, block_size, 0, 0, 1, buf,
 			       EXPECT_MISCOMPARE);
 		CU_ASSERT_EQUAL(ret, 0);

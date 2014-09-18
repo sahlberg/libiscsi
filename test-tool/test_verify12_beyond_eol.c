@@ -42,7 +42,7 @@ test_verify12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = verify12(iscsic, tgt_lun, num_blocks + 1 - i,
+		ret = verify12(sd->iscsi_ctx, sd->iscsi_lun, num_blocks + 1 - i,
 			       i * block_size, block_size, 0, 0, 1, buf,
 			       EXPECT_LBA_OOB);
 		if (ret == -2) {
@@ -59,7 +59,7 @@ test_verify12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = verify12(iscsic, tgt_lun, 0x80000000,
+		ret = verify12(sd->iscsi_ctx, sd->iscsi_lun, 0x80000000,
 			       i * block_size, block_size, 0, 0, 1, buf,
 			       EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -71,7 +71,7 @@ test_verify12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = verify12(iscsic, tgt_lun, -1, i * block_size,
+		ret = verify12(sd->iscsi_ctx, sd->iscsi_lun, -1, i * block_size,
 			       block_size, 0, 0, 1, buf,
 			       EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -83,7 +83,7 @@ test_verify12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = verify12(iscsic, tgt_lun, num_blocks - 1,
+		ret = verify12(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - 1,
 			       i * block_size, block_size, 0, 0, 1, buf,
 			       EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);

@@ -69,13 +69,13 @@ void test_iscsi_datasn_invalid(void)
 	logging(LOG_VERBOSE, "Send 2 DATAIN with DATASN==0. Should fail.");
 	change_datasn = 1;
 
-	iscsic->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsic->target_max_recv_data_segment_length = block_size;
+	sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+	sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
-	iscsi_set_noautoreconnect(iscsic, 1);
-	iscsi_set_timeout(iscsic, 3);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
+	iscsi_set_timeout(sd->iscsi_ctx, 3);
 
-	ret = write10(iscsic, tgt_lun, 100, 2 * block_size,
+	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 100, 2 * block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
@@ -86,19 +86,19 @@ void test_iscsi_datasn_invalid(void)
 	}	
 	CU_ASSERT_NOT_EQUAL(ret, 0);
 
-	iscsi_set_noautoreconnect(iscsic, 0);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 
 
 	logging(LOG_VERBOSE, "Send DATAIN with DATASN==27. Should fail");
 	change_datasn = 2;
 
-	iscsic->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsic->target_max_recv_data_segment_length = block_size;
+	sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+	sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
-	iscsi_set_noautoreconnect(iscsic, 1);
-	iscsi_set_timeout(iscsic, 3);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
+	iscsi_set_timeout(sd->iscsi_ctx, 3);
 
-	ret = write10(iscsic, tgt_lun, 100, block_size,
+	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 100, block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
@@ -109,19 +109,19 @@ void test_iscsi_datasn_invalid(void)
 	}	
 	CU_ASSERT_NOT_EQUAL(ret, 0);
 
-	iscsi_set_noautoreconnect(iscsic, 0);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 
 
 	logging(LOG_VERBOSE, "Send DATAIN with DATASN==-1. Should fail");
 	change_datasn = 3;
 
-	iscsic->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsic->target_max_recv_data_segment_length = block_size;
+	sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+	sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
-	iscsi_set_noautoreconnect(iscsic, 1);
-	iscsi_set_timeout(iscsic, 3);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
+	iscsi_set_timeout(sd->iscsi_ctx, 3);
 
-	ret = write10(iscsic, tgt_lun, 100, block_size,
+	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 100, block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
@@ -132,20 +132,20 @@ void test_iscsi_datasn_invalid(void)
 	}	
 	CU_ASSERT_NOT_EQUAL(ret, 0);
 
-	iscsi_set_noautoreconnect(iscsic, 0);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 
 
 
 	logging(LOG_VERBOSE, "Send DATAIN in reverse order (datasn == 1,0). Should fail");
 	change_datasn = 4;
 
-	iscsic->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-	iscsic->target_max_recv_data_segment_length = block_size;
+	sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+	sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
-	iscsi_set_noautoreconnect(iscsic, 1);
-	iscsi_set_timeout(iscsic, 3);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
+	iscsi_set_timeout(sd->iscsi_ctx, 3);
 
-	ret = write10(iscsic, tgt_lun, 100, 2 * block_size,
+	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 100, 2 * block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
@@ -157,5 +157,5 @@ void test_iscsi_datasn_invalid(void)
 	CU_ASSERT_NOT_EQUAL(ret, 0);
 
 	local_iscsi_queue_pdu = NULL;
-	iscsi_set_noautoreconnect(iscsic, 0);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 }

@@ -52,7 +52,7 @@ test_prout_reserve_simple(void)
 	logging(LOG_VERBOSE, "Test Persistent Reserve IN RESERVE works.");
 
 	/* register our reservation key with the target */
-	ret = prout_register_and_ignore(iscsic, tgt_lun, key);
+	ret = prout_register_and_ignore(sd->iscsi_ctx, sd->iscsi_lun, key);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE OUT is not implemented.");
 		CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
@@ -65,22 +65,22 @@ test_prout_reserve_simple(void)
 		enum scsi_persistent_out_type pr_type = pr_types_to_test[i];
 
 		/* reserve the target */
-		ret = prout_reserve(iscsic, tgt_lun, key, pr_type);
+		ret = prout_reserve(sd->iscsi_ctx, sd->iscsi_lun, key, pr_type);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		/* verify target reservation */
-		ret = prin_verify_reserved_as(iscsic, tgt_lun,
+		ret = prin_verify_reserved_as(sd->iscsi_ctx, sd->iscsi_lun,
 		    pr_type_is_all_registrants(pr_type) ? 0 : key,
 		    pr_type);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		/* release our reservation */
-		ret = prout_release(iscsic, tgt_lun, key, pr_type);
+		ret = prout_release(sd->iscsi_ctx, sd->iscsi_lun, key, pr_type);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 	/* remove our key from the target */
-	ret = prout_register_key(iscsic, tgt_lun, 0, key);
+	ret = prout_register_key(sd->iscsi_ctx, sd->iscsi_lun, 0, key);
 	CU_ASSERT_EQUAL(ret, 0);
 
 }
