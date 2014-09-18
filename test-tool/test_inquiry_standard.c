@@ -35,7 +35,8 @@ test_inquiry_standard(void)
 
 	logging(LOG_VERBOSE, "Verify we can read standard INQUIRY page");
 	/* 260 bytes is the maximum possible size of the standard vpd */
-	ret = inquiry(iscsic, tgt_lun, 0, 0, 260, &task);
+	ret = inquiry(iscsic, &task, tgt_lun, 0, 0, 260,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we got at least 36 bytes of data");

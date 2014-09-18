@@ -105,7 +105,8 @@ test_sanitize_reset(void)
 
 	logging(LOG_VERBOSE, "Verify that INQUIRY is still allowed while "
 		"SANITIZE is in progress");
-	ret = inquiry(iscsic, tgt_lun, 0, 0, 255, NULL);
+	ret = inquiry(iscsic, NULL, tgt_lun, 0, 0, 255,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 

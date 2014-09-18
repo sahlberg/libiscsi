@@ -37,7 +37,8 @@ test_mandatory_sbc(void)
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, "Test INQUIRY.");
-	ret = inquiry(iscsic, tgt_lun, 0, 0, 255, NULL);
+	ret = inquiry(iscsic, NULL, tgt_lun, 0, 0, 255,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READCAPACITY10.");

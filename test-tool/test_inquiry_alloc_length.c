@@ -34,14 +34,14 @@ test_inquiry_alloc_length(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test of the INQUIRY allocation length");
 
-
 	logging(LOG_VERBOSE, "Verify we can read standard INQUIRY page with alloc length from 5-255");
 	for (i = 5; i < 256 ; i++) {
 		if (task != NULL) {
 			scsi_free_scsi_task(task);
 			task = NULL;
 		}
-		ret = inquiry(iscsic, tgt_lun, 0, 0, i, &task);
+		ret = inquiry(iscsic, &task, tgt_lun, 0, 0, i,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 	logging(LOG_VERBOSE, "Verify we got at least 36 bytes of data when reading with alloc length 255");
@@ -83,11 +83,13 @@ test_inquiry_alloc_length(void)
 
 	logging(LOG_VERBOSE, "Version is SPC-3 or later. Read INQUIRY data using 16-bit allocation length");
 	logging(LOG_VERBOSE, "Read INQUIRY data with allocation length 511 (low order byte is 0xff)");
-	ret = inquiry(iscsic, tgt_lun, 0, 0, 511, &task);
+	ret = inquiry(iscsic, &task, tgt_lun, 0, 0, 511,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Read INQUIRY data with allocation length 512 (low order byte is 0x00)");
-	ret = inquiry(iscsic, tgt_lun, 0, 0, 512, &task2);
+	ret = inquiry(iscsic, &task2, tgt_lun, 0, 0, 512,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "INQUIRY data should be the same when allocation length is 511 and 512 bytes");
