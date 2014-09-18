@@ -64,7 +64,8 @@ test_unmap_simple(void)
 		logging(LOG_VERBOSE, "UNMAP blocks 0-%d", i);
 		list[0].lba = 0;
 		list[0].num = i;
-		ret = unmap(iscsic, tgt_lun, 0, list, 1);
+		ret = unmap(iscsic, tgt_lun, 0, list, 1,
+			    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read blocks 0-%d", i);
@@ -98,7 +99,8 @@ test_unmap_simple(void)
 	for (i = 0; i < 256; i++) {
 		list[i].lba = i;
 		list[i].num = 1;
-		ret = unmap(iscsic, tgt_lun, 0, list, i + 1);
+		ret = unmap(iscsic, tgt_lun, 0, list, i + 1,
+			    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read blocks 0-%d", i);

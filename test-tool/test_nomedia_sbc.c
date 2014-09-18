@@ -266,7 +266,8 @@ test_nomedia_sbc(void)
 	logging(LOG_VERBOSE, "Test UNMAP when medium is ejected.");
 	list[0].lba = 0;
 	list[0].num = lbppb;
-	ret = unmap_nomedium(iscsic, tgt_lun, 0, list, 1);
+	ret = unmap(iscsic, tgt_lun, 0, list, 1,
+		    EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"UNMAP");

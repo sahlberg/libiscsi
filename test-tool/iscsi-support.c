@@ -1840,120 +1840,63 @@ reserve6_conflict(struct iscsi_context *iscsi, int lun)
 }
 
 int
-unmap(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len)
+unmap(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
+	struct scsi_iovec *iov;
+	unsigned char *data;
+	int xferlen;
+	int i;
+	int ret;
 
-	logging(LOG_VERBOSE, "Send UNMAP list_len:%d anchor:%d", list_len, anchor);
-	task = iscsi_unmap_sync(iscsi, lun, anchor, 0, list, list_len);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send UNMAP command: %s",
-			iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		logging(LOG_NORMAL, "[SKIPPED] UNMAP is not implemented on target");
-		scsi_free_scsi_task(task);
-		return -2;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] UNMAP command: failed with sense. %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
+	logging(LOG_VERBOSE, "Send UNMAP (Expecting %s) list_len:%d anchor:%d",
+		scsi_status_str(status),
+		list_len, anchor);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping unmap\n");
 		return -1;
 	}
 
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] UNMAP returned SUCCESS.");
-	return 0;
-}
+	xferlen = 8 + list_len * 16;
 
-int
-unmap_writeprotected(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len)
-{
-	struct scsi_task *task;
+	task = scsi_cdb_unmap(anchor, 0, xferlen);
+	assert(task != NULL);
 
-	logging(LOG_VERBOSE, "Send UNMAP (Expecting WRITE_PROTECTED) "
-		"list_len:%d anchor:%d", list_len, anchor);
-
-	task = iscsi_unmap_sync(iscsi, lun, anchor, 0, list, list_len);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send UNMAP command: %s",
-			iscsi_get_error(iscsi));
-		return -1;
-	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		logging(LOG_NORMAL, "[SKIPPED] UNMAP is not implemented on target");
-		scsi_free_scsi_task(task);
-		return -2;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] UNMAP successful but should "
-			"have failed with DATA_PROTECTION/WRITE_PROTECTED");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
-		logging(LOG_NORMAL, "[FAILED] UNMAP failed with wrong sense. "
-			"Should have failed with DATA_PRTOTECTION/"
-			"WRITE_PROTECTED. Sense:%s\n",
-			iscsi_get_error(iscsi));
+	data = scsi_malloc(task, xferlen);
+	if (data == NULL) {
+		logging(LOG_NORMAL, "Out-of-memory: Failed to create "
+			"unmap parameters.");
 		scsi_free_scsi_task(task);
 		return -1;
 	}
 
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] UNMAP returned DATA_PROTECTION/WRITE_PROTECTED.");
-	return 0;
-}
-
-int
-unmap_nomedium(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send UNMAP (Expecting MEDIUM_NOT_PRESENT) "
-		"list_len:%d anchor:%d", list_len, anchor);
-
-	task = iscsi_unmap_sync(iscsi, lun, anchor, 0, list, list_len);
-	if (task == NULL) {
-		logging(LOG_NORMAL, "[FAILED] Failed to send UNMAP command: %s",
-			iscsi_get_error(iscsi));
-		return -1;
+	scsi_set_uint16(&data[0], xferlen - 2);
+	scsi_set_uint16(&data[2], xferlen - 8);
+	for (i = 0; i < list_len; i++) {
+		scsi_set_uint32(&data[8 + 16 * i], list[i].lba >> 32);
+		scsi_set_uint32(&data[8 + 16 * i + 4], list[i].lba & 0xffffffff);
+		scsi_set_uint32(&data[8 + 16 * i + 8], list[i].num);
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
-		logging(LOG_NORMAL, "[SKIPPED] UNMAP is not implemented on target");
-		scsi_free_scsi_task(task);
-		return -2;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] UNMAP successful but should "
-			"have failed with NOT_READY/MEDIUM_NOT_PRESENT*");
+
+	iov = scsi_malloc(task, sizeof(struct scsi_iovec));
+	if (iov == NULL) {
+		logging(LOG_NORMAL, "Out-of-memory: Failed to create "
+			"iov array.");
 		scsi_free_scsi_task(task);
 		return -1;
 	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_NOT_READY
-	    || (task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_OPEN
-	        && task->sense.ascq != SCSI_SENSE_ASCQ_MEDIUM_NOT_PRESENT_TRAY_CLOSED)) {
-		logging(LOG_NORMAL, "[FAILED] UNMAP Should have failed "
-			"with NOT_READY/MEDIUM_NOT_PRESENT* But failed "
-			"with %s", iscsi_get_error(iscsi));
-		scsi_free_scsi_task(task);
-		return -1;
-	}	
+	iov->iov_base = data;
+	iov->iov_len  = xferlen;
+	scsi_task_set_iov_out(task, iov, 1);
 
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] UNMAP returned MEDIUM_NOT_PRESENT.");
-	return 0;
+	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+
+	ret = check_result("UNMAP", iscsi, task, status, key, ascq, num_ascq);
+	if (task) {
+		scsi_free_scsi_task(task);
+	}
+	return ret;
 }
 
 int

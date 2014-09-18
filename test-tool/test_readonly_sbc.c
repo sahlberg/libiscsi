@@ -97,7 +97,8 @@ test_readonly_sbc(void)
 	logging(LOG_VERBOSE, "Test UNMAP of one physical block fails with WRITE_PROTECTED");
 	list[0].lba = 0;
 	list[0].num = lbppb;
-	ret = unmap_writeprotected(iscsic, tgt_lun, 0, list, 1);
+	ret = unmap(iscsic, tgt_lun, 0, list, 1,
+		    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "UNMAP not supported on target. Skipped.");
 	}
@@ -106,7 +107,8 @@ test_readonly_sbc(void)
 	logging(LOG_VERBOSE, "Test UNMAP of one logical block fails with WRITE_PROTECTED");
 	list[0].lba = 0;
 	list[0].num = 1;
-	ret = unmap_writeprotected(iscsic, tgt_lun, 0, list, 1);
+	ret = unmap(iscsic, tgt_lun, 0, list, 1,
+		    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "UNMAP not supported on target. Skipped.");
 	}

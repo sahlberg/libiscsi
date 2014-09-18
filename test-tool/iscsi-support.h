@@ -2,6 +2,7 @@
    iscsi-test tool support
 
    Copyright (C) 2012 by Lee Duncan <leeman.duncan@gmail.com>
+   Copyright (C) 2014 by Ronnie sahlberg <ronniesahlberg@gmail.com>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -280,9 +281,7 @@ int synchronizecache16(struct iscsi_context *iscsi, int lun, uint64_t lba, int n
 int testunitready_clear_ua(struct iscsi_context *iscsi, int lun);
 int testunitready(struct iscsi_context *iscsi, int lun, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int mode_sense(struct iscsi_context *iscsi, int lun);
-int unmap(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len);
-int unmap_writeprotected(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len);
-int unmap_nomedium(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len);
+int unmap(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int verify10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int verify12(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int verify16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);

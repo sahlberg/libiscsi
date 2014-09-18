@@ -60,7 +60,8 @@ test_get_lba_status_unmap_single(void)
 			PRIu64 " (number of logical blocks: %d)", i, lbppb);
 		list[0].lba = i;
 		list[0].num = lbppb;
-		ret = unmap(iscsic, tgt_lun, 0, list, 1);
+		ret = unmap(iscsic, tgt_lun, 0, list, 1,
+			    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:%"
@@ -122,7 +123,8 @@ test_get_lba_status_unmap_single(void)
 		logging(LOG_VERBOSE, "Unmap %" PRIu64 " blocks at LBA 0", i);
 		list[0].lba = 0;
 		list[0].num = i;
-		ret = unmap(iscsic, tgt_lun, 0, list, 1);
+		ret = unmap(iscsic, tgt_lun, 0, list, 1,
+			    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:0");
