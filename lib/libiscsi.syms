@@ -153,6 +153,7 @@ iscsi_writesame10_task
 iscsi_writesame16_sync
 iscsi_writesame16_task
 scsi_association_to_str
+scsi_cdb_compareandwrite
 scsi_cdb_inquiry
 scsi_cdb_get_lba_status
 scsi_cdb_modeselect6
@@ -207,6 +208,7 @@ scsi_get_uint16
 scsi_get_uint32
 scsi_get_uint64
 scsi_inquiry_pagecode_to_str
+scsi_malloc
 scsi_modesense_dataout_marshall
 scsi_modesense_get_page
 scsi_protocol_identifier_to_str
