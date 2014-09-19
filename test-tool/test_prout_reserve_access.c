@@ -124,11 +124,15 @@ test_prout_reserve_access_ea(void)
 {
 	struct scsi_device sd2;
 
-	sd2.iscsi_ctx = iscsic2;
-	sd2.iscsi_lun = tgt_lun2;
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd2.iscsi_ctx == NULL) {
+		logging(LOG_VERBOSE, "Failed to login to target");
+		return;
+	}
 	verify_persistent_reserve_access(sd, &sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS,
 	    0, 0, 0, 0);
+	iscsi_destroy_context(sd2.iscsi_ctx);
 }
 
 void
@@ -136,11 +140,15 @@ test_prout_reserve_access_we(void)
 {
 	struct scsi_device sd2;
 
-	sd2.iscsi_ctx = iscsic2;
-	sd2.iscsi_lun = tgt_lun2;
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd2.iscsi_ctx == NULL) {
+		logging(LOG_VERBOSE, "Failed to login to target");
+		return;
+	}
 	verify_persistent_reserve_access(sd, &sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
 	    1, 0, 1, 0);
+	iscsi_destroy_context(sd2.iscsi_ctx);
 }
 
 void
@@ -148,11 +156,15 @@ test_prout_reserve_access_earo(void)
 {
 	struct scsi_device sd2;
 
-	sd2.iscsi_ctx = iscsic2;
-	sd2.iscsi_lun = tgt_lun2;
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd2.iscsi_ctx == NULL) {
+		logging(LOG_VERBOSE, "Failed to login to target");
+		return;
+	}
 	verify_persistent_reserve_access(sd, &sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY,
 	    1, 1, 0, 0);
+	iscsi_destroy_context(sd2.iscsi_ctx);
 }
 
 void
@@ -160,11 +172,15 @@ test_prout_reserve_access_wero(void)
 {
 	struct scsi_device sd2;
 
-	sd2.iscsi_ctx = iscsic2;
-	sd2.iscsi_lun = tgt_lun2;
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd2.iscsi_ctx == NULL) {
+		logging(LOG_VERBOSE, "Failed to login to target");
+		return;
+	}
 	verify_persistent_reserve_access(sd, &sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY,
 	    1, 1, 1, 0);
+	iscsi_destroy_context(sd2.iscsi_ctx);
 }
 
 void
@@ -172,11 +188,15 @@ test_prout_reserve_access_eaar(void)
 {
 	struct scsi_device sd2;
 
-	sd2.iscsi_ctx = iscsic2;
-	sd2.iscsi_lun = tgt_lun2;
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd2.iscsi_ctx == NULL) {
+		logging(LOG_VERBOSE, "Failed to login to target");
+		return;
+	}
 	verify_persistent_reserve_access(sd, &sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS,
 	    1, 1, 0, 0);
+	iscsi_destroy_context(sd2.iscsi_ctx);
 }
 
 void
@@ -184,9 +204,13 @@ test_prout_reserve_access_wear(void)
 {
 	struct scsi_device sd2;
 
-	sd2.iscsi_ctx = iscsic2;
-	sd2.iscsi_lun = tgt_lun2;
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd2.iscsi_ctx == NULL) {
+		logging(LOG_VERBOSE, "Failed to login to target");
+		return;
+	}
 	verify_persistent_reserve_access(sd, &sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS,
 	    1, 1, 1, 0);
+	iscsi_destroy_context(sd2.iscsi_ctx);
 }

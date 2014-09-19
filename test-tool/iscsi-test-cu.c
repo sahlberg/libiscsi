@@ -410,7 +410,6 @@ typedef struct libiscsi_suite_info {
 } libiscsi_suite_info;
 
 #define NON_PGR_FUNCS suite_init, suite_cleanup, test_setup, test_teardown
-#define PGR_FUNCS suite_init_pgr, suite_cleanup_pgr, test_setup, test_teardown
 
 /* SCSI protocol tests */
 static libiscsi_suite_info scsi_suites[] = {
@@ -427,7 +426,7 @@ static libiscsi_suite_info scsi_suites[] = {
 	{ "PrinReadKeys", NON_PGR_FUNCS, tests_prin_read_keys },
 	{ "PrinServiceactionRange", NON_PGR_FUNCS, tests_prin_serviceaction_range },
 	{ "ProutRegister", NON_PGR_FUNCS, tests_prout_register },
-	{ "ProutReserve", PGR_FUNCS, tests_prout_reserve },
+	{ "ProutReserve", NON_PGR_FUNCS, tests_prout_reserve },
 	{ "Read6", NON_PGR_FUNCS, tests_read6 },
 	{ "Read10", NON_PGR_FUNCS, tests_read10 },
 	{ "Read12", NON_PGR_FUNCS, tests_read12 },
@@ -508,7 +507,7 @@ static libiscsi_suite_info all_suites[] = {
 	{ "PrinServiceactionRange", NON_PGR_FUNCS,
 	  tests_prin_serviceaction_range },
 	{ "ProutRegister", NON_PGR_FUNCS, tests_prout_register },
-	{ "ProutReserve", PGR_FUNCS, tests_prout_reserve },
+	{ "ProutReserve", NON_PGR_FUNCS, tests_prout_reserve },
 	{ "Read6", NON_PGR_FUNCS, tests_read6 },
 	{ "Read10", NON_PGR_FUNCS, tests_read10 },
 	{ "Read12", NON_PGR_FUNCS, tests_read12 },
@@ -553,7 +552,7 @@ static libiscsi_suite_info scsi_usb_sbc_suites[] = {
 	{ "PrinServiceactionRange", NON_PGR_FUNCS,
 	  tests_prin_serviceaction_range },
 	{ "ProutRegister", NON_PGR_FUNCS, tests_prout_register },
-	{ "ProutReserve", PGR_FUNCS, tests_prout_reserve },
+	{ "ProutReserve", NON_PGR_FUNCS, tests_prout_reserve },
 	{ "Read6", NON_PGR_FUNCS, tests_read6 },
 	{ "Read10", NON_PGR_FUNCS, tests_read10 },
 	{ "Read12", NON_PGR_FUNCS, tests_read12 },
@@ -597,10 +596,7 @@ static struct test_family families[] = {
  * globals for test setup and teardown
  */
 struct scsi_task *task;
-int tgt_lun2;
-struct iscsi_context *iscsic2;
 unsigned char *read_write_buf;
-
 
 static void
 print_usage(void)
@@ -707,32 +703,6 @@ suite_cleanup(void)
 		iscsi_destroy_context(sd->iscsi_ctx);
 		sd->iscsi_ctx = NULL;
 	}
-	return 0;
-}
-
-int
-suite_init_pgr(void)
-{
-	suite_init();
-	iscsic2 = iscsi_context_login(initiatorname2, sd->iscsi_url, &tgt_lun2);
-	if (iscsic2 == NULL) {
-		fprintf(stderr,
-		    "error: Failed to login to target for test set-up\n");
-		suite_cleanup();
-		return 1;
-	}
-	return 0;
-}
-
-int
-suite_cleanup_pgr(void)
-{
-	if (iscsic2) {
-		iscsi_logout_sync(iscsic2);
-		iscsi_destroy_context(iscsic2);
-		iscsic2 = NULL;
-	}
-	suite_cleanup();
 	return 0;
 }
 

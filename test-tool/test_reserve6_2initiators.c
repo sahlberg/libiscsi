@@ -94,5 +94,4 @@ test_reserve6_2initiators(void)
 
 	iscsi_logout_sync(sd2.iscsi_ctx);
 	iscsi_destroy_context(sd2.iscsi_ctx);
-	iscsic2 = NULL;
 }

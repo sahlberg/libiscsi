@@ -33,8 +33,6 @@
 
 /* globals between setup, tests, and teardown */
 extern struct scsi_task *task;
-extern struct iscsi_context *iscsic2;
-extern int tgt_lun2;
 extern unsigned char *read_write_buf;
 
 #ifndef HAVE_CU_SUITEINFO_PSETUPFUNC
