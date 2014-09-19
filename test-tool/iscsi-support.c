@@ -291,6 +291,11 @@ iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	return real_iscsi_queue_pdu(iscsi, pdu);
 }
 
+static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi_task *task, struct iscsi_data *d)
+{
+	return iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, d);
+}
+
 int
 orwrite(struct scsi_device *sdev, uint64_t lba,
 	uint32_t datalen, int blocksize, int wrprotect, 
@@ -319,7 +324,7 @@ orwrite(struct scsi_device *sdev, uint64_t lba,
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("ORWRITE", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1047,7 +1052,7 @@ synchronizecache10(struct scsi_device *sdev, uint32_t lba, int num, int sync_nv,
 	task = scsi_cdb_synchronizecache10(lba, num_blocks, sync_nv, immed);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("SYNCHRONIZECACHE10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1070,7 +1075,7 @@ synchronizecache16(struct scsi_device *sdev, uint64_t lba, int num, int sync_nv,
 	task = scsi_cdb_synchronizecache16(lba, num_blocks, sync_nv, immed);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("SYNCHRONIZECACHE16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1250,7 +1255,7 @@ int startstopunit(struct scsi_device *sdev, int immed, int pcm, int pc, int no_f
 	task = scsi_cdb_startstopunit(immed, pcm, pc, no_flush, loej, start);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("STARTSTOPUNIT", sdev, task, status, key, ascq,
 			   num_ascq);
@@ -1272,7 +1277,7 @@ testunitready(struct scsi_device *sdev, int status, enum scsi_sense_key key, int
 	task = scsi_cdb_testunitready();
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("TESTUNITREADY", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1357,7 +1362,7 @@ int compareandwrite(struct scsi_device *sdev, uint64_t lba,
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("COMPAREANDWRITE", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1379,7 +1384,7 @@ int get_lba_status(struct scsi_device *sdev, struct scsi_task **out_task, uint64
 	task = scsi_cdb_get_lba_status(lba, len);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("GET_LBA_STATUS", sdev, task, status, key, ascq, num_ascq);
 	if (out_task) {
@@ -1404,7 +1409,7 @@ prefetch10(struct scsi_device *sdev, uint32_t lba, int num, int immed, int group
 	task = scsi_cdb_prefetch10(lba, num, immed, group);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("PREFETCH10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1427,7 +1432,7 @@ prefetch16(struct scsi_device *sdev, uint64_t lba, int num, int immed, int group
 	task = scsi_cdb_prefetch16(lba, num, immed, group);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("PREFETCH16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1483,7 +1488,7 @@ read6(struct scsi_device *sdev, uint32_t lba,
 	task = scsi_cdb_read6(lba, datalen, blocksize);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("READ6", sdev, task, status, key, ascq, num_ascq);
 	if (data) {
@@ -1516,7 +1521,7 @@ read10(struct scsi_device *sdev, struct scsi_task **out_task,
 				dpo, fua, fua_nv, group);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("READ10", sdev, task, status, key, ascq, num_ascq);
 	if (data) {
@@ -1550,7 +1555,7 @@ read12(struct scsi_device *sdev, uint32_t lba,
 				dpo, fua, fua_nv, group);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("READ12", sdev, task, status, key, ascq, num_ascq);
 	if (data) {
@@ -1582,7 +1587,7 @@ read16(struct scsi_device *sdev, uint64_t lba,
 				dpo, fua, fua_nv, group);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("READ16", sdev, task, status, key, ascq, num_ascq);
 	if (data) {
@@ -1608,7 +1613,7 @@ readcapacity10(struct scsi_device *sdev, uint32_t lba, int pmi, int status, enum
 	task = scsi_cdb_readcapacity10(lba, pmi);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("READCAPACITY10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1629,7 +1634,7 @@ readcapacity16(struct scsi_device *sdev, int alloc_len, int status, enum scsi_se
 	task = scsi_cdb_serviceactionin16(SCSI_READCAPACITY16, alloc_len);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("READCAPACITY16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1686,7 +1691,7 @@ int report_supported_opcodes(struct scsi_device *sdev, struct scsi_task **out_ta
 						 alloc_len);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("INQUIRY", sdev, task, status, key, ascq, num_ascq);
 	if (out_task) {
@@ -1828,7 +1833,7 @@ unmap(struct scsi_device *sdev, int anchor, struct unmap_list *list, int list_le
 	iov->iov_len  = xferlen;
 	scsi_task_set_iov_out(task, iov, 1);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("UNMAP", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1855,7 +1860,7 @@ verify10(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("VERIFY10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1881,7 +1886,7 @@ verify12(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("VERIFY12", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1907,7 +1912,7 @@ verify16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int blocksize
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("VERIFY16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1940,7 +1945,7 @@ write10(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize,
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("WRITE10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -1973,7 +1978,7 @@ write12(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize,
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("WRITE12", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -2006,7 +2011,7 @@ write16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int blocksize,
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("WRITE16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -2045,7 +2050,7 @@ writesame10(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int num, i
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("WRITESAME10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -2084,7 +2089,7 @@ writesame16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int num, i
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("WRITESAME16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -2120,7 +2125,7 @@ writeverify10(struct scsi_device *sdev, uint32_t lba,
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("WRITEVERIFY10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -2156,7 +2161,7 @@ writeverify12(struct scsi_device *sdev, uint32_t lba,
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("WRITEVERIFY12", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -2192,7 +2197,7 @@ writeverify16(struct scsi_device *sdev, uint64_t lba,
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("WRITEVERIFY16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
@@ -2215,7 +2220,7 @@ inquiry(struct scsi_device *sdev, struct scsi_task **out_task, int evpd, int pag
 	task = scsi_cdb_inquiry(evpd, page_code, maxsize);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
+	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("INQUIRY", sdev, task, status, key, ascq, num_ascq);
 	if (out_task) {
