@@ -542,7 +542,7 @@ static libiscsi_suite_info all_suites[] = {
 	{ NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
-static libiscsi_suite_info scsi_usb_sbc_suites[] = {
+static libiscsi_suite_info linux_suites[] = {
 	{ "CompareAndWrite", NON_PGR_FUNCS, tests_compareandwrite },
 	{ "GetLBAStatus", NON_PGR_FUNCS, tests_get_lba_status },
 	{ "Inquiry", NON_PGR_FUNCS, tests_inquiry },
@@ -588,11 +588,11 @@ struct test_family {
 };
 
 static struct test_family families[] = {
-       { "ALL",		     all_suites },
-       { "SCSI",	     scsi_suites },
-       { "iSCSI",	     iscsi_suites },
-       { "SCSI-USB-SBC",     scsi_usb_sbc_suites },
-       { NULL, NULL}
+	{ "ALL",		all_suites },
+	{ "SCSI",		scsi_suites },
+	{ "iSCSI",		iscsi_suites },
+	{ "LINUX",		linux_suites },
+	{ NULL, NULL}
 };
 
 /*
