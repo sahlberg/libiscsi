@@ -46,7 +46,6 @@ test_read10_beyond_eol(void)
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-
 	logging(LOG_VERBOSE, "Test READ10 1-256 blocks at LBA==2^31");
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {

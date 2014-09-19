@@ -17,6 +17,8 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+
 #define _GNU_SOURCE
 #include <sys/syscall.h>
 #include <dlfcn.h>
@@ -29,6 +31,12 @@
 #include <getopt.h>
 #include <fnmatch.h>
 #include <ctype.h>
+
+#ifdef HAVE_SG_IO
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <scsi/sg.h>
+#endif
 
 #include <CUnit/CUnit.h>
 #include <CUnit/Basic.h>
@@ -673,15 +681,17 @@ test_teardown(void)
 int
 suite_init(void)
 {
-	if (sd->iscsi_ctx) {
-		iscsi_logout_sync(sd->iscsi_ctx);
-		iscsi_destroy_context(sd->iscsi_ctx);
-	}
-	sd->iscsi_ctx = iscsi_context_login(initiatorname1, sd->iscsi_url, &sd->iscsi_lun);
-	if (sd->iscsi_ctx == NULL) {
-		fprintf(stderr,
-		    "error: Failed to login to target for test set-up\n");
-		return 1;
+	if (sd->iscsi_url) {
+		if (sd->iscsi_ctx) {
+			iscsi_logout_sync(sd->iscsi_ctx);
+			iscsi_destroy_context(sd->iscsi_ctx);
+		}
+		sd->iscsi_ctx = iscsi_context_login(initiatorname1, sd->iscsi_url, &sd->iscsi_lun);
+		if (sd->iscsi_ctx == NULL) {
+			fprintf(stderr,
+				"error: Failed to login to target for test set-up\n");
+			return 1;
+		}
 	}
 #ifndef HAVE_CU_SUITEINFO_PSETUPFUNC
 	/* libcunit version 1 */
@@ -697,10 +707,12 @@ suite_cleanup(void)
 	/* libcunit version 1 */
 	test_teardown();
 #endif
-	if (sd->iscsi_ctx) {
-		iscsi_logout_sync(sd->iscsi_ctx);
-		iscsi_destroy_context(sd->iscsi_ctx);
-		sd->iscsi_ctx = NULL;
+	if (sd->iscsi_url) {
+		if (sd->iscsi_ctx) {
+			iscsi_logout_sync(sd->iscsi_ctx);
+			iscsi_destroy_context(sd->iscsi_ctx);
+			sd->iscsi_ctx = NULL;
+		}
 	}
 	return 0;
 }
@@ -863,11 +875,31 @@ static void parse_and_add_tests(char *testname_re)
 
 static int connect_scsi_device(struct scsi_device *sdev, const char *initiatorname)
 {
-	sdev->iscsi_ctx = iscsi_context_login(initiatorname, sdev->iscsi_url, &sdev->iscsi_lun);
-	if (sdev->iscsi_ctx == NULL) {
-		return -1;
+	if (sdev->iscsi_url) {
+		sdev->iscsi_ctx = iscsi_context_login(initiatorname, sdev->iscsi_url, &sdev->iscsi_lun);
+		if (sdev->iscsi_ctx == NULL) {
+			return -1;
+		}
+		return 0;
 	}
-	return 0;
+#ifdef HAVE_SG_IO
+	if (sdev->sgio_dev) {
+		int version;
+
+		if ((sdev->sgio_fd = open(sdev->sgio_dev, O_RDWR)) == -1) {
+			fprintf(stderr, "Failed to open SG_IO device %s. Error:%s\n", sdev->sgio_dev,
+				strerror(errno));
+			return -1;
+		}
+		if ((ioctl(sdev->sgio_fd, SG_GET_VERSION_NUM, &version) < 0) || (version < 30000)) {
+			fprintf(stderr, "%s is not a SCSI device node\n", sdev->sgio_dev);
+			close(sdev->sgio_fd);
+			return -1;
+		}
+		return 0;
+	}
+#endif
+	return -1;
 }
 
 static void free_scsi_device(struct scsi_device *sdev)
@@ -884,6 +916,15 @@ static void free_scsi_device(struct scsi_device *sdev)
 		iscsi_logout_sync(sdev->iscsi_ctx);
 		iscsi_destroy_context(sdev->iscsi_ctx);
 		sdev->iscsi_ctx = NULL;
+	}
+
+	if (sdev->sgio_dev) {
+		free(discard_const(sdev->sgio_dev));
+		sdev->sgio_dev = NULL;
+	}
+	if (sdev->sgio_fd != -1) {
+		close(sdev->sgio_fd);
+		sdev->sgio_fd = -1;
 	}
 	free(sd);
 }
@@ -929,6 +970,7 @@ main(int argc, char *argv[])
 
 	sd = malloc(sizeof(struct scsi_device));
 	memset(sd, '\0', sizeof(struct scsi_device));
+	sd->sgio_fd = -1;
 
 	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsSnuvxV", long_opts,
 		    &opt_idx)) > 0) {
@@ -991,7 +1033,13 @@ main(int argc, char *argv[])
 	}
 
 	if (optind < argc) {
-		sd->iscsi_url = strdup(argv[optind++]);
+		if (!strncmp(argv[optind], "iscsi://", 8)) {
+			sd->iscsi_url = strdup(argv[optind++]);
+#ifdef HAVE_SG_IO
+		} else if (!strncmp(argv[optind], "/dev/sg", 7)) {
+			sd->sgio_dev = strdup(argv[optind++]);
+#endif
+		}
 	}
 	if (optind < argc) {
 		fprintf(stderr, "error: too many arguments\n");
@@ -1002,8 +1050,12 @@ main(int argc, char *argv[])
 	/* XXX why is this done? */
 	real_iscsi_queue_pdu = dlsym(RTLD_NEXT, "iscsi_queue_pdu");
 
-	if (sd->iscsi_url == NULL) {
-		fprintf(stderr, "You must specify the URL\n");
+	if (sd->iscsi_url == NULL && sd->sgio_dev== NULL ) {
+#ifdef HAVE_SG_IO
+		fprintf(stderr, "You must specify either an iSCSI URL or a /dev/sg device\n");
+#else
+		fprintf(stderr, "You must specify either an iSCSI URL\n");
+#endif
 		print_usage();
 		if (testname_re)
 			free(testname_re);

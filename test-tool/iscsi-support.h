@@ -195,6 +195,7 @@ struct scsi_device {
 	const char *iscsi_url;
 
 	const char *sgio_dev;
+	int sgio_fd;
 };
 extern struct scsi_device *sd;
 

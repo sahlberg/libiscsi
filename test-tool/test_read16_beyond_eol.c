@@ -60,7 +60,6 @@ test_read16_beyond_eol(void)
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-
 	logging(LOG_VERBOSE, "Test READ16 1-256 blocks at LBA==2^63");
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {

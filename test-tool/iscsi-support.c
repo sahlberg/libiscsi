@@ -1,3 +1,4 @@
+
 /*
    iscsi-test tool support
 
@@ -18,6 +19,8 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
+
 #define _GNU_SOURCE
 #include <assert.h>
 #include <sys/syscall.h>
@@ -31,6 +34,13 @@
 #include <string.h>
 #include <poll.h>
 #include <fnmatch.h>
+
+#ifdef HAVE_SG_IO
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <scsi/sg.h>
+#endif
+
 #include "slist.h"
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
@@ -170,16 +180,119 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
 
 static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi_task *task, struct iscsi_data *d)
 {
-	if (sdev->error_str != NULL) {
-		free(discard_const(sdev->error_str));
-		sdev->error_str = NULL;
-	}
-	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, d);
-	if (task == NULL) {
-		sdev->error_str = strdup(iscsi_get_error(sdev->iscsi_ctx));
+	if (sdev->iscsi_url) {
+		if (sdev->error_str != NULL) {
+			free(discard_const(sdev->error_str));
+			sdev->error_str = NULL;
+		}
+		task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, d);
+		if (task == NULL) {
+			sdev->error_str = strdup(iscsi_get_error(sdev->iscsi_ctx));
+		}
+
+		return task;
 	}
 
-	return task;
+#ifdef HAVE_SG_IO
+	if (sdev->sgio_dev) {
+		sg_io_hdr_t io_hdr;
+		unsigned int sense_len=32;
+		unsigned char sense[sense_len];
+		char buf[1024];
+
+		memset(&io_hdr, 0, sizeof(sg_io_hdr_t));
+		io_hdr.interface_id = 'S';
+
+		/* CDB */
+		io_hdr.cmdp = task->cdb;
+		io_hdr.cmd_len = task->cdb_size;
+
+		/* Where to store the sense_data, if there was an error */
+		io_hdr.sbp = sense;
+		io_hdr.mx_sb_len = sense_len;
+		sense_len=0;
+
+		/* Transfer direction, either in or out. Linux does not yet
+		   support bidirectional SCSI transfers ?
+		*/
+		switch (task->xfer_dir) {
+		case SCSI_XFER_WRITE:
+		  io_hdr.dxfer_direction = SG_DXFER_TO_DEV;
+		  io_hdr.dxferp = d->data;
+		  io_hdr.dxfer_len = d->size;
+		  break;
+		case SCSI_XFER_READ:
+		  io_hdr.dxfer_direction = SG_DXFER_FROM_DEV;
+		  task->datain.size = task->expxferlen;
+		  task->datain.data = malloc(task->expxferlen);
+		  io_hdr.dxferp = task->datain.data;
+		  io_hdr.dxfer_len = task->datain.size;
+		  break;
+		}
+
+		/* SCSI timeout in ms */
+		io_hdr.timeout = 5000;
+
+		if(ioctl(sdev->sgio_fd, SG_IO, &io_hdr) < 0){
+			sdev->error_str = strdup("SG_IO ioctl failed");
+			return NULL;
+		}
+
+		/* now for the error processing */
+		if(io_hdr.sb_len_wr > 0){
+			task->status = SCSI_STATUS_CHECK_CONDITION;
+			task->sense.error_type = sense[0] & 0x7f;
+			switch (task->sense.error_type) {
+			case 0x70:
+			case 0x71:
+				task->sense.key = sense[2] & 0x0f;
+				task->sense.ascq  = scsi_get_uint16(&sense[12]);
+				break;
+			case 0x72:
+			case 0x73:
+				task->sense.key = sense[1] & 0x0f;
+				task->sense.ascq = scsi_get_uint16(&sense[2]);
+				break;
+			}
+			sense_len=io_hdr.sb_len_wr;
+			snprintf(buf, sizeof(buf), "SENSE KEY:%s(%d) ASCQ:%s(0x%04x)",
+				 scsi_sense_key_str(task->sense.key),
+				 task->sense.key,
+				 scsi_sense_ascq_str(task->sense.ascq),
+				 task->sense.ascq);
+			sdev->error_str = strdup(buf);
+			return task;
+		}
+
+		if(io_hdr.masked_status){
+			task->status = SCSI_STATUS_ERROR;
+			task->sense.key = 0x0f;
+			task->sense.ascq  = 0xffff;
+
+			sdev->error_str = strdup("SCSI masked error");
+			return NULL;
+		}
+		if(io_hdr.host_status){
+			task->status = SCSI_STATUS_ERROR;
+			task->sense.key = 0x0f;
+			task->sense.ascq  = 0xffff;
+
+			snprintf(buf, sizeof(buf), "SCSI host error. Status=0x%x", io_hdr.host_status);
+			sdev->error_str = strdup(buf);
+			return task;
+		}
+		if(io_hdr.driver_status){
+			task->status = SCSI_STATUS_ERROR;
+			task->sense.key = 0x0f;
+			task->sense.ascq  = 0xffff;
+
+			sdev->error_str = strdup("SCSI driver error");
+			return NULL;
+		}
+		return task;
+	}
+#endif
+	return NULL;
 }
 
 void logging(int level, const char *format, ...)
@@ -1714,7 +1827,7 @@ int report_supported_opcodes(struct scsi_device *sdev, struct scsi_task **out_ta
 
 	task = send_scsi_command(sdev, task, NULL);
 
-	ret = check_result("INQUIRY", sdev, task, status, key, ascq, num_ascq);
+	ret = check_result("REPORT_SUPPORTED_OPCODES", sdev, task, status, key, ascq, num_ascq);
 	if (out_task) {
 		*out_task = task;
 	} else if (task) {
