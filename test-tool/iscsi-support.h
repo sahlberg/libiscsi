@@ -26,6 +26,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#ifndef discard_const
+#define discard_const(ptr) ((void *)((intptr_t)(ptr)))
+#endif
+
 extern const char *initiatorname1;
 extern const char *initiatorname2;
 
@@ -184,9 +188,13 @@ extern int sbc3_support;
 extern int maximum_transfer_length;
 
 struct scsi_device {
+	const char *error_str;
+
 	struct iscsi_context *iscsi_ctx;
 	int iscsi_lun;
 	const char *iscsi_url;
+
+	const char *sgio_dev;
 };
 extern struct scsi_device *sd;
 

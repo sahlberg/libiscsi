@@ -40,12 +40,7 @@
 
 #include "iscsi-support.h"
 #include "iscsi-test-cu.h"
-
-
-
-#ifndef discard_const
-#define discard_const(ptr) ((void *)((intptr_t)(ptr)))
-#endif
+#include "iscsi-support.h"
 
 #define	PROG	"iscsi-test-cu"
 
@@ -866,7 +861,6 @@ int
 main(int argc, char *argv[])
 {
 	char *testname_re = NULL;
-	int lun;
 	CU_BasicRunMode mode = CU_BRM_VERBOSE;
 	CU_ErrorAction error_action = CUEA_IGNORE;
 	int res;
@@ -984,7 +978,7 @@ main(int argc, char *argv[])
 		return 10;
 	}
 
-	sd->iscsi_ctx = iscsi_context_login(initiatorname1, sd->iscsi_url, &lun);
+	sd->iscsi_ctx = iscsi_context_login(initiatorname1, sd->iscsi_url, &sd->iscsi_lun);
 	if (sd->iscsi_ctx == NULL) {
 		printf("Failed to login to target\n");
 		return -1;
@@ -995,24 +989,21 @@ main(int argc, char *argv[])
 	 * All devices support readcapacity10 but only some support
 	 * readcapacity16
 	 */
-	task = iscsi_readcapacity10_sync(sd->iscsi_ctx, lun, 0, 0);
+	task = iscsi_readcapacity10_sync(sd->iscsi_ctx, sd->iscsi_lun, 0, 0);
 	if (task == NULL) {
-		printf("Failed to send READCAPACITY10 command: %s\n",
-		    iscsi_get_error(sd->iscsi_ctx));
+		printf("Failed to send READCAPACITY10 command: %s\n", sd->error_str);
 		iscsi_destroy_context(sd->iscsi_ctx);
 		return -1;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
-		printf("READCAPACITY10 command: failed with sense. %s\n",
-		    iscsi_get_error(sd->iscsi_ctx));
+		printf("READCAPACITY10 command: failed with sense. %s\n", sd->error_str);
 		scsi_free_scsi_task(task);
 		iscsi_destroy_context(sd->iscsi_ctx);
 		return -1;
 	}
 	rc10 = scsi_datain_unmarshall(task);
 	if (rc10 == NULL) {
-		printf("failed to unmarshall READCAPACITY10 data. %s\n",
-		    iscsi_get_error(sd->iscsi_ctx));
+		printf("failed to unmarshall READCAPACITY10 data.\n");
 		scsi_free_scsi_task(task);
 		iscsi_destroy_context(sd->iscsi_ctx);
 		return -1;
@@ -1021,18 +1012,16 @@ main(int argc, char *argv[])
 	num_blocks = rc10->lba + 1;
 	scsi_free_scsi_task(task);
 
-	rc16_task = iscsi_readcapacity16_sync(sd->iscsi_ctx, lun);
+	rc16_task = iscsi_readcapacity16_sync(sd->iscsi_ctx, sd->iscsi_lun);
 	if (rc16_task == NULL) {
-		printf("Failed to send READCAPACITY16 command: %s\n",
-		    iscsi_get_error(sd->iscsi_ctx));
+		printf("Failed to send READCAPACITY16 command: %s\n", sd->error_str);
 		iscsi_destroy_context(sd->iscsi_ctx);
 		return -1;
 	}
 	if (rc16_task->status == SCSI_STATUS_GOOD) {
 		rc16 = scsi_datain_unmarshall(rc16_task);
 		if (rc16 == NULL) {
-			printf("failed to unmarshall READCAPACITY16 data. %s\n",
-			    iscsi_get_error(sd->iscsi_ctx));
+			printf("failed to unmarshall READCAPACITY16 data. %s\n", sd->error_str);
 			scsi_free_scsi_task(rc16_task);
 			iscsi_destroy_context(sd->iscsi_ctx);
 			return -1;
@@ -1042,9 +1031,9 @@ main(int argc, char *argv[])
 		lbppb = 1 << rc16->lbppbe;
 	}
 
-	inq_task = iscsi_inquiry_sync(sd->iscsi_ctx, lun, 0, 0, 64);
+	inq_task = iscsi_inquiry_sync(sd->iscsi_ctx, sd->iscsi_lun, 0, 0, 64);
 	if (inq_task == NULL || inq_task->status != SCSI_STATUS_GOOD) {
-		printf("Inquiry command failed : %s\n", iscsi_get_error(sd->iscsi_ctx));
+		printf("Inquiry command failed : %s\n", sd->error_str);
 		return -1;
 	}
 	full_size = scsi_datain_getfullsize(inq_task);
@@ -1052,10 +1041,9 @@ main(int argc, char *argv[])
 		scsi_free_scsi_task(inq_task);
 
 		/* we need more data for the full list */
-		inq_task = iscsi_inquiry_sync(sd->iscsi_ctx, lun, 0, 0, full_size);
+		inq_task = iscsi_inquiry_sync(sd->iscsi_ctx, sd->iscsi_lun, 0, 0, full_size);
 		if (inq_task == NULL) {
-			printf("Inquiry command failed : %s\n",
-			    iscsi_get_error(sd->iscsi_ctx));
+			printf("Inquiry command failed : %s\n", sd->error_str);
 			return -1;
 		}
 	}
@@ -1074,7 +1062,7 @@ main(int argc, char *argv[])
 	}
 
 	/* try reading block limits vpd */
-	inq_bl_task = iscsi_inquiry_sync(sd->iscsi_ctx, lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS, 64);
+	inq_bl_task = iscsi_inquiry_sync(sd->iscsi_ctx, sd->iscsi_lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS, 64);
 	if (inq_bl_task && inq_bl_task->status != SCSI_STATUS_GOOD) {
 		scsi_free_scsi_task(inq_bl_task);
 		inq_bl_task = NULL;
@@ -1084,8 +1072,8 @@ main(int argc, char *argv[])
 		if (full_size > inq_bl_task->datain.size) {
 			scsi_free_scsi_task(inq_bl_task);
 
-			if ((inq_bl_task = iscsi_inquiry_sync(sd->iscsi_ctx, lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS, full_size)) == NULL) {
-				printf("Inquiry command failed : %s\n", iscsi_get_error(sd->iscsi_ctx));
+			if ((inq_bl_task = iscsi_inquiry_sync(sd->iscsi_ctx, sd->iscsi_lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS, full_size)) == NULL) {
+				printf("Inquiry command failed : %s\n", sd->error_str);
 				return -1;
 			}
 		}
@@ -1098,7 +1086,7 @@ main(int argc, char *argv[])
 	}
 
 	/* try reading block device characteristics vpd */
-	inq_bdc_task = iscsi_inquiry_sync(sd->iscsi_ctx, lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS, 255);
+	inq_bdc_task = iscsi_inquiry_sync(sd->iscsi_ctx, sd->iscsi_lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS, 255);
 	if (inq_bdc_task == NULL) {
 		printf("Failed to read Block Device Characteristics page\n");
 	}
@@ -1112,9 +1100,9 @@ main(int argc, char *argv[])
 
 	/* if thin provisioned we also need to read the VPD page for it */
 	if (rc16 && rc16->lbpme != 0){
-		inq_lbp_task = iscsi_inquiry_sync(sd->iscsi_ctx, lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, 64);
+		inq_lbp_task = iscsi_inquiry_sync(sd->iscsi_ctx, sd->iscsi_lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, 64);
 		if (inq_lbp_task == NULL || inq_lbp_task->status != SCSI_STATUS_GOOD) {
-			printf("Inquiry command failed : %s\n", iscsi_get_error(sd->iscsi_ctx));
+			printf("Inquiry command failed : %s\n", sd->error_str);
 			return -1;
 		}
 		full_size = scsi_datain_getfullsize(inq_lbp_task);
@@ -1122,8 +1110,8 @@ main(int argc, char *argv[])
 			scsi_free_scsi_task(inq_lbp_task);
 
 			/* we need more data for the full list */
-			if ((inq_lbp_task = iscsi_inquiry_sync(sd->iscsi_ctx, lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, full_size)) == NULL) {
-				printf("Inquiry command failed : %s\n", iscsi_get_error(sd->iscsi_ctx));
+			if ((inq_lbp_task = iscsi_inquiry_sync(sd->iscsi_ctx, sd->iscsi_lun, 1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, full_size)) == NULL) {
+				printf("Inquiry command failed : %s\n", sd->error_str);
 				return -1;
 			}
 		}
@@ -1135,31 +1123,27 @@ main(int argc, char *argv[])
 		}
 	}
 
-	rsop_task = iscsi_report_supported_opcodes_sync(sd->iscsi_ctx, lun,
+	rsop_task = iscsi_report_supported_opcodes_sync(sd->iscsi_ctx, sd->iscsi_lun,
 		1, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0, 65535);
 	if (rsop_task == NULL) {
-		printf("Failed to send REPORT_SUPPORTED_OPCODES command: %s\n",
-		    iscsi_get_error(sd->iscsi_ctx));
+		printf("Failed to send REPORT_SUPPORTED_OPCODES command: %s\n", sd->error_str);
 		iscsi_destroy_context(sd->iscsi_ctx);
 		return -1;
 	}
 	if (rsop_task->status == SCSI_STATUS_GOOD) {
 		rsop = scsi_datain_unmarshall(rsop_task);
 		if (rsop == NULL) {
-			printf("failed to unmarshall REPORT_SUPPORTED_OPCODES "
-			       "data. %s\n",
-			       iscsi_get_error(sd->iscsi_ctx));
+			printf("failed to unmarshall REPORT_SUPPORTED_OPCODES data.\n");
 			scsi_free_scsi_task(rsop_task);
 		}
 	}
 
 	/* check if the device is write protected or not */
-	task = iscsi_modesense6_sync(sd->iscsi_ctx, lun, 0, SCSI_MODESENSE_PC_CURRENT,
+	task = iscsi_modesense6_sync(sd->iscsi_ctx, sd->iscsi_lun, 0, SCSI_MODESENSE_PC_CURRENT,
 				     SCSI_MODEPAGE_RETURN_ALL_PAGES,
 				     0, 255);
 	if (task == NULL) {
-		printf("Failed to send MODE_SENSE6 command: %s\n",
-		    iscsi_get_error(sd->iscsi_ctx));
+		printf("Failed to send MODE_SENSE6 command: %s\n", sd->error_str);
 		iscsi_destroy_context(sd->iscsi_ctx);
 		return -1;
 	}

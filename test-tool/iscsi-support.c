@@ -113,7 +113,7 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
 
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send %s command: "
-			"%s", opcode, iscsi_get_error(sdev->iscsi_ctx));
+			"%s", opcode, sdev->error_str);
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -125,7 +125,7 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
 	}
 	if (status == SCSI_STATUS_GOOD && task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] %s command failed with "
-			"sense. %s", opcode, iscsi_get_error(sdev->iscsi_ctx));
+			"sense. %s", opcode, sdev->error_str);
 		return -1;
 	}
 	if (status != SCSI_STATUS_GOOD && task->status == SCSI_STATUS_GOOD) {
@@ -158,7 +158,7 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
 			opcode,
 			scsi_sense_key_str(key), key,
 			scsi_sense_ascq_str(ascq[0]), ascq[0],
-			iscsi_get_error(sdev->iscsi_ctx));
+			sdev->error_str);
 		return -1;
 	}
 	logging(LOG_VERBOSE, "[OK] %s returned %s %s(0x%02x) %s(0x%04x)",
@@ -166,6 +166,20 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
 		scsi_sense_key_str(task->sense.key), task->sense.key,
 		scsi_sense_ascq_str(task->sense.ascq), task->sense.ascq);
 	return 0;
+}
+
+static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi_task *task, struct iscsi_data *d)
+{
+	if (sdev->error_str != NULL) {
+		free(discard_const(sdev->error_str));
+		sdev->error_str = NULL;
+	}
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, d);
+	if (task == NULL) {
+		sdev->error_str = strdup(iscsi_get_error(sdev->iscsi_ctx));
+	}
+
+	return task;
 }
 
 void logging(int level, const char *format, ...)
@@ -289,11 +303,6 @@ iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		local_iscsi_queue_pdu(iscsi, pdu);
 	}
 	return real_iscsi_queue_pdu(iscsi, pdu);
-}
-
-static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi_task *task, struct iscsi_data *d)
-{
-	return iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, d);
 }
 
 int
