@@ -861,6 +861,15 @@ static void parse_and_add_tests(char *testname_re)
 	parse_and_add_test(testname_re);
 }
 
+static int connect_scsi_device(struct scsi_device *sdev, const char *initiatorname)
+{
+	sdev->iscsi_ctx = iscsi_context_login(initiatorname, sdev->iscsi_url, &sdev->iscsi_lun);
+	if (sdev->iscsi_ctx == NULL) {
+		return -1;
+	}
+	return 0;
+}
+
 static void free_scsi_device(struct scsi_device *sdev)
 {
 	if (sdev->error_str) {
@@ -1001,9 +1010,9 @@ main(int argc, char *argv[])
 		return 10;
 	}
 
-	sd->iscsi_ctx = iscsi_context_login(initiatorname1, sd->iscsi_url, &sd->iscsi_lun);
-	if (sd->iscsi_ctx == NULL) {
-		printf("Failed to login to target\n");
+	if (connect_scsi_device(sd, initiatorname1)) {
+		fprintf(stderr, "Failed to connect to SCSI device\n");
+		free_scsi_device(sd);
 		return -1;
 	}
 
