@@ -34,7 +34,7 @@ test_read6_simple(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ6 of 1-255 blocks at the start of the LUN");
 	for (i = 1; i <= 255; i++) {
-		ret = read6(sd->iscsi_ctx, sd->iscsi_lun, 0, i * block_size,
+		ret = read6(sd, 0, i * block_size,
 			    block_size, NULL,
 			    EXPECT_STATUS_GOOD);
 		if (ret == -2) {
@@ -51,7 +51,7 @@ test_read6_simple(void)
 		CU_PASS("LUN is too big for read-at-eol tests with READ6. Skipping test.\n");
 	} else {
 		for (i = 1; i <= 255; i++) {
-			ret = read6(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
+			ret = read6(sd, num_blocks - i,
 				    i * block_size, block_size, NULL,
 				    EXPECT_STATUS_GOOD);
 			CU_ASSERT_EQUAL(ret, 0);

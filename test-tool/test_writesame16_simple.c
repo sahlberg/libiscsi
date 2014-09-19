@@ -40,7 +40,7 @@ test_writesame16_simple(void)
 
 	memset(buf, 0, block_size);
 	for (i = 1; i <= 256; i++) {
-		ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, 0,
+		ret = writesame16(sd, 0,
 				  block_size, i, 0, 0, 0, 0, buf,
 				  EXPECT_STATUS_GOOD);
 		if (ret == -2) {
@@ -53,7 +53,7 @@ test_writesame16_simple(void)
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
-		ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
+		ret = writesame16(sd, num_blocks - i,
 				  block_size, i, 0, 0, 0, 0, buf,
 				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

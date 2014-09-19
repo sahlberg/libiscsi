@@ -37,7 +37,7 @@ test_read10_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read10(sd->iscsi_ctx, NULL,sd->iscsi_lun, 0, i * block_size,
+		ret = read10(sd, NULL, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, NULL,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -49,7 +49,7 @@ test_read10_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read10(sd->iscsi_ctx, NULL, sd->iscsi_lun, num_blocks - i,
+		ret = read10(sd, NULL, num_blocks - i,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

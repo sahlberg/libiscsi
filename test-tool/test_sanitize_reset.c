@@ -86,26 +86,26 @@ test_sanitize_reset(void)
 
 	logging(LOG_VERBOSE, "Verify that the SANITIZE has started and that "
 		"TESTUNITREADY fails with SANITIZE_IN_PROGRESS");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify that STARTSTOPUNIT fails with "
 		"SANITIZE_IN_PROGRESS");
-	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun, 1, 0, 1, 0, 1, 0,
+	ret = startstopunit(sd, 1, 0, 1, 0, 1, 0,
 			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify that READ16 fails with "
 		"SANITIZE_IN_PROGRESS");
-	ret = read16(sd->iscsi_ctx, sd->iscsi_lun, 0, block_size,
+	ret = read16(sd, 0, block_size,
 		     block_size, 0, 0, 0, 0, 0, NULL,
 		     EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify that INQUIRY is still allowed while "
 		"SANITIZE is in progress");
-	ret = inquiry(sd->iscsi_ctx, NULL, sd->iscsi_lun, 0, 0, 255,
+	ret = inquiry(sd, NULL, 0, 0, 255,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -157,12 +157,12 @@ test_sanitize_reset(void)
 	}
 
 	logging(LOG_VERBOSE, "Verify that the SANITIZE is still going.");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Wait until the SANITIZE operation has finished");
-	while (testunitready_clear_ua(sd->iscsi_ctx, sd->iscsi_lun)) {
+	while (testunitready_clear_ua(sd)) {
 		sleep(60);
 	}
 }

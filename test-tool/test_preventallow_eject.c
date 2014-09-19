@@ -36,48 +36,48 @@ test_preventallow_eject(void)
 	logging(LOG_VERBOSE, "Test that we can not eject medium when PREVENT is active");
 
 	logging(LOG_VERBOSE, "Set the PREVENT flag");
-	ret = preventallow(sd->iscsi_ctx, sd->iscsi_lun, 1);
+	ret = preventallow(sd, 1);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
-	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun, 0, 0, 0, 0, 1, 0,
+	ret = startstopunit(sd, 0, 0, 0, 0, 1, 0,
 			    EXPECT_REMOVAL_PREVENTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can still access the media.");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
-	ret = preventallow(sd->iscsi_ctx, sd->iscsi_lun, 0);
+	ret = preventallow(sd, 0);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
-	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun, 0, 0, 0, 0, 1, 0,
+	ret = startstopunit(sd, 0, 0, 0, 0, 1, 0,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can not access the media.");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Set the PREVENT flag");
-	ret = preventallow(sd->iscsi_ctx, sd->iscsi_lun, 1);
+	ret = preventallow(sd, 1);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Try to load the medium");
-	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun, 0, 0, 0, 0, 1, 1,
+	ret = startstopunit(sd, 0, 0, 0, 0, 1, 1,
 			    EXPECT_REMOVAL_PREVENTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Clear PREVENT flag");
-	ret = preventallow(sd->iscsi_ctx, sd->iscsi_lun, 0);
+	ret = preventallow(sd, 0);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Load the medium again");
-	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun, 0, 0, 0, 0, 1, 1,
+	ret = startstopunit(sd, 0, 0, 0, 0, 1, 1,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 

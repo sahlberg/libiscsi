@@ -25,8 +25,7 @@
 
 
 static void
-verify_persistent_reserve_ownership(struct iscsi_context *iscsi1, int lun1,
-    struct iscsi_context *iscsi2, int lun2,
+verify_persistent_reserve_ownership(struct scsi_device *sd1, struct scsi_device *sd2,
     const enum scsi_persistent_out_type pr_type,
     int resvn_is_shared)
 {
@@ -41,97 +40,121 @@ verify_persistent_reserve_ownership(struct iscsi_context *iscsi1, int lun1,
 	    scsi_pr_type_str(pr_type));
 
 	/* send TURs to clear possible check conditions */
-	(void) testunitready_clear_ua(iscsi1, lun1);
-	(void) testunitready_clear_ua(iscsi2, lun2);
+	(void) testunitready_clear_ua(sd1);
+	(void) testunitready_clear_ua(sd2);
 
 	/* register our reservation key with the target */
-	ret = prout_register_and_ignore(iscsi1, lun1, key1);
+	ret = prout_register_and_ignore(sd1, key1);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE OUT is not implemented.");
 		CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
 		return;
 	}	
 	CU_ASSERT_EQUAL(0, ret);
-	ret = prout_register_and_ignore(iscsi2, lun2, key2);
+	ret = prout_register_and_ignore(sd2, key2);
 	CU_ASSERT_EQUAL(0, ret);
 
 	/* reserve the target through initiator 1 */
-	ret = prout_reserve(iscsi1, lun1, key1, pr_type);
+	ret = prout_reserve(sd1, key1, pr_type);
 	CU_ASSERT_EQUAL(0, ret);
 
 	/* verify target reservation */
-	ret = prin_verify_reserved_as(iscsi1, lun1,
+	ret = prin_verify_reserved_as(sd1,
 	    pr_type_is_all_registrants(pr_type) ? 0 : key1,
 	    pr_type);
 	CU_ASSERT_EQUAL(0, ret);
 
 	/* unregister init1 */
-	ret = prout_register_key(iscsi1, lun1, 0, key1);
+	ret = prout_register_key(sd1, 0, key1);
 	CU_ASSERT_EQUAL(0, ret);
 
 	/* verify if reservation is still present */
 	if (resvn_is_shared) {
 		/* verify target reservation */
-		ret = prin_verify_reserved_as(iscsi1, lun1,
+		ret = prin_verify_reserved_as(sd1,
 		    pr_type_is_all_registrants(pr_type) ? 0 : key1,
 		    pr_type);
 		CU_ASSERT_EQUAL(0, ret);
 
 		/* release our reservation */
-		ret = prout_release(iscsi2, lun2, key2, pr_type);
+		ret = prout_release(sd2, key2, pr_type);
 		CU_ASSERT_EQUAL(0, ret);
 	} else {
 		/* verify target is not reserved now */
-		ret = prin_verify_not_reserved(iscsi1, lun1);
+		ret = prin_verify_not_reserved(sd1);
 		CU_ASSERT_EQUAL(0, ret);
 
 		/* send TUR to clear possible check condition */
-		(void) testunitready_clear_ua(iscsi2, lun2);
+		(void) testunitready_clear_ua(sd2);
 	}
 
 	/* remove our remaining key from the target */
-	ret = prout_register_key(iscsi2, lun2, 0, key2);
+	ret = prout_register_key(sd2, 0, key2);
 	CU_ASSERT_EQUAL(0, ret);
 }
 
 void
 test_prout_reserve_ownership_ea(void)
 {
-	verify_persistent_reserve_ownership(sd->iscsi_ctx, sd->iscsi_lun, iscsic2, tgt_lun2,
+	struct scsi_device sd2;
+
+	sd2.iscsi_ctx = iscsic2;
+	sd2.iscsi_lun = tgt_lun2;
+	verify_persistent_reserve_ownership(sd, &sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS, 0);
 }
 
 void
 test_prout_reserve_ownership_we(void)
 {
-	verify_persistent_reserve_ownership(sd->iscsi_ctx, sd->iscsi_lun, iscsic2, tgt_lun2,
+	struct scsi_device sd2;
+
+	sd2.iscsi_ctx = iscsic2;
+	sd2.iscsi_lun = tgt_lun2;
+	verify_persistent_reserve_ownership(sd, &sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE, 0);
 }
 
 void
 test_prout_reserve_ownership_earo(void)
 {
-	verify_persistent_reserve_ownership(sd->iscsi_ctx, sd->iscsi_lun, iscsic2, tgt_lun2,
+	struct scsi_device sd2;
+
+	sd2.iscsi_ctx = iscsic2;
+	sd2.iscsi_lun = tgt_lun2;
+	verify_persistent_reserve_ownership(sd, &sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY, 0);
 }
 
 void
 test_prout_reserve_ownership_wero(void)
 {
-	verify_persistent_reserve_ownership(sd->iscsi_ctx, sd->iscsi_lun, iscsic2, tgt_lun2,
+	struct scsi_device sd2;
+
+	sd2.iscsi_ctx = iscsic2;
+	sd2.iscsi_lun = tgt_lun2;
+	verify_persistent_reserve_ownership(sd, &sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY, 0);
 }
 
 void
 test_prout_reserve_ownership_eaar(void)
 {
-	verify_persistent_reserve_ownership(sd->iscsi_ctx, sd->iscsi_lun, iscsic2, tgt_lun2,
+	struct scsi_device sd2;
+
+	sd2.iscsi_ctx = iscsic2;
+	sd2.iscsi_lun = tgt_lun2;
+	verify_persistent_reserve_ownership(sd, &sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS, 1);
 }
 
 void
 test_prout_reserve_ownership_wear(void)
 {
-	verify_persistent_reserve_ownership(sd->iscsi_ctx, sd->iscsi_lun, iscsic2, tgt_lun2,
+	struct scsi_device sd2;
+
+	sd2.iscsi_ctx = iscsic2;
+	sd2.iscsi_lun = tgt_lun2;
+	verify_persistent_reserve_ownership(sd, &sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS, 1);
 }

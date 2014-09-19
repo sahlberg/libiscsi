@@ -40,7 +40,7 @@ test_inquiry_alloc_length(void)
 			scsi_free_scsi_task(task);
 			task = NULL;
 		}
-		ret = inquiry(sd->iscsi_ctx, &task, sd->iscsi_lun, 0, 0, i,
+		ret = inquiry(sd, &task, 0, 0, i,
 			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -83,12 +83,12 @@ test_inquiry_alloc_length(void)
 
 	logging(LOG_VERBOSE, "Version is SPC-3 or later. Read INQUIRY data using 16-bit allocation length");
 	logging(LOG_VERBOSE, "Read INQUIRY data with allocation length 511 (low order byte is 0xff)");
-	ret = inquiry(sd->iscsi_ctx, &task, sd->iscsi_lun, 0, 0, 511,
+	ret = inquiry(sd, &task, 0, 0, 511,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Read INQUIRY data with allocation length 512 (low order byte is 0x00)");
-	ret = inquiry(sd->iscsi_ctx, &task2, sd->iscsi_lun, 0, 0, 512,
+	ret = inquiry(sd, &task2, 0, 0, 512,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 

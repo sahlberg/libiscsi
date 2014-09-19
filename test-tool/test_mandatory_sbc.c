@@ -37,38 +37,38 @@ test_mandatory_sbc(void)
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, "Test INQUIRY.");
-	ret = inquiry(sd->iscsi_ctx, NULL, sd->iscsi_lun, 0, 0, 255,
+	ret = inquiry(sd, NULL, 0, 0, 255,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READCAPACITY10.");
-	ret = readcapacity10(sd->iscsi_ctx, sd->iscsi_lun, 0, 0,
+	ret = readcapacity10(sd, 0, 0,
 			     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	if (sbc3_support) {
 		logging(LOG_VERBOSE, "Test READCAPACITY16. The device claims SBC-3 support.");
-		ret = readcapacity16(sd->iscsi_ctx, sd->iscsi_lun, 15,
+		ret = readcapacity16(sd, 15,
 				     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 	logging(LOG_VERBOSE, "Test READ10.");
-	ret = read10(sd->iscsi_ctx, NULL, sd->iscsi_lun, 0, block_size, block_size,
+	ret = read10(sd, NULL, 0, block_size, block_size,
 		     0, 0, 0, 0, 0, NULL,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	if (sbc3_support) {
 		logging(LOG_VERBOSE, "Test READ16. the device claims SBC-3 support.");
-		ret = read16(sd->iscsi_ctx, sd->iscsi_lun, 0, block_size, block_size,
+		ret = read16(sd, 0, block_size, block_size,
 			     0, 0, 0, 0, 0, NULL,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY.");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 }

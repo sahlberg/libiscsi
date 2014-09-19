@@ -32,6 +32,7 @@ test_sanitize_reservations(void)
 	int ret;
 	struct iscsi_data data;
 	struct scsi_command_descriptor *cd;
+	struct scsi_device sd2;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test SANITIZE with RESERVATIONS");
@@ -40,15 +41,15 @@ test_sanitize_reservations(void)
 	CHECK_FOR_DATALOSS;
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	iscsic2 = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd->iscsi_lun);
-	if (iscsic2 == NULL) {
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
 	}
 
 	logging(LOG_VERBOSE, "Take out a RESERVE6 from the second "
 			     "initiator");
-	ret = reserve6(iscsic2, sd->iscsi_lun);
+	ret = reserve6(&sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
@@ -70,7 +71,7 @@ test_sanitize_reservations(void)
 		data.data[1] = 0x00;
 		data.data[2] = block_size >> 8;
 		data.data[3] = block_size & 0xff;
-		ret = sanitize_conflict(sd->iscsi_ctx, sd->iscsi_lun,
+		ret = sanitize_conflict(sd,
 		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -85,7 +86,7 @@ test_sanitize_reservations(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE BLOCK_ERASE");
-		ret = sanitize_conflict(sd->iscsi_ctx, sd->iscsi_lun,
+		ret = sanitize_conflict(sd,
 		       0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -99,12 +100,10 @@ test_sanitize_reservations(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE CRYPTO_ERASE");
-		ret = sanitize_conflict(sd->iscsi_ctx, sd->iscsi_lun,
+		ret = sanitize_conflict(sd,
 		       0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-
-	iscsi_destroy_context(iscsic2);
-	iscsic2 = NULL;
+	iscsi_destroy_context(sd2.iscsi_ctx);
 }

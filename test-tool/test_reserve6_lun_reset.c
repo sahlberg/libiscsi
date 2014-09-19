@@ -29,14 +29,14 @@ void
 test_reserve6_lun_reset(void)
 {
 	int ret;
-
+	struct scsi_device  sd2;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that RESERVE6 is released on lun reset");
 
 
 	logging(LOG_VERBOSE, "Take out a RESERVE6 from the first initiator");
-	ret = reserve6(sd->iscsi_ctx, sd->iscsi_lun);
+	ret = reserve6(sd);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "[SKIPPED] Target does not support RESERVE6. Skipping test");
 		CU_PASS("[SKIPPED] Target does not support RESERVE6. Skipping test");
@@ -57,21 +57,20 @@ test_reserve6_lun_reset(void)
 
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	iscsic2 = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd->iscsi_lun);
-	if (iscsic2 == NULL) {
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
 	}
 
 	logging(LOG_VERBOSE, "RESERVE6 from the second initiator should work now");
-	ret = reserve6(iscsic2, sd->iscsi_lun);
+	ret = reserve6(&sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "RELEASE6 from the second initiator");
-	ret = release6(iscsic2, sd->iscsi_lun);
+	ret = release6(&sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	iscsi_logout_sync(iscsic2);
-	iscsi_destroy_context(iscsic2);
-	iscsic2 = NULL;
+	iscsi_logout_sync(sd2.iscsi_ctx);
+	iscsi_destroy_context(sd2.iscsi_ctx);
 }

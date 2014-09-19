@@ -40,7 +40,7 @@ test_verify10_mismatch_no_cmp(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read10(sd->iscsi_ctx, NULL, sd->iscsi_lun, 0, i * block_size,
+		ret = read10(sd, NULL, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -49,7 +49,7 @@ test_verify10_mismatch_no_cmp(void)
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify10(sd->iscsi_ctx, sd->iscsi_lun, 0, i * block_size,
+		ret = verify10(sd, 0, i * block_size,
 			       block_size, 0, 0, 0, buf,
 			       EXPECT_STATUS_GOOD);
 		if (ret == -2) {
@@ -67,7 +67,7 @@ test_verify10_mismatch_no_cmp(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read10(sd->iscsi_ctx, NULL, sd->iscsi_lun, num_blocks - i,
+		ret = read10(sd, NULL, num_blocks - i,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -76,7 +76,7 @@ test_verify10_mismatch_no_cmp(void)
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify10(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
+		ret = verify10(sd, num_blocks - i,
 			       i * block_size, block_size, 0, 0, 0, buf,
 			       EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

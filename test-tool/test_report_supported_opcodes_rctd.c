@@ -39,7 +39,7 @@ test_report_supported_opcodes_rctd(void)
 	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES report ALL opcodes "
 		"without timeout descriptors");
 	ret = report_supported_opcodes(
-		sd->iscsi_ctx, &rso_task, sd->iscsi_lun,
+		sd, &rso_task,
 		0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
 		65535,
 		EXPECT_STATUS_GOOD);
@@ -76,7 +76,7 @@ test_report_supported_opcodes_rctd(void)
 	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES report ALL opcodes "
 		"with timeout descriptors");
 	ret = report_supported_opcodes(
-		sd->iscsi_ctx, &rso_task, sd->iscsi_lun,
+		sd, &rso_task,
 		1, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
 		65535,
 		EXPECT_STATUS_GOOD);

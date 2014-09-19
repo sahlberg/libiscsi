@@ -60,7 +60,7 @@ test_sanitize_exit_failure_mode(void)
 		"be 0");
 	logging(LOG_VERBOSE, "Test that non-zero param length is an error for "
 		"EXIT_FAILURE_MODE");
-	ret = sanitize_invalidfieldincdb(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = sanitize_invalidfieldincdb(sd,
 		       0, 0, SCSI_SANITIZE_EXIT_FAILURE_MODE, 8, &data);
 	CU_ASSERT_EQUAL(ret, 0);
 }

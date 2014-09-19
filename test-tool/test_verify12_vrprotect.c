@@ -41,10 +41,10 @@ test_verify12_vrprotect(void)
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
 	
-			ret = read10(sd->iscsi_ctx, NULL, sd->iscsi_lun, 0, block_size,
+			ret = read10(sd, NULL, 0, block_size,
 				     block_size, 0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
-			ret = verify12(sd->iscsi_ctx, sd->iscsi_lun, 0, block_size,
+			ret = verify12(sd, 0, block_size,
 				       block_size, i, 0, 1, buf,
 				       EXPECT_INVALID_FIELD_IN_CDB);
 			if (ret == -2) {

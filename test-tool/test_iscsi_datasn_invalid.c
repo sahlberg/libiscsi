@@ -75,7 +75,7 @@ void test_iscsi_datasn_invalid(void)
 	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
 	iscsi_set_timeout(sd->iscsi_ctx, 3);
 
-	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 100, 2 * block_size,
+	ret = write10(sd, 100, 2 * block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
@@ -98,7 +98,7 @@ void test_iscsi_datasn_invalid(void)
 	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
 	iscsi_set_timeout(sd->iscsi_ctx, 3);
 
-	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 100, block_size,
+	ret = write10(sd, 100, block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
@@ -121,7 +121,7 @@ void test_iscsi_datasn_invalid(void)
 	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
 	iscsi_set_timeout(sd->iscsi_ctx, 3);
 
-	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 100, block_size,
+	ret = write10(sd, 100, block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
@@ -145,7 +145,7 @@ void test_iscsi_datasn_invalid(void)
 	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
 	iscsi_set_timeout(sd->iscsi_ctx, 3);
 
-	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 100, 2 * block_size,
+	ret = write10(sd, 100, 2 * block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {

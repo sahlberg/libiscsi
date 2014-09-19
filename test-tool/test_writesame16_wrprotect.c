@@ -45,7 +45,7 @@ test_writesame16_wrprotect(void)
 	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
-			ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, 0,
+			ret = writesame16(sd, 0,
 					  block_size, 1, 0, 0, i, 0, buf,
 					  EXPECT_INVALID_FIELD_IN_CDB);
 			if (ret == -2) {

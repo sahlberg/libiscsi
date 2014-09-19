@@ -39,7 +39,7 @@ test_inquiry_block_limits(void)
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, "Block device. Verify that we can read Block Limits VPD");
-	ret = inquiry(sd->iscsi_ctx, &bl_task, sd->iscsi_lun,
+	ret = inquiry(sd, &bl_task,
 		      1, SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS, 64,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -107,7 +107,7 @@ test_inquiry_block_limits(void)
 	 * MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT
 	 */
 	logging(LOG_VERBOSE, "Try reading the logical block provisioning VPD");
-	ret = inquiry(sd->iscsi_ctx, &lbp_task, sd->iscsi_lun,
+	ret = inquiry(sd, &lbp_task,
 		      1, SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING, 64,
 		      EXPECT_STATUS_GOOD);
 	if (ret == 0) {

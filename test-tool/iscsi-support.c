@@ -104,7 +104,7 @@ static const char *scsi_status_str(int status)
 	return "UNKNOWN";
 }
 
-static int check_result(const char *opcode, struct iscsi_context *iscsi,
+static int check_result(const char *opcode, struct scsi_device *sdev,
 			struct scsi_task *task,
 			int status, enum scsi_sense_key key,
 			int *ascq, int num_ascq)
@@ -113,7 +113,7 @@ static int check_result(const char *opcode, struct iscsi_context *iscsi,
 
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send %s command: "
-			"%s", opcode, iscsi_get_error(iscsi));
+			"%s", opcode, iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -125,7 +125,7 @@ static int check_result(const char *opcode, struct iscsi_context *iscsi,
 	}
 	if (status == SCSI_STATUS_GOOD && task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] %s command failed with "
-			"sense. %s", opcode, iscsi_get_error(iscsi));
+			"sense. %s", opcode, iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (status != SCSI_STATUS_GOOD && task->status == SCSI_STATUS_GOOD) {
@@ -158,7 +158,7 @@ static int check_result(const char *opcode, struct iscsi_context *iscsi,
 			opcode,
 			scsi_sense_key_str(key), key,
 			scsi_sense_ascq_str(ascq[0]), ascq[0],
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	logging(LOG_VERBOSE, "[OK] %s returned %s %s(0x%02x) %s(0x%04x)",
@@ -292,7 +292,7 @@ iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 }
 
 int
-orwrite(struct iscsi_context *iscsi, int lun, uint64_t lba,
+orwrite(struct scsi_device *sdev, uint64_t lba,
 	uint32_t datalen, int blocksize, int wrprotect, 
 	int dpo, int fua, int fua_nv, int group,
 	unsigned char *data,
@@ -319,9 +319,9 @@ orwrite(struct iscsi_context *iscsi, int lun, uint64_t lba,
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(iscsi, lun, task, &d);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
 
-	ret = check_result("ORWRITE", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("ORWRITE", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -329,7 +329,7 @@ orwrite(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 int
-prin_task(struct iscsi_context *iscsi, int lun, int service_action,
+prin_task(struct scsi_device *sdev, int service_action,
     int success_expected)
 {
 	const int buf_sz = 16384;
@@ -340,12 +340,12 @@ prin_task(struct iscsi_context *iscsi, int lun, int service_action,
 	logging(LOG_VERBOSE, "Send PRIN/SA=0x%02x, expect %s", service_action,
 	    success_expected ? "success" : "failure");
 
-	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
+	task = iscsi_persistent_reserve_in_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 	    service_action, buf_sz);
 	if (task == NULL) {
 	        logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PRIN command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -360,7 +360,7 @@ prin_task(struct iscsi_context *iscsi, int lun, int service_action,
 		if (task->status != SCSI_STATUS_GOOD) {
 			logging(LOG_NORMAL,
 			    "[FAILED] PRIN/SA=0x%x failed: %s",
-			    service_action, iscsi_get_error(iscsi));
+			    service_action, iscsi_get_error(sdev->iscsi_ctx));
 			ret = -1;
 		}
 	} else {
@@ -379,7 +379,7 @@ prin_task(struct iscsi_context *iscsi, int lun, int service_action,
 }
 
 int
-prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
+prin_read_keys(struct scsi_device *sdev, struct scsi_task **tp,
 	struct scsi_persistent_reserve_in_read_keys **rkp)
 {
 	const int buf_sz = 16384;
@@ -388,12 +388,12 @@ prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
 
 	logging(LOG_VERBOSE, "Send PRIN/READ_KEYS");
 
-	*tp = iscsi_persistent_reserve_in_sync(iscsi, lun,
+	*tp = iscsi_persistent_reserve_in_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 	    SCSI_PERSISTENT_RESERVE_READ_KEYS, buf_sz);
 	if (*tp == NULL) {
 	        logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PRIN command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if ((*tp)->status        == SCSI_STATUS_CHECK_CONDITION
@@ -405,7 +405,7 @@ prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
 	if ((*tp)->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] PRIN command: failed with sense. %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 
@@ -413,7 +413,7 @@ prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
 	if (rk == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAIL] failed to unmarshall PRIN/READ_KEYS data. %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (rkp != NULL)
@@ -423,7 +423,7 @@ prin_read_keys(struct iscsi_context *iscsi, int lun, struct scsi_task **tp,
 }
 
 int
-prout_register_and_ignore(struct iscsi_context *iscsi, int lun,
+prout_register_and_ignore(struct scsi_device *sdev,
     unsigned long long sark)
 {
 	struct scsi_persistent_reserve_out_basic poc;
@@ -433,8 +433,8 @@ prout_register_and_ignore(struct iscsi_context *iscsi, int lun,
 
 	/* register our reservation key with the target */
 	logging(LOG_VERBOSE,
-	    "Send PROUT/REGISTER_AND_IGNORE to register init=%s",
-	    iscsi->initiator_name);
+		"Send PROUT/REGISTER_AND_IGNORE to register init=%s",
+		sdev->iscsi_ctx->initiator_name);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set in. Skipping PROUT\n");
@@ -443,13 +443,13 @@ prout_register_and_ignore(struct iscsi_context *iscsi, int lun,
 
 	memset(&poc, 0, sizeof (poc));
 	poc.service_action_reservation_key = sark;
-	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
+	task = iscsi_persistent_reserve_out_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 	    SCSI_PERSISTENT_RESERVE_REGISTER_AND_IGNORE_EXISTING_KEY,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU, 0, &poc);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PROUT command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status == SCSI_STATUS_CHECK_CONDITION &&
@@ -462,7 +462,7 @@ prout_register_and_ignore(struct iscsi_context *iscsi, int lun,
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] PROUT command: failed with sense. %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 	}
 
@@ -472,7 +472,7 @@ prout_register_and_ignore(struct iscsi_context *iscsi, int lun,
 }
 
 int
-prout_register_key(struct iscsi_context *iscsi, int lun,
+prout_register_key(struct scsi_device *sdev,
     unsigned long long sark, unsigned long long rk)
 {
 	struct scsi_persistent_reserve_out_basic poc;
@@ -483,8 +483,8 @@ prout_register_key(struct iscsi_context *iscsi, int lun,
 	/* register/unregister our reservation key with the target */
 
 	logging(LOG_VERBOSE, "Send PROUT/REGISTER to %s init=%s",
-	    sark != 0 ? "register" : "unregister",
-	    iscsi->initiator_name);
+		sark != 0 ? "register" : "unregister",
+		sdev->iscsi_ctx->initiator_name);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set in. Skipping PROUT\n");
@@ -494,13 +494,13 @@ prout_register_key(struct iscsi_context *iscsi, int lun,
 	memset(&poc, 0, sizeof (poc));
 	poc.service_action_reservation_key = sark;
 	poc.reservation_key = rk;
-	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
+	task = iscsi_persistent_reserve_out_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 	    SCSI_PERSISTENT_RESERVE_REGISTER,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU, 0, &poc);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PROUT command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -513,7 +513,7 @@ prout_register_key(struct iscsi_context *iscsi, int lun,
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] PROUT command: failed with sense: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 	}
 
@@ -523,7 +523,7 @@ prout_register_key(struct iscsi_context *iscsi, int lun,
 }
 
 int
-prin_verify_key_presence(struct iscsi_context *iscsi, int lun,
+prin_verify_key_presence(struct scsi_device *sdev,
     unsigned long long key, int present)
 {
 	struct scsi_task *task;
@@ -535,16 +535,16 @@ prin_verify_key_presence(struct iscsi_context *iscsi, int lun,
 
 
 	logging(LOG_VERBOSE,
-	    "Send PRIN/READ_KEYS to verify key %s init=%s... ",
-	    present ? "present" : "absent",
-	    iscsi->initiator_name);
+		"Send PRIN/READ_KEYS to verify key %s init=%s... ",
+		present ? "present" : "absent",
+		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
+	task = iscsi_persistent_reserve_in_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 	    SCSI_PERSISTENT_RESERVE_READ_KEYS, buf_sz);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PRIN command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -558,7 +558,7 @@ prin_verify_key_presence(struct iscsi_context *iscsi, int lun,
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] PRIN command: failed with sense. %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto dun;
 	}
@@ -567,7 +567,7 @@ prin_verify_key_presence(struct iscsi_context *iscsi, int lun,
 	if (rk == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] failed to unmarshall PRIN/READ_KEYS data. %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto dun;
 	}
@@ -594,7 +594,7 @@ prin_verify_key_presence(struct iscsi_context *iscsi, int lun,
 }
 
 int
-prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
+prout_reregister_key_fails(struct scsi_device *sdev,
     unsigned long long sark)
 {
 	struct scsi_persistent_reserve_out_basic poc;
@@ -603,8 +603,8 @@ prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
 
 
 	logging(LOG_VERBOSE,
-	    "Send PROUT/REGISTER to ensure reregister fails init=%s",
-	    iscsi->initiator_name);
+		"Send PROUT/REGISTER to ensure reregister fails init=%s",
+		sdev->iscsi_ctx->initiator_name);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set in. Skipping PROUT\n");
@@ -613,13 +613,13 @@ prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
 
 	memset(&poc, 0, sizeof (poc));
 	poc.service_action_reservation_key = sark;
-	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
+	task = iscsi_persistent_reserve_out_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 	    SCSI_PERSISTENT_RESERVE_REGISTER,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU, 0, &poc);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PROUT command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -641,7 +641,7 @@ prout_reregister_key_fails(struct iscsi_context *iscsi, int lun,
 }
 
 int
-prout_reserve(struct iscsi_context *iscsi, int lun,
+prout_reserve(struct scsi_device *sdev,
     unsigned long long key, enum scsi_persistent_out_type pr_type)
 {
 	struct scsi_persistent_reserve_out_basic poc;
@@ -651,9 +651,9 @@ prout_reserve(struct iscsi_context *iscsi, int lun,
 
 	/* reserve the target using specified reservation type */
 	logging(LOG_VERBOSE,
-	    "Send PROUT/RESERVE to reserve, type=%d (%s) init=%s",
-	    pr_type, scsi_pr_type_str(pr_type),
-	    iscsi->initiator_name);
+		"Send PROUT/RESERVE to reserve, type=%d (%s) init=%s",
+		pr_type, scsi_pr_type_str(pr_type),
+		sdev->iscsi_ctx->initiator_name);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set in. Skipping PROUT\n");
@@ -662,14 +662,14 @@ prout_reserve(struct iscsi_context *iscsi, int lun,
 
 	memset(&poc, 0, sizeof (poc));
 	poc.reservation_key = key;
-	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
+	task = iscsi_persistent_reserve_out_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 	    SCSI_PERSISTENT_RESERVE_RESERVE,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
 	    pr_type, &poc);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PROUT command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -683,7 +683,7 @@ prout_reserve(struct iscsi_context *iscsi, int lun,
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] PROUT command: failed with sense. %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 	}
 
@@ -692,7 +692,7 @@ prout_reserve(struct iscsi_context *iscsi, int lun,
 }
 
 int
-prout_release(struct iscsi_context *iscsi, int lun,
+prout_release(struct scsi_device *sdev,
     unsigned long long key, enum scsi_persistent_out_type pr_type)
 {
 	struct scsi_persistent_reserve_out_basic poc;
@@ -701,8 +701,8 @@ prout_release(struct iscsi_context *iscsi, int lun,
 
 
 	logging(LOG_VERBOSE,
-	    "Send PROUT/RELEASE to release reservation, type=%d init=%s",
-	    pr_type, iscsi->initiator_name);
+		"Send PROUT/RELEASE to release reservation, type=%d init=%s",
+		pr_type, sdev->iscsi_ctx->initiator_name);
 
 	if (!data_loss) {
 		printf("--dataloss flag is not set in. Skipping PROUT\n");
@@ -711,14 +711,14 @@ prout_release(struct iscsi_context *iscsi, int lun,
 
 	memset(&poc, 0, sizeof (poc));
 	poc.reservation_key = key;
-	task = iscsi_persistent_reserve_out_sync(iscsi, lun,
+	task = iscsi_persistent_reserve_out_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 	    SCSI_PERSISTENT_RESERVE_RELEASE,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
 	    pr_type, &poc);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PROUT command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -732,7 +732,7 @@ prout_release(struct iscsi_context *iscsi, int lun,
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] PROUT command: failed with sense. %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 	}
 
@@ -741,7 +741,7 @@ prout_release(struct iscsi_context *iscsi, int lun,
 }
 
 int
-prin_verify_reserved_as(struct iscsi_context *iscsi, int lun,
+prin_verify_reserved_as(struct scsi_device *sdev,
     unsigned long long key, enum scsi_persistent_out_type pr_type)
 {
 	struct scsi_task *task;
@@ -751,15 +751,15 @@ prin_verify_reserved_as(struct iscsi_context *iscsi, int lun,
 
 
 	logging(LOG_VERBOSE,
-	    "Send PRIN/READ_RESERVATION to verify type=%d init=%s... ",
-	    pr_type, iscsi->initiator_name);
+		"Send PRIN/READ_RESERVATION to verify type=%d init=%s... ",
+		pr_type, sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
+	task = iscsi_persistent_reserve_in_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 	    SCSI_PERSISTENT_RESERVE_READ_RESERVATION, buf_sz);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PRIN command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -773,7 +773,7 @@ prin_verify_reserved_as(struct iscsi_context *iscsi, int lun,
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] PRIN command: failed with sense: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto dun;
 	}
@@ -781,7 +781,7 @@ prin_verify_reserved_as(struct iscsi_context *iscsi, int lun,
 	if (rr == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to unmarshall PRIN/READ_RESERVATION data. %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto dun;
 	}
@@ -815,7 +815,7 @@ prin_verify_reserved_as(struct iscsi_context *iscsi, int lun,
 }
 
 int
-prin_verify_not_reserved(struct iscsi_context *iscsi, int lun)
+prin_verify_not_reserved(struct scsi_device *sdev)
 {
 	struct scsi_task *task;
 	const int buf_sz = 16384;
@@ -824,15 +824,15 @@ prin_verify_not_reserved(struct iscsi_context *iscsi, int lun)
 
 
 	logging(LOG_VERBOSE,
-	    "Send PRIN/READ_RESERVATION to verify not reserved init=%s",
-	    iscsi->initiator_name);
+		"Send PRIN/READ_RESERVATION to verify not reserved init=%s",
+		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_persistent_reserve_in_sync(iscsi, lun,
+	task = iscsi_persistent_reserve_in_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 	    SCSI_PERSISTENT_RESERVE_READ_RESERVATION, buf_sz);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PRIN command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -846,7 +846,7 @@ prin_verify_not_reserved(struct iscsi_context *iscsi, int lun)
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] PRIN command: failed with sense: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto dun;
 	}
@@ -854,7 +854,7 @@ prin_verify_not_reserved(struct iscsi_context *iscsi, int lun)
 	if (rr == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to unmarshall PRIN/READ_RESERVATION data: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto dun;
 	}
@@ -872,7 +872,7 @@ prin_verify_not_reserved(struct iscsi_context *iscsi, int lun)
 }
 
 int
-verify_read_works(struct iscsi_context *iscsi, int lun, unsigned char *buf)
+verify_read_works(struct scsi_device *sdev, unsigned char *buf)
 {
 	struct scsi_task *task;
 	const uint32_t lba = 1;
@@ -886,21 +886,21 @@ verify_read_works(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 	 */
 
 	logging(LOG_VERBOSE, "Send READ10 to verify READ works init=%s",
-	    iscsi->initiator_name);
+		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blksize,
+	task = iscsi_read10_sync(sdev->iscsi_ctx, sdev->iscsi_lun, lba, datalen, blksize,
 	    0, 0, 0, 0, 0);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send READ10 command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] READ10 command: failed with sense: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto dun;
 	}
@@ -912,7 +912,7 @@ verify_read_works(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 }
 
 int
-verify_write_works(struct iscsi_context *iscsi, int lun, unsigned char *buf)
+verify_write_works(struct scsi_device *sdev, unsigned char *buf)
 {
 	struct scsi_task *task;
 	const uint32_t lba = 1;
@@ -926,20 +926,20 @@ verify_write_works(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 	 */
 
 	logging(LOG_VERBOSE, "Send WRITE10 to verify WRITE works init=%s",
-	    iscsi->initiator_name);
+		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_write10_sync(iscsi, lun, lba, buf, datalen, blksize,
+	task = iscsi_write10_sync(sdev->iscsi_ctx, sdev->iscsi_lun, lba, buf, datalen, blksize,
 	    0, 0, 0, 0, 0);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send WRITE10 command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 		    "[FAILED] WRITE10 command: failed with sense: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 	}
 	scsi_free_scsi_task(task);
@@ -947,7 +947,7 @@ verify_write_works(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 }
 
 int
-verify_read_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf)
+verify_read_fails(struct scsi_device *sdev, unsigned char *buf)
 {
 	struct scsi_task *task;
 	const uint32_t lba = 1;
@@ -961,15 +961,15 @@ verify_read_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 	 */
 
 	logging(LOG_VERBOSE,
-	    "Send READ10 to verify READ does not work init=%s",
-	    iscsi->initiator_name);
+		"Send READ10 to verify READ does not work init=%s",
+		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_read10_sync(iscsi, lun, lba, datalen, blksize,
+	task = iscsi_read10_sync(sdev->iscsi_ctx, sdev->iscsi_lun, lba, datalen, blksize,
 	    0, 0, 0, 0, 0);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send READ10 command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 
@@ -991,7 +991,7 @@ verify_read_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 }
 
 int
-verify_write_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf)
+verify_write_fails(struct scsi_device *sdev, unsigned char *buf)
 {
 	struct scsi_task *task;
 	const uint32_t lba = 1;
@@ -1005,15 +1005,15 @@ verify_write_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 	 */
 
 	logging(LOG_VERBOSE,
-	    "Send WRITE10 to verify WRITE does not work init=%s",
-	    iscsi->initiator_name);
+		"Send WRITE10 to verify WRITE does not work init=%s",
+		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_write10_sync(iscsi, lun, lba, buf, datalen, blksize,
+	task = iscsi_write10_sync(sdev->iscsi_ctx, sdev->iscsi_lun, lba, buf, datalen, blksize,
 	    0, 0, 0, 0, 0);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send WRITE10 command: %s",
-		    iscsi_get_error(iscsi));
+		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 
@@ -1034,7 +1034,7 @@ verify_write_fails(struct iscsi_context *iscsi, int lun, unsigned char *buf)
 }
 
 int
-synchronizecache10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, int sync_nv, int immed, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+synchronizecache10(struct scsi_device *sdev, uint32_t lba, int num, int sync_nv, int immed, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	int ret;
@@ -1047,9 +1047,9 @@ synchronizecache10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, 
 	task = scsi_cdb_synchronizecache10(lba, num_blocks, sync_nv, immed);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("SYNCHRONIZECACHE10", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("SYNCHRONIZECACHE10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -1057,7 +1057,7 @@ synchronizecache10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, 
 }
 
 int
-synchronizecache16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num, int sync_nv, int immed, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+synchronizecache16(struct scsi_device *sdev, uint64_t lba, int num, int sync_nv, int immed, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	int ret;
@@ -1070,16 +1070,16 @@ synchronizecache16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num, 
 	task = scsi_cdb_synchronizecache16(lba, num_blocks, sync_nv, immed);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("SYNCHRONIZECACHE16", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("SYNCHRONIZECACHE16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
 	return ret;
 }
 
-int sanitize(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
+int sanitize(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
 {
 	struct scsi_task *task;
 
@@ -1087,12 +1087,12 @@ int sanitize(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, 
 		"PARAM_LEN:%d",
 		immed, ause, sa, param_len);
 
-	task = iscsi_sanitize_sync(iscsi, lun, immed, ause, sa, param_len,
+	task = iscsi_sanitize_sync(sdev->iscsi_ctx, sdev->iscsi_lun, immed, ause, sa, param_len,
 				   data);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 			"[FAILED] Failed to send SANITIZE command: %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -1106,7 +1106,7 @@ int sanitize(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, 
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 			"[FAILED] SANITIZE command: failed with sense. %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		scsi_free_scsi_task(task);
 		return -1;
 	}
@@ -1115,7 +1115,7 @@ int sanitize(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, 
 	return 0;
 }
 
-int sanitize_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
+int sanitize_invalidfieldincdb(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
 {
 	struct scsi_task *task;
 
@@ -1124,12 +1124,12 @@ int sanitize_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int immed, 
 		"PARAM_LEN:%d",
 		immed, ause, sa, param_len);
 
-	task = iscsi_sanitize_sync(iscsi, lun, immed, ause, sa, param_len,
+	task = iscsi_sanitize_sync(sdev->iscsi_ctx, sdev->iscsi_lun, immed, ause, sa, param_len,
 				   data);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 			"[FAILED] Failed to send SANITIZE command: %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -1152,7 +1152,7 @@ int sanitize_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int immed, 
 		logging(LOG_NORMAL, "[FAILED] SANITIZE failed with wrong "
 			"sense. Should have failed with ILLEGAL_REQUEST/"
 			"INVALID_FIELD_IN_CDB. Sense:%s\n",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		scsi_free_scsi_task(task);
 		return -1;
 	}
@@ -1163,7 +1163,7 @@ int sanitize_invalidfieldincdb(struct iscsi_context *iscsi, int lun, int immed, 
 	return 0;
 }
 
-int sanitize_conflict(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
+int sanitize_conflict(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
 {
 	struct scsi_task *task;
 
@@ -1172,12 +1172,12 @@ int sanitize_conflict(struct iscsi_context *iscsi, int lun, int immed, int ause,
 		"PARAM_LEN:%d",
 		immed, ause, sa, param_len);
 
-	task = iscsi_sanitize_sync(iscsi, lun, immed, ause, sa, param_len,
+	task = iscsi_sanitize_sync(sdev->iscsi_ctx, sdev->iscsi_lun, immed, ause, sa, param_len,
 				   data);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 			"[FAILED] Failed to send SANITIZE command: %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
@@ -1189,7 +1189,7 @@ int sanitize_conflict(struct iscsi_context *iscsi, int lun, int immed, int ause,
 
 	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
 		logging(LOG_NORMAL, "[FAILED] Expected RESERVATION CONFLICT. "
-			"Sense:%s", iscsi_get_error(iscsi));
+			"Sense:%s", iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 
@@ -1198,7 +1198,7 @@ int sanitize_conflict(struct iscsi_context *iscsi, int lun, int immed, int ause,
 	return 0;
 }
 
-int sanitize_writeprotected(struct iscsi_context *iscsi, int lun, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
+int sanitize_writeprotected(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
 {
 	struct scsi_task *task;
 
@@ -1207,12 +1207,12 @@ int sanitize_writeprotected(struct iscsi_context *iscsi, int lun, int immed, int
 		"PARAM_LEN:%d",
 		immed, ause, sa, param_len);
 
-	task = iscsi_sanitize_sync(iscsi, lun, immed, ause, sa, param_len,
+	task = iscsi_sanitize_sync(sdev->iscsi_ctx, sdev->iscsi_lun, immed, ause, sa, param_len,
 				   data);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 			"[FAILED] Failed to send SANITIZE command: %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
@@ -1227,7 +1227,7 @@ int sanitize_writeprotected(struct iscsi_context *iscsi, int lun, int immed, int
 		logging(LOG_NORMAL, "[FAILED] SANITIZE failed with wrong "
 			"sense. Should have failed with DATA_PRTOTECTION/"
 			"WRITE_PROTECTED. Sense:%s\n",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		scsi_free_scsi_task(task);
 		return -1;
 	}
@@ -1237,7 +1237,7 @@ int sanitize_writeprotected(struct iscsi_context *iscsi, int lun, int immed, int
 	return 0;
 }
 
-int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int pc, int no_flush, int loej, int start, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+int startstopunit(struct scsi_device *sdev, int immed, int pcm, int pc, int no_flush, int loej, int start, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	int ret;
@@ -1250,9 +1250,9 @@ int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int 
 	task = scsi_cdb_startstopunit(immed, pcm, pc, no_flush, loej, start);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("STARTSTOPUNIT", iscsi, task, status, key, ascq,
+	ret = check_result("STARTSTOPUNIT", sdev, task, status, key, ascq,
 			   num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
@@ -1261,7 +1261,7 @@ int startstopunit(struct iscsi_context *iscsi, int lun, int immed, int pcm, int 
 }
 
 int
-testunitready(struct iscsi_context *iscsi, int lun, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+testunitready(struct scsi_device *sdev, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	int ret;
@@ -1272,9 +1272,9 @@ testunitready(struct iscsi_context *iscsi, int lun, int status, enum scsi_sense_
 	task = scsi_cdb_testunitready();
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("TESTUNITREADY", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("TESTUNITREADY", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -1282,26 +1282,26 @@ testunitready(struct iscsi_context *iscsi, int lun, int status, enum scsi_sense_
 }
 
 int
-testunitready_clear_ua(struct iscsi_context *iscsi, int lun)
+testunitready_clear_ua(struct scsi_device *sdev)
 {
 	struct scsi_task *task;
 	int ret = -1;
 
 	logging(LOG_VERBOSE,
-	    "Send TESTUNITREADY (To Clear Possible UA) init=%s",
-		iscsi->initiator_name);
+		"Send TESTUNITREADY (To Clear Possible UA) init=%s",
+		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_testunitready_sync(iscsi, lun);
+	task = iscsi_testunitready_sync(sdev->iscsi_ctx, sdev->iscsi_lun);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 			"[FAILED] Failed to send TESTUNITREADY command: %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		goto out;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL,
 			"[INFO] TESTUNITREADY command: failed with sense. %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		goto out;
 	}
 	logging(LOG_VERBOSE, "[OK] TESTUNITREADY does not return unit "
@@ -1317,12 +1317,12 @@ out:
  * Returns -1 if allocating a SCSI task failed or if a communication error
  * occurred and a SCSI status if a SCSI response has been received.
  */
-int mode_sense(struct iscsi_context *iscsi, int lun)
+int mode_sense(struct scsi_device *sdev)
 {
 	struct scsi_task *t;
 	enum scsi_status ret = -1;
 
-	t = iscsi_modesense6_sync(iscsi, lun, 0, SCSI_MODESENSE_PC_CURRENT,
+	t = iscsi_modesense6_sync(sdev->iscsi_ctx, sdev->iscsi_lun, 0, SCSI_MODESENSE_PC_CURRENT,
 				  SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255);
 	if (t) {
 		ret = t->status;
@@ -1331,7 +1331,7 @@ int mode_sense(struct iscsi_context *iscsi, int lun)
 	return ret;
 }
 
-int compareandwrite(struct iscsi_context *iscsi, int lun, uint64_t lba,
+int compareandwrite(struct scsi_device *sdev, uint64_t lba,
     unsigned char *data, uint32_t datalen, int blocksize,
     int wrprotect, int dpo,
     int fua, int group_number,
@@ -1357,16 +1357,16 @@ int compareandwrite(struct iscsi_context *iscsi, int lun, uint64_t lba,
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(iscsi, lun, task, &d);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
 
-	ret = check_result("COMPAREANDWRITE", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("COMPAREANDWRITE", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
 	return ret;
 }
 
-int get_lba_status(struct iscsi_context *iscsi, struct scsi_task **out_task, int lun, uint64_t lba, uint32_t len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+int get_lba_status(struct scsi_device *sdev, struct scsi_task **out_task, uint64_t lba, uint32_t len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	int ret;
@@ -1379,9 +1379,9 @@ int get_lba_status(struct iscsi_context *iscsi, struct scsi_task **out_task, int
 	task = scsi_cdb_get_lba_status(lba, len);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("GET_LBA_STATUS", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("GET_LBA_STATUS", sdev, task, status, key, ascq, num_ascq);
 	if (out_task) {
 		*out_task = task;
 	} else if (task) {
@@ -1391,7 +1391,7 @@ int get_lba_status(struct iscsi_context *iscsi, struct scsi_task **out_task, int
 }
 
 int
-prefetch10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, int immed, int group, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+prefetch10(struct scsi_device *sdev, uint32_t lba, int num, int immed, int group, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	int ret;
@@ -1404,9 +1404,9 @@ prefetch10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, int imme
 	task = scsi_cdb_prefetch10(lba, num, immed, group);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("PREFETCH10", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("PREFETCH10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -1414,7 +1414,7 @@ prefetch10(struct iscsi_context *iscsi, int lun, uint32_t lba, int num, int imme
 }
 
 int
-prefetch16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num, int immed, int group, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+prefetch16(struct scsi_device *sdev, uint64_t lba, int num, int immed, int group, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	int ret;
@@ -1427,9 +1427,9 @@ prefetch16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num, int imme
 	task = scsi_cdb_prefetch16(lba, num, immed, group);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("PREFETCH16", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("PREFETCH16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -1437,15 +1437,15 @@ prefetch16(struct iscsi_context *iscsi, int lun, uint64_t lba, int num, int imme
 }
 
 int
-preventallow(struct iscsi_context *iscsi, int lun, int prevent)
+preventallow(struct scsi_device *sdev, int prevent)
 {
 	struct scsi_task *task;
 
 	logging(LOG_VERBOSE, "Send PREVENTALLOW prevent:%d", prevent);
-	task = iscsi_preventallow_sync(iscsi, lun, prevent);
+	task = iscsi_preventallow_sync(sdev->iscsi_ctx, sdev->iscsi_lun, prevent);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send PREVENTALLOW "
-			"command: %s", iscsi_get_error(iscsi));
+			"command: %s", iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -1457,7 +1457,7 @@ preventallow(struct iscsi_context *iscsi, int lun, int prevent)
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "[FAILED] PREVENTALLOW command: "
-			"failed with sense. %s", iscsi_get_error(iscsi));
+			"failed with sense. %s", iscsi_get_error(sdev->iscsi_ctx));
 		scsi_free_scsi_task(task);
 		return -1;
 	}
@@ -1468,7 +1468,7 @@ preventallow(struct iscsi_context *iscsi, int lun, int prevent)
 }
 
 int
-read6(struct iscsi_context *iscsi, int lun, uint32_t lba,
+read6(struct scsi_device *sdev, uint32_t lba,
       uint32_t datalen, int blocksize,
       unsigned char *data,
       int status, enum scsi_sense_key key, int *ascq, int num_ascq)
@@ -1483,9 +1483,9 @@ read6(struct iscsi_context *iscsi, int lun, uint32_t lba,
 	task = scsi_cdb_read6(lba, datalen, blocksize);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("READ6", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("READ6", sdev, task, status, key, ascq, num_ascq);
 	if (data) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
@@ -1496,8 +1496,8 @@ read6(struct iscsi_context *iscsi, int lun, uint32_t lba,
 }
 
 int
-read10(struct iscsi_context *iscsi, struct scsi_task **out_task,
-       int lun, uint32_t lba,
+read10(struct scsi_device *sdev, struct scsi_task **out_task,
+       uint32_t lba,
        uint32_t datalen, int blocksize, int rdprotect, 
        int dpo, int fua, int fua_nv, int group,
        unsigned char *data,
@@ -1516,9 +1516,9 @@ read10(struct iscsi_context *iscsi, struct scsi_task **out_task,
 				dpo, fua, fua_nv, group);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("READ10", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("READ10", sdev, task, status, key, ascq, num_ascq);
 	if (data) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
@@ -1531,7 +1531,7 @@ read10(struct iscsi_context *iscsi, struct scsi_task **out_task,
 }
 
 int
-read12(struct iscsi_context *iscsi, int lun, uint32_t lba,
+read12(struct scsi_device *sdev, uint32_t lba,
        uint32_t datalen, int blocksize, int rdprotect, 
        int dpo, int fua, int fua_nv, int group,
        unsigned char *data,
@@ -1550,9 +1550,9 @@ read12(struct iscsi_context *iscsi, int lun, uint32_t lba,
 				dpo, fua, fua_nv, group);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("READ12", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("READ12", sdev, task, status, key, ascq, num_ascq);
 	if (data) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
@@ -1563,7 +1563,7 @@ read12(struct iscsi_context *iscsi, int lun, uint32_t lba,
 }
 
 int
-read16(struct iscsi_context *iscsi, int lun, uint64_t lba,
+read16(struct scsi_device *sdev, uint64_t lba,
        uint32_t datalen, int blocksize, int rdprotect, 
        int dpo, int fua, int fua_nv, int group,
        unsigned char *data,
@@ -1582,9 +1582,9 @@ read16(struct iscsi_context *iscsi, int lun, uint64_t lba,
 				dpo, fua, fua_nv, group);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("READ16", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("READ16", sdev, task, status, key, ascq, num_ascq);
 	if (data) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
@@ -1595,7 +1595,7 @@ read16(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 int
-readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+readcapacity10(struct scsi_device *sdev, uint32_t lba, int pmi, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	int ret;
@@ -1608,9 +1608,9 @@ readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi, int 
 	task = scsi_cdb_readcapacity10(lba, pmi);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("READCAPACITY10", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("READCAPACITY10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -1618,7 +1618,7 @@ readcapacity10(struct iscsi_context *iscsi, int lun, uint32_t lba, int pmi, int 
 }
 
 int
-readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+readcapacity16(struct scsi_device *sdev, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	int ret;
@@ -1629,9 +1629,9 @@ readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len, int status, 
 	task = scsi_cdb_serviceactionin16(SCSI_READCAPACITY16, alloc_len);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("READCAPACITY16", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("READCAPACITY16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -1639,7 +1639,7 @@ readcapacity16(struct iscsi_context *iscsi, int lun, int alloc_len, int status, 
 }
 
 int
-release6(struct iscsi_context *iscsi, int lun)
+release6(struct scsi_device *sdev)
 {
 	struct scsi_task *task;
 	int i, res = 0;
@@ -1647,11 +1647,11 @@ release6(struct iscsi_context *iscsi, int lun)
 	logging(LOG_VERBOSE, "Send RELEASE6");
 
 	for (i = 0; i < 3 && res == 0; ++i) {
-		task = iscsi_release6_sync(iscsi, lun);
+		task = iscsi_release6_sync(sdev->iscsi_ctx, sdev->iscsi_lun);
 		if (task == NULL) {
 			logging(LOG_NORMAL,
 				"[FAILED] Failed to send RELEASE6 command: %s",
-				iscsi_get_error(iscsi));
+				iscsi_get_error(sdev->iscsi_ctx));
 			res = -1;
 			break;
 		}
@@ -1661,7 +1661,7 @@ release6(struct iscsi_context *iscsi, int lun)
 		      && task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET)) {
 			logging(LOG_NORMAL, "[FAILED] RELEASE6 command: "
 				"failed with sense. %s",
-				iscsi_get_error(iscsi));
+				iscsi_get_error(sdev->iscsi_ctx));
 			res = -1;
 		}
 		scsi_free_scsi_task(task);
@@ -1672,7 +1672,7 @@ release6(struct iscsi_context *iscsi, int lun)
 	return res;
 }
 
-int report_supported_opcodes(struct iscsi_context *iscsi, struct scsi_task **out_task, int lun, int rctd, int options, int opcode, int sa, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+int report_supported_opcodes(struct scsi_device *sdev, struct scsi_task **out_task, int rctd, int options, int opcode, int sa, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	int ret;
@@ -1686,9 +1686,9 @@ int report_supported_opcodes(struct iscsi_context *iscsi, struct scsi_task **out
 						 alloc_len);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("INQUIRY", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("INQUIRY", sdev, task, status, key, ascq, num_ascq);
 	if (out_task) {
 		*out_task = task;
 	} else if (task) {
@@ -1698,7 +1698,7 @@ int report_supported_opcodes(struct iscsi_context *iscsi, struct scsi_task **out
 }
 
 int
-reserve6(struct iscsi_context *iscsi, int lun)
+reserve6(struct scsi_device *sdev)
 {
 	struct scsi_task *task;
 	int i, res = 0;
@@ -1706,11 +1706,11 @@ reserve6(struct iscsi_context *iscsi, int lun)
 	logging(LOG_VERBOSE, "Send RESERVE6");
 
 	for (i = 0; i < 3 && res == 0; ++i) {
-		task = iscsi_reserve6_sync(iscsi, lun);
+		task = iscsi_reserve6_sync(sdev->iscsi_ctx, sdev->iscsi_lun);
 		if (task == NULL) {
 			logging(LOG_NORMAL,
 				"[FAILED] Failed to send RESERVE6 command: %s",
-				iscsi_get_error(iscsi));
+				iscsi_get_error(sdev->iscsi_ctx));
 			res = -1;
 			break;
 		}
@@ -1726,7 +1726,7 @@ reserve6(struct iscsi_context *iscsi, int lun)
 		      && task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET)) {
 			logging(LOG_NORMAL, "[FAILED] RESERVE6 command: "
 				"failed with sense. %s",
-				iscsi_get_error(iscsi));
+				iscsi_get_error(sdev->iscsi_ctx));
 			res = -1;
 		}
 		scsi_free_scsi_task(task);
@@ -1738,7 +1738,7 @@ reserve6(struct iscsi_context *iscsi, int lun)
 }
 
 int
-reserve6_conflict(struct iscsi_context *iscsi, int lun)
+reserve6_conflict(struct scsi_device *sdev)
 {
 	struct scsi_task *task;
 	int i, res = 0;
@@ -1746,11 +1746,11 @@ reserve6_conflict(struct iscsi_context *iscsi, int lun)
 	logging(LOG_VERBOSE, "Send RESERVE6 (Expecting RESERVATION_CONFLICT)");
 
 	for (i = 0; i < 3 && res == 0; ++i) {
-		task = iscsi_reserve6_sync(iscsi, lun);
+		task = iscsi_reserve6_sync(sdev->iscsi_ctx, sdev->iscsi_lun);
 		if (task == NULL) {
 			logging(LOG_NORMAL,
 				"[FAILED] Failed to send RESERVE6 command: %s",
-				iscsi_get_error(iscsi));
+				iscsi_get_error(sdev->iscsi_ctx));
 			res = -1;
 			break;
 		}
@@ -1778,7 +1778,7 @@ reserve6_conflict(struct iscsi_context *iscsi, int lun)
 }
 
 int
-unmap(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list, int list_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+unmap(struct scsi_device *sdev, int anchor, struct unmap_list *list, int list_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	struct scsi_iovec *iov;
@@ -1828,9 +1828,9 @@ unmap(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list,
 	iov->iov_len  = xferlen;
 	scsi_task_set_iov_out(task, iov, 1);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("UNMAP", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("UNMAP", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -1838,7 +1838,7 @@ unmap(struct iscsi_context *iscsi, int lun, int anchor, struct unmap_list *list,
 }
 
 int
-verify10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+verify10(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 
 {
 	struct scsi_task *task;
@@ -1855,9 +1855,9 @@ verify10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, i
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(iscsi, lun, task, &d);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
 
-	ret = check_result("VERIFY10", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("VERIFY10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -1865,7 +1865,7 @@ verify10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, i
 }
 
 int
-verify12(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+verify12(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1881,9 +1881,9 @@ verify12(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, i
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(iscsi, lun, task, &d);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
 
-	ret = check_result("VERIFY12", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("VERIFY12", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -1891,7 +1891,7 @@ verify12(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, i
 }
 
 int
-verify16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+verify16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1907,9 +1907,9 @@ verify16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, i
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(iscsi, lun, task, &d);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
 
-	ret = check_result("VERIFY16", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("VERIFY16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -1917,7 +1917,7 @@ verify16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, i
 }
 
 int
-write10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+write10(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1940,9 +1940,9 @@ write10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, in
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(iscsi, lun, task, &d);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
 
-	ret = check_result("WRITE10", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("WRITE10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -1950,7 +1950,7 @@ write10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, in
 }
 
 int
-write12(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+write12(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1973,9 +1973,9 @@ write12(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, in
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(iscsi, lun, task, &d);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
 
-	ret = check_result("WRITE12", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("WRITE12", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -1983,7 +1983,7 @@ write12(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, in
 }
 
 int
-write16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+write16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -2006,9 +2006,9 @@ write16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, in
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(iscsi, lun, task, &d);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
 
-	ret = check_result("WRITE16", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("WRITE16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -2016,7 +2016,7 @@ write16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, in
 }
 
 int
-writesame10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+writesame10(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -2045,9 +2045,9 @@ writesame10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(iscsi, lun, task, &d);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
 
-	ret = check_result("WRITESAME10", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("WRITESAME10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -2055,7 +2055,7 @@ writesame10(struct iscsi_context *iscsi, int lun, uint32_t lba, uint32_t datalen
 }
 
 int
-writesame16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+writesame16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -2084,9 +2084,9 @@ writesame16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(iscsi, lun, task, &d);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
 
-	ret = check_result("WRITESAME16", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("WRITESAME16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -2094,7 +2094,7 @@ writesame16(struct iscsi_context *iscsi, int lun, uint64_t lba, uint32_t datalen
 }
 
 int
-writeverify10(struct iscsi_context *iscsi, int lun, uint32_t lba,
+writeverify10(struct scsi_device *sdev, uint32_t lba,
 	      uint32_t datalen, int blocksize, int wrprotect, 
 	      int dpo, int bytchk, int group, unsigned char *data,
 	      int status, enum scsi_sense_key key, int *ascq, int num_ascq)
@@ -2120,9 +2120,9 @@ writeverify10(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(iscsi, lun, task, &d);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
 
-	ret = check_result("WRITEVERIFY10", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("WRITEVERIFY10", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -2130,7 +2130,7 @@ writeverify10(struct iscsi_context *iscsi, int lun, uint32_t lba,
 }
 
 int
-writeverify12(struct iscsi_context *iscsi, int lun, uint32_t lba,
+writeverify12(struct scsi_device *sdev, uint32_t lba,
 	      uint32_t datalen, int blocksize, int wrprotect, 
 	      int dpo, int bytchk, int group, unsigned char *data,
 	      int status, enum scsi_sense_key key, int *ascq, int num_ascq)
@@ -2156,9 +2156,9 @@ writeverify12(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(iscsi, lun, task, &d);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
 
-	ret = check_result("WRITEVERIFY12", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("WRITEVERIFY12", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -2166,7 +2166,7 @@ writeverify12(struct iscsi_context *iscsi, int lun, uint32_t lba,
 }
 
 int
-writeverify16(struct iscsi_context *iscsi, int lun, uint64_t lba,
+writeverify16(struct scsi_device *sdev, uint64_t lba,
 	      uint32_t datalen, int blocksize, int wrprotect, 
 	      int dpo, int bytchk, int group, unsigned char *data,
 	      int status, enum scsi_sense_key key, int *ascq, int num_ascq)
@@ -2192,9 +2192,9 @@ writeverify16(struct iscsi_context *iscsi, int lun, uint64_t lba,
 
 	d.data = data;
 	d.size = datalen;
-	task = iscsi_scsi_command_sync(iscsi, lun, task, &d);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, &d);
 
-	ret = check_result("WRITEVERIFY16", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("WRITEVERIFY16", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
 		scsi_free_scsi_task(task);
 	}
@@ -2202,7 +2202,7 @@ writeverify16(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 int
-inquiry(struct iscsi_context *iscsi, struct scsi_task **out_task, int lun, int evpd, int page_code, int maxsize, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+inquiry(struct scsi_device *sdev, struct scsi_task **out_task, int evpd, int page_code, int maxsize, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	int ret;
@@ -2215,9 +2215,9 @@ inquiry(struct iscsi_context *iscsi, struct scsi_task **out_task, int lun, int e
 	task = scsi_cdb_inquiry(evpd, page_code, maxsize);
 	assert(task != NULL);
 
-	task = iscsi_scsi_command_sync(iscsi, lun, task, NULL);
+	task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
 
-	ret = check_result("INQUIRY", iscsi, task, status, key, ascq, num_ascq);
+	ret = check_result("INQUIRY", sdev, task, status, key, ascq, num_ascq);
 	if (out_task) {
 		*out_task = task;
 	} else if (task) {
@@ -2245,7 +2245,7 @@ get_command_descriptor(int opcode, int sa)
 	return NULL;
 }
 
-int set_swp(struct iscsi_context *iscsi, int lun)
+int set_swp(struct scsi_device *sdev)
 {
 	int ret = 0;
 	struct scsi_task *sense_task = NULL;
@@ -2254,19 +2254,19 @@ int set_swp(struct iscsi_context *iscsi, int lun)
 	struct scsi_mode_page *mp;
 
 	logging(LOG_VERBOSE, "Read CONTROL page");
-	sense_task = iscsi_modesense6_sync(iscsi, lun,
+	sense_task = iscsi_modesense6_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 		1, SCSI_MODESENSE_PC_CURRENT,
 		SCSI_MODEPAGE_CONTROL,
 		0, 255);
 	if (sense_task == NULL) {
 		logging(LOG_NORMAL, "Failed to send MODE_SENSE6 command: %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto finished;
 	}
 	if (sense_task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "MODE_SENSE6 failed: %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto finished;
 	}
@@ -2287,17 +2287,17 @@ int set_swp(struct iscsi_context *iscsi, int lun)
 	logging(LOG_VERBOSE, "Turn SWP ON");
 	mp->control.swp = 1;
 
-	select_task = iscsi_modeselect6_sync(iscsi, lun,
+	select_task = iscsi_modeselect6_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 		    1, 0, mp);
 	if (select_task == NULL) {
 		logging(LOG_NORMAL, "Failed to send MODE_SELECT6 command: %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto finished;
 	}
 	if (select_task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "MODE_SELECT6 failed: %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto finished;
 	}
@@ -2312,7 +2312,7 @@ finished:
 	return ret;
 }
 
-int clear_swp(struct iscsi_context *iscsi, int lun)
+int clear_swp(struct scsi_device *sdev)
 {
 	int ret = 0;
 	struct scsi_task *sense_task = NULL;
@@ -2321,19 +2321,19 @@ int clear_swp(struct iscsi_context *iscsi, int lun)
 	struct scsi_mode_page *mp;
 
 	logging(LOG_VERBOSE, "Read CONTROL page");
-	sense_task = iscsi_modesense6_sync(iscsi, lun,
+	sense_task = iscsi_modesense6_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 		1, SCSI_MODESENSE_PC_CURRENT,
 		SCSI_MODEPAGE_CONTROL,
 		0, 255);
 	if (sense_task == NULL) {
 		logging(LOG_NORMAL, "Failed to send MODE_SENSE6 command: %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto finished;
 	}
 	if (sense_task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "MODE_SENSE6 failed: %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto finished;
 	}
@@ -2354,17 +2354,17 @@ int clear_swp(struct iscsi_context *iscsi, int lun)
 	logging(LOG_VERBOSE, "Turn SWP OFF");
 	mp->control.swp = 0;
 
-	select_task = iscsi_modeselect6_sync(iscsi, lun,
+	select_task = iscsi_modeselect6_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
 		    1, 0, mp);
 	if (select_task == NULL) {
 		logging(LOG_NORMAL, "Failed to send MODE_SELECT6 command: %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto finished;
 	}
 	if (select_task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_NORMAL, "MODE_SELECT6 failed: %s",
-			iscsi_get_error(iscsi));
+			iscsi_get_error(sdev->iscsi_ctx));
 		ret = -1;
 		goto finished;
 	}

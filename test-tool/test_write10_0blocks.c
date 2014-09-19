@@ -32,7 +32,7 @@ test_write10_0blocks(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITE10 0-blocks at LBA==0");
-	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 0, 0, block_size,
+	ret = write10(sd, 0, 0, block_size,
 		      0, 0, 0, 0, 0, NULL,
 		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
@@ -48,21 +48,21 @@ test_write10_0blocks(void)
 	}
 
 	logging(LOG_VERBOSE, "Test WRITE10 0-blocks one block past end-of-LUN");
-	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, num_blocks + 1, 0,
+	ret = write10(sd, num_blocks + 1, 0,
 		      block_size, 0, 0, 0, 0, 0, NULL,
 		      EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITE10 0-blocks at LBA==2^31");
-	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 0x80000000, 0,
+	ret = write10(sd, 0x80000000, 0,
 		      block_size, 0, 0, 0, 0, 0, NULL,
 		      EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITE10 0-blocks at LBA==-1");
-	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, -1, 0, block_size,
+	ret = write10(sd, -1, 0, block_size,
 		      0, 0, 0, 0, 0, NULL,
 		      EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);

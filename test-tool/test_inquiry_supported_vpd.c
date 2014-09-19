@@ -34,7 +34,7 @@ test_inquiry_supported_vpd(void)
 	logging(LOG_VERBOSE, "Test INQUIRY supported VPD pages");
 
 	logging(LOG_VERBOSE, "Verify we can read the SUPPORTED VPD page");
-	ret = inquiry(sd->iscsi_ctx, &task, sd->iscsi_lun,
+	ret = inquiry(sd, &task,
 		      1, SCSI_INQUIRY_PAGECODE_SUPPORTED_VPD_PAGES, 255,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -56,7 +56,7 @@ test_inquiry_supported_vpd(void)
 		logging(LOG_VERBOSE, "Verify we can read page 0x%02x",
 			sup_inq->pages[i]);
 
-		ret = inquiry(sd->iscsi_ctx, NULL, sd->iscsi_lun, 1, sup_inq->pages[i], 255,
+		ret = inquiry(sd, NULL, 1, sup_inq->pages[i], 255,
 			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}

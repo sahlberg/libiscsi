@@ -44,7 +44,7 @@ test_writeverify10_residuals(void)
 	CHECK_FOR_SBC;
 
 	/* check if writeverify10 is supported */
-	ret = writeverify10(sd->iscsi_ctx, sd->iscsi_lun, 0, 0,
+	ret = writeverify10(sd, 0, 0,
 			    block_size, 0, 0, 0, 0, NULL,
 			    EXPECT_STATUS_GOOD);
 	if (ret == -2) {
@@ -246,7 +246,7 @@ test_writeverify10_residuals(void)
 
 	logging(LOG_VERBOSE, "Write two blocks of 'a'");
 	memset(buf, 'a', 10000);
-	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 0, 2 * block_size,
+	ret = write10(sd, 0, 2 * block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -294,7 +294,7 @@ test_writeverify10_residuals(void)
 	task = NULL;
 
 	logging(LOG_VERBOSE, "Read the two blocks");
-	ret = read10(sd->iscsi_ctx, NULL, sd->iscsi_lun, 0, 2* block_size,
+	ret = read10(sd, NULL, 0, 2* block_size,
 		     block_size, 0, 0, 0, 0, 0, buf,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -322,7 +322,7 @@ test_writeverify10_residuals(void)
 
 	logging(LOG_VERBOSE, "Write two blocks of 'a'");
 	memset(buf, 'a', 10000);
-	ret = write10(sd->iscsi_ctx, sd->iscsi_lun, 0, 2 * block_size,
+	ret = write10(sd, 0, 2 * block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -370,7 +370,7 @@ test_writeverify10_residuals(void)
 	task = NULL;
 
 	logging(LOG_VERBOSE, "Read the two blocks");
-	ret = read10(sd->iscsi_ctx, NULL, sd->iscsi_lun, 0, 2* block_size,
+	ret = read10(sd, NULL, 0, 2* block_size,
 		     block_size, 0, 0, 0, 0, 0, buf,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);

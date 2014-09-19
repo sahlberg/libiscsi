@@ -54,7 +54,7 @@ test_compareandwrite_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = write16(sd->iscsi_ctx, sd->iscsi_lun, 0, i * block_size,
+		ret = write16(sd, 0, i * block_size,
 			      block_size, 0, 0, 0, 0, 0, buf,
 			      EXPECT_STATUS_GOOD);
 		if (ret == -2) {
@@ -69,7 +69,7 @@ test_compareandwrite_simple(void)
 				"BlockLimits.MaximumCompareAndWriteLength(%d). "
 				"Command should fail with INVALID_FIELD_IN_CDB",
 				i, maxbl);
-			ret = compareandwrite(sd->iscsi_ctx, sd->iscsi_lun, 0,
+			ret = compareandwrite(sd, 0,
 					      buf, 2 * i * block_size,
 					      block_size, 0, 0, 0, 0,
 					      EXPECT_INVALID_FIELD_IN_CDB);
@@ -87,7 +87,7 @@ test_compareandwrite_simple(void)
 
 		logging(LOG_VERBOSE, "Overwrite %d blocks with 'B' "
 			"at LBA:0 (if they all contain 'A')", i);
-		ret = compareandwrite(sd->iscsi_ctx, sd->iscsi_lun, 0,
+		ret = compareandwrite(sd, 0,
 				      buf, 2 * i * block_size, block_size,
 				      0, 0, 0, 0,
 				      EXPECT_STATUS_GOOD);
@@ -100,7 +100,7 @@ test_compareandwrite_simple(void)
 
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:0 and verify "
 			"they are all 'B'", i);
-		ret = read16(sd->iscsi_ctx, sd->iscsi_lun, 0, i * block_size,
+		ret = read16(sd, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -126,7 +126,7 @@ test_compareandwrite_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = write16(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i, i * block_size,
+		ret = write16(sd, num_blocks - i, i * block_size,
 			      block_size, 0, 0, 0, 0, 0, buf,
 			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -136,7 +136,7 @@ test_compareandwrite_simple(void)
 				"BlockLimits.MaximumCompareAndWriteLength(%d). "
 				"Command should fail with INVALID_FIELD_IN_CDB",
 				i, maxbl);
-			ret = compareandwrite(sd->iscsi_ctx, sd->iscsi_lun, 0,
+			ret = compareandwrite(sd, 0,
 					      buf, 2 * i * block_size,
 					      block_size, 0, 0, 0, 0,
 					      EXPECT_INVALID_FIELD_IN_CDB);
@@ -149,7 +149,7 @@ test_compareandwrite_simple(void)
 		logging(LOG_VERBOSE, "Overwrite %d blocks with 'B' "
 			"at LBA:%" PRIu64 " (if they all contain 'A')",
 			i, num_blocks - i);
-		ret = compareandwrite(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i,
+		ret = compareandwrite(sd, num_blocks - i,
 				      buf, 2 * i * block_size, block_size,
 				      0, 0, 0, 0,
 				      EXPECT_STATUS_GOOD);
@@ -158,7 +158,7 @@ test_compareandwrite_simple(void)
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:%" PRIu64 
 			" and verify they are all 'B'",
 			i, num_blocks - i);
-		ret = read16(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - i, i * block_size,
+		ret = read16(sd, num_blocks - i, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

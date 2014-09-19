@@ -33,7 +33,7 @@ test_inquiry_evpd(void)
 	logging(LOG_VERBOSE, "Test of the INQUIRY EVPD bit");
 
 	logging(LOG_VERBOSE, "Verify that INQUIRY with EVPD==0 and PC!=0 is an error");
-	ret = inquiry(sd->iscsi_ctx, NULL, sd->iscsi_lun, 0, 1, 256,
+	ret = inquiry(sd, NULL, 0, 1, 256,
 		      EXPECT_INVALID_FIELD_IN_CDB);
 	CU_ASSERT_EQUAL(ret, 0);
 }

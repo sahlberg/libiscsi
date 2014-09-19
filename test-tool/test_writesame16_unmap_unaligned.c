@@ -41,7 +41,7 @@ test_writesame16_unmap_unaligned(void)
 
 	for (i = 1; i < lbppb; i++) {
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16 at LBA:%d", lbppb - i, i);
-		ret = writesame16(sd->iscsi_ctx, sd->iscsi_lun, i, 0, lbppb - i,
+		ret = writesame16(sd, i, 0, lbppb - i,
 				  0, 1, 0, 0, NULL,
 				  EXPECT_STATUS_GOOD);
 		if (ret == -2) {

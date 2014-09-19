@@ -37,7 +37,7 @@ test_prin_serviceaction_range(void)
 	logging(LOG_VERBOSE, "Test Persistent Reserve IN Serviceaction range.");
 
 	/* verify PRIN/READ_KEYS works -- XXX redundant -- remove this? */
-	ret = prin_read_keys(sd->iscsi_ctx, sd->iscsi_lun, &task, NULL);
+	ret = prin_read_keys(sd, &task, NULL);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE IN is not implemented.");
 		CU_PASS("PERSISTENT RESERVE IN is not implemented.");
@@ -47,13 +47,13 @@ test_prin_serviceaction_range(void)
 
 	/* verify that PRIN/SA={0,1,2,3} works ... */
 	for (i = 0; i < 4; i++) {
-		ret = prin_task(sd->iscsi_ctx, sd->iscsi_lun, i, 1);
+		ret = prin_task(sd, i, 1);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 	/*  verify that PRIN/SA={4..0x20} fails ... */
 	for (i = 4; i < 0x20; i++) {
-		ret = prin_task(sd->iscsi_ctx, sd->iscsi_lun, i, 0);
+		ret = prin_task(sd, i, 0);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

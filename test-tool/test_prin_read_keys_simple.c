@@ -36,7 +36,7 @@ test_prin_read_keys_simple(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test Persistent Reserve IN READ_KEYS works.");
 
-	ret = prin_read_keys(sd->iscsi_ctx, sd->iscsi_lun, &task, NULL);
+	ret = prin_read_keys(sd, &task, NULL);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE IN is not implemented.");
 		CU_PASS("PERSISTENT RESERVE IN is not implemented.");

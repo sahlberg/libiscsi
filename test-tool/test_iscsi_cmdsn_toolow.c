@@ -64,7 +64,7 @@ void test_iscsi_cmdsn_toolow(void)
 	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
 	iscsi_set_timeout(sd->iscsi_ctx, 3);
 
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, -1);
 	if (ret == -1) {
@@ -77,7 +77,7 @@ void test_iscsi_cmdsn_toolow(void)
 
 	iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 	logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == EXPCMDSN. should work again");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 

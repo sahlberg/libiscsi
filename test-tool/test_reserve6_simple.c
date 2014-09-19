@@ -34,7 +34,7 @@ test_reserve6_simple(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test basic RESERVE6/RELEASE6 commands if supported");
 
-	ret = reserve6(sd->iscsi_ctx, sd->iscsi_lun);
+	ret = reserve6(sd);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "[SKIPPED] Target does not support RESERVE6. Skipping test");
 		CU_PASS("[SKIPPED] Target does not support RESERVE6. Skipping test");
@@ -42,6 +42,6 @@ test_reserve6_simple(void)
 	}
 	CU_ASSERT_EQUAL(ret, 0);
 
-	ret = release6(sd->iscsi_ctx, sd->iscsi_lun);
+	ret = release6(sd);
 	CU_ASSERT_EQUAL(ret, 0);
 }

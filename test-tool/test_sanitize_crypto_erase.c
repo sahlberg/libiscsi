@@ -33,7 +33,7 @@ check_wacereq(void)
 	struct scsi_task *task_ret = NULL;
 
 	logging(LOG_VERBOSE, "Read one block from LBA 0");
-	read10(sd->iscsi_ctx, &task_ret, sd->iscsi_lun, 0, block_size, block_size,
+	read10(sd, &task_ret, 0, block_size, block_size,
 	       0, 0, 0, 0, 0, NULL,
 	       EXPECT_STATUS_GOOD);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
@@ -106,7 +106,7 @@ init_lun_with_data(unsigned char *buf, uint64_t lba)
 	int ret;
 
 	memset(buf, 'a', 256 * block_size);
-	ret = write16(sd->iscsi_ctx, sd->iscsi_lun, lba, 256 * block_size,
+	ret = write16(sd, lba, 256 * block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -118,7 +118,7 @@ check_lun_is_wiped(unsigned char *buf, uint64_t lba)
 	int ret;
 	unsigned char *rbuf = alloca(256 * block_size);
 
-	ret = read16(sd->iscsi_ctx, sd->iscsi_lun, lba, 256 * block_size,
+	ret = read16(sd, lba, 256 * block_size,
 		     block_size, 0, 0, 0, 0, 0, rbuf,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -184,7 +184,7 @@ test_sanitize_crypto_erase(void)
 
 
 	logging(LOG_VERBOSE, "Test we can perform basic CRYPTO ERASE SANITIZE");
-	ret = sanitize(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = sanitize(sd,
 		       0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -202,7 +202,7 @@ return;
 	logging(LOG_VERBOSE, "CRYPTO_ERASE parameter list length must be 0");
 	logging(LOG_VERBOSE, "Test that non-zero param length is an error for "
 		"CRYPTO ERASE");
-	ret = sanitize_invalidfieldincdb(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = sanitize_invalidfieldincdb(sd,
 		       0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 8, &data);
 	CU_ASSERT_EQUAL(ret, 0);
 

@@ -39,7 +39,7 @@ test_verify16_beyond_eol(void)
 			break;
 		}
 
-		ret = verify16(sd->iscsi_ctx, sd->iscsi_lun, num_blocks + 1 - i,
+		ret = verify16(sd, num_blocks + 1 - i,
 			       i * block_size, block_size, 0, 0, 1, buf,
 			       EXPECT_LBA_OOB);
 		if (ret == -2) {
@@ -57,7 +57,7 @@ test_verify16_beyond_eol(void)
 			break;
 		}
 
-		ret = verify16(sd->iscsi_ctx, sd->iscsi_lun, 0x8000000000000000ULL,
+		ret = verify16(sd, 0x8000000000000000ULL,
 			       i * block_size, block_size, 0, 0, 1, buf,
 			       EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -70,7 +70,7 @@ test_verify16_beyond_eol(void)
 			break;
 		}
 
-		ret = verify16(sd->iscsi_ctx, sd->iscsi_lun, -1, i * block_size,
+		ret = verify16(sd, -1, i * block_size,
 			       block_size, 0, 0, 1, buf,
 			       EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -83,7 +83,7 @@ test_verify16_beyond_eol(void)
 			break;
 		}
 
-		ret = verify16(sd->iscsi_ctx, sd->iscsi_lun, num_blocks - 1,
+		ret = verify16(sd, num_blocks - 1,
 			       i * block_size, block_size, 0, 0, 1, buf,
 			       EXPECT_LBA_OOB);
 

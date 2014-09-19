@@ -39,95 +39,95 @@ test_startstopunit_noloej(void)
 	}
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==0 NO_FLUSH==0 START==0");
-	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = startstopunit(sd,
 			    0, 0, 0, 0, 0, 0,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==0 NO_FLUSH==0 START==1");
-	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = startstopunit(sd,
 			    0, 0, 0, 0, 0, 1,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==1 NO_FLUSH==0 START==0");
-	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = startstopunit(sd,
 			    1, 0, 0, 0, 0, 0,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==1 NO_FLUSH==0 START==1");
-	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = startstopunit(sd,
 			    1, 0, 0, 0, 0, 1,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==0 NO_FLUSH==1 START==0");
-	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = startstopunit(sd,
 			    0, 0, 0, 1, 0, 0,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==0 NO_FLUSH==1 START==1");
-	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = startstopunit(sd,
 			    0, 0, 0, 1, 0, 1,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==1 NO_FLUSH==1 START==0");
-	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = startstopunit(sd,
 			    1, 0, 0, 1, 0, 0,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==1 NO_FLUSH==1 START==1");
-	ret = startstopunit(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = startstopunit(sd,
 			    1, 0, 0, 1, 0, 1,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd->iscsi_ctx, sd->iscsi_lun,
+	ret = testunitready(sd,
 			    EXPECT_SANITIZE);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "In case the target did eject the medium, load it again.");
-	startstopunit(sd->iscsi_ctx, sd->iscsi_lun, 1, 0, 0, 0, 1, 1,
+	startstopunit(sd, 1, 0, 0, 0, 1, 1,
 		      EXPECT_STATUS_GOOD);
 }

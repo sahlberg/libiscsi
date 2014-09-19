@@ -37,7 +37,7 @@ test_report_supported_opcodes_servactv(void)
 
 
 	ret = report_supported_opcodes(
-		sd->iscsi_ctx, &rso_task, sd->iscsi_lun,
+		sd, &rso_task,
 		0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
 		65535,
 		EXPECT_STATUS_GOOD);

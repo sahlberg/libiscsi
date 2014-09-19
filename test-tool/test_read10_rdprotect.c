@@ -42,7 +42,7 @@ test_read10_rdprotect(void)
 	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
-			ret = read10(sd->iscsi_ctx, NULL, sd->iscsi_lun, 0,
+			ret = read10(sd, NULL, 0,
 				     block_size, block_size,
 				     i, 0, 0, 0, 0, NULL,
 				     EXPECT_INVALID_FIELD_IN_CDB);
