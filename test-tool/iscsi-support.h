@@ -266,9 +266,11 @@ int verify_read_works(struct scsi_device *sdev, unsigned char *buf);
 int verify_write_works(struct scsi_device *sdev, unsigned char *buf);
 int verify_read_fails(struct scsi_device *sdev, unsigned char *buf);
 int verify_write_fails(struct scsi_device *sdev, unsigned char *buf);
-int inquiry(struct scsi_device *sdev, struct scsi_task **task, int evpd, int page_code, int maxsize, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
+
 int compareandwrite(struct scsi_device *sdev, uint64_t lba, unsigned char *data, uint32_t len, int blocksize, int wrprotect, int dpo, int fua, int group_number, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int get_lba_status(struct scsi_device *sdev, struct scsi_task **task, uint64_t lba, uint32_t len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
+int inquiry(struct scsi_device *sdev, struct scsi_task **task, int evpd, int page_code, int maxsize, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
+int modesense6(struct scsi_device *sdev, struct scsi_task **task, int dbd, enum scsi_modesense_page_control pc, enum scsi_modesense_page_code page_code, int sub_page_code, unsigned char alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int orwrite(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int prefetch10(struct scsi_device *sdev, uint32_t lba, int num_blocks, int immed, int group, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int prefetch16(struct scsi_device *sdev, uint64_t lba, int num_blocks, int immed, int group, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
@@ -277,8 +279,8 @@ int read6(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksiz
 int read10(struct scsi_device *sdev, struct scsi_task **task, uint32_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int read12(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int read16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
-int readcapacity10(struct scsi_device *sdev, uint32_t lba, int pmi, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
-int readcapacity16(struct scsi_device *sdev, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
+int readcapacity10(struct scsi_device *sdev, struct scsi_task **task, uint32_t lba, int pmi, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
+int readcapacity16(struct scsi_device *sdev, struct scsi_task **task, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int report_supported_opcodes(struct scsi_device *sdev, struct scsi_task **save_task, int rctd, int options, int opcode, int sa, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int release6(struct scsi_device *sdev);
 int reserve6(struct scsi_device *sdev);
@@ -292,7 +294,6 @@ int synchronizecache10(struct scsi_device *sdev, uint32_t lba, int num_blocks, i
 int synchronizecache16(struct scsi_device *sdev, uint64_t lba, int num_blocks, int sync_nv, int immed, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int testunitready_clear_ua(struct scsi_device *sdev);
 int testunitready(struct scsi_device *sdev, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
-int mode_sense(struct scsi_device *sdev);
 int unmap(struct scsi_device *sdev, int anchor, struct unmap_list *list, int list_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int verify10(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int verify12(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize, int vprotect, int dpo, int bytchk, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);

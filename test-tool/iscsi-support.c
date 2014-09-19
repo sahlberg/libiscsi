@@ -1331,16 +1331,24 @@ out:
  * Returns -1 if allocating a SCSI task failed or if a communication error
  * occurred and a SCSI status if a SCSI response has been received.
  */
-int mode_sense(struct scsi_device *sdev)
+int modesense6(struct scsi_device *sdev, struct scsi_task **out_task, int dbd, enum scsi_modesense_page_control pc, enum scsi_modesense_page_code page_code, int sub_page_code, unsigned char alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
-	struct scsi_task *t;
-	enum scsi_status ret = -1;
+	struct scsi_task *task;
+	int ret;
 
-	t = iscsi_modesense6_sync(sdev->iscsi_ctx, sdev->iscsi_lun, 0, SCSI_MODESENSE_PC_CURRENT,
-				  SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255);
-	if (t) {
-		ret = t->status;
-		scsi_free_scsi_task(t);
+	logging(LOG_VERBOSE, "Send MODESENSE6 (Expecting %s) ",
+		scsi_status_str(status));
+
+	task = scsi_cdb_modesense6(dbd, pc, page_code, sub_page_code, alloc_len);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
+
+	ret = check_result("MODESENSE6", sdev, task, status, key, ascq, num_ascq);
+	if (out_task) {
+		*out_task = task;
+	} else if (task) {
+		scsi_free_scsi_task(task);
 	}
 	return ret;
 }
@@ -1609,7 +1617,7 @@ read16(struct scsi_device *sdev, uint64_t lba,
 }
 
 int
-readcapacity10(struct scsi_device *sdev, uint32_t lba, int pmi, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+readcapacity10(struct scsi_device *sdev, struct scsi_task **out_task, uint32_t lba, int pmi, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	int ret;
@@ -1625,14 +1633,16 @@ readcapacity10(struct scsi_device *sdev, uint32_t lba, int pmi, int status, enum
 	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("READCAPACITY10", sdev, task, status, key, ascq, num_ascq);
-	if (task) {
+	if (out_task) {
+		*out_task = task;
+	} else if (task) {
 		scsi_free_scsi_task(task);
 	}
 	return ret;
 }
 
 int
-readcapacity16(struct scsi_device *sdev, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+readcapacity16(struct scsi_device *sdev, struct scsi_task **out_task, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
 	int ret;
@@ -1646,7 +1656,9 @@ readcapacity16(struct scsi_device *sdev, int alloc_len, int status, enum scsi_se
 	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("READCAPACITY16", sdev, task, status, key, ascq, num_ascq);
-	if (task) {
+	if (out_task) {
+		*out_task = task;
+	} else if (task) {
 		scsi_free_scsi_task(task);
 	}
 	return ret;

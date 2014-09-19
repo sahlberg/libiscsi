@@ -91,12 +91,12 @@ test_nomedia_sbc(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READCAPACITY10 when medium is ejected.");
-	ret = readcapacity10(sd, 0, 0,
+	ret = readcapacity10(sd, NULL, 0, 0,
 			     EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READCAPACITY16 when medium is ejected.");
-	ret = readcapacity16(sd, 15,
+	ret = readcapacity16(sd, NULL, 15,
 			     EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		if (sbc3_support) {
