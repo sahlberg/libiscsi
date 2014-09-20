@@ -1920,8 +1920,8 @@ int
 unmap(struct scsi_device *sdev, int anchor, struct unmap_list *list, int list_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
-	struct scsi_iovec *iov;
 	unsigned char *data;
+	struct iscsi_data d;
 	int xferlen;
 	int i;
 	int ret;
@@ -1956,18 +1956,10 @@ unmap(struct scsi_device *sdev, int anchor, struct unmap_list *list, int list_le
 		scsi_set_uint32(&data[8 + 16 * i + 8], list[i].num);
 	}
 
-	iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-	if (iov == NULL) {
-		logging(LOG_NORMAL, "Out-of-memory: Failed to create "
-			"iov array.");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	iov->iov_base = data;
-	iov->iov_len  = xferlen;
-	scsi_task_set_iov_out(task, iov, 1);
+	d.data = data;
+	d.size = xferlen;
 
-	task = send_scsi_command(sdev, task, NULL);
+	task = send_scsi_command(sdev, task, &d);
 
 	ret = check_result("UNMAP", sdev, task, status, key, ascq, num_ascq);
 	if (task) {
