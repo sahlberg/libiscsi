@@ -1621,7 +1621,7 @@ read6(struct scsi_device *sdev, uint32_t lba,
 	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("READ6", sdev, task, status, key, ascq, num_ascq);
-	if (data) {
+	if (data && task) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
 	if (task) {
@@ -1654,7 +1654,7 @@ read10(struct scsi_device *sdev, struct scsi_task **out_task,
 	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("READ10", sdev, task, status, key, ascq, num_ascq);
-	if (data) {
+	if (data && task) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
 	if (out_task) {
@@ -1688,7 +1688,7 @@ read12(struct scsi_device *sdev, uint32_t lba,
 	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("READ12", sdev, task, status, key, ascq, num_ascq);
-	if (data) {
+	if (data && task) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
 	if (task) {
@@ -1720,7 +1720,7 @@ read16(struct scsi_device *sdev, uint64_t lba,
 	task = send_scsi_command(sdev, task, NULL);
 
 	ret = check_result("READ16", sdev, task, status, key, ascq, num_ascq);
-	if (data) {
+	if (data && task) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
 	if (task) {
