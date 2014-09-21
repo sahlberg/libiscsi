@@ -1,4 +1,3 @@
-
 /*
    iscsi-test tool support
 
@@ -200,6 +199,7 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 		unsigned char sense[sense_len];
 		char buf[1024];
 
+		memset(sense, 0, sizeof(sense));
 		memset(&io_hdr, 0, sizeof(sg_io_hdr_t));
 		io_hdr.interface_id = 'S';
 
