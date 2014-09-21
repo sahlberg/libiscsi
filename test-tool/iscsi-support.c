@@ -235,6 +235,9 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 		io_hdr.timeout = 5000;
 
 		if(ioctl(sdev->sgio_fd, SG_IO, &io_hdr) < 0){
+			if (sdev->error_str != NULL) {
+				free(discard_const(sdev->error_str));
+			}
 			sdev->error_str = strdup("SG_IO ioctl failed");
 			return NULL;
 		}
@@ -261,6 +264,9 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 				 task->sense.key,
 				 scsi_sense_ascq_str(task->sense.ascq),
 				 task->sense.ascq);
+			if (sdev->error_str != NULL) {
+				free(discard_const(sdev->error_str));
+			}
 			sdev->error_str = strdup(buf);
 			return task;
 		}
@@ -270,6 +276,9 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 			task->sense.key = 0x0f;
 			task->sense.ascq  = 0xffff;
 
+			if (sdev->error_str != NULL) {
+				free(discard_const(sdev->error_str));
+			}
 			sdev->error_str = strdup("SCSI masked error");
 			return NULL;
 		}
@@ -279,6 +288,9 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 			task->sense.ascq  = 0xffff;
 
 			snprintf(buf, sizeof(buf), "SCSI host error. Status=0x%x", io_hdr.host_status);
+			if (sdev->error_str != NULL) {
+				free(discard_const(sdev->error_str));
+			}
 			sdev->error_str = strdup(buf);
 			return task;
 		}
@@ -287,6 +299,9 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 			task->sense.key = 0x0f;
 			task->sense.ascq  = 0xffff;
 
+			if (sdev->error_str != NULL) {
+				free(discard_const(sdev->error_str));
+			}
 			sdev->error_str = strdup("SCSI driver error");
 			return NULL;
 		}
