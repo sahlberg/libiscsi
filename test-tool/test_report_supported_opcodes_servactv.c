@@ -45,10 +45,12 @@ test_report_supported_opcodes_servactv(void)
 		logging(LOG_NORMAL, "[SKIPPED] READ_SUPPORTED_OPCODES is not "
 			"implemented.");
 		CU_PASS("READ_SUPPORTED_OPCODES is not implemented.");
+		scsi_free_scsi_task(rso_task);
 		return;
 	}
 	CU_ASSERT_EQUAL(ret, 0);
 	if (ret != 0) {
+		scsi_free_scsi_task(rso_task);
 		return;
 	}
 	
