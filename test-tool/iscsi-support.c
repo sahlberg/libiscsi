@@ -118,7 +118,7 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
 			int status, enum scsi_sense_key key,
 			int *ascq, int num_ascq)
 {
-	int ascq_ok;
+	int ascq_ok = 0;
 
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send %s command: "
