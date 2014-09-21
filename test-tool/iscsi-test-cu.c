@@ -550,7 +550,6 @@ static libiscsi_suite_info linux_suites[] = {
 	{ "OrWrite", NON_PGR_FUNCS, tests_orwrite },
 	{ "Prefetch10", NON_PGR_FUNCS, tests_prefetch10 },
 	{ "Prefetch16", NON_PGR_FUNCS, tests_prefetch16 },
-	{ "Read6", NON_PGR_FUNCS, tests_read6 },
 	{ "Read10", NON_PGR_FUNCS, tests_read10 },
 	{ "Read12", NON_PGR_FUNCS, tests_read12 },
 	{ "Read16", NON_PGR_FUNCS, tests_read16 },
