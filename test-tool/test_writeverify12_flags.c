@@ -42,7 +42,7 @@ test_writeverify12_flags(void)
 			    block_size, block_size, 0, 1, 0, 0, buf,
 			    EXPECT_STATUS_GOOD);
 	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY12 is not implemented.");
+		logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY12 is not implemented.");
 		CU_PASS("WRITEVERIFY12 is not implemented.");
 		return;
 	}	

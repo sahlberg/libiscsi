@@ -45,7 +45,7 @@ test_writeverify16_beyond_eol(void)
 				    i * block_size, block_size, 0, 0, 0, 0, buf,
 				    EXPECT_LBA_OOB);
 		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY16 is not implemented.");
+			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
 			CU_PASS("WRITEVERIFY16 is not implemented.");
 			return;
 	       	}	

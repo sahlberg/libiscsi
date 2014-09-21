@@ -49,7 +49,7 @@ test_writeverify12_wrprotect(void)
 					    i, 0, 0, 0, buf,
 					    EXPECT_INVALID_FIELD_IN_CDB);
 			if (ret == -2) {
-				logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY12 is not implemented.");
+				logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY12 is not implemented.");
 				CU_PASS("WRITEVERIFY12 is not implemented.");
 				return;
 			}	
