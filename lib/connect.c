@@ -34,6 +34,7 @@ struct connect_task {
 	iscsi_command_cb cb;
 	void *private_data;
 	int lun;
+	int num_uas;
 };
 
 static void
@@ -48,14 +49,24 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 	struct scsi_task *task = command_data;
 
 	if (status != 0) {
-		if (task->sense.key == SCSI_SENSE_UNIT_ATTENTION
-		    && (task->sense.ascq == SCSI_SENSE_ASCQ_BUS_RESET ||
-			task->sense.ascq == SCSI_SENSE_ASCQ_POWER_ON_OCCURED ||
-			task->sense.ascq == SCSI_SENSE_ASCQ_NEXUS_LOSS)) {
+		if (task->sense.key == SCSI_SENSE_UNIT_ATTENTION) {
 			/* This is just the normal unitattention/busreset
 			 * you always get just after a fresh login. Try
-			 * again.
+			 * again. Instead of enumerating all of them we
+			 * assume that there will be at most 10 or else
+			 * there is something broken.
 			 */
+			ct->num_uas++;
+			if (ct->num_uas > 10) {
+				iscsi_set_error(iscsi, "iscsi_testunitready "
+						"Too many UnitAttentions "
+						"during login.");
+				ct->cb(iscsi, SCSI_STATUS_ERROR, NULL,
+				       ct->private_data);
+				iscsi_free(iscsi, ct);
+				scsi_free_scsi_task(task);
+				return;
+			}
 			if (iscsi_testunitready_task(iscsi, ct->lun,
 						      iscsi_testunitready_cb,
 						      ct) == NULL) {
@@ -166,6 +177,7 @@ iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
 	}
 	ct->cb           = cb;
 	ct->lun          = lun;
+	ct->num_uas      = 0;
 	ct->private_data = private_data;
 	if (iscsi_connect_async(iscsi, portal, iscsi_connect_cb, ct) != 0) {
 		iscsi_free(iscsi, ct);
