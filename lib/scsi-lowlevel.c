@@ -3252,19 +3252,18 @@ scsi_datain_getfullsize(struct scsi_task *task)
 void *
 scsi_datain_unmarshall(struct scsi_task *task)
 {
-	switch (task->cdb[0]) {
-	case SCSI_OPCODE_TESTUNITREADY:
+	if (!task || !task->datain.size)
 		return NULL;
+
+	switch (task->cdb[0]) {
 	case SCSI_OPCODE_INQUIRY:
 		return scsi_inquiry_datain_unmarshall(task);
 	case SCSI_OPCODE_MODESENSE6:
-	  return scsi_modesense_datain_unmarshall(task, 1);
+		return scsi_modesense_datain_unmarshall(task, 1);
 	case SCSI_OPCODE_MODESENSE10:
 	  return scsi_modesense_datain_unmarshall(task, 0);
 	case SCSI_OPCODE_READCAPACITY10:
 		return scsi_readcapacity10_datain_unmarshall(task);
-	case SCSI_OPCODE_SYNCHRONIZECACHE10:
-		return NULL;
 	case SCSI_OPCODE_READTOC:
 		return scsi_readtoc_datain_unmarshall(task);
 	case SCSI_OPCODE_REPORTLUNS:
