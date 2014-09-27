@@ -27,6 +27,9 @@
 void
 test_modesense6_residuals(void)
 {
+	struct scsi_task *ms_task = NULL;
+	int ret;
+
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test of MODESENSE6 Residuals");
 
@@ -36,95 +39,69 @@ test_modesense6_residuals(void)
 	
 	logging(LOG_VERBOSE, "Try a MODESENSE6 command with 4 bytes of "
 		"transfer length and verify that we don't get residuals.");
-	if (task != NULL) {
-		scsi_free_scsi_task(task);
-		task = NULL;
-	}
-	task = iscsi_modesense6_sync(sd->iscsi_ctx, sd->iscsi_lun, 0,
-				     SCSI_MODESENSE_PC_CURRENT,
-				     SCSI_MODEPAGE_RETURN_ALL_PAGES,
-				     0, 4);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_VERBOSE, "[FAILED] Failed to send MODE_SENSE6 "
-			"command:%s",
-			iscsi_get_error(sd->iscsi_ctx));
-		CU_FAIL("[FAILED] Failed to fetch the All Pages page.");
-		return;
-	}
+	ret = modesense6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
+			 SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 4,
+			 EXPECT_STATUS_GOOD);
+	CU_ASSERT_EQUAL(ret, 0);
 	logging(LOG_VERBOSE, "[SUCCESS] All Pages fetched.");
 
 
 	logging(LOG_VERBOSE, "Verify that we got at most 4 bytes of DATA-IN");
-	if (task->datain.size > 4) {
+	if (ms_task->datain.size > 4) {
 		logging(LOG_NORMAL, "[FAILED] got more than 4 bytes of "
 			"DATA-IN.");
 	} else {
 		logging(LOG_VERBOSE, "[SUCCESS] <= 4 bytes of DATA-IN "
 			"received.");
 	}
-	CU_ASSERT_TRUE(task->datain.size <= 4);
+	CU_ASSERT_TRUE(ms_task->datain.size <= 4);
 
 
 	logging(LOG_VERBOSE, "Verify residual overflow flag not set");
-	if (task->residual_status == SCSI_RESIDUAL_OVERFLOW) {
+	if (ms_task->residual_status == SCSI_RESIDUAL_OVERFLOW) {
 		logging(LOG_VERBOSE, "[FAILED] Target set residual "
 			"overflow flag");
 	}
-	CU_ASSERT_NOT_EQUAL(task->residual_status, SCSI_RESIDUAL_OVERFLOW);
+	CU_ASSERT_NOT_EQUAL(ms_task->residual_status, SCSI_RESIDUAL_OVERFLOW);
 
 
 
 	logging(LOG_VERBOSE, "Try a MODESENSE6 command with 255 bytes of "
 		"transfer length and verify that we get residuals if the target returns less than the requested amount of data.");
-	if (task != NULL) {
-		scsi_free_scsi_task(task);
-		task = NULL;
-	}
-	task = iscsi_modesense6_sync(sd->iscsi_ctx, sd->iscsi_lun, 0,
-				     SCSI_MODESENSE_PC_CURRENT,
-				     SCSI_MODEPAGE_RETURN_ALL_PAGES,
-				     0, 255);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_VERBOSE, "[FAILED] Failed to send MODE_SENSE6 "
-			"command:%s",
-			iscsi_get_error(sd->iscsi_ctx));
-		CU_FAIL("[FAILED] Failed to fetch the All Pages page.");
-		return;
-	}
+	scsi_free_scsi_task(ms_task);
+	ret = modesense6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
+			 SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
+			 EXPECT_STATUS_GOOD);
+	CU_ASSERT_EQUAL(ret, 0);
 	logging(LOG_VERBOSE, "[SUCCESS] All Pages fetched.");
 
-
-	if (task->datain.size == 255) {
+	if (ms_task->datain.size == 255) {
 		logging(LOG_VERBOSE, "We got all 255 bytes of data back "
 			"from the target. Verify that underflow is not set.");
 
-		if (task->residual_status == SCSI_RESIDUAL_UNDERFLOW) {
+		if (ms_task->residual_status == SCSI_RESIDUAL_UNDERFLOW) {
 			logging(LOG_VERBOSE, "[FAILED] Target set residual "
 				"underflow flag");
 		} else {
 			logging(LOG_VERBOSE, "[SUCCESS] Residual underflow "
 				"is not set");
 		}
-		CU_ASSERT_NOT_EQUAL(task->residual_status,
+		CU_ASSERT_NOT_EQUAL(ms_task->residual_status,
 				SCSI_RESIDUAL_UNDERFLOW);
 	} else {
 		logging(LOG_VERBOSE, "We got less than the requested 255 bytes "
 			"from the target. Verify that underflow is set.");
 
-		if (task->residual_status != SCSI_RESIDUAL_UNDERFLOW) {
+		if (ms_task->residual_status != SCSI_RESIDUAL_UNDERFLOW) {
 			logging(LOG_VERBOSE, "[FAILED] Target did not set "
 				"residual underflow flag");
 		} else {
 			logging(LOG_VERBOSE, "[SUCCESS] Residual underflow "
 				"is set");
 		}
-		CU_ASSERT_EQUAL(task->residual_status,
+		CU_ASSERT_EQUAL(ms_task->residual_status,
 				SCSI_RESIDUAL_UNDERFLOW);
 	}
 
-
-	if (task != NULL) {
-		scsi_free_scsi_task(task);
-		task = NULL;
-	}
+	scsi_free_scsi_task(ms_task);
 }

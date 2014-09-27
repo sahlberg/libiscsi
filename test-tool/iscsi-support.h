@@ -272,6 +272,7 @@ int compareandwrite(struct scsi_device *sdev, uint64_t lba, unsigned char *data,
 int get_lba_status(struct scsi_device *sdev, struct scsi_task **task, uint64_t lba, uint32_t len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int inquiry(struct scsi_device *sdev, struct scsi_task **task, int evpd, int page_code, int maxsize, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int modesense6(struct scsi_device *sdev, struct scsi_task **task, int dbd, enum scsi_modesense_page_control pc, enum scsi_modesense_page_code page_code, int sub_page_code, unsigned char alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
+int modeselect6(struct scsi_device *sdev, int pf, int sp, struct scsi_mode_page *mp, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int orwrite(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int prefetch10(struct scsi_device *sdev, uint32_t lba, int num_blocks, int immed, int group, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int prefetch16(struct scsi_device *sdev, uint64_t lba, int num_blocks, int immed, int group, int status, enum scsi_sense_key key, int *ascq, int num_ascq);

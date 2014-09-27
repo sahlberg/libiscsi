@@ -1482,6 +1482,40 @@ int modesense6(struct scsi_device *sdev, struct scsi_task **out_task, int dbd, e
 	return ret;
 }
 
+int modeselect6(struct scsi_device *sdev, int pf, int sp, struct scsi_mode_page *mp, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+{
+	struct scsi_task *task;
+	int ret;
+	struct scsi_data *data;
+	struct iscsi_data d;
+
+	logging(LOG_VERBOSE, "Send MODESELECT6 (Expecting %s) ",
+		scsi_status_str(status));
+
+	task = scsi_cdb_modeselect6(pf, sp, 255);
+	assert(task != NULL);
+
+	data = scsi_modesense_dataout_marshall(task, mp, 1);
+	if (data == NULL) {
+		logging(LOG_VERBOSE, "Failed to marshall MODESELECT6 data");
+		scsi_free_scsi_task(task);
+		return -1;
+	}
+
+	d.data = data->data;
+	d.size = data->size;
+	task->cdb[4] = data->size;
+	task->expxferlen = data->size;
+
+	task = send_scsi_command(sdev, task, &d);
+
+	ret = check_result("MODESELECT6", sdev, task, status, key, ascq, num_ascq);
+	if (task) {
+		scsi_free_scsi_task(task);
+	}
+	return ret;
+}
+
 int compareandwrite(struct scsi_device *sdev, uint64_t lba,
     unsigned char *data, uint32_t datalen, int blocksize,
     int wrprotect, int dpo,
@@ -2394,29 +2428,21 @@ get_command_descriptor(int opcode, int sa)
 
 int set_swp(struct scsi_device *sdev)
 {
-	int ret = 0;
+	int ret;
 	struct scsi_task *sense_task = NULL;
-	struct scsi_task *select_task = NULL;
 	struct scsi_mode_sense *ms;
 	struct scsi_mode_page *mp;
 
 	logging(LOG_VERBOSE, "Read CONTROL page");
-	sense_task = iscsi_modesense6_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
-		1, SCSI_MODESENSE_PC_CURRENT,
-		SCSI_MODEPAGE_CONTROL,
-		0, 255);
-	if (sense_task == NULL) {
-		logging(LOG_NORMAL, "Failed to send MODE_SENSE6 command: %s",
-			iscsi_get_error(sdev->iscsi_ctx));
-		ret = -1;
+	ret = modesense6(sdev, &sense_task, 1, SCSI_MODESENSE_PC_CURRENT,
+			 SCSI_MODEPAGE_CONTROL, 0, 255,
+			 EXPECT_STATUS_GOOD);
+	if (ret) {
+		logging(LOG_NORMAL, "Failed to read CONTROL mode page.");
 		goto finished;
 	}
-	if (sense_task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "MODE_SENSE6 failed: %s",
-			iscsi_get_error(sdev->iscsi_ctx));
-		ret = -1;
-		goto finished;
-	}
+	logging(LOG_VERBOSE, "[SUCCESS] CONTROL page fetched.");
+
 	ms = scsi_datain_unmarshall(sense_task);
 	if (ms == NULL) {
 		logging(LOG_NORMAL, "failed to unmarshall mode sense datain "
@@ -2434,56 +2460,38 @@ int set_swp(struct scsi_device *sdev)
 	logging(LOG_VERBOSE, "Turn SWP ON");
 	mp->control.swp = 1;
 
-	select_task = iscsi_modeselect6_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
-		    1, 0, mp);
-	if (select_task == NULL) {
-		logging(LOG_NORMAL, "Failed to send MODE_SELECT6 command: %s",
-			iscsi_get_error(sdev->iscsi_ctx));
-		ret = -1;
+	ret = modeselect6(sdev, 1, 0, mp,
+			 EXPECT_STATUS_GOOD);
+	if (ret) {
+		logging(LOG_NORMAL, "Failed to write CONTROL mode page.");
 		goto finished;
 	}
-	if (select_task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "MODE_SELECT6 failed: %s",
-			iscsi_get_error(sdev->iscsi_ctx));
-		ret = -1;
-		goto finished;
-	}
+	logging(LOG_VERBOSE, "[SUCCESS] CONTROL page written.");
 
 finished:
 	if (sense_task != NULL) {
 		scsi_free_scsi_task(sense_task);
-	}
-	if (select_task != NULL) {
-		scsi_free_scsi_task(select_task);
 	}
 	return ret;
 }
 
 int clear_swp(struct scsi_device *sdev)
 {
-	int ret = 0;
+	int ret;
 	struct scsi_task *sense_task = NULL;
-	struct scsi_task *select_task = NULL;
 	struct scsi_mode_sense *ms;
 	struct scsi_mode_page *mp;
 
 	logging(LOG_VERBOSE, "Read CONTROL page");
-	sense_task = iscsi_modesense6_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
-		1, SCSI_MODESENSE_PC_CURRENT,
-		SCSI_MODEPAGE_CONTROL,
-		0, 255);
-	if (sense_task == NULL) {
-		logging(LOG_NORMAL, "Failed to send MODE_SENSE6 command: %s",
-			iscsi_get_error(sdev->iscsi_ctx));
-		ret = -1;
+	ret = modesense6(sdev, &sense_task, 1, SCSI_MODESENSE_PC_CURRENT,
+			 SCSI_MODEPAGE_CONTROL, 0, 255,
+			 EXPECT_STATUS_GOOD);
+	if (ret) {
+		logging(LOG_NORMAL, "Failed to read CONTROL mode page.");
 		goto finished;
 	}
-	if (sense_task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "MODE_SENSE6 failed: %s",
-			iscsi_get_error(sdev->iscsi_ctx));
-		ret = -1;
-		goto finished;
-	}
+	logging(LOG_VERBOSE, "[SUCCESS] CONTROL page fetched.");
+
 	ms = scsi_datain_unmarshall(sense_task);
 	if (ms == NULL) {
 		logging(LOG_NORMAL, "failed to unmarshall mode sense datain "
@@ -2501,27 +2509,17 @@ int clear_swp(struct scsi_device *sdev)
 	logging(LOG_VERBOSE, "Turn SWP OFF");
 	mp->control.swp = 0;
 
-	select_task = iscsi_modeselect6_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
-		    1, 0, mp);
-	if (select_task == NULL) {
-		logging(LOG_NORMAL, "Failed to send MODE_SELECT6 command: %s",
-			iscsi_get_error(sdev->iscsi_ctx));
-		ret = -1;
+	ret = modeselect6(sdev, 1, 0, mp,
+			 EXPECT_STATUS_GOOD);
+	if (ret) {
+		logging(LOG_NORMAL, "Failed to write CONTROL mode page.");
 		goto finished;
 	}
-	if (select_task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "MODE_SELECT6 failed: %s",
-			iscsi_get_error(sdev->iscsi_ctx));
-		ret = -1;
-		goto finished;
-	}
+	logging(LOG_VERBOSE, "[SUCCESS] CONTROL page written.");
 
 finished:
 	if (sense_task != NULL) {
 		scsi_free_scsi_task(sense_task);
-	}
-	if (select_task != NULL) {
-		scsi_free_scsi_task(select_task);
 	}
 	return ret;
 }
