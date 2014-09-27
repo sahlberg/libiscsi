@@ -46,6 +46,14 @@ test_sanitize_reset(void)
 	CHECK_FOR_SANITIZE;
 	CHECK_FOR_DATALOSS;
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This SANITIZE test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
 	logging(LOG_VERBOSE, "Check that SANITIZE OVERWRITE will continue "
 		"even after Task/Lun/Target/* reset.");
 	cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,

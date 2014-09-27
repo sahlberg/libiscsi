@@ -1653,7 +1653,7 @@ preventallow(struct scsi_device *sdev, int prevent)
 }
 
 int
-read6(struct scsi_device *sdev, uint32_t lba,
+read6(struct scsi_device *sdev, struct scsi_task **out_task, uint32_t lba,
       uint32_t datalen, int blocksize,
       unsigned char *data,
       int status, enum scsi_sense_key key, int *ascq, int num_ascq)
@@ -1674,7 +1674,9 @@ read6(struct scsi_device *sdev, uint32_t lba,
 	if (data && task) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
-	if (task) {
+	if (out_task) {
+		*out_task = task;
+	} else if (task) {
 		scsi_free_scsi_task(task);
 	}
 	return ret;

@@ -98,7 +98,18 @@ test_prout_reserve_ownership_ea(void)
 {
 	struct scsi_device sd2;
 
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
+			"only supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
+	memset(&sd2, 0, sizeof(sd2));
+	sd2.iscsi_url = sd->iscsi_url;
+	sd2.iscsi_lun = sd->iscsi_lun;
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
 	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
@@ -113,7 +124,18 @@ test_prout_reserve_ownership_we(void)
 {
 	struct scsi_device sd2;
 
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
+			"only supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
+	memset(&sd2, 0, sizeof(sd2));
+	sd2.iscsi_url = sd->iscsi_url;
+	sd2.iscsi_lun = sd->iscsi_lun;
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
 	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
@@ -128,7 +150,18 @@ test_prout_reserve_ownership_earo(void)
 {
 	struct scsi_device sd2;
 
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
+			"only supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
+	memset(&sd2, 0, sizeof(sd2));
+	sd2.iscsi_url = sd->iscsi_url;
+	sd2.iscsi_lun = sd->iscsi_lun;
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
 	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
@@ -143,7 +176,18 @@ test_prout_reserve_ownership_wero(void)
 {
 	struct scsi_device sd2;
 
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
+			"only supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
+	memset(&sd2, 0, sizeof(sd2));
+	sd2.iscsi_url = sd->iscsi_url;
+	sd2.iscsi_lun = sd->iscsi_lun;
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
 	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
@@ -158,7 +202,18 @@ test_prout_reserve_ownership_eaar(void)
 {
 	struct scsi_device sd2;
 
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
+			"only supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
+	memset(&sd2, 0, sizeof(sd2));
+	sd2.iscsi_url = sd->iscsi_url;
+	sd2.iscsi_lun = sd->iscsi_lun;
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
 	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
@@ -173,7 +228,18 @@ test_prout_reserve_ownership_wear(void)
 {
 	struct scsi_device sd2;
 
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
+			"only supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
+	memset(&sd2, 0, sizeof(sd2));
+	sd2.iscsi_url = sd->iscsi_url;
+	sd2.iscsi_lun = sd->iscsi_lun;
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
 	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;

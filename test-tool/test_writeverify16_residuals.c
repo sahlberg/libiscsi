@@ -43,6 +43,14 @@ test_writeverify16_residuals(void)
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This WRITEVERIFY16 test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
 	/* check if writeverify16 is supported */
 	ret = writeverify16(sd, 0, 0,
 			    block_size, 0, 0, 0, 0, NULL,
@@ -50,6 +58,14 @@ test_writeverify16_residuals(void)
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
 		CU_PASS("[SKIPPED] Target does not support WRITEVERIFY16. Skipping test");
+		return;
+	}
+
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] WRITEVERIFY16 tests are only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
 		return;
 	}
 

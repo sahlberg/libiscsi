@@ -39,6 +39,14 @@ test_read10_invalid(void)
 	logging(LOG_VERBOSE, "Test invalid READ10 commands");
 	logging(LOG_VERBOSE, "Block size is %zu", block_size);
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This READ10 test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
 	/* Try a read10 of 1 block but xferlength == 0 */
 	task = malloc(sizeof(struct scsi_task));
 	CU_ASSERT_PTR_NOT_NULL(task);

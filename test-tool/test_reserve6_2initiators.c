@@ -34,6 +34,13 @@ test_reserve6_2initiators(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test RESERVE6/RELEASE6 across two initiators");
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This RESERVE6 test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
 
 	logging(LOG_NORMAL, "Take out a RESERVE6 from the first initiator");
 	ret = reserve6(sd);

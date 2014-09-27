@@ -121,7 +121,7 @@ check_unmap(void)
 	if (task_ret->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Failed to read LBA mapping "
 			"from the target. Sense: %s",
-			iscsi_get_error(sd->iscsi_ctx));
+			sd->error_str);
 		CU_FAIL("[FAILED] Failed to read LBA mapping "
 			"from the target.");
 		scsi_free_scsi_task(task_ret);

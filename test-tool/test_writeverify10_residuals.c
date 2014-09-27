@@ -43,6 +43,14 @@ test_writeverify10_residuals(void)
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This WRITEVERIFY10 test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
 	/* check if writeverify10 is supported */
 	ret = writeverify10(sd, 0, 0,
 			    block_size, 0, 0, 0, 0, NULL,

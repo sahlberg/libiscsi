@@ -34,6 +34,13 @@ test_reserve6_itnexus_loss(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that RESERVE6 is released on it-nexus loss");
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This RESERVE6 test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
 
 	logging(LOG_NORMAL, "Take out a RESERVE6 from the first initiator");
 	ret = reserve6(sd);

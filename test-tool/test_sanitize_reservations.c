@@ -40,6 +40,14 @@ test_sanitize_reservations(void)
 	CHECK_FOR_SANITIZE;
 	CHECK_FOR_DATALOSS;
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This SANITIZE test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
 	logging(LOG_VERBOSE, "Create a second connection to the target");
 	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
 	if (sd2.iscsi_ctx == NULL) {

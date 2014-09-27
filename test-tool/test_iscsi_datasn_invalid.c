@@ -65,6 +65,13 @@ void test_iscsi_datasn_invalid(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test sending invalid iSCSI DATASN");
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This test is "
+			"only supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
 
 	logging(LOG_VERBOSE, "Send 2 DATAIN with DATASN==0. Should fail.");
 	change_datasn = 1;

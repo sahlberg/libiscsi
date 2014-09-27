@@ -35,6 +35,14 @@ test_preventallow_logout(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that Logout loss clears PREVENT MEDIUM REMOVAL");
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This PREVENTALLOW test is "
+			"only supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
 	logging(LOG_VERBOSE, "Set the PREVENT flag");
 	ret = preventallow(sd, 1);
 	CU_ASSERT_EQUAL(ret, 0);

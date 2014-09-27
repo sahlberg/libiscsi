@@ -277,7 +277,7 @@ int orwrite(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int blocks
 int prefetch10(struct scsi_device *sdev, uint32_t lba, int num_blocks, int immed, int group, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int prefetch16(struct scsi_device *sdev, uint64_t lba, int num_blocks, int immed, int group, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int preventallow(struct scsi_device *sdev, int prevent);
-int read6(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
+int read6(struct scsi_device *sdev, struct scsi_task **task, uint32_t lba, uint32_t datalen, int blocksize, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int read10(struct scsi_device *sdev, struct scsi_task **task, uint32_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int read12(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int read16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);

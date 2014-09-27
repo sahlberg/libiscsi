@@ -40,6 +40,14 @@ test_sanitize_readonly(void)
 	CHECK_FOR_SANITIZE;
 	CHECK_FOR_DATALOSS;
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This SANITIZE test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
 	logging(LOG_VERBOSE, "Create a second connection to the target");
 	memset(&sd2, 0, sizeof(sd2));
 	sd2.iscsi_url = sd->iscsi_url;
