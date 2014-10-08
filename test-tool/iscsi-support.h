@@ -38,14 +38,14 @@ extern const char *initiatorname2;
 #define EXPECT_LBA_OOB SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, lba_oob_ascqs, 1
 #define EXPECT_INVALID_FIELD_IN_CDB SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, invalid_cdb_ascqs, 1
 #define EXPECT_MISCOMPARE SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_MISCOMPARE, miscompare_ascqs, 1
-#define EXPECT_WRITE_PROTECTED SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_DATA_PROTECTION, write_protect_ascqs, 1
+#define EXPECT_WRITE_PROTECTED SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_DATA_PROTECTION, write_protect_ascqs, 3
 #define EXPECT_SANITIZE SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_NOT_READY, sanitize_ascqs, 1
 #define EXPECT_REMOVAL_PREVENTED SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, removal_ascqs, 1
 
 int no_medium_ascqs[3];
 int lba_oob_ascqs[1];
 int invalid_cdb_ascqs[1];
-int write_protect_ascqs[1];
+int write_protect_ascqs[3];
 int sanitize_ascqs[1];
 int removal_ascqs[1];
 int miscompare_ascqs[1];

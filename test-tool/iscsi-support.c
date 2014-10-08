@@ -66,8 +66,10 @@ int lba_oob_ascqs[1] = {
 int invalid_cdb_ascqs[1] = {
 	SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB
 };
-int write_protect_ascqs[1] = {
-	SCSI_SENSE_ASCQ_WRITE_PROTECTED
+int write_protect_ascqs[3] = {
+	SCSI_SENSE_ASCQ_WRITE_PROTECTED,
+	SCSI_SENSE_ASCQ_HARDWARE_WRITE_PROTECTED,
+	SCSI_SENSE_ASCQ_SOFTWARE_WRITE_PROTECTED
 };
 int sanitize_ascqs[1] = {
 	SCSI_SENSE_ASCQ_SANITIZE_IN_PROGRESS
