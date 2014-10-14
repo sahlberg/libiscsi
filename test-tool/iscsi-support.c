@@ -2461,6 +2461,9 @@ int set_swp(struct scsi_device *sdev)
 		goto finished;
 	}
 
+	/* For MODE SELECT PS is reserved and hence must be cleared */
+	mp->ps = 0;
+
 	logging(LOG_VERBOSE, "Turn SWP ON");
 	mp->control.swp = 1;
 
@@ -2509,6 +2512,9 @@ int clear_swp(struct scsi_device *sdev)
 		ret = -1;
 		goto finished;
 	}
+
+	/* For MODE SELECT PS is reserved and hence must be cleared */
+	mp->ps = 0;
 
 	logging(LOG_VERBOSE, "Turn SWP OFF");
 	mp->control.swp = 0;

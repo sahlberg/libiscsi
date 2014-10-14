@@ -206,6 +206,9 @@ int main(int argc, char *argv[])
 		goto finished;
 	}
 
+	/* For MODE SELECT PS is reserved and hence must be cleared */
+	mp->ps = 0;
+
 	printf("SWP:%d\n", mp->control.swp);
 
 	switch (swp) {
