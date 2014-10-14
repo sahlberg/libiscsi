@@ -115,6 +115,40 @@ static const char *scsi_status_str(int status)
 	return "UNKNOWN";
 }
 
+static int status_is_invalid_field_in_cdb(struct scsi_task *task)
+{
+	return task->status == SCSI_STATUS_CHECK_CONDITION
+		&& task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
+		&& task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB;
+}
+
+/*
+ * There is no agreement among the T10 committee whether a SCSI target should
+ * report "invalid opcode", "invalid field in CDB" or "invalid field in
+ * parameter list" if the opcode consists of two bytes. Hence accept all three
+ * sense codes for two-byte opcodes. For more information see also Frederick
+ * Knight, RE: INVALID COMMAND OPERATION CODE, T10 Reflector, 16 May 2008
+ * (http://t10.org/ftp/t10/t10r/2008/r0805167.htm).
+ */
+static int status_is_invalid_opcode(struct scsi_task *task)
+{
+	if (task->status == SCSI_STATUS_CHECK_CONDITION
+	    && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST) {
+		if (task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE)
+			return 1;
+		switch (task->cdb[0]) {
+		case SCSI_OPCODE_MAINTENANCE_IN:
+		case SCSI_OPCODE_SERVICE_ACTION_IN:
+			switch (task->sense.ascq) {
+			case SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB:
+			case SCSI_SENSE_ASCQ_INVALID_FIELD_IN_PARAMETER_LIST:
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
 static int check_result(const char *opcode, struct scsi_device *sdev,
 			struct scsi_task *task,
 			int status, enum scsi_sense_key key,
@@ -127,9 +161,7 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
 			"%s", opcode, sdev->error_str);
 		return -1;
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(task)) {
 		logging(LOG_NORMAL, "[SKIPPED] %s is not implemented.",
 			opcode);
 		return -2;
@@ -493,9 +525,7 @@ prin_task(struct scsi_device *sdev, int service_action,
 		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(task)) {
 		scsi_free_scsi_task(task);
 		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE IN is not implemented.");
 		return -2;
@@ -541,9 +571,7 @@ prin_read_keys(struct scsi_device *sdev, struct scsi_task **tp,
 		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
-	if ((*tp)->status        == SCSI_STATUS_CHECK_CONDITION
-	    && (*tp)->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && (*tp)->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(*tp)) {
 		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE IN is not implemented.");
 		return -2;
 	}
@@ -597,9 +625,7 @@ prout_register_and_ignore(struct scsi_device *sdev,
 		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
-	if (task->status == SCSI_STATUS_CHECK_CONDITION &&
-	    task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST &&
-	    task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(task)) {
 		logging(LOG_NORMAL, "[SKIPPED] PROUT Not Supported");
 		ret = -2;
 		goto dun;
@@ -648,9 +674,7 @@ prout_register_key(struct scsi_device *sdev,
 		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(task)) {
 		scsi_free_scsi_task(task);
 		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE OUT is not implemented.");
 		return -2;
@@ -692,9 +716,7 @@ prin_verify_key_presence(struct scsi_device *sdev,
 		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(task)) {
 		scsi_free_scsi_task(task);
 		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE IN is not implemented.");
 		return -2;
@@ -767,9 +789,7 @@ prout_reregister_key_fails(struct scsi_device *sdev,
 		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(task)) {
 		scsi_free_scsi_task(task);
 		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE OUT is not implemented.");
 		return -2;
@@ -817,9 +837,7 @@ prout_reserve(struct scsi_device *sdev,
 		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(task)) {
 		scsi_free_scsi_task(task);
 		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE OUT is not implemented.");
 		return -2;
@@ -866,9 +884,7 @@ prout_release(struct scsi_device *sdev,
 		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(task)) {
 		scsi_free_scsi_task(task);
 		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE OUT is not implemented.");
 		return -2;
@@ -907,9 +923,7 @@ prin_verify_reserved_as(struct scsi_device *sdev,
 		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(task)) {
 		scsi_free_scsi_task(task);
 		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE IN is not implemented.");
 		return -2;
@@ -980,9 +994,7 @@ prin_verify_not_reserved(struct scsi_device *sdev)
 		    iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(task)) {
 		scsi_free_scsi_task(task);
 		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE IN is not implemented.");
 		return -2;
@@ -1240,9 +1252,7 @@ int sanitize(struct scsi_device *sdev, int immed, int ause, int sa, int param_le
 			iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(task)) {
 		logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
 			"implemented on target");
 		scsi_free_scsi_task(task);
@@ -1277,9 +1287,7 @@ int sanitize_invalidfieldincdb(struct scsi_device *sdev, int immed, int ause, in
 			iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(task)) {
 		logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
 			"implemented on target");
 		scsi_free_scsi_task(task);
@@ -1291,9 +1299,7 @@ int sanitize_invalidfieldincdb(struct scsi_device *sdev, int immed, int ause, in
 		scsi_free_scsi_task(task);
 		return -1;
 	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-		|| task->sense.key  != SCSI_SENSE_ILLEGAL_REQUEST
-		|| task->sense.ascq != SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB) {
+	if (!status_is_invalid_field_in_cdb(task)) {
 		logging(LOG_NORMAL, "[FAILED] SANITIZE failed with wrong "
 			"sense. Should have failed with ILLEGAL_REQUEST/"
 			"INVALID_FIELD_IN_CDB. Sense:%s\n",
@@ -1635,9 +1641,7 @@ preventallow(struct scsi_device *sdev, int prevent)
 			"command: %s", iscsi_get_error(sdev->iscsi_ctx));
 		return -1;
 	}
-	if (task->status        == SCSI_STATUS_CHECK_CONDITION
-	    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-	    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+	if (status_is_invalid_opcode(task)) {
 		logging(LOG_NORMAL, "[SKIPPED] PREVENTALLOW is not implemented on target");
 		scsi_free_scsi_task(task);
 		return -2;
@@ -1907,9 +1911,7 @@ reserve6(struct scsi_device *sdev)
 			res = -1;
 			break;
 		}
-		if (task->status        == SCSI_STATUS_CHECK_CONDITION
-		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		if (status_is_invalid_opcode(task)) {
 			logging(LOG_NORMAL, "[SKIPPED] RESERVE6 is not "
 				"implemented on target");
 			res = -2;
@@ -1947,9 +1949,7 @@ reserve6_conflict(struct scsi_device *sdev)
 			res = -1;
 			break;
 		}
-		if (task->status        == SCSI_STATUS_CHECK_CONDITION
-		    && task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-		    && task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
+		if (status_is_invalid_opcode(task)) {
 			logging(LOG_NORMAL, "[SKIPPED] RESERVE6 is not"
 				" implemented on target");
 			res = -2;
