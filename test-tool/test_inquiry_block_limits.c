@@ -24,10 +24,19 @@
 #include "iscsi-support.h"
 #include "iscsi-test-cu.h"
 
+static void check_lbp(int *supports_lbp)
+{
+	*supports_lbp = 0;
+
+	CHECK_FOR_THIN_PROVISIONING;
+
+	*supports_lbp = 1;
+}
+
 void
 test_inquiry_block_limits(void)
 {
-	int ret;
+	int supports_lbp, ret;
 	struct scsi_inquiry_block_limits *bl;
 	struct scsi_task *bl_task = NULL;
 	struct scsi_inquiry_logical_block_provisioning *lbp = NULL;
@@ -103,6 +112,9 @@ test_inquiry_block_limits(void)
 		goto finished;
 	}
 
+	check_lbp(&supports_lbp);
+	if (!supports_lbp)
+		goto finished;
 
 	/*
 	 * MAXIMUM UNMAP LBA COUNT
