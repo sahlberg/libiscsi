@@ -124,8 +124,8 @@ test_sanitize_overwrite(void)
 	data.data[1] = 0x00;
 	data.data[2] = block_size >> 8;
 	data.data[3] = block_size & 0xff;
-	ret = sanitize(sd,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+	ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data,
+		       EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Check that the first 256 LBAs are wiped.");
@@ -140,8 +140,8 @@ test_sanitize_overwrite(void)
 	data.data[2] = (block_size / 2) >> 8;
 	data.data[3] = (block_size / 2 ) & 0xff;
 
-	ret = sanitize(sd,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+	ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data,
+		       EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
@@ -151,8 +151,8 @@ test_sanitize_overwrite(void)
 	data.data[2] = 0;
 	data.data[3] = 4;
 
-	ret = sanitize(sd,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+	ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data,
+		       EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "OVERWRITE parameter list length must "
@@ -161,8 +161,8 @@ test_sanitize_overwrite(void)
 		logging(LOG_VERBOSE, "Test OVERWRITE with ParamLen:%d is an "
 			"error.", i);
 
-		ret = sanitize_invalidfieldincdb(sd,
-			       0, 0, SCSI_SANITIZE_OVERWRITE, i, &data);
+		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, i, &data,
+			       EXPECT_INVALID_FIELD_IN_CDB);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
 				"implemented.");
@@ -180,8 +180,9 @@ test_sanitize_overwrite(void)
 	data.size = block_size + 8;
 	data.data = alloca(block_size + 8); /* so we can send IP > blocksize */
 	memset(data.data, 0, data.size);
-	ret = sanitize_invalidfieldincdb(sd,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, block_size + 5, &data);
+	ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, block_size + 5, &data,
+		       EXPECT_INVALID_FIELD_IN_CDB);
+
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
 			"implemented.");
@@ -199,8 +200,8 @@ test_sanitize_overwrite(void)
 	data.data[1] = 0x00;
 	data.data[2] = block_size >> 8;
 	data.data[3] = block_size & 0xff;
-	ret = sanitize_invalidfieldincdb(sd,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+	ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data,
+		       EXPECT_INVALID_FIELD_IN_CDB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
@@ -212,8 +213,8 @@ test_sanitize_overwrite(void)
 	data.data[1] = 0x00;
 	data.data[2] = 0x00;
 	data.data[3] = 0x00;
-	ret = sanitize_invalidfieldincdb(sd,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+	ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data,
+		       EXPECT_INVALID_FIELD_IN_CDB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
@@ -226,7 +227,7 @@ test_sanitize_overwrite(void)
 	data.data[1] = 0x00;
 	data.data[2] = (block_size + 4) >> 8;
 	data.data[3] = (block_size + 4) & 0xff;
-	ret = sanitize_invalidfieldincdb(sd,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+	ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data,
+		       EXPECT_INVALID_FIELD_IN_CDB);
 	CU_ASSERT_EQUAL(ret, 0);
 }

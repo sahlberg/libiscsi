@@ -89,8 +89,9 @@ test_sanitize_readonly(void)
 		data.data[1] = 0x00;
 		data.data[2] = block_size >> 8;
 		data.data[3] = block_size & 0xff;
-		ret = sanitize_writeprotected(sd,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size,
+			       &data,
+			       EXPECT_WRITE_PROTECTED);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -104,8 +105,8 @@ test_sanitize_readonly(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE BLOCK_ERASE");
-		ret = sanitize_writeprotected(sd,
-		       0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL);
+		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL,
+			       EXPECT_WRITE_PROTECTED);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -118,8 +119,8 @@ test_sanitize_readonly(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE CRYPTO_ERASE");
-		ret = sanitize_writeprotected(sd,
-		       0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL);
+		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL,
+			       EXPECT_WRITE_PROTECTED);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

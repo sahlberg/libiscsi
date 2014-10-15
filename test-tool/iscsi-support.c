@@ -115,13 +115,6 @@ static const char *scsi_status_str(int status)
 	return "UNKNOWN";
 }
 
-static int status_is_invalid_field_in_cdb(struct scsi_task *task)
-{
-	return task->status == SCSI_STATUS_CHECK_CONDITION
-		&& task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST
-		&& task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB;
-}
-
 /*
  * There is no agreement among the T10 committee whether a SCSI target should
  * report "invalid opcode", "invalid field in CDB" or "invalid field in
@@ -1236,82 +1229,34 @@ synchronizecache16(struct scsi_device *sdev, uint64_t lba, int num, int sync_nv,
 	return ret;
 }
 
-int sanitize(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
+int sanitize(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;
+	int ret;
 
-	logging(LOG_VERBOSE, "Send SANITIZE IMMED:%d AUSE:%d SA:%d "
-		"PARAM_LEN:%d",
+	logging(LOG_VERBOSE, "Send SANITIZE (Expecting %s) IMMED:%d AUSE:%d "
+		"SA:%d PARAM_LEN:%d",
+		scsi_status_str(status),
 		immed, ause, sa, param_len);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping sanitize\n");
+		return -1;
+	}
 
 	task = iscsi_sanitize_sync(sdev->iscsi_ctx, sdev->iscsi_lun, immed, ause, sa, param_len,
 				   data);
-	if (task == NULL) {
-		logging(LOG_NORMAL,
-			"[FAILED] Failed to send SANITIZE command: %s",
-			iscsi_get_error(sdev->iscsi_ctx));
-		return -1;
-	}
-	if (status_is_invalid_opcode(task)) {
-		logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
-			"implemented on target");
-		scsi_free_scsi_task(task);
-		return -2;
-	}
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL,
-			"[FAILED] SANITIZE command: failed with sense. %s",
-			iscsi_get_error(sdev->iscsi_ctx));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] SANITIZE returned SUCCESS.");
-	return 0;
-}
+	task = scsi_cdb_sanitize(immed, ause, sa, param_len);
 
-int sanitize_invalidfieldincdb(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
-{
-	struct scsi_task *task;
+	assert(task != NULL);
 
-	logging(LOG_VERBOSE, "Send SANITIZE (Expecting INVALID_FIELD_IN_CDB) "
-		"IMMED:%d AUSE:%d SA:%d "
-		"PARAM_LEN:%d",
-		immed, ause, sa, param_len);
+	task = send_scsi_command(sdev, task, data);
 
-	task = iscsi_sanitize_sync(sdev->iscsi_ctx, sdev->iscsi_lun, immed, ause, sa, param_len,
-				   data);
-	if (task == NULL) {
-		logging(LOG_NORMAL,
-			"[FAILED] Failed to send SANITIZE command: %s",
-			iscsi_get_error(sdev->iscsi_ctx));
-		return -1;
-	}
-	if (status_is_invalid_opcode(task)) {
-		logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
-			"implemented on target");
+	ret = check_result("SANITIZE", sdev, task, status, key, ascq, num_ascq);
+	if (task) {
 		scsi_free_scsi_task(task);
-		return -2;
 	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] SANITIZE successful but should "
-			"have failed with ILLEGAL_REQUEST/INVALID_FIELD_IN_CDB");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (!status_is_invalid_field_in_cdb(task)) {
-		logging(LOG_NORMAL, "[FAILED] SANITIZE failed with wrong "
-			"sense. Should have failed with ILLEGAL_REQUEST/"
-			"INVALID_FIELD_IN_CDB. Sense:%s\n",
-			iscsi_get_error(sdev->iscsi_ctx));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] SANITIZE returned ILLEGAL_REQUEST/"
-		"INVALID_FIELD_IB_CDB.");
-	return 0;
+	return ret;
 }
 
 int sanitize_conflict(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
@@ -1346,45 +1291,6 @@ int sanitize_conflict(struct scsi_device *sdev, int immed, int ause, int sa, int
 
 	scsi_free_scsi_task(task);
 	logging(LOG_VERBOSE, "[OK] SANITIZE returned RESERVATION_CONFLICT.");
-	return 0;
-}
-
-int sanitize_writeprotected(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send SANITIZE (Expecting WRITE_PROTECTED) "
-		"IMMED:%d AUSE:%d SA:%d "
-		"PARAM_LEN:%d",
-		immed, ause, sa, param_len);
-
-	task = iscsi_sanitize_sync(sdev->iscsi_ctx, sdev->iscsi_lun, immed, ause, sa, param_len,
-				   data);
-	if (task == NULL) {
-		logging(LOG_NORMAL,
-			"[FAILED] Failed to send SANITIZE command: %s",
-			iscsi_get_error(sdev->iscsi_ctx));
-		return -1;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] SANITIZE successful but should "
-			"have failed with DATA_PROTECTION/WRITE_PROTECTED");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-	if (task->status        != SCSI_STATUS_CHECK_CONDITION
-	    || task->sense.key  != SCSI_SENSE_DATA_PROTECTION
-	    || task->sense.ascq != SCSI_SENSE_ASCQ_WRITE_PROTECTED) {
-		logging(LOG_NORMAL, "[FAILED] SANITIZE failed with wrong "
-			"sense. Should have failed with DATA_PRTOTECTION/"
-			"WRITE_PROTECTED. Sense:%s\n",
-			iscsi_get_error(sdev->iscsi_ctx));
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] SANITIZE returned DATA_PROTECTION/WRITE_PROTECTED.");
 	return 0;
 }
 

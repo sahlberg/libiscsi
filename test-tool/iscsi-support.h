@@ -287,10 +287,8 @@ int report_supported_opcodes(struct scsi_device *sdev, struct scsi_task **save_t
 int release6(struct scsi_device *sdev);
 int reserve6(struct scsi_device *sdev);
 int reserve6_conflict(struct scsi_device *sdev);
-int sanitize(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data);
+int sanitize(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int sanitize_conflict(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data);
-int sanitize_invalidfieldincdb(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data);
-int sanitize_writeprotected(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data);
 int startstopunit(struct scsi_device *sdev, int immed, int pcm, int pc, int no_flush, int loej, int start, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int synchronizecache10(struct scsi_device *sdev, uint32_t lba, int num_blocks, int sync_nv, int immed, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int synchronizecache16(struct scsi_device *sdev, uint64_t lba, int num_blocks, int sync_nv, int immed, int status, enum scsi_sense_key key, int *ascq, int num_ascq);

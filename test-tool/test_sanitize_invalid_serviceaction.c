@@ -51,8 +51,8 @@ test_sanitize_invalid_serviceaction(void)
 		logging(LOG_VERBOSE, "Verify that ServiceAction:0x%02d is "
 			"an error.", i);
 
-		ret = sanitize_invalidfieldincdb(sd,
-			       0, 0, i, 0, NULL);
+		ret = sanitize(sd, 0, 0, i, 0, NULL,
+			       EXPECT_INVALID_FIELD_IN_CDB);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
 				"implemented.");

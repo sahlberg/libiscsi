@@ -73,8 +73,8 @@ void test_sanitize_overwrite_reserved(void)
 	logging(LOG_VERBOSE, "Send SANITIZE command with the reserved "
 		"bit in byte 1 set to 1");
 	change_num = 1;
-	ret = sanitize_invalidfieldincdb(sd,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+	ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data,
+		       EXPECT_INVALID_FIELD_IN_CDB);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] SANITIZE OVERWRITE is not "
 			"implemented on target.");
@@ -89,8 +89,9 @@ void test_sanitize_overwrite_reserved(void)
 			"byte %d set to non-zero", i);
 		change_num = i;
 
-		ret = sanitize_invalidfieldincdb(sd,
-			 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size,
+			       &data,
+			       EXPECT_INVALID_FIELD_IN_CDB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }
