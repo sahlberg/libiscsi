@@ -172,6 +172,12 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
 			scsi_sense_ascq_str(ascq[0]), ascq[0]);
 		return -1;
 	}
+	if (status == SCSI_STATUS_RESERVATION_CONFLICT
+	    && task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
+		logging(LOG_NORMAL, "[FAILED] %s command should have failed "
+			"with RESERVATION_CONFLICT.", opcode);
+		return -1;
+	}
 	/* did we get any of the expected ASCQs ?*/
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
 		int i;
@@ -1257,41 +1263,6 @@ int sanitize(struct scsi_device *sdev, int immed, int ause, int sa, int param_le
 		scsi_free_scsi_task(task);
 	}
 	return ret;
-}
-
-int sanitize_conflict(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data)
-{
-	struct scsi_task *task;
-
-	logging(LOG_VERBOSE, "Send SANITIZE (Expecting RESERVATION_CONFLICT) "
-		"IMMED:%d AUSE:%d SA:%d "
-		"PARAM_LEN:%d",
-		immed, ause, sa, param_len);
-
-	task = iscsi_sanitize_sync(sdev->iscsi_ctx, sdev->iscsi_lun, immed, ause, sa, param_len,
-				   data);
-	if (task == NULL) {
-		logging(LOG_NORMAL,
-			"[FAILED] Failed to send SANITIZE command: %s",
-			iscsi_get_error(sdev->iscsi_ctx));
-		return -1;
-	}
-	if (task->status == SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL,
-			"[FAILED] SANITIZE successful but should have failed with RESERVATION_CONFLICT");
-		scsi_free_scsi_task(task);
-		return -1;
-	}
-
-	if (task->status != SCSI_STATUS_RESERVATION_CONFLICT) {
-		logging(LOG_NORMAL, "[FAILED] Expected RESERVATION CONFLICT. "
-			"Sense:%s", iscsi_get_error(sdev->iscsi_ctx));
-		return -1;
-	}
-
-	scsi_free_scsi_task(task);
-	logging(LOG_VERBOSE, "[OK] SANITIZE returned RESERVATION_CONFLICT.");
-	return 0;
 }
 
 int startstopunit(struct scsi_device *sdev, int immed, int pcm, int pc, int no_flush, int loej, int start, int status, enum scsi_sense_key key, int *ascq, int num_ascq)

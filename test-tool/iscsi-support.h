@@ -41,6 +41,7 @@ extern const char *initiatorname2;
 #define EXPECT_WRITE_PROTECTED SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_DATA_PROTECTION, write_protect_ascqs, 3
 #define EXPECT_SANITIZE SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_NOT_READY, sanitize_ascqs, 1
 #define EXPECT_REMOVAL_PREVENTED SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, removal_ascqs, 1
+#define EXPECT_RESERVATION_CONFLICT SCSI_STATUS_RESERVATION_CONFLICT, 0, NULL, 0
 
 int no_medium_ascqs[3];
 int lba_oob_ascqs[1];
@@ -288,7 +289,6 @@ int release6(struct scsi_device *sdev);
 int reserve6(struct scsi_device *sdev);
 int reserve6_conflict(struct scsi_device *sdev);
 int sanitize(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
-int sanitize_conflict(struct scsi_device *sdev, int immed, int ause, int sa, int param_len, struct iscsi_data *data);
 int startstopunit(struct scsi_device *sdev, int immed, int pcm, int pc, int no_flush, int loej, int start, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int synchronizecache10(struct scsi_device *sdev, uint32_t lba, int num_blocks, int sync_nv, int immed, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int synchronizecache16(struct scsi_device *sdev, uint64_t lba, int num_blocks, int sync_nv, int immed, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
