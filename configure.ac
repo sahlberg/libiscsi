@@ -10,8 +10,6 @@ AM_PROG_AR
 LT_INIT
 
 AC_CANONICAL_HOST
-AM_CONDITIONAL(LD_ISCSI,
-               [expr "$host_os" : linux > /dev/null 2>&1])
 AM_PROG_CC_C_O
 
 enable_write_strings="yes"
@@ -108,8 +106,9 @@ else
   AC_MSG_NOTICE(You need libcunit to build the test suite.)
   AC_MSG_NOTICE(The scsi/iscsi test suite will not be built.)
 fi
-AM_CONDITIONAL(ISCSITEST, [test "$ac_cv_have_cunit" = yes])
+AM_CONDITIONAL(ISCSITEST, [test "$ac_cv_have_cunit" = yes -a "$enable_shared" = "yes"])
 
+AM_CONDITIONAL(LD_ISCSI, [expr "(" "$host_os" : "linux" ")" "&" "$enable_shared" "=" "yes"])
 
 AC_CHECK_MEMBER([struct CU_SuiteInfo.pSetUpFunc],
 		[AC_DEFINE([HAVE_CU_SUITEINFO_PSETUPFUNC], 1,
