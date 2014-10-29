@@ -432,6 +432,15 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 		switch (event) {
 		case 0x1:
 			ISCSI_LOG(iscsi, 2, "target requests logout within %u seconds", param3);
+			/* this is an ugly workaround for DELL Equallogic FW 7.x bugs:
+			 *  Bug_71409 - I/O errors during volume move (present before 7.0.7)
+			 *  Bug_73732 - I/O errors during volume move operation (still present in 7.0.9)
+			 */
+			if (getenv("LIBISCSI_DROP_CONN_ON_ASYNC_EVENT1") != NULL) {
+				 
+				ISCSI_LOG(iscsi, 2, "dropping connection to fix errors with broken DELL Equallogic firmware 7.x");
+				return -1;
+			}
 			iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_URGENT_DELIVERY);
 			return 0;
 		case 0x2:
