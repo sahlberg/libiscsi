@@ -152,7 +152,8 @@ iscsi_connect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_
 	}
 
 	if (iscsi_login_async(iscsi, iscsi_login_cb, ct) != 0) {
-		iscsi_set_error(iscsi, "iscsi_login_async failed.");
+		iscsi_set_error(iscsi, "iscsi_login_async failed: %s",
+				iscsi_get_error(iscsi));
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
 		iscsi_free(iscsi, ct);
 	}
