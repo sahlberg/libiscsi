@@ -91,6 +91,7 @@ scsi_create_task(int cdb_size, unsigned char *cdb, int xfer_dir, int expxferlen)
 	memset(task, 0, sizeof(struct scsi_task));
 
 	memcpy(&task->cdb[0], cdb, cdb_size);
+	task->cdb_size   = cdb_size;
 	task->xfer_dir   = xfer_dir;
 	task->expxferlen = expxferlen;
 
