@@ -3857,3 +3857,12 @@ scsi_task_add_data_out_buffer(struct scsi_task *task, int len, unsigned char *bu
 {
 	return scsi_iovector_add(task, &task->iovector_out, len, buf);
 }
+
+int
+scsi_task_get_status(struct scsi_task *task, struct scsi_sense *sense)
+{
+	if (sense) {
+		memcpy(sense, &task->sense, sizeof(struct scsi_sense));
+	}
+	return task->status;
+}

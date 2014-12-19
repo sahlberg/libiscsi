@@ -223,6 +223,7 @@ scsi_set_uint32
 scsi_set_uint64
 scsi_task_add_data_in_buffer
 scsi_task_add_data_out_buffer
+scsi_task_get_status
 scsi_task_set_iov_in
 scsi_task_set_iov_out
 scsi_version_to_str

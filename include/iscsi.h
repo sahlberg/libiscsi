@@ -512,6 +512,7 @@ EXTERN int iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 EXTERN int iscsi_get_nops_in_flight(struct iscsi_context *iscsi);
 
 struct scsi_task;
+struct scsi_sense;
 
 enum iscsi_task_mgmt_funcs {
      ISCSI_TM_ABORT_TASK        = 0x01,
@@ -1126,6 +1127,8 @@ EXTERN int scsi_task_add_data_out_buffer(struct scsi_task *task, int len, unsign
 struct scsi_iovec;
 EXTERN void scsi_task_set_iov_out(struct scsi_task *task, struct scsi_iovec *iov, int niov);
 EXTERN void scsi_task_set_iov_in(struct scsi_task *task, struct scsi_iovec *iov, int niov);
+
+EXTERN int scsi_task_get_status(struct scsi_task *task, struct scsi_sense *sense);
 
 /*
  * This function is used when you want to cancel a scsi task.
