@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.12.0
+Version: 1.13.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -109,6 +109,16 @@ Test tool for iSCSI/SCSI targets
 
 
 %changelog
+* Sun Dec 21 2014 : 1.13.0
+ - Fix UNMAP tests
+ - Build updates
+ - Check residuals also when status != GOOD
+ - Add WSNZ bit to the tests
+ - Various test updates
+ - Fix bug in scsi_create_task so it sets cdb_len correctly
+ - Add a getter function for scsi task status and sense
+ - Fixes and workarounds for Dell Equallogic issues
+ - Be more flexible when allowing for unit attentions during connect time
 * Mon Jul 21 2014 : 1.12.0
  - Fix statsn when wrapping
  - Add Async event handling
