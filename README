@@ -79,7 +79,7 @@ Patches for other packages would be welcome.
 
 ISCSI-TEST-CU
 =============
-./bin/iscsi-test-cu is a CUnit based test tool for scsi and iscsi.
+iscsi-test-cu is a CUnit based test tool for scsi and iscsi.
 
 iscsi-test-cu depends on the CUnit library and will only build if libcunit can be
 found during configure.
@@ -92,9 +92,9 @@ in a line similar to :
 checking whether libcunit is available... yes
 
 Some example commands:
-./bin/iscsi-test-cu -l to list all tests.
-./bin/iscsi-test-cu -t <test-suite> <iscsi-url> to run a test suite
-./bin/iscsi-test-cu -t <test-suite>.<test> <iscsi-url> to run a specific test
+iscsi-test-cu -l to list all tests.
+iscsi-test-cu -t <test-suite> <iscsi-url> to run a test suite
+iscsi-test-cu -t <test-suite>.<test> <iscsi-url> to run a specific test
 
 Most tests only require a single login to the target, but some tests,
 for example the it nexus loss tests may need to login two separate sessions.
@@ -116,6 +116,12 @@ These results can be converted to JUnit format using this script:
 
 http://git.cyrusimap.org/cyrus-imapd/plain/cunit/cunit-to-junit.pl
 
+On Linux, the test tool can also access SG_IO devices directly. Just specify the
+device as /dev/sg* instead of the iSCSI URL.
+
+Example:
+sudo iscsi-test-cu --test LINUX.Read10.Simple /dev/sg1
+
 
 LD_PRELOAD FUN
 ==============
@@ -127,7 +133,7 @@ modifications.
 
 For example:
 The stat command: this shows the size of the iSCSI LUN as if it was a normal file:
-$ LD_PRELOAD=./bin/ld_iscsi.so stat iscsi://127.0.0.1:3262/iqn.ronnie.test/2
+$ LD_PRELOAD=ld_iscsi.so stat iscsi://127.0.0.1:3262/iqn.ronnie.test/2
   File: `iscsi://127.0.0.1:3262/iqn.ronnie.test/2'
   Size: 3431540736	Blocks: 0          IO Block: 0      regular file
 Device: 0h/0d	Inode: 0           Links: 0
@@ -137,10 +143,10 @@ Modify: 1970-01-01 10:00:00.000000000 +1000
 Change: 1970-01-01 10:00:00.000000000 +1000
 
 The cat command, which allows you to read/dump a iSCSI LUN to a file :
-$ LD_PRELOAD=./bin/ld_iscsi.so cat iscsi://127.0.0.1:3262/iqn.ronnie.test/2 >copy_of_iscsi_lun
+$ LD_PRELOAD=ld_iscsi.so cat iscsi://127.0.0.1:3262/iqn.ronnie.test/2 >copy_of_iscsi_lun
 
 Or using dd even :
-$ LD_PRELOAD=./bin/ld_iscsi.so dd if=iscsi://127.0.0.1:3262/iqn.ronnie.test/2 of=copy_of_LUN bs=10M count=1
+$ LD_PRELOAD=ld_iscsi.so dd if=iscsi://127.0.0.1:3262/iqn.ronnie.test/2 of=copy_of_LUN bs=10M count=1
 
 The LD_PRELOAD hack is incomplete and needs more functions to be intercepted
 before becoming fully functional. Patches welcome!
