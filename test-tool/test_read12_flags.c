@@ -36,9 +36,9 @@ test_read12_flags(void)
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, "Test READ12 with DPO==1");
-	ret = read12(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 1, 0, 0, 0, NULL);
+	ret = read12(sd, 0,
+		     block_size, block_size, 0, 1, 0, 0, 0, NULL,
+		     EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
 		CU_PASS("READ12 is not implemented.");
@@ -48,29 +48,29 @@ test_read12_flags(void)
 
 
 	logging(LOG_VERBOSE, "Test READ12 with FUA==1 FUA_NV==0");
-	ret = read12(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 0, 1, 0, 0, NULL);
+	ret = read12(sd, 0,
+		     block_size, block_size, 0, 0, 1, 0, 0, NULL,
+		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test READ12 with FUA==1 FUA_NV==1");
-	ret = read12(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 0, 1, 1, 0, NULL);
+	ret = read12(sd, 0,
+		     block_size, block_size, 0, 0, 1, 1, 0, NULL,
+		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test READ12 with FUA==0 FUA_NV==1");
-	ret = read12(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 0, 0, 1, 0, NULL);
+	ret = read12(sd, 0,
+		     block_size, block_size, 0, 0, 0, 1, 0, NULL,
+		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test READ12 with DPO==1 FUA==1 FUA_NV==1");
-	ret = read12(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 1, 1, 1, 0, NULL);
+	ret = read12(sd, 0,
+		     block_size, block_size, 0, 1, 1, 1, 0, NULL,
+		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 }

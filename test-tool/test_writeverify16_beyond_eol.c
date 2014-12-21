@@ -41,12 +41,11 @@ test_writeverify16_beyond_eol(void)
 			break;
 		}
 
-		ret = writeverify16_lbaoutofrange(iscsic, tgt_lun,
-						  num_blocks + 1 - i,
-						  i * block_size, block_size,
-						  0, 0, 0, 0, buf);
+		ret = writeverify16(sd, num_blocks + 1 - i,
+				    i * block_size, block_size, 0, 0, 0, 0, buf,
+				    EXPECT_LBA_OOB);
 		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY16 is not implemented.");
+			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
 			CU_PASS("WRITEVERIFY16 is not implemented.");
 			return;
 	       	}	
@@ -60,10 +59,9 @@ test_writeverify16_beyond_eol(void)
 			break;
 		}
 
-		ret = writeverify16_lbaoutofrange(iscsic, tgt_lun,
-						  0x8000000000000000ULL,
-						  i * block_size, block_size,
-						  0, 0, 0, 0, buf);
+		ret = writeverify16(sd, 0x8000000000000000ULL,
+				    i * block_size, block_size, 0, 0, 0, 0, buf,
+				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -74,10 +72,9 @@ test_writeverify16_beyond_eol(void)
 			break;
 		}
 
-		ret = writeverify16_lbaoutofrange(iscsic, tgt_lun,
-						  -1,
-						  i * block_size, block_size,
-						  0, 0, 0, 0, buf);
+		ret = writeverify16(sd, -1,
+				    i * block_size, block_size, 0, 0, 0, 0, buf,
+				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -88,10 +85,9 @@ test_writeverify16_beyond_eol(void)
 			break;
 		}
 
-		ret = writeverify16_lbaoutofrange(iscsic, tgt_lun,
-						  num_blocks - 1,
-						  i * block_size, block_size,
-						  0, 0, 0, 0, buf);
+		ret = writeverify16(sd, num_blocks - 1,
+				    i * block_size, block_size, 0, 0, 0, 0, buf,
+				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

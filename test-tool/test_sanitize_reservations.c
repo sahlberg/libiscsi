@@ -32,6 +32,7 @@ test_sanitize_reservations(void)
 	int ret;
 	struct iscsi_data data;
 	struct scsi_command_descriptor *cd;
+	struct scsi_device sd2;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test SANITIZE with RESERVATIONS");
@@ -39,16 +40,24 @@ test_sanitize_reservations(void)
 	CHECK_FOR_SANITIZE;
 	CHECK_FOR_DATALOSS;
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This SANITIZE test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	iscsic2 = iscsi_context_login(initiatorname2, tgt_url, &tgt_lun);
-	if (iscsic2 == NULL) {
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
 	}
 
 	logging(LOG_VERBOSE, "Take out a RESERVE6 from the second "
 			     "initiator");
-	ret = reserve6(iscsic2, tgt_lun);
+	ret = reserve6(&sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
@@ -70,8 +79,9 @@ test_sanitize_reservations(void)
 		data.data[1] = 0x00;
 		data.data[2] = block_size >> 8;
 		data.data[3] = block_size & 0xff;
-		ret = sanitize_conflict(iscsic, tgt_lun,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size,
+			       &data,
+			       EXPECT_RESERVATION_CONFLICT);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -85,8 +95,8 @@ test_sanitize_reservations(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE BLOCK_ERASE");
-		ret = sanitize_conflict(iscsic, tgt_lun,
-		       0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL);
+		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL,
+			       EXPECT_RESERVATION_CONFLICT);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -99,12 +109,10 @@ test_sanitize_reservations(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE CRYPTO_ERASE");
-		ret = sanitize_conflict(iscsic, tgt_lun,
-		       0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL);
+		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL,
+			       EXPECT_RESERVATION_CONFLICT);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-
-	iscsi_destroy_context(iscsic2);
-	iscsic2 = NULL;
+	iscsi_destroy_context(sd2.iscsi_ctx);
 }

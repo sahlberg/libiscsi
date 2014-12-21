@@ -36,17 +36,21 @@ test_report_supported_opcodes_servactv(void)
 	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES SERVACTV flag");
 
 
-	ret = report_supported_opcodes(iscsic, tgt_lun,
+	ret = report_supported_opcodes(
+		sd, &rso_task,
 		0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
-		65535, &rso_task);
+		65535,
+		EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] READ_SUPPORTED_OPCODES is not "
 			"implemented.");
 		CU_PASS("READ_SUPPORTED_OPCODES is not implemented.");
+		scsi_free_scsi_task(rso_task);
 		return;
 	}
 	CU_ASSERT_EQUAL(ret, 0);
 	if (ret != 0) {
+		scsi_free_scsi_task(rso_task);
 		return;
 	}
 	

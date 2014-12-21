@@ -39,9 +39,9 @@ test_verify16_beyond_eol(void)
 			break;
 		}
 
-		ret = verify16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
-					   i * block_size, block_size,
-					   0, 0, 1, buf);
+		ret = verify16(sd, num_blocks + 1 - i,
+			       i * block_size, block_size, 0, 0, 1, buf,
+			       EXPECT_LBA_OOB);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support VERIFY16. Skipping test");
@@ -57,9 +57,9 @@ test_verify16_beyond_eol(void)
 			break;
 		}
 
-		ret = verify16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000ULL,
-					   i * block_size, block_size,
-					   0, 0, 1, buf);
+		ret = verify16(sd, 0x8000000000000000ULL,
+			       i * block_size, block_size, 0, 0, 1, buf,
+			       EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -70,8 +70,9 @@ test_verify16_beyond_eol(void)
 			break;
 		}
 
-		ret = verify16_lbaoutofrange(iscsic, tgt_lun, -1, i * block_size,
-					   block_size, 0, 0, 1, buf);
+		ret = verify16(sd, -1, i * block_size,
+			       block_size, 0, 0, 1, buf,
+			       EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -82,9 +83,10 @@ test_verify16_beyond_eol(void)
 			break;
 		}
 
-		ret = verify16_lbaoutofrange(iscsic, tgt_lun, num_blocks - 1,
-					   i * block_size, block_size,
-					   0, 0, 1, buf);
+		ret = verify16(sd, num_blocks - 1,
+			       i * block_size, block_size, 0, 0, 1, buf,
+			       EXPECT_LBA_OOB);
+
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

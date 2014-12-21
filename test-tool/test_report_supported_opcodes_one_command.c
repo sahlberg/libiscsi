@@ -39,17 +39,20 @@ test_report_supported_opcodes_one_command(void)
 
 
 	logging(LOG_VERBOSE, "Fetch list of all supported opcodes");
-	ret = report_supported_opcodes(iscsic, tgt_lun,
-		0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
-		65535, &rso_task);
+	ret = report_supported_opcodes(sd, &rso_task,
+				       0, SCSI_REPORT_SUPPORTING_OPS_ALL,
+				       0, 0, 65535,
+				       EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] READ_SUPPORTED_OPCODES is not "
 			"implemented.");
 		CU_PASS("READ_SUPPORTED_OPCODES is not implemented.");
+		scsi_free_scsi_task(rso_task);
 		return;
 	}
 	CU_ASSERT_EQUAL(ret, 0);
 	if (ret != 0) {
+		scsi_free_scsi_task(rso_task);
 		return;
 	}
 	
@@ -67,22 +70,23 @@ test_report_supported_opcodes_one_command(void)
 		if (rsoc->descriptors[i].servactv) {
 			logging(LOG_VERBOSE, "This opcode has service actions. "
 				"Reporting Options 001b should fail");
-			ret = report_supported_opcodes_invalidfieldincdb(
-				iscsic, tgt_lun,
+			ret = report_supported_opcodes(sd, NULL,
 				0, SCSI_REPORT_SUPPORTING_OPCODE,
 				rsoc->descriptors[i].opcode,
 				rsoc->descriptors[i].sa,
-				65535, NULL);
+				65535,
+				EXPECT_INVALID_FIELD_IN_CDB);
 		} else {
 			logging(LOG_VERBOSE, "This opcode does not have "
 				"service actions. Reporting Options 001b "
 				"should work");
 			ret = report_supported_opcodes(
-				iscsic, tgt_lun,
+				sd, NULL,
 				0, SCSI_REPORT_SUPPORTING_OPCODE,
 				rsoc->descriptors[i].opcode,
 				rsoc->descriptors[i].sa,
-				65535, NULL);
+				65535,
+				EXPECT_STATUS_GOOD);
 		}
 		CU_ASSERT_EQUAL(ret, 0);
 
@@ -90,21 +94,23 @@ test_report_supported_opcodes_one_command(void)
 			logging(LOG_VERBOSE, "This opcode has service actions. "
 				"Reporting Options 002b should work");
 			ret = report_supported_opcodes(
-				iscsic, tgt_lun,
+				sd, NULL,
 				0, SCSI_REPORT_SUPPORTING_SERVICEACTION,
 				rsoc->descriptors[i].opcode,
 				rsoc->descriptors[i].sa,
-				65535, NULL);
+				65535,
+				EXPECT_STATUS_GOOD);
 		} else {
 			logging(LOG_VERBOSE, "This opcode does not have "
 				"service actions. Reporting Options 002b "
 				"should fail");
-			ret = report_supported_opcodes_invalidfieldincdb(
-				iscsic, tgt_lun,
+			ret = report_supported_opcodes(
+				sd, NULL,
 				0, SCSI_REPORT_SUPPORTING_SERVICEACTION,
 				rsoc->descriptors[i].opcode,
 				rsoc->descriptors[i].sa,
-				65535, NULL);
+				65535,
+				EXPECT_INVALID_FIELD_IN_CDB);
 		}
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -117,14 +123,14 @@ test_report_supported_opcodes_one_command(void)
 			rsoc->descriptors[i].opcode,
 			rsoc->descriptors[i].sa);
 		ret = report_supported_opcodes(
-			iscsic, tgt_lun,
-			0,
+			sd, &one_task, 0,
 			rsoc->descriptors[i].servactv ?
 				SCSI_REPORT_SUPPORTING_SERVICEACTION :
 				SCSI_REPORT_SUPPORTING_OPCODE,
 			rsoc->descriptors[i].opcode,
 			rsoc->descriptors[i].sa,
-			65535, &one_task);
+			65535,
+			EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
 		rsoc_one = scsi_datain_unmarshall(one_task);

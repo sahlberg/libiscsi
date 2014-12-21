@@ -41,49 +41,54 @@ test_readonly_sbc(void)
 
 
 	logging(LOG_VERBOSE, "Test WRITE10 fails with WRITE_PROTECTED");
-	ret = write10_writeprotected(iscsic, tgt_lun, 0, block_size, block_size,
-				     0, 0, 0, 0, 0, buf);
+	ret = write10(sd, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_WRITE_PROTECTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE12 fails with WRITE_PROTECTED");
-	ret = write12_writeprotected(iscsic, tgt_lun, 0, block_size, block_size,
-				     0, 0, 0, 0, 0, buf);
+	ret = write12(sd, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_WRITE_PROTECTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE16 fails with WRITE_PROTECTED");
-	ret = write16_writeprotected(iscsic, tgt_lun, 0, block_size, block_size,
-				     0, 0, 0, 0, 0, buf);
+	ret = write16(sd, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_WRITE_PROTECTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE_SAME10 fails with WRITE_PROTECTED");
-	ret = writesame10_writeprotected(iscsic, tgt_lun, 0, block_size, 1,
-					 0, 0, 0, 0, buf);
+	ret = writesame10(sd, 0, block_size, 1,
+			  0, 0, 0, 0, buf,
+			  EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITE_SAME10 not supported on target. Skipped.");
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITE_SAME16 fails with WRITE_PROTECTED");
-	ret = writesame16_writeprotected(iscsic, tgt_lun, 0, block_size, 1,
-					 0, 0, 0, 0, buf);
+	ret = writesame16(sd, 0, block_size, 1,
+			  0, 0, 0, 0, buf,
+			  EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITE_SAME16 not supported on target. Skipped.");
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITE_SAME10 UNMAP fails with WRITE_PROTECTED");
-	ret = writesame10_writeprotected(iscsic, tgt_lun, 0,
-					 block_size, 1,
-					 0, 1, 0, 0, NULL);
+	ret = writesame10(sd, 0,
+			  block_size, 1, 0, 1, 0, 0, NULL,
+			  EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITE_SAME10 not supported on target. Skipped.");
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITE_SAME16 UNMAP fails with WRITE_PROTECTED");
-	ret = writesame16_writeprotected(iscsic, tgt_lun, 0,
-					 block_size, 1,
-					 0, 1, 0, 0, NULL);
+	ret = writesame16(sd, 0,
+			  block_size, 1, 0, 1, 0, 0, NULL,
+			  EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITE_SAME16 not supported on target. Skipped.");
 	}
@@ -92,7 +97,8 @@ test_readonly_sbc(void)
 	logging(LOG_VERBOSE, "Test UNMAP of one physical block fails with WRITE_PROTECTED");
 	list[0].lba = 0;
 	list[0].num = lbppb;
-	ret = unmap_writeprotected(iscsic, tgt_lun, 0, list, 1);
+	ret = unmap(sd, 0, list, 1,
+		    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "UNMAP not supported on target. Skipped.");
 	}
@@ -101,43 +107,44 @@ test_readonly_sbc(void)
 	logging(LOG_VERBOSE, "Test UNMAP of one logical block fails with WRITE_PROTECTED");
 	list[0].lba = 0;
 	list[0].num = 1;
-	ret = unmap_writeprotected(iscsic, tgt_lun, 0, list, 1);
+	ret = unmap(sd, 0, list, 1,
+		    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "UNMAP not supported on target. Skipped.");
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 fails with WRITE_PROTECTED");
-	ret = writeverify10_writeprotected(iscsic, tgt_lun, 0,
-					   block_size, block_size,
-					   0, 0, 0, 0, buf);
+	ret = writeverify10(sd, 0,
+			    block_size, block_size, 0, 0, 0, 0, buf,
+			    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITEVERIFY10 not supported on target. Skipped.");
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY12 fails with WRITE_PROTECTED");
-	ret = writeverify12_writeprotected(iscsic, tgt_lun, 0,
-					   block_size, block_size,
-					   0, 0, 0, 0, buf);
+	ret = writeverify12(sd, 0,
+			    block_size, block_size, 0, 0, 0, 0, buf,
+			    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITEVERIFY12 not supported on target. Skipped.");
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 fails with WRITE_PROTECTED");
-	ret = writeverify16_writeprotected(iscsic, tgt_lun, 0,
-					   block_size, block_size,
-					   0, 0, 0, 0, buf);
+	ret = writeverify16(sd, 0,
+			    block_size, block_size, 0, 0, 0, 0, buf,
+			    EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITEVERIFY16 not supported on target. Skipped.");
 	}
 	CU_ASSERT_NOT_EQUAL(ret, -1);
 
 	logging(LOG_VERBOSE, "Test ORWRITE fails with WRITE_PROTECTED");
-	ret = orwrite_writeprotected(iscsic, tgt_lun, 0,
-				     block_size, block_size,
-				     0, 0, 0, 0, 0, buf);
+	ret = orwrite(sd, 0,
+		      block_size, block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_WRITE_PROTECTED);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "ORWRITE not supported on target. Skipped.");
 	}

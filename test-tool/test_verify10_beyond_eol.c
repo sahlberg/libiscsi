@@ -42,9 +42,9 @@ test_verify10_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = verify10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
-					   i * block_size, block_size,
-					   0, 0, 1, buf);
+		ret = verify10(sd, num_blocks + 1 - i,
+			       i * block_size, block_size, 0, 0, 1, buf,
+			       EXPECT_LBA_OOB);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] VERIFY10 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support VERIFY10. Skipping test");
@@ -59,9 +59,9 @@ test_verify10_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = verify10_lbaoutofrange(iscsic, tgt_lun, 0x80000000,
-					   i * block_size, block_size,
-					   0, 0, 1, buf);
+		ret = verify10(sd, 0x80000000,
+			       i * block_size, block_size, 0, 0, 1, buf,
+			       EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -71,8 +71,9 @@ test_verify10_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = verify10_lbaoutofrange(iscsic, tgt_lun, -1, i * block_size,
-					   block_size, 0, 0, 1, buf);
+		ret = verify10(sd, -1, i * block_size,
+			       block_size, 0, 0, 1, buf,
+			       EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -82,9 +83,9 @@ test_verify10_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = verify10_lbaoutofrange(iscsic, tgt_lun, num_blocks - 1,
-					   i * block_size, block_size,
-					   0, 0, 1, buf);
+		ret = verify10(sd, num_blocks - 1,
+			       i * block_size, block_size, 0, 0, 1, buf,
+			       EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

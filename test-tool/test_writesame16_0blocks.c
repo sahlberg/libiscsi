@@ -27,6 +27,7 @@ void
 test_writesame16_0blocks(void)
 {
 	int ret;
+	unsigned char *buf = alloca(block_size);
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -34,9 +35,10 @@ test_writesame16_0blocks(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks at LBA==0 (WSNZ=%d)",
 		inq_bl->wsnz);
-	ret = writesame16(iscsic, tgt_lun, 0,
-			  block_size, 0,
-			  0, 0, 0, 0, NULL);
+	memset(buf, 0, block_size);
+	ret = writesame16(sd, 0,
+			  block_size, 0, 0, 0, 0, 0, buf,
+			  EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
 		CU_PASS("[SKIPPED] Target does not support WRITESAME16. Skipping test");
@@ -54,22 +56,22 @@ test_writesame16_0blocks(void)
 	}
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks one block past end-of-LUN");
-	ret = writesame16_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1,
-					block_size, inq_bl->wsnz,
-					0, 0, 0, 0, NULL);
+	ret = writesame16(sd, num_blocks + 1,
+			  block_size, inq_bl->wsnz, 0, 0, 0, 0, buf,
+			  EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks at LBA==2^63");
-	ret = writesame16_lbaoutofrange(iscsic, tgt_lun, 0x8000000000000000ULL,
-					block_size, inq_bl->wsnz,
-					0, 0, 0, 0, NULL);
+	ret = writesame16(sd, 0x8000000000000000ULL,
+			  block_size, inq_bl->wsnz, 0, 0, 0, 0, buf,
+			  EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks at LBA==-1");
-	ret = writesame16_lbaoutofrange(iscsic, tgt_lun, -1,
-					block_size, inq_bl->wsnz,
-					0, 0, 0, 0, NULL);
+	ret = writesame16(sd, -1,
+			  block_size, inq_bl->wsnz, 0, 0, 0, 0, buf,
+			  EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 }

@@ -47,14 +47,16 @@ test_orwrite_verify(void)
 
 		logging(LOG_VERBOSE, "Write %d blocks of all-zero", i);
 		memset(buf, 0, block_size * i);
-		ret = write10(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+		ret = write10(sd, 0, i * block_size,
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0xa5", i);
 		memset(buf, 0xa5, block_size * i);
-		ret = orwrite(iscsic, tgt_lun, 0, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf);
+		ret = orwrite(sd, 0, i * block_size,
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
 			CU_PASS("ORWRITE is not implemented.");
@@ -63,8 +65,9 @@ test_orwrite_verify(void)
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read10(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, readbuf);
+		ret = read10(sd, NULL, 0, i * block_size,
+			     block_size, 0, 0, 0, 0, 0, readbuf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Verify that the blocks are all 0xa5");
@@ -73,13 +76,15 @@ test_orwrite_verify(void)
 
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0x5a", i);
 		memset(buf, 0x5a, block_size * i);
-		ret = orwrite(iscsic, tgt_lun, 0, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf);
+		ret = orwrite(sd, 0, i * block_size,
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read10(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, readbuf);
+		ret = read10(sd, NULL, 0, i * block_size,
+			     block_size, 0, 0, 0, 0, 0, readbuf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Verify that the blocks are all 0xff");
@@ -96,19 +101,22 @@ test_orwrite_verify(void)
 
 		logging(LOG_VERBOSE, "Write %d blocks of all-zero", i);
 		memset(buf, 0, block_size * i);
-		ret = write16(iscsic, tgt_lun, num_blocks - i, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, buf);
+		ret = write16(sd, num_blocks - i, i * block_size,
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0xa5", i);
 		memset(buf, 0xa5, block_size * i);
-		ret = orwrite(iscsic, tgt_lun, num_blocks - i, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf);
+		ret = orwrite(sd, num_blocks - i, i * block_size,
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read16(iscsic, tgt_lun, num_blocks - i, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, readbuf);
+		ret = read16(sd, num_blocks - i, i * block_size,
+			     block_size, 0, 0, 0, 0, 0, readbuf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Verify that the blocks are all 0xa5");
@@ -117,13 +125,15 @@ test_orwrite_verify(void)
 
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0x5a", i);
 		memset(buf, 0x5a, block_size * i);
-		ret = orwrite(iscsic, tgt_lun, num_blocks - i, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf);
+		ret = orwrite(sd, num_blocks - i, i * block_size,
+			      block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read16(iscsic, tgt_lun, num_blocks - i, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, readbuf);
+		ret = read16(sd, num_blocks - i, i * block_size,
+			     block_size, 0, 0, 0, 0, 0, readbuf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Verify that the blocks are all 0xff");

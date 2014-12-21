@@ -35,7 +35,8 @@ test_inquiry_standard(void)
 
 	logging(LOG_VERBOSE, "Verify we can read standard INQUIRY page");
 	/* 260 bytes is the maximum possible size of the standard vpd */
-	ret = inquiry(iscsic, tgt_lun, 0, 0, 260, &task);
+	ret = inquiry(sd, &task, 0, 0, 260,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we got at least 36 bytes of data");
@@ -82,13 +83,29 @@ test_inquiry_standard(void)
 	CU_ASSERT_EQUAL(std_inq->response_data_format, 2);
 
 	logging(LOG_VERBOSE, "Verify additional-length is correct");
-	if (std_inq->additional_length != task->datain.size - 5) {
+	if (std_inq->additional_length > task->datain.size - 5) {
 		logging(LOG_NORMAL, "[FAILED] Bad additional length "
 			"returned. Should be %d but device returned %d.",
 			task->datain.size - 5,
 			std_inq->additional_length);
+		logging(LOG_NORMAL, "[FAILED] Additional length points "
+			"beyond end of data");
+		CU_FAIL("Additional length points beyond end of data");
 	}
-	CU_ASSERT_EQUAL(std_inq->additional_length, task->datain.size - 5);
+	if (std_inq->additional_length < task->datain.size - 5) {
+		logging(LOG_NORMAL, "[WARNING] Bad additional length "
+			"returned. Should be %d but device returned %d. ",
+			task->datain.size - 5,
+			std_inq->additional_length);
+		logging(LOG_VERBOSE, "Verify that all padding data is 0");
+		for (i = std_inq->additional_length + 6; i < task->datain.size; i++) {
+			if (!task->datain.data[i])
+				continue;
+			logging(LOG_NORMAL, "[FAILED] Padding data is not zero."
+					   " Are we leaking data?");
+			CU_FAIL("Padding data is not zero. Leaking data?");
+		}
+	}
 
 	logging(LOG_VERBOSE, "Verify VENDOR_IDENTIFICATION is in ASCII");
 	for (i = 8; i < 16; i++) {

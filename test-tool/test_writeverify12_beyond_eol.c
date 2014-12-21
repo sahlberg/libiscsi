@@ -44,11 +44,11 @@ test_writeverify12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeverify12_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
-						  i * block_size, block_size,
-						  0, 0, 0, 0, buf);
+		ret = writeverify12(sd, num_blocks + 1 - i,
+				    i * block_size, block_size, 0, 0, 0, 0, buf,
+				    EXPECT_LBA_OOB);
 		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY12 is not implemented.");
+			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY12 is not implemented.");
 			CU_PASS("WRITEVERIFY12 is not implemented.");
 			return;
 		}	
@@ -61,9 +61,9 @@ test_writeverify12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeverify12_lbaoutofrange(iscsic, tgt_lun, 0x80000000,
-					   i * block_size, block_size,
-					   0, 0, 0, 0, buf);
+		ret = writeverify12(sd, 0x80000000,
+				    i * block_size, block_size, 0, 0, 0, 0, buf,
+				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -73,8 +73,9 @@ test_writeverify12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeverify12_lbaoutofrange(iscsic, tgt_lun, -1, i * block_size,
-						  block_size, 0, 0, 0, 0, buf);
+		ret = writeverify12(sd, -1, i * block_size,
+				    block_size, 0, 0, 0, 0, buf,
+				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -84,9 +85,9 @@ test_writeverify12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeverify12_lbaoutofrange(iscsic, tgt_lun, num_blocks - 1,
-						  i * block_size, block_size,
-						  0, 0, 0, 0, buf);
+		ret = writeverify12(sd, num_blocks - 1,
+				    i * block_size, block_size, 0, 0, 0, 0, buf,
+				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

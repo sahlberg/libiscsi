@@ -43,15 +43,18 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Eject the medium.");
-	ret = startstopunit(iscsic, tgt_lun, 1, 0, 0, 0, 1, 0);
+	ret = startstopunit(sd, 1, 0, 0, 0, 1, 0,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY when medium is ejected.");
-	ret = testunitready_nomedium(iscsic, tgt_lun);
+	ret = testunitready(sd,
+			    EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test SYNCHRONIZECACHE10 when medium is ejected.");
-	ret = synchronizecache10_nomedium(iscsic, tgt_lun, 0, 1, 1, 1);
+	ret = synchronizecache10(sd, 0, 1, 1, 1,
+				 EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"SYNCHRONIZECACHE10");
@@ -60,7 +63,8 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test SYNCHRONIZECACHE16 when medium is ejected.");
-	ret = synchronizecache16_nomedium(iscsic, tgt_lun, 0, 1, 1, 1);
+	ret = synchronizecache16(sd, 0, 1, 1, 1,
+				 EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"SYNCHRONIZECACHE16");
@@ -69,26 +73,31 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test READ10 when medium is ejected.");
-	ret = read10_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			      0, 0, 0, 0, 0, NULL);
+	ret = read10(sd, NULL, 0, block_size, block_size,
+		     0, 0, 0, 0, 0, NULL,
+		     EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READ12 when medium is ejected.");
-	ret = read12_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			      0, 0, 0, 0, 0, NULL);
+	ret = read12(sd, 0, block_size, block_size,
+		     0, 0, 0, 0, 0, NULL,
+		     EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READ16 when medium is ejected.");
-	ret = read16_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			      0, 0, 0, 0, 0, NULL);
+	ret = read16(sd, 0, block_size, block_size,
+		     0, 0, 0, 0, 0, NULL,
+		     EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READCAPACITY10 when medium is ejected.");
-	ret = readcapacity10_nomedium(iscsic, tgt_lun, 0, 0);
+	ret = readcapacity10(sd, NULL, 0, 0,
+			     EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test READCAPACITY16 when medium is ejected.");
-	ret = readcapacity16_nomedium(iscsic, tgt_lun, 15);
+	ret = readcapacity16(sd, NULL, 15,
+			     EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		if (sbc3_support) {
 			logging(LOG_NORMAL, "[FAILED] READCAPACITY16 is not available but the device claims SBC-3 support.");
@@ -101,7 +110,8 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test GET_LBA_STATUS when medium is ejected.");
-	ret = get_lba_status_nomedium(iscsic, tgt_lun, 0, 24);
+	ret = get_lba_status(sd, NULL, 0, 24,
+			     EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"GET_LBA_STATUS");
@@ -110,7 +120,8 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test PREFETCH10 when medium is ejected.");
-	ret = prefetch10_nomedium(iscsic, tgt_lun, 0, 1, 1, 0);
+	ret = prefetch10(sd, 0, 1, 1, 0, EXPECT_NO_MEDIUM);
+
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"PREFETCH10");
@@ -119,7 +130,7 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 when medium is ejected.");
-	ret = prefetch16_nomedium(iscsic, tgt_lun, 0, 1, 1, 0);
+	ret = prefetch16(sd, 0, 1, 1, 0, EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"PREFETCH16");
@@ -128,8 +139,9 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test VERIFY10 when medium is ejected.");
-	ret = verify10_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-				0, 0, 1, buf);
+	ret = verify10(sd, 0, block_size, block_size,
+		       0, 0, 1, buf,
+		       EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"VERIFY10");
@@ -138,8 +150,9 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test VERIFY12 when medium is ejected.");
-	ret = verify12_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-				0, 0, 1, buf);
+	ret = verify12(sd, 0, block_size, block_size,
+		       0, 0, 1, buf,
+		       EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"VERIFY102");
@@ -148,8 +161,9 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test VERIFY16 when medium is ejected.");
-	ret = verify16_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-				0, 0, 1, buf);
+	ret = verify16(sd, 0, block_size, block_size,
+		       0, 0, 1, buf,
+		       EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"VERIFY16");
@@ -163,23 +177,27 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test WRITE10 when medium is ejected.");
-	ret = write10_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			       0, 0, 0, 0, 0, buf);
+	ret = write10(sd, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE12 when medium is ejected.");
-	ret = write12_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			       0, 0, 0, 0, 0, buf);
+	ret = write12(sd, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITE16 when medium is ejected.");
-	ret = write16_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			       0, 0, 0, 0, 0, buf);
+	ret = write16(sd, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 when medium is ejected.");
-	ret = writeverify10_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			       0, 0, 0, 0, buf);
+	ret = writeverify10(sd, 0, block_size, block_size,
+			    0, 0, 0, 0, buf,
+			    EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"WRITEVERIFY10");
@@ -188,8 +206,9 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY12 when medium is ejected.");
-	ret = writeverify12_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			       0, 0, 0, 0, buf);
+	ret = writeverify12(sd, 0, block_size, block_size,
+			    0, 0, 0, 0, buf,
+			    EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"WRITEVERIFY12");
@@ -198,8 +217,9 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 when medium is ejected.");
-	ret = writeverify16_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			       0, 0, 0, 0, buf);
+	ret = writeverify16(sd, 0, block_size, block_size,
+			    0, 0, 0, 0, buf,
+			    EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"WRITEVERIFY16");
@@ -208,8 +228,9 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test ORWRITE when medium is ejected.");
-	ret = orwrite_nomedium(iscsic, tgt_lun, 0, block_size, block_size,
-			       0, 0, 0, 0, 0, buf);
+	ret = orwrite(sd, 0, block_size, block_size,
+		      0, 0, 0, 0, 0, buf,
+		      EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"ORWRITE");
@@ -221,8 +242,9 @@ test_nomedia_sbc(void)
 	logging(LOG_VERBOSE, "[SKIPPED] Test not implemented yet");
 
 	logging(LOG_VERBOSE, "Test WRITESAME10 when medium is ejected.");
-	ret = writesame10_nomedium(iscsic, tgt_lun, 0, block_size,
-				   1, 0, 0, 0, 0, buf);
+	ret = writesame10(sd, 0, block_size,
+			  1, 0, 0, 0, 0, buf,
+			  EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"WRITESAME10");
@@ -231,8 +253,9 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 when medium is ejected.");
-	ret = writesame16_nomedium(iscsic, tgt_lun, 0, block_size,
-				   1, 0, 0, 0, 0, buf);
+	ret = writesame16(sd, 0, block_size,
+			  1, 0, 0, 0, 0, buf,
+			  EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"WRITESAME16");
@@ -243,7 +266,8 @@ test_nomedia_sbc(void)
 	logging(LOG_VERBOSE, "Test UNMAP when medium is ejected.");
 	list[0].lba = 0;
 	list[0].num = lbppb;
-	ret = unmap_nomedium(iscsic, tgt_lun, 0, list, 1);
+	ret = unmap(sd, 0, list, 1,
+		    EXPECT_NO_MEDIUM);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] target does not support "
 			"UNMAP");
@@ -254,6 +278,7 @@ test_nomedia_sbc(void)
 
 finished:
 	logging(LOG_VERBOSE, "Load the medium again.");
-	ret = startstopunit(iscsic, tgt_lun, 1, 0, 0, 0, 1, 1);
+	ret = startstopunit(sd, 1, 0, 0, 0, 1, 1,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 }

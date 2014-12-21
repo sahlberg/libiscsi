@@ -40,9 +40,9 @@ test_read12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
-					   i * block_size, block_size,
-					   0, 0, 0, 0, 0, NULL);
+		ret = read12(sd, num_blocks + 1 - i,
+			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_LBA_OOB);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
 			CU_PASS("READ12 is not implemented.");
@@ -57,9 +57,9 @@ test_read12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12_lbaoutofrange(iscsic, tgt_lun, 0x80000000,
-					   i * block_size, block_size,
-					   0, 0, 0, 0, 0, NULL);
+		ret = read12(sd, 0x80000000,
+			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -69,8 +69,9 @@ test_read12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12_lbaoutofrange(iscsic, tgt_lun, -1, i * block_size,
-					   block_size, 0, 0, 0, 0, 0, NULL);
+		ret = read12(sd, -1, i * block_size,
+			     block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -80,9 +81,9 @@ test_read12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12_lbaoutofrange(iscsic, tgt_lun, num_blocks - 1,
-					   i * block_size, block_size,
-					   0, 0, 0, 0, 0, NULL);
+		ret = read12(sd, num_blocks - 1,
+			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

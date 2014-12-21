@@ -1,4 +1,3 @@
-
 /* 
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -42,15 +41,17 @@ test_verify16_mismatch_no_cmp(void)
 			break;
 		}
 
-		ret = read16(iscsic, tgt_lun, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, buf);
+		ret = read16(sd, 0, i * block_size,
+			     block_size, 0, 0, 0, 0, 0, buf,
+			     EXPECT_STATUS_GOOD);
 
 		/* flip a random byte in the data */
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify16(iscsic, tgt_lun, 0, i * block_size,
-			       block_size, 0, 0, 0, buf);
+		ret = verify16(sd, 0, i * block_size,
+			       block_size, 0, 0, 0, buf,
+			       EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support VERIFY16. Skipping test");
@@ -67,16 +68,18 @@ test_verify16_mismatch_no_cmp(void)
 			break;
 		}
 
-		ret = read16(iscsic, tgt_lun, num_blocks - i,
-			     i * block_size, block_size, 0, 0, 0, 0, 0, buf);
+		ret = read16(sd, num_blocks - i,
+			     i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		/* flip a random byte in the data */
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify16(iscsic, tgt_lun, num_blocks - i,
-			       i * block_size, block_size, 0, 0, 0, buf);
+		ret = verify16(sd, num_blocks - i,
+			       i * block_size, block_size, 0, 0, 0, buf,
+			       EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

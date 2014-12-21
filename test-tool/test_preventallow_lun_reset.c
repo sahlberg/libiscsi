@@ -35,46 +35,59 @@ test_preventallow_lun_reset(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that Target Warm Reset clears PREVENT MEDIUM REMOVAL");
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This PREVENTALLOW test is "
+			"only supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
 	logging(LOG_VERBOSE, "Set the PREVENT flag");
-	ret = preventallow(iscsic, tgt_lun, 1);
+	ret = preventallow(sd, 1);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
-	ret = startstopunit_preventremoval(iscsic, tgt_lun, 0, 0, 0, 0, 1, 0);
+	ret = startstopunit(sd, 0, 0, 0, 0, 1, 0,
+			    EXPECT_REMOVAL_PREVENTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can still access the media.");
-	ret = testunitready(iscsic, tgt_lun);
+	ret = testunitready(sd,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	
 	logging(LOG_VERBOSE, "Perform LUN reset on target");
-	ret = iscsi_task_mgmt_lun_reset_sync(iscsic, tgt_lun);
+	ret = iscsi_task_mgmt_lun_reset_sync(sd->iscsi_ctx, sd->iscsi_lun);
 	CU_ASSERT_EQUAL(ret, 0);
 	logging(LOG_VERBOSE, "Wait until all unit attentions clear");
-	while (testunitready(iscsic, tgt_lun) != 0);
+	while (testunitready(sd, EXPECT_STATUS_GOOD) != 0);
 
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
-	ret = startstopunit(iscsic, tgt_lun, 0, 0, 0, 0, 1, 0);
+	ret = startstopunit(sd, 0, 0, 0, 0, 1, 0,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can not access the media.");
-	ret = testunitready_nomedium(iscsic, tgt_lun);
+	ret = testunitready(sd,
+			    EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Load the medium");
-	ret = startstopunit(iscsic, tgt_lun, 0, 0, 0, 0, 1, 0);
+	ret = startstopunit(sd, 0, 0, 0, 0, 1, 0,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Clear PREVENT and load medium in case target failed");
 	logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
-	ret = preventallow(iscsic, tgt_lun, 0);
+	ret = preventallow(sd, 0);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Load the medium");
-	ret = startstopunit(iscsic, tgt_lun, 0, 0, 0, 0, 1, 1);
+	ret = startstopunit(sd, 0, 0, 0, 0, 1, 1,
+			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
-
 }

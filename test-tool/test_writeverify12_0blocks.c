@@ -37,29 +37,33 @@ test_writeverify12_0blocks(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITEVERIFY12 0-blocks at LBA==0");
-	ret = writeverify12(iscsic, tgt_lun, 0, 0, block_size,
-			    0, 0, 0, 0, NULL);
+	ret = writeverify12(sd, 0, 0, block_size,
+			    0, 0, 0, 0, NULL,
+			    EXPECT_STATUS_GOOD);
 	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY12 is not implemented.");
+		logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY12 is not implemented.");
 		CU_PASS("WRITEVERIFY12 is not implemented.");
 		return;
 	}	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY12 0-blocks one block past end-of-LUN");
-	ret = writeverify12_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1, 0,
-					  block_size, 0, 0, 0, 0, NULL);
+	ret = writeverify12(sd, num_blocks + 1, 0,
+			    block_size, 0, 0, 0, 0, NULL,
+			    EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY12 0-blocks at LBA==2^31");
-	ret = writeverify12_lbaoutofrange(iscsic, tgt_lun, 0x80000000, 0,
-					  block_size, 0, 0, 0, 0, NULL);
+	ret = writeverify12(sd, 0x80000000, 0,
+			    block_size, 0, 0, 0, 0, NULL,
+			    EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY12 0-blocks at LBA==-1");
-	ret = writeverify12_lbaoutofrange(iscsic, tgt_lun, -1, 0, block_size,
-					  0, 0, 0, 0, NULL);
+	ret = writeverify12(sd, -1, 0, block_size,
+			    0, 0, 0, 0, NULL,
+			    EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 }

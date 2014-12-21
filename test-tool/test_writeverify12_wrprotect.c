@@ -44,11 +44,12 @@ test_writeverify12_wrprotect(void)
 	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
-			ret = writeverify12_invalidfieldincdb(iscsic, tgt_lun, 0,
-							      block_size, block_size,
-							      i, 0, 0, 0, buf);
+			ret = writeverify12(sd, 0,
+					    block_size, block_size,
+					    i, 0, 0, 0, buf,
+					    EXPECT_INVALID_FIELD_IN_CDB);
 			if (ret == -2) {
-				logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY12 is not implemented.");
+				logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY12 is not implemented.");
 				CU_PASS("WRITEVERIFY12 is not implemented.");
 				return;
 			}	

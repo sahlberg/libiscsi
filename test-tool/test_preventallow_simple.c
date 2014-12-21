@@ -36,10 +36,10 @@ test_preventallow_simple(void)
 	logging(LOG_VERBOSE, "Test PREVENTALLOW basics");
 
 	logging(LOG_VERBOSE, "Test we can set PREVENT flag");
-	ret = preventallow(iscsic, tgt_lun, 1);
+	ret = preventallow(sd, 1);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
-	ret = preventallow(iscsic, tgt_lun, 0);
+	ret = preventallow(sd, 0);
 	CU_ASSERT_EQUAL(ret, 0);
 }

@@ -29,14 +29,21 @@ void
 test_reserve6_2initiators(void)
 {
 	int ret;
-
+	struct scsi_device sd2;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test RESERVE6/RELEASE6 across two initiators");
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This RESERVE6 test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
 
 	logging(LOG_NORMAL, "Take out a RESERVE6 from the first initiator");
-	ret = reserve6(iscsic, tgt_lun);
+	ret = reserve6(sd);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "[SKIPPED] Target does not support RESERVE6. Skipping test");
 		CU_PASS("[SKIPPED] Target does not support RESERVE6. Skipping test");
@@ -46,53 +53,54 @@ test_reserve6_2initiators(void)
 
 
 	logging(LOG_NORMAL, "Verify that the first initiator can re-RESERVE6 the same reservation");
-	ret = reserve6(iscsic, tgt_lun);
+	ret = reserve6(sd);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	iscsic2 = iscsi_context_login(initiatorname2, tgt_url, &tgt_lun);
-	if (iscsic2 == NULL) {
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
 	}
 
 	logging(LOG_NORMAL, "Try to take out a RESERVE6 from the second initiator");
-	ret = reserve6_conflict(iscsic2, tgt_lun);
+	ret = reserve6_conflict(&sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_NORMAL, "Try to RELEASE from the second initiator. Should be a nop");
-	ret = release6(iscsic2, tgt_lun);
+	ret = release6(&sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_NORMAL, "Test we can still send MODE SENSE from the first initiator");
-	ret = mode_sense(iscsic, tgt_lun);
+	ret = modesense6(sd, NULL, 0, SCSI_MODESENSE_PC_CURRENT, SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
+			 EXPECT_STATUS_GOOD);	
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_NORMAL, "MODE SENSE should fail from the second initiator");
-	ret = mode_sense(iscsic2, tgt_lun);
+	ret = modesense6(&sd2, NULL, 0, SCSI_MODESENSE_PC_CURRENT, SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
+			 EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, SCSI_STATUS_RESERVATION_CONFLICT);
 
 
 	logging(LOG_NORMAL, "RESERVE6 from the second initiator should still fail");
-	ret = reserve6_conflict(iscsic2, tgt_lun);
+	ret = reserve6_conflict(&sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_NORMAL, "RELEASE6 from the first initiator");
-	ret = release6(iscsic, tgt_lun);
+	ret = release6(sd);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_NORMAL, "RESERVE6 from the second initiator should work now");
-	ret = reserve6(iscsic2, tgt_lun);
+	ret = reserve6(&sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_NORMAL, "RELEASE6 from the second initiator");
-	ret = release6(iscsic2, tgt_lun);
+	ret = release6(&sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	iscsi_logout_sync(iscsic2);
-	iscsi_destroy_context(iscsic2);
-	iscsic2 = NULL;
+	iscsi_logout_sync(sd2.iscsi_ctx);
+	iscsi_destroy_context(sd2.iscsi_ctx);
 }

@@ -32,6 +32,7 @@ test_sanitize_readonly(void)
 	int ret;
 	struct iscsi_data data;
 	struct scsi_command_descriptor *cd;
+	struct scsi_device sd2;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test SANITIZE with READONLY devices");
@@ -39,15 +40,26 @@ test_sanitize_readonly(void)
 	CHECK_FOR_SANITIZE;
 	CHECK_FOR_DATALOSS;
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This SANITIZE test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	iscsic2 = iscsi_context_login(initiatorname2, tgt_url, &tgt_lun);
-	if (iscsic2 == NULL) {
+	memset(&sd2, 0, sizeof(sd2));
+	sd2.iscsi_url = sd->iscsi_url;
+	sd2.iscsi_lun = sd->iscsi_lun;
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
+	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
 	}
 
 	logging(LOG_VERBOSE, "Set Software Write Protect on the second connection");
-	ret = set_swp(iscsic2, tgt_lun);
+	ret = set_swp(&sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 	if (ret != 0) {
 		return;
@@ -55,7 +67,7 @@ test_sanitize_readonly(void)
 
 	logging(LOG_VERBOSE, "Use TESTUNITREADY to clear unit attention on "
 		"first connection");
-	while (testunitready_clear_ua(iscsic, tgt_lun)) {
+	while (testunitready_clear_ua(sd)) {
 		sleep(1);
 	}
 
@@ -77,8 +89,9 @@ test_sanitize_readonly(void)
 		data.data[1] = 0x00;
 		data.data[2] = block_size >> 8;
 		data.data[3] = block_size & 0xff;
-		ret = sanitize_writeprotected(iscsic, tgt_lun,
-		       0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data);
+		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size,
+			       &data,
+			       EXPECT_WRITE_PROTECTED);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -92,8 +105,8 @@ test_sanitize_readonly(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE BLOCK_ERASE");
-		ret = sanitize_writeprotected(iscsic, tgt_lun,
-		       0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL);
+		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL,
+			       EXPECT_WRITE_PROTECTED);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
@@ -106,21 +119,20 @@ test_sanitize_readonly(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE CRYPTO_ERASE");
-		ret = sanitize_writeprotected(iscsic, tgt_lun,
-		       0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL);
+		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL,
+			       EXPECT_WRITE_PROTECTED);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 
 	logging(LOG_VERBOSE, "Clear Software Write Protect on the second connection");
-	ret = clear_swp(iscsic2, tgt_lun);
+	ret = clear_swp(&sd2);
 
 	logging(LOG_VERBOSE, "Use TESTUNITREADY to clear unit attention on "
 		"first connection");
-	while (testunitready_clear_ua(iscsic, tgt_lun)) {
+	while (testunitready_clear_ua(sd)) {
 		sleep(1);
 	}
 
-	iscsi_destroy_context(iscsic2);
-	iscsic2 = NULL;
+	iscsi_destroy_context(sd2.iscsi_ctx);
 }

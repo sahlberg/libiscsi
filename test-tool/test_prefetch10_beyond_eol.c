@@ -37,8 +37,8 @@ test_prefetch10_beyond_eol(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test PREFETCH10 1-256 blocks one block beyond the end");
 	for (i = 1; i <= 256; i++) {
-		ret = prefetch10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1 - i,
-					       i, 0, 0);
+		ret = prefetch10(sd, num_blocks + 1 - i, i, 0, 0,
+				 EXPECT_LBA_OOB);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] PREFETCH10 is not implemented.");
 			CU_PASS("PREFETCH10 is not implemented.");
@@ -50,24 +50,24 @@ test_prefetch10_beyond_eol(void)
 
 	logging(LOG_VERBOSE, "Test PREFETCH10 1-256 blocks at LBA==2^31");
 	for (i = 1; i <= 256; i++) {
-		ret = prefetch10_lbaoutofrange(iscsic, tgt_lun, 0x80000000,
-					       i, 0, 0);
+		ret = prefetch10(sd, 0x80000000, i, 0, 0,
+				 EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 
 	logging(LOG_VERBOSE, "Test PREFETCH10 1-256 blocks at LBA==-1");
 	for (i = 1; i <= 256; i++) {
-		ret = prefetch10_lbaoutofrange(iscsic, tgt_lun, -1,
-					       i, 0, 0);
+		ret = prefetch10(sd, -1, i, 0, 0,
+				 EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 
 	logging(LOG_VERBOSE, "Test PREFETCH10 2-256 blocks all but one block beyond the end");
 	for (i = 2; i <= 256; i++) {
-		ret = prefetch10_lbaoutofrange(iscsic, tgt_lun, num_blocks - 1,
-					       i, 0, 0);
+		ret = prefetch10(sd, num_blocks - 1, i, 0, 0,
+				 EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

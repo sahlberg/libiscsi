@@ -40,8 +40,8 @@ test_unmap_vpd(void)
 	logging(LOG_VERBOSE, "Check if UNMAP is available.");
 	list[0].lba = 0;
 	list[0].num = 0;
-	ret = unmap(iscsic, tgt_lun, 0, list, 1);
-
+	ret = unmap(sd, 0, list, 1,
+		    EXPECT_STATUS_GOOD);
 	if (ret != 0) {
 		logging(LOG_VERBOSE, "UNMAP is not available. Verify that VPD "
 			"settings reflect this.");

@@ -155,8 +155,8 @@ iscsi_writesame10_task
 iscsi_writesame16_sync
 iscsi_writesame16_task
 scsi_association_to_str
-scsi_cdb_inquiry
 scsi_cdb_compareandwrite
+scsi_cdb_inquiry
 scsi_cdb_get_lba_status
 scsi_cdb_modeselect6
 scsi_cdb_modeselect10

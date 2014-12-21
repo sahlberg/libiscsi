@@ -43,9 +43,18 @@ test_writeverify10_residuals(void)
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This WRITEVERIFY10 test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
 	/* check if writeverify10 is supported */
-	ret = writeverify10(iscsic, tgt_lun, 0, 0,
-			    block_size, 0, 0, 0, 0, NULL);
+	ret = writeverify10(sd, 0, 0,
+			    block_size, 0, 0, 0, 0, NULL,
+			    EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		CU_PASS("[SKIPPED] Target does not support WRITEVERIFY10. Skipping test");
 		return;
@@ -66,11 +75,11 @@ test_writeverify10_residuals(void)
 	 * we don't want autoreconnect since some targets will drop the session
 	 * on this condition.
 	 */
-	iscsi_set_noautoreconnect(iscsic, 1);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
 
 	logging(LOG_VERBOSE, "Try writing one block but with iSCSI expected transfer length==0");
 
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, NULL);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, NULL);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 	CU_ASSERT_NOT_EQUAL(task->status, SCSI_STATUS_CANCELLED); /* XXX redundant? */
 
@@ -84,7 +93,7 @@ test_writeverify10_residuals(void)
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -107,7 +116,7 @@ test_writeverify10_residuals(void)
 	task = NULL;
 
 	/* in case the previous test failed the session */
-	iscsi_set_noautoreconnect(iscsic, 0);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 
 
 	logging(LOG_VERBOSE, "Try writing one block but with iSCSI expected transfer length==10000");
@@ -123,13 +132,13 @@ test_writeverify10_residuals(void)
 
 	data.size = task->expxferlen;
 	data.data = &buf[0];
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, &data);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -165,13 +174,13 @@ test_writeverify10_residuals(void)
 
 	data.size = task->expxferlen;
 	data.data = &buf[0];
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, &data);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -210,13 +219,13 @@ test_writeverify10_residuals(void)
 
 	data.size = task->expxferlen;
 	data.data = &buf[0];
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, &data);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -245,8 +254,9 @@ test_writeverify10_residuals(void)
 
 	logging(LOG_VERBOSE, "Write two blocks of 'a'");
 	memset(buf, 'a', 10000);
-	ret = write10(iscsic, tgt_lun, 0, 2 * block_size,
-	    block_size, 0, 0, 0, 0, 0, buf);
+	ret = write10(sd, 0, 2 * block_size,
+		      block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Write one block of 'b' but set iSCSI EDTL to 2 blocks.");
@@ -264,13 +274,13 @@ test_writeverify10_residuals(void)
 
 	data.size = task->expxferlen;
 	data.data = &buf[0];
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, &data);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -292,8 +302,9 @@ test_writeverify10_residuals(void)
 	task = NULL;
 
 	logging(LOG_VERBOSE, "Read the two blocks");
-	ret = read10(iscsic, tgt_lun, 0, 2* block_size,
-		     block_size, 0, 0, 0, 0, 0, buf);
+	ret = read10(sd, NULL, 0, 2* block_size,
+		     block_size, 0, 0, 0, 0, 0, buf,
+		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify that the first block was changed to 'b'");
@@ -319,8 +330,9 @@ test_writeverify10_residuals(void)
 
 	logging(LOG_VERBOSE, "Write two blocks of 'a'");
 	memset(buf, 'a', 10000);
-	ret = write10(iscsic, tgt_lun, 0, 2 * block_size,
-	    block_size, 0, 0, 0, 0, 0, buf);
+	ret = write10(sd, 0, 2 * block_size,
+		      block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Write two blocks of 'b' but set iSCSI EDTL to 1 blocks.");
@@ -338,13 +350,13 @@ test_writeverify10_residuals(void)
 
 	data.size = task->expxferlen;
 	data.data = &buf[0];
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, &data);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -366,8 +378,9 @@ test_writeverify10_residuals(void)
 	task = NULL;
 
 	logging(LOG_VERBOSE, "Read the two blocks");
-	ret = read10(iscsic, tgt_lun, 0, 2* block_size,
-		     block_size, 0, 0, 0, 0, 0, buf);
+	ret = read10(sd, NULL, 0, 2* block_size,
+		     block_size, 0, 0, 0, 0, 0, buf,
+		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify that the first block was changed to 'b'");

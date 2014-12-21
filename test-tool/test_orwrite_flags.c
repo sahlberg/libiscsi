@@ -39,9 +39,9 @@ test_orwrite_flags(void)
 	logging(LOG_VERBOSE, "Test ORWRITE flags");
 
 	logging(LOG_VERBOSE, "Test ORWRITE with DPO==1");
-	ret = orwrite(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 1, 0, 0, 0, buf);
+	ret = orwrite(sd, 0,
+		      block_size, block_size, 0, 1, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		CU_PASS("[SKIPPED] Target does not support VERIFY16. Skipping test");
 		return;
@@ -50,29 +50,29 @@ test_orwrite_flags(void)
 
 
 	logging(LOG_VERBOSE, "Test ORWRITE with FUA==1 FUA_NV==0");
-	ret = orwrite(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 0, 1, 0, 0, buf);
+	ret = orwrite(sd, 0,
+		      block_size, block_size, 0, 0, 1, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test ORWRITE with FUA==1 FUA_NV==1");
-	ret = orwrite(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 0, 1, 1, 0, buf);
+	ret = orwrite(sd, 0,
+		      block_size, block_size, 0, 0, 1, 1, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test ORWRITE with FUA==0 FUA_NV==1");
-	ret = orwrite(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 0, 0, 1, 0, buf);
+	ret = orwrite(sd, 0,
+		      block_size, block_size, 0, 0, 0, 1, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test ORWRITE with DPO==1 FUA==1 FUA_NV==1");
-	ret = orwrite(iscsic, tgt_lun, 0,
-		     block_size, block_size,
-		     0, 1, 1, 1, 0, buf);
+	ret = orwrite(sd, 0,
+		      block_size, block_size, 0, 1, 1, 1, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 }

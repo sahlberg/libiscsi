@@ -28,39 +28,28 @@ void
 test_modesense6_all_pages(void)
 {
 	struct scsi_mode_sense *ms;
+	struct scsi_task *ms_task = NULL;
+	int ret;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test of MODESENSE6 AllPages");
 
 
-	if (task != NULL) {
-		scsi_free_scsi_task(task);
-		task = NULL;
-	}
-
 	logging(LOG_VERBOSE, "Send MODESENSE6 command to fetch AllPages");
-	task = iscsi_modesense6_sync(iscsic, tgt_lun, 0,
-				     SCSI_MODESENSE_PC_CURRENT,
-				     SCSI_MODEPAGE_RETURN_ALL_PAGES,
-				     0, 255);
-	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_VERBOSE, "[FAILED] Failed to send MODE_SENSE6 "
-			"command:%s",
-			iscsi_get_error(iscsic));
-		CU_FAIL("[FAILED] Failed to fetch the All Pages page.");
-		return;
-	}
+	ret = modesense6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
+			 SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
+			 EXPECT_STATUS_GOOD);
+	CU_ASSERT_EQUAL(ret, 0);
 	logging(LOG_VERBOSE, "[SUCCESS] All Pages fetched.");
 
 
 	logging(LOG_VERBOSE, "Try to unmarshall the DATA-IN buffer.");
-	ms = scsi_datain_unmarshall(task);
+	ms = scsi_datain_unmarshall(ms_task);
 	if (ms == NULL) {
 		logging(LOG_VERBOSE, "[FAILED] failed to unmarshall mode sense "
 			"datain buffer");
 		CU_FAIL("[FAILED] Failed to unmarshall the data-in buffer.");
-		scsi_free_scsi_task(task);
-		task = NULL;
+		scsi_free_scsi_task(ms_task);
 		return;
 	}
 	logging(LOG_VERBOSE, "[SUCCESS] Unmarshalling successful.");
@@ -75,8 +64,5 @@ test_modesense6_all_pages(void)
 	CU_ASSERT_TRUE(ms->mode_data_length >= 3);
 
 
-	if (task != NULL) {
-		scsi_free_scsi_task(task);
-		task = NULL;
-	}
+	scsi_free_scsi_task(ms_task);
 }

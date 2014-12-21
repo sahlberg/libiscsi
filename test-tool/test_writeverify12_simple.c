@@ -41,10 +41,11 @@ test_writeverify12_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeverify12(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, buf);
+		ret = writeverify12(sd, 0, i * block_size,
+				    block_size, 0, 0, 0, 0, buf,
+				    EXPECT_STATUS_GOOD);
 		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY12 is not implemented.");
+			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY12 is not implemented.");
 			CU_PASS("WRITEVERIFY12 is not implemented.");
 			return;
 		}	
@@ -56,8 +57,9 @@ test_writeverify12_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeverify12(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 0, 0, buf);
+		ret = writeverify12(sd, num_blocks - i,
+				    i * block_size, block_size, 0, 0, 0, 0, buf,
+				    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 

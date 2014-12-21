@@ -41,9 +41,9 @@ test_writesame10_unmap_unaligned(void)
 	logging(LOG_VERBOSE, "Test that unaligned WRITESAME10 Unmap succeeds. LBPPB==%d", lbppb);
 	for (i = 1; i < lbppb; i++) {
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10 at LBA:%d", lbppb - i, i);
-		ret = writesame10(iscsic, tgt_lun, i,
-				  block_size, lbppb - i,
-				  0, 1, 0, 0, buf);
+		ret = writesame10(sd, i,
+				  block_size, lbppb - i, 0, 1, 0, 0, buf,
+				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

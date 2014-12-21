@@ -40,6 +40,14 @@ test_read10_residuals(void)
 	logging(LOG_VERBOSE, "Test READ10 commands with residuals");
 	logging(LOG_VERBOSE, "Block size is %zu", block_size);
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This READ10 test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
 	/* Try a read10 of 1 block but xferlength == 0 */
 	task = malloc(sizeof(struct scsi_task));
 	CU_ASSERT_PTR_NOT_NULL(task);
@@ -55,19 +63,19 @@ test_read10_residuals(void)
 	 * we don't want autoreconnect since some targets will drop the session
 	 * on this condition.
 	 */
-	iscsi_set_noautoreconnect(iscsic, 1);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
 
 
 	logging(LOG_VERBOSE, "Try reading one block but with iSCSI expected transfer length==0");
 
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, NULL);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, NULL);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 	CU_ASSERT_NOT_EQUAL(task->status, SCSI_STATUS_CANCELLED); /* XXX redundant? */
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -90,7 +98,7 @@ test_read10_residuals(void)
 	task = NULL;
 
 	/* in case the previous test failed the session */
-	iscsi_set_noautoreconnect(iscsic, 0);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 
 
 	logging(LOG_VERBOSE, "Try reading one block but with iSCSI expected transfer length==10000");
@@ -104,13 +112,13 @@ test_read10_residuals(void)
 	task->xfer_dir = SCSI_XFER_READ;
 	task->expxferlen = 10000;
 
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, NULL);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, NULL);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -152,13 +160,13 @@ test_read10_residuals(void)
 	task->xfer_dir = SCSI_XFER_READ;
 	task->expxferlen = 200;
 
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, NULL);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, NULL);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -198,13 +206,13 @@ test_read10_residuals(void)
 	task->xfer_dir = SCSI_XFER_READ;
 	task->expxferlen = block_size;
 
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, NULL);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, NULL);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 

@@ -33,7 +33,8 @@ test_prefetch16_simple(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test PREFETCH16 of 1-256 blocks at the start of the LUN");
 	for (i = 1; i <= 256; i++) {
-		ret = prefetch16(iscsic, tgt_lun, 0, i, 0, 0);
+		ret = prefetch16(sd, 0, i, 0, 0,
+				 EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] PREFETCH16 is not implemented.");
 			CU_PASS("PREFETCH16 is not implemented.");
@@ -45,7 +46,8 @@ test_prefetch16_simple(void)
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
-		ret = prefetch16(iscsic, tgt_lun, num_blocks - i, i, 0, 0);
+		ret = prefetch16(sd, num_blocks - i, i, 0, 0,
+				 EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

@@ -30,8 +30,8 @@ test_prefetch10_0blocks(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test PREFETCH10 0-blocks at LBA==0");
-	ret = prefetch10(iscsic, tgt_lun, 0,
-			 0, 0, 0);
+	ret = prefetch10(sd, 0, 0, 0, 0,
+			 EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] PREFETCH10 is not implemented.");
 		CU_PASS("PREFETCH10 is not implemented.");
@@ -45,19 +45,19 @@ test_prefetch10_0blocks(void)
 	}
 
 	logging(LOG_VERBOSE, "Test PREFETCH10 0-blocks one block past end-of-LUN");
-	ret = prefetch10_lbaoutofrange(iscsic, tgt_lun, num_blocks + 1,
-				       0, 0, 0);
+	ret = prefetch10(sd, num_blocks + 1, 0, 0, 0,
+			 EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test PREFETCH10 0-blocks at LBA==2^31");
-	ret = prefetch10_lbaoutofrange(iscsic, tgt_lun, 0x80000000,
-				       0, 0, 0);
+	ret = prefetch10(sd, 0x80000000, 0, 0, 0,
+			 EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test PREFETCH10 0-blocks at LBA==-1");
-	ret = prefetch10_lbaoutofrange(iscsic, tgt_lun, -1,
-				       0, 0, 0);
+	ret = prefetch10(sd, -1, 0, 0, 0,
+			 EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 }

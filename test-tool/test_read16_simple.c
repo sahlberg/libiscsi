@@ -39,8 +39,9 @@ test_read16_simple(void)
 			break;
 		}
 
-		ret = read16(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, 0, NULL);
+		ret = read16(sd, 0, i * block_size,
+			     block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented on this target and it does not claim SBC-3 support.");
 			CU_PASS("READ16 is not implemented and no SBC-3 support claimed.");
@@ -56,9 +57,9 @@ test_read16_simple(void)
 			break;
 		}
 
-		ret = read16(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 0, 0, 0, NULL);
-
+		ret = read16(sd, num_blocks - i,
+			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 }

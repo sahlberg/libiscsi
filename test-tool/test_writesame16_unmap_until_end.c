@@ -47,14 +47,13 @@ test_writesame16_unmap_until_end(void)
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, block_size * i);
-		ret = write16(iscsic, tgt_lun, num_blocks - i,
-			      i * block_size, block_size,
-			      0, 0, 0, 0, 0, buf);
-
+		ret = write16(sd, num_blocks - i,
+			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      EXPECT_STATUS_GOOD);
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
-		ret = writesame16(iscsic, tgt_lun, num_blocks - i,
-				  0, i,
-				  0, 1, 0, 0, NULL);
+		ret = writesame16(sd, num_blocks - i,
+				  0, i, 0, 1, 0, 0, NULL,
+				  EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support WRITESAME16. Skipping test");
@@ -68,9 +67,10 @@ test_writesame16_unmap_until_end(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			ret = read16(iscsic, tgt_lun, num_blocks - i,
+			ret = read16(sd, num_blocks - i,
 				     i * block_size, block_size,
-				     0, 0, 0, 0, 0, buf);
+				     0, 0, 0, 0, 0, buf,
+				     EXPECT_STATUS_GOOD);
 			for (j = 0; j < i; j++) {
 				CU_ASSERT_EQUAL(memcmp(buf + j*block_size, zeroBlock, block_size), 0);
 			}

@@ -43,12 +43,29 @@ test_writeverify16_residuals(void)
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This WRITEVERIFY16 test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
+
 	/* check if writeverify16 is supported */
-	ret = writeverify16(iscsic, tgt_lun, 0, 0,
-			    block_size, 0, 0, 0, 0, NULL);
+	ret = writeverify16(sd, 0, 0,
+			    block_size, 0, 0, 0, 0, NULL,
+			    EXPECT_STATUS_GOOD);
 	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY16 is not implemented.");
+		logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
 		CU_PASS("[SKIPPED] Target does not support WRITEVERIFY16. Skipping test");
+		return;
+	}
+
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] WRITEVERIFY16 tests are only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
 		return;
 	}
 
@@ -67,11 +84,11 @@ test_writeverify16_residuals(void)
 	 * we don't want autoreconnect since some targets will drop the session
 	 * on this condition.
 	 */
-	iscsi_set_noautoreconnect(iscsic, 1);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
 
 	logging(LOG_VERBOSE, "Try writing one block but with iSCSI expected transfer length==0");
 
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, NULL);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, NULL);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 	CU_ASSERT_NOT_EQUAL(task->status, SCSI_STATUS_CANCELLED); /* XXX redundant? */
 
@@ -85,7 +102,7 @@ test_writeverify16_residuals(void)
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -108,7 +125,7 @@ test_writeverify16_residuals(void)
 	task = NULL;
 
 	/* in case the previous test failed the session */
-	iscsi_set_noautoreconnect(iscsic, 0);
+	iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 
 
 	logging(LOG_VERBOSE, "Try writing one block but with iSCSI expected transfer length==10000");
@@ -124,13 +141,13 @@ test_writeverify16_residuals(void)
 
 	data.size = task->expxferlen;
 	data.data = &buf[0];
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, &data);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -166,13 +183,13 @@ test_writeverify16_residuals(void)
 
 	data.size = task->expxferlen;
 	data.data = &buf[0];
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, &data);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -211,13 +228,13 @@ test_writeverify16_residuals(void)
 
 	data.size = task->expxferlen;
 	data.data = &buf[0];
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, &data);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -246,8 +263,9 @@ test_writeverify16_residuals(void)
 
 	logging(LOG_VERBOSE, "Write two blocks of 'a'");
 	memset(buf, 'a', 10000);
-	ret = write16(iscsic, tgt_lun, 0, 2 * block_size,
-	    block_size, 0, 0, 0, 0, 0, buf);
+	ret = write16(sd, 0, 2 * block_size,
+		      block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Write one block of 'b' but set iSCSI EDTL to 2 blocks.");
@@ -265,13 +283,13 @@ test_writeverify16_residuals(void)
 
 	data.size = task->expxferlen;
 	data.data = &buf[0];
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, &data);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -293,8 +311,9 @@ test_writeverify16_residuals(void)
 	task = NULL;
 
 	logging(LOG_VERBOSE, "Read the two blocks");
-	ret = read16(iscsic, tgt_lun, 0, 2* block_size,
-		     block_size, 0, 0, 0, 0, 0, buf);
+	ret = read16(sd, 0, 2* block_size,
+		     block_size, 0, 0, 0, 0, 0, buf,
+		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify that the first block was changed to 'b'");
@@ -320,8 +339,9 @@ test_writeverify16_residuals(void)
 
 	logging(LOG_VERBOSE, "Write two blocks of 'a'");
 	memset(buf, 'a', 10000);
-	ret = write16(iscsic, tgt_lun, 0, 2 * block_size,
-	    block_size, 0, 0, 0, 0, 0, buf);
+	ret = write16(sd, 0, 2 * block_size,
+		      block_size, 0, 0, 0, 0, 0, buf,
+		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Write two blocks of 'b' but set iSCSI EDTL to 1 blocks.");
@@ -339,13 +359,13 @@ test_writeverify16_residuals(void)
 
 	data.size = task->expxferlen;
 	data.data = &buf[0];
-	task_ret = iscsi_scsi_command_sync(iscsic, tgt_lun, task, &data);
+	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
-			iscsi_get_error(iscsic));
+			iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
@@ -367,8 +387,9 @@ test_writeverify16_residuals(void)
 	task = NULL;
 
 	logging(LOG_VERBOSE, "Read the two blocks");
-	ret = read16(iscsic, tgt_lun, 0, 2* block_size,
-		     block_size, 0, 0, 0, 0, 0, buf);
+	ret = read16(sd, 0, 2* block_size,
+		     block_size, 0, 0, 0, 0, 0, buf,
+		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify that the first block was changed to 'b'");

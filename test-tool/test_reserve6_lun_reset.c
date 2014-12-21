@@ -29,14 +29,21 @@ void
 test_reserve6_lun_reset(void)
 {
 	int ret;
-
+	struct scsi_device  sd2;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that RESERVE6 is released on lun reset");
 
+	if (sd->iscsi_ctx == NULL) {
+		const char *err = "[SKIPPED] This RESERVE6 test is only "
+			"supported for iSCSI backends";
+		logging(LOG_NORMAL, "%s", err);
+		CU_PASS(err);
+		return;
+	}
 
 	logging(LOG_VERBOSE, "Take out a RESERVE6 from the first initiator");
-	ret = reserve6(iscsic, tgt_lun);
+	ret = reserve6(sd);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "[SKIPPED] Target does not support RESERVE6. Skipping test");
 		CU_PASS("[SKIPPED] Target does not support RESERVE6. Skipping test");
@@ -46,9 +53,9 @@ test_reserve6_lun_reset(void)
 
 
 	logging(LOG_VERBOSE, "Send a LUN Reset");
-	ret = iscsi_task_mgmt_lun_reset_sync(iscsic, tgt_lun);
+	ret = iscsi_task_mgmt_lun_reset_sync(sd->iscsi_ctx, sd->iscsi_lun);
 	if (ret != 0) {
-		logging(LOG_NORMAL, "LUN reset failed. %s", iscsi_get_error(iscsic));
+		logging(LOG_NORMAL, "LUN reset failed. %s", iscsi_get_error(sd->iscsi_ctx));
 	}
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -57,21 +64,20 @@ test_reserve6_lun_reset(void)
 
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	iscsic2 = iscsi_context_login(initiatorname2, tgt_url, &tgt_lun);
-	if (iscsic2 == NULL) {
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
 	}
 
 	logging(LOG_VERBOSE, "RESERVE6 from the second initiator should work now");
-	ret = reserve6(iscsic2, tgt_lun);
+	ret = reserve6(&sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "RELEASE6 from the second initiator");
-	ret = release6(iscsic2, tgt_lun);
+	ret = release6(&sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	iscsi_logout_sync(iscsic2);
-	iscsi_destroy_context(iscsic2);
-	iscsic2 = NULL;
+	iscsi_logout_sync(sd2.iscsi_ctx);
+	iscsi_destroy_context(sd2.iscsi_ctx);
 }

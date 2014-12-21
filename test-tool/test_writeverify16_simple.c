@@ -43,10 +43,11 @@ test_writeverify16_simple(void)
 			break;
 		}
 
-		ret = writeverify16(iscsic, tgt_lun, 0, i * block_size,
-		    block_size, 0, 0, 0, 0, buf);
+		ret = writeverify16(sd, 0, i * block_size,
+				    block_size, 0, 0, 0, 0, buf,
+				    EXPECT_STATUS_GOOD);
 		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITE1VERIFY16 is not implemented.");
+			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
 			CU_PASS("WRITEVERIFY16 is not implemented.");
 			return;
 	       	}	
@@ -59,8 +60,9 @@ test_writeverify16_simple(void)
 			break;
 		}
 
-		ret = writeverify16(iscsic, tgt_lun, num_blocks - i,
-		    i * block_size, block_size, 0, 0, 0, 0, buf);
+		ret = writeverify16(sd, num_blocks - i,
+				    i * block_size, block_size, 0, 0, 0, 0, buf,
+				    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
