@@ -49,6 +49,7 @@ void test_setup(void);
 void test_teardown(void);
 
 void test_compareandwrite_simple(void);
+void test_compareandwrite_dpofua(void);
 void test_compareandwrite_miscompare(void);
 
 void test_get_lba_status_simple(void);
@@ -79,7 +80,7 @@ void test_orwrite_simple(void);
 void test_orwrite_beyond_eol(void);
 void test_orwrite_0blocks(void);
 void test_orwrite_wrprotect(void);
-void test_orwrite_flags(void);
+void test_orwrite_dpofua(void);
 void test_orwrite_verify(void);
 
 void test_prefetch10_simple(void);
@@ -128,7 +129,7 @@ void test_read10_simple(void);
 void test_read10_beyond_eol(void);
 void test_read10_0blocks(void);
 void test_read10_rdprotect(void);
-void test_read10_flags(void);
+void test_read10_dpofua(void);
 void test_read10_residuals(void);
 void test_read10_invalid(void);
 
@@ -136,14 +137,14 @@ void test_read12_simple(void);
 void test_read12_beyond_eol(void);
 void test_read12_0blocks(void);
 void test_read12_rdprotect(void);
-void test_read12_flags(void);
+void test_read12_dpofua(void);
 void test_read12_residuals(void);
 
 void test_read16_simple(void);
 void test_read16_beyond_eol(void);
 void test_read16_0blocks(void);
 void test_read16_rdprotect(void);
-void test_read16_flags(void);
+void test_read16_dpofua(void);
 void test_read16_residuals(void);
 
 void test_readcapacity10_simple(void);
@@ -194,6 +195,7 @@ void test_verify10_beyond_eol(void);
 void test_verify10_0blocks(void);
 void test_verify10_vrprotect(void);
 void test_verify10_flags(void);
+void test_verify10_dpo(void);
 void test_verify10_mismatch(void);
 void test_verify10_mismatch_no_cmp(void);
 
@@ -202,6 +204,7 @@ void test_verify12_beyond_eol(void);
 void test_verify12_0blocks(void);
 void test_verify12_vrprotect(void);
 void test_verify12_flags(void);
+void test_verify12_dpo(void);
 void test_verify12_mismatch(void);
 void test_verify12_mismatch_no_cmp(void);
 
@@ -210,6 +213,7 @@ void test_verify16_beyond_eol(void);
 void test_verify16_0blocks(void);
 void test_verify16_vrprotect(void);
 void test_verify16_flags(void);
+void test_verify16_dpo(void);
 void test_verify16_mismatch(void);
 void test_verify16_mismatch_no_cmp(void);
 
@@ -217,21 +221,21 @@ void test_write10_simple(void);
 void test_write10_beyond_eol(void);
 void test_write10_0blocks(void);
 void test_write10_wrprotect(void);
-void test_write10_flags(void);
+void test_write10_dpofua(void);
 void test_write10_residuals(void);
 
 void test_write12_simple(void);
 void test_write12_beyond_eol(void);
 void test_write12_0blocks(void);
 void test_write12_wrprotect(void);
-void test_write12_flags(void);
+void test_write12_dpofua(void);
 void test_write12_residuals(void);
 
 void test_write16_simple(void);
 void test_write16_beyond_eol(void);
 void test_write16_0blocks(void);
 void test_write16_wrprotect(void);
-void test_write16_flags(void);
+void test_write16_dpofua(void);
 void test_write16_residuals(void);
 
 void test_writesame10_simple(void);
@@ -257,6 +261,7 @@ void test_writeverify10_beyond_eol(void);
 void test_writeverify10_0blocks(void);
 void test_writeverify10_wrprotect(void);
 void test_writeverify10_flags(void);
+void test_writeverify10_dpo(void);
 void test_writeverify10_residuals(void);
 
 void test_writeverify12_simple(void);
@@ -264,6 +269,7 @@ void test_writeverify12_beyond_eol(void);
 void test_writeverify12_0blocks(void);
 void test_writeverify12_wrprotect(void);
 void test_writeverify12_flags(void);
+void test_writeverify12_dpo(void);
 void test_writeverify12_residuals(void);
 
 void test_writeverify16_simple(void);
@@ -271,6 +277,7 @@ void test_writeverify16_beyond_eol(void);
 void test_writeverify16_0blocks(void);
 void test_writeverify16_wrprotect(void);
 void test_writeverify16_flags(void);
+void test_writeverify16_dpo(void);
 void test_writeverify16_residuals(void);
 
 #endif	/* _ISCSI_TEST_CU_H_ */

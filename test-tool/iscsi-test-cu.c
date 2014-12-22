@@ -68,6 +68,7 @@ int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
  *****************************************************************/
 static CU_TestInfo tests_compareandwrite[] = {
 	{ (char *)"Simple", test_compareandwrite_simple },
+	{ (char *)"DpoFua", test_compareandwrite_dpofua },
 	{ (char *)"Miscompare", test_compareandwrite_miscompare },
 	CU_TEST_INFO_NULL
 };
@@ -111,7 +112,7 @@ static CU_TestInfo tests_orwrite[] = {
 	{ (char *)"BeyondEol", test_orwrite_beyond_eol },
 	{ (char *)"ZeroBlocks", test_orwrite_0blocks },
 	{ (char *)"Protect", test_orwrite_wrprotect },
-	{ (char *)"Flags", test_orwrite_flags },
+	{ (char *)"DpoFua", test_orwrite_dpofua },
 	{ (char *)"Verify", test_orwrite_verify },
 	CU_TEST_INFO_NULL
 };
@@ -200,7 +201,7 @@ static CU_TestInfo tests_read10[] = {
 	{ (char *)"BeyondEol", test_read10_beyond_eol },
 	{ (char *)"ZeroBlocks", test_read10_0blocks },
 	{ (char *)"ReadProtect", test_read10_rdprotect },
-	{ (char *)"Flags", test_read10_flags },
+	{ (char *)"DpoFua", test_read10_dpofua },
 	CU_TEST_INFO_NULL
 };
 
@@ -209,7 +210,7 @@ static CU_TestInfo tests_read12[] = {
 	{ (char *)"BeyondEol", test_read12_beyond_eol },
 	{ (char *)"ZeroBlocks", test_read12_0blocks },
 	{ (char *)"ReadProtect", test_read12_rdprotect },
-	{ (char *)"Flags", test_read12_flags },
+	{ (char *)"DpoFua", test_read12_dpofua },
 	CU_TEST_INFO_NULL
 };
 
@@ -218,7 +219,7 @@ static CU_TestInfo tests_read16[] = {
 	{ (char *)"BeyondEol", test_read16_beyond_eol },
 	{ (char *)"ZeroBlocks", test_read16_0blocks },
 	{ (char *)"ReadProtect", test_read16_rdprotect },
-	{ (char *)"Flags", test_read16_flags },
+	{ (char *)"DpoFua", test_read16_dpofua },
 	CU_TEST_INFO_NULL
 };
 
@@ -298,6 +299,7 @@ static CU_TestInfo tests_verify10[] = {
 	{ (char *)"ZeroBlocks", test_verify10_0blocks },
 	{ (char *)"VerifyProtect", test_verify10_vrprotect },
 	{ (char *)"Flags", test_verify10_flags },
+	{ (char *)"Dpo", test_verify10_dpo },
 	{ (char *)"Mismatch", test_verify10_mismatch },
 	{ (char *)"MismatchNoCmp", test_verify10_mismatch_no_cmp },
 	CU_TEST_INFO_NULL
@@ -309,6 +311,7 @@ static CU_TestInfo tests_verify12[] = {
 	{ (char *)"ZeroBlocks", test_verify12_0blocks },
 	{ (char *)"VerifyProtect", test_verify12_vrprotect },
 	{ (char *)"Flags", test_verify12_flags },
+	{ (char *)"Dpo", test_verify12_dpo },
 	{ (char *)"Mismatch", test_verify12_mismatch },
 	{ (char *)"MismatchNoCmp", test_verify12_mismatch_no_cmp },
 	CU_TEST_INFO_NULL
@@ -320,6 +323,7 @@ static CU_TestInfo tests_verify16[] = {
 	{ (char *)"ZeroBlocks", test_verify16_0blocks },
 	{ (char *)"VerifyProtect", test_verify16_vrprotect },
 	{ (char *)"Flags", test_verify16_flags },
+	{ (char *)"Dpo", test_verify16_dpo },
 	{ (char *)"Mismatch", test_verify16_mismatch },
 	{ (char *)"MismatchNoCmp", test_verify16_mismatch_no_cmp },
 	CU_TEST_INFO_NULL
@@ -330,7 +334,7 @@ static CU_TestInfo tests_write10[] = {
 	{ (char *)"BeyondEol", test_write10_beyond_eol },
 	{ (char *)"ZeroBlocks", test_write10_0blocks },
 	{ (char *)"WriteProtect", test_write10_wrprotect },
-	{ (char *)"Flags", test_write10_flags },
+	{ (char *)"DpoFua", test_write10_dpofua },
 	CU_TEST_INFO_NULL
 };
 
@@ -339,7 +343,7 @@ static CU_TestInfo tests_write12[] = {
 	{ (char *)"BeyondEol", test_write12_beyond_eol },
 	{ (char *)"ZeroBlocks", test_write12_0blocks },
 	{ (char *)"WriteProtect", test_write12_wrprotect },
-	{ (char *)"Flags", test_write12_flags },
+	{ (char *)"DpoFua", test_write12_dpofua },
 	CU_TEST_INFO_NULL
 };
 
@@ -348,7 +352,7 @@ static CU_TestInfo tests_write16[] = {
 	{ (char *)"BeyondEol", test_write16_beyond_eol },
 	{ (char *)"ZeroBlocks", test_write16_0blocks },
 	{ (char *)"WriteProtect", test_write16_wrprotect },
-	{ (char *)"Flags", test_write16_flags },
+	{ (char *)"DpoFua", test_write16_dpofua },
 	CU_TEST_INFO_NULL
 };
 
@@ -382,6 +386,7 @@ static CU_TestInfo tests_writeverify10[] = {
 	{ (char *)"ZeroBlocks", test_writeverify10_0blocks },
 	{ (char *)"WriteProtect", test_writeverify10_wrprotect },
 	{ (char *)"Flags", test_writeverify10_flags },
+	{ (char *)"Dpo", test_writeverify10_dpo },
 	CU_TEST_INFO_NULL
 };
 
@@ -391,6 +396,7 @@ static CU_TestInfo tests_writeverify12[] = {
 	{ (char *)"ZeroBlocks", test_writeverify12_0blocks },
 	{ (char *)"WriteProtect", test_writeverify12_wrprotect },
 	{ (char *)"Flags", test_writeverify12_flags },
+	{ (char *)"Dpo", test_writeverify12_dpo },
 	CU_TEST_INFO_NULL
 };
 
@@ -400,6 +406,7 @@ static CU_TestInfo tests_writeverify16[] = {
 	{ (char *)"ZeroBlocks", test_writeverify16_0blocks },
 	{ (char *)"WriteProtect", test_writeverify16_wrprotect },
 	{ (char *)"Flags", test_writeverify16_flags },
+	{ (char *)"Dpo", test_writeverify16_dpo },
 	CU_TEST_INFO_NULL
 };
 

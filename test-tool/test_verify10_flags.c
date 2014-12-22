@@ -40,9 +40,9 @@ test_verify10_flags(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 
-	logging(LOG_VERBOSE, "Test VERIFY10 with DPO==1");
+	logging(LOG_VERBOSE, "Test VERIFY10 with BYTCHK==1");
 	ret = verify10(sd, 0, block_size,
-		       block_size, 0, 1, 0, buf,
+		       block_size, 0, 0, 1, buf,
 		       EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] VERIFY10 is not implemented.");
@@ -50,13 +50,6 @@ test_verify10_flags(void)
 		free(buf);
 		return;
 	}
-	CU_ASSERT_EQUAL(ret, 0);
-
-
-	logging(LOG_VERBOSE, "Test VERIFY10 with BYTCHK==1");
-	ret = verify10(sd, 0, block_size,
-		       block_size, 0, 0, 1, buf,
-		       EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 	free(buf);
 }

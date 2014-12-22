@@ -15,6 +15,7 @@ iscsi_test_cu_LDFLAGS = -ldl -lcunit
 iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	iscsi-support.c \
 	test_compareandwrite_simple.c \
+	test_compareandwrite_dpofua.c \
 	test_compareandwrite_miscompare.c \
 	test_get_lba_status_simple.c \
 	test_get_lba_status_beyond_eol.c \
@@ -37,7 +38,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_orwrite_beyond_eol.c \
 	test_orwrite_0blocks.c \
 	test_orwrite_wrprotect.c \
-	test_orwrite_flags.c \
+	test_orwrite_dpofua.c \
 	test_orwrite_verify.c \
 	test_prefetch10_simple.c \
 	test_prefetch10_beyond_eol.c \
@@ -67,20 +68,20 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_read10_beyond_eol.c \
 	test_read10_0blocks.c \
 	test_read10_rdprotect.c \
-	test_read10_flags.c \
+	test_read10_dpofua.c \
 	test_read10_residuals.c \
 	test_read10_invalid.c \
 	test_read12_simple.c \
 	test_read12_beyond_eol.c \
 	test_read12_0blocks.c \
 	test_read12_rdprotect.c \
-	test_read12_flags.c \
+	test_read12_dpofua.c \
 	test_read12_residuals.c \
 	test_read16_simple.c \
 	test_read16_beyond_eol.c \
 	test_read16_0blocks.c \
 	test_read16_rdprotect.c \
-	test_read16_flags.c \
+	test_read16_dpofua.c \
 	test_read16_residuals.c \
 	test_readcapacity10_simple.c \
 	test_readcapacity16_alloclen.c \
@@ -121,6 +122,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_verify10_0blocks.c \
 	test_verify10_vrprotect.c \
 	test_verify10_flags.c \
+	test_verify10_dpo.c \
 	test_verify10_mismatch.c \
 	test_verify10_mismatch_no_cmp.c \
 	test_verify12_simple.c \
@@ -128,6 +130,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_verify12_0blocks.c \
 	test_verify12_vrprotect.c \
 	test_verify12_flags.c \
+	test_verify12_dpo.c \
 	test_verify12_mismatch.c \
 	test_verify12_mismatch_no_cmp.c \
 	test_verify16_simple.c \
@@ -135,25 +138,26 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_verify16_0blocks.c \
 	test_verify16_vrprotect.c \
 	test_verify16_flags.c \
+	test_verify16_dpo.c \
 	test_verify16_mismatch.c \
 	test_verify16_mismatch_no_cmp.c \
 	test_write10_simple.c \
 	test_write10_beyond_eol.c \
 	test_write10_0blocks.c \
 	test_write10_wrprotect.c \
-	test_write10_flags.c \
+	test_write10_dpofua.c \
 	test_write10_residuals.c \
 	test_write12_simple.c \
 	test_write12_beyond_eol.c \
 	test_write12_0blocks.c \
 	test_write12_wrprotect.c \
-	test_write12_flags.c \
+	test_write12_dpofua.c \
 	test_write12_residuals.c \
 	test_write16_simple.c \
 	test_write16_beyond_eol.c \
 	test_write16_0blocks.c \
 	test_write16_wrprotect.c \
-	test_write16_flags.c \
+	test_write16_dpofua.c \
 	test_write16_residuals.c \
 	test_writesame10_simple.c \
 	test_writesame10_beyond_eol.c \
@@ -176,18 +180,21 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_writeverify10_0blocks.c \
 	test_writeverify10_wrprotect.c \
 	test_writeverify10_flags.c \
+	test_writeverify10_dpo.c \
 	test_writeverify10_residuals.c \
 	test_writeverify12_simple.c \
 	test_writeverify12_beyond_eol.c \
 	test_writeverify12_0blocks.c \
 	test_writeverify12_wrprotect.c \
 	test_writeverify12_flags.c \
+	test_writeverify12_dpo.c \
 	test_writeverify12_residuals.c \
 	test_writeverify16_simple.c \
 	test_writeverify16_beyond_eol.c \
 	test_writeverify16_0blocks.c \
 	test_writeverify16_wrprotect.c \
 	test_writeverify16_flags.c \
+	test_writeverify16_dpo.c \
 	test_writeverify16_residuals.c
 
 endif
