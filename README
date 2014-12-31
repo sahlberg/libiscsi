@@ -91,11 +91,49 @@ in a line similar to :
 
 checking whether libcunit is available... yes
 
-Some example commands:
-iscsi-test-cu -l to list all tests.
-iscsi-test-cu -t <test-suite> <iscsi-url> to run a test suite
-iscsi-test-cu -t <test-suite>.<test> <iscsi-url> to run a specific test
+Test family/suite/test
+----------------------
+Tests are divided up in families, suites and tests and are specified as
+  --test=<family>.<suite>.<test>
 
+A <family> is a logical collection of test suites to cover a broad set
+of functionality. Example families are 'SCSI' for performing all tests for
+SCSI commands and 'iSCSI' that contain tests for the iSCSI layer.
+
+To run all tests in the SCSI family you can just specify
+  --test=SCSI or --test=SCSI.*.*
+
+The next layer of tests are the suites. Within a family there are a collection
+of suites that perform test to cover a specific area of functionality.
+For example, to run all SCSI tests that cover the Read10 opcode you would
+specify it as
+  --test=SCSI.Read10 or --test=SCSI.Read10.*
+
+Finally at the lowest level you have the individual tests. These tests perform
+specific topic in a suite.
+For example, we have tests for the Read10 opcode that verifies that the target
+implements the DPO/FUA flags properly.
+To run those tests you would specify
+  --test=SCSI.Read10.DpoFua
+
+Test discovery
+--------------
+To discover which tests exist you can use the command 
+  iscsi-test-cu --list
+
+Examples
+--------
+Run the DpoFua test for Read10
+  iscsi-test-cu --test=SCSI.Read10.DpoFua iscsi://127.0.0.1/iqn.example.test/1
+
+Run all Read10 tests
+  iscsi-test-cu --test=SCSI.Read10 iscsi://127.0.0.1/iqn.example.test/1
+
+Run all SCSI tests for all opcodes
+  iscsi-test-cu --test=SCSI iscsi://127.0.0.1/iqn.example.test/1
+
+Initiator names used by the test suite
+--------------------------------------
 Most tests only require a single login to the target, but some tests,
 for example the it nexus loss tests may need to login two separate sessions.
 By default the initiator names use for the logins will be
@@ -116,11 +154,12 @@ These results can be converted to JUnit format using this script:
 
 http://git.cyrusimap.org/cyrus-imapd/plain/cunit/cunit-to-junit.pl
 
-On Linux, the test tool can also access SG_IO devices directly. Just specify the
-device as /dev/sg* instead of the iSCSI URL.
+Linux SG_IO devices
+-------------------
+When used on Linux, the test tool also supports talking directly to local SG_IO
+devices. Accessing SG_IO devices often require that you are root:
 
-Example:
-sudo iscsi-test-cu --test LINUX.Read10.Simple /dev/sg1
+  sudo iscsi-test-cu --test LINUX.Read10.Simple /dev/sg1
 
 
 LD_PRELOAD FUN

@@ -657,7 +657,7 @@ print_usage(void)
 	    "  \"ipv6-address\"   e.g. [fce0::1]\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr,
-	    "and <test-name-reg-exp> is of the form: SUITENAME_RE[.[SUBTESTNAME_RE]]\n");
+	    "and <test-name-reg-exp> is of the form: FAMILY[.SUITE[.TEST]]\n");
 	fprintf(stderr, "\n");
 }
 
