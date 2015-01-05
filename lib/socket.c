@@ -129,7 +129,7 @@ static void set_nonblocking(int fd)
 #endif
 }
 
-int set_tcp_sockopt(int sockfd, int optname, int value)
+static int set_tcp_sockopt(int sockfd, int optname, int value)
 {
 	int level;
 
@@ -151,7 +151,7 @@ int set_tcp_sockopt(int sockfd, int optname, int value)
 #define TCP_USER_TIMEOUT        18
 #endif
 
-int set_tcp_user_timeout(struct iscsi_context *iscsi)
+static int set_tcp_user_timeout(struct iscsi_context *iscsi)
 {
 	if (set_tcp_sockopt(iscsi->fd, TCP_USER_TIMEOUT, iscsi->tcp_user_timeout) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp user timeout. Error %s(%d)", strerror(errno), errno);
@@ -165,7 +165,7 @@ int set_tcp_user_timeout(struct iscsi_context *iscsi)
 #define TCP_SYNCNT        7
 #endif
 
-int set_tcp_syncnt(struct iscsi_context *iscsi)
+static int set_tcp_syncnt(struct iscsi_context *iscsi)
 {
 	if (set_tcp_sockopt(iscsi->fd, TCP_SYNCNT, iscsi->tcp_syncnt) != 0) {
 		iscsi_set_error(iscsi, "TCP: Failed to set tcp syn retries. Error %s(%d)", strerror(errno), errno);
