@@ -368,6 +368,7 @@ iscsi_disconnect(struct iscsi_context *iscsi)
 
 	iscsi->fd  = -1;
 	iscsi->is_connected = 0;
+	iscsi->is_corked = 0;
 
 	return 0;
 }
