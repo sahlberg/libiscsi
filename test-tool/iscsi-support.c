@@ -169,7 +169,8 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
 			"have failed with %s(0x%02x)/%s(0x%04x)",
 			opcode,
 			scsi_sense_key_str(key), key,
-			scsi_sense_ascq_str(ascq[0]), ascq[0]);
+			num_ascq ? scsi_sense_ascq_str(ascq[0]) : "NO ASCQ",
+			num_ascq ? ascq[0] : 0);
 		return -1;
 	}
 	if (status == SCSI_STATUS_RESERVATION_CONFLICT
@@ -199,7 +200,8 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
 			"but failed with Sense:%s\n",
 			opcode,
 			scsi_sense_key_str(key), key,
-			scsi_sense_ascq_str(ascq[0]), ascq[0],
+			num_ascq ? scsi_sense_ascq_str(ascq[0]) : "NO ASCQ",
+			num_ascq ? ascq[0] : 0,
 			sdev->error_str);
 		return -1;
 	}
