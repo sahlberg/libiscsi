@@ -30,6 +30,9 @@ test_reserve6_2initiators(void)
 {
 	int ret;
 	struct scsi_device sd2;
+	memset(&sd2, 0, sizeof(sd2));
+	sd2.iscsi_url = sd->iscsi_url;
+	sd2.iscsi_lun = sd->iscsi_lun;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test RESERVE6/RELEASE6 across two initiators");
@@ -58,7 +61,7 @@ test_reserve6_2initiators(void)
 
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
+	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
 	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
 		return;
@@ -81,8 +84,7 @@ test_reserve6_2initiators(void)
 
 	logging(LOG_NORMAL, "MODE SENSE should fail from the second initiator");
 	ret = modesense6(&sd2, NULL, 0, SCSI_MODESENSE_PC_CURRENT, SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
-			 EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, SCSI_STATUS_RESERVATION_CONFLICT);
+			 EXPECT_RESERVATION_CONFLICT);
 
 
 	logging(LOG_NORMAL, "RESERVE6 from the second initiator should still fail");
