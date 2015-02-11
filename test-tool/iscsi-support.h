@@ -23,6 +23,7 @@
 
 #include <time.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <stdlib.h>
 
@@ -220,17 +221,20 @@ struct scsi_command_descriptor *get_command_descriptor(int opcode, int sa);
 
 static inline long rand_key(void)
 {
-	time_t t;
-	pid_t p;
-	unsigned int s;
-	long l;
+	static int seed = 0;
 
-	(void)time(&t);
-	p = getpid();
-	s = ((int)p * (t & 0xffff));
-	srandom(s);
-	l = random();
-	return l;
+	if (!seed) {
+		struct timeval tv;
+		pid_t p;
+		unsigned int s;
+
+		gettimeofday(&tv, NULL);
+		p = getpid();
+		s = p ^ tv.tv_sec ^ tv.tv_usec;
+		srandom(s);
+	}
+	seed = 1;
+	return random();
 }
 
 static inline int pr_type_is_all_registrants(
