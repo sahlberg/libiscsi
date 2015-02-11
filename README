@@ -147,12 +147,25 @@ These names can be controlled by using the arguments
 The tests are all self-documented to describe what they test and how they test.
 Use -V with a test to print the documentation for a test.
 
+XLM/JUNIT
+=========
 iscsi-test-cu can produce machine-readable test results for consumption by your
 CI server. Use the --xml option with any test suite(s), and a file called
 CUnitAutomated-Results.xml will be written to your current working directory.
 These results can be converted to JUnit format using this script:
 
 http://git.cyrusimap.org/cyrus-imapd/plain/cunit/cunit-to-junit.pl
+
+See also:
+
+CUnit-List.xsl
+--------------
+https://code.google.com/p/warc-tools/source/browse/trunk/utest/outputs/CUnit-List.xsl
+
+CUnit-Run.xsl
+-------------
+https://code.google.com/p/mdflib/source/browse/trunk/cunit/CUnit-Run.xsl
+
 
 Linux SG_IO devices
 -------------------
