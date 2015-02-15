@@ -277,6 +277,17 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 			return NULL;
 		}
 
+		task->residual_status = SCSI_RESIDUAL_NO_RESIDUAL;
+		task->residual = 0;
+
+		if (io_hdr.resid) {
+			task->residual_status = SCSI_RESIDUAL_UNDERFLOW;
+			task->residual = io_hdr.resid;
+		}
+
+		if (task->xfer_dir == SCSI_XFER_READ)
+			task->datain.size -= task->residual;
+
 		/* now for the error processing */
 		if(io_hdr.sb_len_wr > 0){
 			task->status = SCSI_STATUS_CHECK_CONDITION;
