@@ -25,3 +25,16 @@ bin
 /ltmain.sh
 libiscsi-*.tar.gz
 TAGS
+/ar-lib
+/compile
+/doc/Makefile.in
+/doc/Makefile
+/examples/Makefile.in
+/examples/Makefile
+/lib/Makefile.in
+/lib/Makefile
+/test-tool/Makefile.in
+/test-tool/Makefile
+/utils/Makefile.in
+/utils/Makefile
+/libiscsi.pc
