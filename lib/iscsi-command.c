@@ -326,13 +326,13 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	 * subtract from first_burst_length.
 	 */
 	if (!(flags & ISCSI_PDU_SCSI_FINAL)) {
-		uint32_t len = task->expxferlen;
+		uint32_t len = task->expxferlen - pdu->payload_len;
 
-		if (len + pdu->payload_len > iscsi->first_burst_length) {
-			len = iscsi->first_burst_length - pdu->payload_len;
+		if (len > iscsi->first_burst_length) {
+			len = iscsi->first_burst_length;
 		}
 		iscsi_send_data_out(iscsi, pdu, 0xffffffff,
-				    pdu->payload_len, len - pdu->payload_len);
+				    pdu->payload_len, len);
 	}
 
 	/* remember cmdsn and itt so we can use task management */
