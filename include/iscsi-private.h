@@ -245,6 +245,7 @@ struct iscsi_pdu {
 
 	struct iscsi_scsi_cbdata scsi_cbdata;
 	time_t scsi_timeout;
+	uint32_t expxferlen;
 };
 
 struct iscsi_pdu *iscsi_allocate_pdu(struct iscsi_context *iscsi,

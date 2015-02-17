@@ -67,7 +67,7 @@ iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 	}
 }
 
-static int
+int
 iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		    uint32_t ttt, uint32_t offset, uint32_t tot_len)
 {

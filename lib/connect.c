@@ -242,6 +242,10 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 	}
 }
 
+int
+iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
+		    uint32_t ttt, uint32_t offset, uint32_t tot_len);
+
 int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
 	struct iscsi_context *iscsi;
@@ -342,10 +346,8 @@ try_again:
 		}
 
 		if (pdu->flags & ISCSI_PDU_DROP_ON_RECONNECT) {
-			/* We don't want to requeue things like DATA-OUT since these guys
-			 * will be reissued automatically anyway once the corresponding
-			 * write command is replayed.
-			 * Similarly we don't want to requeue NOPs. 
+			/*
+			 * We don't want to requeue NOPs.
 		 	 */
 			iscsi_free_pdu(old_iscsi, pdu);
 			continue;
@@ -365,6 +367,14 @@ try_again:
 		pdu->outdata_written = 0;
 		pdu->payload_written = 0;
 		iscsi_queue_pdu(iscsi, pdu);
+		/* All PDUs that write data and do not have final set
+		 * needs some additional data-out to be requeued.
+		 */
+		if ((pdu->outdata.data[1] & (ISCSI_PDU_SCSI_WRITE | ISCSI_PDU_SCSI_FINAL)) == ISCSI_PDU_SCSI_WRITE) {
+			iscsi_send_data_out(iscsi, pdu, 0xffffffff,
+					    pdu->payload_len,
+					    pdu->expxferlen - pdu->payload_len);
+		}
 	}
 
 	if (dup2(iscsi->fd, old_iscsi->fd) == -1) {
