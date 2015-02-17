@@ -2,12 +2,12 @@
 .\"     Title: iscsi-test-cu
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 03/26/2014
+.\"      Date: 02/16/2015
 .\"    Manual: iscsi-test-cu: iSCSI/SCSI protocol test suite
 .\"    Source: iscsi-test-cu
 .\"  Language: English
 .\"
-.TH "ISCSI\-TEST\-CU" "1" "03/26/2014" "iscsi\-test\-cu" "iscsi\-test\-cu: iSCSI/SCSI pr"
+.TH "ISCSI\-TEST\-CU" "1" "02/16/2015" "iscsi\-test\-cu" "iscsi\-test\-cu: iSCSI/SCSI pr"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -33,7 +33,7 @@ iscsi-test-cu \- iSCSI/SCSI test suite
 .HP \w'\fBiscsi\-test\-cu\ [\ OPTIONS\ ]\ <ISCSI\-PORTAL>\fR\ 'u
 \fBiscsi\-test\-cu [ OPTIONS ] <ISCSI\-PORTAL>\fR
 .HP \w'\fBiscsi\-test\-cu\fR\ 'u
-\fBiscsi\-test\-cu\fR [\-i\ \-\-initiator\-name=<IQN>] [\-I\ \-\-initiator\-name\-2=<IQN>] [\-l\ \-\-list] [\-t\ \-\-test=<family>|*[\&.<suite>|*[\&.<test>|*]]] [\-d\ \-\-dataloss] [\-s\ \-\-allow\-sanitize] [\-u\ \-\-usb] [\-V\ \-\-Verbose\-scsi] [\-x\ \-\-xml] [\-?\ \-\-help]
+\fBiscsi\-test\-cu\fR [\-i\ \-\-initiator\-name=<IQN>] [\-I\ \-\-initiator\-name\-2=<IQN>] [\-l\ \-\-list] [\-t\ \-\-test=<family>|*[\&.<suite>|*[\&.<test>|*]]] [\-d\ \-\-dataloss] [\-s\ \-\-allow\-sanitize] [\-V\ \-\-Verbose\-scsi] [\-x\ \-\-xml] [\-?\ \-\-help]
 .SH "DESCRIPTION"
 .PP
 iscsi\-test\-cu is a test suite for iSCSI/SCSI\&.
@@ -149,13 +149,6 @@ The tests that requre \-\-dataloss will overwrite the data on the LUN and any an
 The SBC SANITIZE opcode is expected to take significant time before it completes and thus tests for this opcode are not suitable for normal test runs\&.
 .sp
 By default any SBC SANITIZE tests will be skipped\&. Use these arguments if you really want to perform SANITIZE tests\&.
-.RE
-.PP
-\-u \-\-usb
-.RS 4
-SCSI devices that sit behind a USB bus are on linux limited to maximum 120k for any single SCSI Read*/Write*\&.
-.sp
-When testing against a USB SCSI device you need to specify these arguments so that the tests will clamp the read/write size to a maximum of 120k\&.
 .RE
 .PP
 \-V \-\-Verbose\-scsi

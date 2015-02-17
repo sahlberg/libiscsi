@@ -27,7 +27,6 @@
 		<arg choice="opt">-t --test=&lt;family&gt;|*[.&lt;suite&gt;|*[.&lt;test&gt;|*]]</arg>
 		<arg choice="opt">-d --dataloss</arg>
 		<arg choice="opt">-s --allow-sanitize</arg>
-		<arg choice="opt">-u --usb</arg>
 		<arg choice="opt">-V --Verbose-scsi</arg>
 		<arg choice="opt">-x --xml</arg>
 		<arg choice="opt">-? --help</arg>
@@ -182,20 +181,6 @@ iscsi-test-cu --test=~/tests-to-run
 	  <para>
 	    By default any SBC SANITIZE tests will be skipped. Use these
 	    arguments if you really want to perform SANITIZE tests.
-	  </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry><term>-u --usb</term>
-        <listitem>
-          <para>
-	    SCSI devices that sit behind a USB bus are on linux limited
-	    to maximum 120k for any single SCSI Read*/Write*.
-	  </para>
-	  <para>
-	    When testing against a USB SCSI device you need to specify these
-	    arguments so that the tests will clamp the read/write size to
-	    a maximum of 120k.
 	  </para>
         </listitem>
       </varlistentry>

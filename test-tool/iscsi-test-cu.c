@@ -36,6 +36,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <scsi/sg.h>
+#include <sys/mount.h>
 #endif
 
 #include <CUnit/CUnit.h>
@@ -54,6 +55,7 @@
 
 int loglevel = LOG_NORMAL;
 struct scsi_device *sd;
+static unsigned int maxsectbytes;
 
 /*
  * this allows us to redefine how PDU are queued, at times, for
@@ -631,9 +633,6 @@ print_usage(void)
 	fprintf(stderr,
 	    "  -A|--abort                       Error Action: ABORT if any tests fail\n");
 	fprintf(stderr,
-	    "  -u|--usb                         The device is attached to a USB bus.\n"
-	    "                                   Additional restrictions apply, such as maximum transfer length 120kb.\n");
-	fprintf(stderr,
 	    "  -s|--silent                      Test Mode: Silent\n");
 	fprintf(stderr,
 	    "  -n|--normal                      Test Mode: Normal\n");
@@ -885,13 +884,18 @@ static int connect_scsi_device(struct scsi_device *sdev, const char *initiatorna
 	if (sdev->sgio_dev) {
 		int version;
 
-		if ((sdev->sgio_fd = open(sdev->sgio_dev, O_RDWR)) == -1) {
+		if ((sdev->sgio_fd = open(sdev->sgio_dev, O_RDWR|O_NONBLOCK)) == -1) {
 			fprintf(stderr, "Failed to open SG_IO device %s. Error:%s\n", sdev->sgio_dev,
 				strerror(errno));
 			return -1;
 		}
 		if ((ioctl(sdev->sgio_fd, SG_GET_VERSION_NUM, &version) < 0) || (version < 30000)) {
 			fprintf(stderr, "%s is not a SCSI device node\n", sdev->sgio_dev);
+			close(sdev->sgio_fd);
+			return -1;
+		}
+		if (ioctl(sdev->sgio_fd, BLKSECTGET, &maxsectbytes) < 0) {
+			fprintf(stderr, "%s failed to read BLKMAXSECT\n", sdev->sgio_dev);
 			close(sdev->sgio_fd);
 			return -1;
 		}
@@ -943,7 +947,6 @@ main(int argc, char *argv[])
 	struct scsi_task *rc16_task = NULL;
 	struct scsi_task *rsop_task = NULL;
 	int full_size;
-	int is_usb = 0;
 	int xml_mode = 0;
 	static struct option long_opts[] = {
 		{ "help", no_argument, 0, '?' },
@@ -958,7 +961,6 @@ main(int argc, char *argv[])
 		{ "abort", no_argument, 0, 'A' },
 		{ "silent", no_argument, 0, 's' },
 		{ "normal", no_argument, 0, 'n' },
-		{ "usb", no_argument, 0, 'u' },
 		{ "verbose", no_argument, 0, 'v' },
 		{ "xml", no_argument, 0, 'x' },
 		{ "Verbose-scsi", no_argument, 0, 'V' },
@@ -971,7 +973,7 @@ main(int argc, char *argv[])
 	memset(sd, '\0', sizeof(struct scsi_device));
 	sd->sgio_fd = -1;
 
-	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsSnuvxV", long_opts,
+	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsSnvxV", long_opts,
 		    &opt_idx)) > 0) {
 		switch (c) {
 		case 'h':
@@ -1010,9 +1012,6 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			mode = CU_BRM_NORMAL;
-			break;
-		case 'u':
-			is_usb = 1;
 			break;
 		case 'v':
 			mode = CU_BRM_VERBOSE;	/* default */
@@ -1259,9 +1258,10 @@ main(int argc, char *argv[])
 	}
 	scsi_free_scsi_task(task);
 
-	if (is_usb) {
-		printf("USB device. Clamping maximum transfer length to 120k\n");
-		maximum_transfer_length = 120 *1024 / block_size;
+	if (maxsectbytes) {
+		maximum_transfer_length = maxsectbytes / block_size;
+		printf("Bus transfer size is limited to %d bytes. Clamping "
+		       "max transfers accordingly.\n", maxsectbytes);
 	}
 
 	if (CU_initialize_registry() != 0) {
