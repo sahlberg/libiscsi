@@ -93,7 +93,7 @@ verify_persistent_reserve_access(struct scsi_device *sd1, struct scsi_device *sd
 	CU_ASSERT_EQUAL(0, ret);
 
 	/* unregister init2 */
-	ret = prout_register_key(sd2, 0, key);
+	ret = prout_register_key(sd2, 0, key2);
 	CU_ASSERT_EQUAL(0, ret);
 
 	/* verify unregistered init2 read access */
