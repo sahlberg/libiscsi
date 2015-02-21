@@ -67,7 +67,7 @@ iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 	}
 }
 
-int
+static int
 iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		    uint32_t ttt, uint32_t offset, uint32_t tot_len)
 {
@@ -190,6 +190,17 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 	}
 }
 
+int
+iscsi_send_unsolicited_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	uint32_t len = pdu->expxferlen - pdu->payload_len;
+
+	if (len > iscsi->first_burst_length) {
+		len = iscsi->first_burst_length;
+	}
+	return iscsi_send_data_out(iscsi, pdu, 0xffffffff,
+				   pdu->payload_len, len);
+}
 
 /* Using 'struct iscsi_data *d' for data-out is optional
  * and will be converted into a one element data-out iovector.
@@ -326,13 +337,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	 * subtract from first_burst_length.
 	 */
 	if (!(flags & ISCSI_PDU_SCSI_FINAL)) {
-		uint32_t len = pdu->expxferlen - pdu->payload_len;
-
-		if (len > iscsi->first_burst_length) {
-			len = iscsi->first_burst_length;
-		}
-		iscsi_send_data_out(iscsi, pdu, 0xffffffff,
-				    pdu->payload_len, len);
+		iscsi_send_unsolicited_data_out(iscsi, pdu);
 	}
 
 	/* remember cmdsn and itt so we can use task management */
