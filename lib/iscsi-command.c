@@ -326,7 +326,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	 * subtract from first_burst_length.
 	 */
 	if (!(flags & ISCSI_PDU_SCSI_FINAL)) {
-		uint32_t len = task->expxferlen - pdu->payload_len;
+		uint32_t len = pdu->expxferlen - pdu->payload_len;
 
 		if (len > iscsi->first_burst_length) {
 			len = iscsi->first_burst_length;
