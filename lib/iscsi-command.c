@@ -76,9 +76,7 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		struct iscsi_pdu *pdu;
 		int flags;
 
-		if (len > iscsi->target_max_recv_data_segment_length) {
-			len = iscsi->target_max_recv_data_segment_length;
-		}
+		len = MIN(len, iscsi->target_max_recv_data_segment_length);
 
 		pdu = iscsi_allocate_pdu_with_itt_flags(iscsi, ISCSI_PDU_DATA_OUT,
 				 ISCSI_PDU_NO_PDU,
@@ -269,13 +267,8 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		if (iscsi->use_immediate_data == ISCSI_IMMEDIATE_DATA_YES) {
 			uint32_t len = task->expxferlen;
 
-			if (len > iscsi->first_burst_length) {
-				len = iscsi->first_burst_length;
-			}
-
-			if (len > iscsi->target_max_recv_data_segment_length) {
-				len = iscsi->target_max_recv_data_segment_length;
-			}
+			len = MIN(len, iscsi->first_burst_length);
+			len = MIN(len, iscsi->target_max_recv_data_segment_length);
 
 			pdu->payload_offset = 0;
 			pdu->payload_len    = len;

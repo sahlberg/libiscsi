@@ -179,13 +179,9 @@ iscsi_create_context(const char *initiator_name)
 	/* iscsi->smalloc_size is the size for small allocations. this should be
 	   max(ISCSI_HEADER_SIZE, sizeof(struct iscsi_pdu), sizeof(struct iscsi_in_pdu))
 	   rounded up to the next power of 2. */
+	required = MAX(required, sizeof(struct iscsi_pdu));
+	required = MAX(required, sizeof(struct iscsi_in_pdu));
 	iscsi->smalloc_size = 1;
-	if (sizeof(struct iscsi_pdu) > required) {
-		required = sizeof(struct iscsi_pdu);
-	}
-	if (sizeof(struct iscsi_in_pdu) > required) {
-		required = sizeof(struct iscsi_in_pdu);
-	}
 	while (iscsi->smalloc_size < required) {
 		iscsi->smalloc_size <<= 1;
 	}
