@@ -343,9 +343,9 @@ try_again:
 
 		if (pdu->flags & ISCSI_PDU_DROP_ON_RECONNECT) {
 			/*
-			 * We don't want to requeue NOPs or DATA-OUT PDUs.
-			 * Any DATA-OUTs we need will be regenerated when we
-			 * call iscsi_scsi_command_async() below.
+			 * We only want to re-queue SCSI COMMAND PDUs.
+			 * All other PDUs are discarded at this point.
+			 * This includes DATA-OUT, NOP and task management.
 			 */
 			iscsi_free_pdu(old_iscsi, pdu);
 			continue;
