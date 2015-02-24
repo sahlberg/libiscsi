@@ -324,6 +324,7 @@ void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
 
 struct scsi_iovector *iscsi_get_scsi_task_iovector_in(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 struct scsi_iovector *iscsi_get_scsi_task_iovector_out(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+void scsi_task_reset_iov(struct scsi_iovector *iovector);
 
 void* iscsi_malloc(struct iscsi_context *iscsi, size_t size);
 void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);

@@ -3817,6 +3817,14 @@ scsi_task_set_iov_in(struct scsi_task *task, struct scsi_iovec *iov, int niov)
 	task->iovector_in.niov = niov;
 }
 
+void
+scsi_task_reset_iov(struct scsi_iovector *iovector)
+{
+	iovector->nalloc = 0;
+	iovector->offset = 0;
+	iovector->consumed = 0;
+}
+
 #define IOVECTOR_INITAL_ALLOC (16)
 
 static int

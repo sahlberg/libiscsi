@@ -351,6 +351,9 @@ try_again:
 			continue;
 		}
 
+		scsi_task_reset_iov(&pdu->scsi_cbdata.task->iovector_in);
+		scsi_task_reset_iov(&pdu->scsi_cbdata.task->iovector_out);
+
 		/* We pass NULL as 'd' since any databuffer has already
 		 * been converted to a task-> iovector first time this
 		 * PDU was sent.
