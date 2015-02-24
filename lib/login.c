@@ -1127,7 +1127,7 @@ iscsi_logout_async_internal(struct iscsi_context *iscsi, iscsi_command_cb cb,
 				 ISCSI_PDU_LOGOUT_REQUEST,
 				 ISCSI_PDU_LOGOUT_RESPONSE,
 				 iscsi_itt_post_increment(iscsi),
-				 ISCSI_PDU_DROP_ON_RECONNECT);
+				 ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_CORK_WHEN_SENT|flags);
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate "
 				"logout pdu.");
@@ -1149,7 +1149,6 @@ iscsi_logout_async_internal(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
-	pdu->flags |= ISCSI_PDU_CORK_WHEN_SENT | flags;
 
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
