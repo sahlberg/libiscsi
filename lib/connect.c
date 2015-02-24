@@ -344,36 +344,25 @@ try_again:
 		if (pdu->flags & ISCSI_PDU_DROP_ON_RECONNECT) {
 			/*
 			 * We don't want to requeue NOPs or DATA-OUT PDUs.
-			 * In case of DATA-OUT PDUs that are part of the
-			 * initial unsolicited data we have to regenerate
-			 * them forther down so that we end the re-queued
-			 * WRITE + DATA-OUT train with a PDU with the F bit.
-		 	 */
+			 * Any DATA-OUTs we need will be regenerated when we
+			 * call iscsi_scsi_command_async() below.
+			 */
 			iscsi_free_pdu(old_iscsi, pdu);
 			continue;
 		}
 
-		pdu->itt   = iscsi_itt_post_increment(iscsi);
-		iscsi_pdu_set_itt(pdu, pdu->itt);
-
-		/* do not increase cmdsn for PDUs marked for immediate delivery
-		 * this will result in a protocol error */
-		pdu->cmdsn = (pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE)?iscsi->cmdsn:iscsi->cmdsn++;
-		iscsi_pdu_set_cmdsn(pdu, pdu->cmdsn);
-
-		iscsi_pdu_set_expstatsn(pdu, iscsi->statsn);
-		iscsi->statsn++;
-
-		pdu->outdata_written = 0;
-		pdu->payload_written = 0;
-		iscsi_queue_pdu(iscsi, pdu);
-		/* Requeue any unsolicited data-out for the command PDU we
-		 * just re-queued. These are commands that write data to the
-		 * device but does not have the F bit set.
+		/* We pass NULL as 'd' since any databuffer has already
+		 * been converted to a task-> iovector first time this
+		 * PDU was sent.
 		 */
-		if ((pdu->outdata.data[1] & (ISCSI_PDU_SCSI_WRITE | ISCSI_PDU_SCSI_FINAL)) == ISCSI_PDU_SCSI_WRITE) {
-			iscsi_send_unsolicited_data_out(iscsi, pdu);
+		if (iscsi_scsi_command_async(iscsi, pdu->lun,
+					     pdu->scsi_cbdata.task,
+					     pdu->scsi_cbdata.callback,
+					     NULL,
+					     pdu->scsi_cbdata.private_data)) {
+			/* not much we can really do at this point */
 		}
+		iscsi_free_pdu(old_iscsi, pdu);
 	}
 
 	if (dup2(iscsi->fd, old_iscsi->fd) == -1) {

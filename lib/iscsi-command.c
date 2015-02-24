@@ -189,7 +189,7 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 	}
 }
 
-int
+static int
 iscsi_send_unsolicited_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	uint32_t len = MIN(pdu->expxferlen, iscsi->first_burst_length) - pdu->payload_len;
