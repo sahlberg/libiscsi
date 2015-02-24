@@ -48,7 +48,7 @@ iscsi_discovery_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	pdu = iscsi_allocate_pdu(iscsi, ISCSI_PDU_TEXT_REQUEST,
 				 ISCSI_PDU_TEXT_RESPONSE,
 				 iscsi_itt_post_increment(iscsi),
-				 0);
+				 ISCSI_PDU_DROP_ON_RECONNECT);
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate "
 				"text pdu.");
