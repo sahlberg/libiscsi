@@ -36,14 +36,15 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		return -1;
 	}
 
-	pdu = iscsi_allocate_pdu(iscsi, ISCSI_PDU_NOP_OUT, ISCSI_PDU_NOP_IN);
+	pdu = iscsi_allocate_pdu(iscsi,
+				 ISCSI_PDU_NOP_OUT,
+				 ISCSI_PDU_NOP_IN,
+				 iscsi_itt_post_increment(iscsi),
+				 ISCSI_PDU_DROP_ON_RECONNECT);
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Failed to allocate nop-out pdu");
 		return -1;
 	}
-
-	/* We don't want to requeue these on reconnect */
-	pdu->flags |= ISCSI_PDU_DROP_ON_RECONNECT;
 
 	/* immediate flag */
 	iscsi_pdu_set_immediate(pdu);
@@ -91,8 +92,11 @@ iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt)
 {
 	struct iscsi_pdu *pdu;
 
-	pdu = iscsi_allocate_pdu_with_itt_flags(iscsi, ISCSI_PDU_NOP_OUT, ISCSI_PDU_NO_PDU,
-				0xffffffff,ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_DELETE_WHEN_SENT|ISCSI_PDU_NO_CALLBACK);
+	pdu = iscsi_allocate_pdu(iscsi,
+				 ISCSI_PDU_NOP_OUT,
+				 ISCSI_PDU_NO_PDU,
+				 0xffffffff,
+				 ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_DELETE_WHEN_SENT|ISCSI_PDU_NO_CALLBACK);
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Failed to allocate nop-out pdu");
 		return -1;

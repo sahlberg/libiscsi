@@ -104,8 +104,9 @@ void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data) {
 }
 
 struct iscsi_pdu *
-iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
-				  enum iscsi_opcode response_opcode, uint32_t itt, uint32_t flags)
+iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
+		   enum iscsi_opcode response_opcode, uint32_t itt,
+		   uint32_t flags)
 {
 	struct iscsi_pdu *pdu;
 
@@ -142,13 +143,6 @@ iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opcode
 
 	return pdu;
 }
-
-struct iscsi_pdu *
-iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
-		   enum iscsi_opcode response_opcode)
-{
-	return iscsi_allocate_pdu_with_itt_flags(iscsi, opcode, response_opcode, iscsi_itt_post_increment(iscsi), 0);
-}	
 
 void
 iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
