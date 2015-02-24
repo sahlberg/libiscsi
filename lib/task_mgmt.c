@@ -53,7 +53,7 @@ iscsi_task_mgmt_async(struct iscsi_context *iscsi,
 				 ISCSI_PDU_SCSI_TASK_MANAGEMENT_REQUEST,
 				 ISCSI_PDU_SCSI_TASK_MANAGEMENT_RESPONSE,
 				 iscsi_itt_post_increment(iscsi),
-				 0);
+				 ISCSI_PDU_DROP_ON_RECONNECT);
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Failed to allocate task mgmt pdu");
 		return -1;
