@@ -27,6 +27,10 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
+#ifndef HAVE_CLOCK_GETTIME
+#include <sys/time.h>
+#endif
+
 #define VERSION "0.1"
 
 const char *initiator = "iqn.2010-11.libiscsi:iscsi-perf";
@@ -55,12 +59,23 @@ struct client {
 };
 
 u_int64_t get_clock_ns(void) {
-	struct timespec tp;
-	if (clock_gettime (CLOCK_MONOTONIC, &tp) == -1) {
-		fprintf(stderr,"could not get clock monotonic\n");
+	int res;
+	u_int64_t ns;
+
+#ifdef HAVE_CLOCK_GETTIME
+	struct timespec ts;
+	res = clock_gettime (CLOCK_MONOTONIC, &tp);
+	ns = ts.tv_sec * 1000000000 + ts.tv_nsec;
+#else
+	struct timeval tv;
+	res = gettimeofday(&tv, NULL);
+	ns = tv.tv_sec * 1000000000 + tv.tv_usec * 1000;
+#endif
+	if (res == -1) {
+		fprintf(stderr,"could not get requested clock\n");
 		exit(10);
 	}
-	return tp.tv_sec*1000000000+tp.tv_nsec;
+	return ns;
 }
 
 void fill_read_queue(struct client *client);

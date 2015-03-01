@@ -128,6 +128,9 @@ AC_CHECK_MEMBER([struct CU_SuiteInfo.pSetUpFunc],
 #include <CUnit/TestDB.h>
 ]])
 
+AC_SEARCH_LIBS(clock_gettime, rt, [
+	       AC_DEFINE([HAVE_CLOCK_GETTIME],1,[Define if clock_gettime is available])])
+
 
 AC_CONFIG_FILES([Makefile]
 		[lib/Makefile]
