@@ -76,12 +76,12 @@ void progress(struct client *client) {
 	uint64_t aiops = 1000000000UL * (client->iops) / (now - client->first_ns);
 	if (!_runtime) {
 		finished = 1;
-		printf ("iops average %lu (%lu MB/s)                                                        ", aiops, (aiops * blocks_per_io * client->blocksize) >> 20);
+		printf ("iops average %llu (%llu MB/s)                                                        ", aiops, (aiops * blocks_per_io * client->blocksize) >> 20);
 	} else {
 		uint64_t iops = 1000000000UL * (client->iops - client->last_iops) / (now - client->last_ns);
-		printf ("%02lu:%02lu:%02lu - ", (_runtime % 3600) / 60, _runtime / 60, _runtime % 60);
-		printf ("lba %lu, iops current %lu (%lu MB/s), ", client->pos, iops, (iops * blocks_per_io * client->blocksize) >> 20);
-		printf ("iops average %lu (%lu MB/s)         ", aiops, (aiops * blocks_per_io * client->blocksize) >> 20);
+		printf ("%02llu:%02llu:%02llu - ", (_runtime % 3600) / 60, _runtime / 60, _runtime % 60);
+		printf ("lba %llu, iops current %llu (%llu MB/s), ", client->pos, iops, (iops * blocks_per_io * client->blocksize) >> 20);
+		printf ("iops average %llu (%llu MB/s)         ", aiops, (aiops * blocks_per_io * client->blocksize) >> 20);
 	}
 	fflush(stdout);
 	client->last_ns = now;
@@ -274,14 +274,14 @@ int main(int argc, char *argv[])
 	
 	scsi_free_scsi_task(task);
 
-	printf("capacity is %lu blocks or %lu byte (%lu MB)\n", client.num_blocks, client.num_blocks * client.blocksize,
+	printf("capacity is %llu blocks or %llu byte (%llu MB)\n", client.num_blocks, client.num_blocks * client.blocksize,
 	                                                        (client.num_blocks * client.blocksize) >> 20);
 	                                                        
 	printf("performing %s READ with %d parallel requests\nfixed transfer size of %d blocks (%d byte)\n",
 	       client.random ? "random" : "sequential", max_in_flight, blocks_per_io, blocks_per_io * client.blocksize);
 
 	if (runtime) {
-		printf("will run for %lu seconds.\n", runtime);
+		printf("will run for %llu seconds.\n", runtime);
 	} else {
 		printf("infinite runtime - press CTRL-C to abort.\n");
 	}
