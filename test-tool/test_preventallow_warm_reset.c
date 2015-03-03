@@ -62,7 +62,8 @@ test_preventallow_warm_reset(void)
 	ret = iscsi_task_mgmt_target_warm_reset_sync(sd->iscsi_ctx);
 	CU_ASSERT_EQUAL(ret, 0);
 	logging(LOG_VERBOSE, "Wait until all unit attentions clear");
-	while (testunitready(sd, EXPECT_STATUS_GOOD) != 0);
+	while (testunitready(sd, EXPECT_STATUS_GOOD) != 0)
+		;
 
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
