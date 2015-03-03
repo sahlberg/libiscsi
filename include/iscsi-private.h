@@ -257,12 +257,9 @@ struct iscsi_pdu {
 
 struct iscsi_pdu *iscsi_allocate_pdu(struct iscsi_context *iscsi,
 				     enum iscsi_opcode opcode,
-				     enum iscsi_opcode response_opcode);
-struct iscsi_pdu *iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi,
-       		 		enum iscsi_opcode opcode,
-				enum iscsi_opcode response_opcode,
-				uint32_t itt,
-				uint32_t flags);
+				     enum iscsi_opcode response_opcode,
+				     uint32_t itt,
+				     uint32_t flags);
 void iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 void iscsi_pdu_set_pduflags(struct iscsi_pdu *pdu, unsigned char flags);
 void iscsi_pdu_set_immediate(struct iscsi_pdu *pdu);
@@ -279,7 +276,6 @@ void iscsi_pdu_set_bufferoffset(struct iscsi_pdu *pdu, uint32_t bufferoffset);
 int iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		       unsigned char *dptr, int dsize);
 int iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
-int iscsi_send_unsolicited_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 int iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 		   unsigned char *dptr, int dsize, int pdualignment);
@@ -328,6 +324,7 @@ void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
 
 struct scsi_iovector *iscsi_get_scsi_task_iovector_in(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 struct scsi_iovector *iscsi_get_scsi_task_iovector_out(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+void scsi_task_reset_iov(struct scsi_iovector *iovector);
 
 void* iscsi_malloc(struct iscsi_context *iscsi, size_t size);
 void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);

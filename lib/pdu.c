@@ -104,8 +104,9 @@ void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data) {
 }
 
 struct iscsi_pdu *
-iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
-				  enum iscsi_opcode response_opcode, uint32_t itt, uint32_t flags)
+iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
+		   enum iscsi_opcode response_opcode, uint32_t itt,
+		   uint32_t flags)
 {
 	struct iscsi_pdu *pdu;
 
@@ -142,13 +143,6 @@ iscsi_allocate_pdu_with_itt_flags(struct iscsi_context *iscsi, enum iscsi_opcode
 
 	return pdu;
 }
-
-struct iscsi_pdu *
-iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
-		   enum iscsi_opcode response_opcode)
-{
-	return iscsi_allocate_pdu_with_itt_flags(iscsi, opcode, response_opcode, iscsi_itt_post_increment(iscsi), 0);
-}	
 
 void
 iscsi_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
@@ -371,7 +365,7 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 
 	if (reason == ISCSI_REJECT_WAITING_FOR_LOGOUT) {
 		ISCSI_LOG(iscsi, 1, "target rejects request with reason: %s",  iscsi_reject_reason_str(reason));
-		iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_URGENT_DELIVERY);
+		iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_URGENT_DELIVERY);
 		return 0;
 	}
 
@@ -441,7 +435,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 				ISCSI_LOG(iscsi, 2, "dropping connection to fix errors with broken DELL Equallogic firmware 7.x");
 				return -1;
 			}
-			iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_URGENT_DELIVERY);
+			iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_URGENT_DELIVERY);
 			return 0;
 		case 0x2:
 			ISCSI_LOG(iscsi, 2, "target will drop this connection. Time2Wait is %u seconds", param2);

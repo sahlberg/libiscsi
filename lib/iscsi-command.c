@@ -78,10 +78,11 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 
 		len = MIN(len, iscsi->target_max_recv_data_segment_length);
 
-		pdu = iscsi_allocate_pdu_with_itt_flags(iscsi, ISCSI_PDU_DATA_OUT,
-				 ISCSI_PDU_NO_PDU,
-				 cmd_pdu->itt,
-				 ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_DELETE_WHEN_SENT|ISCSI_PDU_NO_CALLBACK);
+		pdu = iscsi_allocate_pdu(iscsi,
+					 ISCSI_PDU_DATA_OUT,
+					 ISCSI_PDU_NO_PDU,
+					 cmd_pdu->itt,
+					 ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_DELETE_WHEN_SENT|ISCSI_PDU_NO_CALLBACK);
 		if (pdu == NULL) {
 			iscsi_set_error(iscsi, "Out-of-memory, Failed to allocate "
 				"scsi data out pdu.");
@@ -188,7 +189,7 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 	}
 }
 
-int
+static int
 iscsi_send_unsolicited_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	uint32_t len = MIN(pdu->expxferlen, iscsi->first_burst_length) - pdu->payload_len;
@@ -235,8 +236,11 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		scsi_task_set_iov_out(task, iov, 1);
 	}
 
-	pdu = iscsi_allocate_pdu(iscsi, ISCSI_PDU_SCSI_REQUEST,
-				 ISCSI_PDU_SCSI_RESPONSE);
+	pdu = iscsi_allocate_pdu(iscsi,
+				 ISCSI_PDU_SCSI_REQUEST,
+				 ISCSI_PDU_SCSI_RESPONSE,
+				 iscsi_itt_post_increment(iscsi),
+				 0);
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory, Failed to allocate "
 				"scsi pdu.");
