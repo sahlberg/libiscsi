@@ -482,7 +482,7 @@ iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 
 int
 orwrite(struct scsi_device *sdev, uint64_t lba,
-	uint32_t datalen, int blocksize, int wrprotect, 
+	uint32_t datalen, int blocksize, int wrprotect,
 	int dpo, int fua, int fua_nv, int group,
 	unsigned char *data,
 	int status, enum scsi_sense_key key, int *ascq, int num_ascq)
@@ -1581,7 +1581,7 @@ read6(struct scsi_device *sdev, struct scsi_task **out_task, uint32_t lba,
 int
 read10(struct scsi_device *sdev, struct scsi_task **out_task,
        uint32_t lba,
-       uint32_t datalen, int blocksize, int rdprotect, 
+       uint32_t datalen, int blocksize, int rdprotect,
        int dpo, int fua, int fua_nv, int group,
        unsigned char *data,
        int status, enum scsi_sense_key key, int *ascq, int num_ascq)
@@ -1615,7 +1615,7 @@ read10(struct scsi_device *sdev, struct scsi_task **out_task,
 
 int
 read12(struct scsi_device *sdev, uint32_t lba,
-       uint32_t datalen, int blocksize, int rdprotect, 
+       uint32_t datalen, int blocksize, int rdprotect,
        int dpo, int fua, int fua_nv, int group,
        unsigned char *data,
        int status, enum scsi_sense_key key, int *ascq, int num_ascq)
@@ -1647,7 +1647,7 @@ read12(struct scsi_device *sdev, uint32_t lba,
 
 int
 read16(struct scsi_device *sdev, uint64_t lba,
-       uint32_t datalen, int blocksize, int rdprotect, 
+       uint32_t datalen, int blocksize, int rdprotect,
        int dpo, int fua, int fua_nv, int group,
        unsigned char *data,
        int status, enum scsi_sense_key key, int *ascq, int num_ascq)
@@ -2170,7 +2170,7 @@ writesame16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int num, i
 
 int
 writeverify10(struct scsi_device *sdev, uint32_t lba,
-	      uint32_t datalen, int blocksize, int wrprotect, 
+	      uint32_t datalen, int blocksize, int wrprotect,
 	      int dpo, int bytchk, int group, unsigned char *data,
 	      int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
@@ -2206,7 +2206,7 @@ writeverify10(struct scsi_device *sdev, uint32_t lba,
 
 int
 writeverify12(struct scsi_device *sdev, uint32_t lba,
-	      uint32_t datalen, int blocksize, int wrprotect, 
+	      uint32_t datalen, int blocksize, int wrprotect,
 	      int dpo, int bytchk, int group, unsigned char *data,
 	      int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
@@ -2242,7 +2242,7 @@ writeverify12(struct scsi_device *sdev, uint32_t lba,
 
 int
 writeverify16(struct scsi_device *sdev, uint64_t lba,
-	      uint32_t datalen, int blocksize, int wrprotect, 
+	      uint32_t datalen, int blocksize, int wrprotect,
 	      int dpo, int bytchk, int group, unsigned char *data,
 	      int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
@@ -2316,7 +2316,7 @@ get_command_descriptor(int opcode, int sa)
 			return &rsop->descriptors[i];
 		}
 	}
-	
+
 	return NULL;
 }
 

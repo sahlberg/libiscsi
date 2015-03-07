@@ -1,16 +1,16 @@
-/* 
+/*
    Copyright (C) 2010 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
@@ -234,7 +234,7 @@ void list_luns(struct client_state *clnt, const char *target, const char *portal
 void discoverylogout_cb(struct iscsi_context *iscsi, int status, void *command_data _U_, void *private_data)
 {
 	struct client_state *state = (struct client_state *)private_data;
-	
+
 	if (status != 0) {
 		fprintf(stderr, "Failed to logout from target. : %s\n", iscsi_get_error(iscsi));
 		exit(10);
@@ -257,7 +257,7 @@ void discovery_cb(struct iscsi_context *iscsi, int status, void *command_data, v
 		exit(10);
 	}
 
-	for(addr=command_data; addr; addr=addr->next) {	
+	for(addr=command_data; addr; addr=addr->next) {
 		printf("Target:%s Portal:%s\n", addr->target_name, addr->target_address);
 		if (showluns != 0) {
 			list_luns(private_data, addr->target_name, addr->target_address);
@@ -391,13 +391,13 @@ int main(int argc, char *argv[])
 	}
 
 	iscsi_url = iscsi_parse_portal_url(iscsi, url);
-	
+
 	if (url) {
 		free(discard_const(url));
 	}
 
 	if (iscsi_url == NULL) {
-		fprintf(stderr, "Failed to parse URL: %s\n", 
+		fprintf(stderr, "Failed to parse URL: %s\n",
 			iscsi_get_error(iscsi));
 		exit(10);
 	}

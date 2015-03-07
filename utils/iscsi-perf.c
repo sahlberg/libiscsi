@@ -1,16 +1,16 @@
-/* 
+/*
    Copyright (C) 2014 by Peter Lieven <pl@kamp.de>
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
@@ -86,7 +86,7 @@ void progress(struct client *client) {
 
 	uint64_t _runtime = (now - client->first_ns) / 1000000000UL;
 	if (runtime) _runtime = runtime - _runtime;
-	
+
 	printf ("\r");
 	uint64_t aiops = 1000000000UL * (client->iops) / (now - client->first_ns);
 	if (!_runtime) {
@@ -197,9 +197,9 @@ int main(int argc, char *argv[])
 	int option_index;
 
 	memset(&client, 0, sizeof(client));
-	
+
 	srand(time(NULL));
-	
+
 	printf("iscsi-perf version %s - (c) 2014 by Peter Lieven <pl@ĸamp.de>\n\n", VERSION);
 
 	while ((c = getopt_long(argc, argv, "i:m:b:t:nr", long_options,
@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
 	}
 	iscsi_url = iscsi_parse_full_url(client.iscsi, url);
 	if (iscsi_url == NULL) {
-		fprintf(stderr, "Failed to parse URL: %s\n", 
+		fprintf(stderr, "Failed to parse URL: %s\n",
 			iscsi_get_error(client.iscsi));
 		exit(10);
 	}
@@ -286,12 +286,12 @@ int main(int argc, char *argv[])
 
 	client.blocksize  = rc16->block_length;
 	client.num_blocks  = rc16->returned_lba + 1;
-	
+
 	scsi_free_scsi_task(task);
 
 	printf("capacity is %" PRIu64 " blocks or %" PRIu64 " byte (%" PRIu64 " MB)\n", client.num_blocks, client.num_blocks * client.blocksize,
 	                                                        (client.num_blocks * client.blocksize) >> 20);
-	                                                        
+
 	printf("performing %s READ with %d parallel requests\nfixed transfer size of %d blocks (%d byte)\n",
 	       client.random ? "random" : "sequential", max_in_flight, blocks_per_io, blocks_per_io * client.blocksize);
 
@@ -300,18 +300,18 @@ int main(int argc, char *argv[])
 	} else {
 		printf("infinite runtime - press CTRL-C to abort.\n");
 	}
-	
+
 	struct sigaction sa;
 	sa.sa_handler = &sig_handler;
 	sa.sa_flags = SA_RESTART;
-	
+
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTERM, &sa, NULL);
-	
+
 	printf("\n");
-	
+
 	client.first_ns = client.last_ns = get_clock_ns();
-	
+
 	fill_read_queue(&client);
 
 	while (client.in_flight) {
@@ -326,9 +326,9 @@ int main(int argc, char *argv[])
 			break;
 		}
 	}
-	
+
 	progress(&client);
-	
+
 	printf ("\n\nfinished.\n");
 
 	iscsi_logout_sync(client.iscsi);

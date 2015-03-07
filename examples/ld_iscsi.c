@@ -74,7 +74,7 @@ int open(const char *path, int flags, mode_t mode)
 		if (mode & O_NONBLOCK) {
 			LD_ISCSI_DPRINTF(0,"Non-blocking I/O is currently not supported");
 			errno = EINVAL;
-			return -1;			
+			return -1;
 		}
 
 		iscsi = iscsi_create_context(initiator);
@@ -131,7 +131,7 @@ int open(const char *path, int flags, mode_t mode)
 			errno = EIO;
 			return -1;
 		}
-      
+
         LD_ISCSI_DPRINTF(4,"readcapacity16_sync: block_size: %d, num_blocks: %"PRIu64,rc16->block_length,rc16->returned_lba + 1);
 
 		fd = iscsi_get_fd(iscsi);
@@ -141,7 +141,7 @@ int open(const char *path, int flags, mode_t mode)
 			iscsi_destroy_context(iscsi);
 			errno = ENFILE;
 			return -1;
-		}		
+		}
 
 		iscsi_fd_list[fd].is_iscsi   = 1;
 		iscsi_fd_list[fd].dup2fd     = -1;
@@ -263,7 +263,7 @@ int __lxstat(int ver, const char *path, struct stat *buf)
 
 		ret = __fxstat(ver, fd, buf);
 		close(fd);
-		return ret;		
+		return ret;
 	}
 
 	return real_lxstat(ver, path, buf);
@@ -303,7 +303,7 @@ off_t lseek(int fd, off_t offset, int whence) {
 		iscsi_fd_list[fd].offset=new_offset;
 		return iscsi_fd_list[fd].offset;
 	}
-	
+
 	return real_lseek(fd, offset, whence);
 }
 
@@ -415,7 +415,7 @@ ssize_t read(int fd, void *buf, size_t count)
 	return real_read(fd, buf, count);
 }
 
-ssize_t (*real_pread)(int fd, void *buf, size_t count, off_t offset); 
+ssize_t (*real_pread)(int fd, void *buf, size_t count, off_t offset);
 ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
 	if ((iscsi_fd_list[fd].is_iscsi == 1 && iscsi_fd_list[fd].in_flight == 0)) {
 		off_t old_offset;
@@ -438,7 +438,7 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
 
 ssize_t (*real_write)(int fd, const void *buf, size_t count);
 
-ssize_t write(int fd, const void *buf, size_t count) 
+ssize_t write(int fd, const void *buf, size_t count)
 {
 	if ((iscsi_fd_list[fd].is_iscsi == 1) && (iscsi_fd_list[fd].in_flight == 0)) {
 		uint64_t offset;
@@ -485,7 +485,7 @@ ssize_t write(int fd, const void *buf, size_t count)
 
 		iscsi_fd_list[fd].offset += count;
 		scsi_free_scsi_task(task);
-		
+
 		return count;
 	}
 
@@ -578,7 +578,7 @@ int __lxstat64(int ver, const char *path, struct stat64 *buf)
 
 		ret = __fxstat64(ver, fd, buf);
 		close(fd);
-		return ret;		
+		return ret;
 	}
 
 	return real_lxstat64(ver, path, buf);
