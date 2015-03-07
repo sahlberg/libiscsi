@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
 	iscsi_set_targetname(client.src_iscsi, iscsi_url->target);
 	iscsi_set_session_type(client.src_iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(client.src_iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	if (iscsi_url->user != NULL) {
+	if (iscsi_url->user[0] != '\0') {
 		if (iscsi_set_initiator_username_pwd(client.src_iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
 			fprintf(stderr, "Failed to set initiator username and password\n");
 			exit(10);
@@ -328,7 +328,7 @@ int main(int argc, char *argv[])
 	iscsi_set_targetname(client.dst_iscsi, iscsi_url->target);
 	iscsi_set_session_type(client.dst_iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(client.dst_iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	if (iscsi_url->user != NULL) {
+	if (iscsi_url->user[0] != '\0') {
 		if (iscsi_set_initiator_username_pwd(client.dst_iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
 			fprintf(stderr, "Failed to set initiator username and password\n");
 			exit(10);

@@ -96,7 +96,7 @@ int open(const char *path, int flags, mode_t mode)
 		iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
 		iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
 
-		if (iscsi_url->user != NULL) {
+		if (iscsi_url->user[0] != '\0') {
 			if (iscsi_set_initiator_username_pwd(iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
 				LD_ISCSI_DPRINTF(0,"Failed to set initiator username and password");
 				iscsi_destroy_context(iscsi);

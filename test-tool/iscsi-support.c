@@ -407,7 +407,7 @@ iscsi_context_login(const char *initiatorname, const char *url, int *lun)
 	iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
 
-	if (iscsi_url->user != NULL) {
+	if (iscsi_url->user[0] != '\0') {
 		if (iscsi_set_initiator_username_pwd(iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
 			fprintf(stderr, "Failed to set initiator username and password\n");
 			iscsi_destroy_url(iscsi_url);
