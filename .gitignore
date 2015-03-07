@@ -16,6 +16,7 @@
 *.o
 *.lo
 *.la
+*.so
 bin
 /config.h
 /config.log
@@ -31,10 +32,18 @@ TAGS
 /doc/Makefile
 /examples/Makefile.in
 /examples/Makefile
+/examples/iscsi-dd
+/examples/iscsiclient
+/examples/ld_iscsi.so
 /lib/Makefile.in
 /lib/Makefile
 /test-tool/Makefile.in
 /test-tool/Makefile
 /utils/Makefile.in
 /utils/Makefile
+/utils/iscsi-inq
+/utils/iscsi-ls
+/utils/iscsi-perf
+/utils/iscsi-readcapacity16
+/utils/iscsi-swp
 /libiscsi.pc
