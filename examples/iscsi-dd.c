@@ -1,16 +1,16 @@
-/* 
+/*
    Copyright (C) 2010 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
-   
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
@@ -262,14 +262,14 @@ int main(int argc, char *argv[])
 	}
 	iscsi_url = iscsi_parse_full_url(client.src_iscsi, src_url);
 	if (iscsi_url == NULL) {
-		fprintf(stderr, "Failed to parse URL: %s\n", 
+		fprintf(stderr, "Failed to parse URL: %s\n",
 			iscsi_get_error(client.src_iscsi));
 		exit(10);
 	}
 	iscsi_set_targetname(client.src_iscsi, iscsi_url->target);
 	iscsi_set_session_type(client.src_iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(client.src_iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	if (iscsi_url->user != NULL) {
+	if (iscsi_url->user[0] != '\0') {
 		if (iscsi_set_initiator_username_pwd(client.src_iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
 			fprintf(stderr, "Failed to set initiator username and password\n");
 			exit(10);
@@ -321,14 +321,14 @@ int main(int argc, char *argv[])
 	}
 	iscsi_url = iscsi_parse_full_url(client.dst_iscsi, dst_url);
 	if (iscsi_url == NULL) {
-		fprintf(stderr, "Failed to parse URL: %s\n", 
+		fprintf(stderr, "Failed to parse URL: %s\n",
 			iscsi_get_error(client.dst_iscsi));
 		exit(10);
 	}
 	iscsi_set_targetname(client.dst_iscsi, iscsi_url->target);
 	iscsi_set_session_type(client.dst_iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(client.dst_iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	if (iscsi_url->user != NULL) {
+	if (iscsi_url->user[0] != '\0') {
 		if (iscsi_set_initiator_username_pwd(client.dst_iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
 			fprintf(stderr, "Failed to set initiator username and password\n");
 			exit(10);
