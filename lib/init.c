@@ -474,8 +474,42 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 	strncpy(str,url + 8, MAX_STRING_SIZE);
 	portal = str;
 
+	iscsi_set_target_username_pwd(iscsi,
+		getenv("LIBISCSI_CHAP_TARGET_USERNAME"),
+		getenv("LIBISCSI_CHAP_TARGET_PASSWORD"));
+
 	user   = getenv("LIBISCSI_CHAP_USERNAME");
 	passwd = getenv("LIBISCSI_CHAP_PASSWORD");
+
+	tmp = strchr(portal, '?');
+	if (tmp) {
+		*tmp++ = 0;
+		while (tmp && *tmp) {
+			char *next = strchr(tmp, '&');
+			char *key, *value;
+
+			if (next != NULL) {
+				*next++ = 0;
+			}
+			key = tmp;
+			value = strchr(key, '=');
+			if (value != NULL) {
+				*value++ = 0;
+			}
+			if (!strcmp(key, "target_user")) {
+				if (value) {
+					strncpy(iscsi->target_user,
+						value, MAX_STRING_SIZE);
+				}
+			} else if (!strcmp(key, "target_password")) {
+				if (value) {
+					strncpy(iscsi->target_passwd,
+						value, MAX_STRING_SIZE);
+				}
+			}
+			tmp = next;
+		}
+	}
 
 	tmp = strchr(portal, '@');
 	if (tmp != NULL) {
@@ -553,9 +587,19 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 
 	strncpy(iscsi_url->portal,portal,MAX_STRING_SIZE);
 
+	if (!iscsi->target_user[0] || !iscsi->target_passwd[0]) {
+		iscsi->target_user[0] = 0;
+		iscsi->target_passwd[0] = 0;
+	}
 	if (user != NULL && passwd != NULL) {
 		strncpy(iscsi_url->user, user, MAX_STRING_SIZE);
 		strncpy(iscsi_url->passwd, passwd, MAX_STRING_SIZE);
+	} else {
+		/* if we do not have normal CHAP, that means we do not have
+		 * bidirectional either.
+		 */
+		iscsi->target_user[0] = 0;
+		iscsi->target_passwd[0] = 0;
 	}
 
 	if (full) {
@@ -600,6 +644,22 @@ iscsi_set_initiator_username_pwd(struct iscsi_context *iscsi,
 	strncpy(iscsi->passwd,passwd,MAX_STRING_SIZE);
 	return 0;
 }
+
+
+int
+iscsi_set_target_username_pwd(struct iscsi_context *iscsi,
+			      const char *user, const char *passwd)
+{
+	if (!user || !passwd) {
+		iscsi->target_user[0] = 0;
+		iscsi->target_passwd[0] = 0;
+		return 0;
+	}
+	strncpy(iscsi->target_user, user, MAX_STRING_SIZE);
+	strncpy(iscsi->target_passwd, passwd, MAX_STRING_SIZE);
+	return 0;
+}
+
 
 int
 iscsi_set_immediate_data(struct iscsi_context *iscsi, enum iscsi_immediate_data immediate_data)

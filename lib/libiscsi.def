@@ -97,6 +97,7 @@ iscsi_set_isid_oui
 iscsi_set_isid_random
 iscsi_set_isid_reserved
 iscsi_set_session_type
+iscsi_set_target_username_pwd
 iscsi_set_targetname
 iscsi_set_tcp_keepalive
 iscsi_set_tcp_user_timeout

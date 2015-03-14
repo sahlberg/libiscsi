@@ -285,6 +285,9 @@ try_again:
 	if (old_iscsi->user[0]) {
 		iscsi_set_initiator_username_pwd(iscsi, old_iscsi->user, old_iscsi->passwd);
 	}
+	if (old_iscsi->target_user[0]) {
+		iscsi_set_target_username_pwd(iscsi, old_iscsi->target_user, old_iscsi->target_passwd);
+	}
 
 	iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
 

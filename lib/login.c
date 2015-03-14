@@ -637,13 +637,16 @@ static void gcry_md_close(gcry_md_hd_t h)
 }
 #endif
 
+/* size of the challenge used for bidirectional chap */
+#define TARGET_CHAP_C_SIZE 32
+
 static int
 iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	char str[MAX_STRING_SIZE+1];
 	char * strp;
 	unsigned char c, cc[2];
-	unsigned char digest[16];
+	unsigned char digest[CHAP_R_SIZE];
 	gcry_md_hd_t ctx;
 	int i;
 
@@ -652,14 +655,14 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return 0;
 	}
 
-	gcry_md_open(&ctx, GCRY_MD_MD5, 0);
-	if (!ctx) {
-		iscsi_set_error(iscsi, "Cannot create MD5 algorithm");
+	if (!iscsi->chap_c[0]) {
+		iscsi_set_error(iscsi, "No CHAP challenge found");
 		return -1;
 	}
 
-	if (!iscsi->chap_c[0]) {
-		iscsi_set_error(iscsi, "No CHAP challenge found");
+	gcry_md_open(&ctx, GCRY_MD_MD5, 0);
+	if (ctx == NULL) {
+		iscsi_set_error(iscsi, "Cannot create MD5 algorithm");
 		return -1;
 	}
 	gcry_md_putc(ctx, iscsi->chap_i);
@@ -681,7 +684,7 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return -1;
 	}
 
-	for (i=0; i<16; i++) {
+	for (i = 0; i < CHAP_R_SIZE; i++) {
 		c = digest[i];
 		cc[0] = i2h((c >> 4)&0x0f);
 		cc[1] = i2h((c     )&0x0f);
@@ -696,6 +699,63 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
 			"failed.");
 		return -1;
+	}
+
+	/* bidirectional chap */
+	if (iscsi->target_user[0]) {
+		unsigned char target_chap_c[TARGET_CHAP_C_SIZE];
+
+		iscsi->target_chap_i++;
+		snprintf(str, MAX_STRING_SIZE, "CHAP_I=%d",
+			 iscsi->target_chap_i);
+		if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str,
+				       strlen(str) + 1) != 0) {
+			iscsi_set_error(iscsi, "Out-of-memory: pdu add "
+					"data failed.");
+			return -1;
+		}
+
+		for (i = 0; i < TARGET_CHAP_C_SIZE; i++) {
+			target_chap_c[i] = rand()&0xff;
+		}
+		strncpy(str, "CHAP_C=0x", MAX_STRING_SIZE);
+		if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str,
+				       strlen(str)) != 0) {
+			iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
+					"failed.");
+			return -1;
+		}
+		for (i = 0; i < TARGET_CHAP_C_SIZE; i++) {
+			c = target_chap_c[i];
+			cc[0] = i2h((c >> 4)&0x0f);
+			cc[1] = i2h((c     )&0x0f);
+			if (iscsi_pdu_add_data(iscsi, pdu, &cc[0], 2) != 0) {
+				iscsi_set_error(iscsi, "Out-of-memory: pdu add "
+						"data failed.");
+				return -1;
+			}
+		}
+		c = 0;
+		if (iscsi_pdu_add_data(iscsi, pdu, &c, 1) != 0) {
+			iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
+					"failed.");
+			return -1;
+		}
+
+		gcry_md_open(&ctx, GCRY_MD_MD5, 0);
+		if (ctx == NULL) {
+			iscsi_set_error(iscsi, "Cannot create MD5 algorithm");
+			return -1;
+		}
+		gcry_md_putc(ctx, iscsi->target_chap_i);
+		gcry_md_write(ctx, (unsigned char *)iscsi->target_passwd,
+			      strlen(iscsi->target_passwd));
+		gcry_md_write(ctx, (unsigned char *)target_chap_c,
+			      TARGET_CHAP_C_SIZE);
+
+		memcpy(iscsi->target_chap_r, gcry_md_read(ctx, 0),
+		       sizeof(iscsi->target_chap_r));
+		gcry_md_close(ctx);
 	}
 
 	return 0;
@@ -969,11 +1029,23 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	uint32_t status;
 	char *ptr = (char *)in->data;
 	int size = in->data_pos;
+	int must_have_chap_n = 0;
+	int must_have_chap_r = 0;
 
 	status = scsi_get_uint16(&in->hdr[36]);
 
 	iscsi_adjust_statsn(iscsi, in);
 	iscsi_adjust_maxexpcmdsn(iscsi, in);
+
+	/* Using bidirectional CHAP? Then we must see a chap_n and chap_r
+	 * field in this PDU
+	 */
+	if ((in->hdr[1] & ISCSI_PDU_LOGIN_TRANSIT)
+	&& (in->hdr[1] & ISCSI_PDU_LOGIN_CSG_FF) == ISCSI_PDU_LOGIN_CSG_SECNEG
+	&& iscsi->target_user[0]) {
+		must_have_chap_n = 1;
+		must_have_chap_r = 1;
+	}
 
 	/* XXX here we should parse the data returned in case the target
 	 * renegotiated some some parameters.
@@ -1070,6 +1142,43 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			iscsi->secneg_phase = ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE;
 		}
 
+		if (!strncmp(ptr, "CHAP_N=", 7)) {
+			if (strcmp(iscsi->target_user, ptr + 7)) {
+				iscsi_set_error(iscsi, "Failed to log in to"
+						" target. Wrong CHAP targetname"
+						" received: %s", ptr + 7);
+				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					      pdu->private_data);
+				return 0;
+			}
+			must_have_chap_n = 0;
+		}
+
+		if (!strncmp(ptr, "CHAP_R=0x", 9)) {
+			int i;
+
+			if (len != 9 + 2 * CHAP_R_SIZE) {
+				iscsi_set_error(iscsi, "Wrong size of CHAP_R"
+						" received from target.");
+				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					      pdu->private_data);
+				return 0;
+			}
+			for (i = 0; i < CHAP_R_SIZE; i++) {
+				unsigned char c;
+				c = ((h2i(ptr[9 + 2 * i]) << 4) | h2i(ptr[9 + 2 * i + 1]));
+				if (c != iscsi->target_chap_r[i]) {
+					iscsi_set_error(iscsi, "Authentication "
+						"failed. Invalid CHAP_R "
+						"response from the target");
+					pdu->callback(iscsi, SCSI_STATUS_ERROR,
+						      NULL, pdu->private_data);
+					return 0;
+				}
+			}
+			must_have_chap_r = 0;
+		}
+
 		ptr  += len + 1;
 		size -= len + 1;
 	}
@@ -1084,6 +1193,22 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	if (status != 0) {
 		iscsi_set_error(iscsi, "Failed to log in to target. Status: %s(%d)",
 				       login_error_str(status), status);
+		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			      pdu->private_data);
+		return 0;
+	}
+
+	if (must_have_chap_n) {
+		iscsi_set_error(iscsi, "Failed to log in to target. "
+				"It did not return CHAP_N during SECNEG.");
+		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			      pdu->private_data);
+		return 0;
+	}
+
+	if (must_have_chap_r) {
+		iscsi_set_error(iscsi, "Failed to log in to target. "
+				"It did not return CHAP_R during SECNEG.");
 		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 			      pdu->private_data);
 		return 0;

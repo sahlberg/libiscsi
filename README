@@ -33,20 +33,67 @@ To build RPMs run the following script from the libiscsi root directory
 iSCSI URL Format
 ================
 iSCSI devices are specified by a URL format of the following form :
-    iscsi://[<username>[%<password>]@]<host>[:<port>]/<target-iqn>/<lun>
+    iscsi://[<username>[%<password>]@]<host>[:<port>]/<target-iqn>/<lun>[?<argument>[&<argument>]*]
+
+Arguments:
+Username and password for bidirectional CHAP authentication:
+target_user=<account>
+target_password=<password>
+
+
 Example:
     iscsi://server/iqn.ronnie.test/1
-When using CHAP authentication, username and password can be specified as part of the URL
+
+
+CHAP Authentication
+===================
+CHAP authentication can be specified two ways. Either via the URL itself
+or through environment variables.
+
+Note that when setting it via the URL, be careful so that username/password
+will not be visible in logfiles or the process list.
+
+URL
+---
+CHAP authentication via URL is specified by providing <username>%<password>@
+in the server part of the URL:
+
+Example:
     iscsi://ronnie%password@server/iqn.ronnie.test/1
-but this may make the user and password visible in log files as well as in ps aux output.
-So it is also possible to provide either just the password or both the password and username
-via environment variables.
-The username and/or password can be set via
-LIBISCSI_CHAP_USERNAME=ronnie
-LIBISCSI_CHAP_PASSWORD=password
+
+Environment variables
+---------------------
+Setting the CHAP authentication via environment variables:
+    LIBISCSI_CHAP_USERNAME=ronnie
+    LIBISCSI_CHAP_PASSWORD=password
 
 Example:
    LIBISCSI_CHAP_PASSWORD=password iscsi-inq iscsi://ronnie@10.1.1.27/iqn.ronnie.test/1
+
+Bidirectional CHAP Authentication
+=================================
+Bidirectional CHAP is when you not only authenticate the initiator to the target
+but also authenticate the target back to the initiator.
+This is only available if you also first specify normal authentication as per
+the previous section.
+
+Bidirectional CHAP can be set either via URL arguments or via environment
+variables. If specifying it via URL arguments, be careful so that you do
+not leak the username/password via logfiles or the process list or similar.
+
+URL
+---
+URL arguments contain the '&' character so make sure to escape them properly
+if you pass them in via a commandline.
+
+Example:
+    iscsi://127.0.0.1/iqn.ronnie.test/1?target_user=target\&target_password=target
+
+Environment variables
+---------------------
+Setting the CHAP authentication via environment variables:
+    LIBISCSI_CHAP_TARGET_USERNAME=target
+    LIBISCSI_CHAP_TARGET_PASSWORD=password
 
 
 IPv6 support

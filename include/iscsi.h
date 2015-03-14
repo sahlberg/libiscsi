@@ -268,6 +268,16 @@ EXTERN int iscsi_set_header_digest(struct iscsi_context *iscsi,
 EXTERN int iscsi_set_initiator_username_pwd(struct iscsi_context *iscsi,
     					    const char *user,
 					    const char *passwd);
+/*
+ * Specify the username and password to use for target chap authentication.
+ * Target/bidirectional CHAP is only supported if you also have normal
+ * CHAP authentication.
+ * You must configure CHAP first using iscsi_set_initiator_username_pwd()
+`* before you can set up target authentication.
+ */
+EXTERN int iscsi_set_target_username_pwd(struct iscsi_context *iscsi,
+					 const char *user,
+					 const char *passwd);
 
 /*
  * check if the context is logged in or not
