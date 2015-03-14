@@ -39,6 +39,7 @@ TAGS
 /lib/Makefile
 /test-tool/Makefile.in
 /test-tool/Makefile
+/test-tool/iscsi-test-cu
 /utils/Makefile.in
 /utils/Makefile
 /utils/iscsi-inq
