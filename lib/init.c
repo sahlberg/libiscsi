@@ -295,7 +295,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 			/* If an error happened during connect/login, we don't want to
 			   call any of the callbacks.
 			 */
-			if (iscsi->is_loggedin) {
+			if (iscsi->is_loggedin && pdu->callback != NULL) {
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 						pdu->private_data);
 			}
@@ -307,7 +307,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		/* If an error happened during connect/login, we don't want to
 		   call any of the callbacks.
 		 */
-		if (iscsi->is_loggedin) {
+		if (iscsi->is_loggedin && pdu->callback != NULL) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 					pdu->private_data);
 		}
