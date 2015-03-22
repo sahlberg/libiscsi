@@ -420,9 +420,10 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 	}
 
 	if (pos < iovector->offset) {
-		/* start over in case we are going backwards */
-		iovector->offset = 0;
-		iovector->consumed = 0;
+		iscsi_set_error(iscsi, "iovector reset. pos is smaller than"
+				"current offset");
+		errno = EINVAL;
+		return -1;
 	}
 
 	if (iovector->niov <= iovector->consumed) {
@@ -578,7 +579,8 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 				return 0;
 			}
 			iscsi_set_error(iscsi, "read from socket failed, "
-				"errno:%d", errno);
+					"errno:%d %s", errno,
+					iscsi_get_error(iscsi));
 			return -1;
 		}
 
@@ -689,7 +691,8 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 					return 0;
 				}
 				iscsi_set_error(iscsi, "Error when writing to "
-						"socket :%d", errno);
+						"socket :%d %s", errno,
+						iscsi_get_error(iscsi));
 				return -1;
 			}
 

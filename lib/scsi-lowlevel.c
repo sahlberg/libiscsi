@@ -3820,7 +3820,6 @@ scsi_task_set_iov_in(struct scsi_task *task, struct scsi_iovec *iov, int niov)
 void
 scsi_task_reset_iov(struct scsi_iovector *iovector)
 {
-	iovector->nalloc = 0;
 	iovector->offset = 0;
 	iovector->consumed = 0;
 }
