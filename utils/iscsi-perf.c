@@ -1,6 +1,6 @@
-/*
-   Copyright (C) 2014 by Peter Lieven <pl@kamp.de>
-
+/* 
+   Copyright (C) 2014-2015 by Peter Lieven <pl@kamp.de>
+   
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
@@ -54,8 +54,10 @@ struct client {
 	uint64_t iops;
 	uint64_t last_iops;
 
-	struct iscsi_context *dst_iscsi;
 	int ignore_errors;
+	int busy_cnt;
+	int err_cnt;
+	int retry_cnt;
 };
 
 u_int64_t get_clock_ns(void) {
@@ -94,9 +96,9 @@ void progress(struct client *client) {
 		printf ("iops average %" PRIu64 " (%" PRIu64 " MB/s)                                                        ", aiops, (aiops * blocks_per_io * client->blocksize) >> 20);
 	} else {
 		uint64_t iops = 1000000000UL * (client->iops - client->last_iops) / (now - client->last_ns);
-		printf ("%02" PRIu64 ":%02" PRIu64 ":%02" PRIu64 " - ", (_runtime % 3600) / 60, _runtime / 60, _runtime % 60);
+		printf ("%02" PRIu64 ":%02" PRIu64 ":%02" PRIu64 " - ", _runtime / 3600, (_runtime % 3600) / 60, _runtime % 60);
 		printf ("lba %" PRIu64 ", iops current %" PRIu64 " (%" PRIu64 " MB/s), ", client->pos, iops, (iops * blocks_per_io * client->blocksize) >> 20);
-		printf ("iops average %" PRIu64 " (%" PRIu64 " MB/s)         ", aiops, (aiops * blocks_per_io * client->blocksize) >> 20);
+		printf ("iops average %" PRIu64 " (%" PRIu64 " MB/s), in_flight %d, busy %d         ", aiops, (aiops * blocks_per_io * client->blocksize) >> 20, client->in_flight, client->busy_cnt);
 	}
 	fflush(stdout);
 	client->last_ns = now;
@@ -106,29 +108,54 @@ void progress(struct client *client) {
 void cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *private_data)
 {
 	struct client *client = (struct client *)private_data;
-	struct scsi_task *task = command_data;
+	struct scsi_task *task = command_data, *task2 = NULL;
 
-	if (status == SCSI_STATUS_CHECK_CONDITION) {
-		printf("Read10/16 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
-		scsi_free_scsi_task(task);
+	if (status == SCSI_STATUS_BUSY ||
+		(status == SCSI_STATUS_CHECK_CONDITION && task->sense.key == SCSI_SENSE_UNIT_ATTENTION)) {
+		struct scsi_read16_cdb *read16_cdb = NULL;
+		if (client->retry_cnt++ > 4 * max_in_flight) {
+			fprintf(stderr, "maxium number of command retries reached...\n");
+			client->err_cnt++;
+			goto out;
+		}
+		read16_cdb = scsi_cdb_unmarshall(task, SCSI_OPCODE_READ16);
+		if (read16_cdb == NULL) {
+			fprintf(stderr, "Failed to unmarshall READ16 CDB.\n");
+			client->err_cnt++;
+			goto out;
+		}
+		task2 = iscsi_read16_task(client->iscsi,
+								client->lun, read16_cdb->lba,
+								read16_cdb->transfer_length * client->blocksize,
+								client->blocksize, 0, 0, 0, 0, 0,
+								cb, client);
+		if (task2 == NULL) {
+			fprintf(stderr, "failed to send read16 command\n");
+			client->err_cnt++;
+		}
+		if (status == SCSI_STATUS_BUSY) {
+			client->busy_cnt++;
+		}
+	} else if (status == SCSI_STATUS_CANCELLED) {
+		client->err_cnt++;
+	} else if (status == SCSI_STATUS_GOOD) {
+		client->retry_cnt = 0;
+	} else {
+		fprintf(stderr, "Read16 failed with %s\n", iscsi_get_error(iscsi));
 		if (!client->ignore_errors) {
-			exit(10);
+			client->err_cnt++;
 		}
 	}
 
+out:
 	scsi_free_scsi_task(task);
-
-	if (status != SCSI_STATUS_GOOD) {
-		printf("Read10/16 failed with %s\n", iscsi_get_error(iscsi));
-		if (!client->ignore_errors) {
-			exit(10);
-		}
+	
+	if (!client->err_cnt) {
+		progress(client);
+		client->iops++;
+		client->in_flight--;
+		fill_read_queue(client);
 	}
-
-	client->iops++;
-	client->in_flight--;
-	progress(client);
-	fill_read_queue(client);
 }
 
 
@@ -159,7 +186,8 @@ void fill_read_queue(struct client *client)
 								cb, client);
 
 		if (task == NULL) {
-			printf("failed to send read16 command\n");
+			fprintf(stderr, "failed to send read16 command\n");
+			iscsi_destroy_context(client->iscsi);
 			exit(10);
 		}
 		client->pos += num_blocks;
@@ -199,8 +227,8 @@ int main(int argc, char *argv[])
 	memset(&client, 0, sizeof(client));
 
 	srand(time(NULL));
-
-	printf("iscsi-perf version %s - (c) 2014 by Peter Lieven <pl@ĸamp.de>\n\n", VERSION);
+	
+	printf("iscsi-perf version %s - (c) 2014-2015 by Peter Lieven <pl@ĸamp.de>\n\n", VERSION);
 
 	while ((c = getopt_long(argc, argv, "i:m:b:t:nr", long_options,
 			&option_index)) != -1) {
@@ -243,6 +271,7 @@ int main(int argc, char *argv[])
 		exit(10);
 	}
 	iscsi_url = iscsi_parse_full_url(client.iscsi, url);
+
 	if (iscsi_url == NULL) {
 		fprintf(stderr, "Failed to parse URL: %s\n",
 			iscsi_get_error(client.iscsi));
@@ -256,6 +285,8 @@ int main(int argc, char *argv[])
 	if (iscsi_url->user[0] != '\0') {
 		if (iscsi_set_initiator_username_pwd(client.iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
 			fprintf(stderr, "Failed to set initiator username and password\n");
+			iscsi_destroy_url(iscsi_url);
+			iscsi_destroy_context(client.iscsi);
 			exit(10);
 		}
 	}
@@ -268,6 +299,7 @@ int main(int argc, char *argv[])
 	}
 
 	printf("connected to %s\n", url);
+	free(url);
 
 	client.lun = iscsi_url->lun;
 	iscsi_destroy_url(iscsi_url);
@@ -304,6 +336,7 @@ int main(int argc, char *argv[])
 	struct sigaction sa;
 	sa.sa_handler = &sig_handler;
 	sa.sa_flags = SA_RESTART;
+	sigemptyset(&sa.sa_mask); 
 
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTERM, &sa, NULL);
@@ -314,7 +347,7 @@ int main(int argc, char *argv[])
 
 	fill_read_queue(&client);
 
-	while (client.in_flight) {
+	while (client.in_flight && !client.err_cnt) {
 		pfd[0].fd = iscsi_get_fd(client.iscsi);
 		pfd[0].events = iscsi_which_events(client.iscsi);
 
@@ -322,19 +355,21 @@ int main(int argc, char *argv[])
 			continue;
 		}
 		if (iscsi_service(client.iscsi, pfd[0].revents) < 0) {
-			printf("iscsi_service failed with : %s\n", iscsi_get_error(client.iscsi));
+			fprintf(stderr, "iscsi_service failed with : %s\n", iscsi_get_error(client.iscsi));
 			break;
 		}
 	}
 
 	progress(&client);
-
-	printf ("\n\nfinished.\n");
-
-	iscsi_logout_sync(client.iscsi);
+	
+	if (!client.err_cnt) {
+		printf ("\n\nfinished.\n");
+		iscsi_logout_sync(client.iscsi);
+	} else {
+		printf ("\nABORTED!\n");
+	}
 	iscsi_destroy_context(client.iscsi);
-	free(url);
 
-	return 0;
+	return client.err_cnt ? 1 : 0;
 }
 
