@@ -341,6 +341,7 @@ try_again:
 
 		ISCSI_LIST_REMOVE(&old_iscsi->waitpdu, pdu);
 		if (pdu->itt == 0xffffffff) {
+			iscsi_free_pdu(old_iscsi, pdu);
 			continue;
 		}
 
