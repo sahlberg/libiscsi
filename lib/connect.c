@@ -245,7 +245,7 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 int iscsi_reconnect(struct iscsi_context *old_iscsi)
 {
 	struct iscsi_context *iscsi;
-	int retry = 0;
+	int retry = 0, i;
 
 	/* if there is already a deferred reconnect do not try again */
 	if (old_iscsi->reconnect_deferred) {
@@ -390,6 +390,11 @@ try_again:
 
 	close(iscsi->fd);
 	iscsi->fd = old_iscsi->fd;
+
+	for (i = 0; i < old_iscsi->smalloc_free; i++) {
+		iscsi_free(old_iscsi, old_iscsi->smalloc_ptrs[i]);
+	}
+
 	iscsi->mallocs+=old_iscsi->mallocs;
 	iscsi->frees+=old_iscsi->frees;
 
