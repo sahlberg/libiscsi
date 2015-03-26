@@ -91,6 +91,8 @@ struct iscsi_url {
        char target[MAX_STRING_SIZE + 1];
        char user[MAX_STRING_SIZE + 1];
        char passwd[MAX_STRING_SIZE + 1];
+       char target_user[MAX_STRING_SIZE + 1];
+       char target_passwd[MAX_STRING_SIZE + 1];
        int lun;
        struct iscsi_context *iscsi;
 };
