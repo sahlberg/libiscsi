@@ -455,17 +455,17 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 
 	int niov=1; /* number of iovectors to pass */
 	uint32_t len2 = pos + count; /* adjust length of iov2 */
-	
+
 	/* forward until iov2 points to the last iovec we pass later. it might
 	   happen that we have a lot of iovectors but are limited by count */
 	while (len2 > iov2->iov_len) {
-		if (iovector->niov <= iovector->consumed+niov-1) {
+		niov++;
+		if (iovector->niov < iovector->consumed + niov) {
 			errno = EINVAL;
 			return -1;
 		}
-		niov++;
 		len2 -= iov2->iov_len;
-		iov2 = &iovector->iov[iovector->consumed+niov-1];
+		iov2 = &iovector->iov[iovector->consumed + niov - 1];
 	}
 
 	/* we might limit the length of the last iovec we pass to readv/writev
@@ -627,15 +627,24 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			if (iscsi->is_corked) {
 				/* connection is corked we are not allowed to send
 				 * additional PDUs */
+				ISCSI_LOG(iscsi, 6, "iscsi_write_to_socket: socket is corked");
 				return 0;
 			}
 			
 			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0
 				&& !(iscsi->outqueue->outdata.data[0] & ISCSI_PDU_IMMEDIATE)) {
 				/* stop sending for non-immediate PDUs. maxcmdsn is reached */
+				ISCSI_LOG(iscsi, 6,
+				          "iscsi_write_to_socket: maxcmdsn reached (outqueue[0]->cmdsnd %08x > maxcmdsn %08x)",
+				          iscsi->outqueue->cmdsn, iscsi->maxcmdsn);
 				return 0;
 			}
 			/* pop first element of the outqueue */
+			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->expcmdsn) < 0) {
+				iscsi_set_error(iscsi, "iscsi_write_to_scoket: outqueue[0]->cmdsn < expcmdsn (%08x < %08x)",
+				                iscsi->outqueue->cmdsn, iscsi->expcmdsn);
+				return -1;
+			}
 			iscsi->outqueue_current = iscsi->outqueue;
 			ISCSI_LIST_REMOVE(&iscsi->outqueue, iscsi->outqueue_current);
 			if (!(iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT)) {

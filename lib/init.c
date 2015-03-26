@@ -453,6 +453,8 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 	char *portal;
 	char *user = NULL;
 	char *passwd = NULL;
+	char *target_user = NULL;
+	char *target_passwd = NULL;
 	char *target = NULL;
 	char *lun;
 	char *tmp;
@@ -474,12 +476,10 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 	strncpy(str,url + 8, MAX_STRING_SIZE);
 	portal = str;
 
-	iscsi_set_target_username_pwd(iscsi,
-		getenv("LIBISCSI_CHAP_TARGET_USERNAME"),
-		getenv("LIBISCSI_CHAP_TARGET_PASSWORD"));
-
-	user   = getenv("LIBISCSI_CHAP_USERNAME");
-	passwd = getenv("LIBISCSI_CHAP_PASSWORD");
+	user          = getenv("LIBISCSI_CHAP_USERNAME");
+	passwd        = getenv("LIBISCSI_CHAP_PASSWORD");
+	target_user   = getenv("LIBISCSI_CHAP_TARGET_USERNAME");
+	target_passwd = getenv("LIBISCSI_CHAP_TARGET_PASSWORD");
 
 	tmp = strchr(portal, '?');
 	if (tmp) {
@@ -487,7 +487,6 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 		while (tmp && *tmp) {
 			char *next = strchr(tmp, '&');
 			char *key, *value;
-
 			if (next != NULL) {
 				*next++ = 0;
 			}
@@ -497,15 +496,9 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 				*value++ = 0;
 			}
 			if (!strcmp(key, "target_user")) {
-				if (value) {
-					strncpy(iscsi->target_user,
-						value, MAX_STRING_SIZE);
-				}
+				target_user = value;
 			} else if (!strcmp(key, "target_password")) {
-				if (value) {
-					strncpy(iscsi->target_passwd,
-						value, MAX_STRING_SIZE);
-				}
+				target_passwd = value;
 			}
 			tmp = next;
 		}
@@ -587,19 +580,16 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 
 	strncpy(iscsi_url->portal,portal,MAX_STRING_SIZE);
 
-	if (!iscsi->target_user[0] || !iscsi->target_passwd[0]) {
-		iscsi->target_user[0] = 0;
-		iscsi->target_passwd[0] = 0;
-	}
-	if (user != NULL && passwd != NULL) {
+	if (user && passwd && user[0] && passwd[0]) {
 		strncpy(iscsi_url->user, user, MAX_STRING_SIZE);
 		strncpy(iscsi_url->passwd, passwd, MAX_STRING_SIZE);
-	} else {
 		/* if we do not have normal CHAP, that means we do not have
 		 * bidirectional either.
 		 */
-		iscsi->target_user[0] = 0;
-		iscsi->target_passwd[0] = 0;
+		if (target_user && target_passwd && target_user[0] && target_passwd[0]) {
+			strncpy(iscsi_url->target_user, target_user, MAX_STRING_SIZE);
+			strncpy(iscsi_url->target_passwd, target_passwd, MAX_STRING_SIZE);
+		}
 	}
 
 	if (full) {
@@ -608,6 +598,14 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 	}
 
 	iscsi_decode_url_string(&iscsi_url->target[0]);
+
+	/* NOTE: iscsi is allowed to be NULL. Especially qemu does call us with iscsi == NULL.
+	 * If we receive iscsi != NULL we apply the parsed settings to the context. */
+	if (iscsi) {
+		iscsi_set_targetname(iscsi, iscsi_url->target);
+		iscsi_set_initiator_username_pwd(iscsi, iscsi_url->user, iscsi_url->passwd);
+		iscsi_set_target_username_pwd(iscsi, iscsi_url->target_user, iscsi_url->target_passwd);
+	}
 
 	return iscsi_url;
 }
@@ -640,6 +638,11 @@ int
 iscsi_set_initiator_username_pwd(struct iscsi_context *iscsi,
 						    const char *user, const char *passwd)
 {
+	if (!user || !passwd || !user[0] || !passwd[0]) {
+		iscsi->user[0] = 0;
+		iscsi->passwd[0] = 0;
+		return 0;
+	}
 	strncpy(iscsi->user,user,MAX_STRING_SIZE);
 	strncpy(iscsi->passwd,passwd,MAX_STRING_SIZE);
 	return 0;
@@ -650,7 +653,7 @@ int
 iscsi_set_target_username_pwd(struct iscsi_context *iscsi,
 			      const char *user, const char *passwd)
 {
-	if (!user || !passwd) {
+	if (!user || !passwd || !user[0] || !passwd[0]) {
 		iscsi->target_user[0] = 0;
 		iscsi->target_passwd[0] = 0;
 		return 0;

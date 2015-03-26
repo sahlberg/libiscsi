@@ -174,28 +174,20 @@ void list_luns(struct client_state *clnt, const char *target, const char *portal
 		printf("Failed to create context\n");
 		exit(10);
 	}
-	if (clnt->username != NULL) {
-		if (iscsi_set_initiator_username_pwd(iscsi, clnt->username, clnt->password) != 0) {
-			fprintf(stderr, "Failed to set initiator username and password\n");
-			exit(10);
-		}
-	}
+
+	iscsi_set_initiator_username_pwd(iscsi, clnt->username, clnt->password);
+
 	if (iscsi_set_targetname(iscsi, target)) {
 		fprintf(stderr, "Failed to set target name\n");
 		exit(10);
 	}
 	iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	if (iscsi_connect_sync(iscsi, portal) != 0) {
+
+	if (iscsi_full_connect_sync(iscsi, portal, -1) != 0) {
 		printf("iscsi_connect failed. %s\n", iscsi_get_error(iscsi));
 		exit(10);
 	}
-
-	if (iscsi_login_sync(iscsi) != 0) {
-		fprintf(stderr, "login failed :%s\n", iscsi_get_error(iscsi));
-		exit(10);
-	}
-
 
 	/* get initial reportluns data, all targets can report 16 bytes but some
 	 * fail if we ask for too much.
@@ -404,14 +396,9 @@ int main(int argc, char *argv[])
 
 	iscsi_set_session_type(iscsi, ISCSI_SESSION_DISCOVERY);
 
-	if (iscsi_url->user[0] != '\0') {
-		state.username = iscsi_url->user;
-		state.password = iscsi_url->passwd;
-		if (iscsi_set_initiator_username_pwd(iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
-			fprintf(stderr, "Failed to set initiator username and password\n");
-			exit(10);
-		}
-	}
+	state.username = iscsi_url->user;
+	state.password = iscsi_url->passwd;
+
 	if (iscsi_connect_async(iscsi, iscsi_url->portal, discoveryconnect_cb, &state) != 0) {
 		fprintf(stderr, "iscsi_connect failed. %s\n", iscsi_get_error(iscsi));
 		exit(10);

@@ -83,6 +83,7 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	}
 
 	iscsi->nops_in_flight++;
+	ISCSI_LOG(iscsi, 6, "NOP Out Send (nops_in_flight: %d)", iscsi->nops_in_flight);
 
 	return 0;
 }
@@ -137,6 +138,8 @@ iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	struct iscsi_data data;
 
 	iscsi->nops_in_flight = 0;
+
+	ISCSI_LOG(iscsi, 6, "NOP Out Reply received");
 
 	if (pdu->callback == NULL) {
 		return 0;

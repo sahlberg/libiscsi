@@ -45,6 +45,8 @@ struct client {
 	int random;
 
 	struct iscsi_context *iscsi;
+	struct scsi_iovec perf_iov;
+
 	int lun;
 	int blocksize;
 	uint64_t num_blocks;
@@ -133,6 +135,7 @@ void cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *p
 			fprintf(stderr, "failed to send read16 command\n");
 			client->err_cnt++;
 		}
+		scsi_task_set_iov_in(task2, &client->perf_iov, 1);
 		if (status == SCSI_STATUS_BUSY) {
 			client->busy_cnt++;
 		}
@@ -184,12 +187,12 @@ void fill_read_queue(struct client *client)
 								num_blocks * client->blocksize,
 								client->blocksize, 0, 0, 0, 0, 0,
 								cb, client);
-
 		if (task == NULL) {
 			fprintf(stderr, "failed to send read16 command\n");
 			iscsi_destroy_context(client->iscsi);
 			exit(10);
 		}
+		scsi_task_set_iov_in(task, &client->perf_iov, 1);
 		client->pos += num_blocks;
 	}
 }
@@ -270,26 +273,16 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Failed to create context\n");
 		exit(10);
 	}
-	iscsi_url = iscsi_parse_full_url(client.iscsi, url);
 
+	iscsi_url = iscsi_parse_full_url(client.iscsi, url);
 	if (iscsi_url == NULL) {
 		fprintf(stderr, "Failed to parse URL: %s\n",
 			iscsi_get_error(client.iscsi));
 		exit(10);
 	}
 
-	iscsi_set_targetname(client.iscsi, iscsi_url->target);
 	iscsi_set_session_type(client.iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(client.iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-
-	if (iscsi_url->user[0] != '\0') {
-		if (iscsi_set_initiator_username_pwd(client.iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
-			fprintf(stderr, "Failed to set initiator username and password\n");
-			iscsi_destroy_url(iscsi_url);
-			iscsi_destroy_context(client.iscsi);
-			exit(10);
-		}
-	}
 
 	if (iscsi_full_connect_sync(client.iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
 		fprintf(stderr, "Login Failed. %s\n", iscsi_get_error(client.iscsi));
@@ -320,6 +313,13 @@ int main(int argc, char *argv[])
 	client.num_blocks  = rc16->returned_lba + 1;
 
 	scsi_free_scsi_task(task);
+
+	client.perf_iov.iov_base = malloc(blocks_per_io * client.blocksize);
+	if (!client.perf_iov.iov_base) {
+		fprintf(stderr, "Out of Memory\n");
+		exit(10);
+	}
+	client.perf_iov.iov_len = blocks_per_io * client.blocksize;
 
 	printf("capacity is %" PRIu64 " blocks or %" PRIu64 " byte (%" PRIu64 " MB)\n", client.num_blocks, client.num_blocks * client.blocksize,
 	                                                        (client.num_blocks * client.blocksize) >> 20);
@@ -369,6 +369,8 @@ int main(int argc, char *argv[])
 		printf ("\nABORTED!\n");
 	}
 	iscsi_destroy_context(client.iscsi);
+
+	free(client.perf_iov.iov_base);
 
 	return client.err_cnt ? 1 : 0;
 }
