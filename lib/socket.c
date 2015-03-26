@@ -455,17 +455,17 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 
 	int niov=1; /* number of iovectors to pass */
 	uint32_t len2 = pos + count; /* adjust length of iov2 */
-	
+
 	/* forward until iov2 points to the last iovec we pass later. it might
 	   happen that we have a lot of iovectors but are limited by count */
 	while (len2 > iov2->iov_len) {
-		if (iovector->niov <= iovector->consumed+niov-1) {
+		niov++;
+		if (iovector->niov < iovector->consumed + niov) {
 			errno = EINVAL;
 			return -1;
 		}
-		niov++;
 		len2 -= iov2->iov_len;
-		iov2 = &iovector->iov[iovector->consumed+niov-1];
+		iov2 = &iovector->iov[iovector->consumed + niov - 1];
 	}
 
 	/* we might limit the length of the last iovec we pass to readv/writev
