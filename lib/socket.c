@@ -627,12 +627,16 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			if (iscsi->is_corked) {
 				/* connection is corked we are not allowed to send
 				 * additional PDUs */
+				ISCSI_LOG(iscsi, 6, "iscsi_write_to_socket: socket is corked");
 				return 0;
 			}
 			
 			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0
 				&& !(iscsi->outqueue->outdata.data[0] & ISCSI_PDU_IMMEDIATE)) {
 				/* stop sending for non-immediate PDUs. maxcmdsn is reached */
+				ISCSI_LOG(iscsi, 6,
+				          "iscsi_write_to_socket: maxcmdsn reached (outqueue[0]->cmdsnd %08x > maxcmdsn %08x)",
+				          iscsi->outqueue->cmdsn, iscsi->maxcmdsn);
 				return 0;
 			}
 			/* pop first element of the outqueue */
