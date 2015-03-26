@@ -386,7 +386,10 @@ iscsi_which_events(struct iscsi_context *iscsi)
 
 	if (iscsi->outqueue_current != NULL ||
 	    (iscsi->outqueue != NULL && !iscsi->is_corked &&
-	     iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0)) {
+	     (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0 ||
+	      iscsi->outqueue->outdata.data[0] & ISCSI_PDU_IMMEDIATE)
+	    )
+	   ) {
 		events |= POLLOUT;
 	}
 	return events;
