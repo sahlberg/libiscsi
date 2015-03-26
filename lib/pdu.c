@@ -365,7 +365,7 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 
 	if (reason == ISCSI_REJECT_WAITING_FOR_LOGOUT) {
 		ISCSI_LOG(iscsi, 1, "target rejects request with reason: %s",  iscsi_reject_reason_str(reason));
-		iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_URGENT_DELIVERY);
+		iscsi_logout_async(iscsi, iscsi_reconnect_after_logout, NULL);
 		return 0;
 	}
 
@@ -435,7 +435,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 				ISCSI_LOG(iscsi, 2, "dropping connection to fix errors with broken DELL Equallogic firmware 7.x");
 				return -1;
 			}
-			iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_URGENT_DELIVERY);
+			iscsi_logout_async(iscsi, iscsi_reconnect_after_logout, NULL);
 			return 0;
 		case 0x2:
 			ISCSI_LOG(iscsi, 2, "target will drop this connection. Time2Wait is %u seconds", param2);
@@ -447,7 +447,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 			return 0;
 		case 0x4:
 			ISCSI_LOG(iscsi, 2, "target requests parameter renogitiation.");
-			iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_DROP_ON_RECONNECT);
+			iscsi_logout_async(iscsi, iscsi_reconnect_after_logout, NULL);
 			return 0;
 		default:
 			ISCSI_LOG(iscsi, 1, "unhandled async event %u: param1 %u param2 %u param3 %u", event, param1, param2, param3);
