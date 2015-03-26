@@ -266,15 +266,8 @@ int main(int argc, char *argv[])
 			iscsi_get_error(client.src_iscsi));
 		exit(10);
 	}
-	iscsi_set_targetname(client.src_iscsi, iscsi_url->target);
 	iscsi_set_session_type(client.src_iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(client.src_iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	if (iscsi_url->user[0] != '\0') {
-		if (iscsi_set_initiator_username_pwd(client.src_iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
-			fprintf(stderr, "Failed to set initiator username and password\n");
-			exit(10);
-		}
-	}
 	if (iscsi_full_connect_sync(client.src_iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
 		fprintf(stderr, "Login Failed. %s\n", iscsi_get_error(client.src_iscsi));
 		iscsi_destroy_url(iscsi_url);
@@ -325,15 +318,8 @@ int main(int argc, char *argv[])
 			iscsi_get_error(client.dst_iscsi));
 		exit(10);
 	}
-	iscsi_set_targetname(client.dst_iscsi, iscsi_url->target);
 	iscsi_set_session_type(client.dst_iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(client.dst_iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	if (iscsi_url->user[0] != '\0') {
-		if (iscsi_set_initiator_username_pwd(client.dst_iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
-			fprintf(stderr, "Failed to set initiator username and password\n");
-			exit(10);
-		}
-	}
 	if (iscsi_full_connect_sync(client.dst_iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
 		fprintf(stderr, "Login Failed. %s\n", iscsi_get_error(client.dst_iscsi));
 		iscsi_destroy_url(iscsi_url);

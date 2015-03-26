@@ -599,6 +599,14 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 
 	iscsi_decode_url_string(&iscsi_url->target[0]);
 
+	/* NOTE: iscsi is allowed to be NULL. Especially qemu does call us with iscsi == NULL.
+	 * If we receive iscsi != NULL we apply the parsed settings to the context. */
+	if (iscsi) {
+		iscsi_set_targetname(iscsi, iscsi_url->target);
+		iscsi_set_initiator_username_pwd(iscsi, iscsi_url->user, iscsi_url->passwd);
+		iscsi_set_target_username_pwd(iscsi, iscsi_url->target_user, iscsi_url->target_passwd);
+	}
+
 	return iscsi_url;
 }
 

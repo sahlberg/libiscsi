@@ -158,17 +158,8 @@ int main(int argc, char *argv[])
 		goto finished;
 	}
 
-	iscsi_set_targetname(iscsi, iscsi_url->target);
 	iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-
-	if (iscsi_url->user[0]) {
-		if (iscsi_set_initiator_username_pwd(iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
-			fprintf(stderr, "Failed to set initiator username and password\n");
-			ret = 10;
-			goto finished;
-		}
-	}
 
 	if (iscsi_full_connect_sync(iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
 		fprintf(stderr, "Login Failed. %s\n", iscsi_get_error(iscsi));

@@ -270,26 +270,16 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Failed to create context\n");
 		exit(10);
 	}
-	iscsi_url = iscsi_parse_full_url(client.iscsi, url);
 
+	iscsi_url = iscsi_parse_full_url(client.iscsi, url);
 	if (iscsi_url == NULL) {
 		fprintf(stderr, "Failed to parse URL: %s\n",
 			iscsi_get_error(client.iscsi));
 		exit(10);
 	}
 
-	iscsi_set_targetname(client.iscsi, iscsi_url->target);
 	iscsi_set_session_type(client.iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(client.iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-
-	if (iscsi_url->user[0] != '\0') {
-		if (iscsi_set_initiator_username_pwd(client.iscsi, iscsi_url->user, iscsi_url->passwd) != 0) {
-			fprintf(stderr, "Failed to set initiator username and password\n");
-			iscsi_destroy_url(iscsi_url);
-			iscsi_destroy_context(client.iscsi);
-			exit(10);
-		}
-	}
 
 	if (iscsi_full_connect_sync(client.iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
 		fprintf(stderr, "Login Failed. %s\n", iscsi_get_error(client.iscsi));
