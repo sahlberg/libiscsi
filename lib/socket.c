@@ -102,8 +102,7 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 
 	do {
 		if (iscsi_serial32_compare(pdu->cmdsn, current->cmdsn) < 0 ||
-			(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE && !(current->outdata.data[0] & ISCSI_PDU_IMMEDIATE)) ||
-			pdu->flags & ISCSI_PDU_URGENT_DELIVERY) {
+			(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE && !(current->outdata.data[0] & ISCSI_PDU_IMMEDIATE))) {
 			/* insert PDU before the current */
 			if (last != NULL) {
 				last->next=pdu;
