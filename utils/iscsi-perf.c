@@ -45,6 +45,8 @@ struct client {
 	int random;
 
 	struct iscsi_context *iscsi;
+	struct scsi_iovec perf_iov;
+
 	int lun;
 	int blocksize;
 	uint64_t num_blocks;
@@ -133,6 +135,7 @@ void cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *p
 			fprintf(stderr, "failed to send read16 command\n");
 			client->err_cnt++;
 		}
+		scsi_task_set_iov_in(task2, &client->perf_iov, 1);
 		if (status == SCSI_STATUS_BUSY) {
 			client->busy_cnt++;
 		}
@@ -184,12 +187,12 @@ void fill_read_queue(struct client *client)
 								num_blocks * client->blocksize,
 								client->blocksize, 0, 0, 0, 0, 0,
 								cb, client);
-
 		if (task == NULL) {
 			fprintf(stderr, "failed to send read16 command\n");
 			iscsi_destroy_context(client->iscsi);
 			exit(10);
 		}
+		scsi_task_set_iov_in(task, &client->perf_iov, 1);
 		client->pos += num_blocks;
 	}
 }
@@ -311,6 +314,13 @@ int main(int argc, char *argv[])
 
 	scsi_free_scsi_task(task);
 
+	client.perf_iov.iov_base = malloc(blocks_per_io * client.blocksize);
+	if (!client.perf_iov.iov_base) {
+		fprintf(stderr, "Out of Memory\n");
+		exit(10);
+	}
+	client.perf_iov.iov_len = blocks_per_io * client.blocksize;
+
 	printf("capacity is %" PRIu64 " blocks or %" PRIu64 " byte (%" PRIu64 " MB)\n", client.num_blocks, client.num_blocks * client.blocksize,
 	                                                        (client.num_blocks * client.blocksize) >> 20);
 
@@ -359,6 +369,8 @@ int main(int argc, char *argv[])
 		printf ("\nABORTED!\n");
 	}
 	iscsi_destroy_context(client.iscsi);
+
+	free(client.perf_iov.iov_base);
 
 	return client.err_cnt ? 1 : 0;
 }
