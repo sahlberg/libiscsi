@@ -180,16 +180,11 @@ void list_luns(struct client_state *clnt, const char *target, const char *portal
 	}
 	iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	if (iscsi_connect_sync(iscsi, portal) != 0) {
+
+	if (iscsi_full_connect_sync(iscsi, portal, -1) != 0) {
 		printf("iscsi_connect failed. %s\n", iscsi_get_error(iscsi));
 		exit(10);
 	}
-
-	if (iscsi_login_sync(iscsi) != 0) {
-		fprintf(stderr, "login failed :%s\n", iscsi_get_error(iscsi));
-		exit(10);
-	}
-
 
 	/* get initial reportluns data, all targets can report 16 bytes but some
 	 * fail if we ask for too much.

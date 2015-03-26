@@ -130,10 +130,14 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 		return;
 	}
 
-	if (iscsi_testunitready_task(iscsi, ct->lun,
-				      iscsi_testunitready_cb, ct) == NULL) {
-		iscsi_set_error(iscsi, "iscsi_testunitready_async failed.");
-		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
+	if (ct->lun != -1) {
+		if (iscsi_testunitready_task(iscsi, ct->lun,
+						  iscsi_testunitready_cb, ct) == NULL) {
+			iscsi_set_error(iscsi, "iscsi_testunitready_async failed.");
+			ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
+		}
+	} else {
+		ct->cb(iscsi, SCSI_STATUS_GOOD, NULL, ct->private_data);
 	}
 }
 
