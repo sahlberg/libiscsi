@@ -80,8 +80,8 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 	iscsi->nops_in_flight++;
 	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
-	          "NOP Out Send (nops_in_flight: %d, pdu->cmdsn %08x, maxcmdsn %08x)",
-	          iscsi->nops_in_flight, pdu->cmdsn, iscsi->maxcmdsn);
+	          "NOP Out Send (nops_in_flight: %d, pdu->cmdsn %08x, pdu->itt %08x, maxcmdsn %08x, expcmdsn %08x)",
+	          iscsi->nops_in_flight, pdu->cmdsn, pdu->itt, iscsi->maxcmdsn, iscsi->expcmdsn);
 
 	return 0;
 }
@@ -135,9 +135,12 @@ iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 {
 	struct iscsi_data data;
 
-	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6, "NOP Out Reply received");
-
 	iscsi_adjust_maxexpcmdsn(iscsi, in);
+
+	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
+	          "NOP Out Reply received (pdu->itt %08x, maxcmdsn %08x, expcmdsn %08x)",
+	          pdu->itt, iscsi->maxcmdsn, iscsi->expcmdsn);      
+
 	iscsi->nops_in_flight = 0;
 
 	if (pdu->callback == NULL) {
