@@ -46,9 +46,6 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		return -1;
 	}
 
-	/* immediate flag */
-	iscsi_pdu_set_immediate(pdu);
-
 	/* flags */
 	iscsi_pdu_set_pduflags(pdu, 0x80);
 
@@ -58,12 +55,11 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	/* lun */
 	iscsi_pdu_set_lun(pdu, 0);
 
-	/* cmdsn is not increased if Immediate delivery*/
 	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
-	pdu->cmdsn = iscsi->cmdsn;
+	pdu->cmdsn = iscsi->cmdsn++;
 
 	/* exp statsn */
-	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn+1);
+	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn + 1);
 
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
@@ -141,6 +137,7 @@ iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6, "NOP Out Reply received");
 
+	iscsi_adjust_maxexpcmdsn(iscsi, in);
 	iscsi->nops_in_flight = 0;
 
 	if (pdu->callback == NULL) {
