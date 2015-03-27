@@ -324,6 +324,7 @@ int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
 	ttt = scsi_get_uint32(&in->hdr[20]);
 
 	iscsi_adjust_statsn(iscsi, in);
+	iscsi_adjust_maxexpcmdsn(iscsi, in);
 
 	/* if the server does not want a response */
 	if (ttt == 0xffffffff) {
