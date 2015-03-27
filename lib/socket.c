@@ -650,9 +650,10 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 				return 0;
 			}
 			/* pop first element of the outqueue */
-			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->expcmdsn) < 0) {
-				iscsi_set_error(iscsi, "iscsi_write_to_scoket: outqueue[0]->cmdsn < expcmdsn (%08x < %08x)",
-				                iscsi->outqueue->cmdsn, iscsi->expcmdsn);
+			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->expcmdsn) < 0 &&
+				(iscsi->outqueue->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT) {
+				iscsi_set_error(iscsi, "iscsi_write_to_scoket: outqueue[0]->cmdsn < expcmdsn (%08x < %08x) opcode %02x",
+				                iscsi->outqueue->cmdsn, iscsi->expcmdsn, iscsi->outqueue->outdata.data[0] & 0x3f);
 				return -1;
 			}
 			iscsi->outqueue_current = iscsi->outqueue;
