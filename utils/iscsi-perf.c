@@ -24,6 +24,7 @@
 #include <getopt.h>
 #include <time.h>
 #include <signal.h>
+#include <unistd.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -33,7 +34,11 @@
 
 #define VERSION "0.1"
 
+#define NOP_INTERVAL 5
+#define MAX_NOP_FAILURES 3
+
 const char *initiator = "iqn.2010-11.libiscsi:iscsi-perf";
+int proc_alarm = 0;
 int max_in_flight = 32;
 int blocks_per_io = 8;
 uint64_t runtime = 0;
@@ -202,8 +207,17 @@ void usage(void) {
 	exit(1);
 }
 
-void sig_handler (int signum _U_) {
-	finished = 1;
+void sig_handler (int signum ) {
+	if (signum == SIGALRM) {
+		if (proc_alarm) {
+			fprintf(stderr, "\n\nABORT: Last alarm was not processed.\n");
+			exit(10);
+		}
+		proc_alarm = 1;
+		alarm(NOP_INTERVAL);
+	} else {
+		finished = 1;
+	}
 }
 
 int main(int argc, char *argv[])
@@ -340,6 +354,7 @@ int main(int argc, char *argv[])
 
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGALRM, &sa, NULL);
 
 	printf("\n");
 
@@ -347,9 +362,20 @@ int main(int argc, char *argv[])
 
 	fill_read_queue(&client);
 
+	alarm(NOP_INTERVAL);
+
 	while (client.in_flight && !client.err_cnt) {
 		pfd[0].fd = iscsi_get_fd(client.iscsi);
 		pfd[0].events = iscsi_which_events(client.iscsi);
+
+		if (proc_alarm) {
+			if (iscsi_get_nops_in_flight(client.iscsi) > MAX_NOP_FAILURES) {
+				fprintf(stderr, "\n\nABORT: NOP timeout.\n");
+				exit(10);
+			}
+			iscsi_nop_out_async(client.iscsi, NULL, NULL, 0, NULL);
+			proc_alarm = 0;
+		}
 
 		if (poll(&pfd[0], 1, -1) < 0) {
 			continue;
@@ -359,6 +385,8 @@ int main(int argc, char *argv[])
 			break;
 		}
 	}
+	
+	alarm(0);
 
 	progress(&client);
 	
