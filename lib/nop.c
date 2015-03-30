@@ -134,6 +134,7 @@ iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	struct iscsi_data data;
 
 	iscsi_adjust_maxexpcmdsn(iscsi, in);
+	iscsi_adjust_statsn(iscsi, in);
 
 	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
 	          "NOP-In received (pdu->itt %08x, pdu->ttt %08x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x, iscsi->statsn %08x)",
