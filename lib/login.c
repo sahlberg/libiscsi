@@ -790,6 +790,13 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		return -1;
 	}
 
+	/* randomize cmdsn and itt */
+	if (!iscsi->current_phase && !iscsi->secneg_phase) {
+		iscsi->itt = (u_int32_t) rand();
+		iscsi->cmdsn = (u_int32_t) rand();
+		iscsi->expcmdsn = iscsi->maxcmdsn = iscsi->cmdsn;
+	}
+
 	pdu = iscsi_allocate_pdu(iscsi,
 				 ISCSI_PDU_LOGIN_REQUEST,
 				 ISCSI_PDU_LOGIN_RESPONSE,
@@ -803,6 +810,10 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 	/* login request */
 	iscsi_pdu_set_immediate(pdu);
+
+	/* cmdsn is not increased if Immediate delivery*/
+	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
+	pdu->cmdsn = iscsi->cmdsn;
 
 	if (!iscsi->user[0]) {
 		iscsi->current_phase = ISCSI_PDU_LOGIN_CSG_OPNEG;
