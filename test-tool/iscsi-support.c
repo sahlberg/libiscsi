@@ -529,8 +529,10 @@ prin_task(struct scsi_device *sdev, int service_action,
 	logging(LOG_VERBOSE, "Send PRIN/SA=0x%02x, expect %s", service_action,
 	    success_expected ? "success" : "failure");
 
-	task = iscsi_persistent_reserve_in_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
-	    service_action, buf_sz);
+	task = scsi_cdb_persistent_reserve_in(service_action, buf_sz);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
 	if (task == NULL) {
 	        logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PRIN command: %s",
@@ -575,8 +577,11 @@ prin_read_keys(struct scsi_device *sdev, struct scsi_task **tp,
 
 	logging(LOG_VERBOSE, "Send PRIN/READ_KEYS");
 
-	*tp = iscsi_persistent_reserve_in_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
-	    SCSI_PERSISTENT_RESERVE_READ_KEYS, buf_sz);
+	*tp = scsi_cdb_persistent_reserve_in(SCSI_PERSISTENT_RESERVE_READ_KEYS,
+	    buf_sz);
+	assert(*tp != NULL);
+
+	*tp = send_scsi_command(sdev, *tp, NULL);
 	if (*tp == NULL) {
 	        logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PRIN command: %s",
@@ -628,9 +633,12 @@ prout_register_and_ignore(struct scsi_device *sdev,
 
 	memset(&poc, 0, sizeof (poc));
 	poc.service_action_reservation_key = sark;
-	task = iscsi_persistent_reserve_out_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
+	task = scsi_cdb_persistent_reserve_out(
 	    SCSI_PERSISTENT_RESERVE_REGISTER_AND_IGNORE_EXISTING_KEY,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU, 0, &poc);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PROUT command: %s",
@@ -677,9 +685,12 @@ prout_register_key(struct scsi_device *sdev,
 	memset(&poc, 0, sizeof (poc));
 	poc.service_action_reservation_key = sark;
 	poc.reservation_key = rk;
-	task = iscsi_persistent_reserve_out_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
+	task = scsi_cdb_persistent_reserve_out(
 	    SCSI_PERSISTENT_RESERVE_REGISTER,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU, 0, &poc);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PROUT command: %s",
@@ -720,8 +731,11 @@ prin_verify_key_presence(struct scsi_device *sdev,
 		present ? "present" : "absent",
 		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_persistent_reserve_in_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
-	    SCSI_PERSISTENT_RESERVE_READ_KEYS, buf_sz);
+	task = scsi_cdb_persistent_reserve_in(SCSI_PERSISTENT_RESERVE_READ_KEYS,
+	    buf_sz);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PRIN command: %s",
@@ -792,9 +806,12 @@ prout_reregister_key_fails(struct scsi_device *sdev,
 
 	memset(&poc, 0, sizeof (poc));
 	poc.service_action_reservation_key = sark;
-	task = iscsi_persistent_reserve_out_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
+	task = scsi_cdb_persistent_reserve_out(
 	    SCSI_PERSISTENT_RESERVE_REGISTER,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU, 0, &poc);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PROUT command: %s",
@@ -839,10 +856,13 @@ prout_reserve(struct scsi_device *sdev,
 
 	memset(&poc, 0, sizeof (poc));
 	poc.reservation_key = key;
-	task = iscsi_persistent_reserve_out_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
+	task = scsi_cdb_persistent_reserve_out(
 	    SCSI_PERSISTENT_RESERVE_RESERVE,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
 	    pr_type, &poc);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PROUT command: %s",
@@ -886,10 +906,13 @@ prout_release(struct scsi_device *sdev,
 
 	memset(&poc, 0, sizeof (poc));
 	poc.reservation_key = key;
-	task = iscsi_persistent_reserve_out_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
+	task = scsi_cdb_persistent_reserve_out(
 	    SCSI_PERSISTENT_RESERVE_RELEASE,
 	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
 	    pr_type, &poc);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PROUT command: %s",
@@ -927,8 +950,11 @@ prin_verify_reserved_as(struct scsi_device *sdev,
 		"Send PRIN/READ_RESERVATION to verify type=%d init=%s... ",
 		pr_type, sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_persistent_reserve_in_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
+	task = scsi_cdb_persistent_reserve_in(
 	    SCSI_PERSISTENT_RESERVE_READ_RESERVATION, buf_sz);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PRIN command: %s",
@@ -998,8 +1024,11 @@ prin_verify_not_reserved(struct scsi_device *sdev)
 		"Send PRIN/READ_RESERVATION to verify not reserved init=%s",
 		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_persistent_reserve_in_sync(sdev->iscsi_ctx, sdev->iscsi_lun,
+	task = scsi_cdb_persistent_reserve_in(
 	    SCSI_PERSISTENT_RESERVE_READ_RESERVATION, buf_sz);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send PRIN command: %s",
@@ -1057,8 +1086,10 @@ verify_read_works(struct scsi_device *sdev, unsigned char *buf)
 	logging(LOG_VERBOSE, "Send READ10 to verify READ works init=%s",
 		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_read10_sync(sdev->iscsi_ctx, sdev->iscsi_lun, lba, datalen, blksize,
-	    0, 0, 0, 0, 0);
+	task = scsi_cdb_read10(lba, datalen, blksize, 0, 0, 0, 0, 0);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send READ10 command: %s",
@@ -1084,6 +1115,7 @@ int
 verify_write_works(struct scsi_device *sdev, unsigned char *buf)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 	const uint32_t lba = 1;
 	const int blksize = 512;
 	const uint32_t datalen = 1 * blksize;
@@ -1097,8 +1129,13 @@ verify_write_works(struct scsi_device *sdev, unsigned char *buf)
 	logging(LOG_VERBOSE, "Send WRITE10 to verify WRITE works init=%s",
 		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_write10_sync(sdev->iscsi_ctx, sdev->iscsi_lun, lba, buf, datalen, blksize,
-	    0, 0, 0, 0, 0);
+	task = scsi_cdb_write10(lba, datalen, blksize, 0, 0, 0, 0, 0);
+	assert(task != NULL);
+
+	d.data = buf;
+	d.size = datalen;
+
+	task = send_scsi_command(sdev, task, &d);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send WRITE10 command: %s",
@@ -1133,8 +1170,10 @@ verify_read_fails(struct scsi_device *sdev, unsigned char *buf)
 		"Send READ10 to verify READ does not work init=%s",
 		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_read10_sync(sdev->iscsi_ctx, sdev->iscsi_lun, lba, datalen, blksize,
-	    0, 0, 0, 0, 0);
+	task = scsi_cdb_read10(lba, datalen, blksize, 0, 0, 0, 0, 0);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send READ10 command: %s",
@@ -1163,6 +1202,7 @@ int
 verify_write_fails(struct scsi_device *sdev, unsigned char *buf)
 {
 	struct scsi_task *task;
+	struct iscsi_data d;
 	const uint32_t lba = 1;
 	const int blksize = 512;
 	const uint32_t datalen = 1 * blksize;
@@ -1177,8 +1217,13 @@ verify_write_fails(struct scsi_device *sdev, unsigned char *buf)
 		"Send WRITE10 to verify WRITE does not work init=%s",
 		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_write10_sync(sdev->iscsi_ctx, sdev->iscsi_lun, lba, buf, datalen, blksize,
-	    0, 0, 0, 0, 0);
+	task = scsi_cdb_write10(lba, datalen, blksize, 0, 0, 0, 0, 0);
+	assert(task != NULL);
+
+	d.data = buf;
+	d.size = datalen;
+
+	task = send_scsi_command(sdev, task, &d);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 		    "[FAILED] Failed to send WRITE10 command: %s",
@@ -1263,8 +1308,6 @@ int sanitize(struct scsi_device *sdev, int immed, int ause, int sa, int param_le
 		return -1;
 	}
 
-	task = iscsi_sanitize_sync(sdev->iscsi_ctx, sdev->iscsi_lun, immed, ause, sa, param_len,
-				   data);
 	task = scsi_cdb_sanitize(immed, ause, sa, param_len);
 
 	assert(task != NULL);
@@ -1332,7 +1375,10 @@ testunitready_clear_ua(struct scsi_device *sdev)
 		"Send TESTUNITREADY (To Clear Possible UA) init=%s",
 		sdev->iscsi_ctx->initiator_name);
 
-	task = iscsi_testunitready_sync(sdev->iscsi_ctx, sdev->iscsi_lun);
+	task = scsi_cdb_testunitready();
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
 	if (task == NULL) {
 		logging(LOG_NORMAL,
 			"[FAILED] Failed to send TESTUNITREADY command: %s",
@@ -1525,7 +1571,10 @@ preventallow(struct scsi_device *sdev, int prevent)
 	struct scsi_task *task;
 
 	logging(LOG_VERBOSE, "Send PREVENTALLOW prevent:%d", prevent);
-	task = iscsi_preventallow_sync(sdev->iscsi_ctx, sdev->iscsi_lun, prevent);
+	task = scsi_cdb_preventallow(prevent);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
 	if (task == NULL) {
 		logging(LOG_NORMAL, "[FAILED] Failed to send PREVENTALLOW "
 			"command: %s", iscsi_get_error(sdev->iscsi_ctx));
@@ -1734,7 +1783,10 @@ release6(struct scsi_device *sdev)
 	logging(LOG_VERBOSE, "Send RELEASE6");
 
 	for (i = 0; i < 3 && res == 0; ++i) {
-		task = iscsi_release6_sync(sdev->iscsi_ctx, sdev->iscsi_lun);
+		task = scsi_cdb_release6();
+		assert(task != NULL);
+
+		task = send_scsi_command(sdev, task, NULL);
 		if (task == NULL) {
 			logging(LOG_NORMAL,
 				"[FAILED] Failed to send RELEASE6 command: %s",
@@ -1793,7 +1845,10 @@ reserve6(struct scsi_device *sdev)
 	logging(LOG_VERBOSE, "Send RESERVE6");
 
 	for (i = 0; i < 3 && res == 0; ++i) {
-		task = iscsi_reserve6_sync(sdev->iscsi_ctx, sdev->iscsi_lun);
+		task = scsi_cdb_reserve6();
+		assert(task != NULL);
+
+		task = send_scsi_command(sdev, task, NULL);
 		if (task == NULL) {
 			logging(LOG_NORMAL,
 				"[FAILED] Failed to send RESERVE6 command: %s",
@@ -1831,7 +1886,10 @@ reserve6_conflict(struct scsi_device *sdev)
 	logging(LOG_VERBOSE, "Send RESERVE6 (Expecting RESERVATION_CONFLICT)");
 
 	for (i = 0; i < 3 && res == 0; ++i) {
-		task = iscsi_reserve6_sync(sdev->iscsi_ctx, sdev->iscsi_lun);
+		task = scsi_cdb_reserve6();
+		assert(task != NULL);
+
+		task = send_scsi_command(sdev, task, NULL);
 		if (task == NULL) {
 			logging(LOG_NORMAL,
 				"[FAILED] Failed to send RESERVE6 command: %s",
