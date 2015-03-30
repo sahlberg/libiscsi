@@ -115,9 +115,6 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		/* ttt */
 		iscsi_pdu_set_ttt(pdu, ttt);
 
-		/* exp statsn */
-		iscsi_pdu_set_expstatsn(pdu, iscsi->statsn+1);
-
 		/* data sn */
 		iscsi_pdu_set_datasn(pdu, cmd_pdu->datasn++);
 
@@ -309,9 +306,6 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	pdu->cmdsn = iscsi->cmdsn;
 	iscsi->cmdsn++;
 
-	/* exp statsn */
-	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn+1);
-	
 	/* cdb */
 	iscsi_pdu_set_cdb(pdu, task);
 

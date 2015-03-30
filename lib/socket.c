@@ -649,6 +649,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 				          iscsi->outqueue->cmdsn, iscsi->maxcmdsn);
 				return 0;
 			}
+
 			/* pop first element of the outqueue */
 			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->expcmdsn) < 0 &&
 				(iscsi->outqueue->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT) {
@@ -657,6 +658,10 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 				return -1;
 			}
 			iscsi->outqueue_current = iscsi->outqueue;
+			
+			/* set exp statsn */
+			iscsi_pdu_set_expstatsn(iscsi->outqueue_current, iscsi->statsn + 1);
+			
 			ISCSI_LIST_REMOVE(&iscsi->outqueue, iscsi->outqueue_current);
 			if (!(iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT)) {
 				/* we have to add the pdu to the waitqueue already here
