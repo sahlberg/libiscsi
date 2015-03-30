@@ -625,6 +625,7 @@ void
 iscsi_pdu_set_cmdsn(struct iscsi_pdu *pdu, uint32_t cmdsn)
 {
 	scsi_set_uint32(&pdu->outdata.data[24], cmdsn);
+	pdu->cmdsn = cmdsn;
 }
 
 void

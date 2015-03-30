@@ -302,9 +302,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	iscsi_pdu_set_expxferlen(pdu, task->expxferlen);
 
 	/* cmdsn */
-	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
-	pdu->cmdsn = iscsi->cmdsn;
-	iscsi->cmdsn++;
+	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn++);
 
 	/* cdb */
 	iscsi_pdu_set_cdb(pdu, task);

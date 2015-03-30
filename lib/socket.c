@@ -97,7 +97,7 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	 */
 
 	if (pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE) {
-		pdu->cmdsn = current->cmdsn;
+		iscsi_pdu_set_cmdsn(pdu, current->cmdsn);
 	}
 
 	do {

@@ -813,7 +813,6 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 	/* cmdsn is not increased if Immediate delivery*/
 	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
-	pdu->cmdsn = iscsi->cmdsn;
 
 	if (!iscsi->user[0]) {
 		iscsi->current_phase = ISCSI_PDU_LOGIN_CSG_OPNEG;
@@ -1284,7 +1283,6 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 	/* cmdsn is not increased if Immediate delivery*/
 	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
-	pdu->cmdsn = iscsi->cmdsn;
 
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
