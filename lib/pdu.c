@@ -319,12 +319,15 @@ static const char *iscsi_reject_reason_str(enum iscsi_reject_reason reason)
 int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
 				struct iscsi_in_pdu *in)
 {
-	uint32_t ttt;
-
-	ttt = scsi_get_uint32(&in->hdr[20]);
+	uint32_t ttt = scsi_get_uint32(&in->hdr[20]);
+	uint32_t itt = scsi_get_uint32(&in->hdr[16]);
 
 	iscsi_adjust_statsn(iscsi, in);
 	iscsi_adjust_maxexpcmdsn(iscsi, in);
+
+	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
+	          "NOP-In received (pdu->itt %08x, pdu->ttt %08x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x, iscsi->statsn %08x)",
+	          itt, ttt, iscsi->maxcmdsn, iscsi->expcmdsn, iscsi->statsn);
 
 	/* if the server does not want a response */
 	if (ttt == 0xffffffff) {
