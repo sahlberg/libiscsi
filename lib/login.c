@@ -1045,7 +1045,13 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 	status = scsi_get_uint16(&in->hdr[36]);
 
-	iscsi_adjust_statsn(iscsi, in);
+	// Status-Class is 0
+	if (!(status >> 8)) {
+		if (!iscsi->current_phase && !iscsi->secneg_phase) {
+			iscsi->statsn = scsi_get_uint32(&in->hdr[24]);
+		}
+		iscsi_adjust_statsn(iscsi, in);
+	}
 	iscsi_adjust_maxexpcmdsn(iscsi, in);
 
 	/* Using bidirectional CHAP? Then we must see a chap_n and chap_r
