@@ -443,11 +443,11 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 			return 0;
 		case 0x2:
 			ISCSI_LOG(iscsi, 2, "target will drop this connection. Time2Wait is %u seconds", param2);
-			iscsi->last_reconnect = time(NULL) + param2;
+			iscsi->next_reconnect = time(NULL) + param2;
 			return 0;
 		case 0x3:
 			ISCSI_LOG(iscsi, 2, "target will drop all connections of this session. Time2Wait is %u seconds", param2);
-			iscsi->last_reconnect = time(NULL) + param2;
+			iscsi->next_reconnect = time(NULL) + param2;
 			return 0;
 		case 0x4:
 			ISCSI_LOG(iscsi, 2, "target requests parameter renogitiation.");

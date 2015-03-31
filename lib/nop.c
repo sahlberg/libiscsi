@@ -30,6 +30,13 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 {
 	struct iscsi_pdu *pdu;
 
+	if (iscsi->old_iscsi || iscsi->pending_reconnect) {
+		ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
+		    "NOP Out Send NOT SEND while reconnecting (nops_in_flight: %d, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x)",
+		    iscsi->nops_in_flight, iscsi->maxcmdsn, iscsi->expcmdsn);
+		return 0;
+	}
+
 	if (iscsi->is_loggedin == 0) {
 		iscsi_set_error(iscsi, "trying to send nop-out while not "
 				"logged in");
