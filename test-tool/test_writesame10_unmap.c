@@ -26,11 +26,28 @@
 #include "iscsi-test-cu.h"
 
 
+static const unsigned char zeroBlock[4096];
+
+static int all_zeroes(const unsigned char *buf, unsigned size)
+{
+	unsigned j, e;
+
+	for (j = 0; j < size; j += sizeof(zeroBlock)) {
+		e = size - j;
+		if (sizeof(zeroBlock) < e)
+			e = sizeof(zeroBlock);
+		if (memcmp(buf + j, zeroBlock, e) != 0)
+			return 0;
+	}
+
+	return 1;
+}
+
 void
 test_writesame10_unmap(void)
 {
 	int ret;
-	unsigned int i, j;
+	unsigned int i;
 	unsigned char *buf = alloca(256 * block_size);
 
 	CHECK_FOR_DATALOSS;
@@ -66,11 +83,7 @@ test_writesame10_unmap(void)
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
-			for (j = 0; j < block_size * i; j++) {
-				if (buf[j] != 0) {
-					CU_ASSERT_EQUAL(buf[j], 0);
-				}
-			}
+			CU_ASSERT(all_zeroes(buf, i * block_size));
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
 				"and verify zero test");
@@ -105,11 +118,7 @@ test_writesame10_unmap(void)
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
-			for (j = 0; j < block_size * i; j++) {
-				if (buf[j] != 0) {
-					CU_ASSERT_EQUAL(buf[j], 0);
-				}
-			}
+			CU_ASSERT(all_zeroes(buf, i * block_size));
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
 				"and verify zero test");
@@ -181,11 +190,7 @@ test_writesame10_unmap(void)
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
-			for (j = 0; j < block_size * i; j++) {
-				if (buf[j] != 0) {
-					CU_ASSERT_EQUAL(buf[j], 0);
-				}
-			}
+			CU_ASSERT(all_zeroes(buf, i * block_size));
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
 				"and verify zero test");
