@@ -400,13 +400,26 @@ EXTERN int iscsi_full_connect_sync(struct iscsi_context *iscsi, const char *port
 EXTERN int iscsi_disconnect(struct iscsi_context *iscsi);
 
 /*
- * Disconnect a connection to a target and try to reconnect.
+ * Disconnect a connection to a target and try to reconnect (async version).
+ * This call returns immediately and the reconnect is processed in the
+ * background. Commands send to this connection will be queued and not
+ * processed until we have successfully reconnected.
  *
  * Returns:
  *  0 reconnect was successful
  * <0 error
  */
 EXTERN int iscsi_reconnect(struct iscsi_context *iscsi);
+
+/*
+ * Disconnect a connection to a target and try to reconnect (sync version).
+ * This call will block until the connection is reestablished.
+ *
+ * Returns:
+ *  0 reconnect was successful
+ * <0 error
+ */
+EXTERN int iscsi_reconnect_sync(struct iscsi_context *iscsi);
 
 /*
  * Asynchronous call to perform an ISCSI login.
