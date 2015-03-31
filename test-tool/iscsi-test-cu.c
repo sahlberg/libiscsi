@@ -824,9 +824,9 @@ add_tests(const char *testname_re)
 
 static void parse_and_add_tests(char *testname_re);
 
-static void parse_and_add_test(char *test)
+static void parse_and_add_test(const char *test)
 {
-	if (access(test, F_OK) == 0) {
+	if (test && access(test, F_OK) == 0) {
 		FILE *fh;
 		char t[256];
 
