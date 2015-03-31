@@ -73,7 +73,6 @@ iscsi_task_mgmt_async(struct iscsi_context *iscsi,
 
 	/* cmdsn is not increased if Immediate delivery*/
 	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
-	pdu->cmdsn = iscsi->cmdsn;
 
 	/* rcmdsn */
 	iscsi_pdu_set_rcmdsn(pdu, rcmdsn);

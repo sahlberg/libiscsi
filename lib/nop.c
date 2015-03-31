@@ -46,9 +46,6 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		return -1;
 	}
 
-	/* immediate flag */
-	iscsi_pdu_set_immediate(pdu);
-
 	/* flags */
 	iscsi_pdu_set_pduflags(pdu, 0x80);
 
@@ -58,12 +55,8 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	/* lun */
 	iscsi_pdu_set_lun(pdu, 0);
 
-	/* cmdsn is not increased if Immediate delivery*/
-	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
-	pdu->cmdsn = iscsi->cmdsn;
-
-	/* exp statsn */
-	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn+1);
+	/* cmdsn */
+	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn++);
 
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
@@ -83,7 +76,9 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	}
 
 	iscsi->nops_in_flight++;
-	ISCSI_LOG(iscsi, 6, "NOP Out Send (nops_in_flight: %d)", iscsi->nops_in_flight);
+	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
+	          "NOP Out Send (nops_in_flight: %d, pdu->cmdsn %08x, pdu->itt %08x, pdu->ttt %08x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x)",
+	          iscsi->nops_in_flight, pdu->cmdsn, pdu->itt, 0xffffffff, iscsi->maxcmdsn, iscsi->expcmdsn);
 
 	return 0;
 }
@@ -117,16 +112,16 @@ iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt)
 
 	/* cmdsn is not increased if Immediate delivery*/
 	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
-	pdu->cmdsn = iscsi->cmdsn;
-
-	/* exp statsn */
-	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn+1);
 
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "failed to queue iscsi nop-out pdu");
 		iscsi_free_pdu(iscsi, pdu);
 		return -1;
 	}
+
+	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
+	          "NOP Out Send (nops_in_flight: %d, pdu->cmdsn %08x, pdu->itt %08x, pdu->ttt %08x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x)",
+	          iscsi->nops_in_flight, pdu->cmdsn, 0xffffffff, ttt, iscsi->maxcmdsn, iscsi->expcmdsn);
 
 	return 0;
 }
@@ -137,9 +132,14 @@ iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 {
 	struct iscsi_data data;
 
-	iscsi->nops_in_flight = 0;
+	iscsi_adjust_maxexpcmdsn(iscsi, in);
+	iscsi_adjust_statsn(iscsi, in);
 
-	ISCSI_LOG(iscsi, 6, "NOP Out Reply received");
+	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
+	          "NOP-In received (pdu->itt %08x, pdu->ttt %08x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x, iscsi->statsn %08x)",
+	          pdu->itt, 0xffffffff, iscsi->maxcmdsn, iscsi->expcmdsn, iscsi->statsn); 
+
+	iscsi->nops_in_flight = 0;
 
 	if (pdu->callback == NULL) {
 		return 0;

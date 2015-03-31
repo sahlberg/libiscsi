@@ -319,11 +319,15 @@ static const char *iscsi_reject_reason_str(enum iscsi_reject_reason reason)
 int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
 				struct iscsi_in_pdu *in)
 {
-	uint32_t ttt;
-
-	ttt = scsi_get_uint32(&in->hdr[20]);
+	uint32_t ttt = scsi_get_uint32(&in->hdr[20]);
+	uint32_t itt = scsi_get_uint32(&in->hdr[16]);
 
 	iscsi_adjust_statsn(iscsi, in);
+	iscsi_adjust_maxexpcmdsn(iscsi, in);
+
+	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
+	          "NOP-In received (pdu->itt %08x, pdu->ttt %08x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x, iscsi->statsn %08x)",
+	          itt, ttt, iscsi->maxcmdsn, iscsi->expcmdsn, iscsi->statsn);
 
 	/* if the server does not want a response */
 	if (ttt == 0xffffffff) {
@@ -365,7 +369,7 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 
 	if (reason == ISCSI_REJECT_WAITING_FOR_LOGOUT) {
 		ISCSI_LOG(iscsi, 1, "target rejects request with reason: %s",  iscsi_reject_reason_str(reason));
-		iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_URGENT_DELIVERY);
+		iscsi_logout_async(iscsi, iscsi_reconnect_after_logout, NULL);
 		return 0;
 	}
 
@@ -435,7 +439,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 				ISCSI_LOG(iscsi, 2, "dropping connection to fix errors with broken DELL Equallogic firmware 7.x");
 				return -1;
 			}
-			iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_URGENT_DELIVERY);
+			iscsi_logout_async(iscsi, iscsi_reconnect_after_logout, NULL);
 			return 0;
 		case 0x2:
 			ISCSI_LOG(iscsi, 2, "target will drop this connection. Time2Wait is %u seconds", param2);
@@ -447,7 +451,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 			return 0;
 		case 0x4:
 			ISCSI_LOG(iscsi, 2, "target requests parameter renogitiation.");
-			iscsi_logout_async_internal(iscsi, iscsi_reconnect_after_logout, NULL, ISCSI_PDU_DROP_ON_RECONNECT);
+			iscsi_logout_async(iscsi, iscsi_reconnect_after_logout, NULL);
 			return 0;
 		default:
 			ISCSI_LOG(iscsi, 1, "unhandled async event %u: param1 %u param2 %u param3 %u", event, param1, param2, param3);
@@ -621,6 +625,7 @@ void
 iscsi_pdu_set_cmdsn(struct iscsi_pdu *pdu, uint32_t cmdsn)
 {
 	scsi_set_uint32(&pdu->outdata.data[24], cmdsn);
+	pdu->cmdsn = cmdsn;
 }
 
 void

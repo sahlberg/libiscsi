@@ -790,6 +790,13 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		return -1;
 	}
 
+	/* randomize cmdsn and itt */
+	if (!iscsi->current_phase && !iscsi->secneg_phase) {
+		iscsi->itt = (u_int32_t) rand();
+		iscsi->cmdsn = (u_int32_t) rand();
+		iscsi->expcmdsn = iscsi->maxcmdsn = iscsi->cmdsn;
+	}
+
 	pdu = iscsi_allocate_pdu(iscsi,
 				 ISCSI_PDU_LOGIN_REQUEST,
 				 ISCSI_PDU_LOGIN_RESPONSE,
@@ -803,6 +810,9 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 	/* login request */
 	iscsi_pdu_set_immediate(pdu);
+
+	/* cmdsn is not increased if Immediate delivery*/
+	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
 
 	if (!iscsi->user[0]) {
 		iscsi->current_phase = ISCSI_PDU_LOGIN_CSG_OPNEG;
@@ -1034,7 +1044,13 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 	status = scsi_get_uint16(&in->hdr[36]);
 
-	iscsi_adjust_statsn(iscsi, in);
+	// Status-Class is 0
+	if (!(status >> 8)) {
+		if (!iscsi->current_phase && !iscsi->secneg_phase) {
+			iscsi->statsn = scsi_get_uint32(&in->hdr[24]);
+		}
+		iscsi_adjust_statsn(iscsi, in);
+	}
 	iscsi_adjust_maxexpcmdsn(iscsi, in);
 
 	/* Using bidirectional CHAP? Then we must see a chap_n and chap_r
@@ -1236,8 +1252,8 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 }
 
 int
-iscsi_logout_async_internal(struct iscsi_context *iscsi, iscsi_command_cb cb,
-		   void *private_data, uint32_t flags)
+iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
+		   void *private_data)
 {
 	struct iscsi_pdu *pdu;
 
@@ -1252,7 +1268,7 @@ iscsi_logout_async_internal(struct iscsi_context *iscsi, iscsi_command_cb cb,
 				 ISCSI_PDU_LOGOUT_REQUEST,
 				 ISCSI_PDU_LOGOUT_RESPONSE,
 				 iscsi_itt_post_increment(iscsi),
-				 ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_CORK_WHEN_SENT|flags);
+				 ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_CORK_WHEN_SENT);
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate "
 				"logout pdu.");
@@ -1267,10 +1283,6 @@ iscsi_logout_async_internal(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 	/* cmdsn is not increased if Immediate delivery*/
 	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
-	pdu->cmdsn = iscsi->cmdsn;
-
-	/* exp statsn */
-	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn+1);
 
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
@@ -1283,13 +1295,6 @@ iscsi_logout_async_internal(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	}
 
 	return 0;
-}
-
-int
-iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
-		   void *private_data)
-{
-	return iscsi_logout_async_internal(iscsi, cb, private_data, 0);
 }
 
 int

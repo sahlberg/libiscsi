@@ -92,10 +92,17 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	
 	/* queue pdus in ascending order of CmdSN. 
 	 * ensure that pakets with the same CmdSN are kept in FIFO order.
+	 * immediate PDUs are queued in front of queue with the CmdSN
+	 * of the first element in the outqueue.
 	 */
+
+	if (pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE) {
+		iscsi_pdu_set_cmdsn(pdu, current->cmdsn);
+	}
+
 	do {
 		if (iscsi_serial32_compare(pdu->cmdsn, current->cmdsn) < 0 ||
-			pdu->flags & ISCSI_PDU_URGENT_DELIVERY) {
+			(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE && !(current->outdata.data[0] & ISCSI_PDU_IMMEDIATE))) {
 			/* insert PDU before the current */
 			if (last != NULL) {
 				last->next=pdu;
@@ -386,7 +393,10 @@ iscsi_which_events(struct iscsi_context *iscsi)
 
 	if (iscsi->outqueue_current != NULL ||
 	    (iscsi->outqueue != NULL && !iscsi->is_corked &&
-	     iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0)) {
+	     (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0 ||
+	      iscsi->outqueue->outdata.data[0] & ISCSI_PDU_IMMEDIATE)
+	    )
+	   ) {
 		events |= POLLOUT;
 	}
 	return events;
@@ -639,13 +649,19 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 				          iscsi->outqueue->cmdsn, iscsi->maxcmdsn);
 				return 0;
 			}
+
 			/* pop first element of the outqueue */
-			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->expcmdsn) < 0) {
-				iscsi_set_error(iscsi, "iscsi_write_to_scoket: outqueue[0]->cmdsn < expcmdsn (%08x < %08x)",
-				                iscsi->outqueue->cmdsn, iscsi->expcmdsn);
+			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->expcmdsn) < 0 &&
+				(iscsi->outqueue->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT) {
+				iscsi_set_error(iscsi, "iscsi_write_to_scoket: outqueue[0]->cmdsn < expcmdsn (%08x < %08x) opcode %02x",
+				                iscsi->outqueue->cmdsn, iscsi->expcmdsn, iscsi->outqueue->outdata.data[0] & 0x3f);
 				return -1;
 			}
 			iscsi->outqueue_current = iscsi->outqueue;
+			
+			/* set exp statsn */
+			iscsi_pdu_set_expstatsn(iscsi->outqueue_current, iscsi->statsn + 1);
+			
 			ISCSI_LIST_REMOVE(&iscsi->outqueue, iscsi->outqueue_current);
 			if (!(iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT)) {
 				/* we have to add the pdu to the waitqueue already here

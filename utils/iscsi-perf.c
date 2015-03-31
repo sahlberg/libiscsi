@@ -24,6 +24,7 @@
 #include <getopt.h>
 #include <time.h>
 #include <signal.h>
+#include <unistd.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -33,7 +34,11 @@
 
 #define VERSION "0.1"
 
+#define NOP_INTERVAL 5
+#define MAX_NOP_FAILURES 3
+
 const char *initiator = "iqn.2010-11.libiscsi:iscsi-perf";
+int proc_alarm = 0;
 int max_in_flight = 32;
 int blocks_per_io = 8;
 uint64_t runtime = 0;
@@ -43,6 +48,7 @@ struct client {
 	int finished;
 	int in_flight;
 	int random;
+	int random_blocks;
 
 	struct iscsi_context *iscsi;
 	struct scsi_iovec perf_iov;
@@ -55,6 +61,8 @@ struct client {
 	uint64_t first_ns;
 	uint64_t iops;
 	uint64_t last_iops;
+	uint64_t bytes;
+	uint64_t last_bytes;
 
 	int ignore_errors;
 	int busy_cnt;
@@ -92,37 +100,41 @@ void progress(struct client *client) {
 	if (runtime) _runtime = runtime - _runtime;
 
 	printf ("\r");
-	uint64_t aiops = 1000000000UL * (client->iops) / (now - client->first_ns);
+	uint64_t aiops = 1000000000.0 * (client->iops) / (now - client->first_ns);
+	uint64_t ambps = 1000000000.0 * (client->bytes) / (now - client->first_ns);
 	if (!_runtime) {
 		finished = 1;
 		printf ("iops average %" PRIu64 " (%" PRIu64 " MB/s)                                                        ", aiops, (aiops * blocks_per_io * client->blocksize) >> 20);
 	} else {
 		uint64_t iops = 1000000000UL * (client->iops - client->last_iops) / (now - client->last_ns);
+		uint64_t mbps = 1000000000UL * (client->bytes - client->last_bytes) / (now - client->last_ns);
 		printf ("%02" PRIu64 ":%02" PRIu64 ":%02" PRIu64 " - ", _runtime / 3600, (_runtime % 3600) / 60, _runtime % 60);
-		printf ("lba %" PRIu64 ", iops current %" PRIu64 " (%" PRIu64 " MB/s), ", client->pos, iops, (iops * blocks_per_io * client->blocksize) >> 20);
-		printf ("iops average %" PRIu64 " (%" PRIu64 " MB/s), in_flight %d, busy %d         ", aiops, (aiops * blocks_per_io * client->blocksize) >> 20, client->in_flight, client->busy_cnt);
+		printf ("lba %" PRIu64 ", iops current %" PRIu64 " (%" PRIu64 " MB/s), ", client->pos, iops, mbps >> 20);
+		printf ("iops average %" PRIu64 " (%" PRIu64 " MB/s), in_flight %d, busy %d         ", aiops, ambps >> 20, client->in_flight, client->busy_cnt);
 	}
 	fflush(stdout);
 	client->last_ns = now;
 	client->last_iops = client->iops;
+	client->last_bytes = client->bytes;
 }
 
 void cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *private_data)
 {
 	struct client *client = (struct client *)private_data;
 	struct scsi_task *task = command_data, *task2 = NULL;
+	struct scsi_read16_cdb *read16_cdb = NULL;
+
+	read16_cdb = scsi_cdb_unmarshall(task, SCSI_OPCODE_READ16);
+	if (read16_cdb == NULL) {
+		fprintf(stderr, "Failed to unmarshall READ16 CDB.\n");
+		client->err_cnt++;
+		goto out;
+	}
 
 	if (status == SCSI_STATUS_BUSY ||
 		(status == SCSI_STATUS_CHECK_CONDITION && task->sense.key == SCSI_SENSE_UNIT_ATTENTION)) {
-		struct scsi_read16_cdb *read16_cdb = NULL;
 		if (client->retry_cnt++ > 4 * max_in_flight) {
 			fprintf(stderr, "maxium number of command retries reached...\n");
-			client->err_cnt++;
-			goto out;
-		}
-		read16_cdb = scsi_cdb_unmarshall(task, SCSI_OPCODE_READ16);
-		if (read16_cdb == NULL) {
-			fprintf(stderr, "Failed to unmarshall READ16 CDB.\n");
 			client->err_cnt++;
 			goto out;
 		}
@@ -143,6 +155,7 @@ void cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *p
 		client->err_cnt++;
 	} else if (status == SCSI_STATUS_GOOD) {
 		client->retry_cnt = 0;
+		client->bytes += read16_cdb->transfer_length * client->blocksize;
 	} else {
 		fprintf(stderr, "Read16 failed with %s\n", iscsi_get_error(iscsi));
 		if (!client->ignore_errors) {
@@ -181,6 +194,10 @@ void fill_read_queue(struct client *client)
 		if (num_blocks > blocks_per_io) {
 			num_blocks = blocks_per_io;
 		}
+		
+		if (client->random_blocks) {
+			num_blocks = rand() % num_blocks + 1;
+		}
 
 		task = iscsi_read16_task(client->iscsi,
 								client->lun, client->pos,
@@ -202,8 +219,17 @@ void usage(void) {
 	exit(1);
 }
 
-void sig_handler (int signum _U_) {
-	finished = 1;
+void sig_handler (int signum ) {
+	if (signum == SIGALRM) {
+		if (proc_alarm) {
+			fprintf(stderr, "\n\nABORT: Last alarm was not processed.\n");
+			exit(10);
+		}
+		proc_alarm = 1;
+		alarm(NOP_INTERVAL);
+	} else {
+		finished = 1;
+	}
 }
 
 int main(int argc, char *argv[])
@@ -222,6 +248,7 @@ int main(int argc, char *argv[])
 		{"blocks",         required_argument,    NULL,        'b'},
 		{"runtime",        required_argument,    NULL,        't'},
 		{"random",         no_argument,          NULL,        'r'},
+		{"random-blocks",  no_argument,          NULL,        'R'},
 		{"ignore-errors",  no_argument,          NULL,        'n'},
 		{0, 0, 0, 0}
 	};
@@ -233,7 +260,7 @@ int main(int argc, char *argv[])
 	
 	printf("iscsi-perf version %s - (c) 2014-2015 by Peter Lieven <pl@ĸamp.de>\n\n", VERSION);
 
-	while ((c = getopt_long(argc, argv, "i:m:b:t:nr", long_options,
+	while ((c = getopt_long(argc, argv, "i:m:b:t:nrR", long_options,
 			&option_index)) != -1) {
 		switch (c) {
 		case 'i':
@@ -253,6 +280,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'r':
 			client.random = 1;
+			break;
+		case 'R':
+			client.random_blocks = 1;
 			break;
 		default:
 			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
@@ -324,8 +354,13 @@ int main(int argc, char *argv[])
 	printf("capacity is %" PRIu64 " blocks or %" PRIu64 " byte (%" PRIu64 " MB)\n", client.num_blocks, client.num_blocks * client.blocksize,
 	                                                        (client.num_blocks * client.blocksize) >> 20);
 
-	printf("performing %s READ with %d parallel requests\nfixed transfer size of %d blocks (%d byte)\n",
-	       client.random ? "random" : "sequential", max_in_flight, blocks_per_io, blocks_per_io * client.blocksize);
+	printf("performing %s READ with %d parallel requests\n", client.random ? "RANDOM" : "SEQUENTIAL", max_in_flight);
+
+	if (client.random_blocks) {
+		printf("RANDOM transfer size of 1 - %d blocks (%d - %d byte)\n", blocks_per_io, client.blocksize, blocks_per_io * client.blocksize);
+	} else {
+		printf("FIXED transfer size of %d blocks (%d byte)\n", blocks_per_io, blocks_per_io * client.blocksize);
+	}
 
 	if (runtime) {
 		printf("will run for %" PRIu64 " seconds.\n", runtime);
@@ -340,6 +375,7 @@ int main(int argc, char *argv[])
 
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGALRM, &sa, NULL);
 
 	printf("\n");
 
@@ -347,9 +383,20 @@ int main(int argc, char *argv[])
 
 	fill_read_queue(&client);
 
+	alarm(NOP_INTERVAL);
+
 	while (client.in_flight && !client.err_cnt) {
 		pfd[0].fd = iscsi_get_fd(client.iscsi);
 		pfd[0].events = iscsi_which_events(client.iscsi);
+
+		if (proc_alarm) {
+			if (iscsi_get_nops_in_flight(client.iscsi) > MAX_NOP_FAILURES) {
+				fprintf(stderr, "\n\nABORT: NOP timeout.\n");
+				exit(10);
+			}
+			iscsi_nop_out_async(client.iscsi, NULL, NULL, 0, NULL);
+			proc_alarm = 0;
+		}
 
 		if (poll(&pfd[0], 1, -1) < 0) {
 			continue;
@@ -359,6 +406,8 @@ int main(int argc, char *argv[])
 			break;
 		}
 	}
+	
+	alarm(0);
 
 	progress(&client);
 	

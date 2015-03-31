@@ -229,11 +229,6 @@ struct iscsi_pdu {
 #define ISCSI_PDU_DROP_ON_RECONNECT	0x00000004
 /* stop sending after this PDU has been sent */
 #define ISCSI_PDU_CORK_WHEN_SENT	0x00000008
-/* put this immediate delivery PDU in front of outqueue.
- * This is currently only used for immediate logout requests
- * as answer to an async logout event. */
-#define ISCSI_PDU_URGENT_DELIVERY	0x00000010
-
 
 	uint32_t flags;
 
@@ -370,10 +365,6 @@ void iscsi_adjust_maxexpcmdsn(struct iscsi_context *iscsi, struct iscsi_in_pdu *
 uint32_t iscsi_itt_post_increment(struct iscsi_context *iscsi);
 
 void iscsi_timeout_scan(struct iscsi_context *iscsi);
-
-int
-iscsi_logout_async_internal(struct iscsi_context *iscsi, iscsi_command_cb cb,
-		  void *private_data, uint32_t flags);
 
 #ifdef __cplusplus
 }
