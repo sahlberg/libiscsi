@@ -65,6 +65,7 @@ struct client {
 	uint64_t last_bytes;
 
 	int ignore_errors;
+	int max_reconnects;
 	int busy_cnt;
 	int err_cnt;
 	int retry_cnt;
@@ -110,7 +111,7 @@ void progress(struct client *client) {
 		uint64_t mbps = 1000000000UL * (client->bytes - client->last_bytes) / (now - client->last_ns);
 		printf ("%02" PRIu64 ":%02" PRIu64 ":%02" PRIu64 " - ", _runtime / 3600, (_runtime % 3600) / 60, _runtime % 60);
 		printf ("lba %" PRIu64 ", iops current %" PRIu64 " (%" PRIu64 " MB/s), ", client->pos, iops, mbps >> 20);
-		printf ("iops average %" PRIu64 " (%" PRIu64 " MB/s), in_flight %d, busy %d         ", aiops, ambps >> 20, client->in_flight, client->busy_cnt);
+		printf ("iops average %" PRIu64 " (%" PRIu64 " MB/s), in_flight %d, busy %d        ", aiops, ambps >> 20, client->in_flight, client->busy_cnt);
 	}
 	fflush(stdout);
 	client->last_ns = now;
@@ -215,7 +216,7 @@ void fill_read_queue(struct client *client)
 }
 
 void usage(void) {
-	fprintf(stderr,"Usage: iscsi-perf [-i <initiator-name>] [-m <max_requests>] [-b blocks_per_request] [-t timeout] [-r|--random] [-n|--ignore-errors] <LUN>\n");
+	fprintf(stderr,"Usage: iscsi-perf [-i <initiator-name>] [-m <max_requests>] [-b blocks_per_request] [-t timeout] [-r|--random] [-n|--ignore-errors] [-x <max_reconnects>] <LUN>\n");
 	exit(1);
 }
 
@@ -228,7 +229,7 @@ void sig_handler (int signum ) {
 		proc_alarm = 1;
 		alarm(NOP_INTERVAL);
 	} else {
-		finished = 1;
+		finished++;
 	}
 }
 
@@ -255,12 +256,13 @@ int main(int argc, char *argv[])
 	int option_index;
 
 	memset(&client, 0, sizeof(client));
+	client.max_reconnects = -1;
 
 	srand(time(NULL));
 	
 	printf("iscsi-perf version %s - (c) 2014-2015 by Peter Lieven <pl@ĸamp.de>\n\n", VERSION);
 
-	while ((c = getopt_long(argc, argv, "i:m:b:t:nrR", long_options,
+	while ((c = getopt_long(argc, argv, "i:m:b:t:nrRx:", long_options,
 			&option_index)) != -1) {
 		switch (c) {
 		case 'i':
@@ -283,6 +285,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'R':
 			client.random_blocks = 1;
+			break;
+		case 'x':
+			client.max_reconnects = atoi(optarg);
 			break;
 		default:
 			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
@@ -381,20 +386,24 @@ int main(int argc, char *argv[])
 
 	client.first_ns = client.last_ns = get_clock_ns();
 
+	iscsi_set_reconnect_max_retries(client.iscsi, client.max_reconnects);
+
 	fill_read_queue(&client);
 
 	alarm(NOP_INTERVAL);
 
-	while (client.in_flight && !client.err_cnt) {
+	while (client.in_flight && !client.err_cnt && finished < 2) {
 		pfd[0].fd = iscsi_get_fd(client.iscsi);
 		pfd[0].events = iscsi_which_events(client.iscsi);
-
 		if (proc_alarm) {
 			if (iscsi_get_nops_in_flight(client.iscsi) > MAX_NOP_FAILURES) {
-				fprintf(stderr, "\n\nABORT: NOP timeout.\n");
-				exit(10);
+				iscsi_reconnect(client.iscsi);
+			} else {
+				iscsi_nop_out_async(client.iscsi, NULL, NULL, 0, NULL);
 			}
-			iscsi_nop_out_async(client.iscsi, NULL, NULL, 0, NULL);
+			if (!iscsi_get_nops_in_flight(client.iscsi)) {
+				finished = 0;
+			}
 			proc_alarm = 0;
 		}
 
@@ -411,7 +420,7 @@ int main(int argc, char *argv[])
 
 	progress(&client);
 	
-	if (!client.err_cnt) {
+	if (!client.err_cnt && finished < 2) {
 		printf ("\n\nfinished.\n");
 		iscsi_logout_sync(client.iscsi);
 	} else {
