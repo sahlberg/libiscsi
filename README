@@ -274,6 +274,14 @@ RELEASE TARBALLS
 Release tarballs are available at https://sites.google.com/site/libiscsitarballs/libiscsitarballs/
 
 
+CONTRIBUTING
+============
+If you want to contribute, please do.
+For sending me patches you can either do that by sending a pull request to my
+github repo or you can send them in an email directly to me at
+ronniesahlberg@gmail.com
+
+
 MAILINGLIST
 ===========
 A libiscsi mailing list is available at http://groups.google.com/group/libiscsi
