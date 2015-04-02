@@ -791,7 +791,9 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 		if (time(NULL) > iscsi->next_reconnect) {
 			return iscsi_reconnect(iscsi);
 		} else {
-			return 0;
+			if (iscsi->is_reconnecting) {
+				return 0;
+			}
 		}
 	}
 
