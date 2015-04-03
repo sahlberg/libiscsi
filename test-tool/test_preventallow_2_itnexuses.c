@@ -59,6 +59,7 @@ test_preventallow_2_itnexuses(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
+	memset(&sd2, 0, sizeof(sd2));
 	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd->iscsi_lun);
 	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");

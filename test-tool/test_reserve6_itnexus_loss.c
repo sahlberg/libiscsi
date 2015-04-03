@@ -53,6 +53,7 @@ test_reserve6_itnexus_loss(void)
 
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
+	memset(&sd2, 0, sizeof(sd2));
 	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd->iscsi_url, &sd2.iscsi_lun);
 	if (sd2.iscsi_ctx == NULL) {
 		logging(LOG_VERBOSE, "Failed to login to target");
