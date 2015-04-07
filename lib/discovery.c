@@ -58,6 +58,9 @@ iscsi_discovery_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	/* immediate */
 	iscsi_pdu_set_immediate(pdu);
 
+	/* cmdsn is not increased if Immediate delivery*/
+	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
+
 	/* flags */
 	iscsi_pdu_set_pduflags(pdu, ISCSI_PDU_TEXT_FINAL);
 
