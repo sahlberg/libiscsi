@@ -133,10 +133,11 @@ AC_SEARCH_LIBS(clock_gettime, rt, [
 
 
 AC_CONFIG_FILES([Makefile]
-		[lib/Makefile]
 		[doc/Makefile]
-		[utils/Makefile]
-		[test-tool/Makefile]
 		[examples/Makefile]
+		[lib/Makefile]
+		[test-tool/Makefile]
+		[tests/Makefile]
+		[utils/Makefile]
 		[libiscsi.pc])
 AC_OUTPUT
