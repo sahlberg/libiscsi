@@ -28,7 +28,7 @@
 void
 test_verify16_dpo(void)
 { 
-	int ret, dpofua;
+	int ret, dpofua, usage_data_dpo;
 	struct scsi_task *ms_task = NULL;
 	struct scsi_mode_sense *ms;
 	struct scsi_task *rso_task = NULL;
@@ -52,7 +52,7 @@ test_verify16_dpo(void)
 	CU_ASSERT_EQUAL(ret, 0);
 	logging(LOG_VERBOSE, "[SUCCESS] Mode sense returned status GOOD");
 	ms = scsi_datain_unmarshall(ms_task);
-	dpofua = !!(ms->device_specific_parameter & 0x10);
+	dpofua = ms && (ms->device_specific_parameter & 0x10);
 	scsi_free_scsi_task(ms_task);
 
 	if (dpofua) {
@@ -102,14 +102,15 @@ test_verify16_dpo(void)
 	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
 	rsoc = scsi_datain_unmarshall(rso_task);
 	CU_ASSERT_NOT_EQUAL(rsoc, NULL);
+	usage_data_dpo = rsoc ? rsoc->cdb_usage_data[1] & 0x10 : -1;
 	if (dpofua) {
 		logging(LOG_VERBOSE, "DPOFUA is set. Verify the DPO flag "
 			"is set in the CDB_USAGE_DATA");
-		CU_ASSERT_EQUAL(rsoc->cdb_usage_data[1] & 0x10, 0x10);
+		CU_ASSERT_EQUAL(usage_data_dpo, 0x10);
 	} else {
 		logging(LOG_VERBOSE, "DPOFUA is clear. Verify the DPO "
 			"flag is clear in the CDB_USAGE_DATA");
-		CU_ASSERT_EQUAL(rsoc->cdb_usage_data[1] & 0x10, 0x00);
+		CU_ASSERT_EQUAL(usage_data_dpo, 0x00);
 	}
 	scsi_free_scsi_task(rso_task);
 }
