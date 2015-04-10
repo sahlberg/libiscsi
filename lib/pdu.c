@@ -428,6 +428,15 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 		uint16_t param2 = scsi_get_uint16(&in->hdr[40]); 
 		uint16_t param3 = scsi_get_uint16(&in->hdr[42]); 
 		switch (event) {
+		case 0x0:
+			/* Just ignore these ones for now. It could be
+			 * a UNIT_ATTENTION for some changes on the
+			 * target but we don't have an API to pass this on
+			 * to the application yet.
+			 */
+			ISCSI_LOG(iscsi, 2, "Ignoring received iSCSI AsyncMsg/"
+				  "SCSI Async Event");
+			return 0;
 		case 0x1:
 			ISCSI_LOG(iscsi, 2, "target requests logout within %u seconds", param3);
 			/* this is an ugly workaround for DELL Equallogic FW 7.x bugs:
