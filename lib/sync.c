@@ -168,6 +168,48 @@ int iscsi_logout_sync(struct iscsi_context *iscsi)
 }
 
 static void
+reconnect_event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
+{
+	struct pollfd pfd;
+	int ret;
+	while (iscsi->is_reconnecting) {
+		pfd.fd = iscsi_get_fd(iscsi);
+		pfd.events = iscsi_which_events(iscsi);
+
+		if ((ret = poll(&pfd, 1, 1000)) < 0) {
+			iscsi_set_error(iscsi, "Poll failed");
+			state->status = -1;
+			return;
+		}
+
+		if (iscsi_service(iscsi, pfd.revents) < 0) {
+			iscsi_set_error(iscsi,
+				"iscsi_service failed with : %s",
+				iscsi_get_error(iscsi));
+			state->status = -1;
+			return;
+		}
+	}
+	state->status = 0;
+}
+
+int iscsi_reconnect_sync(struct iscsi_context *iscsi)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_reconnect(iscsi) != 0) {
+		iscsi_set_error(iscsi, "Failed to reconnect. %s", iscsi_get_error(iscsi));
+		return -1;
+	}
+
+	reconnect_event_loop(iscsi, &state);
+
+	return state.status;
+}
+
+static void
 iscsi_task_mgmt_sync_cb(struct iscsi_context *iscsi, int status,
 	      void *command_data, void *private_data)
 {

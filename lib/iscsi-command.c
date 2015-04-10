@@ -206,6 +206,11 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	struct iscsi_pdu *pdu;
 	int flags;
 
+	if (iscsi->old_iscsi) {
+		iscsi = iscsi->old_iscsi;
+		ISCSI_LOG(iscsi, 2, "iscsi_scsi_command_async: queuing cmd to old_iscsi while reconnecting");
+	}
+
 	if (iscsi->session_type != ISCSI_SESSION_NORMAL) {
 		iscsi_set_error(iscsi, "Trying to send command on "
 				"discovery session.");

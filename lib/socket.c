@@ -291,6 +291,14 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	}
 
+	if (iscsi->old_iscsi && iscsi->fd != iscsi->old_iscsi->fd) {
+		if (dup2(iscsi->fd, iscsi->old_iscsi->fd) == -1) {
+			return -1;
+		}
+		close(iscsi->fd);
+		iscsi->fd = iscsi->old_iscsi->fd;
+	}
+
 	iscsi->socket_status_cb  = cb;
 	iscsi->connect_data      = private_data;
 
@@ -383,6 +391,9 @@ iscsi_disconnect(struct iscsi_context *iscsi)
 int
 iscsi_get_fd(struct iscsi_context *iscsi)
 {
+	if (iscsi->old_iscsi) {
+		return iscsi->old_iscsi->fd;
+	}
 	return iscsi->fd;
 }
 
@@ -390,6 +401,11 @@ int
 iscsi_which_events(struct iscsi_context *iscsi)
 {
 	int events = iscsi->is_connected ? POLLIN : POLLOUT;
+
+	if (iscsi->pending_reconnect && iscsi->is_reconnecting &&
+		time(NULL) < iscsi->next_reconnect) {
+		return 0;
+	}
 
 	if (iscsi->outqueue_current != NULL ||
 	    (iscsi->outqueue != NULL && !iscsi->is_corked &&
@@ -763,6 +779,9 @@ iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 			return 0;
 		}
 	}
+	if (iscsi->is_reconnecting) {
+		return 0;
+	}
 	return -1;
 }
 
@@ -774,7 +793,13 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 	}
 
 	if (iscsi->pending_reconnect) {
-		iscsi_reconnect(iscsi);
+		if (time(NULL) >= iscsi->next_reconnect) {
+			return iscsi_reconnect(iscsi);
+		} else {
+			if (iscsi->is_reconnecting) {
+				return 0;
+			}
+		}
 	}
 
 	if (revents & POLLERR) {
