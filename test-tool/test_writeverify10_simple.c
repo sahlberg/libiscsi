@@ -36,7 +36,7 @@ test_writeverify10_simple(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITEVERIFY10 of 1-256 blocks at the start of the LUN");
-
+	memset(buf, 0xa6, 256 * block_size);
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;

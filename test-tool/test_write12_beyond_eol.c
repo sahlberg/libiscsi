@@ -40,6 +40,7 @@ test_write12_beyond_eol(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITE12 1-256 blocks one block beyond the end");
+	memset(buf, 0xa6, 256 * block_size);
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;

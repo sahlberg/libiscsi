@@ -121,6 +121,7 @@ test_write10_residuals(void)
 	task->xfer_dir = SCSI_XFER_WRITE;
 	task->expxferlen = 10000;
 
+	memset(buf, 0xa6, sizeof(buf));
 	data.size = task->expxferlen;
 	data.data = &buf[0];
 	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);

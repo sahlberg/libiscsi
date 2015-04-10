@@ -38,6 +38,7 @@ test_write12_flags(void)
 	logging(LOG_VERBOSE, "Test WRITE12 flags");
 
 	logging(LOG_VERBOSE, "Test WRITE12 with DPO==1");
+	memset(buf, 0xa6, block_size);
 	ret = write12(sd, 0,
 		      block_size, block_size, 0, 1, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);

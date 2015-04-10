@@ -41,6 +41,7 @@ test_readonly_sbc(void)
 
 
 	logging(LOG_VERBOSE, "Test WRITE10 fails with WRITE_PROTECTED");
+	memset(buf, 0xa6, sizeof(buf));
 	ret = write10(sd, 0, block_size, block_size,
 		      0, 0, 0, 0, 0, buf,
 		      EXPECT_WRITE_PROTECTED);

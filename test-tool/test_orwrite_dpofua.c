@@ -60,6 +60,7 @@ test_orwrite_dpofua(void)
 	}
 
 	logging(LOG_VERBOSE, "Test ORWRITE with DPO==1");
+	memset(buf, 0xa6, block_size);
 	if (dpofua) {
 		ret = orwrite(sd, 0, block_size,
 			      block_size, 0, 1, 0, 0, 0, buf,

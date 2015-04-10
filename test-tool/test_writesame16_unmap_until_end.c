@@ -44,6 +44,7 @@ test_writesame16_unmap_until_end(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME16 of 1-256 blocks at the end of the LUN by setting number-of-blocks==0");
+	memset(buf, 0xa6, 256 * block_size);
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, block_size * i);

@@ -60,6 +60,7 @@ test_compareandwrite_dpofua(void)
 	}
 
 	logging(LOG_VERBOSE, "Test COMPAREANDWRITE with DPO==1");
+	memset(buf, 0xa6, block_size);
 	if (dpofua) {
 		ret = compareandwrite(sd, 0, buf, block_size,
 				      block_size, 0, 1, 0, 0,

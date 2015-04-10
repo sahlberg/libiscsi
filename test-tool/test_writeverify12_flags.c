@@ -39,6 +39,7 @@ test_writeverify12_flags(void)
 
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY12 with BYTCHK==1");
+	memset(buf, 0xa6, block_size);
 	ret = writeverify12(sd, 0,
 			    block_size, block_size, 0, 0, 1, 0, buf,
 			    EXPECT_STATUS_GOOD);

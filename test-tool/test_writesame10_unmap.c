@@ -58,6 +58,7 @@ test_writesame10_unmap(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME10 of 1-256 blocks at the start of "
 		"the LUN");
+	memset(buf, 0xa6, 256 * block_size);
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);

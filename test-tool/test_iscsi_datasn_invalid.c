@@ -82,6 +82,8 @@ void test_iscsi_datasn_invalid(void)
 	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
 	iscsi_set_timeout(sd->iscsi_ctx, 3);
 
+	memset(buf, 0xa6, 2 * block_size);
+
 	ret = write10(sd, 100, 2 * block_size,
 		      block_size, 0, 0, 0, 0, 0, buf,
 		      EXPECT_STATUS_GOOD);

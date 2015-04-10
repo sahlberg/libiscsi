@@ -245,6 +245,7 @@ test_read10_invalid(void)
 	task->xfer_dir = SCSI_XFER_WRITE;
 	task->expxferlen = block_size;
 
+	memset(buf, 0xa6, block_size);
 	data.size = block_size;
 	data.data = (unsigned char *)buf;
 

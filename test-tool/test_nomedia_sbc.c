@@ -139,6 +139,7 @@ test_nomedia_sbc(void)
 	}
 
 	logging(LOG_VERBOSE, "Test VERIFY10 when medium is ejected.");
+	memset(buf, 0xa6, sizeof(buf));
 	ret = verify10(sd, 0, block_size, block_size,
 		       0, 0, 1, buf,
 		       EXPECT_NO_MEDIUM);
