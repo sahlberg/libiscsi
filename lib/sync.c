@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
@@ -175,6 +176,11 @@ reconnect_event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state
 	while (iscsi->old_iscsi) {
 		pfd.fd = iscsi_get_fd(iscsi);
 		pfd.events = iscsi_which_events(iscsi);
+
+		if (!pfd.events) {
+			sleep(1);
+			continue;
+		}
 
 		if ((ret = poll(&pfd, 1, 1000)) < 0) {
 			iscsi_set_error(iscsi, "Poll failed");

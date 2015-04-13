@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <getopt.h>
+#include <unistd.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -54,21 +55,26 @@ struct client_state {
 
 void event_loop(struct iscsi_context *iscsi, struct client_state *state)
 {
-       struct pollfd pfd;
+	struct pollfd pfd;
 
-       while (state->finished == 0) {
-               pfd.fd = iscsi_get_fd(iscsi);
-               pfd.events = iscsi_which_events(iscsi);
+	while (state->finished == 0) {
+		pfd.fd = iscsi_get_fd(iscsi);
+		pfd.events = iscsi_which_events(iscsi);
 
-               if (poll(&pfd, 1, -1) < 0) {
-                       fprintf(stderr, "Poll failed");
-                       exit(10);
-               }
-               if (iscsi_service(iscsi, pfd.revents) < 0) {
-                       fprintf(stderr, "iscsi_service failed with : %s\n", iscsi_get_error(iscsi));
-                       exit(10);
-               }
-       }
+		if (!pfd.events) {
+			sleep(1);
+			continue;
+		}
+
+		if (poll(&pfd, 1, -1) < 0) {
+			fprintf(stderr, "Poll failed");
+			exit(10);
+		}
+		if (iscsi_service(iscsi, pfd.revents) < 0) {
+			fprintf(stderr, "iscsi_service failed with : %s\n", iscsi_get_error(iscsi));
+			exit(10);
+		}
+	}
 }
 
 void show_lun(struct iscsi_context *iscsi, int lun)

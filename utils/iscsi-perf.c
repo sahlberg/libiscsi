@@ -395,6 +395,7 @@ int main(int argc, char *argv[])
 	while (client.in_flight && !client.err_cnt && finished < 2) {
 		pfd[0].fd = iscsi_get_fd(client.iscsi);
 		pfd[0].events = iscsi_which_events(client.iscsi);
+
 		if (proc_alarm) {
 			if (iscsi_get_nops_in_flight(client.iscsi) > MAX_NOP_FAILURES) {
 				iscsi_reconnect(client.iscsi);
@@ -405,6 +406,11 @@ int main(int argc, char *argv[])
 				finished = 0;
 			}
 			proc_alarm = 0;
+		}
+
+		if (!pfd[0].events) {
+			sleep(1);
+			continue;
 		}
 
 		if (poll(&pfd[0], 1, -1) < 0) {
