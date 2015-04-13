@@ -22,6 +22,7 @@
 #include <string.h>
 #include <poll.h>
 #include <getopt.h>
+#include <unistd.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -376,6 +377,11 @@ int main(int argc, char *argv[])
 		pfd[0].events = iscsi_which_events(client.src_iscsi);
 		pfd[1].fd = iscsi_get_fd(client.dst_iscsi);
 		pfd[1].events = iscsi_which_events(client.dst_iscsi);
+
+		if (!pfd[0].events && !pfd[1].events) {
+			sleep(1);
+			continue;
+		}
 
 		if (poll(&pfd[0], 2, -1) < 0) {
 			printf("Poll failed");

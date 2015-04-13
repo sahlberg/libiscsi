@@ -111,7 +111,6 @@ struct iscsi_context {
 	int secneg_phase;
 	int login_attempts;
 	int is_loggedin;
-	int is_reconnecting;
 	int bind_interfaces_cnt;
 	int nops_in_flight;
 
@@ -317,7 +316,7 @@ int iscsi_process_r2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		      struct iscsi_in_pdu *in);
 int iscsi_process_reject(struct iscsi_context *iscsi,
 				struct iscsi_in_pdu *in);
-int iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt);
+int iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt, uint32_t lun);
 
 #if defined(WIN32)
 void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
@@ -367,6 +366,9 @@ void iscsi_adjust_maxexpcmdsn(struct iscsi_context *iscsi, struct iscsi_in_pdu *
 uint32_t iscsi_itt_post_increment(struct iscsi_context *iscsi);
 
 void iscsi_timeout_scan(struct iscsi_context *iscsi);
+
+void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
+                        void *command_data, void *private_data);
 
 #ifdef __cplusplus
 }
