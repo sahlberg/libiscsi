@@ -367,6 +367,9 @@ uint32_t iscsi_itt_post_increment(struct iscsi_context *iscsi);
 
 void iscsi_timeout_scan(struct iscsi_context *iscsi);
 
+void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
+                        void *command_data, void *private_data);
+
 #ifdef __cplusplus
 }
 #endif

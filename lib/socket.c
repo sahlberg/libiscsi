@@ -780,6 +780,9 @@ iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 		}
 	}
 	if (iscsi->old_iscsi) {
+		if (!iscsi->pending_reconnect) {
+			iscsi_reconnect_cb(iscsi, SCSI_STATUS_ERROR, NULL, NULL);
+		}
 		return 0;
 	}
 	return -1;
