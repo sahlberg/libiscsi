@@ -344,7 +344,6 @@ static void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
 	ISCSI_LOG(iscsi, 2, "reconnect was successful");
 
 	iscsi->pending_reconnect = 0;
-	iscsi->is_reconnecting = 0;
 }
 
 int iscsi_reconnect(struct iscsi_context *old_iscsi)
@@ -366,7 +365,7 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 		return 0;
 	}
 
-	if (old_iscsi->is_reconnecting && !old_iscsi->pending_reconnect) {
+	if (old_iscsi->old_iscsi && !old_iscsi->pending_reconnect) {
 		return 0;
 	}
 
@@ -388,9 +387,6 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 	}
 
 	ISCSI_LOG(old_iscsi, 2, "reconnect initiated");
-
-	old_iscsi->is_reconnecting = 1;
-	iscsi->is_reconnecting = 1;
 
 	iscsi_set_targetname(iscsi, old_iscsi->target_name);
 

@@ -172,7 +172,7 @@ reconnect_event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state
 {
 	struct pollfd pfd;
 	int ret;
-	while (iscsi->is_reconnecting) {
+	while (iscsi->old_iscsi) {
 		pfd.fd = iscsi_get_fd(iscsi);
 		pfd.events = iscsi_which_events(iscsi);
 

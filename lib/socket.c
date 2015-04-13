@@ -402,7 +402,7 @@ iscsi_which_events(struct iscsi_context *iscsi)
 {
 	int events = iscsi->is_connected ? POLLIN : POLLOUT;
 
-	if (iscsi->pending_reconnect && iscsi->is_reconnecting &&
+	if (iscsi->pending_reconnect && iscsi->old_iscsi &&
 		time(NULL) < iscsi->next_reconnect) {
 		return 0;
 	}
@@ -779,7 +779,7 @@ iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 			return 0;
 		}
 	}
-	if (iscsi->is_reconnecting) {
+	if (iscsi->old_iscsi) {
 		return 0;
 	}
 	return -1;
@@ -796,7 +796,7 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 		if (time(NULL) >= iscsi->next_reconnect) {
 			return iscsi_reconnect(iscsi);
 		} else {
-			if (iscsi->is_reconnecting) {
+			if (iscsi->old_iscsi) {
 				return 0;
 			}
 		}

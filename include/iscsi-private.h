@@ -111,7 +111,6 @@ struct iscsi_context {
 	int secneg_phase;
 	int login_attempts;
 	int is_loggedin;
-	int is_reconnecting;
 	int bind_interfaces_cnt;
 	int nops_in_flight;
 
