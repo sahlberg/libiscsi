@@ -316,7 +316,7 @@ int iscsi_process_r2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		      struct iscsi_in_pdu *in);
 int iscsi_process_reject(struct iscsi_context *iscsi,
 				struct iscsi_in_pdu *in);
-int iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt);
+int iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt, uint32_t lun);
 
 #if defined(WIN32)
 void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,

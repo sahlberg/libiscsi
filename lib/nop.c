@@ -91,7 +91,7 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 }
 
 int
-iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt)
+iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt, uint32_t lun)
 {
 	struct iscsi_pdu *pdu;
 
@@ -115,7 +115,7 @@ iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt)
 	iscsi_pdu_set_ttt(pdu, ttt);
 
 	/* lun */
-	iscsi_pdu_set_lun(pdu, 0);
+	iscsi_pdu_set_lun(pdu, lun);
 
 	/* cmdsn is not increased if Immediate delivery*/
 	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
@@ -127,8 +127,8 @@ iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt)
 	}
 
 	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
-	          "NOP Out Send (nops_in_flight: %d, pdu->cmdsn %08x, pdu->itt %08x, pdu->ttt %08x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x)",
-	          iscsi->nops_in_flight, pdu->cmdsn, 0xffffffff, ttt, iscsi->maxcmdsn, iscsi->expcmdsn);
+	          "NOP Out Send (nops_in_flight: %d, pdu->cmdsn %08x, pdu->itt %08x, pdu->ttt %08x, pdu->lun %8x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x)",
+	          iscsi->nops_in_flight, pdu->cmdsn, 0xffffffff, ttt, lun, iscsi->maxcmdsn, iscsi->expcmdsn);
 
 	return 0;
 }
