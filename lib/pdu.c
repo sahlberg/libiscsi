@@ -328,7 +328,7 @@ int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
 
 	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
 	          "NOP-In received (pdu->itt %08x, pdu->ttt %08x, pdu->lun %8x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x, iscsi->statsn %08x)",
-	          itt, ttt, iscsi->maxcmdsn, iscsi->expcmdsn, iscsi->statsn);
+	          itt, ttt, lun, iscsi->maxcmdsn, iscsi->expcmdsn, iscsi->statsn);
 
 	/* if the server does not want a response */
 	if (ttt == 0xffffffff) {
