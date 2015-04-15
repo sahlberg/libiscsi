@@ -61,6 +61,14 @@ struct sockaddr;
 EXTERN int iscsi_get_fd(struct iscsi_context *iscsi);
 /*
  * Returns which events that we need to poll for for the iscsi file descriptor.
+ *
+ * This function can return 0 which means that there are no events to
+ * poll for at this time. In that case the application should wait some time
+ * before calling iscsi_which_events() again. This could for example happen
+ * if we fail to reconnect the TCP session during an automatic session
+ * reconnect.
+ * When this function returns 0, the application should wait >=100ms
+ * before trying again.
  */
 EXTERN int iscsi_which_events(struct iscsi_context *iscsi);
 /*
