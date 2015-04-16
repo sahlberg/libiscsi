@@ -377,7 +377,7 @@ iscsi_disconnect(struct iscsi_context *iscsi)
 
 	close(iscsi->fd);
 
-	if (iscsi->connected_portal[0]) {
+	if (!iscsi->pending_reconnect && iscsi->connected_portal[0]) {
 		ISCSI_LOG(iscsi, 2, "disconnected from portal %s",iscsi->connected_portal);
 	}
 

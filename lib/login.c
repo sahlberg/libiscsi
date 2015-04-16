@@ -1304,6 +1304,7 @@ struct iscsi_in_pdu *in)
 	iscsi_adjust_maxexpcmdsn(iscsi, in);
 
 	iscsi->is_loggedin = 0;
+	ISCSI_LOG(iscsi, 2, "logout successful");
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
 
 	return 0;

@@ -337,7 +337,10 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		ISCSI_LOG(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs, %d realloc(s), %d free(s) and %d reused small allocations",iscsi->mallocs,iscsi->reallocs,iscsi->frees,iscsi->smallocs);
 	}
 
-	iscsi_destroy_context(iscsi->old_iscsi);
+	if (iscsi->old_iscsi) {
+		iscsi->old_iscsi->fd = -1;
+		iscsi_destroy_context(iscsi->old_iscsi);
+	}
 
 	memset(iscsi, 0, sizeof(struct iscsi_context));
 	free(iscsi);
