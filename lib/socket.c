@@ -785,6 +785,8 @@ iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 		}
 		return 0;
 	}
+	iscsi_set_error(iscsi, "iscsi_service_reconnect_if_loggedin. Can not "
+			"reconnect right now.\n");
 	return -1;
 }
 
