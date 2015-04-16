@@ -10,7 +10,7 @@ TGTURL=iscsi://${TGTPORTAL}/${IQNTARGET}/1
 start_target() {
     # Setup target
     echo "Starting iSCSI target"
-    ${TGTD} --iscsi portal=${TGTPORTAL},nop_interval=3,nop_count=3
+    ${TGTD} --iscsi portal=${TGTPORTAL},${1}
     sleep 1
     ${TGTADM} --op new --mode target --tid 1 -T ${IQNTARGET}
     ${TGTADM} --op bind --mode target --tid 1 -I ALL
