@@ -33,7 +33,7 @@ test_write12_residuals(void)
 	struct scsi_task *task_ret;
 	unsigned char buf[10000];
 	struct iscsi_data data;
-	int ret;
+	int ret, ok;
 	unsigned int i;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -170,16 +170,15 @@ test_write12_residuals(void)
 	CU_ASSERT_PTR_NOT_NULL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
-	if (task->status != SCSI_STATUS_GOOD
-	    && !(task->status == SCSI_STATUS_CHECK_CONDITION
-		 && task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST
-		 && task->sense.ascq ==
-		 SCSI_SENSE_ASCQ_INVALID_FIELD_IN_INFORMATION_UNIT))
-	{
+	ok = task->status == SCSI_STATUS_GOOD ||
+		(task->status == SCSI_STATUS_CHECK_CONDITION &&
+		 task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST &&
+		 task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_FIELD_IN_INFORMATION_UNIT);
+	if (!ok) {
 		logging(LOG_VERBOSE, "[FAILED] Target returned error %s",
 			iscsi_get_error(sd->iscsi_ctx));
-		CU_ASSERT(0);
 	}
+	CU_ASSERT(ok);
 
 	logging(LOG_VERBOSE, "Verify residual overflow flag is set");
 	if (task->residual_status != SCSI_RESIDUAL_OVERFLOW) {
