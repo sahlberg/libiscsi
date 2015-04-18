@@ -72,6 +72,7 @@ void test_iscsi_datasn_invalid(void);
 void test_mandatory_sbc(void);
 
 void test_modesense6_all_pages(void);
+void test_modesense6_control(void);
 void test_modesense6_residuals(void);
 
 void test_nomedia_sbc(void);

@@ -100,6 +100,7 @@ static CU_TestInfo tests_mandatory[] = {
 
 static CU_TestInfo tests_modesense6[] = {
 	{ (char *)"AllPages", test_modesense6_all_pages },
+	{ (char *)"Control", test_modesense6_control },
 	{ (char *)"Residuals", test_modesense6_residuals },
 	CU_TEST_INFO_NULL
 };

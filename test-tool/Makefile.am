@@ -32,6 +32,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_iscsi_datasn_invalid.c \
 	test_mandatory_sbc.c \
 	test_modesense6_all_pages.c \
+	test_modesense6_control.c \
 	test_modesense6_residuals.c \
 	test_nomedia_sbc.c \
 	test_orwrite_simple.c \
