@@ -227,6 +227,19 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 		return task;
 	}
 
+	/* We got an actual buffer from the application. Convert it to
+	 * a data-out iovector.
+	 */
+	if (d != NULL && d->data != NULL) {
+		struct scsi_iovec *iov;
+
+		iov = scsi_malloc(task, sizeof(struct scsi_iovec));
+		iov->iov_base = d->data;
+		iov->iov_len  = d->size;
+		scsi_task_set_iov_out(task, iov, 1);
+	}
+
+
 #ifdef HAVE_SG_IO
 	if (sdev->sgio_dev) {
 		sg_io_hdr_t io_hdr;
@@ -253,8 +266,8 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 		switch (task->xfer_dir) {
 		case SCSI_XFER_WRITE:
 		  io_hdr.dxfer_direction = SG_DXFER_TO_DEV;
-		  io_hdr.dxferp = d->data;
-		  io_hdr.dxfer_len = d->size;
+		  io_hdr.dxferp = task->iovector_out.iov;
+		  io_hdr.dxfer_len = task->iovector_out.niov;
 		  break;
 		case SCSI_XFER_READ:
 		  io_hdr.dxfer_direction = SG_DXFER_FROM_DEV;
