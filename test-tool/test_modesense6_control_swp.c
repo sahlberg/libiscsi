@@ -95,12 +95,6 @@ test_modesense6_control_swp(void)
 		      EXPECT_WRITE_PROTECTED);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	//	ret = set_swp(&sd2);
-	//	CU_ASSERT_EQUAL(ret, 0);
-	//if (ret != 0) {
-	//	return;
-	//}
-
 
  finished:
 	if (ms_task != NULL) {
