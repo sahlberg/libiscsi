@@ -212,6 +212,16 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
 	return 0;
 }
 
+static size_t iov_tot_len(struct scsi_iovec *iov, int niov)
+{
+	size_t len = 0;
+	int i;
+
+	for (i = 0; i < niov; i++)
+		len += iov[i].iov_len;
+	return len;
+}
+
 static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi_task *task, struct iscsi_data *d)
 {
 	if (sdev->iscsi_url) {
@@ -266,8 +276,10 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 		switch (task->xfer_dir) {
 		case SCSI_XFER_WRITE:
 		  io_hdr.dxfer_direction = SG_DXFER_TO_DEV;
+		  io_hdr.iovec_count = task->iovector_out.niov;
 		  io_hdr.dxferp = task->iovector_out.iov;
-		  io_hdr.dxfer_len = task->iovector_out.niov;
+		  io_hdr.dxfer_len = iov_tot_len(task->iovector_out.iov,
+						 task->iovector_out.niov);
 		  break;
 		case SCSI_XFER_READ:
 		  io_hdr.dxfer_direction = SG_DXFER_FROM_DEV;
