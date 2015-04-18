@@ -110,9 +110,8 @@ test_modesense6_control(void)
 		}
 	}
 	if(ct_page == NULL) {
-		logging(LOG_NORMAL, "[WARNING] CONTROL page was not returned "
-			"from AllPages. All devices SHOULD implement this "
-			"page.");
+		logging(LOG_NORMAL, "[WARNING] CONTROL page was not returned."
+			"All devices SHOULD implement this page.");
 	}
 
 	if (ap_page == NULL && ct_page != NULL) {
