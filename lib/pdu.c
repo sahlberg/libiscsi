@@ -346,8 +346,6 @@ static void iscsi_reconnect_after_logout(struct iscsi_context *iscsi, int status
 {
 	if (status) {
 		ISCSI_LOG(iscsi, 1, "logout failed: %s", iscsi_get_error(iscsi));
-	} else {
-		ISCSI_LOG(iscsi, 2, "logout was successful");
 	}
 	iscsi->pending_reconnect = 1;
 }
@@ -445,7 +443,6 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 			 *  Bug_73732 - I/O errors during volume move operation (still present in 7.0.9)
 			 */
 			if (getenv("LIBISCSI_DROP_CONN_ON_ASYNC_EVENT1") != NULL) {
-				 
 				ISCSI_LOG(iscsi, 2, "dropping connection to fix errors with broken DELL Equallogic firmware 7.x");
 				return -1;
 			}
