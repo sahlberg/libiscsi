@@ -971,6 +971,11 @@ main(int argc, char *argv[])
 	};
 	int i, c;
 	int opt_idx = 0;
+	char *ca;
+
+	ca = getenv("LIBISCSI_CACHE_ALLOCATIONS");
+	if (ca && atoi(ca) == 0)
+		iscsi_set_cache_allocations(0);
 
 	sd = malloc(sizeof(struct scsi_device));
 	memset(sd, '\0', sizeof(struct scsi_device));
