@@ -1049,9 +1049,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		if (!iscsi->current_phase && !iscsi->secneg_phase) {
 			iscsi->statsn = scsi_get_uint32(&in->hdr[24]);
 		}
-		iscsi_adjust_statsn(iscsi, in);
 	}
-	iscsi_adjust_maxexpcmdsn(iscsi, in);
 
 	/* Using bidirectional CHAP? Then we must see a chap_n and chap_r
 	 * field in this PDU
@@ -1299,10 +1297,8 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 int
 iscsi_process_logout_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
-struct iscsi_in_pdu *in)
+struct iscsi_in_pdu *in _U_)
 {
-	iscsi_adjust_maxexpcmdsn(iscsi, in);
-
 	iscsi->is_loggedin = 0;
 	ISCSI_LOG(iscsi, 2, "logout successful");
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);

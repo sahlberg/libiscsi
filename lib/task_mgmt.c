@@ -94,14 +94,9 @@ int
 iscsi_process_task_mgmt_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			    struct iscsi_in_pdu *in)
 {
-	uint32_t response;
-
-	response = in->hdr[2];
-
-	iscsi_adjust_maxexpcmdsn(iscsi, in);
+	uint32_t response = in->hdr[2];
 
 	pdu->callback(iscsi, SCSI_STATUS_GOOD, &response, pdu->private_data);
-
 	return 0;
 }
 

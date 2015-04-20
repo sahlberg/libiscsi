@@ -69,31 +69,6 @@ iscsi_itt_post_increment(struct iscsi_context *iscsi) {
 	return old_itt;
 }
 
-void iscsi_adjust_statsn(struct iscsi_context *iscsi, struct iscsi_in_pdu *in) {
-	uint32_t statsn = scsi_get_uint32(&in->hdr[24]);
-	uint32_t itt = scsi_get_uint32(&in->hdr[16]);
-	
-	if (itt == 0xffffffff) {
-		/* target will not increase statsn if itt == 0xffffffff */
-		statsn--;
-	}
-	
-	if (iscsi_serial32_compare(statsn, iscsi->statsn) > 0) {
-		iscsi->statsn = statsn;
-	}
-}
-
-void iscsi_adjust_maxexpcmdsn(struct iscsi_context *iscsi, struct iscsi_in_pdu *in) {
-	uint32_t maxcmdsn = scsi_get_uint32(&in->hdr[32]);
-	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
-		iscsi->maxcmdsn = maxcmdsn;
-	}
-	uint32_t expcmdsn = scsi_get_uint32(&in->hdr[28]);
-	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
-		iscsi->expcmdsn = expcmdsn;
-	}
-}
-
 void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data) {
 	char dump[ISCSI_RAW_HEADER_SIZE*3+1]={0};
 	int i;
@@ -323,9 +298,6 @@ int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
 	uint32_t itt = scsi_get_uint32(&in->hdr[16]);
 	uint32_t lun = scsi_get_uint16(&in->hdr[8]);
 
-	iscsi_adjust_statsn(iscsi, in);
-	iscsi_adjust_maxexpcmdsn(iscsi, in);
-
 	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
 	          "NOP-In received (pdu->itt %08x, pdu->ttt %08x, pdu->lun %8x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x, iscsi->statsn %08x)",
 	          itt, ttt, lun, iscsi->maxcmdsn, iscsi->expcmdsn, iscsi->statsn);
@@ -407,18 +379,33 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 int
 iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 {
-	uint32_t itt;
-	enum iscsi_opcode opcode;
+	uint32_t itt = scsi_get_uint32(&in->hdr[16]);
+	uint32_t statsn = scsi_get_uint32(&in->hdr[24]);
+	uint32_t maxcmdsn = scsi_get_uint32(&in->hdr[32]);
+	uint32_t expcmdsn = scsi_get_uint32(&in->hdr[28]);
+	enum iscsi_opcode opcode = in->hdr[0] & 0x3f;
+	uint8_t	ahslen = in->hdr[4];
 	struct iscsi_pdu *pdu;
-	uint8_t	ahslen;
-
-	opcode = in->hdr[0] & 0x3f;
-	ahslen = in->hdr[4];
-	itt = scsi_get_uint32(&in->hdr[16]);
 
 	if (ahslen != 0) {
 		iscsi_set_error(iscsi, "cant handle expanded headers yet");
 		return -1;
+	}
+
+	/* All target PDUs expect update the serials */
+	if (itt == 0xffffffff) {
+		/* target will not increase statsn if itt == 0xffffffff */
+		statsn--;
+	}
+	if (iscsi_serial32_compare(statsn, iscsi->statsn) > 0) {
+		iscsi->statsn = statsn;
+	}
+
+	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
+		iscsi->maxcmdsn = maxcmdsn;
+	}
+	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
+		iscsi->expcmdsn = expcmdsn;
 	}
 
 	if (opcode == ISCSI_PDU_ASYNC_MSG) {
