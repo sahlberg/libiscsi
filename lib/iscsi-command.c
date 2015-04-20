@@ -348,9 +348,6 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	struct iscsi_scsi_cbdata *scsi_cbdata = &pdu->scsi_cbdata;
 	struct scsi_task *task = scsi_cbdata->task;
 
-	iscsi_adjust_statsn(iscsi, in);
-	iscsi_adjust_maxexpcmdsn(iscsi, in);
-
 	flags = in->hdr[1];
 	if ((flags&ISCSI_PDU_DATA_FINAL) == 0) {
 		iscsi_set_error(iscsi, "scsi response pdu but Final bit is "
@@ -487,9 +484,6 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	struct scsi_task *task = scsi_cbdata->task;
 	int dsl;
 
-	iscsi_adjust_statsn(iscsi, in);
-	iscsi_adjust_maxexpcmdsn(iscsi, in);
-
 	flags = in->hdr[1];
 	if ((flags&ISCSI_PDU_DATA_ACK_REQUESTED) != 0) {
 		iscsi_set_error(iscsi, "scsi response asked for ACK "
@@ -566,8 +560,6 @@ iscsi_process_r2t(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	ttt    = scsi_get_uint32(&in->hdr[20]);
 	offset = scsi_get_uint32(&in->hdr[40]);
 	len    = scsi_get_uint32(&in->hdr[44]);
-
-	iscsi_adjust_maxexpcmdsn(iscsi, in);
 
 	pdu->datasn = 0;
 	iscsi_send_data_out(iscsi, pdu, ttt, offset, len);
