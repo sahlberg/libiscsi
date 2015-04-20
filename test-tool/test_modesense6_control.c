@@ -67,7 +67,8 @@ test_modesense6_control(void)
 	CU_ASSERT_TRUE(ms->mode_data_length >= 3);
 
 	for (ap_page = ms->pages; ap_page; ap_page = ap_page->next) {
-		if (ap_page->page_code == SCSI_MODEPAGE_CONTROL) {
+		if (ap_page->page_code == SCSI_MODEPAGE_CONTROL &&
+		    ap_page->spf == 0) {
 			break;
 		}
 	}
