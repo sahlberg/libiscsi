@@ -73,6 +73,7 @@ void test_mandatory_sbc(void);
 
 void test_modesense6_all_pages(void);
 void test_modesense6_control(void);
+void test_modesense6_control_d_sense(void);
 void test_modesense6_control_swp(void);
 void test_modesense6_residuals(void);
 

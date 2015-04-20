@@ -245,6 +245,11 @@ struct scsi_report_supported_params {
 	int return_timeouts;
 };
 
+#define SCSI_SENSE_FIXED_CURRENT              0x70
+#define SCSI_SENSE_FIXED_DEFERRED_ERRORS      0x71
+#define SCSI_SENSE_DESCRIPTOR_CURRENT         0x72
+#define SCSI_SENSE_DESCRIPTOR_DEFERRED_ERRORS 0x73
+
 struct scsi_sense {
 	unsigned char       error_type;
 	enum scsi_sense_key key;
