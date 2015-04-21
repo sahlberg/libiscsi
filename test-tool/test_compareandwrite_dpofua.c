@@ -33,7 +33,7 @@ test_compareandwrite_dpofua(void)
 	struct scsi_mode_sense *ms;
 	struct scsi_task *rso_task = NULL;
 	struct scsi_report_supported_op_codes_one_command *rsoc;
-	unsigned char *buf = alloca(block_size);
+	unsigned char *buf = alloca(2 * block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test COMPAREANDWRITE DPO/FUA flags");
@@ -51,6 +51,16 @@ test_compareandwrite_dpofua(void)
 	dpofua = ms && (ms->device_specific_parameter & 0x10);
 	scsi_free_scsi_task(ms_task);
 
+	logging(LOG_VERBOSE, "Read the first block");
+	ret = read10(sd, NULL, 0, block_size,
+		     block_size, 0, 0, 0, 0, 0, buf,
+		     EXPECT_STATUS_GOOD);
+	CU_ASSERT_EQUAL(ret, 0);
+	if (ret == 0)
+		memcpy(buf + block_size, buf, block_size);
+	else
+		memset(buf, 0xa6, 2 * block_size);
+
 	if (dpofua) {
 		logging(LOG_VERBOSE, "DPOFUA flag is set. Device should allow "
 			"DPO/FUA flags in CDBs");
@@ -60,14 +70,13 @@ test_compareandwrite_dpofua(void)
 	}
 
 	logging(LOG_VERBOSE, "Test COMPAREANDWRITE with DPO==1");
-	memset(buf, 0xa6, block_size);
 	if (dpofua) {
-		ret = compareandwrite(sd, 0, buf, block_size,
+		ret = compareandwrite(sd, 0, buf, 2 * block_size,
 				      block_size, 0, 1, 0, 0,
 				      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	} else {
-		ret = compareandwrite(sd, 0, buf, block_size,
+		ret = compareandwrite(sd, 0, buf, 2 * block_size,
 				      block_size, 0, 1, 0, 0,
 				      EXPECT_INVALID_FIELD_IN_CDB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -75,12 +84,12 @@ test_compareandwrite_dpofua(void)
 
 	logging(LOG_VERBOSE, "Test COMPAREANDWRITE with FUA==1");
 	if (dpofua) {
-		ret = compareandwrite(sd, 0, buf, block_size,
+		ret = compareandwrite(sd, 0, buf, 2 * block_size,
 				      block_size, 0, 0, 1, 0,
 				      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	} else {
-		ret = compareandwrite(sd, 0, buf, block_size,
+		ret = compareandwrite(sd, 0, buf, 2 * block_size,
 				      block_size, 0, 0, 1, 0,
 				      EXPECT_INVALID_FIELD_IN_CDB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -88,12 +97,12 @@ test_compareandwrite_dpofua(void)
 
 	logging(LOG_VERBOSE, "Test COMPAREANDWRITE with DPO==1 FUA==1");
 	if (dpofua) {
-		ret = compareandwrite(sd, 0, buf, block_size,
+		ret = compareandwrite(sd, 0, buf, 2 * block_size,
 				      block_size, 0, 1, 1, 0,
 				      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	} else {
-		ret = compareandwrite(sd, 0, buf, block_size,
+		ret = compareandwrite(sd, 0, buf, 2 * block_size,
 				      block_size, 0, 1, 1, 0,
 				      EXPECT_INVALID_FIELD_IN_CDB);
 		CU_ASSERT_EQUAL(ret, 0);
