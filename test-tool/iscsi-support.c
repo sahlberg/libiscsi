@@ -135,7 +135,8 @@ static int status_is_invalid_opcode(struct scsi_task *task)
 			switch (task->sense.ascq) {
 			case SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB:
 			case SCSI_SENSE_ASCQ_INVALID_FIELD_IN_PARAMETER_LIST:
-				return 1;
+				return !task->sense.sense_specific ||
+					task->sense.field_pointer == 1;
 			}
 		}
 	}
