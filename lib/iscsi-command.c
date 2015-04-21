@@ -340,6 +340,62 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	return 0;
 }
 
+/* Parse a sense key specific sense data descriptor */
+static void parse_sense_spec(struct scsi_sense *sense, const uint8_t inf[3])
+{
+	if (!(inf[0] & 0x80)) /* SKSV */
+		return;
+
+	sense->sense_specific = 1;
+	sense->ill_param_in_cdb = !!(inf[0] & 0x40); /* C/D flag */
+	if (inf[0] & 8) { /* BPV */
+		sense->bit_pointer_valid = 1;
+		sense->bit_pointer = inf[0] & 7;
+	}
+	sense->field_pointer = scsi_get_uint16(&inf[1]);
+}
+
+/* Parse descriptor format sense data */
+static void parse_sense_descriptors(struct scsi_sense *sense, const uint8_t *sb,
+				    unsigned sb_len)
+{
+	const unsigned char *p, *const end = sb + sb_len;
+
+	for (p = sb; p < end; p += p[1]) {
+		if (p[1] < 4) /* length */
+			break;
+		if (!(p[2] & 0x80)) /* VALID bit */
+			break;
+		switch (p[0]) {
+		case 2:
+			/* Sense key specific sense data descriptor */
+			parse_sense_spec(sense, p + 4);
+			break;
+		}
+	}
+}
+
+void scsi_parse_sense_data(struct scsi_sense *sense, const uint8_t *sb)
+{
+	sense->error_type = sb[0] & 0x7f;
+	switch (sense->error_type) {
+	case 0x70:
+	case 0x71:
+		/* Fixed format */
+		sense->key  = sb[2] & 0x0f;
+		sense->ascq = scsi_get_uint16(&sb[12]);
+		parse_sense_spec(sense, sb + 15);
+		break;
+	case 0x72:
+	case 0x73:
+		/* Descriptor format */
+		sense->key  = sb[1] & 0x0f;
+		sense->ascq = scsi_get_uint16(&sb[2]);
+		parse_sense_descriptors(sense, sb + 8, sb[7]);
+		break;
+	}
+}
+
 int
 iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			 struct iscsi_in_pdu *in)
@@ -416,21 +472,7 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		}
 		memcpy(task->datain.data, in->data, task->datain.size);
 
-		task->sense.error_type = task->datain.data[2] & 0x7f;
-		switch (task->sense.error_type) {
-		case 0x70:
-		case 0x71:
-		  task->sense.key        = task->datain.data[4] & 0x0f;
-		  task->sense.ascq       = scsi_get_uint16(
-						&(task->datain.data[14]));
-		  break;
-		case 0x72:
-		case 0x73:
-		  task->sense.key        = task->datain.data[3] & 0x0f;
-		  task->sense.ascq       = scsi_get_uint16(
-						&(task->datain.data[4]));
-		  break;
-		}
+		scsi_parse_sense_data(&task->sense, &task->datain.data[2]);
 		iscsi_set_error(iscsi, "SENSE KEY:%s(%d) ASCQ:%s(0x%04x)",
 				scsi_sense_key_str(task->sense.key),
 				task->sense.key,

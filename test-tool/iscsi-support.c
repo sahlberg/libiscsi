@@ -317,19 +317,7 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 		/* now for the error processing */
 		if(io_hdr.sb_len_wr > 0){
 			task->status = SCSI_STATUS_CHECK_CONDITION;
-			task->sense.error_type = sense[0] & 0x7f;
-			switch (task->sense.error_type) {
-			case 0x70:
-			case 0x71:
-				task->sense.key = sense[2] & 0x0f;
-				task->sense.ascq  = scsi_get_uint16(&sense[12]);
-				break;
-			case 0x72:
-			case 0x73:
-				task->sense.key = sense[1] & 0x0f;
-				task->sense.ascq = scsi_get_uint16(&sense[2]);
-				break;
-			}
+			scsi_parse_sense_data(&task->sense, sense);
 			sense_len=io_hdr.sb_len_wr;
 			snprintf(buf, sizeof(buf), "SENSE KEY:%s(%d) ASCQ:%s(0x%04x)",
 				 scsi_sense_key_str(task->sense.key),

@@ -214,6 +214,7 @@ scsi_inquiry_pagecode_to_str
 scsi_malloc
 scsi_modesense_dataout_marshall
 scsi_modesense_get_page
+scsi_parse_sense_data
 scsi_protocol_identifier_to_str
 scsi_reportluns_cdb
 scsi_sense_ascq_str
