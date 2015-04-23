@@ -60,18 +60,9 @@ void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size) {
 }
 
 void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size) {
-	int i;
 	void * _ptr = realloc(ptr, size);
 	if (_ptr != NULL) {
 		iscsi->reallocs++;
-	}
-	if (ptr != NULL) {
-		for (i = 0; i < iscsi->smalloc_free; i++) {
-			if (iscsi->smalloc_ptrs[i] == ptr) {
-				iscsi->smalloc_ptrs[i] = _ptr;
-				break;
-			}
-		}
 	}
 	return _ptr;
 }
