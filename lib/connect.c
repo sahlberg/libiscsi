@@ -263,7 +263,7 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
 			backoff = 30;
 		}
 		if (iscsi->reconnect_max_retries != -1 &&
-		    iscsi->old_iscsi->retry_cnt >= iscsi->reconnect_max_retries) {
+		    iscsi->old_iscsi->retry_cnt > iscsi->reconnect_max_retries) {
 			/* we will exit iscsi_service with -1 the next time we enter it. */
 			backoff = 0;
 		}
@@ -375,7 +375,7 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 	}
 
 	if (old_iscsi->reconnect_max_retries != -1 && old_iscsi->old_iscsi &&
-	    old_iscsi->old_iscsi->retry_cnt >= old_iscsi->reconnect_max_retries) {
+	    old_iscsi->old_iscsi->retry_cnt > old_iscsi->reconnect_max_retries) {
 		iscsi_defer_reconnect(old_iscsi);
 		return -1;
 	}
