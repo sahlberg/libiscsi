@@ -40,6 +40,8 @@ TAGS
 /test-tool/Makefile.in
 /test-tool/Makefile
 /test-tool/iscsi-test-cu
+/tests/Makefile.in
+/tests/Makefile
 /utils/Makefile.in
 /utils/Makefile
 /utils/iscsi-inq
