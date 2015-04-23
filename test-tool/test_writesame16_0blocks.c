@@ -36,6 +36,16 @@ test_writesame16_0blocks(void)
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks at LBA==0 (WSNZ=%d)",
 		inq_bl->wsnz);
 	memset(buf, 0, block_size);
+
+	if (inq_bl->wsnz) {
+		ret = writesame16(sd, 0,
+				  block_size, 0, 0, 0, 0, 0, buf,
+				  EXPECT_INVALID_FIELD_IN_CDB);
+		logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 does not support 0-blocks.");
+		CU_ASSERT_EQUAL(ret, 0);
+		return;
+	}
+
 	ret = writesame16(sd, 0,
 			  block_size, 0, 0, 0, 0, 0, buf,
 			  EXPECT_STATUS_GOOD);
@@ -48,30 +58,26 @@ test_writesame16_0blocks(void)
 	} else if (ret == -4) {
 		CU_PASS("[SKIPPED] Number of WRITESAME16 logical blocks to be written exceeds MAXIMUM WRITE SAME LENGTH");
 	} else {
-		if (inq_bl->wsnz) {
-			CU_ASSERT_EQUAL(ret, -1);
-		} else {
-			CU_ASSERT_EQUAL(ret, 0);
-		}
+		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks one block past end-of-LUN");
 	ret = writesame16(sd, num_blocks + 1,
-			  block_size, inq_bl->wsnz, 0, 0, 0, 0, buf,
+			  block_size, 0, 0, 0, 0, 0, buf,
 			  EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks at LBA==2^63");
 	ret = writesame16(sd, 0x8000000000000000ULL,
-			  block_size, inq_bl->wsnz, 0, 0, 0, 0, buf,
+			  block_size, 0, 0, 0, 0, 0, buf,
 			  EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks at LBA==-1");
 	ret = writesame16(sd, -1,
-			  block_size, inq_bl->wsnz, 0, 0, 0, 0, buf,
+			  block_size, 0, 0, 0, 0, 0, buf,
 			  EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 }

@@ -40,6 +40,12 @@ test_writesame10_unmap_until_end(void)
 	zeroBlock = alloca(block_size);
 	memset(zeroBlock, 0, block_size);
 
+	if (inq_bl->wsnz) {
+	    logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 does not support 0-blocks.");
+	    CU_PASS("[SKIPPED] WRITESAME10 does not support 0-blocks.");
+	    return;
+	}
+
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME10 of 1-256 blocks at the end of the LUN by setting number-of-blocks==0");
 	for (i = 1; i <= 256; i++) {
@@ -54,7 +60,7 @@ test_writesame10_unmap_until_end(void)
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
 		ret = writesame10(sd, num_blocks - i,
-				  block_size, i, 0, 1, 0, 0, buf,
+				  block_size, 0, 0, 1, 0, 0, buf,
 				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 

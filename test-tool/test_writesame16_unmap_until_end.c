@@ -39,6 +39,12 @@ test_writesame16_unmap_until_end(void)
 	CHECK_FOR_LBPWS;
 	CHECK_FOR_SBC;
 
+	if (inq_bl->wsnz) {
+	    logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 does not support 0-blocks.");
+	    CU_PASS("[SKIPPED] WRITESAME10 does not support 0-blocks.");
+	    return;
+	}
+
 	zeroBlock = alloca(block_size);
 	memset(zeroBlock, 0, block_size);
 
