@@ -58,8 +58,9 @@ test_writesame16_unmap_until_end(void)
 			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			      EXPECT_STATUS_GOOD);
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
+		memset(buf, 0, block_size);
 		ret = writesame16(sd, num_blocks - i,
-				  0, i, 0, 1, 0, 0, NULL,
+				  block_size, 0, 0, 1, 0, 0, buf,
 				  EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
