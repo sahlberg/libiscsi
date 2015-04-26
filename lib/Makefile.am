@@ -15,9 +15,9 @@ SOREVISON=0
 SOAGE=1
 libiscsi_la_LDFLAGS = \
 	-version-info $(SOCURRENT):$(SOREVISON):$(SOAGE) -bindir $(bindir) \
-	-no-undefined -export-symbols libiscsi.syms
+	-no-undefined -export-symbols ${srcdir}/libiscsi.syms
 
-libiscsi_la_CPPFLAGS = -I../include -I$(srcdir)/include \
+libiscsi_la_CPPFLAGS = -I${srcdir}/../include -I$(srcdir)/include \
 	"-D_U_=__attribute__((unused))" \
 	"-D_R_(A,B)=__attribute__((format(printf,A,B)))"
 

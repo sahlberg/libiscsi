@@ -196,13 +196,14 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
 	     || task->sense.key  != key
 	     || !ascq_ok)) {
 		logging(LOG_NORMAL, "[FAILED] %s failed with wrong sense. "
-			"Should have failed with %s(0x%02x)/%s(0x%04x)"
-			"but failed with Sense:%s\n",
+			"Should have failed with %s(0x%02x)/%s(0x%04x) "
+			"but failed with Sense: %s(0x%02x)/(0x%04x)\n",
 			opcode,
 			scsi_sense_key_str(key), key,
 			num_ascq ? scsi_sense_ascq_str(ascq[0]) : "NO ASCQ",
 			num_ascq ? ascq[0] : 0,
-			sdev->error_str);
+			sdev->error_str,
+			task->sense.key, task->sense.ascq);
 		return -1;
 	}
 	logging(LOG_VERBOSE, "[OK] %s returned %s %s(0x%02x) %s(0x%04x)",

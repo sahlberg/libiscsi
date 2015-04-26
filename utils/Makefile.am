@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I../include "-D_U_=__attribute__((unused))" \
+AM_CPPFLAGS = -I${srcdir}/../include "-D_U_=__attribute__((unused))" \
 	"-D_R_(A,B)=__attribute__((format(printf,A,B)))"
 AM_CFLAGS = $(WARN_CFLAGS)
 LDADD = ../lib/libiscsi.la
