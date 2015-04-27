@@ -40,7 +40,7 @@ init_lun_with_data(uint64_t lba)
 }
 
 static void
-check_lun_is_wiped(uint64_t lba, char c)
+check_lun_is_wiped(uint64_t lba, unsigned char c)
 {
 	int ret;
 	unsigned char *rbuf = alloca(256 * block_size);
@@ -54,13 +54,11 @@ check_lun_is_wiped(uint64_t lba, char c)
 	memset(zbuf, c, 256 * block_size);
 
 	if (memcmp(zbuf, rbuf, 256 * block_size)) {
-		logging(LOG_NORMAL, "[FAILED] Blocks did not "
-			"read back as zero");
-		CU_FAIL("[FAILED] Blocks did not read back "
-			"as zero");
+		logging(LOG_NORMAL, "[FAILED] Blocks did not read back as %#x",
+			c);
+		CU_FAIL("[FAILED] Blocks did not read back as expected");
 	} else {
-		logging(LOG_VERBOSE, "[SUCCESS] Blocks read "
-			"back as zero");
+		logging(LOG_VERBOSE, "[SUCCESS] Blocks read back as %#x", c);
 	}
 }
 
