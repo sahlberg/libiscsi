@@ -87,6 +87,7 @@ struct iscsi_context {
 	unsigned char isid[6];
 	uint32_t itt;
 	uint32_t cmdsn;
+	uint32_t min_cmdsn_waiting;
 	uint32_t expcmdsn;
 	uint32_t maxcmdsn;
 	uint32_t statsn;

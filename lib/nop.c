@@ -143,6 +143,12 @@ iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	          "NOP-In received (pdu->itt %08x, pdu->ttt %08x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x, iscsi->statsn %08x)",
 	          pdu->itt, 0xffffffff, iscsi->maxcmdsn, iscsi->expcmdsn, iscsi->statsn); 
 
+	if (iscsi->waitpdu->cmdsn == iscsi->min_cmdsn_waiting) {
+		ISCSI_LOG(iscsi, 2, "Oldest element in waitqueue is unchanged since last NOP-In (iscsi->min_cmdsn_waiting %08x)",
+		          iscsi->min_cmdsn_waiting); 
+	}
+	iscsi->min_cmdsn_waiting = iscsi->waitpdu->cmdsn;
+
 	iscsi->nops_in_flight = 0;
 
 	if (pdu->callback == NULL) {
