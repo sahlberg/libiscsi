@@ -153,6 +153,7 @@ struct iscsi_context {
 	void* smalloc_ptrs[SMALL_ALLOC_MAX_FREE];
 	int smalloc_free;
 	size_t smalloc_size;
+	int cache_allocations;
 
 	time_t next_reconnect;
 	int scsi_timeout;

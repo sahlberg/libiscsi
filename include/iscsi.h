@@ -51,7 +51,7 @@ struct sockaddr;
   "<host>[:<port>]\""
 
 
-EXTERN void iscsi_set_cache_allocations(int ca);
+EXTERN void iscsi_set_cache_allocations(struct iscsi_context *iscsi, int ca);
 
 /*
  * The following three functions are used to integrate libiscsi in an event
