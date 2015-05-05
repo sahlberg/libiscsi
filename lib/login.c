@@ -794,7 +794,7 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	if (!iscsi->current_phase && !iscsi->secneg_phase) {
 		iscsi->itt = (u_int32_t) rand();
 		iscsi->cmdsn = (u_int32_t) rand();
-		iscsi->expcmdsn = iscsi->maxcmdsn = iscsi->cmdsn;
+		iscsi->expcmdsn = iscsi->maxcmdsn = iscsi->min_cmdsn_waiting = iscsi->cmdsn;
 	}
 
 	pdu = iscsi_allocate_pdu(iscsi,

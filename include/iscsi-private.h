@@ -87,6 +87,7 @@ struct iscsi_context {
 	unsigned char isid[6];
 	uint32_t itt;
 	uint32_t cmdsn;
+	uint32_t min_cmdsn_waiting;
 	uint32_t expcmdsn;
 	uint32_t maxcmdsn;
 	uint32_t statsn;
@@ -152,6 +153,7 @@ struct iscsi_context {
 	void* smalloc_ptrs[SMALL_ALLOC_MAX_FREE];
 	int smalloc_free;
 	size_t smalloc_size;
+	int cache_allocations;
 
 	time_t next_reconnect;
 	int scsi_timeout;
