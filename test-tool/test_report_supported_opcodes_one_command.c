@@ -88,7 +88,13 @@ test_report_supported_opcodes_one_command(void)
 				65535,
 				EXPECT_STATUS_GOOD);
 		}
-		CU_ASSERT_EQUAL(ret, 0);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] SCSI_REPORT_SUPPORTING_OPCODE is not "
+			"implemented.");
+			CU_PASS("SCSI_REPORT_SUPPORTING_OPCODE is not implemented.");
+		} else {
+			CU_ASSERT_EQUAL(ret, 0);
+		}
 
 		if (rsoc->descriptors[i].servactv) {
 			logging(LOG_VERBOSE, "This opcode has service actions. "
@@ -112,7 +118,13 @@ test_report_supported_opcodes_one_command(void)
 				65535,
 				EXPECT_INVALID_FIELD_IN_CDB);
 		}
-		CU_ASSERT_EQUAL(ret, 0);
+		if (ret == -2) {
+			logging(LOG_NORMAL, "[SKIPPED] SCSI_REPORT_SUPPORTING_SERVICEACTION is not "
+			"implemented.");
+			CU_PASS("SCSI_REPORT_SUPPORTING_SERVICEACTION is not implemented.");
+		} else {
+			CU_ASSERT_EQUAL(ret, 0);
+		}
 	}
 
 
