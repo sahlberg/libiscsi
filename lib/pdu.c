@@ -376,29 +376,19 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 }
 
 
-int
-iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
+static void iscsi_process_pdu_serials(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 {
 	uint32_t itt = scsi_get_uint32(&in->hdr[16]);
 	uint32_t statsn = scsi_get_uint32(&in->hdr[24]);
 	uint32_t maxcmdsn = scsi_get_uint32(&in->hdr[32]);
 	uint32_t expcmdsn = scsi_get_uint32(&in->hdr[28]);
+	uint16_t status = scsi_get_uint16(&in->hdr[36]);
+	uint8_t flags = in->hdr[1];
 	enum iscsi_opcode opcode = in->hdr[0] & 0x3f;
-	uint8_t	ahslen = in->hdr[4];
-	struct iscsi_pdu *pdu;
 
-	if (ahslen != 0) {
-		iscsi_set_error(iscsi, "cant handle expanded headers yet");
-		return -1;
-	}
-
-	/* All target PDUs expect update the serials */
-	if (itt == 0xffffffff) {
-		/* target will not increase statsn if itt == 0xffffffff */
-		statsn--;
-	}
-	if (iscsi_serial32_compare(statsn, iscsi->statsn) > 0) {
-		iscsi->statsn = statsn;
+	/* RFC3720 10.13.5 (serials are invalid if status class != 0) */
+	if (opcode == ISCSI_PDU_LOGIN_RESPONSE && (status >> 8)) {
+		return;
 	}
 
 	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
@@ -407,6 +397,37 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 	if (iscsi_serial32_compare(expcmdsn, iscsi->expcmdsn) > 0) {
 		iscsi->expcmdsn = expcmdsn;
 	}
+
+	/* RFC3720 10.7.3 (StatSN is invalid if S bit unset in flags) */
+	if (opcode == ISCSI_PDU_DATA_IN &&
+	    !(flags & ISCSI_PDU_DATA_CONTAINS_STATUS)) {
+		return;
+	}
+
+	if (itt == 0xffffffff) {
+		/* target will not increase statsn if itt == 0xffffffff */
+		statsn--;
+	}
+	if (iscsi_serial32_compare(statsn, iscsi->statsn) > 0) {
+		iscsi->statsn = statsn;
+	}
+}
+
+int
+iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
+{
+	uint32_t itt = scsi_get_uint32(&in->hdr[16]);
+	enum iscsi_opcode opcode = in->hdr[0] & 0x3f;
+	uint8_t ahslen = in->hdr[4];
+	struct iscsi_pdu *pdu;
+
+	if (ahslen != 0) {
+		iscsi_set_error(iscsi, "cant handle expanded headers yet");
+		return -1;
+	}
+
+	/* All target PDUs update the serials */
+	iscsi_process_pdu_serials(iscsi, in);
 
 	if (opcode == ISCSI_PDU_ASYNC_MSG) {
 		uint8_t event = in->hdr[36];
