@@ -71,9 +71,9 @@ struct client {
 	int retry_cnt;
 };
 
-u_int64_t get_clock_ns(void) {
+uint64_t get_clock_ns(void) {
 	int res;
-	u_int64_t ns;
+	uint64_t ns;
 
 #ifdef HAVE_CLOCK_GETTIME
 	struct timespec ts;
