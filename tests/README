@@ -1,0 +1,4 @@
+The tests require that TGTD version 1.0.58 or later is installed.
+
+To run the tests:
+  make test
