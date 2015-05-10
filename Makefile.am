@@ -1,5 +1,5 @@
 # Generic definitions
-SUBDIRS = lib doc utils test-tool examples
+SUBDIRS = lib doc utils test-tool tests examples
 
 ACLOCAL_AMFLAGS =-I m4
 AUTOMAKE_OPTIONS = foreign subdir-objects
