@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.13.0
+Version: 1.14.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -110,6 +110,24 @@ Test tool for iSCSI/SCSI targets
 
 
 %changelog
+* Sun May 10 2015 : 1.0.14
+ - Add support to use /dev/* nodes instead of just iscsi devices.
+ - Create a dedicated test for the FUA/DPO flags
+ - Allow reusing the context after disconnect
+ - Fix non-randomness in rand_key()
+ - Add iscsi-perf tool
+ - Fix length bug when sending unsolicited data in iscsi_command
+ - Reqrite the reconnect logic to begome fully async
+ - Fix wrong checks for username in CHAP
+ - Support Bidirectional CHAP
+ - Improve handling of IMMEDIATE bit
+ - Cmdsn, statsn fixes
+ - iscsi_which_events can return 0, which means that there are no events right
+   now but try again in a second or so.
+ - Ignore any ASYNC EVENTS we receive since we can not yet pass them back to
+   the application.
+ - Add initial make test support
+ - Various minor fixes to libiscsi and the test suite
 * Sun Dec 21 2014 : 1.13.0
  - Fix UNMAP tests
  - Build updates

@@ -10,9 +10,9 @@ if !HAVE_LIBGCRYPT
 libiscsi_la_SOURCES += md5.c
 endif
 
-SOCURRENT=5
+SOCURRENT=6
 SOREVISON=0
-SOAGE=1
+SOAGE=2
 libiscsi_la_LDFLAGS = \
 	-version-info $(SOCURRENT):$(SOREVISON):$(SOAGE) -bindir $(bindir) \
 	-no-undefined -export-symbols ${srcdir}/libiscsi.syms
