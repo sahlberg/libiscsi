@@ -222,6 +222,16 @@ devices. Accessing SG_IO devices often require that you are root:
   sudo iscsi-test-cu --test LINUX.Read10.Simple /dev/sg1
 
 
+Unit Tests
+----------
+The tests directory contains test scripts and programs to verify the
+functionality of libiscsi itself. These tests require that you have STGT
+version 1.0.58 or later installed to use as a taget to test against.
+To run the tests:
+  cd tests
+  make test
+
+
 LD_PRELOAD FUN
 ==============
 There is a small LD_PRELOAD hack in the src directory that intercepts a handful
