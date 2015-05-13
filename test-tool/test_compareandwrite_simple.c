@@ -100,7 +100,7 @@ test_compareandwrite_simple(void)
 
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:0 and verify "
 			"they are all 'B'", i);
-		ret = read16(sd, 0, i * block_size,
+		ret = read16(sd, NULL, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -158,7 +158,7 @@ test_compareandwrite_simple(void)
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:%" PRIu64 
 			" and verify they are all 'B'",
 			i, num_blocks - i);
-		ret = read16(sd, num_blocks - i, i * block_size,
+		ret = read16(sd, NULL, num_blocks - i, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

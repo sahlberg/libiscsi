@@ -58,7 +58,7 @@ test_verify16_simple(void)
 			break;
 		}
 
-		ret = read16(sd, num_blocks - i,
+		ret = read16(sd, NULL, num_blocks - i,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

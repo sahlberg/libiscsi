@@ -61,7 +61,7 @@ test_mandatory_sbc(void)
 
 	if (sbc3_support) {
 		logging(LOG_VERBOSE, "Test READ16. the device claims SBC-3 support.");
-		ret = read16(sd, 0, block_size, block_size,
+		ret = read16(sd, NULL, 0, block_size, block_size,
 			     0, 0, 0, 0, 0, NULL,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

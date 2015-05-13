@@ -41,7 +41,7 @@ test_verify16_vrprotect(void)
 	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
-			ret = read16(sd, 0, block_size,
+			ret = read16(sd, NULL, 0, block_size,
 				     block_size, 0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
 			ret = verify16(sd, 0, block_size,

@@ -46,7 +46,7 @@ check_lun_is_wiped(uint64_t lba, unsigned char c)
 	unsigned char *rbuf = alloca(256 * block_size);
 	unsigned char *zbuf = alloca(256 * block_size);
 
-	ret = read16(sd, lba, 256 * block_size,
+	ret = read16(sd, NULL, lba, 256 * block_size,
 		     block_size, 0, 0, 0, 0, 0, rbuf,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);

@@ -41,7 +41,7 @@ test_verify16_mismatch(void)
 			break;
 		}
 
-		ret = read16(sd, 0, i * block_size,
+		ret = read16(sd, NULL, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 
@@ -68,7 +68,7 @@ test_verify16_mismatch(void)
 			break;
 		}
 
-		ret = read16(sd, num_blocks - i,
+		ret = read16(sd, NULL, num_blocks - i,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

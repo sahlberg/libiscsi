@@ -40,7 +40,7 @@ test_verify12_mismatch(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12(sd, 0, i * block_size,
+		ret = read12(sd, NULL, 0, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 
@@ -66,7 +66,7 @@ test_verify12_mismatch(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12(sd, num_blocks - i,
+		ret = read12(sd, NULL, num_blocks - i,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, buf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

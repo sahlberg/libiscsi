@@ -114,7 +114,7 @@ test_orwrite_verify(void)
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read16(sd, num_blocks - i, i * block_size,
+		ret = read16(sd, NULL, num_blocks - i, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, readbuf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -131,7 +131,7 @@ test_orwrite_verify(void)
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read16(sd, num_blocks - i, i * block_size,
+		ret = read16(sd, NULL, num_blocks - i, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, readbuf,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);

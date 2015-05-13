@@ -284,8 +284,8 @@ int prefetch16(struct scsi_device *sdev, uint64_t lba, int num_blocks, int immed
 int preventallow(struct scsi_device *sdev, int prevent);
 int read6(struct scsi_device *sdev, struct scsi_task **task, uint32_t lba, uint32_t datalen, int blocksize, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int read10(struct scsi_device *sdev, struct scsi_task **task, uint32_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
-int read12(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
-int read16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
+int read12(struct scsi_device *sdev, struct scsi_task **task, uint32_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
+int read16(struct scsi_device *sdev, struct scsi_task **task, uint64_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int readcapacity10(struct scsi_device *sdev, struct scsi_task **task, uint32_t lba, int pmi, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int readcapacity16(struct scsi_device *sdev, struct scsi_task **task, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int report_supported_opcodes(struct scsi_device *sdev, struct scsi_task **save_task, int rctd, int options, int opcode, int sa, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);

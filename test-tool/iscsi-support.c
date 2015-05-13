@@ -1678,7 +1678,8 @@ read10(struct scsi_device *sdev, struct scsi_task **out_task,
 }
 
 int
-read12(struct scsi_device *sdev, uint32_t lba,
+read12(struct scsi_device *sdev, struct scsi_task **out_task,
+       uint32_t lba,
        uint32_t datalen, int blocksize, int rdprotect,
        int dpo, int fua, int fua_nv, int group,
        unsigned char *data,
@@ -1703,14 +1704,17 @@ read12(struct scsi_device *sdev, uint32_t lba,
 	if (data && task) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
-	if (task) {
+	if (out_task) {
+		*out_task = task;
+	} else if (task) {
 		scsi_free_scsi_task(task);
 	}
 	return ret;
 }
 
 int
-read16(struct scsi_device *sdev, uint64_t lba,
+read16(struct scsi_device *sdev, struct scsi_task **out_task,
+       uint64_t lba,
        uint32_t datalen, int blocksize, int rdprotect,
        int dpo, int fua, int fua_nv, int group,
        unsigned char *data,
@@ -1735,7 +1739,9 @@ read16(struct scsi_device *sdev, uint64_t lba,
 	if (data && task) {
 		memcpy(data, task->datain.data, task->datain.size);
 	}
-	if (task) {
+	if (out_task) {
+		*out_task = task;
+	} else if (task) {
 		scsi_free_scsi_task(task);
 	}
 	return ret;

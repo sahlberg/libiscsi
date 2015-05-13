@@ -35,7 +35,7 @@ test_verify12_flags(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY12 flags");
 
-	ret = read12(sd, 0, block_size,
+	ret = read12(sd, NULL, 0, block_size,
 		     block_size, 0, 0, 0, 0, 0, buf,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);

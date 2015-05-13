@@ -35,7 +35,7 @@ test_verify16_flags(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 flags");
 
-	ret = read16(sd, 0, block_size,
+	ret = read16(sd, NULL, 0, block_size,
 		     block_size, 0, 0, 0, 0, 0, buf,
 		     EXPECT_STATUS_GOOD);
 

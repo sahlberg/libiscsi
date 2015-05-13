@@ -49,7 +49,7 @@ test_read16_beyond_eol(void)
 			break;
 		}
 
-		ret = read16(sd, num_blocks + 1 - i,
+		ret = read16(sd, NULL, num_blocks + 1 - i,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
 			     EXPECT_LBA_OOB);
 		if (ret == -2) {
@@ -66,7 +66,7 @@ test_read16_beyond_eol(void)
 			break;
 		}
 
-		ret = read16(sd, 0x8000000000000000ULL,
+		ret = read16(sd, NULL, 0x8000000000000000ULL,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
 			     EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -80,7 +80,7 @@ test_read16_beyond_eol(void)
 			break;
 		}
 
-		ret = read16(sd,
+		ret = read16(sd, NULL,
 			     1ULL << (64 - ilog2(block_size)),
 			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
 			     EXPECT_LBA_OOB);
@@ -95,7 +95,7 @@ test_read16_beyond_eol(void)
 			break;
 		}
 
-		ret = read16(sd,
+		ret = read16(sd, NULL,
 			     1ULL << (63 - ilog2(block_size)),
 			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
 			     EXPECT_LBA_OOB);
@@ -109,7 +109,7 @@ test_read16_beyond_eol(void)
 			break;
 		}
 
-		ret = read16(sd, -1, i * block_size,
+		ret = read16(sd, NULL, -1, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, NULL,
 			     EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -122,7 +122,7 @@ test_read16_beyond_eol(void)
 			break;
 		}
 
-		ret = read16(sd, num_blocks - 1,
+		ret = read16(sd, NULL, num_blocks - 1,
 			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
 			     EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
