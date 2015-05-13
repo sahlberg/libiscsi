@@ -41,7 +41,11 @@ test_modesense6_control_d_sense(void)
 	ret = modesense6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
 			 SCSI_MODEPAGE_CONTROL, 0, 255,
 			 EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	if (ret != 0) {
+		logging(LOG_NORMAL,"[WARNING] Could not read "
+			"BlockDeviceCharacteristics.");
+		goto finished;
+	}
 	logging(LOG_VERBOSE, "[SUCCESS] CONTROL page fetched.");
 
 	logging(LOG_VERBOSE, "Try to unmarshall the DATA-IN buffer.");
