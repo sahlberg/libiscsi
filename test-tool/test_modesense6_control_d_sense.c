@@ -66,10 +66,12 @@ test_modesense6_control_d_sense(void)
 	}
 	logging(LOG_VERBOSE, "Send a READ16 that will fail so we can check "
 		"the type of sense data returned");
-	r16_task = iscsi_read16_sync(sd->iscsi_ctx, sd->iscsi_lun,
-				     0xffffffffffffffffLL,
-				     block_size, block_size, 0,
-				     0, 0, 0, 0);
+	ret = read16(sd, &r16_task, 0xffffffffffffffffLL,
+		     block_size, block_size, 0,
+		     0, 0, 0, 0, NULL,
+		     EXPECT_LBA_OOB);
+	CU_ASSERT_EQUAL(ret, 0);
+
 	if (page->control.d_sense) {
 		logging(LOG_VERBOSE, "D_SENSE is set, verify that sense format "
 			"is descriptor format");
