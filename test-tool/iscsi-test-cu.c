@@ -1179,13 +1179,11 @@ main(int argc, char *argv[])
 	}
 
 	/* try reading block device characteristics vpd */
-	inq_bdc_task = NULL;
 	inquiry(sd, &inq_bdc_task, 1, SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS, 255,
 		EXPECT_STATUS_GOOD);
-	if (inq_bdc_task == NULL) {
+	if (inq_bdc_task == NULL || inq_bdc_task->status != SCSI_STATUS_GOOD) {
 		printf("Failed to read Block Device Characteristics page\n");
-	}
-	if (inq_bdc_task) {
+	} else {
 		inq_bdc = scsi_datain_unmarshall(inq_bdc_task);
 		if (inq_bdc == NULL) {
 			printf("failed to unmarshall inquiry datain blob\n");
