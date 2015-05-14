@@ -559,6 +559,7 @@ static libiscsi_suite_info linux_suites[] = {
 	{ "GetLBAStatus", NON_PGR_FUNCS, tests_get_lba_status },
 	{ "Inquiry", NON_PGR_FUNCS, tests_inquiry },
 	{ "Mandatory", NON_PGR_FUNCS, tests_mandatory },
+	{ "ModeSense6", NON_PGR_FUNCS, tests_modesense6 },
 	{ "OrWrite", NON_PGR_FUNCS, tests_orwrite },
 	{ "Prefetch10", NON_PGR_FUNCS, tests_prefetch10 },
 	{ "Prefetch16", NON_PGR_FUNCS, tests_prefetch16 },
