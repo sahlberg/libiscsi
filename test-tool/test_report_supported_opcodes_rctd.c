@@ -37,7 +37,7 @@ test_report_supported_opcodes_rctd(void)
 
 
 	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES report ALL opcodes "
-		"without timeout descriptors");
+		"without timeout descriptors. RCTD==0");
 	ret = report_supported_opcodes(
 		sd, &rso_task,
 		0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
@@ -66,7 +66,7 @@ test_report_supported_opcodes_rctd(void)
 	for (i = 0; i < rsoc->num_descriptors; i++) {
 		if (rsoc->descriptors[i].ctdp) {
 			logging(LOG_NORMAL, "[FAILED] Command descriptor with "
-				"CTDP set");
+				"CTDP set received when RCTD==0");
 			CU_FAIL("[FAILED] Command descriptor with "
 				"CTDP set");
 		}
@@ -76,7 +76,7 @@ test_report_supported_opcodes_rctd(void)
 
 
 	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES report ALL opcodes "
-		"with timeout descriptors");
+		"with timeout descriptors. RCTD==1");
 	ret = report_supported_opcodes(
 		sd, &rso_task,
 		1, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
@@ -96,7 +96,7 @@ test_report_supported_opcodes_rctd(void)
 	for (i = 0; i < rsoc->num_descriptors; i++) {
 		if (!rsoc->descriptors[i].ctdp) {
 			logging(LOG_NORMAL, "[FAILED] Command descriptor "
-				"without CTDP set");
+				"with CTDP clear when RCTD==1");
 			CU_FAIL("[FAILED] Command descriptor without "
 				"CTDP set");
 		}
@@ -105,7 +105,8 @@ test_report_supported_opcodes_rctd(void)
 	logging(LOG_VERBOSE, "Verify that all timeout descriptors have the "
 		"correct length");
 	for (i = 0; i < rsoc->num_descriptors; i++) {
-		if (rsoc->descriptors[i].to.descriptor_length != 0x0a) {
+		if (rsoc->descriptors[i].ctdp &&
+		    rsoc->descriptors[i].to.descriptor_length != 0x0a) {
 			logging(LOG_NORMAL, "[FAILED] Command descriptor "
 				"with invalid TimeoutDescriptor length");
 			CU_FAIL("[FAILED] Command descriptor with "
