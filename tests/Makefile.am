@@ -3,7 +3,8 @@ AM_CPPFLAGS = -I../include "-D_U_=__attribute__((unused))" \
 AM_CFLAGS = $(WARN_CFLAGS)
 LDADD = ../lib/libiscsi.la
 
-noinst_PROGRAMS = prog_reconnect prog_reconnect_timeout prog_noop_reply
+noinst_PROGRAMS = prog_reconnect prog_reconnect_timeout prog_noop_reply \
+	prog_timeout
 
 T = `ls test_*.sh`
 

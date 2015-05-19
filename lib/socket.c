@@ -889,6 +889,8 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 	}
+	iscsi_timeout_scan(iscsi);
+
 	return 0;
 }
 

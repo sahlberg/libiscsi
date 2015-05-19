@@ -53,6 +53,8 @@ event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 	int ret;
 
 	while (state->finished == 0) {
+		short revents;
+
 		pfd.fd = iscsi_get_fd(iscsi);
 		pfd.events = iscsi_which_events(iscsi);
 
@@ -61,11 +63,8 @@ event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 			state->status = -1;
 			return;
 		}
-		if (ret == 0) {
-			iscsi_timeout_scan(iscsi);
-			continue;
-		}
-		if (iscsi_service(iscsi, pfd.revents) < 0) {
+		revents = (ret == 0) ? 0 : pfd.revents;
+		if (iscsi_service(iscsi, revents) < 0) {
 			iscsi_set_error(iscsi,
 				"iscsi_service failed with : %s",
 				iscsi_get_error(iscsi));

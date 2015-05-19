@@ -83,9 +83,44 @@ EXTERN int iscsi_service(struct iscsi_context *iscsi, int revents);
  */
 EXTERN int iscsi_queue_length(struct iscsi_context *iscsi);
 
+/************************************************************
+ * Timeout Handling.
+ * Libiscsi does not use or interface with any system timers.
+ * Instead all timeout processing in libiscsi is done as part
+ * of the iscsi_service() processing.
+ *
+ * This means that if you use the timeout function below you must
+ * device your application to call out to iscsi_service() at regular
+ * intervals.
+ * An easy way to do this is calling iscsi_service(iscsi, 0), i.e.
+ * by passing 0 as the revents arguments once every second or so.
+ ************************************************************/
+
 /*
- * Set the timeout in seconds after which a synchronous SCSI command
- * will timeout.
+ * Set the timeout in seconds after which a task/pdu will timeout.
+ * This timeout applies to SCSI task PDUs as well as normal iSCSI
+ * PDUs such as login/task management/logout/...
+ *
+ * Each PDU is assigned its timeout value upon creation and can not be
+ * changed afterwards. I.e. When you change the default timeout, it will
+ * only affect any commands that are issued in the future but will not
+ * affect the timeouts for any commands already in flight.
+ *
+ * The recommended usecase is to set to a default value for all PDUs
+ * and only change the default temporarily when a specific task needs
+ * a different timeout.
+ *
+ * // Set default to 5 seconds for all commands at beginning of program.
+ * iscsi_set_timeout(iscsi, 5);
+ *
+ * ...
+ * // SANITIZE command will take long so set it to no tiemout.
+ * iscsi_set_timeout(iscsi, 0);
+ * iscsi_sanitize_task(iscsi, ...
+ * iscsi_set_timeout(iscsi, <set back to original value>);
+ * ...
+ *
+ *
  * Default is 0 == no timeout.
  */
 EXTERN int iscsi_set_timeout(struct iscsi_context *iscsi, int timeout);
