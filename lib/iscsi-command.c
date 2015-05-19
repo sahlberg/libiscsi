@@ -56,10 +56,13 @@ iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 	case SCSI_STATUS_TASK_ABORTED:
 	case SCSI_STATUS_ERROR:
 	case SCSI_STATUS_CANCELLED:
+	case SCSI_STATUS_TIMEOUT:
+		scsi_cbdata->task->status = status;
 		scsi_cbdata->callback(iscsi, status, scsi_cbdata->task,
 				      scsi_cbdata->private_data);
 		return;
 	default:
+		scsi_cbdata->task->status = SCSI_STATUS_ERROR;
 		iscsi_set_error(iscsi, "Cant handle  scsi status %d yet.",
 				status);
 		scsi_cbdata->callback(iscsi, SCSI_STATUS_ERROR, scsi_cbdata->task,
@@ -146,44 +149,6 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		offset  += len;
 	}
 	return 0;
-}
-
-void
-iscsi_timeout_scan(struct iscsi_context *iscsi)
-{
-	struct iscsi_pdu *pdu;
-	struct iscsi_pdu *next_pdu;
-	time_t t = time(NULL);
-
-	for (pdu = iscsi->waitpdu; pdu; pdu = next_pdu) {
-		struct iscsi_scsi_cbdata *scsi_cbdata;
-		struct scsi_task *task;
-
-		next_pdu = pdu->next;
-
-		if (pdu->scsi_timeout == 0) {
-			/* no timeout for this pdu */
-			continue;
-		}
-		if (t < pdu->scsi_timeout) {
-			/* not expired yet */
-			continue;
-		}
-		if (pdu->outdata.data[0] != ISCSI_PDU_SCSI_REQUEST) {
-			continue;
-		}
-
-		scsi_cbdata = &pdu->scsi_cbdata;
-		task = scsi_cbdata->task;
-
-		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-		pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
-				task, pdu->private_data);
-		iscsi_set_error(iscsi, "SCSI command timed out");
-
-		/* task is freed by the sync caller */
-		task->status = SCSI_STATUS_TIMEOUT;
-	}
 }
 
 static int
@@ -1938,4 +1903,3 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 		iscsi_free_pdu(iscsi, pdu);
 	}
 }
-

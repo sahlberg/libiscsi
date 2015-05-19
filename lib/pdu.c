@@ -686,3 +686,42 @@ iscsi_pdu_set_expxferlen(struct iscsi_pdu *pdu, uint32_t expxferlen)
 	pdu->expxferlen = expxferlen;
 	scsi_set_uint32(&pdu->outdata.data[20], expxferlen);
 }
+
+void
+iscsi_timeout_scan(struct iscsi_context *iscsi)
+{
+	struct iscsi_pdu *pdu;
+	struct iscsi_pdu *next_pdu;
+	time_t t = time(NULL);
+
+	for (pdu = iscsi->outqueue; pdu; pdu = next_pdu) {
+		next_pdu = pdu->next;
+
+		if (pdu->scsi_timeout == 0) {
+			/* no timeout for this pdu */
+			continue;
+		}
+		if (t < pdu->scsi_timeout) {
+			/* not expired yet */
+			continue;
+		}
+		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
+		pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
+			      NULL, pdu->private_data);
+	}
+	for (pdu = iscsi->waitpdu; pdu; pdu = next_pdu) {
+		next_pdu = pdu->next;
+
+		if (pdu->scsi_timeout == 0) {
+			/* no timeout for this pdu */
+			continue;
+		}
+		if (t < pdu->scsi_timeout) {
+			/* not expired yet */
+			continue;
+		}
+		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+		pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
+			      NULL, pdu->private_data);
+	}
+}
