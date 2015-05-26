@@ -8,6 +8,7 @@ EXTRA_DIST = README
 
 dist_noinst_HEADERS = iscsi-support.h \
 		      iscsi-test-cu.h
+		      iscsi-multipath.h
 
 # libiscsi test tool using cunit
 if ISCSITEST
@@ -15,6 +16,7 @@ bin_PROGRAMS = iscsi-test-cu
 iscsi_test_cu_LDFLAGS = -ldl -lcunit
 iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	iscsi-support.c \
+	iscsi-multipath.c \
 	test_compareandwrite_simple.c \
 	test_compareandwrite_dpofua.c \
 	test_compareandwrite_miscompare.c \
