@@ -417,6 +417,11 @@ static CU_TestInfo tests_writeverify16[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_multipathio[] = {
+	{ (char *)"Simple", test_multipathio_simple },
+	CU_TEST_INFO_NULL
+};
+
 typedef struct libiscsi_suite_info {
         const char       *pName;         /**< Suite name. */
         CU_InitializeFunc pInitFunc;     /**< Suite initialization function. */
@@ -469,6 +474,7 @@ static libiscsi_suite_info scsi_suites[] = {
 	{ "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
 	{ "WriteVerify12", NON_PGR_FUNCS, tests_writeverify12 },
 	{ "WriteVerify16", NON_PGR_FUNCS, tests_writeverify16 },
+	{ "MultipathIO", NON_PGR_FUNCS, tests_multipathio },
 	{ NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -553,6 +559,7 @@ static libiscsi_suite_info all_suites[] = {
 	{ "iSCSIcmdsn", NON_PGR_FUNCS, tests_iscsi_cmdsn },
 	{ "iSCSIdatasn", NON_PGR_FUNCS, tests_iscsi_datasn },
 	{ "iSCSIResiduals", NON_PGR_FUNCS, tests_iscsi_residuals },
+	{ "MultipathIO", NON_PGR_FUNCS, tests_multipathio },
 	{ NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
@@ -586,6 +593,7 @@ static libiscsi_suite_info linux_suites[] = {
 	{ "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
 	{ "WriteVerify12", NON_PGR_FUNCS, tests_writeverify12 },
 	{ "WriteVerify16", NON_PGR_FUNCS, tests_writeverify16 },
+	{ "MultipathIO", NON_PGR_FUNCS, tests_multipathio },
 	{ NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
