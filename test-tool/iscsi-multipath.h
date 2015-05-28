@@ -24,6 +24,17 @@
 extern int mp_num_sds;
 extern struct scsi_device *mp_sds[MPATH_MAX_DEVS];
 
+#define MPATH_SKIP_IF_UNAVAILABLE(_sds, _num_sds)			\
+do {									\
+	if (_num_sds <= 1) {						\
+		logging(LOG_NORMAL, "[SKIPPED] Multipath unavailable."	\
+			" Skipping test");				\
+		CU_PASS("[SKIPPED] Multipath unavailable."		\
+			" Skipping test");				\
+		return;							\
+	}								\
+} while (0);
+
 int
 mpath_check_matching_ids(int num_sds,
 			 struct scsi_device **sds);
