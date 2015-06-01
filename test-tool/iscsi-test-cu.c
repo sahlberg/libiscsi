@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
 #include <getopt.h>
@@ -50,11 +51,12 @@
 #include "iscsi-support.h"
 #include "iscsi-test-cu.h"
 #include "iscsi-support.h"
+#include "iscsi-multipath.h"
 
 #define	PROG	"iscsi-test-cu"
 
 int loglevel = LOG_NORMAL;
-struct scsi_device *sd;
+struct scsi_device *sd = NULL;	/* mp_sds[0] alias */
 static unsigned int maxsectbytes;
 
 /*
@@ -415,6 +417,11 @@ static CU_TestInfo tests_writeverify16[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_multipathio[] = {
+	{ (char *)"Simple", test_multipathio_simple },
+	CU_TEST_INFO_NULL
+};
+
 typedef struct libiscsi_suite_info {
         const char       *pName;         /**< Suite name. */
         CU_InitializeFunc pInitFunc;     /**< Suite initialization function. */
@@ -467,6 +474,7 @@ static libiscsi_suite_info scsi_suites[] = {
 	{ "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
 	{ "WriteVerify12", NON_PGR_FUNCS, tests_writeverify12 },
 	{ "WriteVerify16", NON_PGR_FUNCS, tests_writeverify16 },
+	{ "MultipathIO", NON_PGR_FUNCS, tests_multipathio },
 	{ NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -551,6 +559,7 @@ static libiscsi_suite_info all_suites[] = {
 	{ "iSCSIcmdsn", NON_PGR_FUNCS, tests_iscsi_cmdsn },
 	{ "iSCSIdatasn", NON_PGR_FUNCS, tests_iscsi_datasn },
 	{ "iSCSIResiduals", NON_PGR_FUNCS, tests_iscsi_residuals },
+	{ "MultipathIO", NON_PGR_FUNCS, tests_multipathio },
 	{ NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
@@ -584,6 +593,7 @@ static libiscsi_suite_info linux_suites[] = {
 	{ "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
 	{ "WriteVerify12", NON_PGR_FUNCS, tests_writeverify12 },
 	{ "WriteVerify16", NON_PGR_FUNCS, tests_writeverify16 },
+	{ "MultipathIO", NON_PGR_FUNCS, tests_multipathio },
 	{ NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
@@ -613,7 +623,7 @@ print_usage(void)
 	    "Usage: %s [-?|--help]    print this message and exit\n",
 	    PROG);
 	fprintf(stderr,
-	    "or     %s [OPTIONS] <iscsi-url>\n", PROG);
+	    "or     %s [OPTIONS] <iscsi-url> [multipath-iscsi-url]\n", PROG);
 	fprintf(stderr,
 	    "Where OPTIONS are from:\n");
 	fprintf(stderr,
@@ -683,13 +693,20 @@ test_teardown(void)
 int
 suite_init(void)
 {
-	if (sd->iscsi_url) {
-		if (sd->iscsi_ctx) {
-			iscsi_logout_sync(sd->iscsi_ctx);
-			iscsi_destroy_context(sd->iscsi_ctx);
+	int i;
+
+	for (i = 0; i < mp_num_sds; i++) {
+		if (!mp_sds[i]->iscsi_url) {
+			continue;
 		}
-		sd->iscsi_ctx = iscsi_context_login(initiatorname1, sd->iscsi_url, &sd->iscsi_lun);
-		if (sd->iscsi_ctx == NULL) {
+		if (mp_sds[i]->iscsi_ctx) {
+			iscsi_logout_sync(mp_sds[i]->iscsi_ctx);
+			iscsi_destroy_context(mp_sds[i]->iscsi_ctx);
+		}
+		mp_sds[i]->iscsi_ctx = iscsi_context_login(initiatorname1,
+							mp_sds[i]->iscsi_url,
+							&mp_sds[i]->iscsi_lun);
+		if (mp_sds[i]->iscsi_ctx == NULL) {
 			fprintf(stderr,
 				"error: Failed to login to target for test set-up\n");
 			return 1;
@@ -705,15 +722,19 @@ suite_init(void)
 int
 suite_cleanup(void)
 {
+	int i;
+
 #ifndef HAVE_CU_SUITEINFO_PSETUPFUNC
 	/* libcunit version 1 */
 	test_teardown();
 #endif
-	if (sd->iscsi_url) {
-		if (sd->iscsi_ctx) {
-			iscsi_logout_sync(sd->iscsi_ctx);
-			iscsi_destroy_context(sd->iscsi_ctx);
-			sd->iscsi_ctx = NULL;
+	for (i = 0; i < mp_num_sds; i++) {
+		if (mp_sds[i]->iscsi_url) {
+			if (mp_sds[i]->iscsi_ctx) {
+				iscsi_logout_sync(mp_sds[i]->iscsi_ctx);
+				iscsi_destroy_context(mp_sds[i]->iscsi_ctx);
+				mp_sds[i]->iscsi_ctx = NULL;
+			}
 		}
 	}
 	return 0;
@@ -933,7 +954,7 @@ static void free_scsi_device(struct scsi_device *sdev)
 		close(sdev->sgio_fd);
 		sdev->sgio_fd = -1;
 	}
-	free(sd);
+	free(sdev);
 }
 
 int
@@ -972,10 +993,7 @@ main(int argc, char *argv[])
 	};
 	int i, c;
 	int opt_idx = 0;
-
-	sd = malloc(sizeof(struct scsi_device));
-	memset(sd, '\0', sizeof(struct scsi_device));
-	sd->sgio_fd = -1;
+	bool got_sgio_dev = false;
 
 	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsSnvxV", long_opts,
 		    &opt_idx)) > 0) {
@@ -1034,29 +1052,40 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (optind < argc) {
+	/* parse all trailing arguments as device paths */
+	mp_num_sds = 0;
+	while (optind < argc) {
+		if (mp_num_sds >= MPATH_MAX_DEVS) {
+			fprintf(stderr, "Too many multipath device URLs\n");
+			print_usage();
+			free(testname_re);
+			return 10;
+		}
+
+		mp_sds[mp_num_sds] = malloc(sizeof(struct scsi_device));
+		memset(mp_sds[mp_num_sds], '\0', sizeof(struct scsi_device));
+		mp_sds[mp_num_sds]->sgio_fd = -1;
+
 		if (!strncmp(argv[optind], "iscsi://", 8)) {
-			sd->iscsi_url = strdup(argv[optind++]);
+			mp_sds[mp_num_sds]->iscsi_url = strdup(argv[optind++]);
 #ifdef HAVE_SG_IO
 		} else {
-			sd->sgio_dev = strdup(argv[optind++]);
+			mp_sds[mp_num_sds]->sgio_dev = strdup(argv[optind++]);
+			got_sgio_dev = true;
 #endif
 		}
-	}
-	if (optind < argc) {
-		fprintf(stderr, "error: too many arguments\n");
-		print_usage();
-		return 1;
+		mp_num_sds++;
 	}
 
 	/* XXX why is this done? */
 	real_iscsi_queue_pdu = dlsym(RTLD_NEXT, "iscsi_queue_pdu");
 
-	if (sd->iscsi_url == NULL && sd->sgio_dev== NULL ) {
+	if ((mp_num_sds == 0) || (mp_sds[0]->iscsi_url == NULL
+					&& mp_sds[0]->sgio_dev == NULL)) {
 #ifdef HAVE_SG_IO
 		fprintf(stderr, "You must specify either an iSCSI URL or a device file\n");
 #else
-		fprintf(stderr, "You must specify either an iSCSI URL\n");
+		fprintf(stderr, "You must specify an iSCSI URL\n");
 #endif
 		print_usage();
 		if (testname_re)
@@ -1064,10 +1093,32 @@ main(int argc, char *argv[])
 		return 10;
 	}
 
-	if (connect_scsi_device(sd, initiatorname1)) {
-		fprintf(stderr, "Failed to connect to SCSI device\n");
-		free_scsi_device(sd);
-		return -1;
+	if ((mp_num_sds > 1) && got_sgio_dev) {
+		fprintf(stderr, "Multipath devices must be iSCSI only\n");
+		print_usage();
+		free(testname_re);
+		return 10;
+	}
+
+	/* sd remains an alias for the first device */
+	sd = mp_sds[0];
+
+	for (i = 0; i < mp_num_sds; i++) {
+		res = connect_scsi_device(mp_sds[i], initiatorname1);
+		if (res < 0) {
+			fprintf(stderr,
+				"Failed to connect to SCSI device %d\n", i);
+			goto err_sds_free;
+		}
+	}
+
+	if (mp_num_sds > 1) {
+		/* check that all multipath sds identify as the same LU */
+		res = mpath_check_matching_ids(mp_num_sds, mp_sds);
+		if (res < 0) {
+			fprintf(stderr, "multipath devices don't match\n");
+			goto err_sds_free;
+		}
 	}
 
 	/*
@@ -1079,21 +1130,18 @@ main(int argc, char *argv[])
 	readcapacity10(sd, &task, 0, 0, EXPECT_STATUS_GOOD);
 	if (task == NULL) {
 		printf("Failed to send READCAPACITY10 command: %s\n", sd->error_str);
-		free_scsi_device(sd);
-		return -1;
+		goto err_sds_free;
 	}
 	if (task->status != SCSI_STATUS_GOOD) {
 		printf("READCAPACITY10 command: failed with sense. %s\n", sd->error_str);
 		scsi_free_scsi_task(task);
-		free_scsi_device(sd);
-		return -1;
+		goto err_sds_free;
 	}
 	rc10 = scsi_datain_unmarshall(task);
 	if (rc10 == NULL) {
 		printf("failed to unmarshall READCAPACITY10 data.\n");
 		scsi_free_scsi_task(task);
-		free_scsi_device(sd);
-		return -1;
+		goto err_sds_free;
 	}
 	block_size = rc10->block_size;
 	num_blocks = rc10->lba + 1;
@@ -1103,16 +1151,14 @@ main(int argc, char *argv[])
 	readcapacity16(sd, &rc16_task, 96, EXPECT_STATUS_GOOD);
 	if (rc16_task == NULL) {
 		printf("Failed to send READCAPACITY16 command: %s\n", sd->error_str);
-		free_scsi_device(sd);
-		return -1;
+		goto err_sds_free;
 	}
 	if (rc16_task->status == SCSI_STATUS_GOOD) {
 		rc16 = scsi_datain_unmarshall(rc16_task);
 		if (rc16 == NULL) {
 			printf("failed to unmarshall READCAPACITY16 data. %s\n", sd->error_str);
 			scsi_free_scsi_task(rc16_task);
-			free_scsi_device(sd);
-			return -1;
+			goto err_sds_free;
 		}
 		block_size = rc16->block_length;
 		num_blocks = rc16->returned_lba + 1;
@@ -1123,7 +1169,7 @@ main(int argc, char *argv[])
 	inquiry(sd, &inq_task, 0, 0, 64, EXPECT_STATUS_GOOD);
 	if (inq_task == NULL || inq_task->status != SCSI_STATUS_GOOD) {
 		printf("Inquiry command failed : %s\n", sd->error_str);
-		return -1;
+		goto err_sds_free;
 	}
 	full_size = scsi_datain_getfullsize(inq_task);
 	if (full_size > inq_task->datain.size) {
@@ -1134,14 +1180,14 @@ main(int argc, char *argv[])
 		inquiry(sd, &inq_task, 0, 0, full_size, EXPECT_STATUS_GOOD);
 		if (inq_task == NULL) {
 			printf("Inquiry command failed : %s\n", sd->error_str);
-			return -1;
+			goto err_sds_free;
 		}
 	}
 	inq = scsi_datain_unmarshall(inq_task);
 	if (inq == NULL) {
 		printf("failed to unmarshall inquiry datain blob\n");
 		scsi_free_scsi_task(inq_task);
-		return -1;
+		goto err_sds_free;
 	}
 
 	sbc3_support = 0;
@@ -1168,14 +1214,14 @@ main(int argc, char *argv[])
 				EXPECT_STATUS_GOOD);
 			if (inq_bl_task == NULL) {
 				printf("Inquiry command failed : %s\n", sd->error_str);
-				return -1;
+				goto err_sds_free;
 			}
 		}
 
 		inq_bl = scsi_datain_unmarshall(inq_bl_task);
 		if (inq_bl == NULL) {
 			printf("failed to unmarshall inquiry datain blob\n");
-			return -1;
+			goto err_sds_free;
 		}
 	}
 
@@ -1188,7 +1234,7 @@ main(int argc, char *argv[])
 		inq_bdc = scsi_datain_unmarshall(inq_bdc_task);
 		if (inq_bdc == NULL) {
 			printf("failed to unmarshall inquiry datain blob\n");
-			return -1;
+			goto err_sds_free;
 		}
 	}
 
@@ -1199,7 +1245,7 @@ main(int argc, char *argv[])
 			EXPECT_STATUS_GOOD);
 		if (inq_lbp_task == NULL || inq_lbp_task->status != SCSI_STATUS_GOOD) {
 			printf("Inquiry command failed : %s\n", sd->error_str);
-			return -1;
+			goto err_sds_free;
 		}
 		full_size = scsi_datain_getfullsize(inq_lbp_task);
 		if (full_size > inq_lbp_task->datain.size) {
@@ -1211,14 +1257,14 @@ main(int argc, char *argv[])
 				full_size, EXPECT_STATUS_GOOD);
 			if (inq_lbp_task == NULL) {
 				printf("Inquiry command failed : %s\n", sd->error_str);
-				return -1;
+				goto err_sds_free;
 			}
 		}
 
 		inq_lbp = scsi_datain_unmarshall(inq_lbp_task);
 		if (inq_lbp == NULL) {
 			printf("failed to unmarshall inquiry datain blob\n");
-			return -1;
+			goto err_sds_free;
 		}
 	}
 
@@ -1227,8 +1273,7 @@ main(int argc, char *argv[])
 				 EXPECT_STATUS_GOOD);
 	if (rsop_task == NULL) {
 		printf("Failed to send REPORT_SUPPORTED_OPCODES command: %s\n", sd->error_str);
-		free_scsi_device(sd);
-		return -1;
+		goto err_sds_free;
 	}
 	if (rsop_task->status == SCSI_STATUS_GOOD) {
 		rsop = scsi_datain_unmarshall(rsop_task);
@@ -1244,8 +1289,7 @@ main(int argc, char *argv[])
 		   EXPECT_STATUS_GOOD);
 	if (task == NULL) {
 		printf("Failed to send MODE_SENSE6 command: %s\n", sd->error_str);
-		free_scsi_device(sd);
-		return -1;
+		goto err_sds_free;
 	}
 	if (task->status == SCSI_STATUS_GOOD) {
 		struct scsi_mode_sense *ms;
@@ -1254,7 +1298,7 @@ main(int argc, char *argv[])
 		if (ms == NULL) {
 			printf("failed to unmarshall mode sense datain blob\n");
 			scsi_free_scsi_task(task);
-			return -1;
+			goto err_sds_free;
 		}
 		readonly = !!(ms->device_specific_parameter & 0x80);
 	}
@@ -1268,7 +1312,7 @@ main(int argc, char *argv[])
 
 	if (CU_initialize_registry() != 0) {
 		fprintf(stderr, "error: unable to initialize test registry\n");
-		return 1;
+		goto err_sds_free;
 	}
 	if (CU_is_test_running()) {
 		fprintf(stderr, "error: test suite(s) already running!?\n");
@@ -1315,7 +1359,15 @@ main(int argc, char *argv[])
 	if (rsop_task != NULL) {
 		scsi_free_scsi_task(rsop_task);
 	}
-	free_scsi_device(sd);
+	for (i = 0; i < mp_num_sds; i++) {
+		free_scsi_device(mp_sds[i]);
+	}
 
 	return 0;
+
+err_sds_free:
+	for (i = 0; i < mp_num_sds; i++) {
+		free_scsi_device(mp_sds[i]);
+	}
+	return -1;
 }
