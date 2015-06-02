@@ -993,7 +993,6 @@ main(int argc, char *argv[])
 	};
 	int i, c;
 	int opt_idx = 0;
-	bool got_sgio_dev = false;
 
 	while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsSnvxV", long_opts,
 		    &opt_idx)) > 0) {
@@ -1071,7 +1070,6 @@ main(int argc, char *argv[])
 #ifdef HAVE_SG_IO
 		} else {
 			mp_sds[mp_num_sds]->sgio_dev = strdup(argv[optind++]);
-			got_sgio_dev = true;
 #endif
 		}
 		mp_num_sds++;
@@ -1095,13 +1093,6 @@ main(int argc, char *argv[])
 		print_usage();
 		if (testname_re)
 			free(testname_re);
-		return 10;
-	}
-
-	if ((mp_num_sds > 1) && got_sgio_dev) {
-		fprintf(stderr, "Multipath devices must be iSCSI only\n");
-		print_usage();
-		free(testname_re);
 		return 10;
 	}
 
