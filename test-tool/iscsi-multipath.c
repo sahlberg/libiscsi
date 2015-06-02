@@ -144,7 +144,8 @@ mpath_check_matching_ids_devid_vpd(int num_sds,
 		 * an identical logical unit identifier.
 		 */
 		inquiry(sds[i], &inq_task, 1,
-			SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION, 64,
+			SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION,
+			64,
 			EXPECT_STATUS_GOOD);
 		if (inq_task && inq_task->status != SCSI_STATUS_GOOD) {
 			printf("Inquiry command failed : %s\n",
@@ -156,7 +157,9 @@ mpath_check_matching_ids_devid_vpd(int num_sds,
 			/* we need more data */
 			scsi_free_scsi_task(inq_task);
 			inq_task = NULL;
-			inquiry(sds[i], &inq_task, 0, 0, full_size,
+			inquiry(sds[i], &inq_task, 1,
+				SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION,
+				full_size,
 				EXPECT_STATUS_GOOD);
 			if (inq_task == NULL) {
 				printf("Inquiry command failed : %s\n",
