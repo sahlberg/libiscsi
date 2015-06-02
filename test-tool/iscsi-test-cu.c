@@ -1077,7 +1077,12 @@ main(int argc, char *argv[])
 		mp_num_sds++;
 	}
 
-	/* XXX why is this done? */
+	/* So that we can override iscsi_queue_pdu in tests
+	 * and replace or mutate the blob that we are about to write to the
+	 * wire.
+	 * This allows such tests to do their mutates and then call out
+	 * to the real queueing function once they have modified the data.
+	 */
 	real_iscsi_queue_pdu = dlsym(RTLD_NEXT, "iscsi_queue_pdu");
 
 	if ((mp_num_sds == 0) || (mp_sds[0]->iscsi_url == NULL
