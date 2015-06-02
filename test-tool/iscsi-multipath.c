@@ -87,7 +87,7 @@ mpath_des_copy(struct scsi_inquiry_device_designator *des,
 		return -1;
 	}
 	memcpy(des_cp->designator, des->designator, des->designator_length);
-	*_des_cp = des;
+	*_des_cp = des_cp;
 
 	return 0;
 }
