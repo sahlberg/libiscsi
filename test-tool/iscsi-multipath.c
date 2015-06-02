@@ -282,7 +282,9 @@ mpath_check_matching_ids_serial_vpd(int num_sds,
 
 			/* we need more data */
 			inq_task = NULL;
-			inquiry(sds[i], &inq_task, 0, 0, full_size,
+			inquiry(sds[i], &inq_task, 1,
+				SCSI_INQUIRY_PAGECODE_UNIT_SERIAL_NUMBER,
+				full_size,
 				EXPECT_STATUS_GOOD);
 			if (inq_task == NULL) {
 				printf("Inquiry command failed : %s\n",
