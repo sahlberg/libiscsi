@@ -49,7 +49,7 @@ test_multipathio_simple(void)
 		read_path = (write_path + 1) % mp_num_sds;
 
 		logging(LOG_VERBOSE,
-			"Test multipath WRITE16/READ16 of 1-256 blocks using "
+			"Test multipath WRITE10/READ10 of 1-256 blocks using "
 			"path %d", write_path);
 
 		for (i = 1; i <= 256; i++) {
@@ -57,7 +57,7 @@ test_multipathio_simple(void)
 					&& maximum_transfer_length < i) {
 				break;
 			}
-			ret = write16(mp_sds[write_path], 0, i * block_size,
+			ret = write10(mp_sds[write_path], 0, i * block_size,
 				      block_size, 0, 0, 0, 0, 0, write_buf,
 				      EXPECT_STATUS_GOOD);
 			if (ret == -2) {
@@ -68,7 +68,7 @@ test_multipathio_simple(void)
 			}
 			CU_ASSERT_EQUAL(ret, 0);
 
-			ret = read16(mp_sds[read_path], NULL, 0, i * block_size,
+			ret = read10(mp_sds[read_path], NULL, 0, i * block_size,
 				     block_size, 0, 0, 0, 0, 0, read_buf,
 				     EXPECT_STATUS_GOOD);
 			CU_ASSERT_EQUAL(ret, 0);
