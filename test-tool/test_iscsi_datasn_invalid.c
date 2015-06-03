@@ -77,6 +77,7 @@ void test_iscsi_datasn_invalid(void)
 	change_datasn = 1;
 
 	sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+	sd->iscsi_ctx->want_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
 	sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
 	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
@@ -102,6 +103,7 @@ void test_iscsi_datasn_invalid(void)
 	change_datasn = 2;
 
 	sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+	sd->iscsi_ctx->want_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
 	sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
 	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
@@ -125,6 +127,7 @@ void test_iscsi_datasn_invalid(void)
 	change_datasn = 3;
 
 	sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+	sd->iscsi_ctx->want_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
 	sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
 	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
@@ -149,6 +152,7 @@ void test_iscsi_datasn_invalid(void)
 	change_datasn = 4;
 
 	sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
+	sd->iscsi_ctx->want_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
 	sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
 	local_iscsi_queue_pdu = my_iscsi_queue_pdu;
 	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
@@ -166,5 +170,4 @@ void test_iscsi_datasn_invalid(void)
 	CU_ASSERT_NOT_EQUAL(ret, 0);
 
 	local_iscsi_queue_pdu = NULL;
-	iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 }
