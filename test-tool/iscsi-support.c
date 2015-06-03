@@ -2407,7 +2407,9 @@ int set_swp(struct scsi_device *sdev)
 	struct scsi_mode_page *mp;
 
 	logging(LOG_VERBOSE, "Read CONTROL page");
-	ret = modesense6(sdev, &sense_task, 1, SCSI_MODESENSE_PC_CURRENT,
+
+	/* see if we can even change swp */
+	ret = modesense6(sdev, &sense_task, 1, SCSI_MODESENSE_PC_CHANGEABLE,
 			 SCSI_MODEPAGE_CONTROL, 0, 255,
 			 EXPECT_STATUS_GOOD);
 	if (ret) {
@@ -2421,6 +2423,12 @@ int set_swp(struct scsi_device *sdev)
 		logging(LOG_NORMAL, "failed to unmarshall mode sense datain "
 			"blob");
 		ret = -1;
+		goto finished;
+	}
+	/* if we cannot change swp, we are done here */
+	if (ms->pages->control.swp == 0) {
+		logging(LOG_NORMAL, "SWP is not changeable");
+		ret = -2;
 		goto finished;
 	}
 	mp = scsi_modesense_get_page(ms, SCSI_MODEPAGE_CONTROL, 0);
