@@ -43,6 +43,10 @@ test_modesense6_control_swp(void)
 
 	logging(LOG_VERBOSE, "Set SWP to enable write protect");
 	ret = set_swp(sd);
+	if (ret == -2) {
+		CU_PASS("[SKIPPED] Target does not support changing SWP");
+		return;
+	}
 	CU_ASSERT_EQUAL(ret, 0);
 	if (ret) {
 		goto finished;
