@@ -2431,6 +2431,25 @@ int set_swp(struct scsi_device *sdev)
 		ret = -2;
 		goto finished;
 	}
+
+	/* get the current control page */
+	ret = modesense6(sdev, &sense_task, 1, SCSI_MODESENSE_PC_CURRENT,
+			 SCSI_MODEPAGE_CONTROL, 0, 255,
+			 EXPECT_STATUS_GOOD);
+	if (ret) {
+		logging(LOG_NORMAL, "Failed to read CONTROL mode page.");
+		goto finished;
+	}
+	logging(LOG_VERBOSE, "[SUCCESS] CONTROL page fetched.");
+
+	ms = scsi_datain_unmarshall(sense_task);
+	if (ms == NULL) {
+		logging(LOG_NORMAL, "failed to unmarshall mode sense datain "
+			"blob");
+		ret = -1;
+		goto finished;
+	}
+
 	mp = scsi_modesense_get_page(ms, SCSI_MODEPAGE_CONTROL, 0);
 	if (mp == NULL) {
 		logging(LOG_NORMAL, "failed to read control mode page");
