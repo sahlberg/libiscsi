@@ -7,8 +7,7 @@ LDADD = ../lib/libiscsi.la
 EXTRA_DIST = README
 
 dist_noinst_HEADERS = iscsi-support.h \
-		      iscsi-test-cu.h
-		      iscsi-multipath.h
+		      iscsi-test-cu.h iscsi-multipath.h
 
 # libiscsi test tool using cunit
 if ISCSITEST
