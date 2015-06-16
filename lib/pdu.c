@@ -75,7 +75,7 @@ void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data) {
 	for (i=0;i<ISCSI_RAW_HEADER_SIZE;i++) {
 		snprintf(&dump[i * 3], 4, " %02x", data[i]);
 	}
-	ISCSI_LOG(iscsi, 0, "PDU header:%s",dump);
+	ISCSI_LOG(iscsi, 2, "PDU header:%s", dump);
 }
 
 struct iscsi_pdu *
@@ -322,7 +322,6 @@ static void iscsi_reconnect_after_logout(struct iscsi_context *iscsi, int status
 	iscsi->pending_reconnect = 1;
 }
 
-
 int iscsi_process_reject(struct iscsi_context *iscsi,
 				struct iscsi_in_pdu *in)
 {
@@ -348,9 +347,7 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 
 	itt = scsi_get_uint32(&in->data[16]);
 
-	if (iscsi->log_level > 1) {
-		iscsi_dump_pdu_header(iscsi, in->data);
-	}
+	iscsi_dump_pdu_header(iscsi, in->data);
 
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		if (pdu->itt == itt) {
@@ -706,8 +703,13 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 			continue;
 		}
 		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
-		pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
-			      NULL, pdu->private_data);
+		iscsi_set_error(iscsi, "command timed out");
+		iscsi_dump_pdu_header(iscsi, pdu->outdata.data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
+					  NULL, pdu->private_data);
+		}
+		iscsi_free_pdu(iscsi, pdu);
 	}
 	for (pdu = iscsi->waitpdu; pdu; pdu = next_pdu) {
 		next_pdu = pdu->next;
@@ -721,7 +723,12 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 			continue;
 		}
 		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-		pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
-			      NULL, pdu->private_data);
+		iscsi_set_error(iscsi, "command timed out");
+		iscsi_dump_pdu_header(iscsi, pdu->outdata.data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
+					  NULL, pdu->private_data);
+		}
+		iscsi_free_pdu(iscsi, pdu);
 	}
 }
