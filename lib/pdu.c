@@ -707,6 +707,7 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 		iscsi_dump_pdu_header(iscsi, pdu->outdata.data);
 		pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
 			      NULL, pdu->private_data);
+		iscsi_free_pdu(iscsi, pdu);
 	}
 	for (pdu = iscsi->waitpdu; pdu; pdu = next_pdu) {
 		next_pdu = pdu->next;
@@ -724,5 +725,6 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 		iscsi_dump_pdu_header(iscsi, pdu->outdata.data);
 		pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
 			      NULL, pdu->private_data);
+		iscsi_free_pdu(iscsi, pdu);
 	}
 }
