@@ -412,6 +412,7 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 	iscsi->tcp_keepintvl = old_iscsi->tcp_keepintvl;
 	iscsi->tcp_syncnt = old_iscsi->tcp_syncnt;
 	iscsi->cache_allocations = old_iscsi->cache_allocations;
+	iscsi->scsi_timeout = old_iscsi->scsi_timeout;
 
 	iscsi->reconnect_max_retries = old_iscsi->reconnect_max_retries;
 
