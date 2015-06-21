@@ -11,7 +11,7 @@ libiscsi_la_SOURCES += md5.c
 endif
 
 SOCURRENT=6
-SOREVISON=0
+SOREVISON=1
 SOAGE=2
 libiscsi_la_LDFLAGS = \
 	-version-info $(SOCURRENT):$(SOREVISON):$(SOAGE) -bindir $(bindir) \

@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.14.0
+Version: 1.15.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -110,6 +110,14 @@ Test tool for iSCSI/SCSI targets
 
 
 %changelog
+* Sun Jun 21 2015 : 1.0.15
+ - Replace some u_int32_t with uint32_t
+ - Portability fixes to iscsi-perf
+ - Improved documentation for the tests in README
+ - Add/fix support for setting task/pdu timeouts and add unit tests for it.
+ - Add multipath helpers for the test suite and add a simple multipath test
+ - Skip sending TUR during reconnect, since it can cause the connection to
+   hang.
 * Sun May 10 2015 : 1.0.14
  - Add support to use /dev/* nodes instead of just iscsi devices.
  - Create a dedicated test for the FUA/DPO flags
