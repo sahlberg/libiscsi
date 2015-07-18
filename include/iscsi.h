@@ -180,7 +180,7 @@ iscsi_set_initial_r2t(struct iscsi_context *iscsi, enum iscsi_initial_r2t initia
  * "iqn.ronnie.test%3A1234" will be translated to "iqn.ronnie.test:1234"
  *
  * Function will return a pointer to an iscsi url structure if successful,
- * or it will return NULL and set iscsi_get_error() accrodingly if there was a problem
+ * or it will return NULL and set iscsi_get_error() accordingly if there was a problem
  * with the URL.
  *
  * CHAP username/password can also be provided via environment variables
@@ -201,7 +201,7 @@ EXTERN void iscsi_destroy_url(struct iscsi_url *iscsi_url);
  * lun is not yet known.
  *
  * Function will return a pointer to an iscsi url structure if successful,
- * or it will return NULL and set iscsi_get_error() accrodingly if there was a problem
+ * or it will return NULL and set iscsi_get_error() accordingly if there was a problem
  * with the URL.
  *
  * CHAP username/password can also be provided via environment variables
@@ -223,8 +223,8 @@ EXTERN const char *iscsi_get_error(struct iscsi_context *iscsi);
  * Initiator_name is the iqn name we want to identify to the target as.
  *
  * Returns:
- *  0: success
- * <0: error
+ *  non-NULL: success
+ *  NULL: error
  */
 EXTERN struct iscsi_context *iscsi_create_context(const char *initiator_name);
 
@@ -528,7 +528,7 @@ EXTERN int iscsi_logout_sync(struct iscsi_context *iscsi);
  *
  * Returns:
  *  0 if the call was initiated and a discovery  will be attempted. Result
- *    of the logout will be reported through the callback function.
+ *    will be reported through the callback function.
  * <0 if there was an error. The callback function will not be invoked.
  *
  * Callback parameters :
@@ -600,7 +600,7 @@ enum iscsi_task_mgmt_funcs {
  *
  * Returns:
  *  0 if the call was initiated and the task mgmt function will be invoked.
- * the connection will be reported through the callback function.
+ *    The result will be reported through the callback function.
  * <0 if there was an error. The callback function will not be invoked.
  *
  * Callback parameters :
