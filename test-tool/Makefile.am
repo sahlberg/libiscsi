@@ -216,7 +216,8 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_writeverify16_dpo.c \
 	test_writeverify16_residuals.c \
 	test_multipathio_simple.c \
-	test_multipathio_reset.c
+	test_multipathio_reset.c \
+	test_multipathio_compareandwrite.c
 
 endif
 
