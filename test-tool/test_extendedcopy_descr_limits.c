@@ -66,6 +66,11 @@ test_extendedcopy_descr_limits(void)
 	logging(LOG_VERBOSE, "Issue RECEIVE COPY RESULTS (OPERATING PARAMS)");
 	ret = receive_copy_results(sd, SCSI_COPY_RESULTS_OP_PARAMS, 0,
 			(void **)&opp, EXPECT_STATUS_GOOD);
+	if (ret == -2) {
+		CU_PASS("[SKIPPED] Target does not support "
+				"RECEIVE_COPY_RESULTS. Skipping test");
+		return;
+	}
 	CU_ASSERT_EQUAL(ret, 0);
 
 	/* Allocate buffer to accommodate (MAX+1) target and

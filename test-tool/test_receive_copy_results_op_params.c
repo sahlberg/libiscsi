@@ -37,6 +37,10 @@ test_receive_copy_results_op_params(void)
 
 	ret = receive_copy_results(sd, SCSI_COPY_RESULTS_OP_PARAMS, 0,
 			(void **)&opp, EXPECT_STATUS_GOOD);
+	if (ret == -2) {
+		CU_PASS("[SKIPPED] RECEIVE_COPY_RESULT is not implemented.");
+		return;
+	}
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_NORMAL,

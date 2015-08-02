@@ -42,6 +42,11 @@ test_receive_copy_results_copy_status(void)
 	logging(LOG_VERBOSE, "No copy in progress");
 	ret = receive_copy_results(sd, SCSI_COPY_RESULTS_COPY_STATUS,
 			list_id, NULL, EXPECT_INVALID_FIELD_IN_CDB);
+	if (ret == -2) {
+		CU_PASS("[SKIPPED] Target does not support "
+				"RECEIVE_COPY_STATUS. Skipping test");
+		return;
+	}
 	CU_ASSERT_EQUAL(ret, 0);
 
 	CHECK_FOR_DATALOSS;
@@ -58,7 +63,7 @@ test_receive_copy_results_copy_status(void)
 			LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);
 	tgt_desc_len = offset - XCOPY_DESC_OFFSET;
 
-	/* Iniitialize segment descriptor list with one segment descriptor */
+	/* Initialize segment descriptor list with one segment descriptor */
 	offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 0,
 			2048, 0, num_blocks - 2048);
 	seg_desc_len = offset - XCOPY_DESC_OFFSET - tgt_desc_len;
