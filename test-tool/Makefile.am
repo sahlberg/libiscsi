@@ -19,6 +19,12 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_compareandwrite_simple.c \
 	test_compareandwrite_dpofua.c \
 	test_compareandwrite_miscompare.c \
+	test_extendedcopy_simple.c \
+	test_extendedcopy_param.c \
+	test_extendedcopy_descr_limits.c \
+	test_extendedcopy_descr_type.c \
+	test_extendedcopy_validate_tgt_descr.c \
+	test_extendedcopy_validate_seg_descr.c \
 	test_get_lba_status_simple.c \
 	test_get_lba_status_beyond_eol.c \
 	test_get_lba_status_unmap_single.c \
@@ -93,6 +99,8 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_readcapacity16_protection.c \
 	test_readcapacity16_simple.c \
 	test_readonly_sbc.c \
+	test_receive_copy_results_copy_status.c \
+	test_receive_copy_results_op_params.c \
 	test_report_supported_opcodes_one_command.c \
 	test_report_supported_opcodes_rctd.c \
 	test_report_supported_opcodes_servactv.c \

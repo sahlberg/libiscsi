@@ -52,6 +52,13 @@ void test_compareandwrite_simple(void);
 void test_compareandwrite_dpofua(void);
 void test_compareandwrite_miscompare(void);
 
+void test_extendedcopy_simple(void);
+void test_extendedcopy_param(void);
+void test_extendedcopy_descr_limits(void);
+void test_extendedcopy_descr_type(void);
+void test_extendedcopy_validate_tgt_descr(void);
+void test_extendedcopy_validate_seg_descr(void);
+
 void test_get_lba_status_simple(void);
 void test_get_lba_status_beyond_eol(void);
 void test_get_lba_status_unmap_single(void);
@@ -157,6 +164,9 @@ void test_readcapacity16_protection(void);
 void test_readcapacity16_simple(void);
 
 void test_readonly_sbc(void);
+
+void test_receive_copy_results_copy_status(void);
+void test_receive_copy_results_op_params(void);
 
 void test_report_supported_opcodes_one_command(void);
 void test_report_supported_opcodes_rctd(void);

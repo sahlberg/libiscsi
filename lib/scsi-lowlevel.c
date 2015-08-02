@@ -835,6 +835,61 @@ scsi_persistentreservein_datain_getfullsize(struct scsi_task *task)
 }
 
 static void *
+scsi_receivecopyresults_datain_unmarshall(struct scsi_task *task)
+{
+	int sa = task->cdb[1] & 0x1f;
+	int len, i;
+	struct scsi_copy_results_copy_status *cs;
+	struct scsi_copy_results_op_params *op;
+
+	switch (sa) {
+	case SCSI_COPY_RESULTS_COPY_STATUS:
+		len = task_get_uint32(task, 0);
+
+		cs = scsi_malloc(task, len+4);
+		if (cs == NULL) {
+			return NULL;
+		}
+		cs->available_data = len;
+		cs->copy_manager_status = task_get_uint8(task, 4) & 0x7F;
+		cs->hdd = (task_get_uint8(task, 4) & 0x80) >> 7;
+		cs->segments_processed = task_get_uint16(task, 5);
+		cs->transfer_count_units = task_get_uint8(task, 7);
+		cs->transfer_count = task_get_uint32(task, 8);
+		return cs;
+
+	case SCSI_COPY_RESULTS_OP_PARAMS:
+		len = task_get_uint32(task, 0);
+
+		op = scsi_malloc(task, len+4);
+		if (op == NULL) {
+			return NULL;
+		}
+		op->available_data = len;
+		op->max_target_desc_count = task_get_uint16(task, 8);
+		op->max_segment_desc_count = task_get_uint16(task, 10);
+		op->max_desc_list_length = task_get_uint32(task, 12);
+		op->max_segment_length = task_get_uint32(task, 16);
+		op->max_inline_data_length = task_get_uint32(task, 20);
+		op->held_data_limit = task_get_uint32(task, 24);
+		op->max_stream_device_transfer_size = task_get_uint32(task, 28);
+		op->total_concurrent_copies = task_get_uint16(task, 34);
+		op->max_concurrent_copies = task_get_uint8(task, 36);
+		op->data_segment_granularity = task_get_uint8(task, 37);
+		op->inline_data_granularity = task_get_uint8(task, 38);
+		op->held_data_granularity = task_get_uint8(task, 39);
+		op->impl_desc_list_length = task_get_uint8(task, 43);
+                for (i = 0; i < (int)op->impl_desc_list_length; i++) {
+                        op->imp_desc_type_codes[i] = task_get_uint8(task, 44+i);
+                }
+		return op;
+	default:
+		return NULL;
+	}
+}
+
+
+static void *
 scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 {
 	struct scsi_persistent_reserve_in_read_keys *rk;
@@ -3230,6 +3285,63 @@ scsi_cdb_writeverify16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprot
 	return task;
 }
 
+/*
+ * EXTENDED COPY
+ */
+struct scsi_task *
+scsi_cdb_extended_copy(int param_len)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL)
+		return NULL;
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]	= SCSI_OPCODE_EXTENDED_COPY;
+	task->cdb[10]	= (param_len >> 24) & 0xFF;
+	task->cdb[11]	= (param_len >> 16) & 0xFF;
+	task->cdb[12] 	= (param_len >> 8) & 0xFF;
+	task->cdb[13]	= param_len & 0xFF;
+	/* Inititalize other fields in CDB */
+	task->cdb_size = 16;
+	task->xfer_dir = SCSI_XFER_WRITE;
+	task->expxferlen = param_len;
+
+	return task;
+}
+
+/*
+ * RECEIVE COPY RESULTS
+ */
+struct scsi_task *
+scsi_cdb_receive_copy_results(enum scsi_copy_results_sa sa, int list_id, int xferlen)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_RECEIVE_COPY_RESULTS;
+	task->cdb[1] |= sa & 0x1f;
+	task->cdb[2] = list_id & 0xFF;
+
+	scsi_set_uint32(&task->cdb[10], xferlen);
+
+	task->cdb_size = 16;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = xferlen;
+
+	return task;
+}
+
 int
 scsi_datain_getfullsize(struct scsi_task *task)
 {
@@ -3281,6 +3393,8 @@ scsi_datain_unmarshall(struct scsi_task *task)
 		return scsi_persistentreservein_datain_unmarshall(task);
 	case SCSI_OPCODE_MAINTENANCE_IN:
 		return scsi_maintenancein_datain_unmarshall(task);
+	case SCSI_OPCODE_RECEIVE_COPY_RESULTS:
+		return scsi_receivecopyresults_datain_unmarshall(task);
 	}
 	return NULL;
 }

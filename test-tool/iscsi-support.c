@@ -63,8 +63,12 @@ int no_medium_ascqs[3] = {
 int lba_oob_ascqs[1] = {
 	SCSI_SENSE_ASCQ_LBA_OUT_OF_RANGE
 };
-int invalid_cdb_ascqs[1] = {
-	SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB
+int invalid_cdb_ascqs[2] = {
+	SCSI_SENSE_ASCQ_INVALID_FIELD_IN_CDB,
+	SCSI_SENSE_ASCQ_INVALID_FIELD_IN_PARAMETER_LIST
+};
+int param_list_len_err_ascqs[1] = {
+	SCSI_SENSE_ASCQ_PARAMETER_LIST_LENGTH_ERROR
 };
 int write_protect_ascqs[3] = {
 	SCSI_SENSE_ASCQ_WRITE_PROTECTED,
@@ -79,6 +83,19 @@ int removal_ascqs[1] = {
 };
 int miscompare_ascqs[1] = {
 	SCSI_SENSE_ASCQ_MISCOMPARE_DURING_VERIFY
+};
+int too_many_desc_ascqs[2] = {
+	SCSI_SENSE_ASCQ_TOO_MANY_TARGET_DESCRIPTORS,
+	SCSI_SENSE_ASCQ_TOO_MANY_SEGMENT_DESCRIPTORS,
+};
+int unsupp_desc_code_ascqs[2] = {
+	SCSI_SENSE_ASCQ_UNSUPPORTED_TARGET_DESCRIPTOR_TYPE_CODE,
+	SCSI_SENSE_ASCQ_UNSUPPORTED_SEGMENT_DESCRIPTOR_TYPE_CODE
+};
+int copy_aborted_ascqs[3] = {
+	SCSI_SENSE_ASCQ_NO_ADDL_SENSE,
+	SCSI_SENSE_ASCQ_UNREACHABLE_COPY_TARGET,
+	SCSI_SENSE_ASCQ_COPY_TARGET_DEVICE_NOT_REACHABLE
 };
 
 struct scsi_inquiry_standard *inq;
@@ -2526,5 +2543,219 @@ finished:
 	if (sense_task != NULL) {
 		scsi_free_scsi_task(sense_task);
 	}
+	return ret;
+}
+
+/* Extended Copy */
+int extendedcopy(struct scsi_device *sdev, struct iscsi_data *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+{
+	struct scsi_task *task;
+	int ret;
+
+	logging(LOG_VERBOSE, "Send EXTENDED COPY (Expecting %s)",
+			scsi_status_str(status));
+
+	if (!data_loss) {
+		logging(LOG_NORMAL, "--dataloss flag is not set in. Skipping extendedcopy\n");
+		return -1;
+	}
+
+	task = scsi_cdb_extended_copy(data->size);
+
+	assert(task != NULL);
+
+	send_scsi_command(sdev, task, data);
+
+	ret = check_result("EXTENDEDCOPY", sdev, task, status, key, ascq, num_ascq);
+	scsi_free_scsi_task(task);
+
+	return ret;
+}
+
+int get_desc_len(enum ec_descr_type_code desc_type)
+{
+	int desc_len = 0;
+	switch (desc_type) {
+		/* Segment Descriptors */
+		case BLK_TO_STRM_SEG_DESCR:
+		case STRM_TO_BLK_SEG_DESCR:
+			desc_len = 0x18;
+			break;
+		case BLK_TO_BLK_SEG_DESCR:
+			desc_len = 0x1C;
+			break;
+		case STRM_TO_STRM_SEG_DESCR:
+			desc_len = 0x14;
+			break;
+
+			/* Target Descriptors */
+		case IPV6_TGT_DESCR:
+		case IP_COPY_SVC_TGT_DESCR:
+			desc_len = 64;
+			break;
+		case IDENT_DESCR_TGT_DESCR:
+		default:
+			if (desc_type >= 0xE0 && desc_type <= 0xE9)
+				desc_len = 32;
+	}
+
+	return desc_len;
+}
+
+void populate_ident_tgt_desc(unsigned char *buf, struct scsi_device *dev)
+{
+	int ret;
+	struct scsi_task *inq_di_task = NULL;
+	struct scsi_inquiry_device_identification *inq_di = NULL;
+	struct scsi_inquiry_device_designator *desig, *tgt_desig = NULL;
+	enum scsi_designator_type prev_type = 0;
+
+	ret = inquiry(dev, &inq_di_task, 1, SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION, 255, EXPECT_STATUS_GOOD);
+	if (ret < 0 || inq_di_task == NULL) {
+		logging(LOG_NORMAL, "Failed to read Device Identification page");
+		goto finished;
+	} else {
+		inq_di = scsi_datain_unmarshall(inq_di_task);
+		if (inq_di == NULL) {
+			logging(LOG_NORMAL, "Failed to unmarshall inquiry datain blob");
+			goto finished;
+		}
+	}
+
+	for (desig = inq_di->designators; desig; desig = desig->next) {
+		switch (desig->designator_type) {
+			case SCSI_DESIGNATOR_TYPE_VENDOR_SPECIFIC:
+			case SCSI_DESIGNATOR_TYPE_T10_VENDORT_ID:
+			case SCSI_DESIGNATOR_TYPE_EUI_64:
+			case SCSI_DESIGNATOR_TYPE_NAA:
+				if (prev_type <= desig->designator_type) {
+					tgt_desig = desig;
+					prev_type = desig->designator_type;
+				}
+			default:
+				continue;
+		}
+	}
+	if (tgt_desig == NULL) {
+		logging(LOG_NORMAL, "No suitalble target descriptor format found");
+		goto finished;
+	}
+
+	buf[0] = tgt_desig->code_set;
+	buf[1] = (tgt_desig->designator_type & 0xF) | ((tgt_desig->association & 3) << 4);
+	buf[3] = tgt_desig->designator_length;
+	memcpy(buf + 4, tgt_desig->designator, tgt_desig->designator_length);
+
+ finished:
+	scsi_free_scsi_task(inq_di_task);
+}
+
+int populate_tgt_desc(unsigned char *desc, enum ec_descr_type_code desc_type, int luid_type, int nul, int peripheral_type, int rel_init_port_id, int pad, struct scsi_device *dev)
+{
+	desc[0] = desc_type;
+	desc[1] = (luid_type << 6) | (nul << 5) | peripheral_type;
+	desc[2] = (rel_init_port_id >> 8) & 0xFF;
+	desc[3] = rel_init_port_id & 0xFF;
+
+	if (desc_type == IDENT_DESCR_TGT_DESCR)
+		populate_ident_tgt_desc(desc+4, dev);
+
+	if (peripheral_type == 0) {
+		// Issue readcapacity for each sd if testing with different LUs
+		// If single LU, use block_size from prior readcapacity involcation
+		desc[28] = pad << 2;
+		desc[29] = (block_size >> 16) & 0xFF;
+		desc[30] = (block_size >> 8) & 0xFF;
+		desc[31] = block_size & 0xFF;
+	}
+	return get_desc_len(desc_type);
+}
+
+int populate_seg_desc_hdr(unsigned char *hdr, enum ec_descr_type_code desc_type, int dc, int cat, int src_index, int dst_index)
+{
+	int desc_len = get_desc_len(desc_type);
+
+	hdr[0] = desc_type;
+	hdr[1] = ((dc << 1) | cat) & 0xFF;
+	hdr[2] = (desc_len >> 8) & 0xFF;
+	hdr[3] = (desc_len - SEG_DESC_SRC_INDEX_OFFSET) & 0xFF; /* don't account for the first 4 bytes in descriptor header*/
+	hdr[4] = (src_index >> 8) & 0xFF;
+	hdr[5] = src_index & 0xFF;
+	hdr[6] = (dst_index >> 8) & 0xFF;
+	hdr[7] = dst_index & 0xFF;
+
+	return desc_len;
+}
+
+int populate_seg_desc_b2b(unsigned char *desc, int dc, int cat, int src_index, int dst_index, int num_blks, uint64_t src_lba, uint64_t dst_lba)
+{
+	int desc_len = populate_seg_desc_hdr(desc, BLK_TO_BLK_SEG_DESCR, dc, cat, src_index, dst_index);
+
+	desc[10] = (num_blks >> 8) & 0xFF;
+	desc[11] = num_blks & 0xFF;
+	desc[12] = (src_lba >> 56) & 0xFF;
+	desc[13] = (src_lba >> 48) & 0xFF;
+	desc[14] = (src_lba >> 40) & 0xFF;
+	desc[15] = (src_lba >> 32) & 0xFF;
+	desc[16] = (src_lba >> 24) & 0xFF;
+	desc[17] = (src_lba >> 16) & 0xFF;
+	desc[18] = (src_lba >> 8) & 0xFF;
+	desc[19] = src_lba & 0xFF;
+	desc[20] = (dst_lba >> 56) & 0xFF;
+	desc[21] = (dst_lba >> 48) & 0xFF;
+	desc[22] = (dst_lba >> 40) & 0xFF;
+	desc[23] = (dst_lba >> 32) & 0xFF;
+	desc[24] = (dst_lba >> 24) & 0xFF;
+	desc[25] = (dst_lba >> 16) & 0xFF;
+	desc[26] = (dst_lba >> 8) & 0xFF;
+	desc[27] = dst_lba & 0xFF;
+
+	return desc_len;
+}
+
+void populate_param_header(unsigned char *buf, int list_id, int str, int list_id_usage, int prio, int tgt_desc_len, int seg_desc_len, int inline_data_len)
+{
+	buf[0] = list_id;
+	buf[1] = ((str & 1) << 5) | ((list_id_usage & 3) << 3) | (prio & 7);
+	buf[2] = (tgt_desc_len >> 8) & 0xFF;
+	buf[3] = tgt_desc_len & 0xFF;
+	buf[8] = (seg_desc_len >> 24) & 0xFF;
+	buf[9] = (seg_desc_len >> 16) & 0xFF;
+	buf[10] = (seg_desc_len >> 8) & 0xFF;
+	buf[11] = seg_desc_len & 0xFF;
+	buf[12] = (inline_data_len >> 24) & 0xFF;
+	buf[13] = (inline_data_len >> 16) & 0xFF;
+	buf[14] = (inline_data_len >> 8) & 0xFF;
+	buf[15] = inline_data_len & 0xFF;
+}
+
+int receive_copy_results(struct scsi_device *sdev, enum scsi_copy_results_sa sa, int list_id, void **datap, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+{
+	int ret;
+	struct scsi_task *task;
+
+	logging(LOG_VERBOSE, "Send RECEIVE COPY RESULTS");
+
+	task = scsi_cdb_receive_copy_results(sa, list_id, 1024);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
+
+	ret = check_result("RECEIVECOPYRESULT", sdev, task, status, key, ascq, num_ascq);
+
+	if (task->status == SCSI_STATUS_GOOD && datap != NULL) {
+		*datap = scsi_datain_unmarshall(task);
+		if (*datap == NULL) {
+			logging(LOG_NORMAL,
+					"[FAIL] failed to unmarshall RECEIVE COPY RESULTS data. %s",
+					iscsi_get_error(sdev->iscsi_ctx));
+			return -1;
+		}
+	}
+
+	ret = check_result("RECEIVECOPYRESULT", sdev, task, status, key, ascq, num_ascq);
+	if (task)
+		scsi_free_scsi_task(task);
+	
 	return ret;
 }

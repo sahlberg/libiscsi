@@ -262,6 +262,22 @@ static CU_TestInfo tests_sanitize[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_extended_copy[] = {
+	{ (char *)"Simple", test_extendedcopy_simple },
+	{ (char *)"ParamHdr", test_extendedcopy_param },
+	{ (char *)"DescrLimits", test_extendedcopy_descr_limits },
+	{ (char *)"DescrType", test_extendedcopy_descr_type },
+	{ (char *)"ValidTgtDescr", test_extendedcopy_validate_tgt_descr },
+	{ (char *)"ValidSegDescr", test_extendedcopy_validate_seg_descr },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_receive_copy_results[] = {
+	{ (char *)"CopyStatus", test_receive_copy_results_copy_status },
+	{ (char *)"OpParams", test_receive_copy_results_op_params },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_report_supported_opcodes[] = {
 	{ (char *)"Simple", test_report_supported_opcodes_simple },
 	{ (char *)"OneCommand", test_report_supported_opcodes_one_command },
@@ -436,6 +452,7 @@ typedef struct libiscsi_suite_info {
 /* SCSI protocol tests */
 static libiscsi_suite_info scsi_suites[] = {
 	{ "CompareAndWrite", NON_PGR_FUNCS, tests_compareandwrite },
+	{ "ExtendedCopy", NON_PGR_FUNCS, tests_extended_copy },
 	{ "GetLBAStatus", NON_PGR_FUNCS, tests_get_lba_status },
 	{ "Inquiry", NON_PGR_FUNCS, tests_inquiry },
 	{ "Mandatory", NON_PGR_FUNCS, tests_mandatory },
@@ -456,6 +473,7 @@ static libiscsi_suite_info scsi_suites[] = {
 	{ "ReadCapacity10", NON_PGR_FUNCS, tests_readcapacity10 },
 	{ "ReadCapacity16", NON_PGR_FUNCS, tests_readcapacity16 },
 	{ "ReadOnly", NON_PGR_FUNCS, tests_readonly },
+	{ "ReceiveCopyResults", NON_PGR_FUNCS, tests_receive_copy_results },
 	{ "ReportSupportedOpcodes", NON_PGR_FUNCS,
 	  tests_report_supported_opcodes },
 	{ "Reserve6", NON_PGR_FUNCS, tests_reserve6 },
@@ -517,6 +535,7 @@ static libiscsi_suite_info iscsi_suites[] = {
 /* All tests */
 static libiscsi_suite_info all_suites[] = {
 	{ "CompareAndWrite", NON_PGR_FUNCS, tests_compareandwrite },
+	{ "ExtendedCopy", NON_PGR_FUNCS, tests_extended_copy },
 	{ "GetLBAStatus", NON_PGR_FUNCS, tests_get_lba_status },
 	{ "Inquiry", NON_PGR_FUNCS, tests_inquiry },
 	{ "Mandatory", NON_PGR_FUNCS, tests_mandatory },
@@ -538,6 +557,7 @@ static libiscsi_suite_info all_suites[] = {
 	{ "ReadCapacity10", NON_PGR_FUNCS, tests_readcapacity10 },
 	{ "ReadCapacity16", NON_PGR_FUNCS, tests_readcapacity16 },
 	{ "ReadOnly", NON_PGR_FUNCS, tests_readonly },
+	{ "ReceiveCopyResults", NON_PGR_FUNCS, tests_receive_copy_results },
 	{ "ReportSupportedOpcodes", NON_PGR_FUNCS,
 	  tests_report_supported_opcodes },
 	{ "Reserve6", NON_PGR_FUNCS, tests_reserve6 },

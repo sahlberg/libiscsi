@@ -37,20 +37,28 @@ extern const char *initiatorname2;
 #define EXPECT_STATUS_GOOD SCSI_STATUS_GOOD, SCSI_SENSE_NO_SENSE, NULL, 0
 #define EXPECT_NO_MEDIUM SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_NOT_READY, no_medium_ascqs, 3
 #define EXPECT_LBA_OOB SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, lba_oob_ascqs, 1
-#define EXPECT_INVALID_FIELD_IN_CDB SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, invalid_cdb_ascqs, 1
+#define EXPECT_INVALID_FIELD_IN_CDB SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, invalid_cdb_ascqs,2 
+#define EXPECT_PARAM_LIST_LEN_ERR SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, param_list_len_err_ascqs, 1
+#define EXPECT_TOO_MANY_DESCR SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, too_many_desc_ascqs, 2
+#define EXPECT_UNSUPP_DESCR_CODE SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, unsupp_desc_code_ascqs, 2
 #define EXPECT_MISCOMPARE SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_MISCOMPARE, miscompare_ascqs, 1
 #define EXPECT_WRITE_PROTECTED SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_DATA_PROTECTION, write_protect_ascqs, 3
 #define EXPECT_SANITIZE SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_NOT_READY, sanitize_ascqs, 1
 #define EXPECT_REMOVAL_PREVENTED SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_ILLEGAL_REQUEST, removal_ascqs, 1
 #define EXPECT_RESERVATION_CONFLICT SCSI_STATUS_RESERVATION_CONFLICT, 0, NULL, 0
+#define EXPECT_COPY_ABORTED SCSI_STATUS_CHECK_CONDITION, SCSI_SENSE_COPY_ABORTED, copy_aborted_ascqs, 3
 
 int no_medium_ascqs[3];
 int lba_oob_ascqs[1];
-int invalid_cdb_ascqs[1];
+int invalid_cdb_ascqs[2];
+int param_list_len_err_ascqs[1];
+int too_many_desc_ascqs[2];
+int unsupp_desc_code_ascqs[2];
 int write_protect_ascqs[3];
 int sanitize_ascqs[1];
 int removal_ascqs[1];
 int miscompare_ascqs[1];
+int copy_aborted_ascqs[3];
 
 extern int loglevel;
 #define LOG_SILENT  0
@@ -314,5 +322,11 @@ int writeverify16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int 
 int set_swp(struct scsi_device *sdev);
 int clear_swp(struct scsi_device *sdev);
 
-
+int extendedcopy(struct scsi_device *sdev, struct iscsi_data *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
+int get_desc_len(enum ec_descr_type_code desc_type);
+int populate_tgt_desc(unsigned char *desc, enum ec_descr_type_code desc_type, int luid_type, int nul, int peripheral_type, int rel_init_port_id, int pad, struct scsi_device *dev);
+int populate_seg_desc_hdr(unsigned char *hdr, enum ec_descr_type_code desc_type, int dc, int cat, int src_index, int dst_index);
+int populate_seg_desc_b2b(unsigned char *desc, int dc, int cat, int src_index, int dst_index, int num_blks, uint64_t src_lba, uint64_t dst_lba);
+void populate_param_header(unsigned char *buf, int list_id, int str, int list_id_usage, int prio, int tgt_desc_len, int seg_desc_len, int inline_data_len);
+int receive_copy_results(struct scsi_device *sdev, enum scsi_copy_results_sa sa, int list_id, void **datap, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 #endif	/* _ISCSI_SUPPORT_H_ */

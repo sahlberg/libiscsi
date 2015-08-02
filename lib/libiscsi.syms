@@ -157,6 +157,7 @@ iscsi_writesame16_sync
 iscsi_writesame16_task
 scsi_association_to_str
 scsi_cdb_compareandwrite
+scsi_cdb_extended_copy
 scsi_cdb_inquiry
 scsi_cdb_get_lba_status
 scsi_cdb_modeselect6
@@ -175,6 +176,7 @@ scsi_cdb_read6
 scsi_cdb_readcapacity10
 scsi_cdb_readcapacity16
 scsi_cdb_readtoc
+scsi_cdb_receive_copy_results
 scsi_cdb_reserve6
 scsi_cdb_release6
 scsi_cdb_report_supported_opcodes
