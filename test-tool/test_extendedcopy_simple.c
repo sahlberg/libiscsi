@@ -33,8 +33,8 @@ test_extendedcopy_simple(void)
 	int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
 	struct iscsi_data data;
 	unsigned char *xcopybuf;
-	unsigned char *buf1 = alloca(2048*block_size);
-	unsigned char *buf2 = alloca(2048*block_size);
+	unsigned char *buf1 = malloc(2048*block_size);
+	unsigned char *buf2 = malloc(2048*block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE,
@@ -49,7 +49,7 @@ test_extendedcopy_simple(void)
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
 		CU_PASS("WRITE16 is not implemented.");
-		return;
+		goto finished;
 	}
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -77,7 +77,7 @@ test_extendedcopy_simple(void)
 	if (ret == -2) {
 		CU_PASS("[SKIPPED] Target does not support "
 				"EXTENDED_COPY. Skipping test");
-		return;
+		goto finished;
 	}
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -90,4 +90,8 @@ test_extendedcopy_simple(void)
 	ret = memcmp(buf1, buf2, 2048);
 	if (ret != 0)
 		CU_FAIL("Blocks were not copied correctly");
+
+ finished:
+	free(buf1);
+	free(buf2);
 }
