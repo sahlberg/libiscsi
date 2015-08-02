@@ -1276,6 +1276,7 @@ main(int argc, char *argv[])
 		if (rsop == NULL) {
 			printf("failed to unmarshall REPORT_SUPPORTED_OPCODES data.\n");
 			scsi_free_scsi_task(rsop_task);
+			rsop_task = NULL;
 		}
 	}
 
