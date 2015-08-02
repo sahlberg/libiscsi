@@ -2160,12 +2160,11 @@ write16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int blocksize,
 
 	d.data = data;
 	d.size = datalen;
-	task = send_scsi_command(sdev, task, &d);
+	send_scsi_command(sdev, task, &d);
 
 	ret = check_result("WRITE16", sdev, task, status, key, ascq, num_ascq);
-	if (task) {
-		scsi_free_scsi_task(task);
-	}
+	scsi_free_scsi_task(task);
+
 	return ret;
 }
 
