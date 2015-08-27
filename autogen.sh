@@ -2,6 +2,7 @@
 
 set -e
 
+# Commands this script needs
 needed='rm mkdir autoreconf echo'
 if ! type $needed >/dev/null
 then
