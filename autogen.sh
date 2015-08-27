@@ -1,5 +1,22 @@
 #!/bin/sh
 
+set -e
+
+needed='rm mkdir autoreconf echo'
+if ! type $needed >/dev/null
+then
+  for cmd in $needed
+  do
+    if ! type $cmd >/dev/null
+    then
+      # Have type print an error message for each missing command
+      type $cmd || true
+    fi
+  done
+  echo A required command is missing. Unable to continue.
+  exit 1
+fi
+
 rm -rf autom4te.cache
 rm -f depcomp aclocal.m4 missing config.guess config.sub install-sh
 rm -f configure config.h.in config.h.in~ m4/libtool.m4 m4/lt*.m4 Makefile.in
