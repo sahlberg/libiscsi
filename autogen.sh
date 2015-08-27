@@ -4,11 +4,11 @@ set -e
 
 # Commands this script needs
 needed='rm mkdir autoreconf echo'
-if ! type $needed >/dev/null
+if ! type $needed >/dev/null 2>&1
 then
   for cmd in $needed
   do
-    if ! type $cmd >/dev/null
+    if ! type $cmd >/dev/null 2>&1
     then
       # Have type print an error message for each missing command
       type $cmd || true
