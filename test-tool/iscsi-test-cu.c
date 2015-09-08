@@ -379,6 +379,15 @@ static CU_TestInfo tests_write16[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_writeatomic16[] = {
+	{ (char *)"Simple", test_writeatomic16_simple },
+	{ (char *)"BeyondEol", test_writeatomic16_beyond_eol },
+	{ (char *)"ZeroBlocks", test_writeatomic16_0blocks },
+	{ (char *)"WriteProtect", test_writeatomic16_wrprotect },
+	{ (char *)"DpoFua", test_writeatomic16_dpofua },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_writesame10[] = {
 	{ (char *)"Simple", test_writesame10_simple },
 	{ (char *)"BeyondEol", test_writesame10_beyond_eol },
@@ -487,6 +496,7 @@ static libiscsi_suite_info scsi_suites[] = {
 	{ "Write10", NON_PGR_FUNCS, tests_write10 },
 	{ "Write12", NON_PGR_FUNCS, tests_write12 },
 	{ "Write16", NON_PGR_FUNCS, tests_write16 },
+	{ "WriteAtomic16", NON_PGR_FUNCS, tests_writeatomic16 },
 	{ "WriteSame10", NON_PGR_FUNCS, tests_writesame10 },
 	{ "WriteSame16", NON_PGR_FUNCS, tests_writesame16 },
 	{ "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
@@ -571,6 +581,7 @@ static libiscsi_suite_info all_suites[] = {
 	{ "Write10", NON_PGR_FUNCS, tests_write10 },
 	{ "Write12", NON_PGR_FUNCS, tests_write12 },
 	{ "Write16", NON_PGR_FUNCS, tests_write16 },
+	{ "WriteAtomic16", NON_PGR_FUNCS, tests_writeatomic16 },
 	{ "WriteSame10", NON_PGR_FUNCS, tests_writesame10 },
 	{ "WriteSame16", NON_PGR_FUNCS, tests_writesame16 },
 	{ "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
@@ -608,6 +619,7 @@ static libiscsi_suite_info linux_suites[] = {
 	{ "Write10", NON_PGR_FUNCS, tests_write10 },
 	{ "Write12", NON_PGR_FUNCS, tests_write12 },
 	{ "Write16", NON_PGR_FUNCS, tests_write16 },
+	{ "WriteAtomic16", NON_PGR_FUNCS, tests_writeatomic16 },
 	{ "WriteSame10", NON_PGR_FUNCS, tests_writesame10 },
 	{ "WriteSame16", NON_PGR_FUNCS, tests_writesame16 },
 	{ "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },

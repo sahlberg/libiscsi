@@ -141,6 +141,8 @@ iscsi_write12_sync
 iscsi_write12_task
 iscsi_write16_sync
 iscsi_write16_task
+iscsi_writeatomic16_sync
+iscsi_writeatomic16_task
 iscsi_orwrite_sync
 iscsi_orwrite_task
 iscsi_compareandwrite_sync
@@ -193,6 +195,7 @@ scsi_cdb_verify16
 scsi_cdb_write10
 scsi_cdb_write12
 scsi_cdb_write16
+scsi_cdb_writeatomic16
 scsi_cdb_orwrite
 scsi_cdb_writeverify10
 scsi_cdb_writeverify12

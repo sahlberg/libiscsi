@@ -2186,6 +2186,38 @@ write16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int blocksize,
 }
 
 int
+writeatomic16(struct scsi_device *sdev, uint64_t lba, uint32_t datalen, int blocksize, int wrprotect, int dpo, int fua, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+{
+	struct scsi_task *task;
+	struct iscsi_data d;
+	int ret;
+
+	logging(LOG_VERBOSE, "Send WRITEATOMIC16 (Expecting %s) LBA:%" PRIu64
+		" blocks:%d wrprotect:%d dpo:%d fua:%d group:%d",
+		scsi_status_str(status),
+		lba, datalen / blocksize, wrprotect,
+		dpo, fua, group);
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping write\n");
+		return -1;
+	}
+
+	task = scsi_cdb_writeatomic16(lba, datalen, blocksize, wrprotect,
+				      dpo, fua, group);
+	assert(task != NULL);
+
+	d.data = data;
+	d.size = datalen;
+	send_scsi_command(sdev, task, &d);
+
+	ret = check_result("WRITEATOMIC16", sdev, task, status, key, ascq, num_ascq);
+	scsi_free_scsi_task(task);
+
+	return ret;
+}
+
+int
 writesame10(struct scsi_device *sdev, uint32_t lba, uint32_t datalen, int num, int anchor, int unmap_flag, int wrprotect, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
 {
 	struct scsi_task *task;

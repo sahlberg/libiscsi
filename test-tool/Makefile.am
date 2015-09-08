@@ -172,6 +172,11 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_write16_wrprotect.c \
 	test_write16_dpofua.c \
 	test_write16_residuals.c \
+	test_writeatomic16_simple.c \
+	test_writeatomic16_beyond_eol.c \
+	test_writeatomic16_0blocks.c \
+	test_writeatomic16_wrprotect.c \
+	test_writeatomic16_dpofua.c \
 	test_writesame10_simple.c \
 	test_writesame10_beyond_eol.c \
 	test_writesame10_0blocks.c \
