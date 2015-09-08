@@ -1811,6 +1811,47 @@ scsi_cdb_write16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, i
 }
 
 /*
+ * WRITEATOMIC16
+ */
+struct scsi_task *
+scsi_cdb_writeatomic16(uint64_t lba, uint32_t xferlen, int blocksize, int wrprotect, int dpo, int fua, int group_number)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_WRITE_ATOMIC16;
+
+	task->cdb[1] |= ((wrprotect & 0x07) << 5);
+	if (dpo) {
+		task->cdb[1] |= 0x10;
+	}
+	if (fua) {
+		task->cdb[1] |= 0x08;
+	}
+
+	scsi_set_uint32(&task->cdb[2], lba >> 32);
+	scsi_set_uint32(&task->cdb[6], lba & 0xffffffff);
+	scsi_set_uint16(&task->cdb[12], xferlen / blocksize);
+
+	task->cdb[14] |= (group_number & 0x1f);
+
+	task->cdb_size = 16;
+	if (xferlen != 0) {
+		task->xfer_dir = SCSI_XFER_WRITE;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = xferlen;
+
+	return task;
+}
+
+/*
  * ORWRITE
  */
 struct scsi_task *
@@ -3624,6 +3665,28 @@ scsi_write16_cdb_unmarshall(struct scsi_task *task)
         return write16;
 }
 
+static struct scsi_writeatomic16_cdb *
+scsi_writeatomic16_cdb_unmarshall(struct scsi_task *task)
+{
+	struct scsi_writeatomic16_cdb *writeatomic16;
+
+	writeatomic16 = scsi_malloc(task, sizeof(struct scsi_writeatomic16_cdb));
+	if (writeatomic16 == NULL) {
+		return NULL;
+	}
+
+	writeatomic16->opcode          = SCSI_OPCODE_WRITE_ATOMIC16;
+	writeatomic16->wrprotect       = (task->cdb[1] >> 5) & 0x7;
+	writeatomic16->dpo             = !!(task->cdb[1] & 0x10);
+	writeatomic16->fua             = !!(task->cdb[1] & 0x08);
+	writeatomic16->lba             = scsi_get_uint64(&task->cdb[2]);
+	writeatomic16->transfer_length = scsi_get_uint16(&task->cdb[12]);
+	writeatomic16->group           = task->cdb[14] & 0x1f;
+	writeatomic16->control         = task->cdb[15];
+
+        return writeatomic16;
+}
+
 void *
 scsi_cdb_unmarshall(struct scsi_task *task, enum scsi_opcode opcode)
 {
@@ -3652,6 +3715,8 @@ scsi_cdb_unmarshall(struct scsi_task *task, enum scsi_opcode opcode)
 		return scsi_write12_cdb_unmarshall(task);
 	case SCSI_OPCODE_WRITE16:
 		return scsi_write16_cdb_unmarshall(task);
+	case SCSI_OPCODE_WRITE_ATOMIC16:
+		return scsi_writeatomic16_cdb_unmarshall(task);
 	}
 	return NULL;
 }

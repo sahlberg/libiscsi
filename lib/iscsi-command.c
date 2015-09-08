@@ -933,6 +933,40 @@ iscsi_write16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 }
 
 struct scsi_task *
+iscsi_writeatomic16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
+			 unsigned char *data, uint32_t datalen, int blocksize,
+			 int wrprotect, int dpo, int fua, int group_number,
+			 iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+	struct iscsi_data d;
+
+	if (datalen % blocksize != 0) {
+		iscsi_set_error(iscsi, "Datalen:%d is not a multiple of the "
+				"blocksize:%d.", datalen, blocksize);
+		return NULL;
+	}
+
+	task = scsi_cdb_writeatomic16(lba, datalen, blocksize, wrprotect,
+				      dpo, fua, group_number);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"writeAtomic16 cdb.");
+		return NULL;
+	}
+	d.data = data;
+	d.size = datalen;
+
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
+				     &d, private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
 iscsi_orwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba, 
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
