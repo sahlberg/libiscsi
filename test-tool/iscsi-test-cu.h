@@ -256,6 +256,7 @@ void test_writeatomic16_beyond_eol(void);
 void test_writeatomic16_0blocks(void);
 void test_writeatomic16_wrprotect(void);
 void test_writeatomic16_dpofua(void);
+void test_writeatomic16_vpd(void);
 
 void test_writesame10_simple(void);
 void test_writesame10_beyond_eol(void);

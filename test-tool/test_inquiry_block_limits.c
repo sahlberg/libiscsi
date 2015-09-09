@@ -178,10 +178,6 @@ test_inquiry_block_limits(void)
 
 
 finished:
-	if (bl_task != NULL) {
-		scsi_free_scsi_task(bl_task);
-	}
-	if (lbp_task != NULL) {
-		scsi_free_scsi_task(lbp_task);
-	}
+	scsi_free_scsi_task(bl_task);
+	scsi_free_scsi_task(lbp_task);
 }

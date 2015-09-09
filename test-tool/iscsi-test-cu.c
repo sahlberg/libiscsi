@@ -385,6 +385,7 @@ static CU_TestInfo tests_writeatomic16[] = {
 	{ (char *)"ZeroBlocks", test_writeatomic16_0blocks },
 	{ (char *)"WriteProtect", test_writeatomic16_wrprotect },
 	{ (char *)"DpoFua", test_writeatomic16_dpofua },
+	{ (char *)"VPD", test_writeatomic16_vpd },
 	CU_TEST_INFO_NULL
 };
 
