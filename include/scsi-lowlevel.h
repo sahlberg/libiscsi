@@ -558,6 +558,11 @@ struct scsi_inquiry_block_limits {
 	int ugavalid;
 	uint32_t unmap_gran_align;		/* unmap_granularity_alignment */
 	uint64_t max_ws_len;			/* maximum_write_same_length */
+
+	/* SBC-4 */
+	uint32_t max_atomic_xfer_len;
+	uint32_t atomic_align;
+	uint32_t atomic_gran;
 };
 
 struct scsi_inquiry_block_device_characteristics {

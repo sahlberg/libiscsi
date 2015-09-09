@@ -1427,6 +1427,10 @@ scsi_inquiry_unmarshall_block_limits(struct scsi_task *task)
 	inq->max_ws_len            = (inq->max_ws_len << 32)
 				   	| task_get_uint32(task, 40);
 
+	inq->max_atomic_xfer_len   = task_get_uint32(task, 44);
+	inq->atomic_align          = task_get_uint32(task, 48);
+	inq->atomic_gran           = task_get_uint32(task, 52);
+
 	return inq;
 }
 
