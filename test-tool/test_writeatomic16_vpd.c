@@ -73,6 +73,12 @@ test_writeatomic16_vpd(void)
 			CU_FAIL("[WARNING] MAXIMUM_ATOMIC_TRANSFER_LENGTH is zero but target supports ATOMICWRITE16");
 
 		}
+
+		logging(LOG_VERBOSE, "Verify that MAXIMUM_ATOMIC_TRANSFER_LENGTH is less than or equal to MAXIMUM_TRANSFER_LENGTH");
+		if (bl->max_atomic_xfer_len > bl->max_xfer_len) {
+			logging(LOG_VERBOSE, "[FAILED] MAXIMUM_ATOMIC_TRANSFER_LENGTH is greater than MAXIMUM_TRANSFER_LENGTH");
+			CU_FAIL("[FAILED] MAXIMUM_ATOMIC_TRANSFER_LENGTH is greater than MAXIMUM_TRANSFER_LENGTH");
+		}
 	}
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITEATOMIC16 is NOT supported by the target.");
