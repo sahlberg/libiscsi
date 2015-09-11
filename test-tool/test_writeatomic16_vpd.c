@@ -61,11 +61,7 @@ test_writeatomic16_vpd(void)
 
 
 	logging(LOG_VERBOSE, "Check if WRITEATOMIC16 is supported");
-	if (bl->atomic_gran) {
-		gran = bl->atomic_gran;
-	} else {
-		gran = 1;
-	}
+	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
 	buf = alloca(block_size * gran);
 	memset(buf, 0x00, block_size * gran);
 	ret = writeatomic16(sd, 0, block_size * gran,

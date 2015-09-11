@@ -28,18 +28,21 @@
 void
 test_writeatomic16_dpofua(void)
 {
-	int ret, dpofua, usage_data_dpofua;
+	int ret, gran, dpofua, usage_data_dpofua;
 	struct scsi_task *ms_task = NULL;
 	struct scsi_mode_sense *ms;
 	struct scsi_task *rso_task = NULL;
 	struct scsi_report_supported_op_codes_one_command *rsoc;
-	unsigned char *buf = alloca(block_size);
+	unsigned char *buf;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 DPO/FUA flags");
 
 	CHECK_FOR_SBC;
 	CHECK_FOR_DATALOSS;
+
+	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
+	buf = alloca(gran * block_size);
 
 	logging(LOG_VERBOSE, "Read the DPOFUA flag from mode sense data");
 	ret = modesense6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
@@ -62,7 +65,7 @@ test_writeatomic16_dpofua(void)
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 with DPO==1");
 	memset(buf, 0xa6, block_size);
 	if (dpofua) {
-		ret = writeatomic16(sd, 0, block_size,
+		ret = writeatomic16(sd, 0, gran * block_size,
 				    block_size, 0, 1, 0, 0, buf,
 				    EXPECT_STATUS_GOOD);
 		if (ret == -2) {
@@ -72,7 +75,7 @@ test_writeatomic16_dpofua(void)
 		}
 		CU_ASSERT_EQUAL(ret, 0);
 	} else {
-		ret = writeatomic16(sd, 0, block_size,
+		ret = writeatomic16(sd, 0, gran * block_size,
 				    block_size, 0, 1, 0, 0, buf,
 				    EXPECT_INVALID_FIELD_IN_CDB);
 		if (ret == -2) {
@@ -85,12 +88,12 @@ test_writeatomic16_dpofua(void)
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 with FUA==1");
 	if (dpofua) {
-		ret = writeatomic16(sd, 0, block_size,
+		ret = writeatomic16(sd, 0, gran * block_size,
 				    block_size, 0, 0, 1, 0, buf,
 				    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	} else {
-		ret = writeatomic16(sd, 0, block_size,
+		ret = writeatomic16(sd, 0, gran * block_size,
 				    block_size, 0, 0, 1, 0, buf,
 				    EXPECT_INVALID_FIELD_IN_CDB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -98,12 +101,12 @@ test_writeatomic16_dpofua(void)
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 with DPO==1 FUA==1");
 	if (dpofua) {
-		ret = writeatomic16(sd, 0, block_size,
+		ret = writeatomic16(sd, 0, gran * block_size,
 				    block_size, 0, 1, 1, 0, buf,
 				    EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	} else {
-		ret = writeatomic16(sd, 0, block_size,
+		ret = writeatomic16(sd, 0, gran * block_size,
 				    block_size, 0, 1, 1, 0, buf,
 				    EXPECT_INVALID_FIELD_IN_CDB);
 		CU_ASSERT_EQUAL(ret, 0);

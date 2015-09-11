@@ -28,35 +28,43 @@
 void
 test_writeatomic16_beyond_eol(void)
 {
-	int i, ret;
-	unsigned char *buf = alloca(256 * block_size);
+	int i, gran, ret;
+	unsigned char *buf = alloca(256 * 2 * block_size);
 
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITEATOMIC16 1-256 blocks one block beyond the end");
+
+	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
+	ret = writeatomic16(sd, 0,
+			    block_size * gran,
+			    block_size, 0, 0, 0, 0, buf,
+			    EXPECT_STATUS_GOOD);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITEATOMIC16 is not implemented.");
+		CU_PASS("WRITEATOMIC16 is not implemented.");
+		return;
+	}
+	CU_ASSERT_EQUAL(ret, 0);
+
+	logging(LOG_VERBOSE, "Test WRITEATOMIC16 1-256 blocks <granularity> blocks beyond the end");
 	memset(buf, 0xa6, 256 * block_size);
-	for (i = 1; i <= 256; i++) {
+	for (i = inq_bl->atomic_gran; i <= 256; i += inq_bl->atomic_gran) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
 
-		ret = writeatomic16(sd, num_blocks + 1 - i,
-				    i * block_size, block_size, 0, 0, 0, 0, buf,
+		ret = writeatomic16(sd, num_blocks - i,
+				    2 * i * block_size, block_size,
+				    0, 0, 0, 0, buf,
 				    EXPECT_LBA_OOB);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITEATOMIC16 is not implemented.");
-			CU_PASS("WRITEATOMIC16 is not implemented.");
-			return;
-		}
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 1-256 blocks at LBA==2^63");
-	for (i = 1; i <= 256; i++) {
+	for (i = inq_bl->atomic_gran; i <= 256; i += inq_bl->atomic_gran) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
@@ -67,12 +75,12 @@ test_writeatomic16_beyond_eol(void)
 	}
 
 
-	logging(LOG_VERBOSE, "Test WRITEATOMIC16 1-256 blocks at LBA==-1");
-	for (i = 1; i <= 256; i++) {
+	logging(LOG_VERBOSE, "Test WRITEATOMIC16 1-256 blocks at LBA==-<alignment>");
+	for (i = inq_bl->atomic_gran; i <= 256; i += inq_bl->atomic_gran) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeatomic16(sd, -1, i * block_size,
+		ret = writeatomic16(sd, -inq_bl->atomic_align, i * block_size,
 				    block_size, 0, 0, 0, 0, buf,
 				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -80,11 +88,11 @@ test_writeatomic16_beyond_eol(void)
 
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 2-256 blocks all but one block beyond the end");
-	for (i = 2; i <= 256; i++) {
+	for (i = 2 * inq_bl->atomic_gran; i <= 256; i += inq_bl->atomic_gran) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeatomic16(sd, num_blocks - 1,
+		ret = writeatomic16(sd, num_blocks - inq_bl->atomic_gran,
 				    i * block_size, block_size, 0, 0, 0, 0, buf,
 				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);

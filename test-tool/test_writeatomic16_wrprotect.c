@@ -29,24 +29,38 @@
 void
 test_writeatomic16_wrprotect(void)
 {
-	int i, ret;
+	int i, gran, ret;
 	unsigned char *buf = alloca(block_size);
+
+	CHECK_FOR_DATALOSS;
+	CHECK_FOR_SBC;
 
 	/*
 	 * Try out different non-zero values for WRPROTECT.
 	 */
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITEATOMIC16 with non-zero WRPROTECT");
 
-	CHECK_FOR_DATALOSS;
-	CHECK_FOR_SBC;
+	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
+	ret = writeatomic16(sd, 0,
+			    block_size * gran,
+			    block_size, 0, 0, 0, 0, buf,
+			    EXPECT_STATUS_GOOD);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITEATOMIC16 is not implemented.");
+		CU_PASS("WRITEATOMIC16 is not implemented.");
+		return;
+	}
+	CU_ASSERT_EQUAL(ret, 0);
+
+
+	logging(LOG_VERBOSE, "Test WRITEATOMIC16 with non-zero WRPROTECT");
 
 	memset(buf, 0xa6, block_size);
 	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
 			ret = writeatomic16(sd, 0,
-					    block_size, block_size,
+					    gran * block_size, block_size,
 					    i, 0, 0, 0, buf,
 					    EXPECT_INVALID_FIELD_IN_CDB);
 			if (ret == -2) {

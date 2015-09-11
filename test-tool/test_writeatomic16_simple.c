@@ -29,7 +29,7 @@
 void
 test_writeatomic16_simple(void)
 {
-	int i, ret;
+	int i, gran, ret;
 	unsigned char *buf = alloca(256 * block_size);
 
 
@@ -37,25 +37,34 @@ test_writeatomic16_simple(void)
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
+
+
+	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
+	ret = writeatomic16(sd, 0,
+			    block_size * gran,
+			    block_size, 0, 0, 0, 0, buf,
+			    EXPECT_STATUS_GOOD);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] WRITEATOMIC16 is not implemented.");
+		CU_PASS("WRITEATOMIC16 is not implemented.");
+		return;
+	}
+	CU_ASSERT_EQUAL(ret, 0);
+
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 of 1-256 blocks at the start of the LUN");
 	memset(buf, 0xa6, 256 * block_size);
-	for (i = 1; i <= 256; i++) {
+	for (i = inq_bl->atomic_gran; i <= 256; i += inq_bl->atomic_gran) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
 		ret = writeatomic16(sd, 0, i * block_size,
 				    block_size, 0, 0, 0, 0, buf,
 				    EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITEATOMIC16 is not implemented.");
-			CU_PASS("WRITEATOMIC16 is not implemented.");
-			return;
-		}
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 of 1-256 blocks at the end of the LUN");
-	for (i = 1; i <= 256; i++) {
+	for (i = inq_bl->atomic_gran; i <= 256; i += inq_bl->atomic_gran) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
