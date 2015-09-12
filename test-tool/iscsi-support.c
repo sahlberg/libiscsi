@@ -234,6 +234,7 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
 	return 0;
 }
 
+#ifdef HAVE_SG_IO
 static size_t iov_tot_len(struct scsi_iovec *iov, int niov)
 {
 	size_t len = 0;
@@ -243,6 +244,7 @@ static size_t iov_tot_len(struct scsi_iovec *iov, int niov)
 		len += iov[i].iov_len;
 	return len;
 }
+#endif
 
 static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi_task *task, struct iscsi_data *d)
 {
