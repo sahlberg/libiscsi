@@ -28,7 +28,7 @@
 void
 test_writeatomic16_beyond_eol(void)
 {
-	int i, gran, ret;
+	int align, i, gran, ret;
 	unsigned char *buf = alloca(256 * 2 * block_size);
 
 
@@ -37,6 +37,7 @@ test_writeatomic16_beyond_eol(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 
+	align = inq_bl->atomic_align ? inq_bl->atomic_align : 1;
 	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
 	ret = writeatomic16(sd, 0,
 			    block_size * gran,
@@ -51,7 +52,7 @@ test_writeatomic16_beyond_eol(void)
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 1-256 blocks <granularity> blocks beyond the end");
 	memset(buf, 0xa6, 256 * block_size);
-	for (i = inq_bl->atomic_gran; i <= 256; i += inq_bl->atomic_gran) {
+	for (i = gran; i <= 256; i += gran) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
@@ -64,7 +65,7 @@ test_writeatomic16_beyond_eol(void)
 	}
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 1-256 blocks at LBA==2^63");
-	for (i = inq_bl->atomic_gran; i <= 256; i += inq_bl->atomic_gran) {
+	for (i = gran; i <= 256; i += gran) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
@@ -76,11 +77,11 @@ test_writeatomic16_beyond_eol(void)
 
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 1-256 blocks at LBA==-<alignment>");
-	for (i = inq_bl->atomic_gran; i <= 256; i += inq_bl->atomic_gran) {
+	for (i = gran; i <= 256; i += gran) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeatomic16(sd, -inq_bl->atomic_align, i * block_size,
+		ret = writeatomic16(sd, -align, i * block_size,
 				    block_size, 0, 0, 0, 0, buf,
 				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -88,11 +89,11 @@ test_writeatomic16_beyond_eol(void)
 
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 2-256 blocks all but one block beyond the end");
-	for (i = 2 * inq_bl->atomic_gran; i <= 256; i += inq_bl->atomic_gran) {
+	for (i = 2 * gran; i <= 256; i += gran) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeatomic16(sd, num_blocks - inq_bl->atomic_gran,
+		ret = writeatomic16(sd, num_blocks - gran,
 				    i * block_size, block_size, 0, 0, 0, 0, buf,
 				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);

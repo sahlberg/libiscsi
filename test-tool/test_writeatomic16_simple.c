@@ -53,7 +53,7 @@ test_writeatomic16_simple(void)
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 of 1-256 blocks at the start of the LUN");
 	memset(buf, 0xa6, 256 * block_size);
-	for (i = inq_bl->atomic_gran; i <= 256; i += inq_bl->atomic_gran) {
+	for (i = gran; i <= 256; i += gran) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
@@ -64,7 +64,7 @@ test_writeatomic16_simple(void)
 	}
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 of 1-256 blocks at the end of the LUN");
-	for (i = inq_bl->atomic_gran; i <= 256; i += inq_bl->atomic_gran) {
+	for (i = gran; i <= 256; i += gran) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}

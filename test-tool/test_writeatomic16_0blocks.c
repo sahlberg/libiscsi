@@ -26,12 +26,13 @@
 void
 test_writeatomic16_0blocks(void)
 {
-	int ret;
+	int align, ret;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
+	align = inq_bl->atomic_align ? inq_bl->atomic_align : 1;
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 0-blocks at LBA==0");
 	ret = writeatomic16(sd, 0, 0, block_size,
 			    0, 0, 0, 0, NULL,
@@ -44,7 +45,7 @@ test_writeatomic16_0blocks(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 0-blocks one alignment past end-of-LUN");
-	ret = writeatomic16(sd, num_blocks + inq_bl->atomic_align, 0,
+	ret = writeatomic16(sd, num_blocks + align, 0,
 			    block_size, 0, 0, 0, 0, NULL,
 			    EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -58,7 +59,7 @@ test_writeatomic16_0blocks(void)
 
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 0-blocks at LBA==-<alignment>");
-	ret = writeatomic16(sd, -inq_bl->atomic_align, 0, block_size,
+	ret = writeatomic16(sd, -align, 0, block_size,
 			    0, 0, 0, 0, NULL,
 			    EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
