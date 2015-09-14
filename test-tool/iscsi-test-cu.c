@@ -445,6 +445,7 @@ static CU_TestInfo tests_writeverify16[] = {
 
 static CU_TestInfo tests_multipathio[] = {
 	{ (char *)"Simple", test_multipathio_simple },
+	{ (char *)"Reset", test_multipathio_reset },
 	CU_TEST_INFO_NULL
 };
 
@@ -503,7 +504,6 @@ static libiscsi_suite_info scsi_suites[] = {
 	{ "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
 	{ "WriteVerify12", NON_PGR_FUNCS, tests_writeverify12 },
 	{ "WriteVerify16", NON_PGR_FUNCS, tests_writeverify16 },
-	{ "MultipathIO", NON_PGR_FUNCS, tests_multipathio },
 	{ NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -626,7 +626,6 @@ static libiscsi_suite_info linux_suites[] = {
 	{ "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
 	{ "WriteVerify12", NON_PGR_FUNCS, tests_writeverify12 },
 	{ "WriteVerify16", NON_PGR_FUNCS, tests_writeverify16 },
-	{ "MultipathIO", NON_PGR_FUNCS, tests_multipathio },
 	{ NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
