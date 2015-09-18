@@ -974,6 +974,55 @@ prout_release(struct scsi_device *sdev,
 }
 
 int
+prout_clear(struct scsi_device *sdev, unsigned long long key)
+{
+	struct scsi_persistent_reserve_out_basic poc;
+	struct scsi_task *task;
+	int ret = 0;
+
+	/* reserve the target using specified reservation type */
+	logging(LOG_VERBOSE,
+		"Send PROUT/CLEAR to clear all registrations and any PR "
+		"reservation");
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping PROUT\n");
+		return -1;
+	}
+
+	memset(&poc, 0, sizeof (poc));
+	poc.reservation_key = key;
+	task = scsi_cdb_persistent_reserve_out(
+	    SCSI_PERSISTENT_RESERVE_CLEAR,
+	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
+	    0, &poc);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
+	if (task == NULL) {
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send PROUT command: %s",
+		    iscsi_get_error(sdev->iscsi_ctx));
+		return -1;
+	}
+	if (status_is_invalid_opcode(task)) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE OUT is not implemented.");
+		return -2;
+	}
+
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL,
+		    "[FAILED] PROUT command: failed with sense. %s",
+		    iscsi_get_error(sdev->iscsi_ctx));
+		ret = -1;
+	}
+
+	scsi_free_scsi_task(task);
+	return ret;
+}
+
+int
 prin_verify_reserved_as(struct scsi_device *sdev,
     unsigned long long key, enum scsi_persistent_out_type pr_type)
 {
