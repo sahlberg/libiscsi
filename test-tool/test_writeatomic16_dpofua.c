@@ -41,6 +41,11 @@ test_writeatomic16_dpofua(void)
 	CHECK_FOR_SBC;
 	CHECK_FOR_DATALOSS;
 
+	if (!inq_bl) {
+		CU_PASS("BlockLimits VPD is not available. Skipping test.\n");
+		return;
+	}
+
 	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
 	buf = alloca(gran * block_size);
 

@@ -35,6 +35,11 @@ test_writeatomic16_beyond_eol(void)
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
+	if (!inq_bl) {
+		CU_PASS("BlockLimits VPD is not available. Skipping test.\n");
+		return;
+	}
+
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 
 	align = inq_bl->atomic_align ? inq_bl->atomic_align : 1;

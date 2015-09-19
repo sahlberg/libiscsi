@@ -35,9 +35,11 @@ test_writeatomic16_wrprotect(void)
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
-	/*
-	 * Try out different non-zero values for WRPROTECT.
-	 */
+	if (!inq_bl) {
+		CU_PASS("BlockLimits VPD is not available. Skipping test.\n");
+		return;
+	}
+
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 
 	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;

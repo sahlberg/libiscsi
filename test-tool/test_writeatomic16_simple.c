@@ -36,8 +36,12 @@ test_writeatomic16_simple(void)
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
+	if (!inq_bl) {
+		CU_PASS("BlockLimits VPD is not available. Skipping test.\n");
+		return;
+	}
 
+	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 
 	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
 	ret = writeatomic16(sd, 0,
