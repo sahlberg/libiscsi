@@ -74,13 +74,17 @@ test_compareandwrite_dpofua(void)
 		ret = compareandwrite(sd, 0, buf, 2 * block_size,
 				      block_size, 0, 1, 0, 0,
 				      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
 	} else {
 		ret = compareandwrite(sd, 0, buf, 2 * block_size,
 				      block_size, 0, 1, 0, 0,
 				      EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
 	}
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] REPORT_SUPPORTED_OPCODES not "
+			"implemented. Skipping this part of the test");
+		return;
+	}
+	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test COMPAREANDWRITE with FUA==1");
 	if (dpofua) {
