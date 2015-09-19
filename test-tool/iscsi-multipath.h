@@ -24,6 +24,13 @@
 extern int mp_num_sds;
 extern struct scsi_device *mp_sds[MPATH_MAX_DEVS];
 
+int
+mpath_check_matching_ids(int num_sds,
+			 struct scsi_device **sds);
+int
+mpath_count_iscsi(int num_sds,
+		  struct scsi_device **sds);
+
 #define MPATH_SKIP_IF_UNAVAILABLE(_sds, _num_sds)			\
 do {									\
 	if (_num_sds <= 1) {						\
@@ -35,8 +42,15 @@ do {									\
 	}								\
 } while (0);
 
-int
-mpath_check_matching_ids(int num_sds,
-			 struct scsi_device **sds);
+#define MPATH_SKIP_UNLESS_ISCSI(_sds, _num_sds)				\
+do {									\
+	if (mpath_count_iscsi(_num_sds, _sds) != _num_sds) {		\
+		logging(LOG_NORMAL, "[SKIPPED] Non-iSCSI multipath."	\
+			" Skipping test");				\
+		CU_PASS("[SKIPPED] Non-iSCSI multipath."		\
+			" Skipping test");				\
+		return;							\
+	}								\
+} while (0);
 
 #endif	/* _ISCSI_MULTIPATH_H_ */

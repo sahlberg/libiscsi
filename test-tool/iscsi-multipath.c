@@ -369,3 +369,19 @@ mpath_check_matching_ids(int num_sds,
 	ret = mpath_check_matching_ids_serial_vpd(num_sds, sds);
 	return ret;
 }
+
+int
+mpath_count_iscsi(int num_sds,
+		  struct scsi_device **sds)
+{
+	int i;
+	int found = 0;
+
+	for (i = 0; i < num_sds; i++) {
+		if (sds[i]->iscsi_ctx != NULL) {
+			found++;
+		}
+	}
+
+	return found;
+}

@@ -73,6 +73,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_prout_reserve_simple.c \
 	test_prout_reserve_access.c \
 	test_prout_reserve_ownership.c \
+	test_prout_clear_simple.c \
 	test_read6_simple.c \
 	test_read6_beyond_eol.c \
 	test_read10_simple.c \
@@ -215,7 +216,9 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_writeverify16_flags.c \
 	test_writeverify16_dpo.c \
 	test_writeverify16_residuals.c \
-	test_multipathio_simple.c
+	test_multipathio_simple.c \
+	test_multipathio_reset.c \
+	test_multipathio_compareandwrite.c
 
 endif
 

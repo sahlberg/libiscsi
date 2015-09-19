@@ -129,6 +129,7 @@ void test_prout_reserve_ownership_earo(void);
 void test_prout_reserve_ownership_wero(void);
 void test_prout_reserve_ownership_eaar(void);
 void test_prout_reserve_ownership_wear(void);
+void test_prout_clear_simple(void);
 
 void test_read6_simple(void);
 void test_read6_beyond_eol(void);
@@ -301,5 +302,7 @@ void test_writeverify16_dpo(void);
 void test_writeverify16_residuals(void);
 
 void test_multipathio_simple(void);
+void test_multipathio_reset(void);
+void test_multipathio_compareandwrite(void);
 
 #endif	/* _ISCSI_TEST_CU_H_ */

@@ -273,6 +273,7 @@ int prout_reserve(struct scsi_device *sdev,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
 int prout_release(struct scsi_device *sdev,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
+int prout_clear(struct scsi_device *sdev, unsigned long long key);
 int prin_verify_not_reserved(struct scsi_device *sdev);
 int prin_verify_reserved_as(struct scsi_device *sdev,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
