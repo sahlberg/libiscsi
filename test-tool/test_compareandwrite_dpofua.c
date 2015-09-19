@@ -123,16 +123,30 @@ test_compareandwrite_dpofua(void)
 	}
 	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
 	rsoc = scsi_datain_unmarshall(rso_task);
-	CU_ASSERT_NOT_EQUAL(rsoc, NULL);
-	usage_data_dpofua = rsoc ? rsoc->cdb_usage_data[1] & 0x18 : -1;
-	if (dpofua) {
-		logging(LOG_VERBOSE, "DPOFUA is set. Verify the DPO/FUA flags "
-			"are set in the CDB_USAGE_DATA");
-		CU_ASSERT_EQUAL(usage_data_dpofua, 0x18);
+	if (rsoc) {
+		usage_data_dpofua = rsoc->cdb_usage_data[1] & 0x18;
+		if (dpofua) {
+			logging(LOG_VERBOSE, "DPOFUA is set. Verify the "
+				"DPO/FUA flags are set in the CDB_USAGE_DATA");
+			if (!usage_data_dpofua) {
+				logging(LOG_NORMAL, "[FAILED] DpoFua not set "
+					"in CDB_USAGE_DATE");
+				CU_FAIL("DpoFua not set in CDB_USAGE_DATE");
+			}
+		} else {
+			logging(LOG_VERBOSE, "DPOFUA is clear. Verify the "
+				"DPO/FUA flags are clear in the CDB_USAGE_DATA");
+			if (usage_data_dpofua) {
+				logging(LOG_NORMAL, "[FAILED] DpoFua not clear "
+					"in CDB_USAGE_DATE");
+				CU_FAIL("DpoFua not clear in CDB_USAGE_DATE");
+			}
+		}
 	} else {
-		logging(LOG_VERBOSE, "DPOFUA is clear. Verify the DPO/FUA "
-			"flags are clear in the CDB_USAGE_DATA");
-		CU_ASSERT_EQUAL(usage_data_dpofua, 0x00);
+		logging(LOG_NORMAL, "[FAILED] Target did not return any data "
+			"for ReportSupportedOpcodes\n");
+		CU_FAIL("Target did not return any data for "
+			"ReportSupportedOpcodes");
 	}
 	scsi_free_scsi_task(rso_task);
 }
