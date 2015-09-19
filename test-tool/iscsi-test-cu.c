@@ -57,7 +57,7 @@
 
 int loglevel = LOG_NORMAL;
 struct scsi_device *sd = NULL;	/* mp_sds[0] alias */
-static unsigned int maxsectbytes;
+static unsigned int maxsectors;
 
 /*
  * this allows us to redefine how PDU are queued, at times, for
@@ -962,7 +962,7 @@ static int connect_scsi_device(struct scsi_device *sdev, const char *initiatorna
 			close(sdev->sgio_fd);
 			return -1;
 		}
-		if (ioctl(sdev->sgio_fd, BLKSECTGET, &maxsectbytes) < 0) {
+		if (ioctl(sdev->sgio_fd, BLKSECTGET, &maxsectors) < 0) {
 			fprintf(stderr, "%s failed to read BLKMAXSECT\n", sdev->sgio_dev);
 			close(sdev->sgio_fd);
 			return -1;
@@ -1344,10 +1344,10 @@ main(int argc, char *argv[])
 	}
 	scsi_free_scsi_task(task);
 
-	if (maxsectbytes) {
-		maximum_transfer_length = maxsectbytes / block_size;
-		printf("Bus transfer size is limited to %d bytes. Clamping "
-		       "max transfers accordingly.\n", maxsectbytes);
+	if (maxsectors) {
+		maximum_transfer_length = maxsectors;
+		printf("Bus transfer size is limited to %d blocks. Clamping "
+		       "max transfers accordingly.\n", maxsectors);
 	}
 
 	if (CU_initialize_registry() != 0) {
