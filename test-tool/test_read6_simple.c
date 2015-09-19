@@ -34,6 +34,10 @@ test_read6_simple(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ6 of 1-255 blocks at the start of the LUN");
 	for (i = 1; i <= 255; i++) {
+		if (maximum_transfer_length && maximum_transfer_length < i) {
+			break;
+		}
+
 		ret = read6(sd, NULL, 0, i * block_size,
 			    block_size, NULL,
 			    EXPECT_STATUS_GOOD);
@@ -51,6 +55,10 @@ test_read6_simple(void)
 		CU_PASS("LUN is too big for read-at-eol tests with READ6. Skipping test.\n");
 	} else {
 		for (i = 1; i <= 255; i++) {
+			if (maximum_transfer_length && maximum_transfer_length < i) {
+				break;
+			}
+
 			ret = read6(sd, NULL, num_blocks - i,
 				    i * block_size, block_size, NULL,
 				    EXPECT_STATUS_GOOD);
@@ -58,28 +66,29 @@ test_read6_simple(void)
 		}
 	}
 
-	logging(LOG_VERBOSE, "Transfer length == 0 means we want to transfer "
-		"256 blocks");
 
-	logging(LOG_VERBOSE, "Test sending a READ6 with transfer length == 0 "
-		"(meaning 256 blocks)");
 	/* 256 is converted to 0 when the CDB is marshalled by the helper */
-	ret = read6(sd, &task, 0,
-		    256 * block_size, block_size, NULL,
-		    EXPECT_STATUS_GOOD);
-	if (task->status != SCSI_STATUS_GOOD) {
-		logging(LOG_NORMAL, "[FAILED] READ6 command: "
-			"failed with sense. %s", sd->error_str );
-	}
-	CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
+	if (maximum_transfer_length >= 256) {
+		logging(LOG_VERBOSE, "Transfer length == 0 means we want to "
+			"transfer 256 blocks");
+		ret = read6(sd, &task, 0,
+			    256 * block_size, block_size, NULL,
+			    EXPECT_STATUS_GOOD);
+		if (task->status != SCSI_STATUS_GOOD) {
+			logging(LOG_NORMAL, "[FAILED] READ6 command: "
+				"failed with sense. %s", sd->error_str );
+		}
+		CU_ASSERT_EQUAL(task->status, SCSI_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Verify that we did get 256 blocks of data back");
-	if (task->datain.size == (int)(256 * block_size)) {
-		logging(LOG_VERBOSE, "[SUCCESS] Target returned 256 blocks of "
-			"data");
-	} else {
-		logging(LOG_NORMAL, "[FAILED] Target did not return 256 "
-			"blocks of data");
+		logging(LOG_VERBOSE, "Verify that we did get 256 blocks of "
+			"data back");
+		if (task->datain.size == (int)(256 * block_size)) {
+			logging(LOG_VERBOSE, "[SUCCESS] Target returned 256 "
+				"blocks of data");
+		} else {
+			logging(LOG_NORMAL, "[FAILED] Target did not return "
+				"256 blocks of data");
+		}
+		CU_ASSERT_EQUAL(task->datain.size, (int)(256 * block_size));
 	}
-	CU_ASSERT_EQUAL(task->datain.size, (int)(256 * block_size));
 }
