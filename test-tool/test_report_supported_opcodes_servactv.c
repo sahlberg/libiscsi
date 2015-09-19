@@ -57,6 +57,13 @@ test_report_supported_opcodes_servactv(void)
 	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
 	rsoc = scsi_datain_unmarshall(rso_task);
 	CU_ASSERT_NOT_EQUAL(rsoc, NULL);
+	if (!rsoc) {
+		logging(LOG_NORMAL, "[FAILED] Target did not return any data "
+			"for ReportSupportedOpcodes\n");
+		CU_FAIL("Target did not return any data for "
+			"ReportSupportedOpcodes");
+		return;
+	}
 
 
 	logging(LOG_VERBOSE, "Verify that when SERVACTV is clear then "
