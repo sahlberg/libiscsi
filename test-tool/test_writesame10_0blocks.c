@@ -36,8 +36,13 @@ test_writesame10_0blocks(void)
 		CU_PASS("LUN is too big for write-beyond-eol tests with WRITESAME10. Skipping test.\n");
 		return;
 	}
+	if (!inq_bl) {
+		CU_PASS("BlockLimits VPD is not available. Skipping test.\n");
+		return;
+	}
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
+
 	logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks at LBA==0 (WSNZ=%d)",
 		inq_bl->wsnz);
 	memset(buf, 0, block_size);
@@ -46,7 +51,7 @@ test_writesame10_0blocks(void)
 		ret = writesame10(sd, 0,
 				  block_size, 0, 0, 0, 0, 0, buf,
 				  EXPECT_INVALID_FIELD_IN_CDB);
-		logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 does not support 0-blocks.");
+		logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 does not support 0-blocks.");
 		CU_ASSERT_EQUAL(ret, 0);
 		return;
 	}

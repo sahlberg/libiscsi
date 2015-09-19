@@ -32,6 +32,11 @@ test_writesame16_0blocks(void)
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
+	if (!inq_bl) {
+		CU_PASS("BlockLimits VPD is not available. Skipping test.\n");
+		return;
+	}
+
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks at LBA==0 (WSNZ=%d)",
 		inq_bl->wsnz);
