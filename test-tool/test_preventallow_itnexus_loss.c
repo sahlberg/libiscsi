@@ -44,7 +44,6 @@ test_preventallow_itnexus_loss(void)
 	}
 
 	logging(LOG_VERBOSE, "Set the PREVENT flag");
-	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
 	ret = startstopunit(sd, 0, 0, 0, 0, 1, 0,
