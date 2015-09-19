@@ -37,6 +37,11 @@ test_preventallow_eject(void)
 
 	logging(LOG_VERBOSE, "Set the PREVENT flag");
 	ret = preventallow(sd, 1);
+	if (ret == -2) {
+		logging(LOG_NORMAL, "[SKIPPED] PREVENTALLOW is not implemented");
+		CU_PASS("PREVENTALLOW is not implemented");
+		return;
+	}
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
