@@ -22,7 +22,7 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-test-cu.h"
-
+#include "iscsi-multipath.h"
 
 static void
 verify_persistent_reserve_ownership(struct scsi_device *sd1, struct scsi_device *sd2,
@@ -96,7 +96,8 @@ verify_persistent_reserve_ownership(struct scsi_device *sd1, struct scsi_device 
 void
 test_prout_reserve_ownership_ea(void)
 {
-	struct scsi_device sd2;
+	struct scsi_device *sd2;
+	int ret;
 
 	if (sd->iscsi_ctx == NULL) {
 		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
@@ -106,23 +107,18 @@ test_prout_reserve_ownership_ea(void)
 		return;
 	}
 
-	memset(&sd2, 0, sizeof(sd2));
-	sd2.iscsi_url = sd->iscsi_url;
-	sd2.iscsi_lun = sd->iscsi_lun;
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
-	if (sd2.iscsi_ctx == NULL) {
-		logging(LOG_VERBOSE, "Failed to login to target");
-		return;
-	}
-	verify_persistent_reserve_ownership(sd, &sd2,
+	ret = mpath_sd2_get_or_clone(sd, &sd2);
+	CU_ASSERT_EQUAL(ret, 0);
+	verify_persistent_reserve_ownership(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS, 0);
-	iscsi_destroy_context(sd2.iscsi_ctx);
+	mpath_sd2_put(sd2);
 }
 
 void
 test_prout_reserve_ownership_we(void)
 {
-	struct scsi_device sd2;
+	struct scsi_device *sd2;
+	int ret;
 
 	if (sd->iscsi_ctx == NULL) {
 		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
@@ -132,23 +128,18 @@ test_prout_reserve_ownership_we(void)
 		return;
 	}
 
-	memset(&sd2, 0, sizeof(sd2));
-	sd2.iscsi_url = sd->iscsi_url;
-	sd2.iscsi_lun = sd->iscsi_lun;
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
-	if (sd2.iscsi_ctx == NULL) {
-		logging(LOG_VERBOSE, "Failed to login to target");
-		return;
-	}
-	verify_persistent_reserve_ownership(sd, &sd2,
+	ret = mpath_sd2_get_or_clone(sd, &sd2);
+	CU_ASSERT_EQUAL(ret, 0);
+	verify_persistent_reserve_ownership(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE, 0);
-	iscsi_destroy_context(sd2.iscsi_ctx);
+	mpath_sd2_put(sd2);
 }
 
 void
 test_prout_reserve_ownership_earo(void)
 {
-	struct scsi_device sd2;
+	struct scsi_device *sd2;
+	int ret;
 
 	if (sd->iscsi_ctx == NULL) {
 		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
@@ -158,23 +149,18 @@ test_prout_reserve_ownership_earo(void)
 		return;
 	}
 
-	memset(&sd2, 0, sizeof(sd2));
-	sd2.iscsi_url = sd->iscsi_url;
-	sd2.iscsi_lun = sd->iscsi_lun;
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
-	if (sd2.iscsi_ctx == NULL) {
-		logging(LOG_VERBOSE, "Failed to login to target");
-		return;
-	}
-	verify_persistent_reserve_ownership(sd, &sd2,
+	ret = mpath_sd2_get_or_clone(sd, &sd2);
+	CU_ASSERT_EQUAL(ret, 0);
+	verify_persistent_reserve_ownership(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY, 0);
-	iscsi_destroy_context(sd2.iscsi_ctx);
+	mpath_sd2_put(sd2);
 }
 
 void
 test_prout_reserve_ownership_wero(void)
 {
-	struct scsi_device sd2;
+	struct scsi_device *sd2;
+	int ret;
 
 	if (sd->iscsi_ctx == NULL) {
 		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
@@ -184,23 +170,18 @@ test_prout_reserve_ownership_wero(void)
 		return;
 	}
 
-	memset(&sd2, 0, sizeof(sd2));
-	sd2.iscsi_url = sd->iscsi_url;
-	sd2.iscsi_lun = sd->iscsi_lun;
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
-	if (sd2.iscsi_ctx == NULL) {
-		logging(LOG_VERBOSE, "Failed to login to target");
-		return;
-	}
-	verify_persistent_reserve_ownership(sd, &sd2,
+	ret = mpath_sd2_get_or_clone(sd, &sd2);
+	CU_ASSERT_EQUAL(ret, 0);
+	verify_persistent_reserve_ownership(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY, 0);
-	iscsi_destroy_context(sd2.iscsi_ctx);
+	mpath_sd2_put(sd2);
 }
 
 void
 test_prout_reserve_ownership_eaar(void)
 {
-	struct scsi_device sd2;
+	struct scsi_device *sd2;
+	int ret;
 
 	if (sd->iscsi_ctx == NULL) {
 		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
@@ -210,23 +191,18 @@ test_prout_reserve_ownership_eaar(void)
 		return;
 	}
 
-	memset(&sd2, 0, sizeof(sd2));
-	sd2.iscsi_url = sd->iscsi_url;
-	sd2.iscsi_lun = sd->iscsi_lun;
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
-	if (sd2.iscsi_ctx == NULL) {
-		logging(LOG_VERBOSE, "Failed to login to target");
-		return;
-	}
-	verify_persistent_reserve_ownership(sd, &sd2,
+	ret = mpath_sd2_get_or_clone(sd, &sd2);
+	CU_ASSERT_EQUAL(ret, 0);
+	verify_persistent_reserve_ownership(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS, 1);
-	iscsi_destroy_context(sd2.iscsi_ctx);
+	mpath_sd2_put(sd2);
 }
 
 void
 test_prout_reserve_ownership_wear(void)
 {
-	struct scsi_device sd2;
+	struct scsi_device *sd2;
+	int ret;
 
 	if (sd->iscsi_ctx == NULL) {
 		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
@@ -236,15 +212,9 @@ test_prout_reserve_ownership_wear(void)
 		return;
 	}
 
-	memset(&sd2, 0, sizeof(sd2));
-	sd2.iscsi_url = sd->iscsi_url;
-	sd2.iscsi_lun = sd->iscsi_lun;
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
-	if (sd2.iscsi_ctx == NULL) {
-		logging(LOG_VERBOSE, "Failed to login to target");
-		return;
-	}
-	verify_persistent_reserve_ownership(sd, &sd2,
+	ret = mpath_sd2_get_or_clone(sd, &sd2);
+	CU_ASSERT_EQUAL(ret, 0);
+	verify_persistent_reserve_ownership(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS, 1);
-	iscsi_destroy_context(sd2.iscsi_ctx);
+	mpath_sd2_put(sd2);
 }
