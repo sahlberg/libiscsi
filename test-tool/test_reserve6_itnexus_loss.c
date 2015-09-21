@@ -23,13 +23,13 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-support.h"
 #include "iscsi-test-cu.h"
-
+#include "iscsi-multipath.h"
 
 void
 test_reserve6_itnexus_loss(void)
 {
 	int ret;
-	struct scsi_device sd2;
+	struct scsi_device *sd2;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that RESERVE6 is released on it-nexus loss");
@@ -53,17 +53,11 @@ test_reserve6_itnexus_loss(void)
 
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	memset(&sd2, 0, sizeof(sd2));
-	sd2.iscsi_url = sd->iscsi_url;
-	sd2.iscsi_lun = sd->iscsi_lun;
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
-	if (sd2.iscsi_ctx == NULL) {
-		logging(LOG_VERBOSE, "Failed to login to target");
-		return;
-	}
+	ret = mpath_sd2_get_or_clone(sd, &sd2);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_NORMAL, "Try to take out a RESERVE6 from the second initiator");
-	ret = reserve6_conflict(&sd2);
+	ret = reserve6_conflict(sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Disconnect from the target.");
@@ -80,14 +74,13 @@ test_reserve6_itnexus_loss(void)
 	}
 
 	logging(LOG_NORMAL, "RESERVE6 from the second initiator should work now");
-	ret = reserve6(&sd2);
+	ret = reserve6(sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_NORMAL, "RELEASE6 from the second initiator");
-	ret = release6(&sd2);
+	ret = release6(sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
 finished:
-	iscsi_logout_sync(sd2.iscsi_ctx);
-	iscsi_destroy_context(sd2.iscsi_ctx);
+	mpath_sd2_put(sd2);
 }
