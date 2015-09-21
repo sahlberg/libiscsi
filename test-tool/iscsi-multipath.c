@@ -32,6 +32,7 @@
 #include <string.h>
 #include <poll.h>
 #include <fnmatch.h>
+#include <errno.h>
 
 #ifdef HAVE_SG_IO
 #include <fcntl.h>
@@ -384,4 +385,60 @@ mpath_count_iscsi(int num_sds,
 	}
 
 	return found;
+}
+
+/*
+ * use an existing multi-path connection, or clone iscsi sd1.
+ */
+int
+mpath_sd2_get_or_clone(struct scsi_device *sd1, struct scsi_device **_sd2)
+{
+	struct scsi_device *sd2;
+
+	if (mp_num_sds > 1) {
+		logging(LOG_VERBOSE, "using multipath dev for second session");
+		*_sd2 = mp_sds[1];
+		return 0;
+	}
+
+	if (sd1->iscsi_ctx == NULL) {
+		logging(LOG_NORMAL, "can't clone non-iscsi device");
+		return -EINVAL;
+	}
+
+	logging(LOG_VERBOSE, "cloning sd1 for second session");
+	sd2 = malloc(sizeof(*sd2));
+	if (sd2 == NULL) {
+		return -ENOMEM;
+	}
+
+	memset(sd2, 0, sizeof(*sd2));
+	sd2->iscsi_url = sd1->iscsi_url;
+	sd2->iscsi_lun = sd1->iscsi_lun;
+	sd2->iscsi_ctx = iscsi_context_login(initiatorname2, sd2->iscsi_url,
+					     &sd2->iscsi_lun);
+	if (sd2->iscsi_ctx == NULL) {
+		logging(LOG_VERBOSE, "Failed to login to target");
+		free(sd2);
+		return -ENOMEM;
+	}
+	*_sd2 = sd2;
+
+	return 0;
+}
+
+void
+mpath_sd2_put(struct scsi_device *sd2)
+{
+	if (mp_num_sds > 1) {
+		if (sd2 != mp_sds[1]) {
+			logging(LOG_NORMAL, "Invalid sd2!");
+		}
+		return;
+	}
+
+	/* sd2 was allocated by mp_get - cleanup */
+	iscsi_logout_sync(sd2->iscsi_ctx);
+	iscsi_destroy_context(sd2->iscsi_ctx);
+	free(sd2);
 }
