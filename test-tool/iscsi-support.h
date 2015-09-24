@@ -277,6 +277,8 @@ int prout_clear(struct scsi_device *sdev, unsigned long long key);
 int prin_verify_not_reserved(struct scsi_device *sdev);
 int prin_verify_reserved_as(struct scsi_device *sdev,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
+int prin_report_caps(struct scsi_device *sdev, struct scsi_task **tp,
+	struct scsi_persistent_reserve_in_report_capabilities **_rcaps);
 int verify_read_works(struct scsi_device *sdev, unsigned char *buf);
 int verify_write_works(struct scsi_device *sdev, unsigned char *buf);
 int verify_read_fails(struct scsi_device *sdev, unsigned char *buf);

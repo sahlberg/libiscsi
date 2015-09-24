@@ -1156,6 +1156,52 @@ prin_verify_not_reserved(struct scsi_device *sdev)
 }
 
 int
+prin_report_caps(struct scsi_device *sdev, struct scsi_task **tp,
+	struct scsi_persistent_reserve_in_report_capabilities **_rcaps)
+{
+	const int buf_sz = 16384;
+	struct scsi_persistent_reserve_in_report_capabilities *rcaps = NULL;
+
+	logging(LOG_VERBOSE, "Send PRIN/REPORT_CAPABILITIES");
+
+	*tp = scsi_cdb_persistent_reserve_in(
+				SCSI_PERSISTENT_RESERVE_REPORT_CAPABILITIES,
+				buf_sz);
+	assert(*tp != NULL);
+
+	*tp = send_scsi_command(sdev, *tp, NULL);
+	if (*tp == NULL) {
+	        logging(LOG_NORMAL,
+		    "[FAILED] Failed to send PRIN command: %s",
+		    iscsi_get_error(sdev->iscsi_ctx));
+		return -1;
+	}
+	if (status_is_invalid_opcode(*tp)) {
+		logging(LOG_NORMAL,
+			"[SKIPPED] PERSISTENT RESERVE IN is not implemented.");
+		return -2;
+	}
+	if ((*tp)->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL,
+		    "[FAILED] PRIN command: failed with sense. %s",
+		    iscsi_get_error(sdev->iscsi_ctx));
+		return -1;
+	}
+
+	rcaps = scsi_datain_unmarshall(*tp);
+	if (rcaps == NULL) {
+		logging(LOG_NORMAL,
+			"[FAIL] failed to unmarshall PRIN/REPORT_CAPABILITIES "
+			"data. %s", iscsi_get_error(sdev->iscsi_ctx));
+		return -1;
+	}
+	if (_rcaps != NULL)
+		*_rcaps = rcaps;
+
+	return 0;
+}
+
+int
 verify_read_works(struct scsi_device *sdev, unsigned char *buf)
 {
 	struct scsi_task *task;
