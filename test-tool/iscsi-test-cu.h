@@ -114,6 +114,7 @@ void test_preventallow_2_itnexuses(void);
 
 void test_prin_read_keys_simple(void);
 void test_prin_serviceaction_range(void);
+void test_prin_report_caps_simple(void);
 
 void test_prout_register_simple(void);
 void test_prout_reserve_simple(void);
