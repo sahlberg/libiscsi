@@ -203,6 +203,12 @@ static CU_TestInfo tests_prout_clear[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_prout_preempt[] = {
+	{ (char *)"RemoveRegistration",
+	  test_prout_preempt_rm_reg },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_prin_serviceaction_range[] = {
 	{ (char *)"Range", test_prin_serviceaction_range },
 	CU_TEST_INFO_NULL
@@ -491,6 +497,7 @@ static libiscsi_suite_info scsi_suites[] = {
 	{ "ProutRegister", NON_PGR_FUNCS, tests_prout_register },
 	{ "ProutReserve", NON_PGR_FUNCS, tests_prout_reserve },
 	{ "ProutClear", NON_PGR_FUNCS, tests_prout_clear },
+	{ "ProutPreempt", NON_PGR_FUNCS, tests_prout_preempt },
 	{ "Read6", NON_PGR_FUNCS, tests_read6 },
 	{ "Read10", NON_PGR_FUNCS, tests_read10 },
 	{ "Read12", NON_PGR_FUNCS, tests_read12 },
@@ -578,6 +585,7 @@ static libiscsi_suite_info all_suites[] = {
 	{ "ProutRegister", NON_PGR_FUNCS, tests_prout_register },
 	{ "ProutReserve", NON_PGR_FUNCS, tests_prout_reserve },
 	{ "ProutClear", NON_PGR_FUNCS, tests_prout_clear },
+	{ "ProutPreempt", NON_PGR_FUNCS, tests_prout_preempt },
 	{ "Read6", NON_PGR_FUNCS, tests_read6 },
 	{ "Read10", NON_PGR_FUNCS, tests_read10 },
 	{ "Read12", NON_PGR_FUNCS, tests_read12 },

@@ -131,6 +131,7 @@ void test_prout_reserve_ownership_wero(void);
 void test_prout_reserve_ownership_eaar(void);
 void test_prout_reserve_ownership_wear(void);
 void test_prout_clear_simple(void);
+void test_prout_preempt_rm_reg(void);
 
 void test_read6_simple(void);
 void test_read6_beyond_eol(void);
