@@ -52,6 +52,7 @@ void
 test_extendedcopy_descr_limits(void)
 {
 	int ret;
+	struct scsi_task *edl_task;
 	struct iscsi_data data;
 	unsigned char *xcopybuf;
 	struct scsi_copy_results_op_params *opp;
@@ -64,12 +65,12 @@ test_extendedcopy_descr_limits(void)
 	CHECK_FOR_DATALOSS;
 
 	logging(LOG_VERBOSE, "Issue RECEIVE COPY RESULTS (OPERATING PARAMS)");
-	ret = receive_copy_results(sd, SCSI_COPY_RESULTS_OP_PARAMS, 0,
-			(void **)&opp, EXPECT_STATUS_GOOD);
+	ret = receive_copy_results(&edl_task, sd, SCSI_COPY_RESULTS_OP_PARAMS, 0,
+				   (void **)&opp, EXPECT_STATUS_GOOD);
 	if (ret < 0) {
 		CU_PASS("[SKIPPED] Target does not support "
 				"RECEIVE_COPY_RESULTS. Skipping test");
-		return;
+		goto out;
 	}
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -95,7 +96,7 @@ test_extendedcopy_descr_limits(void)
 	if (ret == -2) {
 		CU_PASS("[SKIPPED] Target does not support "
 				"EXTENDED_COPY. Skipping test");
-		return;
+		goto out;
 	}
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -123,4 +124,7 @@ test_extendedcopy_descr_limits(void)
 		ret = extendedcopy(sd, &data, EXPECT_PARAM_LIST_LEN_ERR);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
+
+out:
+	scsi_free_scsi_task(edl_task);
 }

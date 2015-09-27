@@ -2956,22 +2956,27 @@ void populate_param_header(unsigned char *buf, int list_id, int str, int list_id
 	buf[15] = inline_data_len & 0xFF;
 }
 
-int receive_copy_results(struct scsi_device *sdev, enum scsi_copy_results_sa sa, int list_id, void **datap, int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+int receive_copy_results(struct scsi_task **task, struct scsi_device *sdev,
+			 enum scsi_copy_results_sa sa, int list_id,
+			 void **datap, int status, enum scsi_sense_key key,
+			 int *ascq, int num_ascq)
 {
 	int ret;
-	struct scsi_task *task;
 
 	logging(LOG_VERBOSE, "Send RECEIVE COPY RESULTS");
 
-	task = scsi_cdb_receive_copy_results(sa, list_id, 1024);
+	*task = scsi_cdb_receive_copy_results(sa, list_id, 1024);
 	assert(task != NULL);
 
-	task = send_scsi_command(sdev, task, NULL);
+	*task = send_scsi_command(sdev, *task, NULL);
 
-	ret = check_result("RECEIVECOPYRESULT", sdev, task, status, key, ascq, num_ascq);
+	ret = check_result("RECEIVECOPYRESULT", sdev, *task, status, key, ascq,
+			   num_ascq);
+	if (ret < 0)
+		return ret;
 
-	if (task->status == SCSI_STATUS_GOOD && datap != NULL) {
-		*datap = scsi_datain_unmarshall(task);
+	if ((*task)->status == SCSI_STATUS_GOOD && datap != NULL) {
+		*datap = scsi_datain_unmarshall(*task);
 		if (*datap == NULL) {
 			logging(LOG_NORMAL,
 					"[FAIL] failed to unmarshall RECEIVE COPY RESULTS data. %s",
@@ -2980,11 +2985,8 @@ int receive_copy_results(struct scsi_device *sdev, enum scsi_copy_results_sa sa,
 		}
 	}
 
-	ret = check_result("RECEIVECOPYRESULT", sdev, task, status, key, ascq, num_ascq);
-	if (task)
-		scsi_free_scsi_task(task);
-	
-	return ret;
+	return check_result("RECEIVECOPYRESULT", sdev, *task, status, key, ascq,
+			    num_ascq);
 }
 
 #define TEST_ISCSI_TUR_MAX_RETRIES 5
