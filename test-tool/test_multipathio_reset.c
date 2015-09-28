@@ -27,36 +27,6 @@
 #include "iscsi-test-cu.h"
 #include "iscsi-multipath.h"
 
-#define MPATH_MAX_TUR_RETRIES 5
-
-static int
-test_iscsi_tur_until_good(struct scsi_device *iscsi_sd,
-			  int *num_uas)
-{
-	int num_turs;
-
-	*num_uas = 0;
-	for (num_turs = 0; num_turs < MPATH_MAX_TUR_RETRIES; num_turs++) {
-		struct scsi_task *tsk;
-		tsk = iscsi_testunitready_sync(iscsi_sd->iscsi_ctx,
-					       iscsi_sd->iscsi_lun);
-		if (tsk->status == SCSI_STATUS_GOOD) {
-			logging(LOG_VERBOSE, "TUR good after %d retries",
-				num_turs);
-			return 0;
-		} else if ((tsk->status == SCSI_STATUS_CHECK_CONDITION)
-			&& (tsk->sense.key == SCSI_SENSE_UNIT_ATTENTION)) {
-			logging(LOG_VERBOSE, "Got UA for TUR");
-			(*num_uas)++;
-		} else {
-			logging(LOG_NORMAL, "unexpected non-UA failure: %d,%d",
-				tsk->status, tsk->sense.key);
-		}
-	}
-
-	return -ETIMEDOUT;
-}
-
 void
 test_multipathio_reset(void)
 {

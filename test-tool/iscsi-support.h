@@ -336,4 +336,5 @@ int populate_seg_desc_hdr(unsigned char *hdr, enum ec_descr_type_code desc_type,
 int populate_seg_desc_b2b(unsigned char *desc, int dc, int cat, int src_index, int dst_index, int num_blks, uint64_t src_lba, uint64_t dst_lba);
 void populate_param_header(unsigned char *buf, int list_id, int str, int list_id_usage, int prio, int tgt_desc_len, int seg_desc_len, int inline_data_len);
 int receive_copy_results(struct scsi_device *sdev, enum scsi_copy_results_sa sa, int list_id, void **datap, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
+int test_iscsi_tur_until_good(struct scsi_device *iscsi_sd, int *num_uas);
 #endif	/* _ISCSI_SUPPORT_H_ */
