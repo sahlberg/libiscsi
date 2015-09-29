@@ -25,6 +25,7 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-test-cu.h"
+#include "iscsi-multipath.h"
 
 void
 test_sanitize_reservations(void)
@@ -32,7 +33,7 @@ test_sanitize_reservations(void)
 	int ret;
 	struct iscsi_data data;
 	struct scsi_command_descriptor *cd;
-	struct scsi_device sd2;
+	struct scsi_device *sd2;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test SANITIZE with RESERVATIONS");
@@ -49,18 +50,12 @@ test_sanitize_reservations(void)
 	}
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	memset(&sd2, 0, sizeof(sd2));
-	sd2.iscsi_url = sd->iscsi_url;
-	sd2.iscsi_lun = sd->iscsi_lun;
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
-	if (sd2.iscsi_ctx == NULL) {
-		logging(LOG_VERBOSE, "Failed to login to target");
-		return;
-	}
+	ret = mpath_sd2_get_or_clone(sd, &sd2);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Take out a RESERVE6 from the second "
 			     "initiator");
-	ret = reserve6(&sd2);
+	ret = reserve6(sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
@@ -117,5 +112,5 @@ test_sanitize_reservations(void)
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-	iscsi_destroy_context(sd2.iscsi_ctx);
+	mpath_sd2_put(sd2);
 }

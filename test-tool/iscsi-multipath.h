@@ -30,6 +30,10 @@ mpath_check_matching_ids(int num_sds,
 int
 mpath_count_iscsi(int num_sds,
 		  struct scsi_device **sds);
+int
+mpath_sd2_get_or_clone(struct scsi_device *sd1, struct scsi_device **_sd2);
+void
+mpath_sd2_put(struct scsi_device *sd2);
 
 #define MPATH_SKIP_IF_UNAVAILABLE(_sds, _num_sds)			\
 do {									\

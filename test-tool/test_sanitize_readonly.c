@@ -25,6 +25,7 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-test-cu.h"
+#include "iscsi-multipath.h"
 
 void
 test_sanitize_readonly(void)
@@ -32,7 +33,7 @@ test_sanitize_readonly(void)
 	int ret;
 	struct iscsi_data data;
 	struct scsi_command_descriptor *cd;
-	struct scsi_device sd2;
+	struct scsi_device *sd2;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test SANITIZE with READONLY devices");
@@ -49,17 +50,11 @@ test_sanitize_readonly(void)
 	}
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
-	memset(&sd2, 0, sizeof(sd2));
-	sd2.iscsi_url = sd->iscsi_url;
-	sd2.iscsi_lun = sd->iscsi_lun;
-	sd2.iscsi_ctx = iscsi_context_login(initiatorname2, sd2.iscsi_url, &sd2.iscsi_lun);
-	if (sd2.iscsi_ctx == NULL) {
-		logging(LOG_VERBOSE, "Failed to login to target");
-		return;
-	}
+	ret = mpath_sd2_get_or_clone(sd, &sd2);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Set Software Write Protect on the second connection");
-	ret = set_swp(&sd2);
+	ret = set_swp(sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 	if (ret != 0) {
 		return;
@@ -126,7 +121,7 @@ test_sanitize_readonly(void)
 
 
 	logging(LOG_VERBOSE, "Clear Software Write Protect on the second connection");
-	ret = clear_swp(&sd2);
+	ret = clear_swp(sd2);
 
 	logging(LOG_VERBOSE, "Use TESTUNITREADY to clear unit attention on "
 		"first connection");
@@ -134,5 +129,5 @@ test_sanitize_readonly(void)
 		sleep(1);
 	}
 
-	iscsi_destroy_context(sd2.iscsi_ctx);
+	mpath_sd2_put(sd2);
 }
