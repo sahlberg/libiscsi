@@ -1015,6 +1015,33 @@ static void free_scsi_device(struct scsi_device *sdev)
 	free(sdev);
 }
 
+/* Clear persistent reservations and reservation keys left by a previous run */
+static int clear_pr(struct scsi_device *sdev)
+{
+	int i, res;
+	struct scsi_task *pr_task;
+	struct scsi_persistent_reserve_in_read_keys *rk;
+
+	res = 0;
+	if (prin_read_keys(sdev, &pr_task, &rk) != 0)
+		goto out;
+
+	res = -1;
+	if (rk->num_keys && data_loss == 0)
+		goto out;
+
+	res = 0;
+	for (i = 0; i < rk->num_keys; i++) {
+		prout_register_and_ignore(sdev, rk->keys[i]);
+		prout_register_key(sdev, 0, rk->keys[i]);
+	}
+
+	scsi_free_scsi_task(pr_task);
+
+out:
+	return res;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1358,6 +1385,11 @@ main(int argc, char *argv[])
 		readonly = !!(ms->device_specific_parameter & 0x80);
 	}
 	scsi_free_scsi_task(task);
+
+	if (clear_pr(sd) < 0) {
+		printf("One or more persistent reservations keys have been registered\n");
+		return -1;
+	}
 
 	if (maxsectors) {
 		maximum_transfer_length = maxsectors;
