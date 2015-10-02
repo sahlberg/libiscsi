@@ -991,11 +991,11 @@ static int connect_scsi_device(struct scsi_device *sdev, const char *initiatorna
 static void free_scsi_device(struct scsi_device *sdev)
 {
 	if (sdev->error_str) {
-		free(discard_const(sdev->error_str));
+		free(sdev->error_str);
 		sdev->error_str = NULL;
 	}
 	if (sdev->iscsi_url) {
-		free(discard_const(sdev->iscsi_url));
+		free(sdev->iscsi_url);
 		sdev->iscsi_url = NULL;
 	}
 	if (sdev->iscsi_ctx) {
@@ -1005,7 +1005,7 @@ static void free_scsi_device(struct scsi_device *sdev)
 	}
 
 	if (sdev->sgio_dev) {
-		free(discard_const(sdev->sgio_dev));
+		free(sdev->sgio_dev);
 		sdev->sgio_dev = NULL;
 	}
 	if (sdev->sgio_fd != -1) {
