@@ -37,7 +37,7 @@ test_read6_beyond_eol(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ6 1-255 blocks one block beyond the end");
-	for (i = 1; i <= 255; i++) {
+	for (i = 1; i <= 255 && i + 0U <= num_blocks + 1; i++) {
 		ret = read6(sd, NULL, num_blocks + 1 - i,
 			    i * block_size, block_size, NULL,
 			    EXPECT_LBA_OOB);
@@ -58,6 +58,10 @@ test_read6_beyond_eol(void)
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
+	if (num_blocks == 0) {
+		CU_PASS("LUN is too small for read-beyond-eol tests with READ6. Skipping test.\n");
+		return;
+	}
 
 	logging(LOG_VERBOSE, "Test READ6 2-255 blocks all but one block beyond the end");
 	for (i = 2; i <= 255; i++) {
