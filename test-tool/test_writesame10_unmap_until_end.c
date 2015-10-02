@@ -29,16 +29,12 @@ void
 test_writesame10_unmap_until_end(void)
 {
 	int ret;
-	unsigned int i, j;
-	unsigned char *zeroBlock;
+	unsigned int i;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_THIN_PROVISIONING;
 	CHECK_FOR_LBPWS10;
 	CHECK_FOR_SBC;
-
-	zeroBlock = alloca(block_size);
-	memset(zeroBlock, 0, block_size);
 
 	if (inq_bl->wsnz) {
 	    logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 does not support 0-blocks.");
@@ -74,9 +70,7 @@ test_writesame10_unmap_until_end(void)
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
-			for (j = 0; j < i; j++) {
-				CU_ASSERT_EQUAL(memcmp(buf + j*block_size, zeroBlock, block_size), 0);
-			}
+			CU_ASSERT(all_zeroes(buf, i * block_size));
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
 				"and verify zero test");

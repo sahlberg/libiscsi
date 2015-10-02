@@ -257,6 +257,8 @@ static inline int pr_type_is_all_registrants(
 	}
 }
 
+int all_zeroes(const unsigned char *buf, unsigned size);
+
 int prin_task(struct scsi_device *sdev, int service_action,
     int success_expected);
 int prin_read_keys(struct scsi_device *sdev, struct scsi_task **tp,

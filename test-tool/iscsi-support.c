@@ -118,6 +118,26 @@ int maximum_transfer_length;
 
 int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
+static const unsigned char zeroBlock[4096];
+
+/**
+ * Returns 1 if and only if buf[0..size-1] is zero.
+ */
+int all_zeroes(const unsigned char *buf, unsigned size)
+{
+	unsigned j, e;
+
+	for (j = 0; j < size; j += e) {
+		e = size - j;
+		if (e > sizeof(zeroBlock))
+			e = sizeof(zeroBlock);
+		if (memcmp(buf + j, zeroBlock, e) != 0)
+			return 0;
+	}
+
+	return 1;
+}
+
 static const char *scsi_status_str(int status)
 {
 	switch(status) {

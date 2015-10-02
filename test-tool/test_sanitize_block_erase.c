@@ -219,12 +219,9 @@ check_lun_is_wiped(unsigned char *buf, uint64_t lba)
 	}
 
 	if (rc16->lbprz) {
-		unsigned char *zbuf = alloca(256 * block_size);
-		memset(zbuf, 0, 256 * block_size);
-
 		logging(LOG_VERBOSE, "LBPRZ==1 All blocks "
 			"should read back as 0");
-		if (memcmp(zbuf, rbuf, 256 * block_size)) {
+		if (all_zeroes(rbuf, 256 * block_size) == 0) {
 			logging(LOG_NORMAL, "[FAILED] Blocks did not "
 				"read back as zero");
 			CU_FAIL("[FAILED] Blocks did not read back "

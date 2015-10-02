@@ -43,8 +43,6 @@ test_unmap_simple(void)
 	int i, ret;
 	struct unmap_list list[257];
 	unsigned char *buf = alloca(256 * block_size);
-	unsigned char *zbuf = alloca(256 * block_size);
-        memset(zbuf, 0, 256 * block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test basic UNMAP");
@@ -77,7 +75,7 @@ test_unmap_simple(void)
 		if (rc16 && rc16->lbprz) {
 			logging(LOG_VERBOSE, "LBPRZ==1 All UNMAPPED blocks "
 				"should read back as 0");
-			if (memcmp(buf, zbuf, i * block_size)) {
+			if (all_zeroes(buf, i * block_size) == 0) {
 				logging(LOG_NORMAL, "[FAILED] Blocks did not "
 					"read back as zero");
 				CU_FAIL("[FAILED] Blocks did not read back "
@@ -112,7 +110,7 @@ test_unmap_simple(void)
 		if (rc16 && rc16->lbprz) {
 			logging(LOG_VERBOSE, "LBPRZ==1 All UNMAPPED blocks "
 				"should read back as 0");
-			if (memcmp(buf, zbuf, i * block_size)) {
+			if (all_zeroes(buf, i * block_size) == 0) {
 				logging(LOG_NORMAL, "[FAILED] Blocks did not "
 					"read back as zero");
 				CU_FAIL("[FAILED] Blocks did not read back "

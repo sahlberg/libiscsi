@@ -30,9 +30,8 @@ void
 test_writesame16_unmap_until_end(void)
 {
 	int ret;
-	unsigned int i, j;
+	unsigned int i;
 	unsigned char *buf = alloca(256 * block_size);
-	unsigned char *zeroBlock;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_THIN_PROVISIONING;
@@ -44,9 +43,6 @@ test_writesame16_unmap_until_end(void)
 	    CU_PASS("[SKIPPED] WRITESAME10 does not support 0-blocks.");
 	    return;
 	}
-
-	zeroBlock = alloca(block_size);
-	memset(zeroBlock, 0, block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME16 of 1-256 blocks at the end of the LUN by setting number-of-blocks==0");
@@ -79,9 +75,7 @@ test_writesame16_unmap_until_end(void)
 				     i * block_size, block_size,
 				     0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
-			for (j = 0; j < i; j++) {
-				CU_ASSERT_EQUAL(memcmp(buf + j*block_size, zeroBlock, block_size), 0);
-			}
+			CU_ASSERT(all_zeroes(buf, i * block_size));
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
 				"and verify zero test");
