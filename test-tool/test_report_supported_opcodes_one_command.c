@@ -101,6 +101,19 @@ test_report_supported_opcodes_one_command(void)
 		} else {
 			CU_ASSERT_EQUAL(ret, 0);
 		}
+		if (ret != 0 && ret != -2) {
+			if (rsoc->descriptors[i].servactv)
+				logging(LOG_NORMAL, "[FAILED] Opcode"
+					" %#02x/%#02x: got unexpected response"
+					" for reporting option 001b",
+					rsoc->descriptors[i].opcode,
+					rsoc->descriptors[i].sa);
+			else
+				logging(LOG_NORMAL, "[FAILED] Opcode %#02x: got"
+					" unexpected response for reporting"
+					" option 001b",
+					rsoc->descriptors[i].opcode);
+		}
 
 		if (rsoc->descriptors[i].servactv) {
 			logging(LOG_VERBOSE, "This opcode has service actions. "
@@ -130,6 +143,19 @@ test_report_supported_opcodes_one_command(void)
 			CU_PASS("SCSI_REPORT_SUPPORTING_SERVICEACTION is not implemented.");
 		} else {
 			CU_ASSERT_EQUAL(ret, 0);
+		}
+		if (ret != 0 && ret != -2) {
+			if (rsoc->descriptors[i].servactv)
+				logging(LOG_NORMAL, "[FAILED] Opcode"
+					" %#02x/%#02x: got unexpected response"
+					" for reporting option 002b",
+					rsoc->descriptors[i].opcode,
+					rsoc->descriptors[i].sa);
+			else
+				logging(LOG_NORMAL, "[FAILED] Opcode %#02x: got"
+					" unexpected response for reporting"
+					" option 002b",
+					rsoc->descriptors[i].opcode);
 		}
 	}
 
