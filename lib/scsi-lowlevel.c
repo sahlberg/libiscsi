@@ -1077,7 +1077,8 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 				task_get_uint8(task, 1) & 0x07;
 			rsoc_one->cdb_length =
 				task_get_uint16(task, 2);
-			if(rsoc_one->cdb_length <= 16) {
+			if (rsoc_one->cdb_length <=
+			    sizeof(rsoc_one->cdb_usage_data)) {
 				memcpy(rsoc_one->cdb_usage_data,
 					&task->datain.data[4],
 					rsoc_one->cdb_length);
