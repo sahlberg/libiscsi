@@ -97,7 +97,7 @@ test_verify12_dpo(void)
 	if (ret == -2) {
 		logging(LOG_NORMAL, "REPORT_SUPPORTED_OPCODES not implemented. "
 			"Skipping this part of the test");
-		return;
+		goto out;
 	}
 	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
 	rsoc = scsi_datain_unmarshall(rso_task);
@@ -112,5 +112,7 @@ test_verify12_dpo(void)
 			"flag is clear in the CDB_USAGE_DATA");
 		CU_ASSERT_EQUAL(usage_data_dpo, 0x00);
 	}
+
+out:
 	scsi_free_scsi_task(rso_task);
 }

@@ -45,14 +45,11 @@ test_report_supported_opcodes_servactv(void)
 		logging(LOG_NORMAL, "[SKIPPED] READ_SUPPORTED_OPCODES is not "
 			"implemented.");
 		CU_PASS("READ_SUPPORTED_OPCODES is not implemented.");
-		scsi_free_scsi_task(rso_task);
-		return;
+		goto out;
 	}
 	CU_ASSERT_EQUAL(ret, 0);
-	if (ret != 0) {
-		scsi_free_scsi_task(rso_task);
-		return;
-	}
+	if (ret != 0)
+		goto out;
 	
 	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
 	rsoc = scsi_datain_unmarshall(rso_task);
@@ -62,7 +59,7 @@ test_report_supported_opcodes_servactv(void)
 			"for ReportSupportedOpcodes\n");
 		CU_FAIL("Target did not return any data for "
 			"ReportSupportedOpcodes");
-		return;
+		goto out;
 	}
 
 
@@ -77,5 +74,6 @@ test_report_supported_opcodes_servactv(void)
 		}
 	}
 
+out:
 	scsi_free_scsi_task(rso_task);
 }

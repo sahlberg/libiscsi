@@ -121,7 +121,7 @@ test_write16_dpofua(void)
 	if (ret == -2) {
 		logging(LOG_NORMAL, "REPORT_SUPPORTED_OPCODES not implemented. "
 			"Skipping this part of the test");
-		return;
+		goto out;
 	}
 	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
 	rsoc = scsi_datain_unmarshall(rso_task);
@@ -150,5 +150,7 @@ test_write16_dpofua(void)
 		CU_FAIL("Target did not return any data for "
 			"ReportSupportedOpcodes");
 	}
+
+out:
 	scsi_free_scsi_task(rso_task);
 }
