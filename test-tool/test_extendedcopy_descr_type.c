@@ -64,6 +64,7 @@ test_extendedcopy_descr_type(void)
 		get_desc_len(BLK_TO_BLK_SEG_DESCR);
 	data.data = alloca(alloc_len);
 	xcopybuf = data.data;
+	memset(xcopybuf, 0, alloc_len);
 
 	logging(LOG_VERBOSE,
 			"Send Fibre Channel N_Port_Name target descriptor");

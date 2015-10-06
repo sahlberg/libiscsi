@@ -44,6 +44,7 @@ test_extendedcopy_validate_tgt_descr(void)
 		get_desc_len(BLK_TO_BLK_SEG_DESCR);
 	data.data = alloca(data.size);
 	xcopybuf = data.data;
+	memset(xcopybuf, 0, data.size);
 
 	logging(LOG_VERBOSE, "Unsupported LU_ID TYPE");
 	/* Unsupported LU ID TYPE */

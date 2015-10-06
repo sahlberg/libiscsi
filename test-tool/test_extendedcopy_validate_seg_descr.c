@@ -44,6 +44,7 @@ test_extendedcopy_validate_seg_descr(void)
 		get_desc_len(BLK_TO_BLK_SEG_DESCR);
 	data.data = alloca(data.size);
 	xcopybuf = data.data;
+	memset(xcopybuf, 0, data.size);
 
 	logging(LOG_VERBOSE, "Send invalid target descriptor index");
 	offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,

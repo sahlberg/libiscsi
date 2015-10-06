@@ -58,6 +58,7 @@ test_extendedcopy_simple(void)
 		get_desc_len(BLK_TO_BLK_SEG_DESCR);
 	data.data = alloca(data.size);
 	xcopybuf = data.data;
+	memset(xcopybuf, 0, data.size);
 
 	/* Initialize target descriptor list with one target descriptor */
 	offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,

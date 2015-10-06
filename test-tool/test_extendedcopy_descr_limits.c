@@ -82,6 +82,7 @@ test_extendedcopy_descr_limits(void)
 		get_desc_len(BLK_TO_BLK_SEG_DESCR);
 	data.data = alloca(alloc_len);
 	xcopybuf = data.data;
+	memset(xcopybuf, 0, alloc_len);
 
 	logging(LOG_VERBOSE,
 			"Test sending more than supported target descriptors");

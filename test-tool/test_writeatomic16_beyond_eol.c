@@ -29,7 +29,8 @@ void
 test_writeatomic16_beyond_eol(void)
 {
 	int align, i, gran, ret;
-	unsigned char *buf = alloca(256 * 2 * block_size);
+	const size_t bufsz = 256 * 2 * block_size;
+	unsigned char *buf = alloca(bufsz);
 
 
 	CHECK_FOR_DATALOSS;
@@ -42,6 +43,7 @@ test_writeatomic16_beyond_eol(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 
+	memset(buf, 0xa6, bufsz);
 	align = inq_bl->atomic_align ? inq_bl->atomic_align : 1;
 	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
 	ret = writeatomic16(sd, 0,
@@ -56,7 +58,6 @@ test_writeatomic16_beyond_eol(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 1-256 blocks <granularity> blocks beyond the end");
-	memset(buf, 0xa6, 256 * block_size);
 	for (i = gran; i <= 256; i += gran) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;

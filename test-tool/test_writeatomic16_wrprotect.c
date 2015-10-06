@@ -43,6 +43,7 @@ test_writeatomic16_wrprotect(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 
 	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
+	memset(buf, 0, block_size);
 	ret = writeatomic16(sd, 0,
 			    block_size * gran,
 			    block_size, 0, 0, 0, 0, buf,

@@ -44,6 +44,7 @@ test_extendedcopy_param(void)
 		get_desc_len(BLK_TO_BLK_SEG_DESCR);
 	data.data = alloca(data.size);
 	xcopybuf = data.data;
+	memset(xcopybuf, 0, data.size);
 
 	offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
 			LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);

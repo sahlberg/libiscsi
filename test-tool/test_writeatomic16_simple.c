@@ -30,7 +30,8 @@ void
 test_writeatomic16_simple(void)
 {
 	int i, gran, ret;
-	unsigned char *buf = alloca(256 * block_size);
+	const size_t bufsz = 256 * block_size;
+	unsigned char *buf = alloca(bufsz);
 
 
 	CHECK_FOR_DATALOSS;
@@ -43,6 +44,7 @@ test_writeatomic16_simple(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 
+	memset(buf, 0, bufsz);
 	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
 	ret = writeatomic16(sd, 0,
 			    block_size * gran,
