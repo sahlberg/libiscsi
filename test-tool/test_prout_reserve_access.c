@@ -135,6 +135,8 @@ test_prout_reserve_access_ea(void)
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 	verify_persistent_reserve_access(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS,
 	    0, 0, 0, 0);
@@ -157,6 +159,8 @@ test_prout_reserve_access_we(void)
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 	verify_persistent_reserve_access(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
 	    1, 0, 1, 0);
@@ -179,6 +183,8 @@ test_prout_reserve_access_earo(void)
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 	verify_persistent_reserve_access(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY,
 	    1, 1, 0, 0);
@@ -201,6 +207,8 @@ test_prout_reserve_access_wero(void)
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 	verify_persistent_reserve_access(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY,
 	    1, 1, 1, 0);
@@ -223,6 +231,8 @@ test_prout_reserve_access_eaar(void)
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 	verify_persistent_reserve_access(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS,
 	    1, 1, 0, 0);
@@ -245,6 +255,8 @@ test_prout_reserve_access_wear(void)
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 	verify_persistent_reserve_access(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS,
 	    1, 1, 1, 0);

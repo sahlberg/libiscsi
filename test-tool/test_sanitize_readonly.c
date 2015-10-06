@@ -52,6 +52,8 @@ test_sanitize_readonly(void)
 	logging(LOG_VERBOSE, "Create a second connection to the target");
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 
 	logging(LOG_VERBOSE, "Set Software Write Protect on the second connection");
 	ret = set_swp(sd2);

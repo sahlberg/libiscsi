@@ -109,6 +109,8 @@ test_prout_reserve_ownership_ea(void)
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 	verify_persistent_reserve_ownership(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS, 0);
 	mpath_sd2_put(sd2);
@@ -130,6 +132,8 @@ test_prout_reserve_ownership_we(void)
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 	verify_persistent_reserve_ownership(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE, 0);
 	mpath_sd2_put(sd2);
@@ -151,6 +155,8 @@ test_prout_reserve_ownership_earo(void)
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 	verify_persistent_reserve_ownership(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY, 0);
 	mpath_sd2_put(sd2);
@@ -172,6 +178,8 @@ test_prout_reserve_ownership_wero(void)
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 	verify_persistent_reserve_ownership(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY, 0);
 	mpath_sd2_put(sd2);
@@ -193,6 +201,8 @@ test_prout_reserve_ownership_eaar(void)
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 	verify_persistent_reserve_ownership(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS, 1);
 	mpath_sd2_put(sd2);
@@ -214,6 +224,8 @@ test_prout_reserve_ownership_wear(void)
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 	verify_persistent_reserve_ownership(sd, sd2,
 	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS, 1);
 	mpath_sd2_put(sd2);

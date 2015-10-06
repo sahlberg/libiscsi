@@ -66,6 +66,8 @@ test_reserve6_target_warm_reset(void)
 	logging(LOG_VERBOSE, "Create a second connection to the target");
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 
 	logging(LOG_VERBOSE, "RESERVE6 from the second initiator should work now");
 	ret = reserve6(sd2);

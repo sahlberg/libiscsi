@@ -70,6 +70,9 @@ test_prout_preempt_rm_reg(void)
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
 
+	if (ret < 0)
+		return;
+
 	/* register secondary key */
 	ret = prout_register_and_ignore(sd2, k2);
 	CU_ASSERT_EQUAL(ret, 0);

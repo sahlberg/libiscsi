@@ -58,6 +58,8 @@ test_reserve6_2initiators(void)
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 
 	logging(LOG_NORMAL, "Try to take out a RESERVE6 from the second initiator");
 	ret = reserve6_conflict(sd2);

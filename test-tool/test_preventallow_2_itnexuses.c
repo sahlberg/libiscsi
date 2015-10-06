@@ -62,6 +62,8 @@ test_preventallow_2_itnexuses(void)
 	logging(LOG_VERBOSE, "Create a second connection to the target");
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
+	if (ret < 0)
+		return;
 
 	logging(LOG_VERBOSE, "Try to eject the medium on the second connection");
 	ret = startstopunit(sd2, 0, 0, 0, 0, 1, 0,
