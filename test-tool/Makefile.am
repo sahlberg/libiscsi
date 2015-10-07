@@ -69,11 +69,13 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_preventallow_2_itnexuses.c \
 	test_prin_read_keys_simple.c \
 	test_prin_serviceaction_range.c \
+	test_prin_report_caps.c \
 	test_prout_register_simple.c \
 	test_prout_reserve_simple.c \
 	test_prout_reserve_access.c \
 	test_prout_reserve_ownership.c \
 	test_prout_clear_simple.c \
+	test_prout_preempt.c \
 	test_read6_simple.c \
 	test_read6_beyond_eol.c \
 	test_read10_simple.c \

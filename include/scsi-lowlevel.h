@@ -945,6 +945,22 @@ struct scsi_persistent_reserve_in_read_reservation {
        unsigned char pr_type;
 };
 
+enum scsi_persistent_reservation_type_mask {
+     SCSI_PR_TYPE_MASK_EX_AC_AR	= (1 << 0),
+     SCSI_PR_TYPE_MASK_WR_EX   	= (1 << 9),
+     SCSI_PR_TYPE_MASK_EX_AC   	= (1 << 11),
+     SCSI_PR_TYPE_MASK_WR_EX_RO	= (1 << 13),
+     SCSI_PR_TYPE_MASK_EX_AC_RO	= (1 << 14),
+     SCSI_PR_TYPE_MASK_WR_EX_AR	= (1 << 15),
+
+     SCSI_PR_TYPE_MASK_ALL	= (SCSI_PR_TYPE_MASK_EX_AC_AR
+				 | SCSI_PR_TYPE_MASK_WR_EX
+				 | SCSI_PR_TYPE_MASK_EX_AC
+				 | SCSI_PR_TYPE_MASK_WR_EX_RO
+				 | SCSI_PR_TYPE_MASK_EX_AC_RO
+				 | SCSI_PR_TYPE_MASK_WR_EX_AR)
+};
+
 struct scsi_persistent_reserve_in_report_capabilities {
        uint16_t length;
        uint8_t  crh;

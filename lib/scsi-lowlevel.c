@@ -947,7 +947,7 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 		rc->atp_c          = !!(task_get_uint8(task, 2) & 0x04);
 		rc->ptpl_c         = !!(task_get_uint8(task, 2) & 0x01);
 		rc->tmv            = !!(task_get_uint8(task, 3) & 0x80);
-		rc->allow_commands = task_get_uint8(task, 3) >> 4;
+		rc->allow_commands = (task_get_uint8(task, 3) & 0x70) >> 4;
 		rc->persistent_reservation_type_mask = task_get_uint16(task, 4);
 
 		return rc;
@@ -3396,7 +3396,7 @@ scsi_datain_getfullsize(struct scsi_task *task)
 	case SCSI_OPCODE_INQUIRY:
 		return scsi_inquiry_datain_getfullsize(task);
 	case SCSI_OPCODE_MODESENSE6:
-	  return scsi_modesense_datain_getfullsize(task, 1);
+		return scsi_modesense_datain_getfullsize(task, 1);
 	case SCSI_OPCODE_READCAPACITY10:
 		return scsi_readcapacity10_datain_getfullsize(task);
 	case SCSI_OPCODE_SYNCHRONIZECACHE10:
@@ -3425,7 +3425,7 @@ scsi_datain_unmarshall(struct scsi_task *task)
 	case SCSI_OPCODE_MODESENSE6:
 		return scsi_modesense_datain_unmarshall(task, 1);
 	case SCSI_OPCODE_MODESENSE10:
-	  return scsi_modesense_datain_unmarshall(task, 0);
+		return scsi_modesense_datain_unmarshall(task, 0);
 	case SCSI_OPCODE_READCAPACITY10:
 		return scsi_readcapacity10_datain_unmarshall(task);
 	case SCSI_OPCODE_READTOC:

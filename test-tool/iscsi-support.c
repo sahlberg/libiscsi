@@ -33,6 +33,7 @@
 #include <string.h>
 #include <poll.h>
 #include <fnmatch.h>
+#include <errno.h>
 
 #ifdef HAVE_SG_IO
 #include <fcntl.h>
@@ -1023,6 +1024,58 @@ prout_clear(struct scsi_device *sdev, unsigned long long key)
 }
 
 int
+prout_preempt(struct scsi_device *sdev,
+	      unsigned long long sark, unsigned long long rk,
+	      enum scsi_persistent_out_type pr_type)
+{
+	struct scsi_persistent_reserve_out_basic poc;
+	struct scsi_task *task;
+	int ret = 0;
+
+	/* reserve the target using specified reservation type */
+	logging(LOG_VERBOSE,
+		"Send PROUT/PREEMPT to preempt reservation and/or "
+		"registration");
+
+	if (!data_loss) {
+		printf("--dataloss flag is not set in. Skipping PROUT\n");
+		return -1;
+	}
+
+	memset(&poc, 0, sizeof (poc));
+	poc.reservation_key = rk;
+	poc.service_action_reservation_key = sark;
+	task = scsi_cdb_persistent_reserve_out(
+	    SCSI_PERSISTENT_RESERVE_PREEMPT,
+	    SCSI_PERSISTENT_RESERVE_SCOPE_LU,
+	    pr_type, &poc);
+	assert(task != NULL);
+
+	task = send_scsi_command(sdev, task, NULL);
+	if (task == NULL) {
+		logging(LOG_NORMAL,
+		    "[FAILED] Failed to send PROUT command: %s",
+		    iscsi_get_error(sdev->iscsi_ctx));
+		return -1;
+	}
+	if (status_is_invalid_opcode(task)) {
+		scsi_free_scsi_task(task);
+		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE OUT is not implemented.");
+		return -2;
+	}
+
+	if (task->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL,
+		    "[FAILED] PROUT command: failed with sense. %s",
+		    iscsi_get_error(sdev->iscsi_ctx));
+		ret = -1;
+	}
+
+	scsi_free_scsi_task(task);
+	return ret;
+}
+
+int
 prin_verify_reserved_as(struct scsi_device *sdev,
     unsigned long long key, enum scsi_persistent_out_type pr_type)
 {
@@ -1153,6 +1206,52 @@ prin_verify_not_reserved(struct scsi_device *sdev)
 	/* ??? free rr? */
 	scsi_free_scsi_task(task);
 	return ret;
+}
+
+int
+prin_report_caps(struct scsi_device *sdev, struct scsi_task **tp,
+	struct scsi_persistent_reserve_in_report_capabilities **_rcaps)
+{
+	const int buf_sz = 16384;
+	struct scsi_persistent_reserve_in_report_capabilities *rcaps = NULL;
+
+	logging(LOG_VERBOSE, "Send PRIN/REPORT_CAPABILITIES");
+
+	*tp = scsi_cdb_persistent_reserve_in(
+				SCSI_PERSISTENT_RESERVE_REPORT_CAPABILITIES,
+				buf_sz);
+	assert(*tp != NULL);
+
+	*tp = send_scsi_command(sdev, *tp, NULL);
+	if (*tp == NULL) {
+	        logging(LOG_NORMAL,
+		    "[FAILED] Failed to send PRIN command: %s",
+		    iscsi_get_error(sdev->iscsi_ctx));
+		return -1;
+	}
+	if (status_is_invalid_opcode(*tp)) {
+		logging(LOG_NORMAL,
+			"[SKIPPED] PERSISTENT RESERVE IN is not implemented.");
+		return -2;
+	}
+	if ((*tp)->status != SCSI_STATUS_GOOD) {
+		logging(LOG_NORMAL,
+		    "[FAILED] PRIN command: failed with sense. %s",
+		    iscsi_get_error(sdev->iscsi_ctx));
+		return -1;
+	}
+
+	rcaps = scsi_datain_unmarshall(*tp);
+	if (rcaps == NULL) {
+		logging(LOG_NORMAL,
+			"[FAIL] failed to unmarshall PRIN/REPORT_CAPABILITIES "
+			"data. %s", iscsi_get_error(sdev->iscsi_ctx));
+		return -1;
+	}
+	if (_rcaps != NULL)
+		*_rcaps = rcaps;
+
+	return 0;
 }
 
 int
@@ -2844,4 +2943,38 @@ int receive_copy_results(struct scsi_device *sdev, enum scsi_copy_results_sa sa,
 		scsi_free_scsi_task(task);
 	
 	return ret;
+}
+
+#define TEST_ISCSI_TUR_MAX_RETRIES 5
+
+int
+test_iscsi_tur_until_good(struct scsi_device *iscsi_sd, int *num_uas)
+{
+	int num_turs;
+
+	if (iscsi_sd->iscsi_ctx == NULL) {
+		logging(LOG_NORMAL, "invalid sd for tur_until_good");
+		return -EINVAL;
+	}
+
+	*num_uas = 0;
+	for (num_turs = 0; num_turs < TEST_ISCSI_TUR_MAX_RETRIES; num_turs++) {
+		struct scsi_task *tsk;
+		tsk = iscsi_testunitready_sync(iscsi_sd->iscsi_ctx,
+					       iscsi_sd->iscsi_lun);
+		if (tsk->status == SCSI_STATUS_GOOD) {
+			logging(LOG_VERBOSE, "TUR good after %d retries",
+				num_turs);
+			return 0;
+		} else if ((tsk->status == SCSI_STATUS_CHECK_CONDITION)
+			&& (tsk->sense.key == SCSI_SENSE_UNIT_ATTENTION)) {
+			logging(LOG_VERBOSE, "Got UA for TUR");
+			(*num_uas)++;
+		} else {
+			logging(LOG_NORMAL, "unexpected non-UA failure: %d,%d",
+				tsk->status, tsk->sense.key);
+		}
+	}
+
+	return -ETIMEDOUT;
 }

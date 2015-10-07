@@ -274,9 +274,14 @@ int prout_reserve(struct scsi_device *sdev,
 int prout_release(struct scsi_device *sdev,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
 int prout_clear(struct scsi_device *sdev, unsigned long long key);
+int prout_preempt(struct scsi_device *sdev,
+		  unsigned long long sark, unsigned long long rk,
+		  enum scsi_persistent_out_type pr_type);
 int prin_verify_not_reserved(struct scsi_device *sdev);
 int prin_verify_reserved_as(struct scsi_device *sdev,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
+int prin_report_caps(struct scsi_device *sdev, struct scsi_task **tp,
+	struct scsi_persistent_reserve_in_report_capabilities **_rcaps);
 int verify_read_works(struct scsi_device *sdev, unsigned char *buf);
 int verify_write_works(struct scsi_device *sdev, unsigned char *buf);
 int verify_read_fails(struct scsi_device *sdev, unsigned char *buf);
@@ -331,4 +336,5 @@ int populate_seg_desc_hdr(unsigned char *hdr, enum ec_descr_type_code desc_type,
 int populate_seg_desc_b2b(unsigned char *desc, int dc, int cat, int src_index, int dst_index, int num_blks, uint64_t src_lba, uint64_t dst_lba);
 void populate_param_header(unsigned char *buf, int list_id, int str, int list_id_usage, int prio, int tgt_desc_len, int seg_desc_len, int inline_data_len);
 int receive_copy_results(struct scsi_device *sdev, enum scsi_copy_results_sa sa, int list_id, void **datap, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
+int test_iscsi_tur_until_good(struct scsi_device *iscsi_sd, int *num_uas);
 #endif	/* _ISCSI_SUPPORT_H_ */

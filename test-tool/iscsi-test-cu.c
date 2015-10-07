@@ -157,6 +157,11 @@ static CU_TestInfo tests_prin_read_keys[] = {
 	CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_prin_report_caps[] = {
+	{ (char *)"Simple", test_prin_report_caps_simple },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_prout_register[] = {
 	{ (char *)"Simple", test_prout_register_simple },
 	CU_TEST_INFO_NULL
@@ -195,6 +200,12 @@ static CU_TestInfo tests_prout_reserve[] = {
 static CU_TestInfo tests_prout_clear[] = {
 	{ (char *)"Simple",
 	  test_prout_clear_simple },
+	CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_prout_preempt[] = {
+	{ (char *)"RemoveRegistration",
+	  test_prout_preempt_rm_reg },
 	CU_TEST_INFO_NULL
 };
 
@@ -482,9 +493,11 @@ static libiscsi_suite_info scsi_suites[] = {
 	{ "PreventAllow", NON_PGR_FUNCS, tests_preventallow },
 	{ "PrinReadKeys", NON_PGR_FUNCS, tests_prin_read_keys },
 	{ "PrinServiceactionRange", NON_PGR_FUNCS, tests_prin_serviceaction_range },
+	{ "PrinReportCapabilities", NON_PGR_FUNCS, tests_prin_report_caps },
 	{ "ProutRegister", NON_PGR_FUNCS, tests_prout_register },
 	{ "ProutReserve", NON_PGR_FUNCS, tests_prout_reserve },
 	{ "ProutClear", NON_PGR_FUNCS, tests_prout_clear },
+	{ "ProutPreempt", NON_PGR_FUNCS, tests_prout_preempt },
 	{ "Read6", NON_PGR_FUNCS, tests_read6 },
 	{ "Read10", NON_PGR_FUNCS, tests_read10 },
 	{ "Read12", NON_PGR_FUNCS, tests_read12 },
@@ -568,9 +581,11 @@ static libiscsi_suite_info all_suites[] = {
 	{ "PrinReadKeys", NON_PGR_FUNCS, tests_prin_read_keys },
 	{ "PrinServiceactionRange", NON_PGR_FUNCS,
 	  tests_prin_serviceaction_range },
+	{ "PrinReportCapabilities", NON_PGR_FUNCS, tests_prin_report_caps },
 	{ "ProutRegister", NON_PGR_FUNCS, tests_prout_register },
 	{ "ProutReserve", NON_PGR_FUNCS, tests_prout_reserve },
 	{ "ProutClear", NON_PGR_FUNCS, tests_prout_clear },
+	{ "ProutPreempt", NON_PGR_FUNCS, tests_prout_preempt },
 	{ "Read6", NON_PGR_FUNCS, tests_read6 },
 	{ "Read10", NON_PGR_FUNCS, tests_read10 },
 	{ "Read12", NON_PGR_FUNCS, tests_read12 },
