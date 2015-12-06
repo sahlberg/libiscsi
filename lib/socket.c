@@ -697,7 +697,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			count = send(iscsi->fd,
 				     pdu->outdata.data + pdu->outdata_written,
 				     pdu->outdata.size - pdu->outdata_written,
-				     0);
+				     MSG_NOSIGNAL);
 			if (count == -1) {
 				if (errno == EAGAIN || errno == EWOULDBLOCK) {
 					return 0;
@@ -746,7 +746,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 
 		/* Write padding */
 		if (pdu->payload_written < total) {
-			count = send(iscsi->fd, padding_buf, total - pdu->payload_written, 0);
+			count = send(iscsi->fd, padding_buf, total - pdu->payload_written, MSG_NOSIGNAL);
 			if (count == -1) {
 				if (errno == EAGAIN || errno == EWOULDBLOCK) {
 					return 0;
