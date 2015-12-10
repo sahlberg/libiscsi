@@ -108,14 +108,4 @@ test_prout_preempt_rm_reg(void)
 	/* unregister k2 */
 	ret = prout_register_key(sd2, 0, k2);
 	CU_ASSERT_EQUAL(ret, 0);
-
-	CU_ASSERT_EQUAL(rk->num_keys, 1);
-	/* ensure preempt bumped generation number */
-	CU_ASSERT_EQUAL(rk->prgeneration, old_gen + 1);
-	/* ensure k2 is retained */
-	CU_ASSERT_EQUAL(rk->keys[0], k2);
-
-	/* unregister k2 */
-	ret = prout_register_key(sd2, 0, k2);
-	CU_ASSERT_EQUAL(ret, 0);
 }
