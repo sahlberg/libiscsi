@@ -769,6 +769,7 @@ suite_init(void)
 				"error: Failed to login to target for test set-up\n");
 			return 1;
 		}
+		iscsi_set_no_ua_on_reconnect(mp_sds[i]->iscsi_ctx, 1);
 	}
 #ifndef HAVE_CU_SUITEINFO_PSETUPFUNC
 	/* libcunit version 1 */
@@ -961,6 +962,7 @@ static int connect_scsi_device(struct scsi_device *sdev, const char *initiatorna
 		if (sdev->iscsi_ctx == NULL) {
 			return -1;
 		}
+		iscsi_set_no_ua_on_reconnect(sdev->iscsi_ctx, 1);
 		return 0;
 	}
 #ifdef HAVE_SG_IO

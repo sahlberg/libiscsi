@@ -159,6 +159,7 @@ struct iscsi_context {
 	int scsi_timeout;
 	struct iscsi_context *old_iscsi;
 	int retry_cnt;
+	int no_ua_on_reconnect;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40

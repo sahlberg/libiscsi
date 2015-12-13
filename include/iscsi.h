@@ -1305,6 +1305,12 @@ iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces);
 EXTERN void
 iscsi_set_reconnect_max_retries(struct iscsi_context *iscsi, int count);
 
+/* Set to true to have libiscsi use TESTUNITREADY and consume any/all
+   UnitAttentions that may have triggered in the target.
+ */
+EXTERN void
+iscsi_set_no_ua_on_reconnect(struct iscsi_context *iscsi, int state);
+
 #ifdef __cplusplus
 }
 #endif
