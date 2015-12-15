@@ -59,7 +59,7 @@ test_reserve6_itnexus_loss(void)
         logging(LOG_VERBOSE, "Disconnect from the target.");
         iscsi_destroy_context(sd->iscsi_ctx);
 
-        logging(LOG_VERBOSE, "Sleep for three seconds incase the target is slow to reset");
+        logging(LOG_VERBOSE, "Sleep for three seconds in case the target is slow to reset");
         sleep(3);
 
         logging(LOG_VERBOSE, "Reconnect to target");

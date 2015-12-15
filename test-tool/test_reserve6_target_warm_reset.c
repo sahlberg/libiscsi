@@ -56,9 +56,8 @@ test_reserve6_target_warm_reset(void)
                 return;
         }
 
-        logging(LOG_VERBOSE, "Sleep for three seconds incase the target is slow to reset");
+        logging(LOG_VERBOSE, "Sleep for three seconds in case the target is slow to reset");
         sleep(3);
-
 
         logging(LOG_VERBOSE, "Create a second connection to the target");
         ret = mpath_sd2_get_or_clone(sd, &sd2);

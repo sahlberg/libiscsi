@@ -53,7 +53,7 @@ test_reserve6_lun_reset(void)
         }
         CU_ASSERT_EQUAL(ret, 0);
 
-        logging(LOG_VERBOSE, "Sleep for three seconds incase the target is slow to reset");
+        logging(LOG_VERBOSE, "Sleep for three seconds in case the target is slow to reset");
         sleep(3);
 
 
