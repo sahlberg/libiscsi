@@ -34,6 +34,7 @@
 #include <poll.h>
 #include <fnmatch.h>
 #include <errno.h>
+#include <time.h>
 
 #ifdef HAVE_SG_IO
 #include <fcntl.h>
@@ -46,6 +47,7 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-private.h"
 #include "iscsi-support.h"
+#include "iscsi-multipath.h"
 
 
 /*****************************************************************
@@ -269,7 +271,11 @@ static size_t iov_tot_len(struct scsi_iovec *iov, int niov)
 
 static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi_task *task, struct iscsi_data *d)
 {
+	static time_t last_time = 0;
+
 	if (sdev->iscsi_url) {
+		time_t current_time = time(NULL);
+
 		if (sdev->error_str != NULL) {
 			free(discard_const(sdev->error_str));
 			sdev->error_str = NULL;
@@ -277,6 +283,22 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 		task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, d);
 		if (task == NULL) {
 			sdev->error_str = strdup(iscsi_get_error(sdev->iscsi_ctx));
+		}
+
+		if (current_time > last_time + 1) {
+			int i;
+
+			/* Device [0] is where we are doing all the I/O
+			 * so it will always work the socket and respond
+			 * to NOPs from the target.
+			 * But we need to trigger a service event every
+			 * now and then on all the other devices to ensure that
+			 * we detect and respond to any NOPs.
+			 */
+			for (i = 1; i < mp_num_sds; i++) {
+				iscsi_service(mp_sds[i]->iscsi_ctx, POLLIN|POLLOUT);
+			}
+			last_time = current_time;
 		}
 
 		return task;
