@@ -41,6 +41,33 @@ static void
 iscsi_connect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 		 void *private_data);
 
+
+/* During a reconnect all new SCSI commands are normally deferred to the
+ * old context and not actually issued until we have completed the re-connect
+ * and switched the contexts.
+ * This is what we want most of the time. However, IF we want to send TURs
+ * during the reconnect to eat all the UAs, then we want to send them out
+ * on this temporary context and NOT just queue them for until later.
+ * Hence this function.
+ *
+ * By setting ->old_iscsi temporarily to NULL when we are creating the TUR
+ * we avoid the check in iscsi_scsi_command_async() that otehrwise will try
+ * to defer this command until later.
+ */
+static struct scsi_task *
+iscsi_testunitready_connect(struct iscsi_context *iscsi, int lun,
+			    iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+	struct iscsi_context *old_iscsi = iscsi->old_iscsi;
+
+	iscsi->old_iscsi = NULL;
+	task = iscsi_testunitready_task(iscsi, lun, cb, private_data);
+	iscsi->old_iscsi = old_iscsi;
+
+	return task;
+}
+
 static void
 iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 		       void *command_data, void *private_data)
@@ -67,9 +94,9 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 				scsi_free_scsi_task(task);
 				return;
 			}
-			if (iscsi_testunitready_task(iscsi, ct->lun,
-						      iscsi_testunitready_cb,
-						      ct) == NULL) {
+			if (iscsi_testunitready_connect(iscsi, ct->lun,
+							iscsi_testunitready_cb,
+							ct) == NULL) {
 				iscsi_set_error(iscsi, "iscsi_testunitready "
 						"failed.");
 				ct->cb(iscsi, SCSI_STATUS_ERROR, NULL,
@@ -135,8 +162,9 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 	   UAs that might be present.
 	*/
 	if (iscsi->no_ua_on_reconnect || (ct->lun != -1 && !iscsi->old_iscsi)) {
-		if (iscsi_testunitready_task(iscsi, ct->lun,
-						  iscsi_testunitready_cb, ct) == NULL) {
+		if (iscsi_testunitready_connect(iscsi, ct->lun,
+						iscsi_testunitready_cb,
+						ct) == NULL) {
 			iscsi_set_error(iscsi, "iscsi_testunitready_async failed.");
 			ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
 			iscsi_free(iscsi, ct);
@@ -269,6 +297,7 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
                         void *command_data _U_, void *private_data _U_)
 {
 	int i;
+
 	if (status != SCSI_STATUS_GOOD) {
 		int backoff = ++iscsi->old_iscsi->retry_cnt;
 		if (backoff > 10) {
@@ -446,6 +475,7 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 	memcpy(old_iscsi, iscsi, sizeof(struct iscsi_context));
 	free(iscsi);
 
-	return iscsi_full_connect_async(old_iscsi, old_iscsi->portal,
-									old_iscsi->lun, iscsi_reconnect_cb, NULL);
+	return  iscsi_full_connect_async(old_iscsi, old_iscsi->portal,
+					 old_iscsi->lun, iscsi_reconnect_cb,
+					 NULL);
 }
