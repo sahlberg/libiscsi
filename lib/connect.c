@@ -336,6 +336,18 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
 			continue;
 		}
 
+		if (pdu->flags & ISCSI_PDU_ERROR_ON_RECONNECT) {
+			/*
+			 * We only want to re-queue SCSI COMMAND PDUs.
+			 * All other PDUs are discarded at this point.
+			 * This includes DATA-OUT, NOP and task management.
+			 */
+			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+				      pdu->private_data);
+			iscsi_free_pdu(old_iscsi, pdu);
+			continue;
+		}
+
 		if (pdu->flags & ISCSI_PDU_DROP_ON_RECONNECT) {
 			/*
 			 * We only want to re-queue SCSI COMMAND PDUs.

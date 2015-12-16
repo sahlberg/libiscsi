@@ -1266,7 +1266,7 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 				 ISCSI_PDU_LOGOUT_REQUEST,
 				 ISCSI_PDU_LOGOUT_RESPONSE,
 				 iscsi_itt_post_increment(iscsi),
-				 ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_CORK_WHEN_SENT);
+				 ISCSI_PDU_ERROR_ON_RECONNECT|ISCSI_PDU_CORK_WHEN_SENT);
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Out-of-memory: Failed to allocate "
 				"logout pdu.");
