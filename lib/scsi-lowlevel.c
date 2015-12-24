@@ -845,8 +845,9 @@ scsi_receivecopyresults_datain_unmarshall(struct scsi_task *task)
 	switch (sa) {
 	case SCSI_COPY_RESULTS_COPY_STATUS:
 		len = task_get_uint32(task, 0);
-
-		cs = scsi_malloc(task, len+4);
+		if (len < 8)
+			return NULL;
+		cs = scsi_malloc(task, sizeof(*cs));
 		if (cs == NULL) {
 			return NULL;
 		}
@@ -860,8 +861,9 @@ scsi_receivecopyresults_datain_unmarshall(struct scsi_task *task)
 
 	case SCSI_COPY_RESULTS_OP_PARAMS:
 		len = task_get_uint32(task, 0);
-
-		op = scsi_malloc(task, len+4);
+		if (len < 40)
+			return NULL;
+		op = scsi_malloc(task, sizeof(*op) + task_get_uint8(task, 43));
 		if (op == NULL) {
 			return NULL;
 		}
