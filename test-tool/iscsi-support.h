@@ -418,7 +418,7 @@ do {                                                                        \
         } while (0);
 
 #define RECEIVE_COPY_RESULTS(...)                                       \
-        do {                                                            \
+        ({								\
                 int _r;                                                 \
                 _r = receive_copy_results(__VA_ARGS__);                 \
                 if (_r == -2) {                                         \
@@ -429,7 +429,8 @@ do {                                                                        \
                         return;                                         \
                 }                                                       \
                 CU_ASSERT_EQUAL(_r, 0);                                 \
-        } while (0);
+		_r;							\
+        })
 
 #define RELEASE6(...)                                                   \
         do {                                                            \
