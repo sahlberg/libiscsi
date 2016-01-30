@@ -80,12 +80,12 @@ uint64_t get_clock_ns(void) {
 
 #ifdef HAVE_CLOCK_GETTIME
 	struct timespec ts;
-	ns = ts.tv_sec * 1000000000 + ts.tv_nsec;
 	res = clock_gettime (CLOCK_MONOTONIC, &ts);
+	ns = ts.tv_sec * 1000000000ULL + ts.tv_nsec;
 #else
 	struct timeval tv;
 	res = gettimeofday(&tv, NULL);
-	ns = tv.tv_sec * 1000000000 + tv.tv_usec * 1000;
+	ns = tv.tv_sec * 1000000000ULL + tv.tv_usec * 1000;
 #endif
 	if (res == -1) {
 		fprintf(stderr,"could not get requested clock\n");
@@ -98,9 +98,9 @@ void fill_read_queue(struct client *client);
 
 void progress(struct client *client) {
 	uint64_t now = get_clock_ns();
-	if (now - client->last_ns < 1000000000) return;
+	if (now - client->last_ns < 1000000000ULL) return;
 
-	uint64_t _runtime = (now - client->first_ns) / 1000000000UL;
+	uint64_t _runtime = (now - client->first_ns) / 1000000000ULL;
 	if (runtime) _runtime = runtime - _runtime;
 
 	printf ("\r");
@@ -110,8 +110,8 @@ void progress(struct client *client) {
 		finished = 1;
 		printf ("iops average %" PRIu64 " (%" PRIu64 " MB/s)                                                        ", aiops, (aiops * blocks_per_io * client->blocksize) >> 20);
 	} else {
-		uint64_t iops = 1000000000UL * (client->iops - client->last_iops) / (now - client->last_ns);
-		uint64_t mbps = 1000000000UL * (client->bytes - client->last_bytes) / (now - client->last_ns);
+		uint64_t iops = 1000000000ULL * (client->iops - client->last_iops) / (now - client->last_ns);
+		uint64_t mbps = 1000000000ULL * (client->bytes - client->last_bytes) / (now - client->last_ns);
 		printf ("%02" PRIu64 ":%02" PRIu64 ":%02" PRIu64 " - ", _runtime / 3600, (_runtime % 3600) / 60, _runtime % 60);
 		printf ("lba %" PRIu64 ", iops current %" PRIu64 " (%" PRIu64 " MB/s), ", client->pos, iops, mbps >> 20);
 		printf ("iops average %" PRIu64 " (%" PRIu64 " MB/s), in_flight %d, busy %d        ", aiops, ambps >> 20, client->in_flight, client->busy_cnt);
