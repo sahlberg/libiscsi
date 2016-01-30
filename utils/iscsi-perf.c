@@ -14,6 +14,9 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +35,7 @@
 #include <sys/time.h>
 #endif
 
-#define VERSION "0.1"
+#define PERF_VERSION "0.1"
 
 #define NOP_INTERVAL 5
 #define MAX_NOP_FAILURES 3
@@ -77,8 +80,8 @@ uint64_t get_clock_ns(void) {
 
 #ifdef HAVE_CLOCK_GETTIME
 	struct timespec ts;
-	res = clock_gettime (CLOCK_MONOTONIC, &tp);
 	ns = ts.tv_sec * 1000000000 + ts.tv_nsec;
+	res = clock_gettime (CLOCK_MONOTONIC, &ts);
 #else
 	struct timeval tv;
 	res = gettimeofday(&tv, NULL);
@@ -260,7 +263,7 @@ int main(int argc, char *argv[])
 
 	srand(time(NULL));
 	
-	printf("iscsi-perf version %s - (c) 2014-2015 by Peter Lieven <pl@ĸamp.de>\n\n", VERSION);
+	printf("iscsi-perf version %s - (c) 2014-2015 by Peter Lieven <pl@ĸamp.de>\n\n", PERF_VERSION);
 
 	while ((c = getopt_long(argc, argv, "i:m:b:t:nrRx:", long_options,
 			&option_index)) != -1) {
