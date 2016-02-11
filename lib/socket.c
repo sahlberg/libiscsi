@@ -140,7 +140,7 @@ static int set_tcp_sockopt(int sockfd, int optname, int value)
 {
 	int level;
 
-	#if defined(__FreeBSD__) || defined(__sun) || (defined(__APPLE__) && defined(__MACH__))
+	#ifndef SOL_TCP
 	struct protoent *buf;
 
 	if ((buf = getprotobyname("tcp")) != NULL)
@@ -643,6 +643,13 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 	size_t total;
 	struct iscsi_pdu *pdu;
 	static char padding_buf[3];
+	int socket_flags = 0;
+
+#ifdef MSG_NOSIGNAL
+	socket_flags |= MSG_NOSIGNAL;
+#elif SO_NOSIGPIPE
+	socket_flags |= SO_NOSIGPIPE;
+#endif
 
 	if (iscsi->fd == -1) {
 		iscsi_set_error(iscsi, "trying to write but not connected");
@@ -697,7 +704,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			count = send(iscsi->fd,
 				     pdu->outdata.data + pdu->outdata_written,
 				     pdu->outdata.size - pdu->outdata_written,
-				     MSG_NOSIGNAL);
+				     socket_flags);
 			if (count == -1) {
 				if (errno == EAGAIN || errno == EWOULDBLOCK) {
 					return 0;
@@ -746,7 +753,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 
 		/* Write padding */
 		if (pdu->payload_written < total) {
-			count = send(iscsi->fd, padding_buf, total - pdu->payload_written, MSG_NOSIGNAL);
+			count = send(iscsi->fd, padding_buf, total - pdu->payload_written, socket_flags);
 			if (count == -1) {
 				if (errno == EAGAIN || errno == EWOULDBLOCK) {
 					return 0;
