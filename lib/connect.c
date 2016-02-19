@@ -297,6 +297,7 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
                         void *command_data _U_, void *private_data _U_)
 {
+        struct iscsi_context *old_iscsi;
 	int i;
 
 	if (status != SCSI_STATUS_GOOD) {
@@ -319,7 +320,7 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
 		return;
 	}
 
-	struct iscsi_context *old_iscsi = iscsi->old_iscsi;
+	old_iscsi = iscsi->old_iscsi;
 	iscsi->old_iscsi = NULL;
 
 	while (old_iscsi->outqueue) {

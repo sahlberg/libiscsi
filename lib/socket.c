@@ -442,7 +442,13 @@ iscsi_queue_length(struct iscsi_context *iscsi)
 ssize_t
 iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *iovector, uint32_t pos, ssize_t count, int do_write)
 {
-	if (iovector->iov == NULL) {
+        struct scsi_iovec *iov, *iov2;
+        int niov;
+        uint32_t len2;
+        size_t _len2;
+        ssize_t n;
+
+        if (iovector->iov == NULL) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -463,7 +469,7 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 	}
 
 	/* iov is a pointer to the first iovec to pass */
-	struct scsi_iovec *iov = &iovector->iov[iovector->consumed];
+	iov = &iovector->iov[iovector->consumed];
 	pos -= iovector->offset;
 
 	/* forward until iov points to the first iov to pass */
@@ -478,11 +484,9 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 		iov = &iovector->iov[iovector->consumed];
 	}
 
-	/* iov2 is a pointer to the last iovec to pass */
-	struct scsi_iovec *iov2 = iov;
-
-	int niov=1; /* number of iovectors to pass */
-	uint32_t len2 = pos + count; /* adjust length of iov2 */
+	iov2 = iov;         /* iov2 is a pointer to the last iovec to pass */
+	niov = 1;           /* number of iovectors to pass */
+	len2 = pos + count; /* adjust length of iov2 */
 
 	/* forward until iov2 points to the last iovec we pass later. it might
 	   happen that we have a lot of iovectors but are limited by count */
@@ -498,14 +502,13 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 
 	/* we might limit the length of the last iovec we pass to readv/writev
 	   store its orignal length to restore it later */
-	size_t _len2 = iov2->iov_len;
+	_len2 = iov2->iov_len;
 
 	/* adjust base+len of start iovec and len of last iovec */
 	iov2->iov_len = len2;
 	iov->iov_base = (void*) ((uintptr_t)iov->iov_base + pos);
 	iov->iov_len -= pos;
 
-	ssize_t n;
 	if (do_write) {
 		n = writev(iscsi->fd, (struct iovec*) iov, niov);
 	} else {
