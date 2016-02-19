@@ -2,7 +2,7 @@ export TGT_IPC_SOCKET=`pwd`/tgtd.socket
 
 TGTD="tgtd"
 TGTADM="tgtadm"
-TGTLUN=`pwd`/100M
+TGTLUN=`pwd`/LUN
 TGTPORTAL=127.0.0.1:3269
 
 IQNTARGET=iqn.libiscsi.unittest.target
@@ -15,7 +15,6 @@ start_target() {
     ${TGTADM} --op delete --mode system 2>/dev/null
     # Setup target
     echo "Starting iSCSI target"
-    #${TGTD} --iscsi -f portal=${TGTPORTAL},${1} 2>/dev/null &
     ${TGTD} --iscsi portal=${TGTPORTAL},${1}
     sleep 1
     ${TGTADM} --op new --mode target --tid 1 -T ${IQNTARGET}
@@ -39,6 +38,25 @@ create_lun() {
 delete_lun() {
     # Remove LUN
     rm ${TGTLUN}
+}
+
+create_disk_lun() {
+    # Setup LUN
+    truncate --size=$2 ${TGTLUN}.$1
+    ${TGTADM} --op new --mode logicalunit --tid 1 --lun $1 -b ${TGTLUN}.$1 --blocksize=512
+}
+
+delete_disk_lun() {
+    # Remove LUN
+    rm ${TGTLUN}.$1
+}
+
+add_disk_lun() {
+    ${TGTADM} --op new --mode logicalunit --tid 1 --lun $1 -b ${TGTLUN}.$1 --blocksize=512
+}
+
+remove_disk_lun() {
+    ${TGTADM} --op delete --mode logicalunit --tid 1 --lun $1
 }
 
 setup_chap() {
