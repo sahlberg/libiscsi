@@ -69,7 +69,7 @@ verify_persistent_reserve_access(struct scsi_device *sd1, struct scsi_device *sd
 	CU_ASSERT_EQUAL(0, ret);
 
 	read_write_buf = malloc(512);	       /* allocate a buffer */
-	CU_ASSERT_PTR_NOT_NULL(read_write_buf);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(read_write_buf);
 
 	/* make sure init1 can read */
 	ret = verify_read_works(sd1, read_write_buf);

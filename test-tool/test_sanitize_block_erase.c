@@ -37,7 +37,7 @@ check_wabereq(void)
 	read10(sd, &task_ret, 0, block_size, block_size,
 	       0, 0, 0, 0, 0, NULL,
 	       EXPECT_STATUS_GOOD);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task_ret);
 	CU_ASSERT_NOT_EQUAL(task_ret->status, SCSI_STATUS_CANCELLED);
 
 	switch (inq_bdc->wabereq) {

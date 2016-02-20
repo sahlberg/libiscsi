@@ -44,7 +44,6 @@ test_read10_simple(void)
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
-
 	logging(LOG_VERBOSE, "Test READ10 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {

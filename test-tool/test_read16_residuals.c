@@ -46,7 +46,7 @@ test_read16_residuals(void)
 	}
 
 	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task);
 
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ16;
@@ -65,7 +65,7 @@ test_read16_residuals(void)
 	logging(LOG_VERBOSE, "Try reading one block but with iSCSI expected transfer length==0");
 
 	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, NULL);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task_ret);
 	CU_ASSERT_NOT_EQUAL(task->status, SCSI_STATUS_CANCELLED); /* XXX redundant? */
 
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -106,7 +106,7 @@ test_read16_residuals(void)
 
 	logging(LOG_VERBOSE, "Try reading one block but with iSCSI expected transfer length==10000");
 	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task);
 
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ16;
@@ -116,7 +116,7 @@ test_read16_residuals(void)
 	task->expxferlen = 10000;
 
 	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, NULL);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
@@ -154,7 +154,7 @@ test_read16_residuals(void)
 
 	logging(LOG_VERBOSE, "Try reading one block but with iSCSI expected transfer length==200");
 	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task);
 
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ16;
@@ -164,7 +164,7 @@ test_read16_residuals(void)
 	task->expxferlen = 200;
 
 	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, NULL);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
@@ -200,7 +200,7 @@ test_read16_residuals(void)
 	logging(LOG_VERBOSE, "Try reading two blocks but iSCSI expected "
 		"transfer length==%zu (==one block)", block_size);
 	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task);
 
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_READ16;
@@ -210,7 +210,7 @@ test_read16_residuals(void)
 	task->expxferlen = block_size;
 
 	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, NULL);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {

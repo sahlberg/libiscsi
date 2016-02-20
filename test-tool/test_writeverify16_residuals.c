@@ -72,7 +72,7 @@ test_writeverify16_residuals(void)
 
 	/* Try a writeverify16 of 1 block but xferlength == 0 */
 	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task);
 
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_WRITE_VERIFY16;
@@ -90,7 +90,7 @@ test_writeverify16_residuals(void)
 	logging(LOG_VERBOSE, "Try writing one block but with iSCSI expected transfer length==0");
 
 	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, NULL);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task_ret);
 	CU_ASSERT_NOT_EQUAL(task->status, SCSI_STATUS_CANCELLED); /* XXX redundant? */
 
 	if (task->status        == SCSI_STATUS_CHECK_CONDITION
@@ -131,7 +131,7 @@ test_writeverify16_residuals(void)
 
 	logging(LOG_VERBOSE, "Try writing one block but with iSCSI expected transfer length==10000");
 	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task);
 
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_WRITE_VERIFY16;
@@ -144,7 +144,7 @@ test_writeverify16_residuals(void)
 	data.size = task->expxferlen;
 	data.data = &buf[0];
 	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
@@ -174,7 +174,7 @@ test_writeverify16_residuals(void)
 
 	logging(LOG_VERBOSE, "Try writing one block but with iSCSI expected transfer length==200");
 	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task);
 
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_WRITE_VERIFY16;
@@ -186,7 +186,7 @@ test_writeverify16_residuals(void)
 	data.size = task->expxferlen;
 	data.data = &buf[0];
 	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	ok = task->status == SCSI_STATUS_GOOD ||
@@ -223,7 +223,7 @@ test_writeverify16_residuals(void)
 	logging(LOG_VERBOSE, "Try writing two blocks but iSCSI expected "
 		"transfer length==%zu (==one block)", block_size);
 	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task);
 
 	memset(task, 0, sizeof(struct scsi_task));
 	task->cdb[0] = SCSI_OPCODE_WRITE_VERIFY16;
@@ -235,7 +235,7 @@ test_writeverify16_residuals(void)
 	data.size = task->expxferlen;
 	data.data = &buf[0];
 	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
@@ -276,7 +276,7 @@ test_writeverify16_residuals(void)
 
 	logging(LOG_VERBOSE, "Write one block of 'b' but set iSCSI EDTL to 2 blocks.");
 	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task);
 
 	memset(buf, 'b', 10000);
 
@@ -290,7 +290,7 @@ test_writeverify16_residuals(void)
 	data.size = task->expxferlen;
 	data.data = &buf[0];
 	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
@@ -352,7 +352,7 @@ test_writeverify16_residuals(void)
 
 	logging(LOG_VERBOSE, "Write two blocks of 'b' but set iSCSI EDTL to 1 blocks.");
 	task = malloc(sizeof(struct scsi_task));
-	CU_ASSERT_PTR_NOT_NULL(task);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task);
 
 	memset(buf, 'b', 10000);
 
@@ -366,7 +366,7 @@ test_writeverify16_residuals(void)
 	data.size = task->expxferlen;
 	data.data = &buf[0];
 	task_ret = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun, task, &data);
-	CU_ASSERT_PTR_NOT_NULL(task_ret);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(task_ret);
 
 	logging(LOG_VERBOSE, "Verify that the target returned SUCCESS");
 	if (task->status != SCSI_STATUS_GOOD) {
