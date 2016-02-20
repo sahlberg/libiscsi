@@ -221,10 +221,8 @@ iscsi_task_mgmt_sync_cb(struct iscsi_context *iscsi, int status,
 {
 	struct iscsi_sync_state *state = private_data;
 
-	if (state != NULL) {
-		state->status    = status;
-		state->finished = 1;
-	}
+	state->status   = status;
+	state->finished = 1;
 
 	/* The task mgmt command might have completed successfully
 	 * but the target might have responded with
@@ -248,7 +246,7 @@ iscsi_task_mgmt_sync_cb(struct iscsi_context *iscsi, int status,
 			break;
 		}
 
-		state->status = SCSI_STATUS_ERROR;
+                state->status = SCSI_STATUS_ERROR;
 	}
 }
 
