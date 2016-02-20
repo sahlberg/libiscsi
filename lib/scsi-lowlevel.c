@@ -790,7 +790,6 @@ scsi_serviceactionin_datain_unmarshall(struct scsi_task *task)
 		gls->descriptors = scsi_malloc(task,
 					       sizeof(*gls->descriptors) * len);
 		if (gls->descriptors == NULL) {
-			free(gls);
 			return NULL;
 		}
 
@@ -1315,7 +1314,6 @@ scsi_inquiry_unmarshall_supported_pages(struct scsi_task *task)
 	inq->num_pages = task_get_uint8(task, 3);
 	inq->pages = scsi_malloc(task, inq->num_pages);
 	if (inq->pages == NULL) {
-		free (inq);
 		return NULL;
 	}
 	memcpy(inq->pages, &task->datain.data[4], inq->num_pages);
@@ -1336,7 +1334,6 @@ scsi_inquiry_unmarshall_unit_serial_number(struct scsi_task* task)
 
 	inq->usn = scsi_malloc(task, task_get_uint8(task, 3) + 1);
 	if (inq->usn == NULL) {
-		free(inq);
 		return NULL;
 	}
 	memcpy(inq->usn, &task->datain.data[4], task_get_uint8(task, 3));
@@ -1396,11 +1393,8 @@ scsi_inquiry_unmarshall_device_identification(struct scsi_task *task)
 	while (inq->designators) {
 		struct scsi_inquiry_device_designator *dev = inq->designators;
 		inq->designators = dev->next;
-		free(dev->designator);
-		free(dev);
 	}
 
-	free(inq);
 	return NULL;
 }
 
