@@ -29,28 +29,18 @@
 void
 test_prefetch16_flags(void)
 { 
-	int ret;
-
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test PREFETCH16 flags");
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 with IMMED==1");
-	ret = prefetch16(sd, 0, 1, 1, 0,
-			 EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] PREFETCH16 is not implemented.");
-		CU_PASS("PREFETCH16 is not implemented.");
-		return;
-	}	
-	CU_ASSERT_EQUAL(ret, 0);
+	PREFETCH16(sd, 0, 1, 1, 0,
+                   EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 with GROUP==3");
-	ret = prefetch16(sd, 0, 1, 0, 3,
-			 EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	PREFETCH16(sd, 0, 1, 0, 3,
+                   EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test PREFETCH16 with IMMED=1 and GROUP==3");
-	ret = prefetch16(sd, 0, 1, 1, 3,
-			 EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	PREFETCH16(sd, 0, 1, 1, 3,
+                   EXPECT_STATUS_GOOD);
 }

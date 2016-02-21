@@ -223,6 +223,34 @@ do {									\
                 CU_ASSERT_EQUAL(_r, 0);                                 \
         } while (0);
 
+#define PREFETCH10(...)                                                 \
+        do {                                                            \
+                int _r;                                                 \
+                _r = prefetch10(__VA_ARGS__);                           \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] PREFETCH10 "     \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "PREFETCH10. Skipping test");           \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
+#define PREFETCH16(...)                                                 \
+        do {                                                            \
+                int _r;                                                 \
+                _r = prefetch16(__VA_ARGS__);                           \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] PREFETCH16 "     \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "PREFETCH16. Skipping test");           \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 #define READ6(...)                                                      \
         do {                                                            \
                 int _r;                                                 \
