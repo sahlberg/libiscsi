@@ -29,18 +29,9 @@
 void
 test_readcapacity16_simple(void)
 {
-	int ret;
-
-
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that READCAPACITY16 works");
 
-	ret = readcapacity16(sd, NULL, 16,
-			     EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented on this target and it does not claim support.");
-		CU_PASS("READCAPACITY16 is not implemented and no SBC-3 support claimed.");
-		return;
-	}	
-	CU_ASSERT_EQUAL(ret, 0);
+	READCAPACITY16(sd, NULL, 16,
+                       EXPECT_STATUS_GOOD);
 }

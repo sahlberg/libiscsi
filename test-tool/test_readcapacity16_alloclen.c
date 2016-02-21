@@ -29,20 +29,13 @@
 void
 test_readcapacity16_alloclen(void)
 {
-	int i, ret;
-
+	int i;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that READCAPACITY16 with alloc_len 0-15 is not an error");
 
 	for (i = 0; i < 16; i++) {
-		ret = readcapacity16(sd, NULL, i,
-				     EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented on this target and it does not claim SBC-3 support.");
-			CU_PASS("READCAPACITY16 is not implemented and no SBC-3 support claimed.");
-			return;
-		}	
-		CU_ASSERT_EQUAL(ret, 0);
+		READCAPACITY16(sd, NULL, i,
+                               EXPECT_STATUS_GOOD);
 	}
 }
