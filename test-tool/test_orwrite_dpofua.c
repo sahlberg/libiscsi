@@ -62,51 +62,29 @@ test_orwrite_dpofua(void)
 	logging(LOG_VERBOSE, "Test ORWRITE with DPO==1");
 	memset(scratch, 0xa6, block_size);
 	if (dpofua) {
-		ret = orwrite(sd, 0, block_size,
-			      block_size, 0, 1, 0, 0, 0, scratch,
-			      EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
-			CU_PASS("ORWRITE is not implemented.");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, 0, block_size, block_size, 0, 1, 0, 0, 0, scratch,
+                        EXPECT_STATUS_GOOD);
 	} else {
-		ret = orwrite(sd, 0, block_size,
-			      block_size, 0, 1, 0, 0, 0, scratch,
-			      EXPECT_INVALID_FIELD_IN_CDB);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
-			CU_PASS("ORWRITE is not implemented.");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, 0, block_size, block_size, 0, 1, 0, 0, 0, scratch,
+                        EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Test ORWRITE with FUA==1");
 	if (dpofua) {
-		ret = orwrite(sd, 0, block_size,
-			      block_size, 0, 0, 1, 0, 0, scratch,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, 0, block_size, block_size, 0, 0, 1, 0, 0, scratch,
+                        EXPECT_STATUS_GOOD);
 	} else {
-		ret = orwrite(sd, 0, block_size,
-			      block_size, 0, 0, 1, 0, 0, scratch,
-			      EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, 0, block_size, block_size, 0, 0, 1, 0, 0, scratch,
+                        EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Test ORWRITE with DPO==1 FUA==1");
 	if (dpofua) {
-		ret = orwrite(sd, 0, block_size,
-			      block_size, 0, 1, 1, 0, 0, scratch,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, 0, block_size, block_size, 0, 1, 1, 0, 0, scratch,
+                        EXPECT_STATUS_GOOD);
 	} else {
-		ret = orwrite(sd, 0, block_size,
-			      block_size, 0, 1, 1, 0, 0, scratch,
-			      EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, 0, block_size, block_size, 0, 1, 1, 0, 0, scratch,
+                        EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Try fetching REPORT_SUPPORTED_OPCODES "

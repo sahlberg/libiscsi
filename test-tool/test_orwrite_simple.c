@@ -30,7 +30,7 @@
 void
 test_orwrite_simple(void)
 {
-	int i, ret;
+	int i;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -42,15 +42,9 @@ test_orwrite_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = orwrite(sd, 0, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, scratch,
-			      EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
-			CU_PASS("ORWRITE is not implemented.");
-			return;
-		}	
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, 0, i * block_size,
+                        block_size, 0, 0, 0, 0, 0, scratch,
+                        EXPECT_STATUS_GOOD);
 	}
 
 	logging(LOG_VERBOSE, "Test ORWRITE of 1-256 blocks at the end of the LUN");
@@ -58,11 +52,8 @@ test_orwrite_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = orwrite(sd, num_blocks - i,
-			      i * block_size, block_size,
-                              0, 0, 0, 0, 0, scratch,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, num_blocks - i, i * block_size, block_size,
+                        0, 0, 0, 0, 0, scratch,
+                        EXPECT_STATUS_GOOD);
 	}
-
 }

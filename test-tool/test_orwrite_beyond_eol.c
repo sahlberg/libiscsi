@@ -29,7 +29,7 @@
 void
 test_orwrite_beyond_eol(void)
 { 
-	int i, ret;
+	int i;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -41,15 +41,9 @@ test_orwrite_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = orwrite(sd, num_blocks + 1 - i,
-			      i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
-			      EXPECT_LBA_OOB);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
-			CU_PASS("ORWRITE is not implemented.");
-			return;
-		}	
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, num_blocks + 1 - i,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
+                        EXPECT_LBA_OOB);
 	}
 
 
@@ -58,11 +52,9 @@ test_orwrite_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = orwrite(sd, 0x8000000000000000ULL,
-			      i * block_size, block_size,
-                              0, 0, 0, 0, 0, scratch,
-			      EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, 0x8000000000000000ULL, i * block_size, block_size,
+                        0, 0, 0, 0, 0, scratch,
+                        EXPECT_LBA_OOB);
 	}
 
 
@@ -71,11 +63,9 @@ test_orwrite_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = orwrite(sd, -1,
-			      i * block_size, block_size,
-                              0, 0, 0, 0, 0, scratch,
-			      EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, -1, i * block_size, block_size,
+                        0, 0, 0, 0, 0, scratch,
+                        EXPECT_LBA_OOB);
 	}
 
 
@@ -84,10 +74,8 @@ test_orwrite_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = orwrite(sd, num_blocks - 1,
-			      i * block_size, block_size,
-                              0, 0, 0, 0, 0, scratch,
-			      EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, num_blocks - 1, i * block_size, block_size,
+                        0, 0, 0, 0, 0, scratch,
+                        EXPECT_LBA_OOB);
 	}
 }

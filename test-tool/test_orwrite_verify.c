@@ -55,15 +55,9 @@ test_orwrite_verify(void)
 
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0xa5", i);
 		memset(buf, 0xa5, block_size * i);
-		ret = orwrite(sd, 0, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
-			CU_PASS("ORWRITE is not implemented.");
-			return;
-		}	
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, 0, i * block_size,
+                        block_size, 0, 0, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
 		ret = read10(sd, NULL, 0, i * block_size,
@@ -77,10 +71,9 @@ test_orwrite_verify(void)
 
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0x5a", i);
 		memset(buf, 0x5a, block_size * i);
-		ret = orwrite(sd, 0, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, 0, i * block_size,
+                        block_size, 0, 0, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
 		read10(sd, NULL, 0, i * block_size,
@@ -107,10 +100,9 @@ test_orwrite_verify(void)
 
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0xa5", i);
 		memset(buf, 0xa5, block_size * i);
-		ret = orwrite(sd, num_blocks - i, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, num_blocks - i, i * block_size,
+                        block_size, 0, 0, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
 		ret = read16(sd, NULL, num_blocks - i, i * block_size,
@@ -124,10 +116,9 @@ test_orwrite_verify(void)
 
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0x5a", i);
 		memset(buf, 0x5a, block_size * i);
-		ret = orwrite(sd, num_blocks - i, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		ORWRITE(sd, num_blocks - i, i * block_size,
+                        block_size, 0, 0, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
 		ret = read16(sd, NULL, num_blocks - i, i * block_size,

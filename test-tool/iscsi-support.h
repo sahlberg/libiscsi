@@ -209,6 +209,20 @@ do {									\
                 CU_ASSERT_EQUAL(_r, 0);                                 \
         } while (0);
 
+#define ORWRITE(...)                                                    \
+        do {                                                            \
+                int _r;                                                 \
+                _r = orwrite(__VA_ARGS__);                              \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] ORWRITE "        \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "ORWRITE. Skipping test");              \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 #define RECEIVE_COPY_RESULTS(...)                                       \
         do {                                                            \
                 int _r;                                                 \
