@@ -27,7 +27,7 @@
 void
 test_writeatomic16_0blocks(void)
 {
-	int align, ret;
+	int align;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -41,33 +41,19 @@ test_writeatomic16_0blocks(void)
 
 	align = inq_bl->atomic_align ? inq_bl->atomic_align : 1;
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 0-blocks at LBA==0");
-	ret = writeatomic16(sd, 0, 0, block_size,
-			    0, 0, 0, 0, NULL,
-			    EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] WRITEATOMIC16 is not implemented.");
-		CU_PASS("WRITEATOMIC16 is not implemented.");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	WRITEATOMIC16(sd, 0, 0, block_size, 0, 0, 0, 0, NULL,
+                      EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 0-blocks one alignment past end-of-LUN");
-	ret = writeatomic16(sd, num_blocks + align, 0,
-			    block_size, 0, 0, 0, 0, NULL,
-			    EXPECT_LBA_OOB);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	WRITEATOMIC16(sd, num_blocks + align, 0, block_size, 0, 0, 0, 0, NULL,
+                      EXPECT_LBA_OOB);
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 0-blocks at LBA==2^63");
-	ret = writeatomic16(sd, 0x8000000000000000ULL, 0,
-			    block_size, 0, 0, 0, 0, NULL,
-			    EXPECT_LBA_OOB);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	WRITEATOMIC16(sd, 0x8000000000000000ULL, 0,
+                      block_size, 0, 0, 0, 0, NULL,
+                      EXPECT_LBA_OOB);
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 0-blocks at LBA==-<alignment>");
-	ret = writeatomic16(sd, -align, 0, block_size,
-			    0, 0, 0, 0, NULL,
-			    EXPECT_LBA_OOB);
-	CU_ASSERT_EQUAL(ret, 0);
+	WRITEATOMIC16(sd, -align, 0, block_size, 0, 0, 0, 0, NULL,
+                      EXPECT_LBA_OOB);
 }

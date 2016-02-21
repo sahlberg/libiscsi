@@ -30,7 +30,7 @@
 void
 test_writeatomic16_simple(void)
 {
-	int i, gran, ret;
+	int i, gran;
 	const size_t bufsz = 256 * block_size;
 
 	CHECK_FOR_DATALOSS;
@@ -45,16 +45,8 @@ test_writeatomic16_simple(void)
 
 	memset(scratch, 0, bufsz);
 	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
-	ret = writeatomic16(sd, 0,
-			    block_size * gran,
-			    block_size, 0, 0, 0, 0, scratch,
-			    EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] WRITEATOMIC16 is not implemented.");
-		CU_PASS("WRITEATOMIC16 is not implemented.");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	WRITEATOMIC16(sd, 0, block_size * gran, block_size, 0, 0, 0, 0, scratch,
+                      EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 of 1-256 blocks at the start of the LUN");
 	memset(scratch, 0xa6, 256 * block_size);
@@ -62,10 +54,9 @@ test_writeatomic16_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeatomic16(sd, 0, i * block_size,
-				    block_size, 0, 0, 0, 0, scratch,
-				    EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEATOMIC16(sd, 0, i * block_size,
+                              block_size, 0, 0, 0, 0, scratch,
+                              EXPECT_STATUS_GOOD);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 of 1-256 blocks at the end of the LUN");
@@ -73,10 +64,8 @@ test_writeatomic16_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeatomic16(sd, num_blocks - i,
-				    i * block_size, block_size,
-                                    0, 0, 0, 0, scratch,
-				    EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEATOMIC16(sd, num_blocks - i, i * block_size, block_size,
+                              0, 0, 0, 0, scratch,
+                              EXPECT_STATUS_GOOD);
 	}
 }

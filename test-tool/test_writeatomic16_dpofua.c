@@ -69,51 +69,35 @@ test_writeatomic16_dpofua(void)
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 with DPO==1");
 	memset(scratch, 0xa6, block_size);
 	if (dpofua) {
-		ret = writeatomic16(sd, 0, gran * block_size,
-				    block_size, 0, 1, 0, 0, scratch,
-				    EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITEATOMIC16 is not implemented.");
-			CU_PASS("WRITEATOMIC16 is not implemented.");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEATOMIC16(sd, 0, gran * block_size,
+                              block_size, 0, 1, 0, 0, scratch,
+                              EXPECT_STATUS_GOOD);
 	} else {
-		ret = writeatomic16(sd, 0, gran * block_size,
-				    block_size, 0, 1, 0, 0, scratch,
-				    EXPECT_INVALID_FIELD_IN_CDB);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITEATOMIC16 is not implemented.");
-			CU_PASS("WRITEATOMIC16 is not implemented.");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEATOMIC16(sd, 0, gran * block_size,
+                              block_size, 0, 1, 0, 0, scratch,
+                              EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 with FUA==1");
 	if (dpofua) {
-		ret = writeatomic16(sd, 0, gran * block_size,
-				    block_size, 0, 0, 1, 0, scratch,
-				    EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEATOMIC16(sd, 0, gran * block_size,
+                              block_size, 0, 0, 1, 0, scratch,
+                              EXPECT_STATUS_GOOD);
 	} else {
-		ret = writeatomic16(sd, 0, gran * block_size,
-				    block_size, 0, 0, 1, 0, scratch,
-				    EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEATOMIC16(sd, 0, gran * block_size,
+                              block_size, 0, 0, 1, 0, scratch,
+                              EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 with DPO==1 FUA==1");
 	if (dpofua) {
-		ret = writeatomic16(sd, 0, gran * block_size,
-				    block_size, 0, 1, 1, 0, scratch,
-				    EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEATOMIC16(sd, 0, gran * block_size,
+                              block_size, 0, 1, 1, 0, scratch,
+                              EXPECT_STATUS_GOOD);
 	} else {
-		ret = writeatomic16(sd, 0, gran * block_size,
-				    block_size, 0, 1, 1, 0, scratch,
-				    EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEATOMIC16(sd, 0, gran * block_size,
+                              block_size, 0, 1, 1, 0, scratch,
+                              EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 
