@@ -69,17 +69,10 @@ test_compareandwrite_simple(void)
 				"BlockLimits.MaximumCompareAndWriteLength(%d). "
 				"Command should fail with INVALID_FIELD_IN_CDB",
 				i, maxbl);
-			ret = compareandwrite(sd, 0,
-					      scratch, 2 * i * block_size,
-					      block_size, 0, 0, 0, 0,
-					      EXPECT_INVALID_FIELD_IN_CDB);
-			if (ret == -2) {
-				CU_PASS("[SKIPPED] Target does not support "
-					"COMPARE_AND_WRITE. Skipping test");
-				return;
-			}
-			CU_ASSERT_EQUAL(ret, 0);
-
+			COMPAREANDWRITE(sd, 0,
+                                        scratch, 2 * i * block_size,
+                                        block_size, 0, 0, 0, 0,
+                                        EXPECT_INVALID_FIELD_IN_CDB);
 			continue;
 		}
 
@@ -87,16 +80,10 @@ test_compareandwrite_simple(void)
 
 		logging(LOG_VERBOSE, "Overwrite %d blocks with 'B' "
 			"at LBA:0 (if they all contain 'A')", i);
-		ret = compareandwrite(sd, 0,
-				      scratch, 2 * i * block_size, block_size,
-				      0, 0, 0, 0,
-				      EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			CU_PASS("[SKIPPED] Target does not support "
-				"COMPARE_AND_WRITE. Skipping test");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		COMPAREANDWRITE(sd, 0,
+                                scratch, 2 * i * block_size, block_size,
+                                0, 0, 0, 0,
+                                EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:0 and verify "
 			"they are all 'B'", i);
@@ -136,12 +123,10 @@ test_compareandwrite_simple(void)
 				"BlockLimits.MaximumCompareAndWriteLength(%d). "
 				"Command should fail with INVALID_FIELD_IN_CDB",
 				i, maxbl);
-			ret = compareandwrite(sd, 0,
-					      scratch, 2 * i * block_size,
-					      block_size, 0, 0, 0, 0,
-					      EXPECT_INVALID_FIELD_IN_CDB);
-			CU_ASSERT_EQUAL(ret, 0);
-
+			COMPAREANDWRITE(sd, 0,
+                                        scratch, 2 * i * block_size,
+                                        block_size, 0, 0, 0, 0,
+                                        EXPECT_INVALID_FIELD_IN_CDB);
 			continue;
 		}
 		memset(scratch + i * block_size, 'B', i * block_size);
@@ -149,11 +134,10 @@ test_compareandwrite_simple(void)
 		logging(LOG_VERBOSE, "Overwrite %d blocks with 'B' "
 			"at LBA:%" PRIu64 " (if they all contain 'A')",
 			i, num_blocks - i);
-		ret = compareandwrite(sd, num_blocks - i,
-				      scratch, 2 * i * block_size, block_size,
-				      0, 0, 0, 0,
-				      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		COMPAREANDWRITE(sd, num_blocks - i,
+                                scratch, 2 * i * block_size, block_size,
+                                0, 0, 0, 0,
+                                EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:%" PRIu64 
 			" and verify they are all 'B'",

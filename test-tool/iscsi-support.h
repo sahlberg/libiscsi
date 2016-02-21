@@ -181,6 +181,20 @@ do {									\
 	}								\
 } while (0);
 
+#define COMPAREANDWRITE(...)                                            \
+        do {                                                            \
+                int _r;                                                 \
+                _r = compareandwrite(__VA_ARGS__);                      \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] COMPAREANDWRITE " \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "COMPAREANDWRITE. Skipping test");      \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 #define VERIFY10(...)                                                   \
         do {                                                            \
                 int _r;                                                 \

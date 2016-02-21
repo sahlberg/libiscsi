@@ -71,45 +71,35 @@ test_compareandwrite_dpofua(void)
 
 	logging(LOG_VERBOSE, "Test COMPAREANDWRITE with DPO==1");
 	if (dpofua) {
-		ret = compareandwrite(sd, 0, scratch, 2 * block_size,
-				      block_size, 0, 1, 0, 0,
-				      EXPECT_STATUS_GOOD);
+		COMPAREANDWRITE(sd, 0, scratch, 2 * block_size,
+                                block_size, 0, 1, 0, 0,
+                                EXPECT_STATUS_GOOD);
 	} else {
-		ret = compareandwrite(sd, 0, scratch, 2 * block_size,
-				      block_size, 0, 1, 0, 0,
-				      EXPECT_INVALID_FIELD_IN_CDB);
+		COMPAREANDWRITE(sd, 0, scratch, 2 * block_size,
+                                block_size, 0, 1, 0, 0,
+                                EXPECT_INVALID_FIELD_IN_CDB);
 	}
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] REPORT_SUPPORTED_OPCODES not "
-			"implemented. Skipping this part of the test");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test COMPAREANDWRITE with FUA==1");
 	if (dpofua) {
-		ret = compareandwrite(sd, 0, scratch, 2 * block_size,
-				      block_size, 0, 0, 1, 0,
-				      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		COMPAREANDWRITE(sd, 0, scratch, 2 * block_size,
+                                block_size, 0, 0, 1, 0,
+                                EXPECT_STATUS_GOOD);
 	} else {
-		ret = compareandwrite(sd, 0, scratch, 2 * block_size,
-				      block_size, 0, 0, 1, 0,
-				      EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
+		COMPAREANDWRITE(sd, 0, scratch, 2 * block_size,
+                                block_size, 0, 0, 1, 0,
+                                EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Test COMPAREANDWRITE with DPO==1 FUA==1");
 	if (dpofua) {
-		ret = compareandwrite(sd, 0, scratch, 2 * block_size,
-				      block_size, 0, 1, 1, 0,
-				      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		COMPAREANDWRITE(sd, 0, scratch, 2 * block_size,
+                                block_size, 0, 1, 1, 0,
+                                EXPECT_STATUS_GOOD);
 	} else {
-		ret = compareandwrite(sd, 0, scratch, 2 * block_size,
-				      block_size, 0, 1, 1, 0,
-				      EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
+		COMPAREANDWRITE(sd, 0, scratch, 2 * block_size,
+                                block_size, 0, 1, 1, 0,
+                                EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Try fetching REPORT_SUPPORTED_OPCODES "

@@ -78,27 +78,19 @@ test_multipathio_compareandwrite(void)
 			/* write data is the second half, wrap around */
 			memset(scratch + io_bl * block_size, path + 1,
 			       io_bl * block_size);
-
-			ret = compareandwrite(mp_sds[path], i,
-					      scratch, 2 * io_bl * block_size,
-					      block_size, 0, 0, 0, 0,
-					      EXPECT_STATUS_GOOD);
-			if (ret == -2) {
-				CU_PASS("[SKIPPED] Target does not support "
-					"COMPARE_AND_WRITE. Skipping test");
-				return;
-			}
-			CU_ASSERT_EQUAL(ret, 0);
+			COMPAREANDWRITE(mp_sds[path], i,
+                                        scratch, 2 * io_bl * block_size,
+                                        block_size, 0, 0, 0, 0,
+                                        EXPECT_STATUS_GOOD);
 
 			logging(LOG_VERBOSE,
 				"Test bad COMPARE_AND_WRITE(%d->%d)",
 				path, path + 1);
 
-			ret = compareandwrite(mp_sds[path], i,
-					      scratch, 2 * io_bl * block_size,
-					      block_size, 0, 0, 0, 0,
-					      EXPECT_MISCOMPARE);
-			CU_ASSERT_EQUAL(ret, 0);
+			COMPAREANDWRITE(mp_sds[path], i,
+                                        scratch, 2 * io_bl * block_size,
+                                        block_size, 0, 0, 0, 0,
+                                        EXPECT_MISCOMPARE);
 		}
 	}
 }
