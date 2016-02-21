@@ -50,10 +50,9 @@ test_writesame10_unmap_until_end(void)
 
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, block_size * i);
-		ret = write10(sd, num_blocks - i,
-			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE10(sd, num_blocks - i,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
 		ret = writesame10(sd, num_blocks - i,

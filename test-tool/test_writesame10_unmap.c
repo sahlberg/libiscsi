@@ -46,10 +46,8 @@ test_writesame10_unmap(void)
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);
-		ret = write10(sd, 0,
-			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE10(sd, 0, i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
 		memset(buf, 0, block_size);
@@ -81,10 +79,9 @@ test_writesame10_unmap(void)
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);
-		ret = write10(sd, num_blocks - i,
-			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+                WRITE10(sd, num_blocks - i,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
 		memset(buf, 0, block_size);
@@ -153,10 +150,9 @@ test_writesame10_unmap(void)
 
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
 		memset(buf, 0xff, i * block_size);
-		ret = write10(sd, 0,
-			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE10(sd, 0,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
 		memset(buf, 0, block_size);

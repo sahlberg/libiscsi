@@ -181,6 +181,48 @@ do {									\
 	}								\
 } while (0);
 
+#define WRITE10(...)                                                    \
+        do {                                                            \
+                int _r;                                                 \
+                _r = write10(__VA_ARGS__);                              \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] WRITE10 "        \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "WRITE10. Skipping test");              \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
+#define WRITE12(...)                                                    \
+        do {                                                            \
+                int _r;                                                 \
+                _r = write12(__VA_ARGS__);                              \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] WRITE12 "        \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "WRITE12. Skipping test");              \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
+#define WRITE16(...)                                                    \
+        do {                                                            \
+                int _r;                                                 \
+                _r = write16(__VA_ARGS__);                              \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] WRITE16 "        \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "WRITE16. Skipping test");              \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 #define WRITEVERIFY10(...)                                              \
         do {                                                            \
                 int _r;                                                 \

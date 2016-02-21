@@ -63,41 +63,30 @@ test_write10_dpofua(void)
 	logging(LOG_VERBOSE, "Test WRITE10 with DPO==1");
 	memset(buf, 0xa6, block_size);
 	if (dpofua) {
-		ret = write10(sd, 0, block_size,
-			      block_size, 0, 1, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE10(sd, 0, block_size, block_size, 0, 1, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 	} else {
-		ret = write10(sd, 0, block_size,
-			      block_size, 0, 1, 0, 0, 0, buf,
-			      EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE10(sd, 0, block_size, block_size, 0, 1, 0, 0, 0, buf,
+                        EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITE10 with FUA==1");
 	if (dpofua) {
-		ret = write10(sd, 0, block_size,
-			      block_size, 0, 0, 1, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE10(sd, 0, block_size, block_size, 0, 0, 1, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 	} else {
-		ret = write10(sd, 0, block_size,
-			      block_size, 0, 0, 1, 0, 0, buf,
-			      EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE10(sd, 0, block_size, block_size, 0, 0, 1, 0, 0, buf,
+                        EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITE10 with DPO==1 FUA==1");
 	if (dpofua) {
-		ret = write10(sd, 0, block_size,
-			      block_size, 0, 1, 1, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
+		WRITE10(sd, 0, block_size, block_size, 0, 1, 1, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	} else {
-		ret = write10(sd, 0, block_size,
-			      block_size, 0, 1, 1, 0, 0, buf,
-			      EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE10(sd, 0, block_size, block_size, 0, 1, 1, 0, 0, buf,
+                        EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 

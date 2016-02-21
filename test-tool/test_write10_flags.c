@@ -30,7 +30,6 @@
 void
 test_write10_flags(void)
 { 
-	int ret;
 	unsigned char *buf = alloca(block_size);
 
 	CHECK_FOR_DATALOSS;
@@ -40,41 +39,22 @@ test_write10_flags(void)
 
 	logging(LOG_VERBOSE, "Test WRITE10 with DPO==1");
 	memset(buf, 0xa6, block_size);
-	ret = write10(sd, 0,
-		      block_size, block_size, 0, 1, 0, 0, 0, buf,
-		      EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
-		CU_PASS("WRITE10 is not implemented.");
-		return;
-	}	
-	CU_ASSERT_EQUAL(ret, 0);
-
+	WRITE10(sd, 0, block_size, block_size, 0, 1, 0, 0, 0, buf,
+                EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test WRITE10 with FUA==1 FUA_NV==0");
-	ret = write10(sd, 0,
-		      block_size, block_size, 0, 0, 1, 0, 0, buf,
-		      EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	WRITE10(sd, 0, block_size, block_size, 0, 0, 1, 0, 0, buf,
+                EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test WRITE10 with FUA==1 FUA_NV==1");
-	ret = write10(sd, 0,
-		      block_size, block_size, 0, 0, 1, 1, 0, buf,
-		      EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	WRITE10(sd, 0, block_size, block_size, 0, 0, 1, 1, 0, buf,
+                EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test WRITE10 with FUA==0 FUA_NV==1");
-	ret = write10(sd, 0,
-		      block_size, block_size, 0, 0, 0, 1, 0, buf,
-		      EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	WRITE10(sd, 0, block_size, block_size, 0, 0, 0, 1, 0, buf,
+                EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test WRITE10 with DPO==1 FUA==1 FUA_NV==1");
-	ret = write10(sd, 0,
-		      block_size, block_size, 0, 1, 1, 1, 0, buf,
-		      EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	WRITE10(sd, 0, block_size, block_size, 0, 1, 1, 1, 0, buf,
+                EXPECT_STATUS_GOOD);
 }

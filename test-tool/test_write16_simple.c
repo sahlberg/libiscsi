@@ -30,7 +30,7 @@
 void
 test_write16_simple(void)
 {
-	int i, ret;
+	int i;
 	unsigned char *buf = alloca(256 * block_size);
 
 
@@ -44,15 +44,8 @@ test_write16_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = write16(sd, 0, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
-			CU_PASS("WRITE16 is not implemented.");
-			return;
-		}	
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE16(sd, 0, i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the end of the LUN");
@@ -60,10 +53,8 @@ test_write16_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = write16(sd, num_blocks - i,
-			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE16(sd, num_blocks - i,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 	}
-
 }

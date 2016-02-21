@@ -30,7 +30,7 @@
 void
 test_write10_simple(void)
 {
-	int i, ret;
+	int i;
 	unsigned char *buf = alloca(256 * block_size);
 
 
@@ -43,15 +43,8 @@ test_write10_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = write10(sd, 0, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
-			CU_PASS("WRITE10 is not implemented.");
-			return;
-		}	
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE10(sd, 0, i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITE10 of 1-256 blocks at the end of the LUN");
@@ -59,10 +52,8 @@ test_write10_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = write10(sd, num_blocks - i,
-			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE10(sd, num_blocks - i,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 	}
-
 }
