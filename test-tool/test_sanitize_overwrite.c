@@ -28,19 +28,6 @@
 #include "iscsi-test-cu.h"
 
 static void
-init_lun_with_data(uint64_t lba)
-{
-	int ret;
-	unsigned char *buf = alloca(256 * block_size);
-
-	memset(buf, 'a', 256 * block_size);
-	ret = write16(sd, lba, 256 * block_size,
-		      block_size, 0, 0, 0, 0, 0, buf,
-		      EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-}
-
-static void
 check_lun_is_wiped(uint64_t lba, unsigned char c)
 {
 	int ret;
@@ -110,9 +97,14 @@ test_sanitize_overwrite(void)
 	}
 
 	logging(LOG_VERBOSE, "Write 'a' to the first 256 LBAs");
-	init_lun_with_data(0);
+	memset(scratch, 'a', 256 * block_size);
+	WRITE16(sd, 0, 256 * block_size,
+                block_size, 0, 0, 0, 0, 0, scratch,
+                EXPECT_STATUS_GOOD);
 	logging(LOG_VERBOSE, "Write 'a' to the last 256 LBAs");
-	init_lun_with_data(num_blocks - 256);
+	WRITE16(sd, num_blocks - 256, 256 * block_size,
+                block_size, 0, 0, 0, 0, 0, scratch,
+                EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE with initialization pattern of one full block");
 	data.size = block_size + 4;

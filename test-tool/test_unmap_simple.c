@@ -26,18 +26,6 @@
 #include "iscsi-support.h"
 #include "iscsi-test-cu.h"
 
-static void
-init_lun_with_data(uint64_t lba)
-{
-	int ret;
-
-	memset(scratch, 'a', 256 * block_size);
-	ret = write10(sd, lba, 256 * block_size,
-		      block_size, 0, 0, 0, 0, 0, scratch,
-		      EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-}
-
 void
 test_unmap_simple(void)
 {
@@ -56,7 +44,10 @@ test_unmap_simple(void)
 		"LUN as a single descriptor");
 
 	logging(LOG_VERBOSE, "Write 'a' to the first 256 LBAs");
-	init_lun_with_data(0);
+	memset(scratch, 'a', 256 * block_size);
+	WRITE10(sd, 0, 256 * block_size,
+                block_size, 0, 0, 0, 0, 0, scratch,
+                EXPECT_STATUS_GOOD);
 
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "UNMAP blocks 0-%d", i);
@@ -91,7 +82,10 @@ test_unmap_simple(void)
 		"LUN with one descriptor per block");
 
 	logging(LOG_VERBOSE, "Write 'a' to the first 256 LBAs");
-	init_lun_with_data(0);
+	memset(scratch, 'a', 256 * block_size);
+	WRITE10(sd, 0, 256 * block_size,
+                block_size, 0, 0, 0, 0, 0, scratch,
+                EXPECT_STATUS_GOOD);
 
 	CU_ASSERT_EQUAL(ret, 0);
 	for (i = 0; i < 256; i++) {

@@ -193,18 +193,6 @@ check_unmap(void)
 }
 
 static void
-init_lun_with_data(unsigned char *buf, uint64_t lba)
-{
-	int ret;
-
-	memset(buf, 'a', 256 * block_size);
-	ret = write16(sd, lba, 256 * block_size,
-		      block_size, 0, 0, 0, 0, 0, buf,
-		      EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-}
-
-static void
 check_lun_is_wiped(unsigned char *buf, uint64_t lba)
 {
 	int ret;
@@ -316,9 +304,14 @@ test_sanitize_block_erase(void)
 
 
 	logging(LOG_VERBOSE, "Write 'a' to the first 256 LBAs");
-	init_lun_with_data(buf, 0);
+	memset(scratch, 'a', 256 * block_size);
+	WRITE16(sd, 0, 256 * block_size,
+                block_size, 0, 0, 0, 0, 0, scratch,
+                EXPECT_STATUS_GOOD);
 	logging(LOG_VERBOSE, "Write 'a' to the last 256 LBAs");
-	init_lun_with_data(buf, num_blocks - 256);
+	WRITE16(sd, num_blocks - 256, 256 * block_size,
+                block_size, 0, 0, 0, 0, 0, scratch,
+                EXPECT_STATUS_GOOD);
 
 
 	logging(LOG_VERBOSE, "Test we can perform basic BLOCK ERASE SANITIZE");

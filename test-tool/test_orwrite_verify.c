@@ -83,10 +83,9 @@ test_orwrite_verify(void)
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read10(sd, NULL, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, readbuf,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		read10(sd, NULL, 0, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, readbuf,
+                       EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Verify that the blocks are all 0xff");
 		memset(buf, 0xff, block_size * i);
@@ -102,10 +101,9 @@ test_orwrite_verify(void)
 
 		logging(LOG_VERBOSE, "Write %d blocks of all-zero", i);
 		memset(buf, 0, block_size * i);
-		ret = write16(sd, num_blocks - i, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE16(sd, num_blocks - i, i * block_size,
+                        block_size, 0, 0, 0, 0, 0, buf,
+                        EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "OrWrite %d blocks with 0xa5", i);
 		memset(buf, 0xa5, block_size * i);

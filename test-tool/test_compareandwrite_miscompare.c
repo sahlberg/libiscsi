@@ -31,7 +31,7 @@
 void
 test_compareandwrite_miscompare(void)
 {
-	int i, ret;
+	int i;
 	unsigned j;
 	int maxbl;
 
@@ -53,16 +53,9 @@ test_compareandwrite_miscompare(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = write16(sd, 0, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, scratch,
-			      EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
-			CU_PASS("WRITE16 is not implemented.");
-			return;
-		}	
-		CU_ASSERT_EQUAL(ret, 0);
-
+		WRITE16(sd, 0, i * block_size,
+                        block_size, 0, 0, 0, 0, 0, scratch,
+                        EXPECT_STATUS_GOOD);
 		
 		logging(LOG_VERBOSE, "Change byte 27 from the end to 'C' so that it does not match.");
 		scratch[i * block_size - 27] = 'C';
@@ -90,10 +83,9 @@ test_compareandwrite_miscompare(void)
 
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:0 and verify "
 			"they are still unchanged as 'A'", i);
-		ret = read16(sd, NULL, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, scratch,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		read16(sd, NULL, 0, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, scratch,
+                       EXPECT_STATUS_GOOD);
 
 		for (j = 0; j < i * block_size; j++) {
 			if (scratch[j] != 'A') {
@@ -115,10 +107,9 @@ test_compareandwrite_miscompare(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = write16(sd, num_blocks - i, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, scratch,
-			      EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITE16(sd, num_blocks - i, i * block_size,
+                        block_size, 0, 0, 0, 0, 0, scratch,
+                        EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Change byte 27 from the end to 'C' so that it does not match.");
 		scratch[i * block_size - 27] = 'C';
@@ -148,10 +139,9 @@ test_compareandwrite_miscompare(void)
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:%" PRIu64 
 			"they are still unchanged as 'A'",
 			i, num_blocks - i);
-		ret = read16(sd, NULL, num_blocks - i, i * block_size,
+		read16(sd, NULL, num_blocks - i, i * block_size,
 			     block_size, 0, 0, 0, 0, 0, scratch,
 			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
 
 		for (j = 0; j < i * block_size; j++) {
 			if (scratch[j] != 'A') {
