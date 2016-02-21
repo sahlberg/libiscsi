@@ -30,18 +30,16 @@ void
 test_verify16_beyond_eol(void)
 { 
 	int i;
-	unsigned char *buf = alloca(256 * block_size);
-
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 1-256 blocks one block beyond the end");
-	memset(buf, 0xa6, 256 * block_size);
+	memset(scratch, 0xa6, 256 * block_size);
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
 		VERIFY16(sd, num_blocks + 1 - i,
-                         i * block_size, block_size, 0, 0, 1, buf,
+                         i * block_size, block_size, 0, 0, 1, scratch,
                          EXPECT_LBA_OOB);
 	}
 
@@ -51,7 +49,7 @@ test_verify16_beyond_eol(void)
 			break;
 		}
 		VERIFY16(sd, 0x8000000000000000ULL,
-                         i * block_size, block_size, 0, 0, 1, buf,
+                         i * block_size, block_size, 0, 0, 1, scratch,
                          EXPECT_LBA_OOB);
 	}
 
@@ -60,7 +58,7 @@ test_verify16_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		VERIFY16(sd, -1, i * block_size, block_size, 0, 0, 1, buf,
+		VERIFY16(sd, -1, i * block_size, block_size, 0, 0, 1, scratch,
                          EXPECT_LBA_OOB);
 	}
 
@@ -70,7 +68,7 @@ test_verify16_beyond_eol(void)
 			break;
 		}
 		VERIFY16(sd, num_blocks - 1,
-                         i * block_size, block_size, 0, 0, 1, buf,
+                         i * block_size, block_size, 0, 0, 1, scratch,
                          EXPECT_LBA_OOB);
 	}
 }

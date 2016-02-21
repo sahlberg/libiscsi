@@ -32,8 +32,8 @@ void
 test_orwrite_verify(void)
 {
 	int i, ret;
-	unsigned char *buf     = alloca(256 * block_size);
-	unsigned char *readbuf = alloca(256 * block_size);
+	unsigned char *buf     = &scratch[0];
+	unsigned char *readbuf = &scratch[256 * block_size];
 
 
 	CHECK_FOR_DATALOSS;

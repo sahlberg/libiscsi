@@ -31,7 +31,6 @@ void
 test_writeverify10_wrprotect(void)
 {
 	int i;
-	unsigned char *buf = alloca(block_size);
 
 	/*
 	 * Try out different non-zero values for WRPROTECT.
@@ -42,12 +41,12 @@ test_writeverify10_wrprotect(void)
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
-	memset(buf, 0xa6, block_size);
+	memset(scratch, 0xa6, block_size);
 	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
 			WRITEVERIFY10(sd, 0, block_size, block_size,
-                                      i, 0, 0, 0, buf,
+                                      i, 0, 0, 0, scratch,
                                       EXPECT_INVALID_FIELD_IN_CDB);
 		}
 		return;

@@ -1249,6 +1249,9 @@ main(int argc, char *argv[])
 		lbppb = 1 << rc16->lbppbe;
 	}
 
+        /* create a really big buffer we can use in the tests */
+        scratch = malloc(65536 * block_size);
+        
 	inq_task = NULL;
 	inquiry(sd, &inq_task, 0, 0, 64, EXPECT_STATUS_GOOD);
 	if (inq_task == NULL || inq_task->status != SCSI_STATUS_GOOD) {
@@ -1452,12 +1455,13 @@ main(int argc, char *argv[])
 	for (i = 0; i < mp_num_sds; i++) {
 		free_scsi_device(mp_sds[i]);
 	}
-
+        free(scratch);
 	return 0;
 
 err_sds_free:
 	for (i = 0; i < mp_num_sds; i++) {
 		free_scsi_device(mp_sds[i]);
 	}
+        free(scratch);
 	return -1;
 }

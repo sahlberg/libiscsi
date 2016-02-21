@@ -46,17 +46,15 @@ test_writesame10_unmap_until_end(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME10 of 1-256 blocks at the end of the LUN by setting number-of-blocks==0");
 	for (i = 1; i <= 256; i++) {
-		unsigned char *buf = malloc(block_size * i);
-
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
-		memset(buf, 0xff, block_size * i);
+		memset(scratch, 0xff, block_size * i);
 		WRITE10(sd, num_blocks - i,
-                        i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
 		ret = writesame10(sd, num_blocks - i,
-				  block_size, 0, 0, 1, 0, 0, buf,
+				  block_size, 0, 0, 1, 0, 0, scratch,
 				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
@@ -68,13 +66,12 @@ test_writesame10_unmap_until_end(void)
 				"are now zero", i);
 			ret = read10(sd, NULL, num_blocks - i,
 				     i * block_size, block_size,
-				     0, 0, 0, 0, 0, buf,
+				     0, 0, 0, 0, 0, scratch,
 				     EXPECT_STATUS_GOOD);
-			CU_ASSERT(all_zeroes(buf, i * block_size));
+			CU_ASSERT(all_zeroes(scratch, i * block_size));
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
 				"and verify zero test");
 		}
-		free(buf);
 	}
 }

@@ -28,7 +28,6 @@ void
 test_writesame10_0blocks(void)
 {
 	int ret;
-	unsigned char *buf = alloca(block_size);
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -46,11 +45,11 @@ test_writesame10_0blocks(void)
 
 	logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks at LBA==0 (WSNZ=%d)",
 		inq_bl->wsnz);
-	memset(buf, 0, block_size);
+	memset(scratch, 0, block_size);
 
 	if (inq_bl->wsnz) {
 		ret = writesame10(sd, 0,
-				  block_size, 0, 0, 0, 0, 0, buf,
+				  block_size, 0, 0, 0, 0, 0, scratch,
 				  EXPECT_INVALID_FIELD_IN_CDB);
 		logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 does not support 0-blocks.");
 		CU_ASSERT_EQUAL(ret, 0);
@@ -58,7 +57,7 @@ test_writesame10_0blocks(void)
 	}
 
 	ret = writesame10(sd, 0,
-			  block_size, 0, 0, 0, 0, 0, buf,
+			  block_size, 0, 0, 0, 0, 0, scratch,
 			  EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		CU_PASS("[SKIPPED] Target does not support WRITESAME10. Skipping test");
@@ -73,21 +72,21 @@ test_writesame10_0blocks(void)
 
 	logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks one block past end-of-LUN");
 	ret = writesame10(sd, num_blocks + 1,
-			  block_size, 0, 0, 0, 0, 0, buf,
+			  block_size, 0, 0, 0, 0, 0, scratch,
 			  EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks at LBA==2^31");
 	ret = writesame10(sd, 0x80000000,
-			  block_size, 0, 0, 0, 0, 0, buf,
+			  block_size, 0, 0, 0, 0, 0, scratch,
 			  EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks at LBA==-1");
 	ret = writesame10(sd, -1,
-			  block_size, 0, 0, 0, 0, 0, buf,
+			  block_size, 0, 0, 0, 0, 0, scratch,
 			  EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 }

@@ -31,20 +31,19 @@ void
 test_orwrite_simple(void)
 {
 	int i, ret;
-	unsigned char *buf = alloca(256 * block_size);
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test ORWRITE of 1-256 blocks at the start of the LUN");
-	memset(buf, 0xa6, 256 * block_size);
+	memset(scratch, 0xa6, 256 * block_size);
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
 		ret = orwrite(sd, 0, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf,
+			      block_size, 0, 0, 0, 0, 0, scratch,
 			      EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
@@ -60,7 +59,8 @@ test_orwrite_simple(void)
 			break;
 		}
 		ret = orwrite(sd, num_blocks - i,
-			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      i * block_size, block_size,
+                              0, 0, 0, 0, 0, scratch,
 			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 	}

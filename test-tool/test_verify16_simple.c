@@ -31,7 +31,6 @@ void
 test_verify16_simple(void)
 {
 	int i, ret;
-	unsigned char *buf = alloca(256 * block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 of 1-256 blocks at the start of the LUN");
@@ -40,10 +39,10 @@ test_verify16_simple(void)
 			break;
 		}
 		ret = read10(sd, NULL, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, buf,
+			     block_size, 0, 0, 0, 0, 0, scratch,
 			     EXPECT_STATUS_GOOD);
 		VERIFY16(sd, 0, i * block_size,
-                         block_size, 0, 0, 1, buf,
+                         block_size, 0, 0, 1, scratch,
                          EXPECT_STATUS_GOOD);
 	}
 
@@ -54,12 +53,12 @@ test_verify16_simple(void)
 		}
 
 		ret = read16(sd, NULL, num_blocks - i,
-			     i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			     i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		VERIFY16(sd, num_blocks - i,
-                         i * block_size, block_size, 0, 0, 1, buf,
+                         i * block_size, block_size, 0, 0, 1, scratch,
                          EXPECT_STATUS_GOOD);
 	}
 }

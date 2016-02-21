@@ -33,7 +33,6 @@ test_compareandwrite_miscompare(void)
 {
 	int i, ret;
 	unsigned j;
-	unsigned char *buf = alloca(2 * 256 * block_size);
 	int maxbl;
 
 	CHECK_FOR_DATALOSS;
@@ -50,12 +49,12 @@ test_compareandwrite_miscompare(void)
 		"start of the LUN. One Byte miscompare in the final block.");
 	for (i = 1; i < 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 'A' at LBA:0", i);
-		memset(buf, 'A', 2 * i * block_size);
+		memset(scratch, 'A', 2 * i * block_size);
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
 		ret = write16(sd, 0, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf,
+			      block_size, 0, 0, 0, 0, 0, scratch,
 			      EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
@@ -66,7 +65,7 @@ test_compareandwrite_miscompare(void)
 
 		
 		logging(LOG_VERBOSE, "Change byte 27 from the end to 'C' so that it does not match.");
-		buf[i * block_size - 27] = 'C';
+		scratch[i * block_size - 27] = 'C';
 
 		if (i > maxbl) {
 			logging(LOG_VERBOSE, "Number of blocks %d is greater than "
@@ -74,7 +73,7 @@ test_compareandwrite_miscompare(void)
 				"Command should fail with INVALID_FIELD_IN_CDB",
 				i, maxbl);
 			ret = compareandwrite(sd, 0,
-					      buf, 2 * i * block_size,
+					      scratch, 2 * i * block_size,
 					      block_size, 0, 0, 0, 0,
 					      EXPECT_INVALID_FIELD_IN_CDB);
 			if (ret == -2) {
@@ -87,12 +86,12 @@ test_compareandwrite_miscompare(void)
 			continue;
 		}
 
-		memset(buf + i * block_size, 'B', i * block_size);
+		memset(scratch + i * block_size, 'B', i * block_size);
 
 		logging(LOG_VERBOSE, "Overwrite %d blocks with 'B' "
 			"at LBA:0 (if they all contain 'A')", i);
 		ret = compareandwrite(sd, 0,
-				      buf, 2 * i * block_size, block_size,
+				      scratch, 2 * i * block_size, block_size,
 				      0, 0, 0, 0,
 				      EXPECT_MISCOMPARE);
 		if (ret == -2) {
@@ -105,12 +104,12 @@ test_compareandwrite_miscompare(void)
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:0 and verify "
 			"they are still unchanged as 'A'", i);
 		ret = read16(sd, NULL, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, buf,
+			     block_size, 0, 0, 0, 0, 0, scratch,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		for (j = 0; j < i * block_size; j++) {
-			if (buf[j] != 'A') {
+			if (scratch[j] != 'A') {
 				logging(LOG_VERBOSE, "[FAILED] Data changed "
 					"eventhough there was a miscompare");
 				CU_FAIL("Block was written to");
@@ -125,17 +124,17 @@ test_compareandwrite_miscompare(void)
 	for (i = 1; i < 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 'A' at LBA:%" PRIu64,
 			i, num_blocks - i);
-		memset(buf, 'A', 2 * i * block_size);
+		memset(scratch, 'A', 2 * i * block_size);
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
 		ret = write16(sd, num_blocks - i, i * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf,
+			      block_size, 0, 0, 0, 0, 0, scratch,
 			      EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Change byte 27 from the end to 'C' so that it does not match.");
-		buf[i * block_size - 27] = 'C';
+		scratch[i * block_size - 27] = 'C';
 
 
 		if (i > maxbl) {
@@ -144,20 +143,20 @@ test_compareandwrite_miscompare(void)
 				"Command should fail with INVALID_FIELD_IN_CDB",
 				i, maxbl);
 			ret = compareandwrite(sd, 0,
-					      buf, 2 * i * block_size,
+					      scratch, 2 * i * block_size,
 					      block_size, 0, 0, 0, 0,
 					      EXPECT_INVALID_FIELD_IN_CDB);
 			CU_ASSERT_EQUAL(ret, 0);
 
 			continue;
 		}
-		memset(buf + i * block_size, 'B', i * block_size);
+		memset(scratch + i * block_size, 'B', i * block_size);
 
 		logging(LOG_VERBOSE, "Overwrite %d blocks with 'B' "
 			"at LBA:%" PRIu64 " (if they all contain 'A')",
 			i, num_blocks - i);
 		ret = compareandwrite(sd, num_blocks - i,
-				      buf, 2 * i * block_size, block_size,
+				      scratch, 2 * i * block_size, block_size,
 				      0, 0, 0, 0,
 				      EXPECT_MISCOMPARE);
 		CU_ASSERT_EQUAL(ret, 0);
@@ -166,12 +165,12 @@ test_compareandwrite_miscompare(void)
 			"they are still unchanged as 'A'",
 			i, num_blocks - i);
 		ret = read16(sd, NULL, num_blocks - i, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, buf,
+			     block_size, 0, 0, 0, 0, 0, scratch,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		for (j = 0; j < i * block_size; j++) {
-			if (buf[j] != 'A') {
+			if (scratch[j] != 'A') {
 				logging(LOG_VERBOSE, "[FAILED] Data changed "
 					"eventhough there was a miscompare");
 				CU_FAIL("Block was written to");

@@ -30,8 +30,6 @@
 void
 test_writeverify12_flags(void)
 { 
-	unsigned char *buf = alloca(block_size);
-
 	CHECK_FOR_DATALOSS;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -39,7 +37,7 @@ test_writeverify12_flags(void)
 
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY12 with BYTCHK==1");
-	memset(buf, 0xa6, block_size);
-	WRITEVERIFY12(sd, 0, block_size, block_size, 0, 0, 1, 0, buf,
+	memset(scratch, 0xa6, block_size);
+	WRITEVERIFY12(sd, 0, block_size, block_size, 0, 0, 1, 0, scratch,
                       EXPECT_STATUS_GOOD);
 }

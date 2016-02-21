@@ -30,21 +30,19 @@ void
 test_write16_beyond_eol(void)
 { 
 	int i;
-	unsigned char *buf = alloca(256 * block_size);
-
-
+        
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITE16 1-256 blocks one block beyond the end");
-	memset(buf, 0xa6, 256 * block_size);
+	memset(scratch, 0xa6, 256 * block_size);
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
 		WRITE16(sd, num_blocks + 1 - i,
-                        i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_LBA_OOB);
 	}
 
@@ -54,7 +52,7 @@ test_write16_beyond_eol(void)
 			break;
 		}
 		WRITE16(sd, 0x8000000000000000ULL,
-                        i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_LBA_OOB);
 	}
 
@@ -64,7 +62,7 @@ test_write16_beyond_eol(void)
 			break;
 		}
 		WRITE16(sd, -1, i * block_size,
-                        block_size, 0, 0, 0, 0, 0, buf,
+                        block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_LBA_OOB);
 	}
 
@@ -74,7 +72,7 @@ test_write16_beyond_eol(void)
 			break;
 		}
 		WRITE16(sd, num_blocks - 1,
-                        i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_LBA_OOB);
 	}
 }

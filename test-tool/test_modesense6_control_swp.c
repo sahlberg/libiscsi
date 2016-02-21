@@ -32,7 +32,6 @@ test_modesense6_control_swp(void)
 	struct scsi_task *ms_task = NULL;
 	struct scsi_mode_sense *ms;
 	struct scsi_mode_page *page;
-	unsigned char *buf = alloca(block_size);
 	int ret;
 
 	CHECK_FOR_DATALOSS;
@@ -90,13 +89,13 @@ test_modesense6_control_swp(void)
 
 	logging(LOG_VERBOSE, "Read a block from the now Read-Only device");
 	ret = read10(sd, NULL, 0, block_size,
-		     block_size, 0, 0, 0, 0, 0, buf,
+		     block_size, 0, 0, 0, 0, 0, scratch,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Try to write a block to the Read-Only device");
 	ret = write10(sd, 0, block_size,
-		      block_size, 0, 0, 0, 0, 0, buf,
+		      block_size, 0, 0, 0, 0, 0, scratch,
 		      EXPECT_WRITE_PROTECTED);
 	CU_ASSERT_EQUAL(ret, 0);
 

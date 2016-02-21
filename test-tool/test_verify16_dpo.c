@@ -34,7 +34,6 @@ test_verify16_dpo(void)
 	struct scsi_mode_sense *ms;
 	struct scsi_task *rso_task = NULL;
 	struct scsi_report_supported_op_codes_one_command *rsoc;
-	unsigned char *buf = alloca(block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 DPO flag");
@@ -42,7 +41,7 @@ test_verify16_dpo(void)
 	CHECK_FOR_SBC;
 
 	ret = read10(sd, NULL, 0, block_size,
-		     block_size, 0, 0, 0, 0, 0, buf,
+		     block_size, 0, 0, 0, 0, 0, scratch,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -66,10 +65,10 @@ test_verify16_dpo(void)
 
 	logging(LOG_VERBOSE, "Test VERIFY16 with DPO==1");
 	if (dpofua) {
-		VERIFY16(sd, 0, block_size, block_size, 0, 1, 0, buf,
+		VERIFY16(sd, 0, block_size, block_size, 0, 1, 0, scratch,
                          EXPECT_STATUS_GOOD);
 	} else {
-		VERIFY16(sd, 0, block_size, block_size, 0, 1, 0, buf,
+		VERIFY16(sd, 0, block_size, block_size, 0, 1, 0, scratch,
                          EXPECT_INVALID_FIELD_IN_CDB);
 	}
 

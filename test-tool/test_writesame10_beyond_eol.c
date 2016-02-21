@@ -30,7 +30,6 @@ void
 test_writesame10_beyond_eol(void)
 { 
 	int i, ret;
-	unsigned char *buf = alloca(block_size);
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -42,10 +41,10 @@ test_writesame10_beyond_eol(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME10 1-256 blocks one block beyond the end");
-	memset(buf, 0, block_size);
+	memset(scratch, 0, block_size);
 	for (i = 1; i <= 256; i++) {
 		ret = writesame10(sd, num_blocks - i + 1,
-				  block_size, i, 0, 0, 0, 0, buf,
+				  block_size, i, 0, 0, 0, 0, scratch,
 				  EXPECT_LBA_OOB);
 		if (ret == -2) {
 			CU_PASS("[SKIPPED] Target does not support WRITESAME10. Skipping test");
@@ -58,7 +57,7 @@ test_writesame10_beyond_eol(void)
 	logging(LOG_VERBOSE, "Test WRITESAME10 1-256 blocks at LBA==2^31");
 	for (i = 1; i <= 256; i++) {
 		ret = writesame10(sd, 0x80000000,
-				  block_size, i, 0, 0, 0, 0, buf,
+				  block_size, i, 0, 0, 0, 0, scratch,
 				  EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -67,7 +66,7 @@ test_writesame10_beyond_eol(void)
 	logging(LOG_VERBOSE, "Test WRITESAME10 1-256 blocks at LBA==-1");
 	for (i = 1; i <= 256; i++) {
 		ret = writesame10(sd, -1,
-				  block_size, i, 0, 0, 0, 0, buf,
+				  block_size, i, 0, 0, 0, 0, scratch,
 				  EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -76,7 +75,7 @@ test_writesame10_beyond_eol(void)
 	logging(LOG_VERBOSE, "Test WRITESAME10 2-256 blocks all but one block beyond the end");
 	for (i = 2; i <= 256; i++) {
 		ret = writesame10(sd, num_blocks - 1,
-				  block_size, i, 0, 0, 0, 0, buf,
+				  block_size, i, 0, 0, 0, 0, scratch,
 				  EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}

@@ -27,13 +27,13 @@
 #include "iscsi-test-cu.h"
 
 static void
-init_lun_with_data(unsigned char *buf, uint64_t lba)
+init_lun_with_data(uint64_t lba)
 {
 	int ret;
 
-	memset(buf, 'a', 256 * block_size);
+	memset(scratch, 'a', 256 * block_size);
 	ret = write10(sd, lba, 256 * block_size,
-		      block_size, 0, 0, 0, 0, 0, buf,
+		      block_size, 0, 0, 0, 0, 0, scratch,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 }
@@ -43,7 +43,6 @@ test_unmap_simple(void)
 {
 	int i, ret;
 	struct unmap_list list[257];
-	unsigned char *buf = alloca(256 * block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test basic UNMAP");
@@ -57,7 +56,7 @@ test_unmap_simple(void)
 		"LUN as a single descriptor");
 
 	logging(LOG_VERBOSE, "Write 'a' to the first 256 LBAs");
-	init_lun_with_data(buf, 0);
+	init_lun_with_data(0);
 
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "UNMAP blocks 0-%d", i);
@@ -69,14 +68,14 @@ test_unmap_simple(void)
 
 		logging(LOG_VERBOSE, "Read blocks 0-%d", i);
 		ret = read10(sd, NULL, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, buf,
+			     block_size, 0, 0, 0, 0, 0, scratch,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		if (rc16 && rc16->lbprz) {
 			logging(LOG_VERBOSE, "LBPRZ==1 All UNMAPPED blocks "
 				"should read back as 0");
-			if (all_zeroes(buf, i * block_size) == 0) {
+			if (all_zeroes(scratch, i * block_size) == 0) {
 				logging(LOG_NORMAL, "[FAILED] Blocks did not "
 					"read back as zero");
 				CU_FAIL("[FAILED] Blocks did not read back "
@@ -92,7 +91,7 @@ test_unmap_simple(void)
 		"LUN with one descriptor per block");
 
 	logging(LOG_VERBOSE, "Write 'a' to the first 256 LBAs");
-	init_lun_with_data(buf, 0);
+	init_lun_with_data(0);
 
 	CU_ASSERT_EQUAL(ret, 0);
 	for (i = 0; i < 256; i++) {
@@ -104,14 +103,14 @@ test_unmap_simple(void)
 
 		logging(LOG_VERBOSE, "Read blocks 0-%d", i);
 		ret = read10(sd, NULL, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, buf,
+			     block_size, 0, 0, 0, 0, 0, scratch,
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		if (rc16 && rc16->lbprz) {
 			logging(LOG_VERBOSE, "LBPRZ==1 All UNMAPPED blocks "
 				"should read back as 0");
-			if (all_zeroes(buf, i * block_size) == 0) {
+			if (all_zeroes(scratch, i * block_size) == 0) {
 				logging(LOG_NORMAL, "[FAILED] Blocks did not "
 					"read back as zero");
 				CU_FAIL("[FAILED] Blocks did not read back "

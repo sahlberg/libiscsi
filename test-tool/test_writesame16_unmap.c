@@ -31,7 +31,6 @@ test_writesame16_unmap(void)
 {
 	int ret;
 	unsigned int i;
-	unsigned char *buf;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_THIN_PROVISIONING;
@@ -40,22 +39,22 @@ test_writesame16_unmap(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME16 of 1-256 blocks at the start of the LUN");
-	buf = calloc(65536, block_size);
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
-		memset(buf, 0xff, i * block_size);
-		WRITE16(sd, 0, i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+		memset(scratch, 0xff, i * block_size);
+		WRITE16(sd, 0, i * block_size, block_size,
+                        0, 0, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
-		memset(buf, 0, block_size);
+		memset(scratch, 0, block_size);
 		ret = writesame16(sd, 0,
-				  block_size, i, 0, 1, 0, 0, buf,
+				  block_size, i, 0, 1, 0, 0, scratch,
 				  EXPECT_STATUS_GOOD);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
 			CU_PASS("[SKIPPED] Target does not support WRITESAME16. Skipping test");
-			goto finished;
+			return;
 		}
 		CU_ASSERT_EQUAL(ret, 0);
 
@@ -66,9 +65,9 @@ test_writesame16_unmap(void)
 				"are now zero", i);
 			ret = read16(sd, NULL, 0,
 				     i * block_size, block_size,
-				     0, 0, 0, 0, 0, buf,
+				     0, 0, 0, 0, 0, scratch,
 				     EXPECT_STATUS_GOOD);
-			CU_ASSERT(all_zeroes(buf, i * block_size));
+			CU_ASSERT(all_zeroes(scratch, i * block_size));
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
 				"and verify zero test");
@@ -79,15 +78,15 @@ test_writesame16_unmap(void)
 	logging(LOG_VERBOSE, "Test WRITESAME16 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
-		memset(buf, 0xff, i * block_size);
+		memset(scratch, 0xff, i * block_size);
 		WRITE16(sd, num_blocks - i,
-                        i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
-		memset(buf, 0, block_size);
+		memset(scratch, 0, block_size);
 		ret = writesame16(sd, num_blocks - i,
-				  block_size, i, 0, 1, 0, 0, buf,
+				  block_size, i, 0, 1, 0, 0, scratch,
 				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
@@ -98,9 +97,9 @@ test_writesame16_unmap(void)
 				"are now zero", i);
 			ret = read16(sd, NULL, num_blocks - i,
 				     i * block_size, block_size,
-				     0, 0, 0, 0, 0, buf,
+				     0, 0, 0, 0, 0, scratch,
 				     EXPECT_STATUS_GOOD);
-			CU_ASSERT(all_zeroes(buf, i * block_size));
+			CU_ASSERT(all_zeroes(scratch, i * block_size));
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
 				"and verify zero test");
@@ -109,7 +108,7 @@ test_writesame16_unmap(void)
 
 	logging(LOG_VERBOSE, "Verify that WRITESAME16 ANCHOR==1 + UNMAP==0 is invalid");
 	ret = writesame16(sd, 0,
-			  block_size, 1, 1, 0, 0, 0, buf,
+			  block_size, 1, 1, 0, 0, 0, scratch,
 			  EXPECT_INVALID_FIELD_IN_CDB);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -117,14 +116,14 @@ test_writesame16_unmap(void)
 
 	if (inq_lbp->anc_sup) {
 		logging(LOG_VERBOSE, "Test WRITESAME16 ANCHOR==1 + UNMAP==0");
-		memset(buf, 0, block_size);
+		memset(scratch, 0, block_size);
 		ret = writesame16(sd, 0,
-				  block_size, 1, 1, 1, 0, 0, buf,
+				  block_size, 1, 1, 1, 0, 0, scratch,
 				  EXPECT_STATUS_GOOD);
 	} else {
 		logging(LOG_VERBOSE, "Test WRITESAME16 ANCHOR==1 + UNMAP==0 no ANC_SUP so expecting to fail");
 		ret = writesame16(sd, 0,
-				  block_size, 1, 1, 1, 0, 0, buf,
+				  block_size, 1, 1, 1, 0, 0, scratch,
 				  EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
@@ -136,7 +135,7 @@ test_writesame16_unmap(void)
 			"BlockLimits VPD is missing.");
 		CU_FAIL("[FAILED] WRITESAME16 works but "
 			"BlockLimits VPD is missing.");
-		goto finished;
+                return;
 	}
 
 	i = 256;
@@ -148,15 +147,15 @@ test_writesame16_unmap(void)
 			"lengths", i, i);
 
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
-		memset(buf, 0xff, i * block_size);
+		memset(scratch, 0xff, i * block_size);
 		WRITE16(sd, 0,
-                        i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
-		memset(buf, 0, block_size);
+		memset(scratch, 0, block_size);
 		ret = writesame16(sd, 0,
-				  block_size, i, 0, 1, 0, 0, buf,
+				  block_size, i, 0, 1, 0, 0, scratch,
 				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
@@ -168,9 +167,9 @@ test_writesame16_unmap(void)
 				"are now zero", i);
 			ret = read16(sd, NULL, 0,
 				     i * block_size, block_size,
-				     0, 0, 0, 0, 0, buf,
+				     0, 0, 0, 0, 0, scratch,
 				     EXPECT_STATUS_GOOD);
-			CU_ASSERT(all_zeroes(buf, i * block_size));
+			CU_ASSERT(all_zeroes(scratch, i * block_size));
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
 				"and verify zero test");
@@ -182,7 +181,7 @@ test_writesame16_unmap(void)
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
 		ret = writesame16(sd, 0,
-				  block_size, i, 0, 1, 0, 0, buf,
+				  block_size, i, 0, 1, 0, 0, scratch,
 				  EXPECT_INVALID_FIELD_IN_CDB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -197,15 +196,15 @@ test_writesame16_unmap(void)
 			"lengths", i, i);
 
 		logging(LOG_VERBOSE, "Write %d blocks of 0xFF", i);
-		memset(buf, 0xff, i * block_size);
+		memset(scratch, 0xff, i * block_size);
 		WRITE16(sd, 0,
-                        i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
-		memset(buf, 0, block_size);
+		memset(scratch, 0, block_size);
 		ret = writesame16(sd, 0,
-				  block_size, i, 0, 1, 0, 0, buf,
+				  block_size, i, 0, 1, 0, 0, scratch,
 				  EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
@@ -217,9 +216,9 @@ test_writesame16_unmap(void)
 				"are now zero", i);
 			ret = read16(sd, NULL, 0,
 				     i * block_size, block_size,
-				     0, 0, 0, 0, 0, buf,
+				     0, 0, 0, 0, 0, scratch,
 				     EXPECT_STATUS_GOOD);
-			CU_ASSERT(all_zeroes(buf, i * block_size));
+			CU_ASSERT(all_zeroes(scratch, i * block_size));
 		} else {
 			logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
 				"and verify zero test");
@@ -231,11 +230,8 @@ test_writesame16_unmap(void)
 
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
 		ret = writesame16(sd, 0,
-				  block_size, i, 0, 1, 0, 0, buf,
+				  block_size, i, 0, 1, 0, 0, scratch,
 				  EXPECT_INVALID_FIELD_IN_CDB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
-
-finished:
-	free(buf);
 }

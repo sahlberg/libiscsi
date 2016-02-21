@@ -68,29 +68,28 @@ verify_persistent_reserve_access(struct scsi_device *sd1, struct scsi_device *sd
 	    pr_type);
 	CU_ASSERT_EQUAL(0, ret);
 
-	read_write_buf = malloc(512);	       /* allocate a buffer */
-	CU_ASSERT_PTR_NOT_NULL_FATAL(read_write_buf);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(scratch);
 
 	/* make sure init1 can read */
-	ret = verify_read_works(sd1, read_write_buf);
+	ret = verify_read_works(sd1, scratch);
 	CU_ASSERT_EQUAL(0, ret);
 
 	/* make sure init1 can write */
-	ret = verify_write_works(sd1, read_write_buf);
+	ret = verify_write_works(sd1, scratch);
 	CU_ASSERT_EQUAL(0, ret);
 
 	/* verify registered init2 read access */
 	if (reg_i2_can_read)
-		ret = verify_read_works(sd2, read_write_buf);
+		ret = verify_read_works(sd2, scratch);
 	else
-		ret = verify_read_fails(sd2, read_write_buf);
+		ret = verify_read_fails(sd2, scratch);
 	CU_ASSERT_EQUAL(0, ret);
 
 	/* verify registered init2 write access */
 	if (reg_i2_can_write)
-		ret = verify_write_works(sd2, read_write_buf);
+		ret = verify_write_works(sd2, scratch);
 	else
-		ret = verify_write_fails(sd2, read_write_buf);
+		ret = verify_write_fails(sd2, scratch);
 	CU_ASSERT_EQUAL(0, ret);
 
 	/* unregister init2 */
@@ -99,16 +98,16 @@ verify_persistent_reserve_access(struct scsi_device *sd1, struct scsi_device *sd
 
 	/* verify unregistered init2 read access */
 	if (unreg_i2_can_read)
-		ret = verify_read_works(sd2, read_write_buf);
+		ret = verify_read_works(sd2, scratch);
 	else
-		ret = verify_read_fails(sd2, read_write_buf);
+		ret = verify_read_fails(sd2, scratch);
 	CU_ASSERT_EQUAL(0, ret);
 
 	/* verify unregistered init2 write access */
 	if (unreg_i2_can_write)
-		ret = verify_write_works(sd2, read_write_buf);
+		ret = verify_write_works(sd2, scratch);
 	else
-		ret = verify_write_fails(sd2, read_write_buf);
+		ret = verify_write_fails(sd2, scratch);
 	CU_ASSERT_EQUAL(0, ret);
 
 	/* release our reservation */

@@ -35,7 +35,6 @@ test_multipathio_compareandwrite(void)
 	int io_bl = 1;	/* 1 block CAW IOs */
 	int path;
 	int i, ret;
-	unsigned char *buf = alloca(2 * io_bl * block_size);
 	int maxbl;
 
 	CHECK_FOR_DATALOSS;
@@ -56,9 +55,9 @@ test_multipathio_compareandwrite(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Initialising data prior to COMPARE_AND_WRITE");
 
-	memset(buf, 0, io_bl * block_size);
+	memset(scratch, 0, io_bl * block_size);
 	ret = writesame10(mp_sds[0], 0,
-			  block_size, 256, 0, 0, 0, 0, buf,
+			  block_size, 256, 0, 0, 0, 0, scratch,
 			  EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		CU_PASS("[SKIPPED] Target does not support WRITESAME10. Skipping test");
@@ -75,13 +74,13 @@ test_multipathio_compareandwrite(void)
 				path, path + 1, path);
 
 			/* compare data is first half */
-			memset(buf, path, io_bl * block_size);
+			memset(scratch, path, io_bl * block_size);
 			/* write data is the second half, wrap around */
-			memset(buf + io_bl * block_size, path + 1,
+			memset(scratch + io_bl * block_size, path + 1,
 			       io_bl * block_size);
 
 			ret = compareandwrite(mp_sds[path], i,
-					      buf, 2 * io_bl * block_size,
+					      scratch, 2 * io_bl * block_size,
 					      block_size, 0, 0, 0, 0,
 					      EXPECT_STATUS_GOOD);
 			if (ret == -2) {
@@ -96,7 +95,7 @@ test_multipathio_compareandwrite(void)
 				path, path + 1);
 
 			ret = compareandwrite(mp_sds[path], i,
-					      buf, 2 * io_bl * block_size,
+					      scratch, 2 * io_bl * block_size,
 					      block_size, 0, 0, 0, 0,
 					      EXPECT_MISCOMPARE);
 			CU_ASSERT_EQUAL(ret, 0);

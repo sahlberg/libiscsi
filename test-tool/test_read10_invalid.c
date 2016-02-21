@@ -33,7 +33,6 @@ void
 test_read10_invalid(void)
 {
 	struct iscsi_data data;
-	char *buf = alloca(block_size);
 	struct scsi_task *task_ret;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -246,9 +245,9 @@ test_read10_invalid(void)
 	task->xfer_dir = SCSI_XFER_WRITE;
 	task->expxferlen = block_size;
 
-	memset(buf, 0xa6, block_size);
+	memset(scratch, 0xa6, block_size);
 	data.size = block_size;
-	data.data = (unsigned char *)buf;
+	data.data = (unsigned char *)scratch;
 
 	iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
 	iscsi_set_timeout(sd->iscsi_ctx, 3);

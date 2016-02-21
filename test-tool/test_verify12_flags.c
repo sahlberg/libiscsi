@@ -31,18 +31,17 @@ void
 test_verify12_flags(void)
 {
 	int ret;
-	unsigned char *buf = alloca(block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY12 flags");
 
 	ret = read12(sd, NULL, 0, block_size,
-		     block_size, 0, 0, 0, 0, 0, buf,
+		     block_size, 0, 0, 0, 0, 0, scratch,
 		     EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test VERIFY12 with BYTCHK==1");
-	VERIFY12(sd, 0, block_size, block_size, 0, 0, 1, buf,
+	VERIFY12(sd, 0, block_size, block_size, 0, 0, 1, scratch,
                  EXPECT_STATUS_GOOD);
 }

@@ -33,7 +33,6 @@ test_writeatomic16_vpd(void)
 	struct scsi_inquiry_block_limits *bl;
 	struct scsi_task *bl_task = NULL;
 	int gran;
-	unsigned char *buf;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITEATOMIC16 VPD data");
@@ -63,10 +62,9 @@ test_writeatomic16_vpd(void)
 
 	logging(LOG_VERBOSE, "Check if WRITEATOMIC16 is supported");
 	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
-	buf = alloca(block_size * gran);
-	memset(buf, 0x00, block_size * gran);
+	memset(scratch   , 0x00, block_size * gran);
 	ret = writeatomic16(sd, 0, block_size * gran,
-			    block_size, 0, 0, 0, 0, buf,
+			    block_size, 0, 0, 0, 0, scratch,
 			    EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_VERBOSE, "WRITEATOMIC16 is NOT supported by the target.");
@@ -110,7 +108,7 @@ test_writeatomic16_vpd(void)
 	} else {
 		logging(LOG_VERBOSE, "Atomic Write at LBA 1 should fail due to misalignment");
 		ret = writeatomic16(sd, 1, block_size * gran,
-				    block_size, 0, 0, 0, 0, buf,
+				    block_size, 0, 0, 0, 0, scratch,
 				    EXPECT_INVALID_FIELD_IN_CDB);
 		if (ret) {
 			logging(LOG_VERBOSE, "[FAILED] Misaligned write did NOT fail with INVALID_FIELD_IN_CDB");
@@ -124,7 +122,7 @@ test_writeatomic16_vpd(void)
 	} else {
 		logging(LOG_VERBOSE, "Atomic Write of 1 block should fail due to invalid granularity");
 		ret = writeatomic16(sd, 0, block_size,
-				    block_size, 0, 0, 0, 0, buf,
+				    block_size, 0, 0, 0, 0, scratch,
 				    EXPECT_INVALID_FIELD_IN_CDB);
 		if (ret) {
 			logging(LOG_VERBOSE, "[FAILED] Misgranularity write did NOT fail with INVALID_FIELD_IN_CDB");

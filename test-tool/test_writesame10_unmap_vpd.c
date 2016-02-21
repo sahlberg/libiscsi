@@ -31,7 +31,6 @@ void
 test_writesame10_unmap_vpd(void)
 {
 	int ret;
-	unsigned char *buf = alloca(block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME10 UNMAP availability is "
@@ -42,9 +41,8 @@ test_writesame10_unmap_vpd(void)
 
 	logging(LOG_VERBOSE, "Check if WRITESAME10 can be used for UNMAP.");
 	logging(LOG_VERBOSE, "Unmap 1 block using WRITESAME10");
-	memset(buf, 0, block_size);
-	ret = writesame10(sd, 0,
-			  block_size, 1, 0, 1, 0, 0, buf,
+	memset(scratch, 0, block_size);
+	ret = writesame10(sd, 0, block_size, 1, 0, 1, 0, 0, scratch,
 			  EXPECT_STATUS_GOOD);
 	if (ret != 0) {
 		logging(LOG_VERBOSE, "WRITESAME10 UNMAP is not available. "

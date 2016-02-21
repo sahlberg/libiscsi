@@ -30,20 +30,19 @@ void
 test_orwrite_beyond_eol(void)
 { 
 	int i, ret;
-	unsigned char *buf = alloca(256 * block_size);
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test ORWRITE 1-256 blocks one block beyond the end");
-	memset(buf, 0xa6, 256 * block_size);
+	memset(scratch, 0xa6, 256 * block_size);
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
 		ret = orwrite(sd, num_blocks + 1 - i,
-			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
 			      EXPECT_LBA_OOB);
 		if (ret == -2) {
 			logging(LOG_NORMAL, "[SKIPPED] ORWRITE is not implemented.");
@@ -60,7 +59,8 @@ test_orwrite_beyond_eol(void)
 			break;
 		}
 		ret = orwrite(sd, 0x8000000000000000ULL,
-			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      i * block_size, block_size,
+                              0, 0, 0, 0, 0, scratch,
 			      EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -72,7 +72,8 @@ test_orwrite_beyond_eol(void)
 			break;
 		}
 		ret = orwrite(sd, -1,
-			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      i * block_size, block_size,
+                              0, 0, 0, 0, 0, scratch,
 			      EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -84,7 +85,8 @@ test_orwrite_beyond_eol(void)
 			break;
 		}
 		ret = orwrite(sd, num_blocks - 1,
-			      i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+			      i * block_size, block_size,
+                              0, 0, 0, 0, 0, scratch,
 			      EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}

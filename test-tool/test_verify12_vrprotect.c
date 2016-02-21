@@ -31,7 +31,6 @@ void
 test_verify12_vrprotect(void)
 {
 	int i, ret;
-	unsigned char *buf = alloca(block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY12 with non-zero VRPROTECT");
@@ -43,12 +42,12 @@ test_verify12_vrprotect(void)
 		for (i = 1; i < 8; i++) {
 	
 			ret = read10(sd, NULL, 0, block_size,
-				     block_size, 0, 0, 0, 0, 0, buf,
+				     block_size, 0, 0, 0, 0, 0, scratch,
 				     EXPECT_STATUS_GOOD);
 			CU_ASSERT_EQUAL(ret, 0);
 
                         VERIFY12(sd, 0, block_size,
-                                 block_size, i, 0, 1, buf,
+                                 block_size, i, 0, 1, scratch,
                                  EXPECT_INVALID_FIELD_IN_CDB);
 		}
 		return;

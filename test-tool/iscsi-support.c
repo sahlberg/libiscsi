@@ -109,6 +109,7 @@ struct scsi_inquiry_block_limits *inq_bl;
 struct scsi_readcapacity16 *rc16;
 struct scsi_report_supported_op_codes *rsop;
 
+unsigned char *scratch;
 size_t block_size;
 uint64_t num_blocks;
 int lbppb;

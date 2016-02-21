@@ -28,7 +28,6 @@ void
 test_writesame16_0blocks(void)
 {
 	int ret;
-	unsigned char *buf = alloca(block_size);
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -41,19 +40,18 @@ test_writesame16_0blocks(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks at LBA==0 (WSNZ=%d)",
 		inq_bl->wsnz);
-	memset(buf, 0, block_size);
+	memset(scratch, 0, block_size);
 
 	if (inq_bl->wsnz) {
 		ret = writesame16(sd, 0,
-				  block_size, 0, 0, 0, 0, 0, buf,
+				  block_size, 0, 0, 0, 0, 0, scratch,
 				  EXPECT_INVALID_FIELD_IN_CDB);
 		logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 does not support 0-blocks.");
 		CU_ASSERT_EQUAL(ret, 0);
 		return;
 	}
 
-	ret = writesame16(sd, 0,
-			  block_size, 0, 0, 0, 0, 0, buf,
+	ret = writesame16(sd, 0, block_size, 0, 0, 0, 0, 0, scratch,
 			  EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
@@ -69,21 +67,21 @@ test_writesame16_0blocks(void)
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks one block past end-of-LUN");
 	ret = writesame16(sd, num_blocks + 1,
-			  block_size, 0, 0, 0, 0, 0, buf,
+			  block_size, 0, 0, 0, 0, 0, scratch,
 			  EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks at LBA==2^63");
 	ret = writesame16(sd, 0x8000000000000000ULL,
-			  block_size, 0, 0, 0, 0, 0, buf,
+			  block_size, 0, 0, 0, 0, 0, scratch,
 			  EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 
 
 	logging(LOG_VERBOSE, "Test WRITESAME16 0-blocks at LBA==-1");
 	ret = writesame16(sd, -1,
-			  block_size, 0, 0, 0, 0, 0, buf,
+			  block_size, 0, 0, 0, 0, 0, scratch,
 			  EXPECT_LBA_OOB);
 	CU_ASSERT_EQUAL(ret, 0);
 }

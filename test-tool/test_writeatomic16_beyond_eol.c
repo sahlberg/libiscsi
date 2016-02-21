@@ -31,8 +31,6 @@ test_writeatomic16_beyond_eol(void)
 {
 	int align, i, gran, ret;
 	const size_t bufsz = 256 * 2 * block_size;
-	unsigned char *buf = alloca(bufsz);
-
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -44,12 +42,12 @@ test_writeatomic16_beyond_eol(void)
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 
-	memset(buf, 0xa6, bufsz);
+	memset(scratch, 0xa6, bufsz);
 	align = inq_bl->atomic_align ? inq_bl->atomic_align : 1;
 	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
 	ret = writeatomic16(sd, 0,
 			    block_size * gran,
-			    block_size, 0, 0, 0, 0, buf,
+			    block_size, 0, 0, 0, 0, scratch,
 			    EXPECT_STATUS_GOOD);
 	if (ret == -2) {
 		logging(LOG_NORMAL, "[SKIPPED] WRITEATOMIC16 is not implemented.");
@@ -66,7 +64,7 @@ test_writeatomic16_beyond_eol(void)
 
 		ret = writeatomic16(sd, num_blocks - i,
 				    2 * i * block_size, block_size,
-				    0, 0, 0, 0, buf,
+				    0, 0, 0, 0, scratch,
 				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -77,7 +75,8 @@ test_writeatomic16_beyond_eol(void)
 			break;
 		}
 		ret = writeatomic16(sd, 0x8000000000000000ULL,
-				    i * block_size, block_size, 0, 0, 0, 0, buf,
+				    i * block_size, block_size,
+                                    0, 0, 0, 0, scratch,
 				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -89,7 +88,7 @@ test_writeatomic16_beyond_eol(void)
 			break;
 		}
 		ret = writeatomic16(sd, -align, i * block_size,
-				    block_size, 0, 0, 0, 0, buf,
+				    block_size, 0, 0, 0, 0, scratch,
 				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
@@ -101,7 +100,8 @@ test_writeatomic16_beyond_eol(void)
 			break;
 		}
 		ret = writeatomic16(sd, num_blocks - gran,
-				    i * block_size, block_size, 0, 0, 0, 0, buf,
+				    i * block_size, block_size,
+                                    0, 0, 0, 0, scratch,
 				    EXPECT_LBA_OOB);
 		CU_ASSERT_EQUAL(ret, 0);
 	}

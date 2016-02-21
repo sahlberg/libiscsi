@@ -31,7 +31,6 @@ void
 test_writesame10_wrprotect(void)
 {
 	int i, ret;
-	unsigned char *buf = alloca(block_size);
 
 	/*
 	 * Try out different non-zero values for WRPROTECT.
@@ -42,12 +41,12 @@ test_writesame10_wrprotect(void)
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
-	memset(buf, 0, block_size);
+	memset(scratch, 0, block_size);
 	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
 			ret = writesame10(sd, 0,
-					  block_size, 1, 0, 0, i, 0, buf,
+					  block_size, 1, 0, 0, i, 0, scratch,
 					  EXPECT_INVALID_FIELD_IN_CDB);
 			if (ret == -2) {
 				logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 is not implemented.");

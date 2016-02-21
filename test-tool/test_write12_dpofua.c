@@ -34,7 +34,6 @@ test_write12_dpofua(void)
 	struct scsi_mode_sense *ms;
 	struct scsi_task *rso_task = NULL;
 	struct scsi_report_supported_op_codes_one_command *rsoc;
-	unsigned char *buf = alloca(block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITE12 DPO/FUA flags");
@@ -61,30 +60,30 @@ test_write12_dpofua(void)
 	}
 
 	logging(LOG_VERBOSE, "Test WRITE12 with DPO==1");
-	memset(buf, 0xa6, block_size);
+	memset(scratch, 0xa6, block_size);
 	if (dpofua) {
-		WRITE12(sd, 0, block_size, block_size, 0, 1, 0, 0, 0, buf,
+		WRITE12(sd, 0, block_size, block_size, 0, 1, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
 	} else {
-		WRITE12(sd, 0, block_size, block_size, 0, 1, 0, 0, 0, buf,
+		WRITE12(sd, 0, block_size, block_size, 0, 1, 0, 0, 0, scratch,
                         EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITE12 with FUA==1");
 	if (dpofua) {
-		WRITE12(sd, 0, block_size, block_size, 0, 0, 1, 0, 0, buf,
+		WRITE12(sd, 0, block_size, block_size, 0, 0, 1, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
 	} else {
-		WRITE12(sd, 0, block_size, block_size, 0, 0, 1, 0, 0, buf,
+		WRITE12(sd, 0, block_size, block_size, 0, 0, 1, 0, 0, scratch,
                         EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITE12 with DPO==1 FUA==1");
 	if (dpofua) {
-		WRITE12(sd, 0, block_size, block_size, 0, 1, 1, 0, 0, buf,
+		WRITE12(sd, 0, block_size, block_size, 0, 1, 1, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
 	} else {
-		WRITE12(sd, 0, block_size, block_size, 0, 1, 1, 0, 0, buf,
+		WRITE12(sd, 0, block_size, block_size, 0, 1, 1, 0, 0, scratch,
                         EXPECT_INVALID_FIELD_IN_CDB);
 	}
 

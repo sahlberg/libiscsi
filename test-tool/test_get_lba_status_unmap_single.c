@@ -31,7 +31,6 @@ test_get_lba_status_unmap_single(void)
 {
 	int ret;
 	uint64_t i;
-	unsigned char *buf = alloca((256 + lbppb + 1) * block_size);
 	struct unmap_list list[1];
 	struct scsi_task *t = NULL;
 	struct scsi_get_lba_status *lbas = NULL;
@@ -41,7 +40,7 @@ test_get_lba_status_unmap_single(void)
 	CHECK_FOR_THIN_PROVISIONING;
 	CHECK_FOR_LBPU;
 
-	memset(buf, 'A', (256 + lbppb + 1) * block_size);
+	memset(scratch, 'A', (256 + lbppb + 1) * block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test GET_LBA_STATUS for a single unmapped block "
@@ -52,7 +51,7 @@ test_get_lba_status_unmap_single(void)
 	logging(LOG_VERBOSE, "Write the first %i blocks with a known "
 		"pattern and thus map the blocks", 256 + lbppb);
 	ret = write10(sd, 0, (256 + lbppb) * block_size,
-		      block_size, 0, 0, 0, 0, 0, buf,
+		      block_size, 0, 0, 0, 0, 0, scratch,
 		      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
@@ -118,7 +117,7 @@ test_get_lba_status_unmap_single(void)
 		logging(LOG_VERBOSE, "Write the first %i blocks with a known "
 			"pattern and thus map the blocks", (256 + lbppb));
 		ret = write10(sd, 0, (256 + lbppb) * block_size,
-			      block_size, 0, 0, 0, 0, 0, buf,
+			      block_size, 0, 0, 0, 0, 0, scratch,
 			      EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmap %" PRIu64 " blocks at LBA 0", i);

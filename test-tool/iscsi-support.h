@@ -314,6 +314,7 @@ extern struct scsi_inquiry_block_limits *inq_bl;
 extern struct scsi_readcapacity16 *rc16;
 extern struct scsi_report_supported_op_codes *rsop;
 
+extern unsigned char *scratch;
 extern size_t block_size;
 extern uint64_t num_blocks;
 extern int lbppb;

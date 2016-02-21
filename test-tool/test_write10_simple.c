@@ -31,19 +31,18 @@ void
 test_write10_simple(void)
 {
 	int i;
-	unsigned char *buf = alloca(256 * block_size);
-
 
 	CHECK_FOR_DATALOSS;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITE10 of 1-256 blocks at the start of the LUN");
-	memset(buf, 0xa6, 256 * block_size);
+	memset(scratch, 0xa6, 256 * block_size);
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		WRITE10(sd, 0, i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+		WRITE10(sd, 0, i * block_size, block_size,
+                        0, 0, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
 	}
 
@@ -53,7 +52,7 @@ test_write10_simple(void)
 			break;
 		}
 		WRITE10(sd, num_blocks - i,
-                        i * block_size, block_size, 0, 0, 0, 0, 0, buf,
+                        i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
 	}
 }
