@@ -66,25 +66,11 @@ test_verify16_dpo(void)
 
 	logging(LOG_VERBOSE, "Test VERIFY16 with DPO==1");
 	if (dpofua) {
-		ret = verify16(sd, 0, block_size,
-			       block_size, 0, 1, 0, buf,
-			       EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented.");
-			CU_PASS("VERIFY16 is not implemented.");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY16(sd, 0, block_size, block_size, 0, 1, 0, buf,
+                         EXPECT_STATUS_GOOD);
 	} else {
-		ret = verify16(sd, 0, block_size,
-			       block_size, 0, 1, 0, buf,
-			       EXPECT_INVALID_FIELD_IN_CDB);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented.");
-			CU_PASS("VERIFY16 is not implemented.");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY16(sd, 0, block_size, block_size, 0, 1, 0, buf,
+                         EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Try fetching REPORT_SUPPORTED_OPCODES "

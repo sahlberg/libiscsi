@@ -29,7 +29,7 @@
 void
 test_verify12_beyond_eol(void)
 { 
-	int i, ret;
+	int i;
 	unsigned char *buf = alloca(256 * block_size);
 
 	if (num_blocks >= 0x80000000) {
@@ -44,50 +44,38 @@ test_verify12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = verify12(sd, num_blocks + 1 - i,
-			       i * block_size, block_size, 0, 0, 1, buf,
-			       EXPECT_LBA_OOB);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented.");
-			CU_PASS("[SKIPPED] Target does not support VERIFY12. Skipping test");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY12(sd, num_blocks + 1 - i,
+                         i * block_size, block_size, 0, 0, 1, buf,
+                         EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test VERIFY12 1-256 blocks at LBA==2^31");
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = verify12(sd, 0x80000000,
-			       i * block_size, block_size, 0, 0, 1, buf,
-			       EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY12(sd, 0x80000000,
+                         i * block_size, block_size, 0, 0, 1, buf,
+                         EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test VERIFY12 1-256 blocks at LBA==-1");
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = verify12(sd, -1, i * block_size,
-			       block_size, 0, 0, 1, buf,
-			       EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY12(sd, -1, i * block_size,
+                         block_size, 0, 0, 1, buf,
+                         EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test VERIFY12 2-256 blocks all but one block beyond the end");
 	for (i = 2; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = verify12(sd, num_blocks - 1,
-			       i * block_size, block_size, 0, 0, 1, buf,
-			       EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY12(sd, num_blocks - 1,
+                         i * block_size, block_size, 0, 0, 1, buf,
+                         EXPECT_LBA_OOB);
 	}
 }

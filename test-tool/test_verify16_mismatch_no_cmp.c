@@ -50,15 +50,8 @@ test_verify16_mismatch_no_cmp(void)
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify16(sd, 0, i * block_size,
-			       block_size, 0, 0, 0, buf,
-			       EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented.");
-			CU_PASS("[SKIPPED] Target does not support VERIFY16. Skipping test");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY16(sd, 0, i * block_size, block_size, 0, 0, 0, buf,
+                         EXPECT_STATUS_GOOD);
 	}
 
 	logging(LOG_VERBOSE, "Test VERIFY16 without BYTCHK of 1-256 blocks at the end of the LUN");
@@ -78,9 +71,8 @@ test_verify16_mismatch_no_cmp(void)
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify16(sd, num_blocks - i,
-			       i * block_size, block_size, 0, 0, 0, buf,
-			       EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY16(sd, num_blocks - i,
+                         i * block_size, block_size, 0, 0, 0, buf,
+                         EXPECT_STATUS_GOOD);
 	}
 }

@@ -44,15 +44,8 @@ test_verify12_simple(void)
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
-		ret = verify12(sd, 0, i * block_size,
-			       block_size, 0, 0, 1, buf,
-			       EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented.");
-			CU_PASS("[SKIPPED] Target does not support VERIFY12. Skipping test");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY12(sd, 0, i * block_size, block_size, 0, 0, 1, buf,
+                         EXPECT_STATUS_GOOD);
 	}
 
 	logging(LOG_VERBOSE, "Test VERIFY12 of 1-256 blocks at the end of the LUN");
@@ -65,9 +58,8 @@ test_verify12_simple(void)
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
-		ret = verify12(sd, num_blocks - i,
-			       i * block_size, block_size, 0, 0, 1, buf,
-			       EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY12(sd, num_blocks - i,
+                         i * block_size, block_size, 0, 0, 1, buf,
+                         EXPECT_STATUS_GOOD);
 	}
 }

@@ -50,14 +50,8 @@ test_verify10_mismatch(void)
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify10(sd, 0, i * block_size,
-			       block_size, 0, 0, 1, buf,
-			       EXPECT_MISCOMPARE);
-		if (ret == -2) {
-			CU_PASS("[SKIPPED] Target does not support VERIFY10. Skipping test");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY10(sd, 0, i * block_size, block_size, 0, 0, 1, buf,
+                         EXPECT_MISCOMPARE);
 	}
 
 	logging(LOG_VERBOSE, "Test VERIFY10 of 1-256 blocks at the end of the LUN");
@@ -76,9 +70,8 @@ test_verify10_mismatch(void)
 		buf[offset] ^= 'X';
 		logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		ret = verify10(sd, num_blocks - i,
-			       i * block_size, block_size, 0, 0, 1, buf,
-			       EXPECT_MISCOMPARE);
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY10(sd, num_blocks - i,
+                         i * block_size, block_size, 0, 0, 1, buf,
+                         EXPECT_MISCOMPARE);
 	}
 }

@@ -44,15 +44,8 @@ test_verify10_simple(void)
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
-		ret = verify10(sd, 0, i * block_size,
-			       block_size, 0, 0, 1, buf,
-			       EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] VERIFY10 is not implemented.");
-			CU_PASS("[SKIPPED] Target does not support VERIFY10. Skipping test");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY10(sd, 0, i * block_size, block_size, 0, 0, 1, buf,
+                         EXPECT_STATUS_GOOD);
 	}
 
 	logging(LOG_VERBOSE, "Test VERIFY10 of 1-256 blocks at the end of the LUN");
@@ -65,9 +58,8 @@ test_verify10_simple(void)
 			     EXPECT_STATUS_GOOD);
 		CU_ASSERT_EQUAL(ret, 0);
 
-		ret = verify10(sd, num_blocks - i,
-			       i * block_size, block_size, 0, 0, 1, buf,
-			       EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		VERIFY10(sd, num_blocks - i,
+                         i * block_size, block_size, 0, 0, 1, buf,
+                         EXPECT_STATUS_GOOD);
 	}
 }

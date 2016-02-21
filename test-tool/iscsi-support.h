@@ -181,6 +181,48 @@ do {									\
 	}								\
 } while (0);
 
+#define VERIFY10(...)                                                   \
+        do {                                                            \
+                int _r;                                                 \
+                _r = verify10(__VA_ARGS__);                             \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] VERIFY10 "       \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "VERIFY10. Skipping test");             \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
+#define VERIFY12(...)                                                   \
+        do {                                                            \
+                int _r;                                                 \
+                _r = verify12(__VA_ARGS__);                             \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] VERIFY12 "       \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "VERIFY12. Skipping test");             \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
+#define VERIFY16(...)                                                   \
+        do {                                                            \
+                int _r;                                                 \
+                _r = verify16(__VA_ARGS__);                             \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] VERIFY16 "       \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "VERIFY16. Skipping test");             \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 #define WRITE10(...)                                                    \
         do {                                                            \
                 int _r;                                                 \

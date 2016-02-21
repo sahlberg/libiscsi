@@ -33,7 +33,6 @@ test_verify16_vrprotect(void)
 	int i, ret;
 	unsigned char *buf = alloca(block_size);
 
-
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 with non-zero VRPROTECT");
 
@@ -45,15 +44,11 @@ test_verify16_vrprotect(void)
 			ret = read16(sd, NULL, 0, block_size,
 				     block_size, 0, 0, 0, 0, 0, buf,
 				     EXPECT_STATUS_GOOD);
-			ret = verify16(sd, 0, block_size,
-				       block_size, i, 0, 1, buf,
-				       EXPECT_INVALID_FIELD_IN_CDB);
-			if (ret == -2) {
-				logging(LOG_NORMAL, "[SKIPPED] VERIFY16 is not implemented.");
-				CU_PASS("[SKIPPED] Target does not support VERIFY16. Skipping test");
-				return;
-			}
 			CU_ASSERT_EQUAL(ret, 0);
+	
+			VERIFY16(sd, 0, block_size,
+                                 block_size, i, 0, 1, buf,
+                                 EXPECT_INVALID_FIELD_IN_CDB);
 		}
 		return;
 	}

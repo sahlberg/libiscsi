@@ -43,13 +43,6 @@ test_verify12_flags(void)
 
 
 	logging(LOG_VERBOSE, "Test VERIFY12 with BYTCHK==1");
-	ret = verify12(sd, 0, block_size,
-		       block_size, 0, 0, 1, buf,
-		       EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] VERIFY12 is not implemented.");
-		CU_PASS("[SKIPPED] Target does not support VERIFY12. Skipping test");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	VERIFY12(sd, 0, block_size, block_size, 0, 0, 1, buf,
+                 EXPECT_STATUS_GOOD);
 }

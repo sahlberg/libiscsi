@@ -46,15 +46,9 @@ test_verify10_vrprotect(void)
 				     EXPECT_STATUS_GOOD);
 			CU_ASSERT_EQUAL(ret, 0);
 	
-			ret = verify10(sd, 0, block_size,
-				       block_size, i, 0, 1, buf,
-				       EXPECT_INVALID_FIELD_IN_CDB);
-			if (ret == -2) {
-				logging(LOG_NORMAL, "[SKIPPED] VERIFY10 is not implemented.");
-				CU_PASS("[SKIPPED] Target does not support VERIFY10. Skipping test");
-				return;
-			}
-			CU_ASSERT_EQUAL(ret, 0);
+			VERIFY10(sd, 0, block_size,
+                                 block_size, i, 0, 1, buf,
+                                 EXPECT_INVALID_FIELD_IN_CDB);
 		}
 		return;
 	}
