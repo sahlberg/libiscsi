@@ -33,18 +33,16 @@ test_modesense6_control(void)
 	struct scsi_mode_page *ct_page;
 	struct scsi_task *ap_task = NULL;
 	struct scsi_task *ct_task = NULL;
-	int ret;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test of MODESENSE6 CONTROL page");
 
-
 	logging(LOG_VERBOSE, "Fetch the CONTROL page via AllPages");
 	logging(LOG_VERBOSE, "Send MODESENSE6 command to fetch AllPages");
-	ret = modesense6(sd, &ap_task, 0, SCSI_MODESENSE_PC_CURRENT,
-			 SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
-			 EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	MODESENSE6(sd, &ap_task, 0, SCSI_MODESENSE_PC_CURRENT,
+                   SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
+                   EXPECT_STATUS_GOOD);
+
 	logging(LOG_VERBOSE, "[SUCCESS] All Pages fetched.");
 
 
@@ -82,10 +80,9 @@ test_modesense6_control(void)
 
 	logging(LOG_VERBOSE, "Fetch the CONTROL page directly");
 	logging(LOG_VERBOSE, "Send MODESENSE6 command to fetch CONTROL");
-	ret = modesense6(sd, &ct_task, 0, SCSI_MODESENSE_PC_CURRENT,
-			 SCSI_MODEPAGE_CONTROL, 0, 255,
-			 EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	MODESENSE6(sd, &ct_task, 0, SCSI_MODESENSE_PC_CURRENT,
+                   SCSI_MODEPAGE_CONTROL, 0, 255,
+                   EXPECT_STATUS_GOOD);
 	logging(LOG_VERBOSE, "[SUCCESS] CONTROL page fetched.");
 
 	logging(LOG_VERBOSE, "Try to unmarshall the DATA-IN buffer.");

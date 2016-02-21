@@ -29,7 +29,6 @@ void
 test_modesense6_residuals(void)
 {
 	struct scsi_task *ms_task = NULL;
-	int ret;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test of MODESENSE6 Residuals");
@@ -40,12 +39,11 @@ test_modesense6_residuals(void)
 	
 	logging(LOG_VERBOSE, "Try a MODESENSE6 command with 4 bytes of "
 		"transfer length and verify that we don't get residuals.");
-	ret = modesense6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
-			 SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 4,
-			 EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-	logging(LOG_VERBOSE, "[SUCCESS] All Pages fetched.");
+	MODESENSE6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
+                   SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 4,
+                   EXPECT_STATUS_GOOD);
 
+	logging(LOG_VERBOSE, "[SUCCESS] All Pages fetched.");
 
 	logging(LOG_VERBOSE, "Verify that we got at most 4 bytes of DATA-IN");
 	if (ms_task->datain.size > 4) {
@@ -70,10 +68,9 @@ test_modesense6_residuals(void)
 	logging(LOG_VERBOSE, "Try a MODESENSE6 command with 255 bytes of "
 		"transfer length and verify that we get residuals if the target returns less than the requested amount of data.");
 	scsi_free_scsi_task(ms_task);
-	ret = modesense6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
-			 SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
-			 EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	MODESENSE6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
+                   SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
+                   EXPECT_STATUS_GOOD);
 	logging(LOG_VERBOSE, "[SUCCESS] All Pages fetched.");
 
 	if (ms_task->datain.size == 255) {

@@ -63,14 +63,14 @@ test_reserve6_2initiators(void)
 	RELEASE6(sd2);
 
 	logging(LOG_NORMAL, "Test we can still send MODE SENSE from the first initiator");
-	ret = modesense6(sd, NULL, 0, SCSI_MODESENSE_PC_CURRENT, SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
-			 EXPECT_STATUS_GOOD);	
-	CU_ASSERT_EQUAL(ret, 0);
+	MODESENSE6(sd, NULL, 0, SCSI_MODESENSE_PC_CURRENT,
+                   SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
+                   EXPECT_STATUS_GOOD);	
 
 	logging(LOG_NORMAL, "MODE SENSE should fail from the second initiator");
-	ret = modesense6(sd2, NULL, 0, SCSI_MODESENSE_PC_CURRENT, SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
-			 EXPECT_RESERVATION_CONFLICT);
-
+	MODESENSE6(sd2, NULL, 0, SCSI_MODESENSE_PC_CURRENT,
+                   SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
+                   EXPECT_RESERVATION_CONFLICT);
 
 	logging(LOG_NORMAL, "RESERVE6 from the second initiator should still fail");
 	ret = reserve6_conflict(sd2);

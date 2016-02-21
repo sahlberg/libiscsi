@@ -30,19 +30,16 @@ test_modesense6_all_pages(void)
 {
 	struct scsi_mode_sense *ms;
 	struct scsi_task *ms_task = NULL;
-	int ret;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test of MODESENSE6 AllPages");
 
 
 	logging(LOG_VERBOSE, "Send MODESENSE6 command to fetch AllPages");
-	ret = modesense6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
-			 SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
-			 EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	MODESENSE6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
+                   SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
+                   EXPECT_STATUS_GOOD);
 	logging(LOG_VERBOSE, "[SUCCESS] All Pages fetched.");
-
 
 	logging(LOG_VERBOSE, "Try to unmarshall the DATA-IN buffer.");
 	ms = scsi_datain_unmarshall(ms_task);

@@ -40,7 +40,6 @@ test_modesense6_control_swp(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test of MODESENSE6 CONTROL SWP flag");
 
-
 	logging(LOG_VERBOSE, "Set SWP to enable write protect");
 	ret = set_swp(sd);
 	if (ret == -2) {
@@ -53,10 +52,9 @@ test_modesense6_control_swp(void)
 	}
 
 	logging(LOG_VERBOSE, "Read the CONTROL page back from the device");
-	ret = modesense6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
-			 SCSI_MODEPAGE_CONTROL, 0, 255,
-			 EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	MODESENSE6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
+                   SCSI_MODEPAGE_CONTROL, 0, 255,
+                   EXPECT_STATUS_GOOD);
 	logging(LOG_VERBOSE, "[SUCCESS] CONTROL page fetched.");
 
 	logging(LOG_VERBOSE, "Try to unmarshall the DATA-IN buffer.");

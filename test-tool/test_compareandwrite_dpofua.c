@@ -42,10 +42,10 @@ test_compareandwrite_dpofua(void)
 	CHECK_FOR_DATALOSS;
 
 	logging(LOG_VERBOSE, "Read the DPOFUA flag from mode sense data");
-	ret = modesense6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
-			 SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
-			 EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	MODESENSE6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
+                   SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
+                   EXPECT_STATUS_GOOD);
+
 	logging(LOG_VERBOSE, "[SUCCESS] Mode sense returned status GOOD");
 	ms = scsi_datain_unmarshall(ms_task);
 	dpofua = ms && (ms->device_specific_parameter & 0x10);
