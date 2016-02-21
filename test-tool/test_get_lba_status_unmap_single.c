@@ -43,7 +43,7 @@ test_get_lba_status_unmap_single(void)
 	memset(scratch, 'A', (256 + lbppb + 1) * block_size);
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test GET_LBA_STATUS for a single unmapped block "
+	logging(LOG_VERBOSE, "Test GETLBASTATUS for a single unmapped block "
 		"at offset 0-255");
 	logging(LOG_VERBOSE, "We have %d logical blocks per physical block",
 		lbppb);
@@ -66,38 +66,27 @@ test_get_lba_status_unmap_single(void)
 
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:%"
 			PRIu64, i);
-		ret = get_lba_status(sd, NULL, i, 24,
-				     EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			CU_PASS("[SKIPPED] Target does not support GET_LBA_STATUS. Skipping test");
-			return;
-		}
-		if (ret != 0) {
-			CU_FAIL("[FAILED] GET_LBA_STATUS command failed");
-			return;
-		}
+		GETLBASTATUS(sd, NULL, i, 24,
+                             EXPECT_STATUS_GOOD);
+
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:%"
 			PRIu64, i + lbppb);
-		ret = get_lba_status(sd, &t, i + lbppb, 24,
-				     EXPECT_STATUS_GOOD);
-		if (ret != 0) {
-			CU_FAIL("[FAILED] GET_LBA_STATUS command failed");
-			return;
-		}
+		GETLBASTATUS(sd, &t, i + lbppb, 24,
+                             EXPECT_STATUS_GOOD);
 		if (t == NULL) {
-			CU_FAIL("[FAILED] GET_LBA_STATUS task is NULL");
+			CU_FAIL("[FAILED] GETLBASTATUS task is NULL");
 			return;
 		}
 		lbas = scsi_datain_unmarshall(t);
 		if (lbas == NULL) {
-			CU_FAIL("[FAILED] GET_LBA_STATUS command: failed "
+			CU_FAIL("[FAILED] GETLBASTATUS command: failed "
 				"to unmarshall data.");
 			scsi_free_scsi_task(t);
 			return;
 		}
 		lbasd = &lbas->descriptors[0];
 		if (lbasd->lba != i + lbppb) {
-			CU_FAIL("[FAILED] GET_LBA_STATUS command: "
+			CU_FAIL("[FAILED] GETLBASTATUS command: "
 				"lba offset in first descriptor does not "
 				"match request.");
 			scsi_free_scsi_task(t);
@@ -111,7 +100,7 @@ test_get_lba_status_unmap_single(void)
 	}
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test GET_LBA_STATUS for a single range of 1-255 "
+	logging(LOG_VERBOSE, "Test GETLBASTATUS for a single range of 1-255 "
 		"blocks at offset 0");
 	for (i = lbppb; i + lbppb <= 256; i += lbppb) {
 		logging(LOG_VERBOSE, "Write the first %i blocks with a known "
@@ -129,37 +118,26 @@ test_get_lba_status_unmap_single(void)
 
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:0");
 
-		ret = get_lba_status(sd, NULL, 0, 24,
-				     EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			CU_PASS("[SKIPPED] Target does not support GET_LBA_STATUS. Skipping test");
-			return;
-		}
-		if (ret != 0) {
-			CU_FAIL("[FAILED] GET_LBA_STATUS command failed");
-			return;
-		}
+		GETLBASTATUS(sd, NULL, 0, 24,
+                             EXPECT_STATUS_GOOD);
+
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:%" PRIu64, i + 1);
-		ret = get_lba_status(sd, &t, i + 1, 24,
-				     EXPECT_STATUS_GOOD);
-		if (ret != 0) {
-			CU_FAIL("[FAILED] GET_LBA_STATUS command failed");
-			return;
-		}
+		GETLBASTATUS(sd, &t, i + 1, 24,
+                             EXPECT_STATUS_GOOD);
 		if (t == NULL) {
-			CU_FAIL("[FAILED] GET_LBA_STATUS task is NULL");
+			CU_FAIL("[FAILED] GETLBASTATUS task is NULL");
 			return;
 		}
 		lbas = scsi_datain_unmarshall(t);
 		if (lbas == NULL) {
-			CU_FAIL("[FAILED] GET_LBA_STATUS command: failed "
+			CU_FAIL("[FAILED] GETLBASTATUS command: failed "
 				"to unmarshall data.");
 			scsi_free_scsi_task(t);
 			return;
 		}
 		lbasd = &lbas->descriptors[0];
 		if (lbasd->lba != i + lbppb) {
-			CU_FAIL("[FAILED] GET_LBA_STATUS command: "
+			CU_FAIL("[FAILED] GETLBASTATUS command: "
 				"lba offset in first descriptor does not "
 				"match request.");
 			scsi_free_scsi_task(t);

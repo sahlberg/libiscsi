@@ -109,8 +109,8 @@ check_unmap(void)
 	uint64_t lba;
 
 	logging(LOG_VERBOSE, "Read LBA mapping from the target");
-	get_lba_status(sd, &task_ret, 0, 256,
-		       EXPECT_STATUS_GOOD);
+	GETLBASTATUS(sd, &task_ret, 0, 256,
+                     EXPECT_STATUS_GOOD);
 	if (task_ret == NULL) {
 		logging(LOG_VERBOSE, "[FAILED] Failed to read LBA mapping "
 			"from the target.");
@@ -127,7 +127,6 @@ check_unmap(void)
 		scsi_free_scsi_task(task_ret);
 		return;
 	}
-
 
 	logging(LOG_VERBOSE, "Unmarshall LBA mapping datain buffer");
 	lbas = scsi_datain_unmarshall(task_ret);
