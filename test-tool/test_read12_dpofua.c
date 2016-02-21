@@ -99,45 +99,34 @@ test_read12_dpofua(void)
 
 	logging(LOG_VERBOSE, "Try fetching REPORT_SUPPORTED_OPCODES "
 		"for READ12");
-	ret = report_supported_opcodes(sd, &rso_task,
-				       0, SCSI_REPORT_SUPPORTING_OPCODE,
-				       SCSI_OPCODE_READ12,
-				       0,
-				       65535,
-				       EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "REPORT_SUPPORTED_OPCODES not implemented. "
-			"Skipping this part of the test");
-		goto out;
-	}
+	REPORT_SUPPORTED_OPCODES(sd, &rso_task,
+                                 0, SCSI_REPORT_SUPPORTING_OPCODE,
+                                 SCSI_OPCODE_READ12,
+                                 0,
+                                 65535,
+                                 EXPECT_STATUS_GOOD);
 	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
 	rsoc = scsi_datain_unmarshall(rso_task);
-	if (rsoc) {
-		usage_data_dpofua = rsoc->cdb_usage_data[1] & 0x18;
-		if (dpofua) {
-			logging(LOG_VERBOSE, "DPOFUA is set. Verify the "
-				"DPO/FUA flags are set in the CDB_USAGE_DATA");
-			if (!usage_data_dpofua) {
-				logging(LOG_NORMAL, "[FAILED] DpoFua not set "
-					"in CDB_USAGE_DATE");
-				CU_FAIL("DpoFua not set in CDB_USAGE_DATE");
-			}
-		} else {
-			logging(LOG_VERBOSE, "DPOFUA is clear. Verify the "
-				"DPO/FUA flags are clear in the CDB_USAGE_DATA");
-			if (usage_data_dpofua) {
-				logging(LOG_NORMAL, "[FAILED] DpoFua not clear "
-					"in CDB_USAGE_DATE");
-				CU_FAIL("DpoFua not clear in CDB_USAGE_DATE");
-			}
-		}
-	} else {
-		logging(LOG_NORMAL, "[FAILED] Target did not return any data "
-			"for ReportSupportedOpcodes\n");
-		CU_FAIL("Target did not return any data for "
-			"ReportSupportedOpcodes");
-	}
+	CU_ASSERT_PTR_NOT_NULL_FATAL(rsoc);
+        
+        usage_data_dpofua = rsoc->cdb_usage_data[1] & 0x18;
+        if (dpofua) {
+                logging(LOG_VERBOSE, "DPOFUA is set. Verify the "
+                        "DPO/FUA flags are set in the CDB_USAGE_DATA");
+                if (!usage_data_dpofua) {
+                        logging(LOG_NORMAL, "[FAILED] DpoFua not set "
+                                "in CDB_USAGE_DATE");
+                        CU_FAIL("DpoFua not set in CDB_USAGE_DATE");
+                }
+        } else {
+                logging(LOG_VERBOSE, "DPOFUA is clear. Verify the "
+                        "DPO/FUA flags are clear in the CDB_USAGE_DATA");
+                if (usage_data_dpofua) {
+                        logging(LOG_NORMAL, "[FAILED] DpoFua not clear "
+                                "in CDB_USAGE_DATE");
+                        CU_FAIL("DpoFua not clear in CDB_USAGE_DATE");
+                }
+        }
 
-out:
 	scsi_free_scsi_task(rso_task);
 }

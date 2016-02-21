@@ -29,40 +29,21 @@
 void
 test_report_supported_opcodes_servactv(void)
 {
-	int i, ret;
+	int i;
 	struct scsi_task *rso_task;
 	struct scsi_report_supported_op_codes *rsoc;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES SERVACTV flag");
 
+	REPORT_SUPPORTED_OPCODES(sd, &rso_task,
+                                 0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
+                                 65535,
+                                 EXPECT_STATUS_GOOD);
 
-	ret = report_supported_opcodes(
-		sd, &rso_task,
-		0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
-		65535,
-		EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] READ_SUPPORTED_OPCODES is not "
-			"implemented.");
-		CU_PASS("READ_SUPPORTED_OPCODES is not implemented.");
-		goto out;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
-	if (ret != 0)
-		goto out;
-	
 	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
 	rsoc = scsi_datain_unmarshall(rso_task);
-	CU_ASSERT_NOT_EQUAL(rsoc, NULL);
-	if (!rsoc) {
-		logging(LOG_NORMAL, "[FAILED] Target did not return any data "
-			"for ReportSupportedOpcodes\n");
-		CU_FAIL("Target did not return any data for "
-			"ReportSupportedOpcodes");
-		goto out;
-	}
-
+	CU_ASSERT_PTR_NOT_NULL_FATAL(rsoc);
 
 	logging(LOG_VERBOSE, "Verify that when SERVACTV is clear then "
 		"ServiceAction must be zero.");
@@ -75,6 +56,5 @@ test_report_supported_opcodes_servactv(void)
 		}
 	}
 
-out:
 	scsi_free_scsi_task(rso_task);
 }

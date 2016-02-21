@@ -195,6 +195,21 @@ do {									\
                 CU_ASSERT_EQUAL(_r, 0);                                 \
         } while (0);
 
+#define REPORT_SUPPORTED_OPCODES(...)                                   \
+        do {                                                            \
+                int _r;                                                 \
+                _r = report_supported_opcodes(__VA_ARGS__);             \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] REPORT_SUPPORTED" \
+                                "_OPCODES is not implemented.");        \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "REPORT_SUPPORTED_OPCODES. Skipping "   \
+                                "test");                                \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 #define VERIFY10(...)                                                   \
         do {                                                            \
                 int _r;                                                 \

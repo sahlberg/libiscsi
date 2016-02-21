@@ -29,21 +29,11 @@
 void
 test_report_supported_opcodes_simple(void)
 {
-	int ret;
-
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test basic READ_SUPPORTED_OPCODES");
 
-	ret = report_supported_opcodes(
-		sd, NULL,
-		0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
-		1024,
-		EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] READ_SUPPORTED_OPCODES is not "
-			"implemented.");
-		CU_PASS("READ_SUPPORTED_OPCODES is not implemented.");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	REPORT_SUPPORTED_OPCODES(sd, NULL,
+                                 0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
+                                 1024,
+                                 EXPECT_STATUS_GOOD);
 }

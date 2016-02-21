@@ -74,20 +74,15 @@ test_verify12_dpo(void)
 
 	logging(LOG_VERBOSE, "Try fetching REPORT_SUPPORTED_OPCODES "
 		"for VERIFY12");
-	ret = report_supported_opcodes(sd, &rso_task,
-				       0, SCSI_REPORT_SUPPORTING_OPCODE,
-				       SCSI_OPCODE_VERIFY12,
-				       0,
-				       65535,
-				       EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "REPORT_SUPPORTED_OPCODES not implemented. "
-			"Skipping this part of the test");
-		goto out;
-	}
+	REPORT_SUPPORTED_OPCODES(sd, &rso_task,
+                                 0, SCSI_REPORT_SUPPORTING_OPCODE,
+                                 SCSI_OPCODE_VERIFY12,
+                                 0,
+                                 65535,
+                                 EXPECT_STATUS_GOOD);
 	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
 	rsoc = scsi_datain_unmarshall(rso_task);
-	CU_ASSERT_NOT_EQUAL(rsoc, NULL);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(rsoc);
 	usage_data_dpo = rsoc ? rsoc->cdb_usage_data[1] & 0x10 : -1;
 	if (dpofua) {
 		logging(LOG_VERBOSE, "DPOFUA is set. Verify the DPO flag "
@@ -99,6 +94,5 @@ test_verify12_dpo(void)
 		CU_ASSERT_EQUAL(usage_data_dpo, 0x00);
 	}
 
-out:
 	scsi_free_scsi_task(rso_task);
 }
