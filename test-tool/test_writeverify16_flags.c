@@ -30,7 +30,6 @@
 void
 test_writeverify16_flags(void)
 { 
-	int ret;
 	unsigned char *buf = alloca(block_size);
 
 	CHECK_FOR_DATALOSS;
@@ -41,13 +40,6 @@ test_writeverify16_flags(void)
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 with BYTCHK==1");
 	memset(buf, 0xa6, block_size);
-	ret = writeverify16(sd, 0,
-			    block_size, block_size, 0, 0, 1, 0, buf,
-			    EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
-		CU_PASS("WRITEVERIFY16 is not implemented.");
-		return;
-       	}	
-	CU_ASSERT_EQUAL(ret, 0);
+	WRITEVERIFY16(sd, 0, block_size, block_size, 0, 0, 1, 0, buf,
+                      EXPECT_STATUS_GOOD);
 }

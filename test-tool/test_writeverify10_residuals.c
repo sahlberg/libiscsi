@@ -53,13 +53,8 @@ test_writeverify10_residuals(void)
 	}
 
 	/* check if writeverify10 is supported */
-	ret = writeverify10(sd, 0, 0,
-			    block_size, 0, 0, 0, 0, NULL,
-			    EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		CU_PASS("[SKIPPED] Target does not support WRITEVERIFY10. Skipping test");
-		return;
-	}
+	WRITEVERIFY10(sd, 0, 0, block_size, 0, 0, 0, 0, NULL,
+                      EXPECT_STATUS_GOOD);
 
 	/* Try a writeverify10 of 1 block but xferlength == 0 */
 	task = malloc(sizeof(struct scsi_task));

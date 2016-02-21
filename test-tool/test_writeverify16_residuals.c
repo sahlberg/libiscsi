@@ -53,14 +53,8 @@ test_writeverify16_residuals(void)
 	}
 
 	/* check if writeverify16 is supported */
-	ret = writeverify16(sd, 0, 0,
-			    block_size, 0, 0, 0, 0, NULL,
-			    EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
-		CU_PASS("[SKIPPED] Target does not support WRITEVERIFY16. Skipping test");
-		return;
-	}
+	WRITEVERIFY16(sd, 0, 0, block_size, 0, 0, 0, 0, NULL,
+                      EXPECT_STATUS_GOOD);
 
 	if (sd->iscsi_ctx == NULL) {
 		const char *err = "[SKIPPED] WRITEVERIFY16 tests are only "

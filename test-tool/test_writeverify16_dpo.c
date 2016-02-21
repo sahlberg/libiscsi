@@ -67,25 +67,13 @@ test_writeverify16_dpo(void)
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 with DPO==1");
 	memset(buf, 0xa6, block_size);
 	if (dpofua) {
-		ret = writeverify16(sd, 0, block_size,
-				    block_size, 0, 1, 0, 0, buf,
-				    EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
-			CU_PASS("WRITEVERIFY16 is not implemented.");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEVERIFY16(sd, 0, block_size,
+                              block_size, 0, 1, 0, 0, buf,
+                              EXPECT_STATUS_GOOD);
 	} else {
-		ret = writeverify16(sd, 0, block_size,
-				    block_size, 0, 1, 0, 0, buf,
-				    EXPECT_INVALID_FIELD_IN_CDB);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
-			CU_PASS("WRITEVERIFY16 is not implemented.");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEVERIFY16(sd, 0, block_size,
+                              block_size, 0, 1, 0, 0, buf,
+                              EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 

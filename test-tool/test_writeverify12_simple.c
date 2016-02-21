@@ -30,7 +30,7 @@
 void
 test_writeverify12_simple(void)
 {
-	int i, ret;
+	int i;
 	unsigned char *buf = alloca(256 * block_size);
 
 	CHECK_FOR_DATALOSS;
@@ -42,15 +42,9 @@ test_writeverify12_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeverify12(sd, 0, i * block_size,
-				    block_size, 0, 0, 0, 0, buf,
-				    EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY12 is not implemented.");
-			CU_PASS("WRITEVERIFY12 is not implemented.");
-			return;
-		}	
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEVERIFY12(sd, 0, i * block_size,
+                              block_size, 0, 0, 0, 0, buf,
+                              EXPECT_STATUS_GOOD);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITE12 of 1-256 blocks at the end of the LUN");
@@ -58,10 +52,8 @@ test_writeverify12_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = writeverify12(sd, num_blocks - i,
-				    i * block_size, block_size, 0, 0, 0, 0, buf,
-				    EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEVERIFY12(sd, num_blocks - i,
+                              i * block_size, block_size, 0, 0, 0, 0, buf,
+                              EXPECT_STATUS_GOOD);
 	}
-
 }

@@ -66,25 +66,13 @@ test_writeverify12_dpo(void)
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY12 with DPO==1");
 	if (dpofua) {
-		ret = writeverify12(sd, 0, block_size,
-				    block_size, 0, 1, 0, 0, buf,
-				    EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY12 is not implemented.");
-			CU_PASS("WRITEVERIFY12 is not implemented.");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEVERIFY12(sd, 0, block_size,
+                              block_size, 0, 1, 0, 0, buf,
+                              EXPECT_STATUS_GOOD);
 	} else {
-		ret = writeverify12(sd, 0, block_size,
-				    block_size, 0, 1, 0, 0, buf,
-				    EXPECT_INVALID_FIELD_IN_CDB);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY12 is not implemented.");
-			CU_PASS("WRITEVERIFY12 is not implemented.");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEVERIFY12(sd, 0, block_size,
+                              block_size, 0, 1, 0, 0, buf,
+                              EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Try fetching REPORT_SUPPORTED_OPCODES "

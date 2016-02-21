@@ -29,7 +29,7 @@
 void
 test_writeverify16_beyond_eol(void)
 { 
-	int i, ret;
+	int i;
 	unsigned char *buf = alloca(256 * block_size);
 
 	CHECK_FOR_DATALOSS;
@@ -42,54 +42,38 @@ test_writeverify16_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = writeverify16(sd, num_blocks + 1 - i,
-				    i * block_size, block_size, 0, 0, 0, 0, buf,
-				    EXPECT_LBA_OOB);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
-			CU_PASS("WRITEVERIFY16 is not implemented.");
-			return;
-	       	}	
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEVERIFY16(sd, num_blocks + 1 - i,
+                              i * block_size, block_size, 0, 0, 0, 0, buf,
+                              EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 1-256 blocks at LBA==2^63");
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = writeverify16(sd, 0x8000000000000000ULL,
-				    i * block_size, block_size, 0, 0, 0, 0, buf,
-				    EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEVERIFY16(sd, 0x8000000000000000ULL,
+                              i * block_size, block_size, 0, 0, 0, 0, buf,
+                              EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 1-256 blocks at LBA==-1");
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = writeverify16(sd, -1,
-				    i * block_size, block_size, 0, 0, 0, 0, buf,
-				    EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEVERIFY16(sd, -1,
+                              i * block_size, block_size, 0, 0, 0, 0, buf,
+                              EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 2-256 blocks all but one block beyond the end");
 	for (i = 2; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = writeverify16(sd, num_blocks - 1,
-				    i * block_size, block_size, 0, 0, 0, 0, buf,
-				    EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEVERIFY16(sd, num_blocks - 1,
+                              i * block_size, block_size, 0, 0, 0, 0, buf,
+                              EXPECT_LBA_OOB);
 	}
 }

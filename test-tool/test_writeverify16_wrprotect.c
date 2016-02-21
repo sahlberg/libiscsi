@@ -31,9 +31,8 @@
 void
 test_writeverify16_wrprotect(void)
 {
-	int i, ret;
+	int i;
 	unsigned char *buf = alloca(block_size);
-
 
 	/*
 	 * Try out different non-zero values for WRPROTECT.
@@ -48,16 +47,9 @@ test_writeverify16_wrprotect(void)
 	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
-			ret = writeverify16(sd, 0,
-					    block_size, block_size,
-					    i, 0, 0, 0, buf,
-					    EXPECT_INVALID_FIELD_IN_CDB);
-			if (ret == -2) {
-				logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
-				CU_PASS("WRITEVERIFY16 is not implemented.");
-				return;
-		       	}	
-			CU_ASSERT_EQUAL(ret, 0);
+			WRITEVERIFY16(sd, 0, block_size, block_size,
+                                      i, 0, 0, 0, buf,
+                                      EXPECT_INVALID_FIELD_IN_CDB);
 		}
 		return;
 	}

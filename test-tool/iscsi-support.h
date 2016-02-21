@@ -181,6 +181,48 @@ do {									\
 	}								\
 } while (0);
 
+#define WRITEVERIFY10(...)                                              \
+        do {                                                            \
+                int _r;                                                 \
+                _r = writeverify10(__VA_ARGS__);                        \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY10 "  \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "WRITEVERIFY10. Skipping test");        \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
+#define WRITEVERIFY12(...)                                              \
+        do {                                                            \
+                int _r;                                                 \
+                _r = writeverify12(__VA_ARGS__);                        \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY12 "  \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "WRITEVERIFY12. Skipping test");        \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
+#define WRITEVERIFY16(...)                                              \
+        do {                                                            \
+                int _r;                                                 \
+                _r = writeverify16(__VA_ARGS__);                        \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 "  \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "WRITEVERIFY16. Skipping test");        \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 extern struct scsi_inquiry_standard *inq;
 extern struct scsi_inquiry_logical_block_provisioning *inq_lbp;
 extern struct scsi_inquiry_block_device_characteristics *inq_bdc;

@@ -30,7 +30,7 @@
 void
 test_writeverify16_simple(void)
 {
-	int i, ret;
+	int i;
 	unsigned char *buf = alloca(256 * block_size);
 
 	CHECK_FOR_DATALOSS;
@@ -43,16 +43,9 @@ test_writeverify16_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = writeverify16(sd, 0, i * block_size,
-				    block_size, 0, 0, 0, 0, buf,
-				    EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITEVERIFY16 is not implemented.");
-			CU_PASS("WRITEVERIFY16 is not implemented.");
-			return;
-	       	}	
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEVERIFY16(sd, 0, i * block_size,
+                              block_size, 0, 0, 0, 0, buf,
+                              EXPECT_STATUS_GOOD);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITEVERIFY16 of 1-256 blocks at the end of the LUN");
@@ -60,11 +53,8 @@ test_writeverify16_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = writeverify16(sd, num_blocks - i,
-				    i * block_size, block_size, 0, 0, 0, 0, buf,
-				    EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITEVERIFY16(sd, num_blocks - i,
+                              i * block_size, block_size, 0, 0, 0, 0, buf,
+                              EXPECT_STATUS_GOOD);
 	}
-
 }
