@@ -29,7 +29,7 @@
 void
 test_writesame16_unmap_unaligned(void)
 {
-	int i, ret;
+	int i;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_THIN_PROVISIONING;
@@ -42,14 +42,7 @@ test_writesame16_unmap_unaligned(void)
 
 	for (i = 1; i < lbppb; i++) {
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16 at LBA:%d", lbppb - i, i);
-		ret = writesame16(sd, i, 0, lbppb - i,
-				  0, 1, 0, 0, NULL,
-				  EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] WRITESAME16 is not implemented.");
-			CU_PASS("[SKIPPED] Target does not support WRITESAME16. Skipping test");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITESAME16(sd, i, 0, lbppb - i, 0, 1, 0, 0, NULL,
+                            EXPECT_STATUS_GOOD);
 	}
 }

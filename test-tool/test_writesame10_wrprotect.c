@@ -30,7 +30,7 @@
 void
 test_writesame10_wrprotect(void)
 {
-	int i, ret;
+	int i;
 
 	/*
 	 * Try out different non-zero values for WRPROTECT.
@@ -45,15 +45,8 @@ test_writesame10_wrprotect(void)
 	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
-			ret = writesame10(sd, 0,
-					  block_size, 1, 0, 0, i, 0, scratch,
-					  EXPECT_INVALID_FIELD_IN_CDB);
-			if (ret == -2) {
-				logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 is not implemented.");
-				CU_PASS("WRITESAME10 is not implemented.");
-				return;
-			}	
-			CU_ASSERT_EQUAL(ret, 0);
+			WRITESAME10(sd, 0, block_size, 1, 0, 0, i, 0, scratch,
+                                    EXPECT_INVALID_FIELD_IN_CDB);
 		}
 		return;
 	}

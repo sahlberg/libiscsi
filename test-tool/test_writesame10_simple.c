@@ -30,7 +30,7 @@
 void
 test_writesame10_simple(void)
 {
-	int i, ret;
+	int i;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -40,22 +40,14 @@ test_writesame10_simple(void)
 
 	memset(scratch, 0, block_size);
 	for (i = 1; i <= 256; i++) {
-		ret = writesame10(sd, 0,
-				  block_size, i, 0, 0, 0, 0, scratch,
-				  EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			CU_PASS("[SKIPPED] Target does not support WRITESAME10. Skipping test");
-			return;
-		}
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITESAME10(sd, 0, block_size, i, 0, 0, 0, 0, scratch,
+                            EXPECT_STATUS_GOOD);
 	}
 
 	logging(LOG_VERBOSE, "Test WRITESAME10 of 1-256 blocks at the end of the LUN");
 	for (i = 1; i <= 256; i++) {
-		ret = writesame10(sd, num_blocks - i,
-				  block_size, i, 0, 0, 0, 0, scratch,
-				  EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITESAME10(sd, num_blocks - i,
+                            block_size, i, 0, 0, 0, 0, scratch,
+                            EXPECT_STATUS_GOOD);
 	}
-
 }

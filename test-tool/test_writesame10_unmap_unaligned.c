@@ -29,7 +29,7 @@
 void
 test_writesame10_unmap_unaligned(void)
 {
-	int i, ret;
+	int i;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_THIN_PROVISIONING;
@@ -42,9 +42,7 @@ test_writesame10_unmap_unaligned(void)
 	memset(scratch, 0xa6, block_size);
 	for (i = 1; i < lbppb; i++) {
 		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10 at LBA:%d", lbppb - i, i);
-		ret = writesame10(sd, i,
-				  block_size, lbppb - i, 0, 1, 0, 0, scratch,
-				  EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		WRITESAME10(sd, i, block_size, lbppb - i, 0, 1, 0, 0, scratch,
+                            EXPECT_STATUS_GOOD);
 	}
 }
