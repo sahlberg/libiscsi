@@ -246,7 +246,6 @@ check_lun_is_wiped(unsigned char *buf, uint64_t lba)
 void
 test_sanitize_block_erase(void)
 { 
-	int ret;
 	struct iscsi_data data;
 	struct scsi_command_descriptor *cd;
 	unsigned char *buf = alloca(256 * block_size);
@@ -323,9 +322,8 @@ test_sanitize_block_erase(void)
 
 
 	logging(LOG_VERBOSE, "Test we can perform basic BLOCK ERASE SANITIZE");
-	ret = sanitize(sd, 0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL,
-		       EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	SANITIZE(sd, 0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL,
+                 EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Check that the first 256 LBAs are wiped.");
 	check_lun_is_wiped(buf, 0);
@@ -339,9 +337,8 @@ test_sanitize_block_erase(void)
 	logging(LOG_VERBOSE, "BLOCK_ERASE parameter list length must be 0");
 	logging(LOG_VERBOSE, "Test that non-zero param length is an error for "
 		"BLOCK ERASE");
-	ret = sanitize(sd, 0, 0, SCSI_SANITIZE_BLOCK_ERASE, 8, &data,
-		       EXPECT_INVALID_FIELD_IN_CDB);
-	CU_ASSERT_EQUAL(ret, 0);
+	SANITIZE(sd, 0, 0, SCSI_SANITIZE_BLOCK_ERASE, 8, &data,
+                 EXPECT_INVALID_FIELD_IN_CDB);
 
 	if (inq_bdc) {
 		logging(LOG_VERBOSE, "Check WABEREQ setting and that READ "

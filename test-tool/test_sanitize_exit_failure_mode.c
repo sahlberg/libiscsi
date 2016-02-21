@@ -30,7 +30,6 @@
 void
 test_sanitize_exit_failure_mode(void)
 { 
-	int ret;
 	struct iscsi_data data;
 	struct scsi_command_descriptor *cd;
 
@@ -56,12 +55,10 @@ test_sanitize_exit_failure_mode(void)
 	data.data = alloca(data.size);
 	memset(data.data, 0, data.size);
 
-
 	logging(LOG_VERBOSE, "EXIT_FAILURE_MODE parameter list length must "
 		"be 0");
 	logging(LOG_VERBOSE, "Test that non-zero param length is an error for "
 		"EXIT_FAILURE_MODE");
-	ret = sanitize(sd, 0, 0, SCSI_SANITIZE_EXIT_FAILURE_MODE, 8, &data,
-		       EXPECT_INVALID_FIELD_IN_CDB);
-	CU_ASSERT_EQUAL(ret, 0);
+	SANITIZE(sd, 0, 0, SCSI_SANITIZE_EXIT_FAILURE_MODE, 8, &data,
+                 EXPECT_INVALID_FIELD_IN_CDB);
 }

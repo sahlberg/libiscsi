@@ -51,7 +51,7 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi _U_, struct iscsi_pdu 
 
 void test_sanitize_overwrite_reserved(void)
 { 
-	int i, ret;
+	int i;
 	struct iscsi_data data;
 
 	data.size = block_size + 4;
@@ -74,25 +74,15 @@ void test_sanitize_overwrite_reserved(void)
 	logging(LOG_VERBOSE, "Send SANITIZE command with the reserved "
 		"bit in byte 1 set to 1");
 	change_num = 1;
-	ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data,
-		       EXPECT_INVALID_FIELD_IN_CDB);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] SANITIZE OVERWRITE is not "
-			"implemented on target.");
-		CU_PASS("SANITIZE is not implemented.");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
-
+	SANITIZE(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data,
+                 EXPECT_INVALID_FIELD_IN_CDB);
 
 	for (i = 2; i < 7; i++) {
 		logging(LOG_VERBOSE, "Send SANITIZE command with the reserved "
 			"byte %d set to non-zero", i);
 		change_num = i;
 
-		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size,
-			       &data,
-			       EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
+		SANITIZE(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data,
+                         EXPECT_INVALID_FIELD_IN_CDB);
 	}
 }

@@ -30,13 +30,12 @@
 void
 test_sanitize_invalid_serviceaction(void)
 { 
-	int i, ret;
+	int i;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test SANITIZE for invalid serviceactions");
 
 	CHECK_FOR_SANITIZE;
-
 
 	logging(LOG_VERBOSE, "Test all invalid service actions and make sure "
 		"they fail with an error");
@@ -52,15 +51,7 @@ test_sanitize_invalid_serviceaction(void)
 		logging(LOG_VERBOSE, "Verify that ServiceAction:0x%02d is "
 			"an error.", i);
 
-		ret = sanitize(sd, 0, 0, i, 0, NULL,
-			       EXPECT_INVALID_FIELD_IN_CDB);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] SANITIZE is not "
-				"implemented.");
-			CU_PASS("SANITIZE is not implemented.");
-			return;
-		} else {
-			CU_ASSERT_EQUAL(ret, 0);
-		}
+		SANITIZE(sd, 0, 0, i, 0, NULL,
+                         EXPECT_INVALID_FIELD_IN_CDB);
 	}
 }

@@ -80,10 +80,8 @@ test_sanitize_reservations(void)
 		data.data[1] = 0x00;
 		data.data[2] = block_size >> 8;
 		data.data[3] = block_size & 0xff;
-		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size,
-			       &data,
-			       EXPECT_RESERVATION_CONFLICT);
-		CU_ASSERT_EQUAL(ret, 0);
+		SANITIZE(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data,
+                         EXPECT_RESERVATION_CONFLICT);
 	}
 
 
@@ -96,9 +94,8 @@ test_sanitize_reservations(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE BLOCK_ERASE");
-		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL,
-			       EXPECT_RESERVATION_CONFLICT);
-		CU_ASSERT_EQUAL(ret, 0);
+		SANITIZE(sd, 0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL,
+                         EXPECT_RESERVATION_CONFLICT);
 	}
 
 	logging(LOG_VERBOSE, "Check if SANITIZE CRYPTO_ERASE is supported "
@@ -110,9 +107,8 @@ test_sanitize_reservations(void)
 			"implemented according to REPORT_SUPPORTED_OPCODES.");
 	} else {
 		logging(LOG_VERBOSE, "Test SANITIZE CRYPTO_ERASE");
-		ret = sanitize(sd, 0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL,
-			       EXPECT_RESERVATION_CONFLICT);
-		CU_ASSERT_EQUAL(ret, 0);
+		SANITIZE(sd, 0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL,
+                         EXPECT_RESERVATION_CONFLICT);
 	}
 
 	mpath_sd2_put(sd2);
