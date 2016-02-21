@@ -195,6 +195,34 @@ do {									\
                 CU_ASSERT_EQUAL(_r, 0);                                 \
         } while (0);
 
+#define EXTENDEDCOPY(...)                                               \
+        do {                                                            \
+                int _r;                                                 \
+                _r = extendedcopy(__VA_ARGS__);                         \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] EXTENDEDCOPY "   \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "EXTENDEDCOPY. Skipping test");         \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
+#define RECEIVE_COPY_RESULTS(...)                                       \
+        do {                                                            \
+                int _r;                                                 \
+                _r = receive_copy_results(__VA_ARGS__);                 \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] RECEIVE_COPY"    \
+                                "_RESULTS is not implemented.");        \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "RECEIVE_COPY_RESULTS. Skipping test"); \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 #define RELEASE6(...)                                                   \
         do {                                                            \
                 int _r;                                                 \

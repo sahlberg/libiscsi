@@ -52,11 +52,10 @@ int init_xcopy_descr(unsigned char *buf, int offset, int num_tgt_desc,
 void
 test_extendedcopy_descr_limits(void)
 {
-	int ret;
 	struct scsi_task *edl_task;
 	struct iscsi_data data;
 	unsigned char *xcopybuf;
-	struct scsi_copy_results_op_params *opp;
+	struct scsi_copy_results_op_params *opp = NULL;
 	int tgt_desc_len = 0, seg_desc_len = 0;
 	unsigned int alloc_len;
 
@@ -66,14 +65,8 @@ test_extendedcopy_descr_limits(void)
 	CHECK_FOR_DATALOSS;
 
 	logging(LOG_VERBOSE, "Issue RECEIVE COPY RESULTS (OPERATING PARAMS)");
-	ret = receive_copy_results(&edl_task, sd, SCSI_COPY_RESULTS_OP_PARAMS, 0,
-				   (void **)&opp, EXPECT_STATUS_GOOD);
-	if (ret < 0) {
-		CU_PASS("[SKIPPED] Target does not support "
-				"RECEIVE_COPY_RESULTS. Skipping test");
-		goto out;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	RECEIVE_COPY_RESULTS(&edl_task, sd, SCSI_COPY_RESULTS_OP_PARAMS, 0,
+                             (void **)&opp, EXPECT_STATUS_GOOD);
 
 	/* Allocate buffer to accommodate (MAX+1) target and
 	 * segment descriptors */
@@ -93,13 +86,7 @@ test_extendedcopy_descr_limits(void)
 			&tgt_desc_len, &seg_desc_len);
 	populate_param_header(xcopybuf, 1, 0, 0, 0,
 			tgt_desc_len, seg_desc_len, 0);
-	ret = extendedcopy(sd, &data, EXPECT_TOO_MANY_DESCR);
-	if (ret == -2) {
-		CU_PASS("[SKIPPED] Target does not support "
-				"EXTENDED_COPY. Skipping test");
-		goto out;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	EXTENDEDCOPY(sd, &data, EXPECT_TOO_MANY_DESCR);
 
 	logging(LOG_VERBOSE,
 			"Test sending more than supported segment descriptors");
@@ -109,8 +96,7 @@ test_extendedcopy_descr_limits(void)
 			&tgt_desc_len, &seg_desc_len);
 	populate_param_header(xcopybuf, 2, 0, 0, 0,
 			tgt_desc_len, seg_desc_len, 0);
-	ret = extendedcopy(sd, &data, EXPECT_TOO_MANY_DESCR);
-	CU_ASSERT_EQUAL(ret, 0);
+	EXTENDEDCOPY(sd, &data, EXPECT_TOO_MANY_DESCR);
 
 	logging(LOG_VERBOSE,
 			"Test sending descriptors > Maximum Descriptor List Length");
@@ -122,10 +108,8 @@ test_extendedcopy_descr_limits(void)
 				&tgt_desc_len, &seg_desc_len);
 		populate_param_header(xcopybuf, 3, 0, 0, 0,
 				tgt_desc_len, seg_desc_len, 0);
-		ret = extendedcopy(sd, &data, EXPECT_PARAM_LIST_LEN_ERR);
-		CU_ASSERT_EQUAL(ret, 0);
+		EXTENDEDCOPY(sd, &data, EXPECT_PARAM_LIST_LEN_ERR);
 	}
 
-out:
 	scsi_free_scsi_task(edl_task);
 }

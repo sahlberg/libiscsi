@@ -49,7 +49,6 @@ int init_xcopybuf(unsigned char *buf, int tgt_desc_type, int seg_desc_type,
 void
 test_extendedcopy_descr_type(void)
 {
-	int ret;
 	int tgt_desc_len = 0, seg_desc_len = 0, alloc_len;
 	struct iscsi_data data;
 	unsigned char *xcopybuf;
@@ -74,13 +73,7 @@ test_extendedcopy_descr_type(void)
 	populate_param_header(xcopybuf, 1, 0, 0, 0,
 			tgt_desc_len, seg_desc_len, 0);
 
-	ret = extendedcopy(sd, &data, EXPECT_UNSUPP_DESCR_CODE);
-	if (ret == -2) {
-		CU_PASS("[SKIPPED] Target does not support "
-				"EXTENDED_COPY. Skipping test");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	EXTENDEDCOPY(sd, &data, EXPECT_UNSUPP_DESCR_CODE);
 
 	logging(LOG_VERBOSE, "Send Stream-to-Stream Copy segment descriptor");
 	memset(xcopybuf, 0, alloc_len);
@@ -90,6 +83,5 @@ test_extendedcopy_descr_type(void)
 	populate_param_header(xcopybuf, 1, 0, 0, 0,
 			tgt_desc_len, seg_desc_len, 0);
 
-	ret = extendedcopy(sd, &data, EXPECT_UNSUPP_DESCR_CODE);
-	CU_ASSERT_EQUAL(ret, 0);
+	EXTENDEDCOPY(sd, &data, EXPECT_UNSUPP_DESCR_CODE);
 }

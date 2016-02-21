@@ -30,7 +30,6 @@
 void
 test_extendedcopy_validate_tgt_descr(void)
 {
-	int ret;
 	int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
 	struct iscsi_data data;
 	unsigned char *xcopybuf;
@@ -58,13 +57,7 @@ test_extendedcopy_validate_tgt_descr(void)
 	populate_param_header(xcopybuf, 1, 0, 0, 0,
 			tgt_desc_len, seg_desc_len, 0);
 
-	ret = extendedcopy(sd, &data, EXPECT_INVALID_FIELD_IN_CDB);
-	if (ret == -2) {
-		CU_PASS("[SKIPPED] Target does not support "
-				"EXTENDED_COPY. Skipping test");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	EXTENDEDCOPY(sd, &data, EXPECT_INVALID_FIELD_IN_CDB);
 
 	logging(LOG_VERBOSE, "Test NUL bit in target descriptor");
 	/* NUL bit */
@@ -79,6 +72,5 @@ test_extendedcopy_validate_tgt_descr(void)
 	populate_param_header(xcopybuf, 1, 0, 0, 0,
 			tgt_desc_len, seg_desc_len, 0);
 
-	ret = extendedcopy(sd, &data, EXPECT_COPY_ABORTED);
-	CU_ASSERT_EQUAL(ret, 0);
+	EXTENDEDCOPY(sd, &data, EXPECT_COPY_ABORTED);
 }

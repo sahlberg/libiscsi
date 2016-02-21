@@ -30,7 +30,6 @@
 void
 test_extendedcopy_param(void)
 {
-	int ret;
 	int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
 	struct iscsi_data data;
 	unsigned char *xcopybuf;
@@ -62,24 +61,16 @@ test_extendedcopy_param(void)
 			"Test parameter list length truncating target descriptor");
 	data.size = XCOPY_DESC_OFFSET +
 		get_desc_len(IDENT_DESCR_TGT_DESCR) - 1;
-	ret = extendedcopy(sd, &data, EXPECT_PARAM_LIST_LEN_ERR);
-	if (ret == -2) {
-		CU_PASS("[SKIPPED] Target does not support "
-				"EXTENDED_COPY. Skipping test");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	EXTENDEDCOPY(sd, &data, EXPECT_PARAM_LIST_LEN_ERR);
 
 	logging(LOG_VERBOSE,
 			"Test parameter list length truncating segment descriptor");
 	data.size = XCOPY_DESC_OFFSET +
 		get_desc_len(IDENT_DESCR_TGT_DESCR) +
 		get_desc_len(BLK_TO_BLK_SEG_DESCR) - 1;
-	ret = extendedcopy(sd, &data, EXPECT_PARAM_LIST_LEN_ERR);
-	CU_ASSERT_EQUAL(ret, 0);
+	EXTENDEDCOPY(sd, &data, EXPECT_PARAM_LIST_LEN_ERR);
 
 	logging(LOG_VERBOSE, "Test parameter list length = 0");
 	data.size = 0;
-	ret = extendedcopy(sd, &data, EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	EXTENDEDCOPY(sd, &data, EXPECT_STATUS_GOOD);
 }

@@ -30,7 +30,6 @@
 void
 test_receive_copy_results_copy_status(void)
 {
-	int ret;
 	struct scsi_task *cs_task;
 	struct scsi_copy_results_copy_status *csp;
 	int tgt_desc_len = 0, seg_desc_len = 0;
@@ -42,16 +41,10 @@ test_receive_copy_results_copy_status(void)
 	logging(LOG_VERBOSE, "Test RECEIVE COPY RESULTS, COPY STATUS");
 
 	logging(LOG_VERBOSE, "No copy in progress");
-	ret = receive_copy_results(&cs_task, sd, SCSI_COPY_RESULTS_COPY_STATUS,
-			list_id, NULL, EXPECT_INVALID_FIELD_IN_CDB);
+	RECEIVE_COPY_RESULTS(&cs_task, sd, SCSI_COPY_RESULTS_COPY_STATUS,
+                             list_id, NULL, EXPECT_INVALID_FIELD_IN_CDB);
 	scsi_free_scsi_task(cs_task);
 	cs_task = NULL;
-	if (ret == -2) {
-		CU_PASS("[SKIPPED] Target does not support "
-				"RECEIVE_COPY_STATUS. Skipping test");
-		goto out;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
 
 	CHECK_FOR_DATALOSS;
 
@@ -77,20 +70,12 @@ test_receive_copy_results_copy_status(void)
 	populate_param_header(xcopybuf, list_id, 0, 0, 0,
 			tgt_desc_len, seg_desc_len, 0);
 
-	ret = extendedcopy(sd, &data, EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		CU_PASS("[SKIPPED] Target does not support "
-				"EXTENDED_COPY. Skipping test");
-		goto out;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	EXTENDEDCOPY(sd, &data, EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE,
 			"Copy Status for the above Extended Copy command");
-	ret = receive_copy_results(&cs_task, sd, SCSI_COPY_RESULTS_COPY_STATUS,
-			list_id, (void **)&csp, EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	RECEIVE_COPY_RESULTS(&cs_task, sd, SCSI_COPY_RESULTS_COPY_STATUS,
+                             list_id, (void **)&csp, EXPECT_STATUS_GOOD);
 
-out:
 	scsi_free_scsi_task(cs_task);
 }

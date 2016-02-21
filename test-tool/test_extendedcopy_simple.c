@@ -30,7 +30,6 @@
 void
 test_extendedcopy_simple(void)
 {
-	int ret;
 	int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
 	struct iscsi_data data;
 	unsigned char *xcopybuf;
@@ -45,14 +44,8 @@ test_extendedcopy_simple(void)
 
 	logging(LOG_VERBOSE, "Write 2048 blocks of 'A' at LBA:0");
 	memset(buf1, 'A', 2048*block_size);
-	ret = write16(sd, 0, 2048*block_size, block_size, 0, 0, 0, 0, 0,
-			buf1, EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] WRITE16 is not implemented.");
-		CU_PASS("WRITE16 is not implemented.");
-		goto finished;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	WRITE16(sd, 0, 2048*block_size, block_size, 0, 0, 0, 0, 0,
+                buf1, EXPECT_STATUS_GOOD);
 
 	data.size = XCOPY_DESC_OFFSET +
 		get_desc_len(IDENT_DESCR_TGT_DESCR) +
@@ -75,25 +68,17 @@ test_extendedcopy_simple(void)
 	populate_param_header(xcopybuf, 1, 0, LIST_ID_USAGE_DISCARD, 0,
 			tgt_desc_len, seg_desc_len, 0);
 
-	ret = extendedcopy(sd, &data, EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		CU_PASS("[SKIPPED] Target does not support "
-				"EXTENDED_COPY. Skipping test");
-		goto finished;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	EXTENDEDCOPY(sd, &data, EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Read 2048 blocks from end of the LUN");
-	ret = read16(sd, NULL, num_blocks - 2048, 2048*block_size,
-			block_size, 0, 0, 0, 0, 0, buf2,
-			EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	read16(sd, NULL, num_blocks - 2048, 2048*block_size,
+               block_size, 0, 0, 0, 0, 0, buf2,
+               EXPECT_STATUS_GOOD);
 
-	ret = memcmp(buf1, buf2, 2048);
-	if (ret != 0)
+	if (memcmp(buf1, buf2, 2048)) {
 		CU_FAIL("Blocks were not copied correctly");
-
- finished:
+        }
+        
 	free(buf1);
 	free(buf2);
 }

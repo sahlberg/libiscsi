@@ -30,26 +30,19 @@
 void
 test_receive_copy_results_op_params(void)
 {
-	int ret;
-	struct scsi_task *op_task;
+	struct scsi_task *op_task = NULL;
 	struct scsi_copy_results_op_params *opp;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test RECEIVE COPY RESULTS, OPERATING PARAMS");
 
-	ret = receive_copy_results(&op_task, sd, SCSI_COPY_RESULTS_OP_PARAMS, 0,
-			(void **)&opp, EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		CU_PASS("[SKIPPED] RECEIVE_COPY_RESULT is not implemented.");
-		goto out;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	RECEIVE_COPY_RESULTS(&op_task, sd, SCSI_COPY_RESULTS_OP_PARAMS, 0,
+                             (void **)&opp, EXPECT_STATUS_GOOD);
 
 	logging(LOG_NORMAL,
 			"max_target_desc=%d, max_seg_desc=%d",
 			opp->max_target_desc_count,
 			opp->max_segment_desc_count);
 
-out:
 	scsi_free_scsi_task(op_task);
 }
