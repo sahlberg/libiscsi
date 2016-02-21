@@ -257,6 +257,7 @@ static CU_TestInfo tests_readcapacity16[] = {
 	{ (char *)"Simple", test_readcapacity16_simple },
 	{ (char *)"Alloclen", test_readcapacity16_alloclen },
 	{ (char *)"PI", test_readcapacity16_protection },
+	{ (char *)"Support", test_readcapacity16_support },
 	CU_TEST_INFO_NULL
 };
 

@@ -165,6 +165,7 @@ void test_readcapacity10_simple(void);
 void test_readcapacity16_alloclen(void);
 void test_readcapacity16_protection(void);
 void test_readcapacity16_simple(void);
+void test_readcapacity16_support(void);
 
 void test_readonly_sbc(void);
 
