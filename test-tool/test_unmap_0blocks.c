@@ -29,7 +29,7 @@
 void
 test_unmap_0blocks(void)
 {
-	int i, ret;
+	int i;
 	struct unmap_list list[257];
 
 	CHECK_FOR_DATALOSS;
@@ -41,23 +41,19 @@ test_unmap_0blocks(void)
 	for (i = 0; i < 256; i++) {
 		list[0].lba = i;
 		list[0].num = 0;
-		ret = unmap(sd, 0, list, 1,
-			    EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		UNMAP(sd, 0, list, 1,
+                      EXPECT_STATUS_GOOD);
 	}
 
 	logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at end-of-LUN");
 	list[0].lba = num_blocks;
 	list[0].num = 0;
-	ret = unmap(sd, 0, list, 1,
-		    EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	UNMAP(sd, 0, list, 1,
+              EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test UNMAP without any descriptors.");
-	ret = unmap(sd, 0, list, 0,
-		    EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	UNMAP(sd, 0, list, 0,
+              EXPECT_STATUS_GOOD);
 
 	if (inq_bl->max_unmap_bdc <= 1) {
 		CU_PASS("[SKIPPING] Test UNMAP of 0 blocks with multiple descriptos not supported");
@@ -68,9 +64,8 @@ test_unmap_0blocks(void)
 	for (i = 0; i < 256; i++) {
 		list[i].lba = i;
 		list[i].num = 0;
-		ret = unmap(sd, 0, list, i + 1,
-			    EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		UNMAP(sd, 0, list, i + 1,
+                      EXPECT_STATUS_GOOD);
 	}
 
 	logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-255  with one descriptor per block, possibly \"overlapping\".");
@@ -78,7 +73,6 @@ test_unmap_0blocks(void)
 		list[i].lba = i/2;
 		list[i].num = 0;
 	}
-	ret = unmap(sd, 0, list, 256,
-		    EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	UNMAP(sd, 0, list, 256,
+              EXPECT_STATUS_GOOD);
 }
