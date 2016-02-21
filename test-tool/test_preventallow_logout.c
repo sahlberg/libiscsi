@@ -45,20 +45,17 @@ test_preventallow_logout(void)
 	}
 
 	logging(LOG_VERBOSE, "Set the PREVENT flag");
-	ret = preventallow(sd, 1);
-	CU_ASSERT_EQUAL(ret, 0);
+	PREVENTALLOW(sd, 1);
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
-	ret = startstopunit(sd, 0, 0, 0, 0, 1, 0,
-			    EXPECT_REMOVAL_PREVENTED);
-	CU_ASSERT_EQUAL(ret, 0);
+	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
+                      EXPECT_REMOVAL_PREVENTED);
 
 	logging(LOG_VERBOSE, "Verify we can still access the media.");
 	ret = testunitready(sd,
 			    EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	
 	logging(LOG_VERBOSE, "Logout from target");
 	iscsi_logout_sync(sd->iscsi_ctx);
 	iscsi_destroy_context(sd->iscsi_ctx);
@@ -71,9 +68,8 @@ test_preventallow_logout(void)
 	}
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
-	ret = startstopunit(sd, 0, 0, 0, 0, 1, 0,
-			    EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
+                      EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Verify we can not access the media.");
 	ret = testunitready(sd,
@@ -81,19 +77,14 @@ test_preventallow_logout(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Load the medium");
-	ret = startstopunit(sd, 0, 0, 0, 0, 1, 0,
-			    EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
+                      EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Clear PREVENT and load medium in case target failed");
 	logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
-	ret = preventallow(sd, 0);
-	CU_ASSERT_EQUAL(ret, 0);
+	PREVENTALLOW(sd, 0);
 
 	logging(LOG_VERBOSE, "Load the medium");
-	ret = startstopunit(sd, 0, 0, 0, 0, 1, 1,
-			    EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 1,
+                      EXPECT_STATUS_GOOD);
 }

@@ -28,8 +28,6 @@
 void
 test_preventallow_simple(void)
 {
-	int ret;
-
 	CHECK_FOR_SBC;
 	CHECK_FOR_REMOVABLE;
 
@@ -37,15 +35,8 @@ test_preventallow_simple(void)
 	logging(LOG_VERBOSE, "Test PREVENTALLOW basics");
 
 	logging(LOG_VERBOSE, "Test we can set PREVENT flag");
-	ret = preventallow(sd, 1);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] PREVENTALLOW is not implemented");
-		CU_PASS("PREVENTALLOW is not implemented");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	PREVENTALLOW(sd, 1);
 
 	logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
-	ret = preventallow(sd, 0);
-	CU_ASSERT_EQUAL(ret, 0);
+	PREVENTALLOW(sd, 0);
 }

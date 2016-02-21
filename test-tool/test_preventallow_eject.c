@@ -28,8 +28,8 @@
 void
 test_preventallow_eject(void)
 {
-	int ret;
-
+        int ret;
+        
 	CHECK_FOR_SBC;
 	CHECK_FOR_REMOVABLE;
 
@@ -37,18 +37,11 @@ test_preventallow_eject(void)
 	logging(LOG_VERBOSE, "Test that we can not eject medium when PREVENT is active");
 
 	logging(LOG_VERBOSE, "Set the PREVENT flag");
-	ret = preventallow(sd, 1);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] PREVENTALLOW is not implemented");
-		CU_PASS("PREVENTALLOW is not implemented");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	PREVENTALLOW(sd, 1);
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
-	ret = startstopunit(sd, 0, 0, 0, 0, 1, 0,
-			    EXPECT_REMOVAL_PREVENTED);
-	CU_ASSERT_EQUAL(ret, 0);
+	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
+                      EXPECT_REMOVAL_PREVENTED);
 
 	logging(LOG_VERBOSE, "Verify we can still access the media.");
 	ret = testunitready(sd,
@@ -56,12 +49,11 @@ test_preventallow_eject(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
-	ret = preventallow(sd, 0);
-	CU_ASSERT_EQUAL(ret, 0);
+	PREVENTALLOW(sd, 0);
 
 	logging(LOG_VERBOSE, "Try to eject the medium");
-	ret = startstopunit(sd, 0, 0, 0, 0, 1, 0,
-			    EXPECT_STATUS_GOOD);
+	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
+                      EXPECT_STATUS_GOOD);
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can not access the media.");
@@ -70,21 +62,16 @@ test_preventallow_eject(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Set the PREVENT flag");
-	ret = preventallow(sd, 1);
-	CU_ASSERT_EQUAL(ret, 0);
+	PREVENTALLOW(sd, 1);
 
 	logging(LOG_VERBOSE, "Try to load the medium");
-	ret = startstopunit(sd, 0, 0, 0, 0, 1, 1,
-			    EXPECT_REMOVAL_PREVENTED);
-	CU_ASSERT_EQUAL(ret, 0);
+	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 1,
+                      EXPECT_REMOVAL_PREVENTED);
 
 	logging(LOG_VERBOSE, "Clear PREVENT flag");
-	ret = preventallow(sd, 0);
-	CU_ASSERT_EQUAL(ret, 0);
+	PREVENTALLOW(sd, 0);
 
 	logging(LOG_VERBOSE, "Load the medium again");
-	ret = startstopunit(sd, 0, 0, 0, 0, 1, 1,
-			    EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 1,
+                      EXPECT_STATUS_GOOD);
 }

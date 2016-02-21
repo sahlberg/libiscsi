@@ -251,6 +251,20 @@ do {									\
                 CU_ASSERT_EQUAL(_r, 0);                                 \
         } while (0);
 
+#define PREVENTALLOW(...)                                               \
+        do {                                                            \
+                int _r;                                                 \
+                _r = preventallow(__VA_ARGS__);                         \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] PREVENTALLOW "   \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "PREVENTALLOW. Skipping test");         \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 #define READ6(...)                                                      \
         do {                                                            \
                 int _r;                                                 \
@@ -387,6 +401,20 @@ do {									\
                                 "is not implemented.");                 \
                         CU_PASS("[SKIPPED] Target does not support "    \
                                 "SANITIZE. Skipping test");             \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
+#define STARTSTOPUNIT(...)                                              \
+        do {                                                            \
+                int _r;                                                 \
+                _r = startstopunit(__VA_ARGS__);                        \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] STARTSTOPUNIT "  \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "STARTSTOPUNIT. Skipping test");        \
                         return;                                         \
                 }                                                       \
                 CU_ASSERT_EQUAL(_r, 0);                                 \
