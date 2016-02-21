@@ -54,9 +54,8 @@ test_preventallow_2_itnexuses(void)
                       EXPECT_REMOVAL_PREVENTED);
 
 	logging(LOG_VERBOSE, "Verify we can still access the media.");
-	ret = testunitready(sd,
-			    EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
 	ret = mpath_sd2_get_or_clone(sd, &sd2);

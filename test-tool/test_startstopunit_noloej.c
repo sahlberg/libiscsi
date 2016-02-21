@@ -29,8 +29,6 @@
 void
 test_startstopunit_noloej(void)
 { 
-	int ret;
-
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test STARTSTOPUNIT LOEJ==0");
 	if (!inq->rmb) {
@@ -44,73 +42,64 @@ test_startstopunit_noloej(void)
                       EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd,
-			    EXPECT_SANITIZE);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_SANITIZE);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==0 NO_FLUSH==0 START==1");
 	STARTSTOPUNIT(sd, 0, 0, 0, 0, 0, 1,
                       EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd,
-			    EXPECT_SANITIZE);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_SANITIZE);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==1 NO_FLUSH==0 START==0");
 	STARTSTOPUNIT(sd, 1, 0, 0, 0, 0, 0,
                       EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd,
-			    EXPECT_SANITIZE);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_SANITIZE);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==1 NO_FLUSH==0 START==1");
 	STARTSTOPUNIT(sd, 1, 0, 0, 0, 0, 1,
                       EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd,
-			    EXPECT_SANITIZE);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_SANITIZE);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==0 NO_FLUSH==1 START==0");
 	STARTSTOPUNIT(sd, 0, 0, 0, 1, 0, 0,
                       EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd,
-			    EXPECT_SANITIZE);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_SANITIZE);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==0 NO_FLUSH==1 START==1");
 	STARTSTOPUNIT(sd, 0, 0, 0, 1, 0, 1,
                       EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd,
-			    EXPECT_SANITIZE);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_SANITIZE);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==1 NO_FLUSH==1 START==0");
 	STARTSTOPUNIT(sd, 1, 0, 0, 1, 0, 0,
                       EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd,
-			    EXPECT_SANITIZE);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_SANITIZE);
 
 	logging(LOG_VERBOSE, "Test that media is not ejected when LOEJ==0 IMMED==1 NO_FLUSH==1 START==1");
 	STARTSTOPUNIT(sd, 1, 0, 0, 1, 0, 1,
                       EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-	ret = testunitready(sd,
-			    EXPECT_SANITIZE);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	TESTUNITREADY(sd,
+                      EXPECT_SANITIZE);
 
 	logging(LOG_VERBOSE, "In case the target did eject the medium, load it again.");
 	STARTSTOPUNIT(sd, 1, 0, 0, 0, 1, 1,

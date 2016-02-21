@@ -28,8 +28,6 @@
 void
 test_preventallow_itnexus_loss(void)
 {
-	int ret;
-
 	CHECK_FOR_SBC;
 	CHECK_FOR_REMOVABLE;
 
@@ -52,10 +50,8 @@ test_preventallow_itnexus_loss(void)
                       EXPECT_REMOVAL_PREVENTED);
 
 	logging(LOG_VERBOSE, "Verify we can still access the media.");
-	ret = testunitready(sd,
-			    EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	TESTUNITREADY(sd,
+                      EXPECT_STATUS_GOOD);
 	
 	logging(LOG_VERBOSE, "Disconnect from the target.");
 	iscsi_destroy_context(sd->iscsi_ctx);
@@ -72,9 +68,8 @@ test_preventallow_itnexus_loss(void)
                       EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Verify we can not access the media.");
-	ret = testunitready(sd,
-			    EXPECT_NO_MEDIUM);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_NO_MEDIUM);
 
 	logging(LOG_VERBOSE, "Load the medium");
 	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,

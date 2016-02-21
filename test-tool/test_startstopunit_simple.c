@@ -52,29 +52,24 @@ test_startstopunit_simple(void)
 
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is ejected.");
-	ret = testunitready(sd,
-			    EXPECT_NO_MEDIUM);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	TESTUNITREADY(sd,
+                      EXPECT_NO_MEDIUM);
 
 	logging(LOG_VERBOSE, "Test we can load the removable the media with IMMED==1");
 	STARTSTOPUNIT(sd, 1, 0, 0, 0, 1, 1,
                       EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Verify we can read from the media.");
-	ret = testunitready(sd,
-			    EXPECT_SANITIZE);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	TESTUNITREADY(sd,
+                      EXPECT_SANITIZE);
 
 	logging(LOG_VERBOSE, "Test we can eject removable the media with IMMED==1");
 	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
                       EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is ejected.");
-	ret = testunitready(sd,
-			    EXPECT_NO_MEDIUM);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_NO_MEDIUM);
 
 
 	logging(LOG_VERBOSE, "Test we can load the removable the media with IMMED==1");
@@ -82,7 +77,6 @@ test_startstopunit_simple(void)
                       EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Verify we can access the media again.");
-	ret = testunitready(sd,
-			    EXPECT_SANITIZE);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_SANITIZE);
 }

@@ -434,6 +434,20 @@ do {									\
                 CU_ASSERT_EQUAL(_r, 0);                                 \
         } while (0);
 
+#define TESTUNITREADY(...)                                              \
+        do {                                                            \
+                int _r;                                                 \
+                _r = testunitready(__VA_ARGS__);                        \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] TESTUNITREADY "  \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "TESTUNITREADY. Skipping test");        \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 #define VERIFY10(...)                                                   \
         do {                                                            \
                 int _r;                                                 \

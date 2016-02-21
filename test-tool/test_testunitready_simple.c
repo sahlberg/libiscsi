@@ -27,11 +27,8 @@
 void
 test_testunitready_simple(void)
 {
-	int ret;
-
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test TESTUNITREADY");
-	ret = testunitready(sd,
-			    EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_STATUS_GOOD);
 }

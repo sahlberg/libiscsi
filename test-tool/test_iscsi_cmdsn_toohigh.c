@@ -85,8 +85,6 @@ void test_iscsi_cmdsn_toohigh(void)
 	
 	iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 	logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == EXPCMDSN. should work again");
-	ret = testunitready(sd,
-			    EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	TESTUNITREADY(sd,
+                      EXPECT_STATUS_GOOD);
 }

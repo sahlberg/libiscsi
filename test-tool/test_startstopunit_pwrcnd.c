@@ -29,7 +29,7 @@
 void
 test_startstopunit_pwrcnd(void)
 { 
-	int i, ret;
+	int i;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test STARTSTOPUNIT PowerCondition");
@@ -45,9 +45,8 @@ test_startstopunit_pwrcnd(void)
                               EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-		ret = testunitready(sd,
-				    EXPECT_SANITIZE);
-		CU_ASSERT_EQUAL(ret, 0);
+		TESTUNITREADY(sd,
+                              EXPECT_SANITIZE);
 	}
 
 	logging(LOG_VERBOSE, "In case the target did eject the medium, load it again.");

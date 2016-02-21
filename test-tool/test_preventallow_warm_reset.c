@@ -52,10 +52,8 @@ test_preventallow_warm_reset(void)
                       EXPECT_REMOVAL_PREVENTED);
 
 	logging(LOG_VERBOSE, "Verify we can still access the media.");
-	ret = testunitready(sd,
-			    EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	TESTUNITREADY(sd,
+                      EXPECT_STATUS_GOOD);
 	
 	logging(LOG_VERBOSE, "Perform warm reset on target");
 	ret = iscsi_task_mgmt_target_warm_reset_sync(sd->iscsi_ctx);
@@ -70,9 +68,8 @@ test_preventallow_warm_reset(void)
                       EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Verify we can not access the media.");
-	ret = testunitready(sd,
-			    EXPECT_NO_MEDIUM);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_NO_MEDIUM);
 
 	logging(LOG_VERBOSE, "Load the medium");
 	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,

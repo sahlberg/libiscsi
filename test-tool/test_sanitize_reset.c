@@ -95,9 +95,8 @@ test_sanitize_reset(void)
 
 	logging(LOG_VERBOSE, "Verify that the SANITIZE has started and that "
 		"TESTUNITREADY fails with SANITIZE_IN_PROGRESS");
-	ret = testunitready(sd,
-			    EXPECT_SANITIZE);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_SANITIZE);
 
 	logging(LOG_VERBOSE, "Verify that STARTSTOPUNIT fails with "
 		"SANITIZE_IN_PROGRESS");
@@ -164,9 +163,8 @@ test_sanitize_reset(void)
 	}
 
 	logging(LOG_VERBOSE, "Verify that the SANITIZE is still going.");
-	ret = testunitready(sd,
-			    EXPECT_SANITIZE);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_SANITIZE);
 
 	logging(LOG_VERBOSE, "Wait until the SANITIZE operation has finished");
 	while (testunitready_clear_ua(sd)) {

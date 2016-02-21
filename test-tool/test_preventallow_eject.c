@@ -28,8 +28,6 @@
 void
 test_preventallow_eject(void)
 {
-        int ret;
-        
 	CHECK_FOR_SBC;
 	CHECK_FOR_REMOVABLE;
 
@@ -44,9 +42,8 @@ test_preventallow_eject(void)
                       EXPECT_REMOVAL_PREVENTED);
 
 	logging(LOG_VERBOSE, "Verify we can still access the media.");
-	ret = testunitready(sd,
-			    EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
 	PREVENTALLOW(sd, 0);
@@ -54,12 +51,10 @@ test_preventallow_eject(void)
 	logging(LOG_VERBOSE, "Try to eject the medium");
 	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
                       EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Verify we can not access the media.");
-	ret = testunitready(sd,
-			    EXPECT_NO_MEDIUM);
-	CU_ASSERT_EQUAL(ret, 0);
+	TESTUNITREADY(sd,
+                      EXPECT_NO_MEDIUM);
 
 	logging(LOG_VERBOSE, "Set the PREVENT flag");
 	PREVENTALLOW(sd, 1);
