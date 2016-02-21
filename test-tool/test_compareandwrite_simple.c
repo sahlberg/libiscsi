@@ -31,7 +31,7 @@
 void
 test_compareandwrite_simple(void)
 {
-	int i, ret;
+	int i;
 	unsigned j;
 	int maxbl;
 
@@ -81,10 +81,9 @@ test_compareandwrite_simple(void)
 
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:0 and verify "
 			"they are all 'B'", i);
-		ret = read16(sd, NULL, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, scratch,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, 0, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, scratch,
+                       EXPECT_STATUS_GOOD);
 
 		for (j = 0; j < i * block_size; j++) {
 			if (scratch[j] != 'B') {
@@ -135,10 +134,9 @@ test_compareandwrite_simple(void)
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:%" PRIu64 
 			" and verify they are all 'B'",
 			i, num_blocks - i);
-		ret = read16(sd, NULL, num_blocks - i, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, scratch,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, num_blocks - i, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, scratch,
+                       EXPECT_STATUS_GOOD);
 
 		for (j = 0; j < i * block_size; j++) {
 			if (scratch[j] != 'B') {

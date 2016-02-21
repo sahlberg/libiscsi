@@ -28,7 +28,7 @@
 void
 test_read12_beyond_eol(void)
 { 
-	int i, ret;
+	int i;
 
 	if (num_blocks >= 0x80000000) {
 		CU_PASS("LUN is too big for read-beyond-eol tests with READ12. Skipping test.\n");
@@ -41,50 +41,38 @@ test_read12_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12(sd, NULL, num_blocks + 1 - i,
-			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_LBA_OOB);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
-			CU_PASS("READ12 is not implemented.");
-			return;
-		}	
-		CU_ASSERT_EQUAL(ret, 0);
+		READ12(sd, NULL, num_blocks + 1 - i,
+                       i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test READ12 1-256 blocks at LBA==2^31");
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12(sd, NULL, 0x80000000,
-			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ12(sd, NULL, 0x80000000,
+                       i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test READ12 1-256 blocks at LBA==-1");
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12(sd, NULL, -1, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ12(sd, NULL, -1, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test READ12 2-256 blocks all but one block beyond the end");
 	for (i = 2; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12(sd, NULL, num_blocks - 1,
-			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ12(sd, NULL, num_blocks - 1,
+                       i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_LBA_OOB);
 	}
 }

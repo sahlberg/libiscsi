@@ -55,8 +55,7 @@ test_writesame16_unmap(void)
 				"blocks back and verify they are all zero");
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			read16(sd, NULL, 0,
-                               i * block_size, block_size,
+			READ16(sd, NULL, 0, i * block_size, block_size,
                                0, 0, 0, 0, 0, scratch,
                                EXPECT_STATUS_GOOD);
 			CU_ASSERT(all_zeroes(scratch, i * block_size));
@@ -86,7 +85,7 @@ test_writesame16_unmap(void)
 				"blocks back and verify they are all zero");
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			read16(sd, NULL, num_blocks - i,
+			READ16(sd, NULL, num_blocks - i,
                                i * block_size, block_size,
                                0, 0, 0, 0, 0, scratch,
                                EXPECT_STATUS_GOOD);
@@ -145,8 +144,7 @@ test_writesame16_unmap(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			read16(sd, NULL, 0,
-                               i * block_size, block_size,
+			READ16(sd, NULL, 0, i * block_size, block_size,
                                0, 0, 0, 0, 0, scratch,
                                EXPECT_STATUS_GOOD);
 			CU_ASSERT(all_zeroes(scratch, i * block_size));
@@ -190,8 +188,7 @@ test_writesame16_unmap(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			read16(sd, NULL, 0,
-                               i * block_size, block_size,
+			READ16(sd, NULL, 0, i * block_size, block_size,
                                0, 0, 0, 0, 0, scratch,
                                EXPECT_STATUS_GOOD);
 			CU_ASSERT(all_zeroes(scratch, i * block_size));

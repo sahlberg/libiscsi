@@ -60,10 +60,9 @@ test_orwrite_verify(void)
                         EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read10(sd, NULL, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, readbuf,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ10(sd, NULL, 0, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, readbuf,
+                       EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Verify that the blocks are all 0xa5");
 		ret = memcmp(buf, readbuf, block_size * i);
@@ -76,7 +75,7 @@ test_orwrite_verify(void)
                         EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		read10(sd, NULL, 0, i * block_size,
+		READ10(sd, NULL, 0, i * block_size,
                        block_size, 0, 0, 0, 0, 0, readbuf,
                        EXPECT_STATUS_GOOD);
 
@@ -105,10 +104,9 @@ test_orwrite_verify(void)
                         EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read16(sd, NULL, num_blocks - i, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, readbuf,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, num_blocks - i, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, readbuf,
+                       EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Verify that the blocks are all 0xa5");
 		ret = memcmp(buf, readbuf, block_size * i);
@@ -121,10 +119,9 @@ test_orwrite_verify(void)
                         EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Read %d blocks back", i);
-		ret = read16(sd, NULL, num_blocks - i, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, readbuf,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, num_blocks - i, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, readbuf,
+                       EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Verify that the blocks are all 0xff");
 		memset(buf, 0xff, block_size * i);

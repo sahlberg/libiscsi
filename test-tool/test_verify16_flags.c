@@ -30,15 +30,11 @@
 void
 test_verify16_flags(void)
 {
-	int ret;
-
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 flags");
 
-	ret = read16(sd, NULL, 0, block_size,
-		     block_size, 0, 0, 0, 0, 0, scratch,
-		     EXPECT_STATUS_GOOD);
-        CU_ASSERT_EQUAL(ret, 0);
+	READ16(sd, NULL, 0, block_size, block_size, 0, 0, 0, 0, 0, scratch,
+               EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Test VERIFY16 with BYTCHK==1");
 	VERIFY16(sd, 0, block_size, block_size, 0, 0, 1, scratch,

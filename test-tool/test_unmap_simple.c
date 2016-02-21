@@ -58,10 +58,9 @@ test_unmap_simple(void)
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read blocks 0-%d", i);
-		ret = read10(sd, NULL, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, scratch,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ10(sd, NULL, 0, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, scratch,
+                       EXPECT_STATUS_GOOD);
 
 		if (rc16 && rc16->lbprz) {
 			logging(LOG_VERBOSE, "LBPRZ==1 All UNMAPPED blocks "
@@ -96,10 +95,9 @@ test_unmap_simple(void)
 		CU_ASSERT_EQUAL(ret, 0);
 
 		logging(LOG_VERBOSE, "Read blocks 0-%d", i);
-		ret = read10(sd, NULL, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, scratch,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ10(sd, NULL, 0, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, scratch,
+                       EXPECT_STATUS_GOOD);
 
 		if (rc16 && rc16->lbprz) {
 			logging(LOG_VERBOSE, "LBPRZ==1 All UNMAPPED blocks "

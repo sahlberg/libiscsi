@@ -30,7 +30,7 @@
 void
 test_verify12_vrprotect(void)
 {
-	int i, ret;
+	int i;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY12 with non-zero VRPROTECT");
@@ -40,12 +40,9 @@ test_verify12_vrprotect(void)
 	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
-	
-			ret = read10(sd, NULL, 0, block_size,
-				     block_size, 0, 0, 0, 0, 0, scratch,
-				     EXPECT_STATUS_GOOD);
-			CU_ASSERT_EQUAL(ret, 0);
-
+			READ10(sd, NULL, 0, block_size,
+                               block_size, 0, 0, 0, 0, 0, scratch,
+                               EXPECT_STATUS_GOOD);
                         VERIFY12(sd, 0, block_size,
                                  block_size, i, 0, 1, scratch,
                                  EXPECT_INVALID_FIELD_IN_CDB);

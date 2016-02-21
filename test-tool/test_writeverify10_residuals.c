@@ -34,7 +34,7 @@ test_writeverify10_residuals(void)
 	struct scsi_task *task_ret;
 	unsigned char buf[10000];
 	struct iscsi_data data;
-	int ret, ok;
+	int ok;
 	unsigned int i;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -301,10 +301,8 @@ test_writeverify10_residuals(void)
 	task = NULL;
 
 	logging(LOG_VERBOSE, "Read the two blocks");
-	ret = read10(sd, NULL, 0, 2* block_size,
-		     block_size, 0, 0, 0, 0, 0, buf,
-		     EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	READ10(sd, NULL, 0, 2* block_size, block_size, 0, 0, 0, 0, 0, buf,
+               EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Verify that the first block was changed to 'b'");
 	for (i = 0; i < block_size; i++) {
@@ -375,10 +373,8 @@ test_writeverify10_residuals(void)
 	task = NULL;
 
 	logging(LOG_VERBOSE, "Read the two blocks");
-	ret = read10(sd, NULL, 0, 2* block_size,
-		     block_size, 0, 0, 0, 0, 0, buf,
-		     EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	READ10(sd, NULL, 0, 2* block_size, block_size, 0, 0, 0, 0, 0, buf,
+               EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Verify that the first block was changed to 'b'");
 	for (i = 0; i < block_size; i++) {

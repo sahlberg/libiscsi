@@ -40,10 +40,8 @@ test_verify10_dpo(void)
 
 	CHECK_FOR_SBC;
 
-	ret = read10(sd, NULL, 0, block_size,
-		     block_size, 0, 0, 0, 0, 0, scratch,
-		     EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	READ10(sd, NULL, 0, block_size, block_size, 0, 0, 0, 0, 0, scratch,
+               EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Read the DPOFUA flag from mode sense data");
 	ret = modesense6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,

@@ -60,43 +60,30 @@ test_read16_dpofua(void)
 
 	logging(LOG_VERBOSE, "Test READ16 with DPO==1");
 	if (dpofua) {
-		ret = read16(sd, NULL, 0,
-			     block_size, block_size, 0, 1, 0, 0, 0, NULL,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, 0, block_size, block_size, 0, 1, 0, 0, 0, NULL,
+                       EXPECT_STATUS_GOOD);
 	} else {
-		ret = read16(sd, NULL, 0,
-			     block_size, block_size, 0, 1, 0, 0, 0, NULL,
-			     EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, 0, block_size, block_size, 0, 1, 0, 0, 0, NULL,
+                       EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Test READ16 with FUA==1");
 	if (dpofua) {
-		ret = read16(sd, NULL, 0,
-			     block_size, block_size, 0, 0, 1, 0, 0, NULL,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, 0, block_size, block_size, 0, 0, 1, 0, 0, NULL,
+                       EXPECT_STATUS_GOOD);
 	} else {
-		ret = read16(sd, NULL, 0,
-			     block_size, block_size, 0, 0, 1, 0, 0, NULL,
-			     EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, 0, block_size, block_size, 0, 0, 1, 0, 0, NULL,
+                       EXPECT_INVALID_FIELD_IN_CDB);
 	}
 
 	logging(LOG_VERBOSE, "Test READ16 with DPO==1 FUA==1");
 	if (dpofua) {
-		ret = read16(sd, NULL, 0,
-			     block_size, block_size, 0, 1, 1, 0, 0, NULL,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, 0, block_size, block_size, 0, 1, 1, 0, 0, NULL,
+                       EXPECT_STATUS_GOOD);
 	} else {
-		ret = read16(sd, NULL, 0,
-			     block_size, block_size, 0, 1, 1, 0, 0, NULL,
-			     EXPECT_INVALID_FIELD_IN_CDB);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, 0, block_size, block_size, 0, 1, 1, 0, 0, NULL,
+                       EXPECT_INVALID_FIELD_IN_CDB);
 	}
-
 
 	logging(LOG_VERBOSE, "Try fetching REPORT_SUPPORTED_OPCODES "
 		"for READ16");

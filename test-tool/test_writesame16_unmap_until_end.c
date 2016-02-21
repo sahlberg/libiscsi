@@ -65,7 +65,7 @@ test_writesame16_unmap_until_end(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			read16(sd, NULL, num_blocks - i,
+			READ16(sd, NULL, num_blocks - i,
                                i * block_size, block_size,
                                0, 0, 0, 0, 0, scratch,
                                EXPECT_STATUS_GOOD);

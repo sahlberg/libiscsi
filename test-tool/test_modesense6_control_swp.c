@@ -88,17 +88,12 @@ test_modesense6_control_swp(void)
 
 
 	logging(LOG_VERBOSE, "Read a block from the now Read-Only device");
-	ret = read10(sd, NULL, 0, block_size,
-		     block_size, 0, 0, 0, 0, 0, scratch,
-		     EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	READ10(sd, NULL, 0, block_size, block_size, 0, 0, 0, 0, 0, scratch,
+               EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Try to write a block to the Read-Only device");
-	ret = write10(sd, 0, block_size,
-		      block_size, 0, 0, 0, 0, 0, scratch,
-		      EXPECT_WRITE_PROTECTED);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	WRITE10(sd, 0, block_size, block_size, 0, 0, 0, 0, 0, scratch,
+                EXPECT_WRITE_PROTECTED);
 
  finished:
 	if (ms_task != NULL) {

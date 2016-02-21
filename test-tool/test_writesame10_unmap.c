@@ -59,8 +59,7 @@ test_writesame10_unmap(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			read10(sd, NULL, 0,
-                               i * block_size, block_size,
+			READ10(sd, NULL, 0, i * block_size, block_size,
                                0, 0, 0, 0, 0, scratch,
                                EXPECT_STATUS_GOOD);
 			CU_ASSERT(all_zeroes(scratch, i * block_size));
@@ -92,7 +91,7 @@ test_writesame10_unmap(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			read10(sd, NULL, num_blocks - i,
+			READ10(sd, NULL, num_blocks - i,
                                i * block_size, block_size,
                                0, 0, 0, 0, 0, scratch,
                                EXPECT_STATUS_GOOD);
@@ -153,8 +152,7 @@ test_writesame10_unmap(void)
 
 			logging(LOG_VERBOSE, "Read %d blocks and verify they "
 				"are now zero", i);
-			read10(sd, NULL, 0,
-                               i * block_size, block_size,
+			READ10(sd, NULL, 0, i * block_size, block_size,
                                0, 0, 0, 0, 0, scratch,
                                EXPECT_STATUS_GOOD);
 			CU_ASSERT(all_zeroes(scratch, i * block_size));

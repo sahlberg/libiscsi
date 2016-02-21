@@ -27,14 +27,11 @@
 void
 test_read10_0blocks(void)
 {
-	int ret;
-
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ10 0-blocks at LBA==0");
-	ret = read10(sd, NULL, 0, 0, block_size,
-		     0, 0, 0, 0, 0, NULL,
-		     EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+
+	READ10(sd, NULL, 0, 0, block_size, 0, 0, 0, 0, 0, NULL,
+               EXPECT_STATUS_GOOD);
 
 	if (num_blocks > 0x80000000) {
 		CU_PASS("[SKIPPED] LUN is too big");
@@ -42,22 +39,14 @@ test_read10_0blocks(void)
 	}
 
 	logging(LOG_VERBOSE, "Test READ10 0-blocks one block past end-of-LUN");
-	ret = read10(sd, NULL, num_blocks + 1, 0,
-		     block_size, 0, 0, 0, 0, 0, NULL,
-		     EXPECT_LBA_OOB);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	READ10(sd, NULL, num_blocks + 1, 0, block_size, 0, 0, 0, 0, 0, NULL,
+               EXPECT_LBA_OOB);
 
 	logging(LOG_VERBOSE, "Test READ10 0-blocks at LBA==2^31");
-	ret = read10(sd, NULL, 0x80000000, 0, block_size,
-		     0, 0, 0, 0, 0, NULL,
-		     EXPECT_LBA_OOB);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	READ10(sd, NULL, 0x80000000, 0, block_size, 0, 0, 0, 0, 0, NULL,
+               EXPECT_LBA_OOB);
 
 	logging(LOG_VERBOSE, "Test READ10 0-blocks at LBA==-1");
-	ret = read10(sd, NULL, -1, 0, block_size,
-		     0, 0, 0, 0, 0, NULL,
-		     EXPECT_LBA_OOB);
-	CU_ASSERT_EQUAL(ret, 0);
+	READ10(sd, NULL, -1, 0, block_size, 0, 0, 0, 0, 0, NULL,
+               EXPECT_LBA_OOB);
 }

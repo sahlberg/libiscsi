@@ -71,7 +71,7 @@ test_extendedcopy_simple(void)
 	EXTENDEDCOPY(sd, &data, EXPECT_STATUS_GOOD);
 
 	logging(LOG_VERBOSE, "Read 2048 blocks from end of the LUN");
-	read16(sd, NULL, num_blocks - 2048, 2048*block_size,
+	READ16(sd, NULL, num_blocks - 2048, 2048*block_size,
                block_size, 0, 0, 0, 0, 0, buf2,
                EXPECT_STATUS_GOOD);
 

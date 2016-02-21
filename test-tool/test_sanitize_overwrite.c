@@ -30,14 +30,12 @@
 static void
 check_lun_is_wiped(uint64_t lba, unsigned char c)
 {
-	int ret;
 	unsigned char *rbuf = alloca(256 * block_size);
 	unsigned char *zbuf = alloca(256 * block_size);
 
-	ret = read16(sd, NULL, lba, 256 * block_size,
-		     block_size, 0, 0, 0, 0, 0, rbuf,
-		     EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	READ16(sd, NULL, lba, 256 * block_size,
+               block_size, 0, 0, 0, 0, 0, rbuf,
+               EXPECT_STATUS_GOOD);
 
 	memset(zbuf, c, 256 * block_size);
 

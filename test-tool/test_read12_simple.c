@@ -29,8 +29,7 @@
 void
 test_read12_simple(void)
 {
-	int i, ret;
-
+	int i;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ12 of 1-256 blocks at the start of the LUN");
@@ -38,15 +37,9 @@ test_read12_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12(sd, NULL, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] READ12 is not implemented.");
-			CU_PASS("READ12 is not implemented.");
-			return;
-		}	
-		CU_ASSERT_EQUAL(ret, 0);
+		READ12(sd, NULL, 0, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_STATUS_GOOD);
 	}
 
 
@@ -55,9 +48,8 @@ test_read12_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-		ret = read12(sd, NULL, num_blocks - i,
-			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ12(sd, NULL, num_blocks - i,
+                       i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_STATUS_GOOD);
 	}
 }

@@ -43,7 +43,7 @@ test_multipathio_simple(void)
 	memset(write_buf, 0xa6, 256 * block_size);
 
 	for (write_path = 0; write_path < mp_num_sds; write_path++) {
-		int i, ret;
+		int i;
 		int read_path;
 
 		/* read back written data using a different path */
@@ -58,21 +58,12 @@ test_multipathio_simple(void)
 					&& maximum_transfer_length < i) {
 				break;
 			}
-			ret = write10(mp_sds[write_path], 0, i * block_size,
+			WRITE10(mp_sds[write_path], 0, i * block_size,
 				      block_size, 0, 0, 0, 0, 0, write_buf,
 				      EXPECT_STATUS_GOOD);
-			if (ret == -2) {
-				logging(LOG_NORMAL,
-					"[SKIPPED] WRITE16 not implemented.");
-				CU_PASS("WRITE16 is not implemented.");
-				return;
-			}
-			CU_ASSERT_EQUAL(ret, 0);
-
-			ret = read10(mp_sds[read_path], NULL, 0, i * block_size,
-				     block_size, 0, 0, 0, 0, 0, read_buf,
-				     EXPECT_STATUS_GOOD);
-			CU_ASSERT_EQUAL(ret, 0);
+			READ10(mp_sds[read_path], NULL, 0, i * block_size,
+                               block_size, 0, 0, 0, 0, 0, read_buf,
+                               EXPECT_STATUS_GOOD);
 
 			/* compare written and read data */
 			CU_ASSERT_EQUAL(0,

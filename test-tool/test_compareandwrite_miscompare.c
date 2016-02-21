@@ -83,7 +83,7 @@ test_compareandwrite_miscompare(void)
 
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:0 and verify "
 			"they are still unchanged as 'A'", i);
-		read16(sd, NULL, 0, i * block_size,
+		READ16(sd, NULL, 0, i * block_size,
                        block_size, 0, 0, 0, 0, 0, scratch,
                        EXPECT_STATUS_GOOD);
 
@@ -139,9 +139,9 @@ test_compareandwrite_miscompare(void)
 		logging(LOG_VERBOSE, "Read %d blocks at LBA:%" PRIu64 
 			"they are still unchanged as 'A'",
 			i, num_blocks - i);
-		read16(sd, NULL, num_blocks - i, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, scratch,
-			     EXPECT_STATUS_GOOD);
+		READ16(sd, NULL, num_blocks - i, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, scratch,
+                       EXPECT_STATUS_GOOD);
 
 		for (j = 0; j < i * block_size; j++) {
 			if (scratch[j] != 'A') {

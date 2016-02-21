@@ -34,8 +34,7 @@ check_wabereq(void)
 	struct scsi_task *task_ret = NULL;
 
 	logging(LOG_VERBOSE, "Read one block from LBA 0");
-	read10(sd, &task_ret, 0, block_size, block_size,
-	       0, 0, 0, 0, 0, NULL,
+	READ10(sd, &task_ret, 0, block_size, block_size, 0, 0, 0, 0, 0, NULL,
 	       EXPECT_STATUS_GOOD);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(task_ret);
 	CU_ASSERT_NOT_EQUAL(task_ret->status, SCSI_STATUS_CANCELLED);
@@ -195,14 +194,10 @@ check_unmap(void)
 static void
 check_lun_is_wiped(unsigned char *buf, uint64_t lba)
 {
-	int ret;
 	unsigned char *rbuf = alloca(256 * block_size);
 
-	ret = read16(sd, NULL, lba, 256 * block_size,
-		     block_size, 0, 0, 0, 0, 0, rbuf,
-		     EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	READ16(sd, NULL, lba, 256 * block_size, block_size, 0, 0, 0, 0, 0, rbuf,
+               EXPECT_STATUS_GOOD);
 	if (rc16 == NULL) {
 		return;
 	}

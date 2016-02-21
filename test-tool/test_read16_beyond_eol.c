@@ -39,7 +39,7 @@ static int ilog2(size_t i)
 void
 test_read16_beyond_eol(void)
 { 
-	int i, ret;
+	int i;
 
 	CHECK_FOR_SBC;
 
@@ -49,16 +49,9 @@ test_read16_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = read16(sd, NULL, num_blocks + 1 - i,
-			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_LBA_OOB);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented on this target and it does not claim SBC-3 support.");
-			CU_PASS("READ16 is not implemented and no SBC-3 support claimed.");
-			return;
-		}	
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, num_blocks + 1 - i,
+                       i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_LBA_OOB);
 	}
 
 	logging(LOG_VERBOSE, "Test READ16 1-256 blocks at LBA==2^63");
@@ -66,13 +59,10 @@ test_read16_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = read16(sd, NULL, 0x8000000000000000ULL,
-			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, 0x8000000000000000ULL,
+                       i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test READ16 1-256 blocks at LBA==2^%d",
 		64 - ilog2(block_size));
@@ -80,14 +70,10 @@ test_read16_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = read16(sd, NULL,
-			     1ULL << (64 - ilog2(block_size)),
-			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, 1ULL << (64 - ilog2(block_size)),
+                       i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test READ16 1-256 blocks at LBA==2^%d",
 		63 - ilog2(block_size));
@@ -95,37 +81,28 @@ test_read16_beyond_eol(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = read16(sd, NULL,
-			     1ULL << (63 - ilog2(block_size)),
-			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, 1ULL << (63 - ilog2(block_size)),
+                       i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test READ16 1-256 blocks at LBA==-1");
 	for (i = 1; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = read16(sd, NULL, -1, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, -1, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test READ16 2-256 blocks all but one block beyond the end");
 	for (i = 2; i <= 256; i++) {
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = read16(sd, NULL, num_blocks - 1,
-			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, num_blocks - 1,
+                       i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_LBA_OOB);
 	}
 }

@@ -29,7 +29,7 @@
 void
 test_read16_simple(void)
 {
-	int i, ret;
+	int i;
 
 	CHECK_FOR_SBC;
 
@@ -39,16 +39,9 @@ test_read16_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = read16(sd, NULL, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_STATUS_GOOD);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] READ16 is not implemented on this target and it does not claim SBC-3 support.");
-			CU_PASS("READ16 is not implemented and no SBC-3 support claimed.");
-			return;
-		}	
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, 0, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_STATUS_GOOD);
 	}
 
 
@@ -57,10 +50,8 @@ test_read16_simple(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = read16(sd, NULL, num_blocks - i,
-			     i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, num_blocks - i,
+                       i * block_size, block_size, 0, 0, 0, 0, 0, NULL,
+                       EXPECT_STATUS_GOOD);
 	}
 }

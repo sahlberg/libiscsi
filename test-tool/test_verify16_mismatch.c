@@ -30,7 +30,7 @@
 void
 test_verify16_mismatch(void)
 {
-	int i, ret;
+	int i;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test VERIFY16 for blocks 1-255");
@@ -40,10 +40,9 @@ test_verify16_mismatch(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = read16(sd, NULL, 0, i * block_size,
-			     block_size, 0, 0, 0, 0, 0, scratch,
-			     EXPECT_STATUS_GOOD);
+		READ16(sd, NULL, 0, i * block_size,
+                       block_size, 0, 0, 0, 0, 0, scratch,
+                       EXPECT_STATUS_GOOD);
 
 		/* flip a random byte in the data */
 		scratch[offset] ^= 'X';
@@ -60,11 +59,9 @@ test_verify16_mismatch(void)
 		if (maximum_transfer_length && maximum_transfer_length < i) {
 			break;
 		}
-
-		ret = read16(sd, NULL, num_blocks - i,
-			     i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
-			     EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ16(sd, NULL, num_blocks - i,
+                       i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
+                       EXPECT_STATUS_GOOD);
 
 		/* flip a random byte in the data */
 		scratch[offset] ^= 'X';

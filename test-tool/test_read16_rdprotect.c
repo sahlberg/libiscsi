@@ -29,7 +29,7 @@
 void
 test_read16_rdprotect(void)
 {
-	int i, ret;
+	int i;
 
 	/*
 	 * Try out different non-zero values for RDPROTECT.
@@ -42,16 +42,9 @@ test_read16_rdprotect(void)
 	if (!inq->protect || (rc16 != NULL && !rc16->prot_en)) {
 		logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
 		for (i = 1; i < 8; i++) {
-			ret = read16(sd, NULL, 0,
-				     block_size, block_size,
-				     i, 0, 0, 0, 0, NULL,
-				     EXPECT_INVALID_FIELD_IN_CDB);
-			if (ret == -2) {
-				logging(LOG_NORMAL, "[SKIPPED] READ16 is not im	lemented on this target and it does not claim SBC-3 support.");
-				CU_PASS("READ16 is not implemented and no SBC-3 support claimed.");
-				return;
-			}	
-			CU_ASSERT_EQUAL(ret, 0);
+			READ16(sd, NULL, 0, block_size, block_size,
+                               i, 0, 0, 0, 0, NULL,
+                               EXPECT_INVALID_FIELD_IN_CDB);
 		}
 		return;
 	}
