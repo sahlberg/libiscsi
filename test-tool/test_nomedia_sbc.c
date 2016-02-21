@@ -25,6 +25,22 @@
 #include "iscsi-support.h"
 #include "iscsi-test-cu.h"
 
+static void
+test_synchronizecache10(void)
+{
+	logging(LOG_VERBOSE, "Test SYNCHRONIZECACHE10 when medium is ejected.");
+	SYNCHRONIZECACHE10(sd, 0, 1, 1, 1,
+                           EXPECT_NO_MEDIUM);
+}
+
+static void
+test_synchronizecache16(void)
+{
+	logging(LOG_VERBOSE, "Test SYNCHRONIZECACHE16 when medium is ejected.");
+	SYNCHRONIZECACHE16(sd, 0, 1, 1, 1,
+                           EXPECT_NO_MEDIUM);
+}
+
 void
 test_nomedia_sbc(void)
 {
@@ -53,25 +69,8 @@ test_nomedia_sbc(void)
 			    EXPECT_NO_MEDIUM);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test SYNCHRONIZECACHE10 when medium is ejected.");
-	ret = synchronizecache10(sd, 0, 1, 1, 1,
-				 EXPECT_NO_MEDIUM);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] target does not support "
-			"SYNCHRONIZECACHE10");
-	} else {
-		CU_ASSERT_EQUAL(ret, 0);
-	}
-
-	logging(LOG_VERBOSE, "Test SYNCHRONIZECACHE16 when medium is ejected.");
-	ret = synchronizecache16(sd, 0, 1, 1, 1,
-				 EXPECT_NO_MEDIUM);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] target does not support "
-			"SYNCHRONIZECACHE16");
-	} else {
-		CU_ASSERT_EQUAL(ret, 0);
-	}
+        test_synchronizecache10();
+        test_synchronizecache16();
 
 	logging(LOG_VERBOSE, "Test READ10 when medium is ejected.");
 	ret = read10(sd, NULL, 0, block_size, block_size,
