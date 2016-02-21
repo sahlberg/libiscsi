@@ -44,18 +44,10 @@ test_reserve6_2initiators(void)
 	}
 
 	logging(LOG_NORMAL, "Take out a RESERVE6 from the first initiator");
-	ret = reserve6(sd);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "[SKIPPED] Target does not support RESERVE6. Skipping test");
-		CU_PASS("[SKIPPED] Target does not support RESERVE6. Skipping test");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
-
+	RESERVE6(sd);
 
 	logging(LOG_NORMAL, "Verify that the first initiator can re-RESERVE6 the same reservation");
-	ret = reserve6(sd);
-	CU_ASSERT_EQUAL(ret, 0);
+	RESERVE6(sd);
 
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
 	CU_ASSERT_EQUAL(ret, 0);
@@ -68,9 +60,7 @@ test_reserve6_2initiators(void)
 
 
 	logging(LOG_NORMAL, "Try to RELEASE from the second initiator. Should be a nop");
-	ret = release6(sd2);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	RELEASE6(sd2);
 
 	logging(LOG_NORMAL, "Test we can still send MODE SENSE from the first initiator");
 	ret = modesense6(sd, NULL, 0, SCSI_MODESENSE_PC_CURRENT, SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
@@ -87,16 +77,13 @@ test_reserve6_2initiators(void)
 	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_NORMAL, "RELEASE6 from the first initiator");
-	ret = release6(sd);
-	CU_ASSERT_EQUAL(ret, 0);
+	RELEASE6(sd);
 
 	logging(LOG_NORMAL, "RESERVE6 from the second initiator should work now");
-	ret = reserve6(sd2);
-	CU_ASSERT_EQUAL(ret, 0);
+	RESERVE6(sd2);
 
 	logging(LOG_NORMAL, "RELEASE6 from the second initiator");
-	ret = release6(sd2);
-	CU_ASSERT_EQUAL(ret, 0);
+	RELEASE6(sd2);
 
 	mpath_sd2_put(sd2);
 }

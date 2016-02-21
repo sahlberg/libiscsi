@@ -44,14 +44,7 @@ test_reserve6_target_warm_reset(void)
 	}
 
 	logging(LOG_VERBOSE, "Take out a RESERVE6 from the first initiator");
-	ret = reserve6(sd);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "[SKIPPED] Target does not support RESERVE6. Skipping test");
-		CU_PASS("[SKIPPED] Target does not support RESERVE6. Skipping test");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
-
+	RESERVE6(sd);
 
 	logging(LOG_VERBOSE, "Send a Warm Reset to the target");
 	ret = iscsi_task_mgmt_target_warm_reset_sync(sd->iscsi_ctx);
@@ -71,12 +64,10 @@ test_reserve6_target_warm_reset(void)
 		return;
 
 	logging(LOG_VERBOSE, "RESERVE6 from the second initiator should work now");
-	ret = reserve6(sd2);
-	CU_ASSERT_EQUAL(ret, 0);
+	RESERVE6(sd2);
 
 	logging(LOG_VERBOSE, "RELEASE6 from the second initiator");
-	ret = release6(sd2);
-	CU_ASSERT_EQUAL(ret, 0);
+	RELEASE6(sd2);
 
 	mpath_sd2_put(sd2);
 }

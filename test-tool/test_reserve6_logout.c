@@ -44,14 +44,7 @@ test_reserve6_logout(void)
 	}
 
 	logging(LOG_NORMAL, "Take out a RESERVE6 from the first initiator");
-	ret = reserve6(sd);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "[SKIPPED] Target does not support RESERVE6. Skipping test");
-		CU_PASS("[SKIPPED] Target does not support RESERVE6. Skipping test");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
-
+	RESERVE6(sd);
 
 	logging(LOG_VERBOSE, "Create a second connection to the target");
 	ret = mpath_sd2_get_or_clone(sd, &sd2);
@@ -75,12 +68,10 @@ test_reserve6_logout(void)
 	}
 
 	logging(LOG_NORMAL, "RESERVE6 from the second initiator should work now");
-	ret = reserve6(sd2);
-	CU_ASSERT_EQUAL(ret, 0);
+	RESERVE6(sd2);
 
 	logging(LOG_NORMAL, "RELEASE6 from the second initiator");
-	ret = release6(sd2);
-	CU_ASSERT_EQUAL(ret, 0);
+	RELEASE6(sd2);
 
 	mpath_sd2_put(sd2);
 }

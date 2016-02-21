@@ -29,20 +29,10 @@
 void
 test_reserve6_simple(void)
 {
-	int ret;
-
-
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test basic RESERVE6/RELEASE6 commands if supported");
 
-	ret = reserve6(sd);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "[SKIPPED] Target does not support RESERVE6. Skipping test");
-		CU_PASS("[SKIPPED] Target does not support RESERVE6. Skipping test");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+	RESERVE6(sd);
 
-	ret = release6(sd);
-	CU_ASSERT_EQUAL(ret, 0);
+	RELEASE6(sd);
 }

@@ -195,6 +195,20 @@ do {									\
                 CU_ASSERT_EQUAL(_r, 0);                                 \
         } while (0);
 
+#define RELEASE6(...)                                                   \
+        do {                                                            \
+                int _r;                                                 \
+                _r = release6(__VA_ARGS__);                             \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] RELEASE6 "       \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "RELEASE6. Skipping test");             \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 #define REPORT_SUPPORTED_OPCODES(...)                                   \
         do {                                                            \
                 int _r;                                                 \
@@ -205,6 +219,20 @@ do {									\
                         CU_PASS("[SKIPPED] Target does not support "    \
                                 "REPORT_SUPPORTED_OPCODES. Skipping "   \
                                 "test");                                \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
+#define RESERVE6(...)                                                   \
+        do {                                                            \
+                int _r;                                                 \
+                _r = reserve6(__VA_ARGS__);                             \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] RESERVE6 "       \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "RESERVE6. Skipping test");             \
                         return;                                         \
                 }                                                       \
                 CU_ASSERT_EQUAL(_r, 0);                                 \

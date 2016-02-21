@@ -31,7 +31,7 @@
 void
 test_sanitize_reservations(void)
 {
-	int ret;
+        int ret;
 	struct iscsi_data data;
 	struct scsi_command_descriptor *cd;
 	struct scsi_device *sd2;
@@ -58,9 +58,7 @@ test_sanitize_reservations(void)
 
 	logging(LOG_VERBOSE, "Take out a RESERVE6 from the second "
 			     "initiator");
-	ret = reserve6(sd2);
-	CU_ASSERT_EQUAL(ret, 0);
-
+	RESERVE6(sd2);
 
 	logging(LOG_VERBOSE, "Check if SANITIZE OVERWRITE is supported "
 		"in REPORT_SUPPORTED_OPCODES");

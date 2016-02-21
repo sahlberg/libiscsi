@@ -121,6 +121,7 @@ test_sanitize_readonly(void)
 
 	logging(LOG_VERBOSE, "Clear Software Write Protect on the second connection");
 	ret = clear_swp(sd2);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	logging(LOG_VERBOSE, "Use TESTUNITREADY to clear unit attention on "
 		"first connection");
