@@ -223,6 +223,20 @@ do {									\
                 CU_ASSERT_EQUAL(_r, 0);                                 \
         } while (0);
 
+#define READ6(...)                                                      \
+        do {                                                            \
+                int _r;                                                 \
+                _r = read6(__VA_ARGS__);                                \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] READ6 "          \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "READ6. Skipping test");                \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 #define READ10(...)                                                     \
         do {                                                            \
                 int _r;                                                 \

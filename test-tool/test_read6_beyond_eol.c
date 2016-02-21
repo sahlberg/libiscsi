@@ -28,35 +28,25 @@
 void
 test_read6_beyond_eol(void)
 { 
-	int i, ret;
+	int i;
 
 	if (num_blocks > 0x1fffff) {
 		CU_PASS("LUN is too big for read-beyond-eol tests with READ6. Skipping test.\n");
 		return;
 	}
 
-
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test READ6 1-255 blocks one block beyond the end");
 	for (i = 1; i <= 255 && i + 0U <= num_blocks + 1; i++) {
-		ret = read6(sd, NULL, num_blocks + 1 - i,
-			    i * block_size, block_size, NULL,
-			    EXPECT_LBA_OOB);
-		if (ret == -2) {
-			logging(LOG_NORMAL, "[SKIPPED] READ6 is not implemented.");
-			CU_PASS("READ6 is not implemented.");
-			return;
-		}	
-		CU_ASSERT_EQUAL(ret, 0);
+		READ6(sd, NULL, num_blocks + 1 - i,
+                      i * block_size, block_size, NULL,
+                      EXPECT_LBA_OOB);
 	}
-
 
 	logging(LOG_VERBOSE, "Test READ6 1-255 blocks at LBA==0x1fffff");
 	for (i = 1; i <= 255; i++) {
-		ret = read6(sd, NULL, 0x1fffff,
-			    i * block_size, block_size, NULL,
-			    EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ6(sd, NULL, 0x1fffff, i * block_size, block_size, NULL,
+                      EXPECT_LBA_OOB);
 	}
 
 	if (num_blocks == 0) {
@@ -66,9 +56,8 @@ test_read6_beyond_eol(void)
 
 	logging(LOG_VERBOSE, "Test READ6 2-255 blocks all but one block beyond the end");
 	for (i = 2; i <= 255; i++) {
-		ret = read6(sd, NULL, num_blocks - 1,
-			    i * block_size, block_size, NULL,
-			    EXPECT_LBA_OOB);
-		CU_ASSERT_EQUAL(ret, 0);
+		READ6(sd, NULL, num_blocks - 1,
+                      i * block_size, block_size, NULL,
+                      EXPECT_LBA_OOB);
 	}
 }
