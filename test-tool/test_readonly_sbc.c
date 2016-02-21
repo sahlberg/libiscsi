@@ -25,14 +25,122 @@
 #include "iscsi-support.h"
 #include "iscsi-test-cu.h"
 
+static void
+test_write10(void)
+{
+	logging(LOG_VERBOSE, "Test WRITE10 fails with WRITE_PROTECTED");
+	memset(scratch, 0xa6, block_size);
+	WRITE10(sd, 0, block_size, block_size, 0, 0, 0, 0, 0, scratch,
+                EXPECT_WRITE_PROTECTED);
+}
+
+static void
+test_write12(void)
+{
+	logging(LOG_VERBOSE, "Test WRITE12 fails with WRITE_PROTECTED");
+	memset(scratch, 0xa6, block_size);
+	WRITE12(sd, 0, block_size, block_size, 0, 0, 0, 0, 0, scratch,
+                EXPECT_WRITE_PROTECTED);
+}
+
+static void
+test_write16(void)
+{
+	logging(LOG_VERBOSE, "Test WRITE16 fails with WRITE_PROTECTED");
+	memset(scratch, 0xa6, block_size);
+	WRITE16(sd, 0, block_size, block_size, 0, 0, 0, 0, 0, scratch,
+                EXPECT_WRITE_PROTECTED);
+}
+
+static void
+test_writesame10(void)
+{
+	logging(LOG_VERBOSE, "Test WRITE_SAME10 fails with WRITE_PROTECTED");
+        WRITESAME10(sd, 0, block_size, 1, 0, 0, 0, 0, scratch,
+                    EXPECT_WRITE_PROTECTED);
+
+	logging(LOG_VERBOSE, "Test WRITE_SAME10 UNMAP fails with "
+                "WRITE_PROTECTED");
+        WRITESAME10(sd, 0, block_size, 1, 0, 1, 0, 0, NULL,
+                    EXPECT_WRITE_PROTECTED);
+}
+
+static void
+test_writesame16(void)
+{
+	logging(LOG_VERBOSE, "Test WRITE_SAME16 fails with WRITE_PROTECTED");
+        WRITESAME16(sd, 0, block_size, 1, 0, 0, 0, 0, scratch,
+                    EXPECT_WRITE_PROTECTED);
+
+	logging(LOG_VERBOSE, "Test WRITE_SAME16 UNMAP fails with "
+                "WRITE_PROTECTED");
+        WRITESAME16(sd, 0, block_size, 1, 0, 1, 0, 0, NULL,
+                    EXPECT_WRITE_PROTECTED);
+}
+
+static void
+test_writeverify10(void)
+{
+	logging(LOG_VERBOSE, "Test WRITEVERIFY10 fails with WRITE_PROTECTED");
+	WRITEVERIFY10(sd, 0, block_size, block_size, 0, 0, 0, 0, scratch,
+                      EXPECT_WRITE_PROTECTED);
+}
+
+static void
+test_writeverify12(void)
+{
+	logging(LOG_VERBOSE, "Test WRITEVERIFY12 fails with WRITE_PROTECTED");
+	WRITEVERIFY12(sd, 0, block_size, block_size, 0, 0, 0, 0, scratch,
+                      EXPECT_WRITE_PROTECTED);
+}
+
+static void
+test_writeverify16(void)
+{
+	logging(LOG_VERBOSE, "Test WRITEVERIFY16 fails with WRITE_PROTECTED");
+	WRITEVERIFY16(sd, 0, block_size, block_size, 0, 0, 0, 0, scratch,
+                      EXPECT_WRITE_PROTECTED);
+}
+
+static void
+test_orwrite(void)
+{
+	logging(LOG_VERBOSE, "Test ORWRITE fails with WRITE_PROTECTED");
+	ORWRITE(sd, 0, block_size, block_size, 0, 0, 0, 0, 0, scratch,
+                EXPECT_WRITE_PROTECTED);
+}
+
+static void
+test_compareandwrite(void)
+{
+	logging(LOG_VERBOSE, "Test COMPAREANDWRITE fails with WRITE_PROTECTED");
+        COMPAREANDWRITE(sd, 0, scratch, 2 * block_size, block_size, 0, 0, 0, 0,
+                        EXPECT_WRITE_PROTECTED);
+}
+
+static void
+test_unmap(void)
+{
+	struct unmap_list list[1];
+
+	logging(LOG_VERBOSE, "Test UNMAP of one physical block fails with "
+                "WRITE_PROTECTED");
+	list[0].lba = 0;
+	list[0].num = lbppb;
+	UNMAP(sd, 0, list, 1,
+              EXPECT_WRITE_PROTECTED);
+
+	logging(LOG_VERBOSE, "Test UNMAP of one logical block fails with "
+                "WRITE_PROTECTED");
+	list[0].lba = 0;
+	list[0].num = 1;
+	UNMAP(sd, 0, list, 1,
+              EXPECT_WRITE_PROTECTED);
+}
 
 void
 test_readonly_sbc(void)
 {
-	int ret;
-	unsigned char buf[4096];
-	struct unmap_list list[1];
-
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_READONLY;
 	CHECK_FOR_SBC;
@@ -40,118 +148,15 @@ test_readonly_sbc(void)
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test that Medium write commands fail for READ-ONLY SBC devices");
 
-
-	logging(LOG_VERBOSE, "Test WRITE10 fails with WRITE_PROTECTED");
-	memset(buf, 0xa6, sizeof(buf));
-	ret = write10(sd, 0, block_size, block_size,
-		      0, 0, 0, 0, 0, buf,
-		      EXPECT_WRITE_PROTECTED);
-	CU_ASSERT_EQUAL(ret, 0);
-
-	logging(LOG_VERBOSE, "Test WRITE12 fails with WRITE_PROTECTED");
-	ret = write12(sd, 0, block_size, block_size,
-		      0, 0, 0, 0, 0, buf,
-		      EXPECT_WRITE_PROTECTED);
-	CU_ASSERT_EQUAL(ret, 0);
-
-	logging(LOG_VERBOSE, "Test WRITE16 fails with WRITE_PROTECTED");
-	ret = write16(sd, 0, block_size, block_size,
-		      0, 0, 0, 0, 0, buf,
-		      EXPECT_WRITE_PROTECTED);
-	CU_ASSERT_EQUAL(ret, 0);
-
-	logging(LOG_VERBOSE, "Test WRITE_SAME10 fails with WRITE_PROTECTED");
-	ret = writesame10(sd, 0, block_size, 1,
-			  0, 0, 0, 0, buf,
-			  EXPECT_WRITE_PROTECTED);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "WRITE_SAME10 not supported on target. Skipped.");
-	}
-	CU_ASSERT_NOT_EQUAL(ret, -1);
-
-	logging(LOG_VERBOSE, "Test WRITE_SAME16 fails with WRITE_PROTECTED");
-	ret = writesame16(sd, 0, block_size, 1,
-			  0, 0, 0, 0, buf,
-			  EXPECT_WRITE_PROTECTED);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "WRITE_SAME16 not supported on target. Skipped.");
-	}
-	CU_ASSERT_NOT_EQUAL(ret, -1);
-
-	logging(LOG_VERBOSE, "Test WRITE_SAME10 UNMAP fails with WRITE_PROTECTED");
-	ret = writesame10(sd, 0,
-			  block_size, 1, 0, 1, 0, 0, NULL,
-			  EXPECT_WRITE_PROTECTED);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "WRITE_SAME10 not supported on target. Skipped.");
-	}
-	CU_ASSERT_NOT_EQUAL(ret, -1);
-
-	logging(LOG_VERBOSE, "Test WRITE_SAME16 UNMAP fails with WRITE_PROTECTED");
-	ret = writesame16(sd, 0,
-			  block_size, 1, 0, 1, 0, 0, NULL,
-			  EXPECT_WRITE_PROTECTED);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "WRITE_SAME16 not supported on target. Skipped.");
-	}
-	CU_ASSERT_NOT_EQUAL(ret, -1);
-
-	logging(LOG_VERBOSE, "Test UNMAP of one physical block fails with WRITE_PROTECTED");
-	list[0].lba = 0;
-	list[0].num = lbppb;
-	ret = unmap(sd, 0, list, 1,
-		    EXPECT_WRITE_PROTECTED);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "UNMAP not supported on target. Skipped.");
-	}
-	CU_ASSERT_NOT_EQUAL(ret, -1);
-
-	logging(LOG_VERBOSE, "Test UNMAP of one logical block fails with WRITE_PROTECTED");
-	list[0].lba = 0;
-	list[0].num = 1;
-	ret = unmap(sd, 0, list, 1,
-		    EXPECT_WRITE_PROTECTED);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "UNMAP not supported on target. Skipped.");
-	}
-	CU_ASSERT_NOT_EQUAL(ret, -1);
-
-	logging(LOG_VERBOSE, "Test WRITEVERIFY10 fails with WRITE_PROTECTED");
-	ret = writeverify10(sd, 0,
-			    block_size, block_size, 0, 0, 0, 0, buf,
-			    EXPECT_WRITE_PROTECTED);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "WRITEVERIFY10 not supported on target. Skipped.");
-	}
-	CU_ASSERT_NOT_EQUAL(ret, -1);
-
-	logging(LOG_VERBOSE, "Test WRITEVERIFY12 fails with WRITE_PROTECTED");
-	ret = writeverify12(sd, 0,
-			    block_size, block_size, 0, 0, 0, 0, buf,
-			    EXPECT_WRITE_PROTECTED);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "WRITEVERIFY12 not supported on target. Skipped.");
-	}
-	CU_ASSERT_NOT_EQUAL(ret, -1);
-
-	logging(LOG_VERBOSE, "Test WRITEVERIFY16 fails with WRITE_PROTECTED");
-	ret = writeverify16(sd, 0,
-			    block_size, block_size, 0, 0, 0, 0, buf,
-			    EXPECT_WRITE_PROTECTED);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "WRITEVERIFY16 not supported on target. Skipped.");
-	}
-	CU_ASSERT_NOT_EQUAL(ret, -1);
-
-	logging(LOG_VERBOSE, "Test ORWRITE fails with WRITE_PROTECTED");
-	ret = orwrite(sd, 0,
-		      block_size, block_size, 0, 0, 0, 0, 0, buf,
-		      EXPECT_WRITE_PROTECTED);
-	if (ret == -2) {
-		logging(LOG_VERBOSE, "ORWRITE not supported on target. Skipped.");
-	}
-	CU_ASSERT_NOT_EQUAL(ret, -1);
-
-	/* NOT implemented yet */
-	logging(LOG_VERBOSE, "Test for COMPAREANDWRITE not implemented yet.");
+        test_compareandwrite();
+        test_orwrite();
+        test_unmap();
+        test_write10();
+        test_write12();
+        test_write16();
+        test_writesame10();
+        test_writesame16();
+        test_writeverify10();
+        test_writeverify12();
+        test_writeverify16();
 }
