@@ -29,13 +29,9 @@
 void
 test_readcapacity10_simple(void)
 {
-	int ret;
-
-
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test basic READCAPACITY10");
 
-	ret = readcapacity10(sd, NULL, 0, 0,
-			     EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	READCAPACITY10(sd, NULL, 0, 0,
+                       EXPECT_STATUS_GOOD);
 }

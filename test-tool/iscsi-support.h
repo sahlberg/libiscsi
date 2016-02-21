@@ -335,6 +335,20 @@ do {									\
                 CU_ASSERT_EQUAL(_r, 0);                                 \
         } while (0);
 
+#define READCAPACITY10(...)                                             \
+        do {                                                            \
+                int _r;                                                 \
+                _r = readcapacity10(__VA_ARGS__);                       \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] READCAPACITY10 " \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "READCAPACITY10. Skipping test");       \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 #define READCAPACITY16(...)                                             \
         do {                                                            \
                 int _r;                                                 \
