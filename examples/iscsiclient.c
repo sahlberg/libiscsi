@@ -561,12 +561,12 @@ void discovery_cb(struct iscsi_context *iscsi, int status, void *command_data, v
 
 	printf("discovery callback   status:%04x\n", status);
 
-	if (status != 0) {
+	if (status != 0 || command_data == NULL) {
 		printf("Failed to do discovery on target. : %s\n", iscsi_get_error(iscsi));
 		exit(10);
 	}
 
-	for(addr=command_data; addr; addr=addr->next) {	
+	for(addr = command_data; addr; addr = addr->next) {	
 		printf("Target:%s Address:%s\n", addr->target_name, addr->portals->portal);
 	}
 

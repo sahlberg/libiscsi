@@ -337,7 +337,6 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 		/* Where to store the sense_data, if there was an error */
 		io_hdr.sbp = sense;
 		io_hdr.mx_sb_len = sense_len;
-		sense_len=0;
 
 		/* Transfer direction, either in or out. Linux does not yet
 		   support bidirectional SCSI transfers ?
@@ -386,7 +385,6 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 		if(io_hdr.sb_len_wr > 0){
 			task->status = SCSI_STATUS_CHECK_CONDITION;
 			scsi_parse_sense_data(&task->sense, sense);
-			sense_len=io_hdr.sb_len_wr;
 			snprintf(buf, sizeof(buf), "SENSE KEY:%s(%d) ASCQ:%s(0x%04x)",
 				 scsi_sense_key_str(task->sense.key),
 				 task->sense.key,

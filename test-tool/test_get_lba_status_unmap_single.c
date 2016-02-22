@@ -29,7 +29,6 @@
 void
 test_get_lba_status_unmap_single(void)
 {
-	int ret;
 	uint64_t i;
 	struct unmap_list list[1];
 	struct scsi_task *t = NULL;
@@ -50,19 +49,17 @@ test_get_lba_status_unmap_single(void)
 
 	logging(LOG_VERBOSE, "Write the first %i blocks with a known "
 		"pattern and thus map the blocks", 256 + lbppb);
-	ret = write10(sd, 0, (256 + lbppb) * block_size,
-		      block_size, 0, 0, 0, 0, 0, scratch,
-		      EXPECT_STATUS_GOOD);
-	CU_ASSERT_EQUAL(ret, 0);
+	WRITE10(sd, 0, (256 + lbppb) * block_size,
+                block_size, 0, 0, 0, 0, 0, scratch,
+                EXPECT_STATUS_GOOD);
 
 	for (i = 0; i + lbppb <= 256; i += lbppb) {
 		logging(LOG_VERBOSE, "Unmap a single physical block at LBA:%"
 			PRIu64 " (number of logical blocks: %d)", i, lbppb);
 		list[0].lba = i;
 		list[0].num = lbppb;
-		ret = unmap(sd, 0, list, 1,
-			    EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		UNMAP(sd, 0, list, 1,
+                      EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:%"
 			PRIu64, i);
@@ -105,16 +102,15 @@ test_get_lba_status_unmap_single(void)
 	for (i = lbppb; i + lbppb <= 256; i += lbppb) {
 		logging(LOG_VERBOSE, "Write the first %i blocks with a known "
 			"pattern and thus map the blocks", (256 + lbppb));
-		ret = write10(sd, 0, (256 + lbppb) * block_size,
-			      block_size, 0, 0, 0, 0, 0, scratch,
-			      EXPECT_STATUS_GOOD);
+		WRITE10(sd, 0, (256 + lbppb) * block_size,
+                        block_size, 0, 0, 0, 0, 0, scratch,
+                        EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Unmap %" PRIu64 " blocks at LBA 0", i);
 		list[0].lba = 0;
 		list[0].num = i;
-		ret = unmap(sd, 0, list, 1,
-			    EXPECT_STATUS_GOOD);
-		CU_ASSERT_EQUAL(ret, 0);
+		UNMAP(sd, 0, list, 1,
+                      EXPECT_STATUS_GOOD);
 
 		logging(LOG_VERBOSE, "Read the status of the block at LBA:0");
 

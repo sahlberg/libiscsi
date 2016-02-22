@@ -149,7 +149,7 @@ mpath_check_matching_ids_devid_vpd(int num_sds,
 			SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION,
 			64,
 			EXPECT_STATUS_GOOD);
-		if (inq_task && inq_task->status != SCSI_STATUS_GOOD) {
+		if (inq_task == NULL || inq_task->status != SCSI_STATUS_GOOD) {
 			printf("Inquiry command failed : %s\n",
 			       sds[i]->error_str);
 			goto err_cleanup;
@@ -273,7 +273,7 @@ mpath_check_matching_ids_serial_vpd(int num_sds,
 		inquiry(sds[i], &inq_task, 1,
 			SCSI_INQUIRY_PAGECODE_UNIT_SERIAL_NUMBER, 64,
 			EXPECT_STATUS_GOOD);
-		if (inq_task && inq_task->status != SCSI_STATUS_GOOD) {
+		if (inq_task == NULL || inq_task->status != SCSI_STATUS_GOOD) {
 			printf("Inquiry command failed : %s\n",
 			       sds[i]->error_str);
 			goto err_cleanup;
