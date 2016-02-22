@@ -29,10 +29,10 @@
 void
 test_reserve6_simple(void)
 {
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test basic RESERVE6/RELEASE6 commands if supported");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test basic RESERVE6/RELEASE6 commands if supported");
 
-	RESERVE6(sd);
+        RESERVE6(sd);
 
-	RELEASE6(sd);
+        RELEASE6(sd);
 }

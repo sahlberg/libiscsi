@@ -30,56 +30,56 @@ test_preventallow_cold_reset(void)
 {
         int ret;
 
-	CHECK_FOR_SBC;
-	CHECK_FOR_REMOVABLE;
+        CHECK_FOR_SBC;
+        CHECK_FOR_REMOVABLE;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test that Target Warm Reset clears PREVENT MEDIUM REMOVAL");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test that Target Warm Reset clears PREVENT MEDIUM REMOVAL");
 
-	if (sd->iscsi_ctx == NULL) {
-		const char *err = "[SKIPPED] This PREVENTALLOW test is "
-			"only supported for iSCSI backends";
-		logging(LOG_NORMAL, "%s", err);
-		CU_PASS(err);
-		return;
-	}
+        if (sd->iscsi_ctx == NULL) {
+                const char *err = "[SKIPPED] This PREVENTALLOW test is "
+                        "only supported for iSCSI backends";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
 
-	logging(LOG_VERBOSE, "Set the PREVENT flag");
-	PREVENTALLOW(sd, 1);
+        logging(LOG_VERBOSE, "Set the PREVENT flag");
+        PREVENTALLOW(sd, 1);
 
-	logging(LOG_VERBOSE, "Try to eject the medium");
-	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
+        logging(LOG_VERBOSE, "Try to eject the medium");
+        STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
                       EXPECT_REMOVAL_PREVENTED);
 
-	logging(LOG_VERBOSE, "Verify we can still access the media.");
-	TESTUNITREADY(sd,
+        logging(LOG_VERBOSE, "Verify we can still access the media.");
+        TESTUNITREADY(sd,
                       EXPECT_STATUS_GOOD);
-	
-	logging(LOG_VERBOSE, "Perform cold reset on target");
-	ret = iscsi_task_mgmt_target_cold_reset_sync(sd->iscsi_ctx);
-	CU_ASSERT_EQUAL(ret, 0);
+        
+        logging(LOG_VERBOSE, "Perform cold reset on target");
+        ret = iscsi_task_mgmt_target_cold_reset_sync(sd->iscsi_ctx);
+        CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Wait until all unit attentions clear");
-	while (testunitready(sd, EXPECT_STATUS_GOOD) != 0)
-		;
+        logging(LOG_VERBOSE, "Wait until all unit attentions clear");
+        while (testunitready(sd, EXPECT_STATUS_GOOD) != 0)
+                ;
 
-	logging(LOG_VERBOSE, "Try to eject the medium");
-	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
+        logging(LOG_VERBOSE, "Try to eject the medium");
+        STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
                       EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Verify we can not access the media.");
-	TESTUNITREADY(sd,
+        logging(LOG_VERBOSE, "Verify we can not access the media.");
+        TESTUNITREADY(sd,
                       EXPECT_NO_MEDIUM);
 
-	logging(LOG_VERBOSE, "Load the medium");
-	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
+        logging(LOG_VERBOSE, "Load the medium");
+        STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
                       EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Clear PREVENT and load medium in case target failed");
-	logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
-	PREVENTALLOW(sd, 0);
+        logging(LOG_VERBOSE, "Clear PREVENT and load medium in case target failed");
+        logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
+        PREVENTALLOW(sd, 0);
 
-	logging(LOG_VERBOSE, "Load the medium");
-	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 1,
+        logging(LOG_VERBOSE, "Load the medium");
+        STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 1,
                       EXPECT_STATUS_GOOD);
 }

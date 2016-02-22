@@ -29,20 +29,20 @@
 void
 test_writesame16_unmap_unaligned(void)
 {
-	int i;
+        int i;
 
-	CHECK_FOR_DATALOSS;
-	CHECK_FOR_THIN_PROVISIONING;
-	CHECK_FOR_LBPWS;
-	CHECK_FOR_LBPPB_GT_1;
-	CHECK_FOR_SBC;
+        CHECK_FOR_DATALOSS;
+        CHECK_FOR_THIN_PROVISIONING;
+        CHECK_FOR_LBPWS;
+        CHECK_FOR_LBPPB_GT_1;
+        CHECK_FOR_SBC;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test that unaligned WRITESAME16 Unmap succeeds. LBPPB==%d", lbppb);
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test that unaligned WRITESAME16 Unmap succeeds. LBPPB==%d", lbppb);
 
-	for (i = 1; i < lbppb; i++) {
-		logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16 at LBA:%d", lbppb - i, i);
-		WRITESAME16(sd, i, 0, lbppb - i, 0, 1, 0, 0, NULL,
+        for (i = 1; i < lbppb; i++) {
+                logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16 at LBA:%d", lbppb - i, i);
+                WRITESAME16(sd, i, 0, lbppb - i, 0, 1, 0, 0, NULL,
                             EXPECT_STATUS_GOOD);
-	}
+        }
 }

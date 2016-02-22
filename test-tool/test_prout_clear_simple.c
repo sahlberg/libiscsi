@@ -29,60 +29,60 @@
 void
 test_prout_clear_simple(void)
 {
-	int ret = 0;
-	uint32_t old_gen;
-	const unsigned long long key = rand_key();
-	struct scsi_task *tsk;
-	struct scsi_persistent_reserve_in_read_keys *rk;
+        int ret = 0;
+        uint32_t old_gen;
+        const unsigned long long key = rand_key();
+        struct scsi_task *tsk;
+        struct scsi_persistent_reserve_in_read_keys *rk;
 
-	CHECK_FOR_DATALOSS;
+        CHECK_FOR_DATALOSS;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test Persistent Reserve OUT CLEAR works.");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test Persistent Reserve OUT CLEAR works.");
 
-	/* register our reservation key with the target */
-	ret = prout_register_and_ignore(sd, key);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE OUT is not implemented.");
-		CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
-		return;
-	}	
-	CU_ASSERT_EQUAL(ret, 0);
+        /* register our reservation key with the target */
+        ret = prout_register_and_ignore(sd, key);
+        if (ret == -2) {
+                logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE OUT is not implemented.");
+                CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
+                return;
+        }        
+        CU_ASSERT_EQUAL(ret, 0);
 
-	ret = prin_read_keys(sd, &tsk, &rk);
-	CU_ASSERT_EQUAL(ret, 0);
+        ret = prin_read_keys(sd, &tsk, &rk);
+        CU_ASSERT_EQUAL(ret, 0);
 
-	CU_ASSERT_NOT_EQUAL(rk->num_keys, 0);
-	/* retain PR generation number to check for increments */
-	old_gen = rk->prgeneration;
+        CU_ASSERT_NOT_EQUAL(rk->num_keys, 0);
+        /* retain PR generation number to check for increments */
+        old_gen = rk->prgeneration;
 
-	scsi_free_scsi_task(tsk);
-	rk = NULL;	/* freed with tsk */
+        scsi_free_scsi_task(tsk);
+        rk = NULL;        /* freed with tsk */
 
-	/* reserve the target */
-	ret = prout_reserve(sd, key,
-			    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS);
-	CU_ASSERT_EQUAL(ret, 0);
+        /* reserve the target */
+        ret = prout_reserve(sd, key,
+                            SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS);
+        CU_ASSERT_EQUAL(ret, 0);
 
-	/* verify target reservation */
-	ret = prin_verify_reserved_as(sd, key,
-				SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS);
-	CU_ASSERT_EQUAL(ret, 0);
+        /* verify target reservation */
+        ret = prin_verify_reserved_as(sd, key,
+                                SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS);
+        CU_ASSERT_EQUAL(ret, 0);
 
-	/* clear reservation and registration */
-	ret = prout_clear(sd, key);
-	CU_ASSERT_EQUAL(ret, 0);
+        /* clear reservation and registration */
+        ret = prout_clear(sd, key);
+        CU_ASSERT_EQUAL(ret, 0);
 
-	ret = prin_verify_not_reserved(sd);
-	CU_ASSERT_EQUAL(ret, 0);
+        ret = prin_verify_not_reserved(sd);
+        CU_ASSERT_EQUAL(ret, 0);
 
-	ret = prin_read_keys(sd, &tsk, &rk);
-	CU_ASSERT_EQUAL(ret, 0);
+        ret = prin_read_keys(sd, &tsk, &rk);
+        CU_ASSERT_EQUAL(ret, 0);
 
-	CU_ASSERT_EQUAL(rk->num_keys, 0);
-	/* generation incremented once for CLEAR (not for RESERVE) */
-	CU_ASSERT_EQUAL(rk->prgeneration, old_gen + 1);
+        CU_ASSERT_EQUAL(rk->num_keys, 0);
+        /* generation incremented once for CLEAR (not for RESERVE) */
+        CU_ASSERT_EQUAL(rk->prgeneration, old_gen + 1);
 
-	scsi_free_scsi_task(tsk);
-	rk = NULL;	/* freed with tsk */
+        scsi_free_scsi_task(tsk);
+        rk = NULL;        /* freed with tsk */
 }

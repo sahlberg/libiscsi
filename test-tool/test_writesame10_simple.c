@@ -30,24 +30,24 @@
 void
 test_writesame10_simple(void)
 {
-	int i;
+        int i;
 
-	CHECK_FOR_DATALOSS;
-	CHECK_FOR_SBC;
+        CHECK_FOR_DATALOSS;
+        CHECK_FOR_SBC;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITESAME10 of 1-256 blocks at the start of the LUN");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test WRITESAME10 of 1-256 blocks at the start of the LUN");
 
-	memset(scratch, 0, block_size);
-	for (i = 1; i <= 256; i++) {
-		WRITESAME10(sd, 0, block_size, i, 0, 0, 0, 0, scratch,
+        memset(scratch, 0, block_size);
+        for (i = 1; i <= 256; i++) {
+                WRITESAME10(sd, 0, block_size, i, 0, 0, 0, 0, scratch,
                             EXPECT_STATUS_GOOD);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test WRITESAME10 of 1-256 blocks at the end of the LUN");
-	for (i = 1; i <= 256; i++) {
-		WRITESAME10(sd, num_blocks - i,
+        logging(LOG_VERBOSE, "Test WRITESAME10 of 1-256 blocks at the end of the LUN");
+        for (i = 1; i <= 256; i++) {
+                WRITESAME10(sd, num_blocks - i,
                             block_size, i, 0, 0, 0, 0, scratch,
                             EXPECT_STATUS_GOOD);
-	}
+        }
 }

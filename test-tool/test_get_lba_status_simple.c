@@ -29,18 +29,18 @@
 void
 test_get_lba_status_simple(void)
 {
-	int i;
+        int i;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test GETLBASTATUS of 1-256 blocks at the start of the LUN");
-	for (i = 1; i <= 256; i++) {
-		GETLBASTATUS(sd, NULL, i, 24,
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test GETLBASTATUS of 1-256 blocks at the start of the LUN");
+        for (i = 1; i <= 256; i++) {
+                GETLBASTATUS(sd, NULL, i, 24,
                              EXPECT_STATUS_GOOD);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test GETLBASTATUS of 1-256 blocks at the end of the LUN");
-	for (i = 1; i <= 256; i++) {
-		GETLBASTATUS(sd, NULL, num_blocks - i, 24,
+        logging(LOG_VERBOSE, "Test GETLBASTATUS of 1-256 blocks at the end of the LUN");
+        for (i = 1; i <= 256; i++) {
+                GETLBASTATUS(sd, NULL, num_blocks - i, 24,
                              EXPECT_STATUS_GOOD);
-	}
+        }
 }

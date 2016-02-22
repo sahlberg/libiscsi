@@ -30,35 +30,35 @@
 void
 test_prout_register_simple(void)
 {
-	const unsigned long long key = rand_key();
-	int ret = 0;
+        const unsigned long long key = rand_key();
+        int ret = 0;
 
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test Persistent Reserve IN REGISTER works.");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test Persistent Reserve IN REGISTER works.");
 
-	/* register our reservation key with the target */
-	ret = prout_register_and_ignore(sd, key);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE OUT is not implemented.");
-		CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
-		return;
-	}	
-	CU_ASSERT_EQUAL(ret, 0);
+        /* register our reservation key with the target */
+        ret = prout_register_and_ignore(sd, key);
+        if (ret == -2) {
+                logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE OUT is not implemented.");
+                CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
+                return;
+        }        
+        CU_ASSERT_EQUAL(ret, 0);
 
-	/* verify we can read the registration */
-	ret = prin_verify_key_presence(sd, key, 1);
-	CU_ASSERT_EQUAL(ret, 0);
+        /* verify we can read the registration */
+        ret = prin_verify_key_presence(sd, key, 1);
+        CU_ASSERT_EQUAL(ret, 0);
 
-	/* try to reregister, which should fail */
-	ret = prout_reregister_key_fails(sd, key+1);
-	CU_ASSERT_EQUAL(ret, 0);
+        /* try to reregister, which should fail */
+        ret = prout_reregister_key_fails(sd, key+1);
+        CU_ASSERT_EQUAL(ret, 0);
 
-	/* release from the target */
-	ret = prout_register_key(sd, 0, key);
-	CU_ASSERT_EQUAL(ret, 0);
+        /* release from the target */
+        ret = prout_register_key(sd, 0, key);
+        CU_ASSERT_EQUAL(ret, 0);
 
-	/* Verify the registration is gone */
-	ret = prin_verify_key_presence(sd, key, 0);
-	CU_ASSERT_EQUAL(ret, 0);
+        /* Verify the registration is gone */
+        ret = prin_verify_key_presence(sd, key, 0);
+        CU_ASSERT_EQUAL(ret, 0);
 }

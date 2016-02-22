@@ -29,54 +29,54 @@
 void
 test_writeverify10_beyond_eol(void)
 { 
-	int i;
+        int i;
 
-	CHECK_FOR_DATALOSS;
+        CHECK_FOR_DATALOSS;
 
-	if (num_blocks >= 0x80000000) {
-		CU_PASS("LUN is too big for write-beyond-eol tests with WRITEVERIFY10. Skipping test.\n");
-		return;
-	}
+        if (num_blocks >= 0x80000000) {
+                CU_PASS("LUN is too big for write-beyond-eol tests with WRITEVERIFY10. Skipping test.\n");
+                return;
+        }
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITEVERIFY10 1-256 blocks one block beyond the end");
-	memset(scratch, 0xa6, 256 * block_size);
-	for (i = 1; i <= 256; i++) {
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		WRITEVERIFY10(sd, num_blocks + 1 - i,
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test WRITEVERIFY10 1-256 blocks one block beyond the end");
+        memset(scratch, 0xa6, 256 * block_size);
+        for (i = 1; i <= 256; i++) {
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                WRITEVERIFY10(sd, num_blocks + 1 - i,
                               i * block_size, block_size, 0, 0, 0, 0, scratch,
                               EXPECT_LBA_OOB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test WRITEVERIFY10 1-256 blocks at LBA==2^31");
-	for (i = 1; i <= 256; i++) {
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		WRITEVERIFY10(sd, 0x80000000,
+        logging(LOG_VERBOSE, "Test WRITEVERIFY10 1-256 blocks at LBA==2^31");
+        for (i = 1; i <= 256; i++) {
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                WRITEVERIFY10(sd, 0x80000000,
                               i * block_size, block_size, 0, 0, 0, 0, scratch,
                               EXPECT_LBA_OOB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test WRITEVERIFY10 1-256 blocks at LBA==-1");
-	for (i = 1; i <= 256; i++) {
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		WRITEVERIFY10(sd, -1, i * block_size,
+        logging(LOG_VERBOSE, "Test WRITEVERIFY10 1-256 blocks at LBA==-1");
+        for (i = 1; i <= 256; i++) {
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                WRITEVERIFY10(sd, -1, i * block_size,
                               block_size, 0, 0, 0, 0, scratch,
                               EXPECT_LBA_OOB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test WRITEVERIFY10 2-256 blocks all but one block beyond the end");
-	for (i = 2; i <= 256; i++) {
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		WRITEVERIFY10(sd, num_blocks - 1,
+        logging(LOG_VERBOSE, "Test WRITEVERIFY10 2-256 blocks all but one block beyond the end");
+        for (i = 2; i <= 256; i++) {
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                WRITEVERIFY10(sd, num_blocks - 1,
                               i * block_size, block_size, 0, 0, 0, 0, scratch,
                               EXPECT_LBA_OOB);
-	}
+        }
 }

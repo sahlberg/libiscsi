@@ -30,55 +30,55 @@
 void
 test_extendedcopy_simple(void)
 {
-	int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
-	struct iscsi_data data;
-	unsigned char *xcopybuf;
-	unsigned char *buf1 = malloc(2048*block_size);
-	unsigned char *buf2 = malloc(2048*block_size);
+        int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
+        struct iscsi_data data;
+        unsigned char *xcopybuf;
+        unsigned char *buf1 = malloc(2048*block_size);
+        unsigned char *buf2 = malloc(2048*block_size);
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE,
-			"Test EXTENDED COPY of 2048 blocks from start of LUN to end of LUN");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE,
+                        "Test EXTENDED COPY of 2048 blocks from start of LUN to end of LUN");
 
-	CHECK_FOR_DATALOSS;
+        CHECK_FOR_DATALOSS;
 
-	logging(LOG_VERBOSE, "Write 2048 blocks of 'A' at LBA:0");
-	memset(buf1, 'A', 2048*block_size);
-	WRITE16(sd, 0, 2048*block_size, block_size, 0, 0, 0, 0, 0,
+        logging(LOG_VERBOSE, "Write 2048 blocks of 'A' at LBA:0");
+        memset(buf1, 'A', 2048*block_size);
+        WRITE16(sd, 0, 2048*block_size, block_size, 0, 0, 0, 0, 0,
                 buf1, EXPECT_STATUS_GOOD);
 
-	data.size = XCOPY_DESC_OFFSET +
-		get_desc_len(IDENT_DESCR_TGT_DESCR) +
-		get_desc_len(BLK_TO_BLK_SEG_DESCR);
-	data.data = alloca(data.size);
-	xcopybuf = data.data;
-	memset(xcopybuf, 0, data.size);
+        data.size = XCOPY_DESC_OFFSET +
+                get_desc_len(IDENT_DESCR_TGT_DESCR) +
+                get_desc_len(BLK_TO_BLK_SEG_DESCR);
+        data.data = alloca(data.size);
+        xcopybuf = data.data;
+        memset(xcopybuf, 0, data.size);
 
-	/* Initialize target descriptor list with one target descriptor */
-	offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
-			LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);
-	tgt_desc_len = offset - XCOPY_DESC_OFFSET;
+        /* Initialize target descriptor list with one target descriptor */
+        offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
+                        LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);
+        tgt_desc_len = offset - XCOPY_DESC_OFFSET;
 
-	/* Iniitialize segment descriptor list with one segment descriptor */
-	offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 0,
-			2048, 0, num_blocks - 2048);
-	seg_desc_len = offset - XCOPY_DESC_OFFSET - tgt_desc_len;
+        /* Iniitialize segment descriptor list with one segment descriptor */
+        offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 0,
+                        2048, 0, num_blocks - 2048);
+        seg_desc_len = offset - XCOPY_DESC_OFFSET - tgt_desc_len;
 
-	/* Initialize the parameter list header */
-	populate_param_header(xcopybuf, 1, 0, LIST_ID_USAGE_DISCARD, 0,
-			tgt_desc_len, seg_desc_len, 0);
+        /* Initialize the parameter list header */
+        populate_param_header(xcopybuf, 1, 0, LIST_ID_USAGE_DISCARD, 0,
+                        tgt_desc_len, seg_desc_len, 0);
 
-	EXTENDEDCOPY(sd, &data, EXPECT_STATUS_GOOD);
+        EXTENDEDCOPY(sd, &data, EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Read 2048 blocks from end of the LUN");
-	READ16(sd, NULL, num_blocks - 2048, 2048*block_size,
+        logging(LOG_VERBOSE, "Read 2048 blocks from end of the LUN");
+        READ16(sd, NULL, num_blocks - 2048, 2048*block_size,
                block_size, 0, 0, 0, 0, 0, buf2,
                EXPECT_STATUS_GOOD);
 
-	if (memcmp(buf1, buf2, 2048)) {
-		CU_FAIL("Blocks were not copied correctly");
+        if (memcmp(buf1, buf2, 2048)) {
+                CU_FAIL("Blocks were not copied correctly");
         }
         
-	free(buf1);
-	free(buf2);
+        free(buf1);
+        free(buf2);
 }

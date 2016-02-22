@@ -30,34 +30,34 @@
 void
 test_prin_read_keys_simple(void)
 {
-	int ret = 0;
-	int al;
+        int ret = 0;
+        int al;
 
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test Persistent Reserve IN READ_KEYS works.");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test Persistent Reserve IN READ_KEYS works.");
 
-	ret = prin_read_keys(sd, &task, NULL);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE IN is not implemented.");
-		CU_PASS("PERSISTENT RESERVE IN is not implemented.");
-		return;
-	}	
-	CU_ASSERT_EQUAL(ret, 0);
+        ret = prin_read_keys(sd, &task, NULL);
+        if (ret == -2) {
+                logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE IN is not implemented.");
+                CU_PASS("PERSISTENT RESERVE IN is not implemented.");
+                return;
+        }        
+        CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test DATA-IN is at least 8 bytes.");
-	if (task->datain.size < 8) {
-		logging(LOG_NORMAL,
-		    "[FAILED] DATA-IN returned less than 8 bytes");
-		return;
-	}
+        logging(LOG_VERBOSE, "Test DATA-IN is at least 8 bytes.");
+        if (task->datain.size < 8) {
+                logging(LOG_NORMAL,
+                    "[FAILED] DATA-IN returned less than 8 bytes");
+                return;
+        }
 
-	logging(LOG_VERBOSE, "Test ADDITIONAL_LENGTH matches DATA_IN size.");
-	al = scsi_get_uint32(&task->datain.data[4]);
-	if (al != task->datain.size - 8) {
-		logging(LOG_NORMAL,
-		    "[FAILED] ADDITIONAL_LENGTH was %d bytes but %d was expected.",
-			al, task->datain.size - 8);
-		return;
-	}
+        logging(LOG_VERBOSE, "Test ADDITIONAL_LENGTH matches DATA_IN size.");
+        al = scsi_get_uint32(&task->datain.data[4]);
+        if (al != task->datain.size - 8) {
+                logging(LOG_NORMAL,
+                    "[FAILED] ADDITIONAL_LENGTH was %d bytes but %d was expected.",
+                        al, task->datain.size - 8);
+                return;
+        }
 }

@@ -29,32 +29,32 @@
 void
 test_report_supported_opcodes_servactv(void)
 {
-	int i;
-	struct scsi_task *rso_task;
-	struct scsi_report_supported_op_codes *rsoc;
+        int i;
+        struct scsi_task *rso_task;
+        struct scsi_report_supported_op_codes *rsoc;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES SERVACTV flag");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES SERVACTV flag");
 
-	REPORT_SUPPORTED_OPCODES(sd, &rso_task,
+        REPORT_SUPPORTED_OPCODES(sd, &rso_task,
                                  0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
                                  65535,
                                  EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
-	rsoc = scsi_datain_unmarshall(rso_task);
-	CU_ASSERT_PTR_NOT_NULL_FATAL(rsoc);
+        logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
+        rsoc = scsi_datain_unmarshall(rso_task);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(rsoc);
 
-	logging(LOG_VERBOSE, "Verify that when SERVACTV is clear then "
-		"ServiceAction must be zero.");
-	for (i = 0; i < rsoc->num_descriptors; i++) {
-		if (!rsoc->descriptors[i].servactv && rsoc->descriptors[i].sa) {
-			logging(LOG_NORMAL, "[FAILED] ServiceAction is "
-				"non-zero but SERVACTV is clear");
-			CU_FAIL("[FAILED] ServiceAction is "
-				"non-zero but SERVACTV is clear");
-		}
-	}
+        logging(LOG_VERBOSE, "Verify that when SERVACTV is clear then "
+                "ServiceAction must be zero.");
+        for (i = 0; i < rsoc->num_descriptors; i++) {
+                if (!rsoc->descriptors[i].servactv && rsoc->descriptors[i].sa) {
+                        logging(LOG_NORMAL, "[FAILED] ServiceAction is "
+                                "non-zero but SERVACTV is clear");
+                        CU_FAIL("[FAILED] ServiceAction is "
+                                "non-zero but SERVACTV is clear");
+                }
+        }
 
-	scsi_free_scsi_task(rso_task);
+        scsi_free_scsi_task(rso_task);
 }

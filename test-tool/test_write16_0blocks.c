@@ -27,23 +27,23 @@
 void
 test_write16_0blocks(void)
 {
-	CHECK_FOR_DATALOSS;
-	CHECK_FOR_SBC;
+        CHECK_FOR_DATALOSS;
+        CHECK_FOR_SBC;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==0");
-	WRITE16(sd, 0, 0, block_size, 0, 0, 0, 0, 0, NULL,
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==0");
+        WRITE16(sd, 0, 0, block_size, 0, 0, 0, 0, 0, NULL,
                 EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Test WRITE16 0-blocks one block past end-of-LUN");
-	WRITE16(sd, num_blocks + 1, 0, block_size, 0, 0, 0, 0, 0, NULL,
+        logging(LOG_VERBOSE, "Test WRITE16 0-blocks one block past end-of-LUN");
+        WRITE16(sd, num_blocks + 1, 0, block_size, 0, 0, 0, 0, 0, NULL,
                 EXPECT_LBA_OOB);
 
-	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==2^63");
-	WRITE16(sd, 0x8000000000000000ULL, 0, block_size, 0, 0, 0, 0, 0, NULL,
+        logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==2^63");
+        WRITE16(sd, 0x8000000000000000ULL, 0, block_size, 0, 0, 0, 0, 0, NULL,
                 EXPECT_LBA_OOB);
 
-	logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==-1");
-	WRITE16(sd, -1, 0, block_size, 0, 0, 0, 0, 0, NULL,
+        logging(LOG_VERBOSE, "Test WRITE16 0-blocks at LBA==-1");
+        WRITE16(sd, -1, 0, block_size, 0, 0, 0, 0, 0, NULL,
                 EXPECT_LBA_OOB);
 }

@@ -27,27 +27,27 @@
 void
 test_writeverify10_0blocks(void)
 {
-	CHECK_FOR_DATALOSS;
+        CHECK_FOR_DATALOSS;
 
-	if (num_blocks >= 0x80000000) {
-		CU_PASS("LUN is too big for read-beyond-eol tests with WRITEVERIFY10. Skipping test.\n");
-		return;
-	}
+        if (num_blocks >= 0x80000000) {
+                CU_PASS("LUN is too big for read-beyond-eol tests with WRITEVERIFY10. Skipping test.\n");
+                return;
+        }
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks at LBA==0");
-	WRITEVERIFY10(sd, 0, 0, block_size, 0, 0, 0, 0, NULL,
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks at LBA==0");
+        WRITEVERIFY10(sd, 0, 0, block_size, 0, 0, 0, 0, NULL,
                       EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks one block past end-of-LUN");
-	WRITEVERIFY10(sd, num_blocks + 1, 0, block_size, 0, 0, 0, 0, NULL,
+        logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks one block past end-of-LUN");
+        WRITEVERIFY10(sd, num_blocks + 1, 0, block_size, 0, 0, 0, 0, NULL,
                       EXPECT_LBA_OOB);
 
-	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks at LBA==2^31");
-	WRITEVERIFY10(sd, 0x80000000, 0, block_size, 0, 0, 0, 0, NULL,
+        logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks at LBA==2^31");
+        WRITEVERIFY10(sd, 0x80000000, 0, block_size, 0, 0, 0, 0, NULL,
                       EXPECT_LBA_OOB);
 
-	logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks at LBA==-1");
-	WRITEVERIFY10(sd, -1, 0, block_size, 0, 0, 0, 0, NULL,
+        logging(LOG_VERBOSE, "Test WRITEVERIFY10 0-blocks at LBA==-1");
+        WRITEVERIFY10(sd, -1, 0, block_size, 0, 0, 0, 0, NULL,
                       EXPECT_LBA_OOB);
 }

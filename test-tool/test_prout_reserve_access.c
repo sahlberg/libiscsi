@@ -33,232 +33,232 @@ verify_persistent_reserve_access(struct scsi_device *sd1, struct scsi_device *sd
     int unreg_i2_can_read,
     int unreg_i2_can_write)
 {
-	int ret;
-	const unsigned long long key = rand_key();
-	const unsigned long long key2 = rand_key();
+        int ret;
+        const unsigned long long key = rand_key();
+        const unsigned long long key2 = rand_key();
 
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE,
-	    "Verify access for reservation type: %s",
-	    scsi_pr_type_str(pr_type));
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE,
+            "Verify access for reservation type: %s",
+            scsi_pr_type_str(pr_type));
 
-	/* send TURs to clear possible check conditions */
-	(void) testunitready_clear_ua(sd1);
-	(void) testunitready_clear_ua(sd2);
+        /* send TURs to clear possible check conditions */
+        (void) testunitready_clear_ua(sd1);
+        (void) testunitready_clear_ua(sd2);
 
-	/* register our reservation key with the target */
-	ret = prout_register_and_ignore(sd1, key);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE OUT is not implemented.");
-		CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
-		return;
-	}	
-	CU_ASSERT_EQUAL(0, ret);
-	ret = prout_register_and_ignore(sd2, key2);
-	CU_ASSERT_EQUAL(0, ret);
+        /* register our reservation key with the target */
+        ret = prout_register_and_ignore(sd1, key);
+        if (ret == -2) {
+                logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE OUT is not implemented.");
+                CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
+                return;
+        }        
+        CU_ASSERT_EQUAL(0, ret);
+        ret = prout_register_and_ignore(sd2, key2);
+        CU_ASSERT_EQUAL(0, ret);
 
-	/* reserve the target through initiator 1 */
-	ret = prout_reserve(sd1, key, pr_type);
-	CU_ASSERT_EQUAL(0, ret);
+        /* reserve the target through initiator 1 */
+        ret = prout_reserve(sd1, key, pr_type);
+        CU_ASSERT_EQUAL(0, ret);
 
-	/* verify target reservation */
-	ret = prin_verify_reserved_as(sd1,
-	    pr_type_is_all_registrants(pr_type) ? 0 : key,
-	    pr_type);
-	CU_ASSERT_EQUAL(0, ret);
+        /* verify target reservation */
+        ret = prin_verify_reserved_as(sd1,
+            pr_type_is_all_registrants(pr_type) ? 0 : key,
+            pr_type);
+        CU_ASSERT_EQUAL(0, ret);
 
-	CU_ASSERT_PTR_NOT_NULL_FATAL(scratch);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(scratch);
 
-	/* make sure init1 can read */
-	ret = verify_read_works(sd1, scratch);
-	CU_ASSERT_EQUAL(0, ret);
+        /* make sure init1 can read */
+        ret = verify_read_works(sd1, scratch);
+        CU_ASSERT_EQUAL(0, ret);
 
-	/* make sure init1 can write */
-	ret = verify_write_works(sd1, scratch);
-	CU_ASSERT_EQUAL(0, ret);
+        /* make sure init1 can write */
+        ret = verify_write_works(sd1, scratch);
+        CU_ASSERT_EQUAL(0, ret);
 
-	/* verify registered init2 read access */
-	if (reg_i2_can_read)
-		ret = verify_read_works(sd2, scratch);
-	else
-		ret = verify_read_fails(sd2, scratch);
-	CU_ASSERT_EQUAL(0, ret);
+        /* verify registered init2 read access */
+        if (reg_i2_can_read)
+                ret = verify_read_works(sd2, scratch);
+        else
+                ret = verify_read_fails(sd2, scratch);
+        CU_ASSERT_EQUAL(0, ret);
 
-	/* verify registered init2 write access */
-	if (reg_i2_can_write)
-		ret = verify_write_works(sd2, scratch);
-	else
-		ret = verify_write_fails(sd2, scratch);
-	CU_ASSERT_EQUAL(0, ret);
+        /* verify registered init2 write access */
+        if (reg_i2_can_write)
+                ret = verify_write_works(sd2, scratch);
+        else
+                ret = verify_write_fails(sd2, scratch);
+        CU_ASSERT_EQUAL(0, ret);
 
-	/* unregister init2 */
-	ret = prout_register_key(sd2, 0, key2);
-	CU_ASSERT_EQUAL(0, ret);
+        /* unregister init2 */
+        ret = prout_register_key(sd2, 0, key2);
+        CU_ASSERT_EQUAL(0, ret);
 
-	/* verify unregistered init2 read access */
-	if (unreg_i2_can_read)
-		ret = verify_read_works(sd2, scratch);
-	else
-		ret = verify_read_fails(sd2, scratch);
-	CU_ASSERT_EQUAL(0, ret);
+        /* verify unregistered init2 read access */
+        if (unreg_i2_can_read)
+                ret = verify_read_works(sd2, scratch);
+        else
+                ret = verify_read_fails(sd2, scratch);
+        CU_ASSERT_EQUAL(0, ret);
 
-	/* verify unregistered init2 write access */
-	if (unreg_i2_can_write)
-		ret = verify_write_works(sd2, scratch);
-	else
-		ret = verify_write_fails(sd2, scratch);
-	CU_ASSERT_EQUAL(0, ret);
+        /* verify unregistered init2 write access */
+        if (unreg_i2_can_write)
+                ret = verify_write_works(sd2, scratch);
+        else
+                ret = verify_write_fails(sd2, scratch);
+        CU_ASSERT_EQUAL(0, ret);
 
-	/* release our reservation */
-	ret = prout_release(sd1, key, pr_type);
-	CU_ASSERT_EQUAL(0, ret);
+        /* release our reservation */
+        ret = prout_release(sd1, key, pr_type);
+        CU_ASSERT_EQUAL(0, ret);
 
-	/* remove our key from the target */
-	ret = prout_register_key(sd1, 0, key);
-	CU_ASSERT_EQUAL(0, ret);
+        /* remove our key from the target */
+        ret = prout_register_key(sd1, 0, key);
+        CU_ASSERT_EQUAL(0, ret);
 }
 
 void
 test_prout_reserve_access_ea(void)
 {
-	struct scsi_device *sd2;
-	int ret;
+        struct scsi_device *sd2;
+        int ret;
 
-	if (sd->iscsi_ctx == NULL) {
-		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
-			"only supported for iSCSI backends";
-		logging(LOG_NORMAL, "%s", err);
-		CU_PASS(err);
-		return;
-	}
+        if (sd->iscsi_ctx == NULL) {
+                const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
+                        "only supported for iSCSI backends";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
 
-	ret = mpath_sd2_get_or_clone(sd, &sd2);
-	CU_ASSERT_EQUAL(ret, 0);
-	if (ret < 0)
-		return;
-	verify_persistent_reserve_access(sd, sd2,
-	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS,
-	    0, 0, 0, 0);
-	mpath_sd2_put(sd2);
+        ret = mpath_sd2_get_or_clone(sd, &sd2);
+        CU_ASSERT_EQUAL(ret, 0);
+        if (ret < 0)
+                return;
+        verify_persistent_reserve_access(sd, sd2,
+            SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS,
+            0, 0, 0, 0);
+        mpath_sd2_put(sd2);
 }
 
 void
 test_prout_reserve_access_we(void)
 {
-	struct scsi_device *sd2;
-	int ret;
+        struct scsi_device *sd2;
+        int ret;
 
-	if (sd->iscsi_ctx == NULL) {
-		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
-			"only supported for iSCSI backends";
-		logging(LOG_NORMAL, "%s", err);
-		CU_PASS(err);
-		return;
-	}
+        if (sd->iscsi_ctx == NULL) {
+                const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
+                        "only supported for iSCSI backends";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
 
-	ret = mpath_sd2_get_or_clone(sd, &sd2);
-	CU_ASSERT_EQUAL(ret, 0);
-	if (ret < 0)
-		return;
-	verify_persistent_reserve_access(sd, sd2,
-	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
-	    1, 0, 1, 0);
-	mpath_sd2_put(sd2);
+        ret = mpath_sd2_get_or_clone(sd, &sd2);
+        CU_ASSERT_EQUAL(ret, 0);
+        if (ret < 0)
+                return;
+        verify_persistent_reserve_access(sd, sd2,
+            SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
+            1, 0, 1, 0);
+        mpath_sd2_put(sd2);
 }
 
 void
 test_prout_reserve_access_earo(void)
 {
-	struct scsi_device *sd2;
-	int ret;
+        struct scsi_device *sd2;
+        int ret;
 
-	if (sd->iscsi_ctx == NULL) {
-		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
-			"only supported for iSCSI backends";
-		logging(LOG_NORMAL, "%s", err);
-		CU_PASS(err);
-		return;
-	}
+        if (sd->iscsi_ctx == NULL) {
+                const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
+                        "only supported for iSCSI backends";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
 
-	ret = mpath_sd2_get_or_clone(sd, &sd2);
-	CU_ASSERT_EQUAL(ret, 0);
-	if (ret < 0)
-		return;
-	verify_persistent_reserve_access(sd, sd2,
-	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY,
-	    1, 1, 0, 0);
-	mpath_sd2_put(sd2);
+        ret = mpath_sd2_get_or_clone(sd, &sd2);
+        CU_ASSERT_EQUAL(ret, 0);
+        if (ret < 0)
+                return;
+        verify_persistent_reserve_access(sd, sd2,
+            SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY,
+            1, 1, 0, 0);
+        mpath_sd2_put(sd2);
 }
 
 void
 test_prout_reserve_access_wero(void)
 {
-	struct scsi_device *sd2;
-	int ret;
+        struct scsi_device *sd2;
+        int ret;
 
-	if (sd->iscsi_ctx == NULL) {
-		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
-			"only supported for iSCSI backends";
-		logging(LOG_NORMAL, "%s", err);
-		CU_PASS(err);
-		return;
-	}
+        if (sd->iscsi_ctx == NULL) {
+                const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
+                        "only supported for iSCSI backends";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
 
-	ret = mpath_sd2_get_or_clone(sd, &sd2);
-	CU_ASSERT_EQUAL(ret, 0);
-	if (ret < 0)
-		return;
-	verify_persistent_reserve_access(sd, sd2,
-	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY,
-	    1, 1, 1, 0);
-	mpath_sd2_put(sd2);
+        ret = mpath_sd2_get_or_clone(sd, &sd2);
+        CU_ASSERT_EQUAL(ret, 0);
+        if (ret < 0)
+                return;
+        verify_persistent_reserve_access(sd, sd2,
+            SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY,
+            1, 1, 1, 0);
+        mpath_sd2_put(sd2);
 }
 
 void
 test_prout_reserve_access_eaar(void)
 {
-	struct scsi_device *sd2;
-	int ret;
+        struct scsi_device *sd2;
+        int ret;
 
-	if (sd->iscsi_ctx == NULL) {
-		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
-			"only supported for iSCSI backends";
-		logging(LOG_NORMAL, "%s", err);
-		CU_PASS(err);
-		return;
-	}
+        if (sd->iscsi_ctx == NULL) {
+                const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
+                        "only supported for iSCSI backends";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
 
-	ret = mpath_sd2_get_or_clone(sd, &sd2);
-	CU_ASSERT_EQUAL(ret, 0);
-	if (ret < 0)
-		return;
-	verify_persistent_reserve_access(sd, sd2,
-	    SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS,
-	    1, 1, 0, 0);
-	mpath_sd2_put(sd2);
+        ret = mpath_sd2_get_or_clone(sd, &sd2);
+        CU_ASSERT_EQUAL(ret, 0);
+        if (ret < 0)
+                return;
+        verify_persistent_reserve_access(sd, sd2,
+            SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS,
+            1, 1, 0, 0);
+        mpath_sd2_put(sd2);
 }
 
 void
 test_prout_reserve_access_wear(void)
 {
-	struct scsi_device *sd2;
-	int ret;
+        struct scsi_device *sd2;
+        int ret;
 
-	if (sd->iscsi_ctx == NULL) {
-		const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
-			"only supported for iSCSI backends";
-		logging(LOG_NORMAL, "%s", err);
-		CU_PASS(err);
-		return;
-	}
+        if (sd->iscsi_ctx == NULL) {
+                const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
+                        "only supported for iSCSI backends";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
 
-	ret = mpath_sd2_get_or_clone(sd, &sd2);
-	CU_ASSERT_EQUAL(ret, 0);
-	if (ret < 0)
-		return;
-	verify_persistent_reserve_access(sd, sd2,
-	    SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS,
-	    1, 1, 1, 0);
-	mpath_sd2_put(sd2);
+        ret = mpath_sd2_get_or_clone(sd, &sd2);
+        CU_ASSERT_EQUAL(ret, 0);
+        if (ret < 0)
+                return;
+        verify_persistent_reserve_access(sd, sd2,
+            SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS,
+            1, 1, 1, 0);
+        mpath_sd2_put(sd2);
 }

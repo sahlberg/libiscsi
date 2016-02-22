@@ -29,50 +29,50 @@
 void
 test_unmap_0blocks(void)
 {
-	int i;
-	struct unmap_list list[257];
+        int i;
+        struct unmap_list list[257];
 
-	CHECK_FOR_DATALOSS;
-	CHECK_FOR_THIN_PROVISIONING;
-	CHECK_FOR_SBC;
+        CHECK_FOR_DATALOSS;
+        CHECK_FOR_THIN_PROVISIONING;
+        CHECK_FOR_SBC;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-255 as a single descriptor");
-	for (i = 0; i < 256; i++) {
-		list[0].lba = i;
-		list[0].num = 0;
-		UNMAP(sd, 0, list, 1,
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-255 as a single descriptor");
+        for (i = 0; i < 256; i++) {
+                list[0].lba = i;
+                list[0].num = 0;
+                UNMAP(sd, 0, list, 1,
                       EXPECT_STATUS_GOOD);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at end-of-LUN");
-	list[0].lba = num_blocks;
-	list[0].num = 0;
-	UNMAP(sd, 0, list, 1,
+        logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at end-of-LUN");
+        list[0].lba = num_blocks;
+        list[0].num = 0;
+        UNMAP(sd, 0, list, 1,
               EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Test UNMAP without any descriptors.");
-	UNMAP(sd, 0, list, 0,
+        logging(LOG_VERBOSE, "Test UNMAP without any descriptors.");
+        UNMAP(sd, 0, list, 0,
               EXPECT_STATUS_GOOD);
 
-	if (inq_bl->max_unmap_bdc <= 1) {
-		CU_PASS("[SKIPPING] Test UNMAP of 0 blocks with multiple descriptos not supported");
-		return;
-	}
+        if (inq_bl->max_unmap_bdc <= 1) {
+                CU_PASS("[SKIPPING] Test UNMAP of 0 blocks with multiple descriptos not supported");
+                return;
+        }
 
-	logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-255  with one descriptor per block");
-	for (i = 0; i < 256; i++) {
-		list[i].lba = i;
-		list[i].num = 0;
-		UNMAP(sd, 0, list, i + 1,
+        logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-255  with one descriptor per block");
+        for (i = 0; i < 256; i++) {
+                list[i].lba = i;
+                list[i].num = 0;
+                UNMAP(sd, 0, list, i + 1,
                       EXPECT_STATUS_GOOD);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-255  with one descriptor per block, possibly \"overlapping\".");
-	for (i = 0; i < 256; i++) {
-		list[i].lba = i/2;
-		list[i].num = 0;
-	}
-	UNMAP(sd, 0, list, 256,
+        logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-255  with one descriptor per block, possibly \"overlapping\".");
+        for (i = 0; i < 256; i++) {
+                list[i].lba = i/2;
+                list[i].num = 0;
+        }
+        UNMAP(sd, 0, list, 256,
               EXPECT_STATUS_GOOD);
 }

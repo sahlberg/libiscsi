@@ -30,30 +30,30 @@
 void
 test_write16_simple(void)
 {
-	int i;
+        int i;
 
-	CHECK_FOR_DATALOSS;
-	CHECK_FOR_SBC;
+        CHECK_FOR_DATALOSS;
+        CHECK_FOR_SBC;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the start of the LUN");
-	memset(scratch, 0xa6, 256 * block_size);
-	for (i = 1; i <= 256; i++) {
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		WRITE16(sd, 0, i * block_size, block_size,
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the start of the LUN");
+        memset(scratch, 0xa6, 256 * block_size);
+        for (i = 1; i <= 256; i++) {
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                WRITE16(sd, 0, i * block_size, block_size,
                         0, 0, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the end of the LUN");
-	for (i = 1; i <= 256; i++) {
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		WRITE16(sd, num_blocks - i,
+        logging(LOG_VERBOSE, "Test WRITE16 of 1-256 blocks at the end of the LUN");
+        for (i = 1; i <= 256; i++) {
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                WRITE16(sd, num_blocks - i,
                         i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
-	}
+        }
 }

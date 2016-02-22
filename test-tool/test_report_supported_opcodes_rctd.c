@@ -29,70 +29,70 @@
 void
 test_report_supported_opcodes_rctd(void)
 {
-	int i;
-	struct scsi_task *rso_task;
-	struct scsi_report_supported_op_codes *rsoc;
+        int i;
+        struct scsi_task *rso_task;
+        struct scsi_report_supported_op_codes *rsoc;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES RCTD flag");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES RCTD flag");
 
-	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES report ALL opcodes "
-		"without timeout descriptors. RCTD==0");
-	REPORT_SUPPORTED_OPCODES(sd, &rso_task,
+        logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES report ALL opcodes "
+                "without timeout descriptors. RCTD==0");
+        REPORT_SUPPORTED_OPCODES(sd, &rso_task,
                                  0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
                                  65535,
                                  EXPECT_STATUS_GOOD);
-	
-	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
-	rsoc = scsi_datain_unmarshall(rso_task);
-	CU_ASSERT_PTR_NOT_NULL_FATAL(rsoc);
+        
+        logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
+        rsoc = scsi_datain_unmarshall(rso_task);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(rsoc);
 
-	logging(LOG_VERBOSE, "Verify that all returned command descriptors "
-		"lack timeout description");
-	for (i = 0; i < rsoc->num_descriptors; i++) {
-		if (rsoc->descriptors[i].ctdp) {
-			logging(LOG_NORMAL, "[FAILED] Command descriptor with "
-				"CTDP set received when RCTD==0");
-			CU_FAIL("[FAILED] Command descriptor with "
-				"CTDP set");
-		}
-	}
-	scsi_free_scsi_task(rso_task);
+        logging(LOG_VERBOSE, "Verify that all returned command descriptors "
+                "lack timeout description");
+        for (i = 0; i < rsoc->num_descriptors; i++) {
+                if (rsoc->descriptors[i].ctdp) {
+                        logging(LOG_NORMAL, "[FAILED] Command descriptor with "
+                                "CTDP set received when RCTD==0");
+                        CU_FAIL("[FAILED] Command descriptor with "
+                                "CTDP set");
+                }
+        }
+        scsi_free_scsi_task(rso_task);
 
 
-	logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES report ALL opcodes "
-		"with timeout descriptors. RCTD==1");
-	REPORT_SUPPORTED_OPCODES(sd, &rso_task,
+        logging(LOG_VERBOSE, "Test READ_SUPPORTED_OPCODES report ALL opcodes "
+                "with timeout descriptors. RCTD==1");
+        REPORT_SUPPORTED_OPCODES(sd, &rso_task,
                                  1, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
                                  65535,
                                  EXPECT_STATUS_GOOD);
-	
-	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
-	rsoc = scsi_datain_unmarshall(rso_task);
-	CU_ASSERT_NOT_EQUAL(rsoc, NULL);
+        
+        logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
+        rsoc = scsi_datain_unmarshall(rso_task);
+        CU_ASSERT_NOT_EQUAL(rsoc, NULL);
 
-	logging(LOG_VERBOSE, "Verify that all returned command descriptors "
-		"have a timeout description");
-	for (i = 0; i < rsoc->num_descriptors; i++) {
-		if (!rsoc->descriptors[i].ctdp) {
-			logging(LOG_NORMAL, "[FAILED] Command descriptor "
-				"with CTDP clear when RCTD==1");
-			CU_FAIL("[FAILED] Command descriptor without "
-				"CTDP set");
-		}
-	}
+        logging(LOG_VERBOSE, "Verify that all returned command descriptors "
+                "have a timeout description");
+        for (i = 0; i < rsoc->num_descriptors; i++) {
+                if (!rsoc->descriptors[i].ctdp) {
+                        logging(LOG_NORMAL, "[FAILED] Command descriptor "
+                                "with CTDP clear when RCTD==1");
+                        CU_FAIL("[FAILED] Command descriptor without "
+                                "CTDP set");
+                }
+        }
 
-	logging(LOG_VERBOSE, "Verify that all timeout descriptors have the "
-		"correct length");
-	for (i = 0; i < rsoc->num_descriptors; i++) {
-		if (rsoc->descriptors[i].ctdp &&
-		    rsoc->descriptors[i].to.descriptor_length != 0x0a) {
-			logging(LOG_NORMAL, "[FAILED] Command descriptor "
-				"with invalid TimeoutDescriptor length");
-			CU_FAIL("[FAILED] Command descriptor with "
-				"invalid TimeoutDescriptor length");
-		}
-	}
+        logging(LOG_VERBOSE, "Verify that all timeout descriptors have the "
+                "correct length");
+        for (i = 0; i < rsoc->num_descriptors; i++) {
+                if (rsoc->descriptors[i].ctdp &&
+                    rsoc->descriptors[i].to.descriptor_length != 0x0a) {
+                        logging(LOG_NORMAL, "[FAILED] Command descriptor "
+                                "with invalid TimeoutDescriptor length");
+                        CU_FAIL("[FAILED] Command descriptor with "
+                                "invalid TimeoutDescriptor length");
+                }
+        }
 
-	scsi_free_scsi_task(rso_task);
+        scsi_free_scsi_task(rso_task);
 }

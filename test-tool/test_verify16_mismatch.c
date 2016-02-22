@@ -30,45 +30,45 @@
 void
 test_verify16_mismatch(void)
 {
-	int i;
+        int i;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test VERIFY16 for blocks 1-255");
-	for (i = 1; i <= 256; i++) {
-		int offset = random() % (i * block_size);
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test VERIFY16 for blocks 1-255");
+        for (i = 1; i <= 256; i++) {
+                int offset = random() % (i * block_size);
 
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		READ16(sd, NULL, 0, i * block_size,
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                READ16(sd, NULL, 0, i * block_size,
                        block_size, 0, 0, 0, 0, 0, scratch,
                        EXPECT_STATUS_GOOD);
 
-		/* flip a random byte in the data */
-		scratch[offset] ^= 'X';
-		logging(LOG_VERBOSE, "Flip some bits in the data");
+                /* flip a random byte in the data */
+                scratch[offset] ^= 'X';
+                logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		VERIFY16(sd, 0, i * block_size, block_size, 0, 0, 1, scratch,
+                VERIFY16(sd, 0, i * block_size, block_size, 0, 0, 1, scratch,
                          EXPECT_MISCOMPARE);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test VERIFY16 of 1-256 blocks at the end of the LUN");
-	for (i = 1; i <= 256; i++) {
-		int offset = random() % (i * block_size);
+        logging(LOG_VERBOSE, "Test VERIFY16 of 1-256 blocks at the end of the LUN");
+        for (i = 1; i <= 256; i++) {
+                int offset = random() % (i * block_size);
 
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		READ16(sd, NULL, num_blocks - i,
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                READ16(sd, NULL, num_blocks - i,
                        i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                        EXPECT_STATUS_GOOD);
 
-		/* flip a random byte in the data */
-		scratch[offset] ^= 'X';
-		logging(LOG_VERBOSE, "Flip some bits in the data");
+                /* flip a random byte in the data */
+                scratch[offset] ^= 'X';
+                logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		VERIFY16(sd, num_blocks - i,
+                VERIFY16(sd, num_blocks - i,
                          i * block_size, block_size, 0, 0, 1, scratch,
                          EXPECT_MISCOMPARE);
-	}
+        }
 }

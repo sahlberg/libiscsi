@@ -29,75 +29,75 @@
 void
 test_orwrite_dpofua(void)
 { 
-	int dpofua, usage_data_dpofua;
-	struct scsi_task *ms_task = NULL;
-	struct scsi_mode_sense *ms;
-	struct scsi_task *rso_task = NULL;
-	struct scsi_report_supported_op_codes_one_command *rsoc;
+        int dpofua, usage_data_dpofua;
+        struct scsi_task *ms_task = NULL;
+        struct scsi_mode_sense *ms;
+        struct scsi_task *rso_task = NULL;
+        struct scsi_report_supported_op_codes_one_command *rsoc;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test ORWRITE DPO/FUA flags");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test ORWRITE DPO/FUA flags");
 
-	CHECK_FOR_SBC;
-	CHECK_FOR_DATALOSS;
+        CHECK_FOR_SBC;
+        CHECK_FOR_DATALOSS;
 
-	logging(LOG_VERBOSE, "Read the DPOFUA flag from mode sense data");
-	MODESENSE6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
+        logging(LOG_VERBOSE, "Read the DPOFUA flag from mode sense data");
+        MODESENSE6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
                    SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
                    EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "[SUCCESS] Mode sense returned status GOOD");
-	ms = scsi_datain_unmarshall(ms_task);
-	dpofua = ms && (ms->device_specific_parameter & 0x10);
-	scsi_free_scsi_task(ms_task);
+        logging(LOG_VERBOSE, "[SUCCESS] Mode sense returned status GOOD");
+        ms = scsi_datain_unmarshall(ms_task);
+        dpofua = ms && (ms->device_specific_parameter & 0x10);
+        scsi_free_scsi_task(ms_task);
 
-	if (dpofua) {
-		logging(LOG_VERBOSE, "DPOFUA flag is set. Device should allow "
-			"DPO/FUA flags in CDBs");
-	} else {
-		logging(LOG_VERBOSE, "DPOFUA flag is clear. Device should fail "
-			"CDBs with DPO/FUA set");
-	}
+        if (dpofua) {
+                logging(LOG_VERBOSE, "DPOFUA flag is set. Device should allow "
+                        "DPO/FUA flags in CDBs");
+        } else {
+                logging(LOG_VERBOSE, "DPOFUA flag is clear. Device should fail "
+                        "CDBs with DPO/FUA set");
+        }
 
-	logging(LOG_VERBOSE, "Test ORWRITE with DPO==1");
-	memset(scratch, 0xa6, block_size);
-	if (dpofua) {
-		ORWRITE(sd, 0, block_size, block_size, 0, 1, 0, 0, 0, scratch,
+        logging(LOG_VERBOSE, "Test ORWRITE with DPO==1");
+        memset(scratch, 0xa6, block_size);
+        if (dpofua) {
+                ORWRITE(sd, 0, block_size, block_size, 0, 1, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
-	} else {
-		ORWRITE(sd, 0, block_size, block_size, 0, 1, 0, 0, 0, scratch,
+        } else {
+                ORWRITE(sd, 0, block_size, block_size, 0, 1, 0, 0, 0, scratch,
                         EXPECT_INVALID_FIELD_IN_CDB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test ORWRITE with FUA==1");
-	if (dpofua) {
-		ORWRITE(sd, 0, block_size, block_size, 0, 0, 1, 0, 0, scratch,
+        logging(LOG_VERBOSE, "Test ORWRITE with FUA==1");
+        if (dpofua) {
+                ORWRITE(sd, 0, block_size, block_size, 0, 0, 1, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
-	} else {
-		ORWRITE(sd, 0, block_size, block_size, 0, 0, 1, 0, 0, scratch,
+        } else {
+                ORWRITE(sd, 0, block_size, block_size, 0, 0, 1, 0, 0, scratch,
                         EXPECT_INVALID_FIELD_IN_CDB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test ORWRITE with DPO==1 FUA==1");
-	if (dpofua) {
-		ORWRITE(sd, 0, block_size, block_size, 0, 1, 1, 0, 0, scratch,
+        logging(LOG_VERBOSE, "Test ORWRITE with DPO==1 FUA==1");
+        if (dpofua) {
+                ORWRITE(sd, 0, block_size, block_size, 0, 1, 1, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
-	} else {
-		ORWRITE(sd, 0, block_size, block_size, 0, 1, 1, 0, 0, scratch,
+        } else {
+                ORWRITE(sd, 0, block_size, block_size, 0, 1, 1, 0, 0, scratch,
                         EXPECT_INVALID_FIELD_IN_CDB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Try fetching REPORT_SUPPORTED_OPCODES "
-		"for ORWRITE");
-	REPORT_SUPPORTED_OPCODES(sd, &rso_task,
+        logging(LOG_VERBOSE, "Try fetching REPORT_SUPPORTED_OPCODES "
+                "for ORWRITE");
+        REPORT_SUPPORTED_OPCODES(sd, &rso_task,
                                  0, SCSI_REPORT_SUPPORTING_OPCODE,
                                  SCSI_OPCODE_ORWRITE,
                                  0,
                                  65535,
                                  EXPECT_STATUS_GOOD);
-	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
-	rsoc = scsi_datain_unmarshall(rso_task);
-	CU_ASSERT_PTR_NOT_NULL_FATAL(rsoc);
+        logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
+        rsoc = scsi_datain_unmarshall(rso_task);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(rsoc);
         
         usage_data_dpofua = rsoc->cdb_usage_data[1] & 0x18;
         if (dpofua) {
@@ -118,5 +118,5 @@ test_orwrite_dpofua(void)
                 }
         }
 
-	scsi_free_scsi_task(rso_task);
+        scsi_free_scsi_task(rso_task);
 }

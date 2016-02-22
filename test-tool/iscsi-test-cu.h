@@ -17,8 +17,8 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef	_ISCSI_TEST_CU_H_
-#define	_ISCSI_TEST_CU_H_
+#ifndef        _ISCSI_TEST_CU_H_
+#define        _ISCSI_TEST_CU_H_
 
 #include <time.h>
 #include <sys/types.h>
@@ -308,4 +308,4 @@ void test_multipathio_simple(void);
 void test_multipathio_reset(void);
 void test_multipathio_compareandwrite(void);
 
-#endif	/* _ISCSI_TEST_CU_H_ */
+#endif        /* _ISCSI_TEST_CU_H_ */

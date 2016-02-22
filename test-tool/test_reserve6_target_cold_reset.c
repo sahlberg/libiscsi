@@ -30,43 +30,43 @@ void
 test_reserve6_target_cold_reset(void)
 {
         int ret;
-	struct scsi_device *sd2;
+        struct scsi_device *sd2;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test that RESERVE6 is released on target cold reset");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test that RESERVE6 is released on target cold reset");
 
-	if (sd->iscsi_ctx == NULL) {
-		const char *err = "[SKIPPED] This RESERVE6 test is only "
-			"supported for iSCSI backends";
-		logging(LOG_NORMAL, "%s", err);
-		CU_PASS(err);
-		return;
-	}
+        if (sd->iscsi_ctx == NULL) {
+                const char *err = "[SKIPPED] This RESERVE6 test is only "
+                        "supported for iSCSI backends";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
 
-	logging(LOG_VERBOSE, "Take out a RESERVE6 from the first initiator");
-	RESERVE6(sd);
+        logging(LOG_VERBOSE, "Take out a RESERVE6 from the first initiator");
+        RESERVE6(sd);
 
-	logging(LOG_VERBOSE, "Send a Cold Reset to the target");
-	ret = iscsi_task_mgmt_target_cold_reset_sync(sd->iscsi_ctx);
-	if (ret != 0) {
-		logging(LOG_NORMAL, "Cold reset failed. %s", iscsi_get_error(sd->iscsi_ctx));
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+        logging(LOG_VERBOSE, "Send a Cold Reset to the target");
+        ret = iscsi_task_mgmt_target_cold_reset_sync(sd->iscsi_ctx);
+        if (ret != 0) {
+                logging(LOG_NORMAL, "Cold reset failed. %s", iscsi_get_error(sd->iscsi_ctx));
+        }
+        CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Sleep for three seconds incase the target is slow to reset");
-	sleep(3);
+        logging(LOG_VERBOSE, "Sleep for three seconds incase the target is slow to reset");
+        sleep(3);
 
-	logging(LOG_VERBOSE, "Create a second connection to the target");
-	ret = mpath_sd2_get_or_clone(sd, &sd2);
-	CU_ASSERT_EQUAL(ret, 0);
-	if (ret < 0)
-		return;
+        logging(LOG_VERBOSE, "Create a second connection to the target");
+        ret = mpath_sd2_get_or_clone(sd, &sd2);
+        CU_ASSERT_EQUAL(ret, 0);
+        if (ret < 0)
+                return;
 
-	logging(LOG_VERBOSE, "RESERVE6 from the second initiator should work now");
-	RESERVE6(sd2);
+        logging(LOG_VERBOSE, "RESERVE6 from the second initiator should work now");
+        RESERVE6(sd2);
 
-	logging(LOG_VERBOSE, "RELEASE6 from the second initiator");
-	RELEASE6(sd2);
+        logging(LOG_VERBOSE, "RELEASE6 from the second initiator");
+        RELEASE6(sd2);
 
-	mpath_sd2_put(sd2);
+        mpath_sd2_put(sd2);
 }

@@ -30,31 +30,31 @@
 void
 test_prin_serviceaction_range(void)
 {
-	int ret = 0;
-	int i;
+        int ret = 0;
+        int i;
 
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test Persistent Reserve IN Serviceaction range.");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test Persistent Reserve IN Serviceaction range.");
 
-	/* verify PRIN/READ_KEYS works -- XXX redundant -- remove this? */
-	ret = prin_read_keys(sd, &task, NULL);
-	if (ret == -2) {
-		logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE IN is not implemented.");
-		CU_PASS("PERSISTENT RESERVE IN is not implemented.");
-		return;
-	}	
-	CU_ASSERT_EQUAL(ret, 0);
+        /* verify PRIN/READ_KEYS works -- XXX redundant -- remove this? */
+        ret = prin_read_keys(sd, &task, NULL);
+        if (ret == -2) {
+                logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE IN is not implemented.");
+                CU_PASS("PERSISTENT RESERVE IN is not implemented.");
+                return;
+        }        
+        CU_ASSERT_EQUAL(ret, 0);
 
-	/* verify that PRIN/SA={0,1,2,3} works ... */
-	for (i = 0; i < 4; i++) {
-		ret = prin_task(sd, i, 1);
-		CU_ASSERT_EQUAL(ret, 0);
-	}
+        /* verify that PRIN/SA={0,1,2,3} works ... */
+        for (i = 0; i < 4; i++) {
+                ret = prin_task(sd, i, 1);
+                CU_ASSERT_EQUAL(ret, 0);
+        }
 
-	/*  verify that PRIN/SA={4..0x20} fails ... */
-	for (i = 4; i < 0x20; i++) {
-		ret = prin_task(sd, i, 0);
-		CU_ASSERT_EQUAL(ret, 0);
-	}
+        /*  verify that PRIN/SA={4..0x20} fails ... */
+        for (i = 4; i < 0x20; i++) {
+                ret = prin_task(sd, i, 0);
+                CU_ASSERT_EQUAL(ret, 0);
+        }
 }

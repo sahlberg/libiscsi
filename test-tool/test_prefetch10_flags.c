@@ -29,18 +29,18 @@
 void
 test_prefetch10_flags(void)
 { 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test PREFETCH10 flags");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test PREFETCH10 flags");
 
-	logging(LOG_VERBOSE, "Test PREFETCH10 with IMMED==1");
-	PREFETCH10(sd, 0, 1, 1, 0,
+        logging(LOG_VERBOSE, "Test PREFETCH10 with IMMED==1");
+        PREFETCH10(sd, 0, 1, 1, 0,
                    EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Test PREFETCH10 with GROUP==3");
-	PREFETCH10(sd, 0, 1, 0, 3,
+        logging(LOG_VERBOSE, "Test PREFETCH10 with GROUP==3");
+        PREFETCH10(sd, 0, 1, 0, 3,
                    EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Test PREFETCH10 with IMMED=1 and GROUP==3");
-	PREFETCH10(sd, 0, 1, 1, 3,
+        logging(LOG_VERBOSE, "Test PREFETCH10 with IMMED=1 and GROUP==3");
+        PREFETCH10(sd, 0, 1, 1, 3,
                    EXPECT_STATUS_GOOD);
 }

@@ -28,15 +28,15 @@
 void
 test_preventallow_simple(void)
 {
-	CHECK_FOR_SBC;
-	CHECK_FOR_REMOVABLE;
+        CHECK_FOR_SBC;
+        CHECK_FOR_REMOVABLE;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test PREVENTALLOW basics");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test PREVENTALLOW basics");
 
-	logging(LOG_VERBOSE, "Test we can set PREVENT flag");
-	PREVENTALLOW(sd, 1);
+        logging(LOG_VERBOSE, "Test we can set PREVENT flag");
+        PREVENTALLOW(sd, 1);
 
-	logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
-	PREVENTALLOW(sd, 0);
+        logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
+        PREVENTALLOW(sd, 0);
 }

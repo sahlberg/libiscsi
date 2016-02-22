@@ -30,47 +30,47 @@
 void
 test_extendedcopy_validate_tgt_descr(void)
 {
-	int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
-	struct iscsi_data data;
-	unsigned char *xcopybuf;
+        int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
+        struct iscsi_data data;
+        unsigned char *xcopybuf;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test EXTENDED COPY target descriptor fields");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test EXTENDED COPY target descriptor fields");
 
-	CHECK_FOR_DATALOSS;
+        CHECK_FOR_DATALOSS;
 
-	data.size = XCOPY_DESC_OFFSET +
-		get_desc_len(IDENT_DESCR_TGT_DESCR) +
-		get_desc_len(BLK_TO_BLK_SEG_DESCR);
-	data.data = alloca(data.size);
-	xcopybuf = data.data;
-	memset(xcopybuf, 0, data.size);
+        data.size = XCOPY_DESC_OFFSET +
+                get_desc_len(IDENT_DESCR_TGT_DESCR) +
+                get_desc_len(BLK_TO_BLK_SEG_DESCR);
+        data.data = alloca(data.size);
+        xcopybuf = data.data;
+        memset(xcopybuf, 0, data.size);
 
-	logging(LOG_VERBOSE, "Unsupported LU_ID TYPE");
-	/* Unsupported LU ID TYPE */
-	offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
-			LU_ID_TYPE_RSVD, 0, 0, 0, 0, sd);
-	tgt_desc_len = offset - XCOPY_DESC_OFFSET;
-	offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 0,
-			2048, 0, num_blocks - 2048);
-	seg_desc_len = offset - XCOPY_DESC_OFFSET - tgt_desc_len;
-	populate_param_header(xcopybuf, 1, 0, 0, 0,
-			tgt_desc_len, seg_desc_len, 0);
+        logging(LOG_VERBOSE, "Unsupported LU_ID TYPE");
+        /* Unsupported LU ID TYPE */
+        offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
+                        LU_ID_TYPE_RSVD, 0, 0, 0, 0, sd);
+        tgt_desc_len = offset - XCOPY_DESC_OFFSET;
+        offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 0,
+                        2048, 0, num_blocks - 2048);
+        seg_desc_len = offset - XCOPY_DESC_OFFSET - tgt_desc_len;
+        populate_param_header(xcopybuf, 1, 0, 0, 0,
+                        tgt_desc_len, seg_desc_len, 0);
 
-	EXTENDEDCOPY(sd, &data, EXPECT_INVALID_FIELD_IN_CDB);
+        EXTENDEDCOPY(sd, &data, EXPECT_INVALID_FIELD_IN_CDB);
 
-	logging(LOG_VERBOSE, "Test NUL bit in target descriptor");
-	/* NUL bit */
-	memset(xcopybuf, 0, data.size);
-	offset = XCOPY_DESC_OFFSET;
-	offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
-			LU_ID_TYPE_LUN, 1, 0, 0, 0, sd);
-	tgt_desc_len = offset - XCOPY_DESC_OFFSET;
-	offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 0,
-			2048, 0, num_blocks - 2048);
-	seg_desc_len = offset - XCOPY_DESC_OFFSET - tgt_desc_len;
-	populate_param_header(xcopybuf, 1, 0, 0, 0,
-			tgt_desc_len, seg_desc_len, 0);
+        logging(LOG_VERBOSE, "Test NUL bit in target descriptor");
+        /* NUL bit */
+        memset(xcopybuf, 0, data.size);
+        offset = XCOPY_DESC_OFFSET;
+        offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
+                        LU_ID_TYPE_LUN, 1, 0, 0, 0, sd);
+        tgt_desc_len = offset - XCOPY_DESC_OFFSET;
+        offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 0,
+                        2048, 0, num_blocks - 2048);
+        seg_desc_len = offset - XCOPY_DESC_OFFSET - tgt_desc_len;
+        populate_param_header(xcopybuf, 1, 0, 0, 0,
+                        tgt_desc_len, seg_desc_len, 0);
 
-	EXTENDEDCOPY(sd, &data, EXPECT_COPY_ABORTED);
+        EXTENDEDCOPY(sd, &data, EXPECT_COPY_ABORTED);
 }

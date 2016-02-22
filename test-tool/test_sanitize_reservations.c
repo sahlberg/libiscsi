@@ -32,82 +32,82 @@ void
 test_sanitize_reservations(void)
 {
         int ret;
-	struct iscsi_data data;
-	struct scsi_command_descriptor *cd;
-	struct scsi_device *sd2;
+        struct iscsi_data data;
+        struct scsi_command_descriptor *cd;
+        struct scsi_device *sd2;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test SANITIZE with RESERVATIONS");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test SANITIZE with RESERVATIONS");
 
-	CHECK_FOR_SANITIZE;
-	CHECK_FOR_DATALOSS;
+        CHECK_FOR_SANITIZE;
+        CHECK_FOR_DATALOSS;
 
-	if (sd->iscsi_ctx == NULL) {
-		const char *err = "[SKIPPED] This SANITIZE test is only "
-			"supported for iSCSI backends";
-		logging(LOG_NORMAL, "%s", err);
-		CU_PASS(err);
-		return;
-	}
+        if (sd->iscsi_ctx == NULL) {
+                const char *err = "[SKIPPED] This SANITIZE test is only "
+                        "supported for iSCSI backends";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
 
-	logging(LOG_VERBOSE, "Create a second connection to the target");
-	ret = mpath_sd2_get_or_clone(sd, &sd2);
-	CU_ASSERT_EQUAL(ret, 0);
-	if (ret < 0)
-		return;
+        logging(LOG_VERBOSE, "Create a second connection to the target");
+        ret = mpath_sd2_get_or_clone(sd, &sd2);
+        CU_ASSERT_EQUAL(ret, 0);
+        if (ret < 0)
+                return;
 
-	logging(LOG_VERBOSE, "Take out a RESERVE6 from the second "
-			     "initiator");
-	RESERVE6(sd2);
+        logging(LOG_VERBOSE, "Take out a RESERVE6 from the second "
+                             "initiator");
+        RESERVE6(sd2);
 
-	logging(LOG_VERBOSE, "Check if SANITIZE OVERWRITE is supported "
-		"in REPORT_SUPPORTED_OPCODES");
-	cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
-				    SCSI_SANITIZE_OVERWRITE);
-	if (cd == NULL) {
-		logging(LOG_NORMAL, "[SKIPPED] SANITIZE OVERWRITE is not "
-			"implemented according to REPORT_SUPPORTED_OPCODES.");
-	} else {
-		logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE with "
-			"initialization pattern of one full block");
-		data.size = block_size + 4;
-		data.data = alloca(data.size);
-		memset(&data.data[4], 0xaa, block_size);
+        logging(LOG_VERBOSE, "Check if SANITIZE OVERWRITE is supported "
+                "in REPORT_SUPPORTED_OPCODES");
+        cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
+                                    SCSI_SANITIZE_OVERWRITE);
+        if (cd == NULL) {
+                logging(LOG_NORMAL, "[SKIPPED] SANITIZE OVERWRITE is not "
+                        "implemented according to REPORT_SUPPORTED_OPCODES.");
+        } else {
+                logging(LOG_VERBOSE, "Test SANITIZE OVERWRITE with "
+                        "initialization pattern of one full block");
+                data.size = block_size + 4;
+                data.data = alloca(data.size);
+                memset(&data.data[4], 0xaa, block_size);
 
-		data.data[0] = 0x01;
-		data.data[1] = 0x00;
-		data.data[2] = block_size >> 8;
-		data.data[3] = block_size & 0xff;
-		SANITIZE(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data,
+                data.data[0] = 0x01;
+                data.data[1] = 0x00;
+                data.data[2] = block_size >> 8;
+                data.data[3] = block_size & 0xff;
+                SANITIZE(sd, 0, 0, SCSI_SANITIZE_OVERWRITE, data.size, &data,
                          EXPECT_RESERVATION_CONFLICT);
-	}
+        }
 
 
-	logging(LOG_VERBOSE, "Check if SANITIZE BLOCK_ERASE is supported "
-		"in REPORT_SUPPORTED_OPCODES");
-	cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
-				    SCSI_SANITIZE_BLOCK_ERASE);
-	if (cd == NULL) {
-		logging(LOG_NORMAL, "[SKIPPED] SANITIZE BLOCK_ERASE is not "
-			"implemented according to REPORT_SUPPORTED_OPCODES.");
-	} else {
-		logging(LOG_VERBOSE, "Test SANITIZE BLOCK_ERASE");
-		SANITIZE(sd, 0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL,
+        logging(LOG_VERBOSE, "Check if SANITIZE BLOCK_ERASE is supported "
+                "in REPORT_SUPPORTED_OPCODES");
+        cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
+                                    SCSI_SANITIZE_BLOCK_ERASE);
+        if (cd == NULL) {
+                logging(LOG_NORMAL, "[SKIPPED] SANITIZE BLOCK_ERASE is not "
+                        "implemented according to REPORT_SUPPORTED_OPCODES.");
+        } else {
+                logging(LOG_VERBOSE, "Test SANITIZE BLOCK_ERASE");
+                SANITIZE(sd, 0, 0, SCSI_SANITIZE_BLOCK_ERASE, 0, NULL,
                          EXPECT_RESERVATION_CONFLICT);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Check if SANITIZE CRYPTO_ERASE is supported "
-		"in REPORT_SUPPORTED_OPCODES");
-	cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
-				    SCSI_SANITIZE_CRYPTO_ERASE);
-	if (cd == NULL) {
-		logging(LOG_NORMAL, "[SKIPPED] SANITIZE CRYPTO_ERASE is not "
-			"implemented according to REPORT_SUPPORTED_OPCODES.");
-	} else {
-		logging(LOG_VERBOSE, "Test SANITIZE CRYPTO_ERASE");
-		SANITIZE(sd, 0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL,
+        logging(LOG_VERBOSE, "Check if SANITIZE CRYPTO_ERASE is supported "
+                "in REPORT_SUPPORTED_OPCODES");
+        cd = get_command_descriptor(SCSI_OPCODE_SANITIZE,
+                                    SCSI_SANITIZE_CRYPTO_ERASE);
+        if (cd == NULL) {
+                logging(LOG_NORMAL, "[SKIPPED] SANITIZE CRYPTO_ERASE is not "
+                        "implemented according to REPORT_SUPPORTED_OPCODES.");
+        } else {
+                logging(LOG_VERBOSE, "Test SANITIZE CRYPTO_ERASE");
+                SANITIZE(sd, 0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL,
                          EXPECT_RESERVATION_CONFLICT);
-	}
+        }
 
-	mpath_sd2_put(sd2);
+        mpath_sd2_put(sd2);
 }

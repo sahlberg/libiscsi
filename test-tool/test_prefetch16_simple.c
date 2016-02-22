@@ -29,19 +29,19 @@
 void
 test_prefetch16_simple(void)
 {
-	int i;
+        int i;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test PREFETCH16 of 1-256 blocks at the start of the LUN");
-	for (i = 1; i <= 256; i++) {
-		PREFETCH16(sd, 0, i, 0, 0,
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test PREFETCH16 of 1-256 blocks at the start of the LUN");
+        for (i = 1; i <= 256; i++) {
+                PREFETCH16(sd, 0, i, 0, 0,
                            EXPECT_STATUS_GOOD);
-	}
+        }
 
 
-	logging(LOG_VERBOSE, "Test PREFETCH16 of 1-256 blocks at the end of the LUN");
-	for (i = 1; i <= 256; i++) {
-		PREFETCH16(sd, num_blocks - i, i, 0, 0,
+        logging(LOG_VERBOSE, "Test PREFETCH16 of 1-256 blocks at the end of the LUN");
+        for (i = 1; i <= 256; i++) {
+                PREFETCH16(sd, num_blocks - i, i, 0, 0,
                            EXPECT_STATUS_GOOD);
-	}
+        }
 }

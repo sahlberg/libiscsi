@@ -27,26 +27,26 @@
 void
 test_prefetch10_0blocks(void)
 {
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test PREFETCH10 0-blocks at LBA==0");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test PREFETCH10 0-blocks at LBA==0");
 
-	PREFETCH10(sd, 0, 0, 0, 0,
+        PREFETCH10(sd, 0, 0, 0, 0,
                    EXPECT_STATUS_GOOD);
 
-	if (num_blocks > 0x80000000) {
-		CU_PASS("[SKIPPED] LUN is too big");
-		return;
-	}
+        if (num_blocks > 0x80000000) {
+                CU_PASS("[SKIPPED] LUN is too big");
+                return;
+        }
 
-	logging(LOG_VERBOSE, "Test PREFETCH10 0-blocks one block past end-of-LUN");
-	PREFETCH10(sd, num_blocks + 1, 0, 0, 0,
+        logging(LOG_VERBOSE, "Test PREFETCH10 0-blocks one block past end-of-LUN");
+        PREFETCH10(sd, num_blocks + 1, 0, 0, 0,
                    EXPECT_LBA_OOB);
 
-	logging(LOG_VERBOSE, "Test PREFETCH10 0-blocks at LBA==2^31");
-	PREFETCH10(sd, 0x80000000, 0, 0, 0,
+        logging(LOG_VERBOSE, "Test PREFETCH10 0-blocks at LBA==2^31");
+        PREFETCH10(sd, 0x80000000, 0, 0, 0,
                    EXPECT_LBA_OOB);
 
-	logging(LOG_VERBOSE, "Test PREFETCH10 0-blocks at LBA==-1");
-	PREFETCH10(sd, -1, 0, 0, 0,
+        logging(LOG_VERBOSE, "Test PREFETCH10 0-blocks at LBA==-1");
+        PREFETCH10(sd, -1, 0, 0, 0,
                    EXPECT_LBA_OOB);
 }

@@ -32,65 +32,65 @@
 void
 test_multipathio_compareandwrite(void)
 {
-	int io_bl = 1;	/* 1 block CAW IOs */
-	int path;
-	int i, ret;
-	int maxbl;
+        int io_bl = 1;        /* 1 block CAW IOs */
+        int path;
+        int i, ret;
+        int maxbl;
 
-	CHECK_FOR_DATALOSS;
-	CHECK_FOR_SBC;
-	MPATH_SKIP_IF_UNAVAILABLE(mp_sds, mp_num_sds);
+        CHECK_FOR_DATALOSS;
+        CHECK_FOR_SBC;
+        MPATH_SKIP_IF_UNAVAILABLE(mp_sds, mp_num_sds);
 
-	if (inq_bl) {
-		maxbl = inq_bl->max_cmp;
-	} else {
-		/* Assume we are not limited */
-		maxbl = 256;
-	}
-	if (maxbl < io_bl) {
-		CU_PASS("[SKIPPED] MAXIMUM_COMPARE_AND_WRITE_LENGTH too small");
-		return;
-	}
+        if (inq_bl) {
+                maxbl = inq_bl->max_cmp;
+        } else {
+                /* Assume we are not limited */
+                maxbl = 256;
+        }
+        if (maxbl < io_bl) {
+                CU_PASS("[SKIPPED] MAXIMUM_COMPARE_AND_WRITE_LENGTH too small");
+                return;
+        }
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Initialising data prior to COMPARE_AND_WRITE");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Initialising data prior to COMPARE_AND_WRITE");
 
-	memset(scratch, 0, io_bl * block_size);
-	ret = writesame10(mp_sds[0], 0,
-			  block_size, 256, 0, 0, 0, 0, scratch,
-			  EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		CU_PASS("[SKIPPED] Target does not support WRITESAME10. Skipping test");
-		return;
-	}
-	CU_ASSERT_EQUAL(ret, 0);
+        memset(scratch, 0, io_bl * block_size);
+        ret = writesame10(mp_sds[0], 0,
+                          block_size, 256, 0, 0, 0, 0, scratch,
+                          EXPECT_STATUS_GOOD);
+        if (ret == -2) {
+                CU_PASS("[SKIPPED] Target does not support WRITESAME10. Skipping test");
+                return;
+        }
+        CU_ASSERT_EQUAL(ret, 0);
 
-	logging(LOG_VERBOSE, "Test multipath COMPARE_AND_WRITE");
-	for (i = 0; i < 256; i++) {
+        logging(LOG_VERBOSE, "Test multipath COMPARE_AND_WRITE");
+        for (i = 0; i < 256; i++) {
 
-		for (path = 0; path < mp_num_sds; path++) {
-			logging(LOG_VERBOSE,
-				"Test COMPARE_AND_WRITE(%d->%d) using path %d",
-				path, path + 1, path);
+                for (path = 0; path < mp_num_sds; path++) {
+                        logging(LOG_VERBOSE,
+                                "Test COMPARE_AND_WRITE(%d->%d) using path %d",
+                                path, path + 1, path);
 
-			/* compare data is first half */
-			memset(scratch, path, io_bl * block_size);
-			/* write data is the second half, wrap around */
-			memset(scratch + io_bl * block_size, path + 1,
-			       io_bl * block_size);
-			COMPAREANDWRITE(mp_sds[path], i,
+                        /* compare data is first half */
+                        memset(scratch, path, io_bl * block_size);
+                        /* write data is the second half, wrap around */
+                        memset(scratch + io_bl * block_size, path + 1,
+                               io_bl * block_size);
+                        COMPAREANDWRITE(mp_sds[path], i,
                                         scratch, 2 * io_bl * block_size,
                                         block_size, 0, 0, 0, 0,
                                         EXPECT_STATUS_GOOD);
 
-			logging(LOG_VERBOSE,
-				"Test bad COMPARE_AND_WRITE(%d->%d)",
-				path, path + 1);
+                        logging(LOG_VERBOSE,
+                                "Test bad COMPARE_AND_WRITE(%d->%d)",
+                                path, path + 1);
 
-			COMPAREANDWRITE(mp_sds[path], i,
+                        COMPAREANDWRITE(mp_sds[path], i,
                                         scratch, 2 * io_bl * block_size,
                                         block_size, 0, 0, 0, 0,
                                         EXPECT_MISCOMPARE);
-		}
-	}
+                }
+        }
 }

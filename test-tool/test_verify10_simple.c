@@ -30,31 +30,31 @@
 void
 test_verify10_simple(void)
 {
-	int i;
+        int i;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test VERIFY10 of 1-256 blocks at the start of the LUN");
-	for (i = 1; i <= 256; i++) {
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		READ10(sd, NULL, 0, i * block_size,
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test VERIFY10 of 1-256 blocks at the start of the LUN");
+        for (i = 1; i <= 256; i++) {
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                READ10(sd, NULL, 0, i * block_size,
                        block_size, 0, 0, 0, 0, 0, scratch,
                        EXPECT_STATUS_GOOD);
-		VERIFY10(sd, 0, i * block_size, block_size, 0, 0, 1, scratch,
+                VERIFY10(sd, 0, i * block_size, block_size, 0, 0, 1, scratch,
                          EXPECT_STATUS_GOOD);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test VERIFY10 of 1-256 blocks at the end of the LUN");
-	for (i = 1; i <= 256; i++) {
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		READ10(sd, NULL, num_blocks - i,
+        logging(LOG_VERBOSE, "Test VERIFY10 of 1-256 blocks at the end of the LUN");
+        for (i = 1; i <= 256; i++) {
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                READ10(sd, NULL, num_blocks - i,
                        i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                        EXPECT_STATUS_GOOD);
-		VERIFY10(sd, num_blocks - i,
+                VERIFY10(sd, num_blocks - i,
                          i * block_size, block_size, 0, 0, 1, scratch,
                          EXPECT_STATUS_GOOD);
-	}
+        }
 }

@@ -29,13 +29,13 @@
 void
 test_verify10_flags(void)
 {
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test VERIFY10 flags");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test VERIFY10 flags");
 
-	READ10(sd, NULL, 0, block_size,
-		     block_size, 0, 0, 0, 0, 0, scratch,
-		     EXPECT_STATUS_GOOD);
-	logging(LOG_VERBOSE, "Test VERIFY10 with BYTCHK==1");
-	VERIFY10(sd, 0, block_size, block_size, 0, 0, 1, scratch,
+        READ10(sd, NULL, 0, block_size,
+                     block_size, 0, 0, 0, 0, 0, scratch,
+                     EXPECT_STATUS_GOOD);
+        logging(LOG_VERBOSE, "Test VERIFY10 with BYTCHK==1");
+        VERIFY10(sd, 0, block_size, block_size, 0, 0, 1, scratch,
                  EXPECT_STATUS_GOOD);
 }

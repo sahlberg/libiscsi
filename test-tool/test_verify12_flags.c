@@ -30,13 +30,13 @@
 void
 test_verify12_flags(void)
 {
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test VERIFY12 flags");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test VERIFY12 flags");
 
-	READ12(sd, NULL, 0, block_size, block_size, 0, 0, 0, 0, 0, scratch,
+        READ12(sd, NULL, 0, block_size, block_size, 0, 0, 0, 0, 0, scratch,
                EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Test VERIFY12 with BYTCHK==1");
-	VERIFY12(sd, 0, block_size, block_size, 0, 0, 1, scratch,
+        logging(LOG_VERBOSE, "Test VERIFY12 with BYTCHK==1");
+        VERIFY12(sd, 0, block_size, block_size, 0, 0, 1, scratch,
                  EXPECT_STATUS_GOOD);
 }

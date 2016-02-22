@@ -30,14 +30,14 @@
 void
 test_writeverify16_flags(void)
 { 
-	CHECK_FOR_DATALOSS;
+        CHECK_FOR_DATALOSS;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITEVERIFY16 flags");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test WRITEVERIFY16 flags");
 
 
-	logging(LOG_VERBOSE, "Test WRITEVERIFY16 with BYTCHK==1");
-	memset(scratch, 0xa6, block_size);
-	WRITEVERIFY16(sd, 0, block_size, block_size, 0, 0, 1, 0, scratch,
+        logging(LOG_VERBOSE, "Test WRITEVERIFY16 with BYTCHK==1");
+        memset(scratch, 0xa6, block_size);
+        WRITEVERIFY16(sd, 0, block_size, block_size, 0, 0, 1, 0, scratch,
                       EXPECT_STATUS_GOOD);
 }

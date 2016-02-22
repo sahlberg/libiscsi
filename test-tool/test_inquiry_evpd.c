@@ -28,13 +28,13 @@
 void
 test_inquiry_evpd(void)
 {
-	int ret;
+        int ret;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test of the INQUIRY EVPD bit");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test of the INQUIRY EVPD bit");
 
-	logging(LOG_VERBOSE, "Verify that INQUIRY with EVPD==0 and PC!=0 is an error");
-	ret = inquiry(sd, NULL, 0, 1, 256,
-		      EXPECT_INVALID_FIELD_IN_CDB);
-	CU_ASSERT_EQUAL(ret, 0);
+        logging(LOG_VERBOSE, "Verify that INQUIRY with EVPD==0 and PC!=0 is an error");
+        ret = inquiry(sd, NULL, 0, 1, 256,
+                      EXPECT_INVALID_FIELD_IN_CDB);
+        CU_ASSERT_EQUAL(ret, 0);
 }

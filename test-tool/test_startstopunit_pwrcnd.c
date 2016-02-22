@@ -29,27 +29,27 @@
 void
 test_startstopunit_pwrcnd(void)
 { 
-	int i;
+        int i;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test STARTSTOPUNIT PowerCondition");
-	if (!inq->rmb) {
-		logging(LOG_VERBOSE, "[SKIPPED] LUN is not removable. "
-			"Skipping test.");
-		return;
-	}
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test STARTSTOPUNIT PowerCondition");
+        if (!inq->rmb) {
+                logging(LOG_VERBOSE, "[SKIPPED] LUN is not removable. "
+                        "Skipping test.");
+                return;
+        }
 
-	logging(LOG_VERBOSE, "Test that media is not ejected when PC!=0");
-	for (i = 1; i < 16; i++) {
-		STARTSTOPUNIT(sd, 1, 0, i, 0, 1, 0,
+        logging(LOG_VERBOSE, "Test that media is not ejected when PC!=0");
+        for (i = 1; i < 16; i++) {
+                STARTSTOPUNIT(sd, 1, 0, i, 0, 1, 0,
                               EXPECT_STATUS_GOOD);
 
-		logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
-		TESTUNITREADY(sd,
+                logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
+                TESTUNITREADY(sd,
                               EXPECT_SANITIZE);
-	}
+        }
 
-	logging(LOG_VERBOSE, "In case the target did eject the medium, load it again.");
-	STARTSTOPUNIT(sd, 1, 0, 0, 0, 1, 1,
-		      EXPECT_STATUS_GOOD);
+        logging(LOG_VERBOSE, "In case the target did eject the medium, load it again.");
+        STARTSTOPUNIT(sd, 1, 0, 0, 0, 1, 1,
+                      EXPECT_STATUS_GOOD);
 }

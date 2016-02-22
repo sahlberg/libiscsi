@@ -30,45 +30,45 @@
 void
 test_verify10_mismatch_no_cmp(void)
 {
-	int i;
+        int i;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test VERIFY10 without BYTCHK for blocks 1-255");
-	for (i = 1; i <= 256; i++) {
-		int offset = random() % (i * block_size);
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test VERIFY10 without BYTCHK for blocks 1-255");
+        for (i = 1; i <= 256; i++) {
+                int offset = random() % (i * block_size);
 
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		READ10(sd, NULL, 0, i * block_size,
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                READ10(sd, NULL, 0, i * block_size,
                        block_size, 0, 0, 0, 0, 0, scratch,
                        EXPECT_STATUS_GOOD);
 
-		/* flip a random byte in the data */
-		scratch[offset] ^= 'X';
-		logging(LOG_VERBOSE, "Flip some bits in the data");
+                /* flip a random byte in the data */
+                scratch[offset] ^= 'X';
+                logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		VERIFY10(sd, 0, i * block_size, block_size, 0, 0, 0, scratch,
+                VERIFY10(sd, 0, i * block_size, block_size, 0, 0, 0, scratch,
                          EXPECT_STATUS_GOOD);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test VERIFY10 without BYTCHK of 1-256 blocks at the end of the LUN");
-	for (i = 1; i <= 256; i++) {
-		int offset = random() % (i * block_size);
+        logging(LOG_VERBOSE, "Test VERIFY10 without BYTCHK of 1-256 blocks at the end of the LUN");
+        for (i = 1; i <= 256; i++) {
+                int offset = random() % (i * block_size);
 
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		READ10(sd, NULL, num_blocks - i,
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                READ10(sd, NULL, num_blocks - i,
                        i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                        EXPECT_STATUS_GOOD);
 
-		/* flip a random byte in the data */
-		scratch[offset] ^= 'X';
-		logging(LOG_VERBOSE, "Flip some bits in the data");
+                /* flip a random byte in the data */
+                scratch[offset] ^= 'X';
+                logging(LOG_VERBOSE, "Flip some bits in the data");
 
-		VERIFY10(sd, num_blocks - i,
+                VERIFY10(sd, num_blocks - i,
                          i * block_size, block_size, 0, 0, 0, scratch,
                          EXPECT_STATUS_GOOD);
-	}
+        }
 }

@@ -27,56 +27,56 @@
 void
 test_writesame10_0blocks(void)
 {
-	int ret;
+        int ret;
 
-	CHECK_FOR_DATALOSS;
-	CHECK_FOR_SBC;
+        CHECK_FOR_DATALOSS;
+        CHECK_FOR_SBC;
 
-	if (num_blocks >= 0x80000000) {
-		CU_PASS("LUN is too big for write-beyond-eol tests with WRITESAME10. Skipping test.\n");
-		return;
-	}
-	if (!inq_bl) {
-		CU_PASS("BlockLimits VPD is not available. Skipping test.\n");
-		return;
-	}
+        if (num_blocks >= 0x80000000) {
+                CU_PASS("LUN is too big for write-beyond-eol tests with WRITESAME10. Skipping test.\n");
+                return;
+        }
+        if (!inq_bl) {
+                CU_PASS("BlockLimits VPD is not available. Skipping test.\n");
+                return;
+        }
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
 
-	logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks at LBA==0 (WSNZ=%d)",
-		inq_bl->wsnz);
-	memset(scratch, 0, block_size);
+        logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks at LBA==0 (WSNZ=%d)",
+                inq_bl->wsnz);
+        memset(scratch, 0, block_size);
 
-	if (inq_bl->wsnz) {
-		WRITESAME10(sd, 0, block_size, 0, 0, 0, 0, 0, scratch,
+        if (inq_bl->wsnz) {
+                WRITESAME10(sd, 0, block_size, 0, 0, 0, 0, 0, scratch,
                             EXPECT_INVALID_FIELD_IN_CDB);
-		logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 does not support 0-blocks.");
-		return;
-	}
+                logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 does not support 0-blocks.");
+                return;
+        }
 
-	ret = writesame10(sd, 0,
-			  block_size, 0, 0, 0, 0, 0, scratch,
-			  EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		CU_PASS("[SKIPPED] Target does not support WRITESAME10. Skipping test");
-		return;
-	} else if (ret == -3) {
-		CU_PASS("[SKIPPED] Target does not support WRITESAME10 with NUMBER OF LOGICAL BLOCKS == 0");
-	} else if (ret == -4) {
-		CU_PASS("[SKIPPED] Number of WRITESAME10 logical blocks to be written exceeds MAXIMUM WRITE SAME LENGTH");
-	} else {
-		CU_ASSERT_EQUAL(ret, 0);
-	}
+        ret = writesame10(sd, 0,
+                          block_size, 0, 0, 0, 0, 0, scratch,
+                          EXPECT_STATUS_GOOD);
+        if (ret == -2) {
+                CU_PASS("[SKIPPED] Target does not support WRITESAME10. Skipping test");
+                return;
+        } else if (ret == -3) {
+                CU_PASS("[SKIPPED] Target does not support WRITESAME10 with NUMBER OF LOGICAL BLOCKS == 0");
+        } else if (ret == -4) {
+                CU_PASS("[SKIPPED] Number of WRITESAME10 logical blocks to be written exceeds MAXIMUM WRITE SAME LENGTH");
+        } else {
+                CU_ASSERT_EQUAL(ret, 0);
+        }
 
-	logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks one block past end-of-LUN");
-	WRITESAME10(sd, num_blocks + 1, block_size, 0, 0, 0, 0, 0, scratch,
+        logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks one block past end-of-LUN");
+        WRITESAME10(sd, num_blocks + 1, block_size, 0, 0, 0, 0, 0, scratch,
                     EXPECT_LBA_OOB);
 
-	logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks at LBA==2^31");
-	WRITESAME10(sd, 0x80000000, block_size, 0, 0, 0, 0, 0, scratch,
+        logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks at LBA==2^31");
+        WRITESAME10(sd, 0x80000000, block_size, 0, 0, 0, 0, 0, scratch,
                     EXPECT_LBA_OOB);
 
-	logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks at LBA==-1");
-	WRITESAME10(sd, -1, block_size, 0, 0, 0, 0, 0, scratch,
+        logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks at LBA==-1");
+        WRITESAME10(sd, -1, block_size, 0, 0, 0, 0, 0, scratch,
                     EXPECT_LBA_OOB);
 }

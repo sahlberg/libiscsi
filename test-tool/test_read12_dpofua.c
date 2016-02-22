@@ -29,79 +29,79 @@
 void
 test_read12_dpofua(void)
 { 
-	int dpofua, usage_data_dpofua;
-	struct scsi_task *ms_task = NULL;
-	struct scsi_mode_sense *ms;
-	struct scsi_task *rso_task = NULL;
-	struct scsi_report_supported_op_codes_one_command *rsoc;
+        int dpofua, usage_data_dpofua;
+        struct scsi_task *ms_task = NULL;
+        struct scsi_mode_sense *ms;
+        struct scsi_task *rso_task = NULL;
+        struct scsi_report_supported_op_codes_one_command *rsoc;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test READ12 DPO/FUA flags");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test READ12 DPO/FUA flags");
 
-	CHECK_FOR_SBC;
+        CHECK_FOR_SBC;
 
-	logging(LOG_VERBOSE, "Read the DPOFUA flag from mode sense data");
-	MODESENSE6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
+        logging(LOG_VERBOSE, "Read the DPOFUA flag from mode sense data");
+        MODESENSE6(sd, &ms_task, 0, SCSI_MODESENSE_PC_CURRENT,
                    SCSI_MODEPAGE_RETURN_ALL_PAGES, 0, 255,
                    EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "[SUCCESS] Mode sense returned status GOOD");
-	ms = scsi_datain_unmarshall(ms_task);
-	dpofua = ms && (ms->device_specific_parameter & 0x10);
-	scsi_free_scsi_task(ms_task);
+        logging(LOG_VERBOSE, "[SUCCESS] Mode sense returned status GOOD");
+        ms = scsi_datain_unmarshall(ms_task);
+        dpofua = ms && (ms->device_specific_parameter & 0x10);
+        scsi_free_scsi_task(ms_task);
 
-	if (dpofua) {
-		logging(LOG_VERBOSE, "DPOFUA flag is set. Device should allow "
-			"DPO/FUA flags in CDBs");
-	} else {
-		logging(LOG_VERBOSE, "DPOFUA flag is clear. Device should fail "
-			"CDBs with DPO/FUA set");
-	}
+        if (dpofua) {
+                logging(LOG_VERBOSE, "DPOFUA flag is set. Device should allow "
+                        "DPO/FUA flags in CDBs");
+        } else {
+                logging(LOG_VERBOSE, "DPOFUA flag is clear. Device should fail "
+                        "CDBs with DPO/FUA set");
+        }
 
-	logging(LOG_VERBOSE, "Test READ12 with DPO==1");
-	if (dpofua) {
-		READ12(sd, NULL, 0,
+        logging(LOG_VERBOSE, "Test READ12 with DPO==1");
+        if (dpofua) {
+                READ12(sd, NULL, 0,
                        block_size, block_size, 0, 1, 0, 0, 0, NULL,
                        EXPECT_STATUS_GOOD);
-	} else {
-		READ12(sd, NULL, 0,
+        } else {
+                READ12(sd, NULL, 0,
                        block_size, block_size, 0, 1, 0, 0, 0, NULL,
                        EXPECT_INVALID_FIELD_IN_CDB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test READ12 with FUA==1");
-	if (dpofua) {
-		READ12(sd, NULL, 0,
+        logging(LOG_VERBOSE, "Test READ12 with FUA==1");
+        if (dpofua) {
+                READ12(sd, NULL, 0,
                        block_size, block_size, 0, 0, 1, 0, 0, NULL,
                        EXPECT_STATUS_GOOD);
-	} else {
-		READ12(sd, NULL, 0,
+        } else {
+                READ12(sd, NULL, 0,
                        block_size, block_size, 0, 0, 1, 0, 0, NULL,
                        EXPECT_INVALID_FIELD_IN_CDB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test READ12 with DPO==1 FUA==1");
-	if (dpofua) {
-		READ12(sd, NULL, 0,
+        logging(LOG_VERBOSE, "Test READ12 with DPO==1 FUA==1");
+        if (dpofua) {
+                READ12(sd, NULL, 0,
                        block_size, block_size, 0, 1, 1, 0, 0, NULL,
                        EXPECT_STATUS_GOOD);
-	} else {
-		READ12(sd, NULL, 0,
+        } else {
+                READ12(sd, NULL, 0,
                        block_size, block_size, 0, 1, 1, 0, 0, NULL,
                        EXPECT_INVALID_FIELD_IN_CDB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Try fetching REPORT_SUPPORTED_OPCODES "
-		"for READ12");
-	REPORT_SUPPORTED_OPCODES(sd, &rso_task,
+        logging(LOG_VERBOSE, "Try fetching REPORT_SUPPORTED_OPCODES "
+                "for READ12");
+        REPORT_SUPPORTED_OPCODES(sd, &rso_task,
                                  0, SCSI_REPORT_SUPPORTING_OPCODE,
                                  SCSI_OPCODE_READ12,
                                  0,
                                  65535,
                                  EXPECT_STATUS_GOOD);
-	logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
-	rsoc = scsi_datain_unmarshall(rso_task);
-	CU_ASSERT_PTR_NOT_NULL_FATAL(rsoc);
+        logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
+        rsoc = scsi_datain_unmarshall(rso_task);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(rsoc);
         
         usage_data_dpofua = rsoc->cdb_usage_data[1] & 0x18;
         if (dpofua) {
@@ -122,5 +122,5 @@ test_read12_dpofua(void)
                 }
         }
 
-	scsi_free_scsi_task(rso_task);
+        scsi_free_scsi_task(rso_task);
 }

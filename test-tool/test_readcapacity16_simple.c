@@ -29,9 +29,9 @@
 void
 test_readcapacity16_simple(void)
 {
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test that READCAPACITY16 works");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test that READCAPACITY16 works");
 
-	READCAPACITY16(sd, NULL, 16,
+        READCAPACITY16(sd, NULL, 16,
                        EXPECT_STATUS_GOOD);
 }

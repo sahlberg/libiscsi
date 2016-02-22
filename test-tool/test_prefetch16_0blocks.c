@@ -27,21 +27,21 @@
 void
 test_prefetch16_0blocks(void)
 {
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks at LBA==0");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks at LBA==0");
 
-	PREFETCH16(sd, 0, 0, 0, 0,
+        PREFETCH16(sd, 0, 0, 0, 0,
                    EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks one block past end-of-LUN");
-	PREFETCH16(sd, num_blocks + 1, 0, 0, 0,
+        logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks one block past end-of-LUN");
+        PREFETCH16(sd, num_blocks + 1, 0, 0, 0,
                    EXPECT_LBA_OOB);
 
-	logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks at LBA==2^63");
-	PREFETCH16(sd, 0x8000000000000000ULL, 0, 0, 0,
+        logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks at LBA==2^63");
+        PREFETCH16(sd, 0x8000000000000000ULL, 0, 0, 0,
                    EXPECT_LBA_OOB);
 
-	logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks at LBA==-1");
-	PREFETCH16(sd, -1, 0, 0, 0,
+        logging(LOG_VERBOSE, "Test PREFETCH16 0-blocks at LBA==-1");
+        PREFETCH16(sd, -1, 0, 0, 0,
                    EXPECT_LBA_OOB);
 }

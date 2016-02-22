@@ -30,42 +30,42 @@
 void
 test_writeatomic16_simple(void)
 {
-	int i, gran;
-	const size_t bufsz = 256 * block_size;
+        int i, gran;
+        const size_t bufsz = 256 * block_size;
 
-	CHECK_FOR_DATALOSS;
-	CHECK_FOR_SBC;
+        CHECK_FOR_DATALOSS;
+        CHECK_FOR_SBC;
 
-	if (!inq_bl) {
-		CU_PASS("BlockLimits VPD is not available. Skipping test.\n");
-		return;
-	}
+        if (!inq_bl) {
+                CU_PASS("BlockLimits VPD is not available. Skipping test.\n");
+                return;
+        }
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
 
-	memset(scratch, 0, bufsz);
-	gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
-	WRITEATOMIC16(sd, 0, block_size * gran, block_size, 0, 0, 0, 0, scratch,
+        memset(scratch, 0, bufsz);
+        gran = inq_bl->atomic_gran ? inq_bl->atomic_gran : 1;
+        WRITEATOMIC16(sd, 0, block_size * gran, block_size, 0, 0, 0, 0, scratch,
                       EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Test WRITEATOMIC16 of 1-256 blocks at the start of the LUN");
-	memset(scratch, 0xa6, 256 * block_size);
-	for (i = gran; i <= 256; i += gran) {
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		WRITEATOMIC16(sd, 0, i * block_size,
+        logging(LOG_VERBOSE, "Test WRITEATOMIC16 of 1-256 blocks at the start of the LUN");
+        memset(scratch, 0xa6, 256 * block_size);
+        for (i = gran; i <= 256; i += gran) {
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                WRITEATOMIC16(sd, 0, i * block_size,
                               block_size, 0, 0, 0, 0, scratch,
                               EXPECT_STATUS_GOOD);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test WRITEATOMIC16 of 1-256 blocks at the end of the LUN");
-	for (i = gran; i <= 256; i += gran) {
-		if (maximum_transfer_length && maximum_transfer_length < i) {
-			break;
-		}
-		WRITEATOMIC16(sd, num_blocks - i, i * block_size, block_size,
+        logging(LOG_VERBOSE, "Test WRITEATOMIC16 of 1-256 blocks at the end of the LUN");
+        for (i = gran; i <= 256; i += gran) {
+                if (maximum_transfer_length && maximum_transfer_length < i) {
+                        break;
+                }
+                WRITEATOMIC16(sd, num_blocks - i, i * block_size, block_size,
                               0, 0, 0, 0, scratch,
                               EXPECT_STATUS_GOOD);
-	}
+        }
 }

@@ -28,59 +28,59 @@
 void
 test_preventallow_logout(void)
 {
-	CHECK_FOR_SBC;
-	CHECK_FOR_REMOVABLE;
+        CHECK_FOR_SBC;
+        CHECK_FOR_REMOVABLE;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test that Logout loss clears PREVENT MEDIUM REMOVAL");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test that Logout loss clears PREVENT MEDIUM REMOVAL");
 
-	if (sd->iscsi_ctx == NULL) {
-		const char *err = "[SKIPPED] This PREVENTALLOW test is "
-			"only supported for iSCSI backends";
-		logging(LOG_NORMAL, "%s", err);
-		CU_PASS(err);
-		return;
-	}
+        if (sd->iscsi_ctx == NULL) {
+                const char *err = "[SKIPPED] This PREVENTALLOW test is "
+                        "only supported for iSCSI backends";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
 
-	logging(LOG_VERBOSE, "Set the PREVENT flag");
-	PREVENTALLOW(sd, 1);
+        logging(LOG_VERBOSE, "Set the PREVENT flag");
+        PREVENTALLOW(sd, 1);
 
-	logging(LOG_VERBOSE, "Try to eject the medium");
-	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
+        logging(LOG_VERBOSE, "Try to eject the medium");
+        STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
                       EXPECT_REMOVAL_PREVENTED);
 
-	logging(LOG_VERBOSE, "Verify we can still access the media.");
-	TESTUNITREADY(sd,
+        logging(LOG_VERBOSE, "Verify we can still access the media.");
+        TESTUNITREADY(sd,
                       EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Logout from target");
-	iscsi_logout_sync(sd->iscsi_ctx);
-	iscsi_destroy_context(sd->iscsi_ctx);
+        logging(LOG_VERBOSE, "Logout from target");
+        iscsi_logout_sync(sd->iscsi_ctx);
+        iscsi_destroy_context(sd->iscsi_ctx);
 
-	logging(LOG_VERBOSE, "Relogin to target");
-	sd->iscsi_ctx = iscsi_context_login(initiatorname1, sd->iscsi_url, &sd->iscsi_lun);
-	if (sd->iscsi_ctx == NULL) {
-		logging(LOG_VERBOSE, "Failed to login to target");
-		return;
-	}
+        logging(LOG_VERBOSE, "Relogin to target");
+        sd->iscsi_ctx = iscsi_context_login(initiatorname1, sd->iscsi_url, &sd->iscsi_lun);
+        if (sd->iscsi_ctx == NULL) {
+                logging(LOG_VERBOSE, "Failed to login to target");
+                return;
+        }
 
-	logging(LOG_VERBOSE, "Try to eject the medium");
-	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
+        logging(LOG_VERBOSE, "Try to eject the medium");
+        STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
                       EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Verify we can not access the media.");
-	TESTUNITREADY(sd,
+        logging(LOG_VERBOSE, "Verify we can not access the media.");
+        TESTUNITREADY(sd,
                       EXPECT_NO_MEDIUM);
 
-	logging(LOG_VERBOSE, "Load the medium");
-	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
+        logging(LOG_VERBOSE, "Load the medium");
+        STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
                       EXPECT_STATUS_GOOD);
 
-	logging(LOG_VERBOSE, "Clear PREVENT and load medium in case target failed");
-	logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
-	PREVENTALLOW(sd, 0);
+        logging(LOG_VERBOSE, "Clear PREVENT and load medium in case target failed");
+        logging(LOG_VERBOSE, "Test we can clear PREVENT flag");
+        PREVENTALLOW(sd, 0);
 
-	logging(LOG_VERBOSE, "Load the medium");
-	STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 1,
+        logging(LOG_VERBOSE, "Load the medium");
+        STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 1,
                       EXPECT_STATUS_GOOD);
 }

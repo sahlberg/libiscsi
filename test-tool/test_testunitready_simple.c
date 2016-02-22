@@ -27,8 +27,8 @@
 void
 test_testunitready_simple(void)
 {
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test TESTUNITREADY");
-	TESTUNITREADY(sd,
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test TESTUNITREADY");
+        TESTUNITREADY(sd,
                       EXPECT_STATUS_GOOD);
 }

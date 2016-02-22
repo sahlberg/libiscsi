@@ -29,13 +29,13 @@
 void
 test_readcapacity16_alloclen(void)
 {
-	int i;
+        int i;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test that READCAPACITY16 with alloc_len 0-15 is not an error");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test that READCAPACITY16 with alloc_len 0-15 is not an error");
 
-	for (i = 0; i < 16; i++) {
-		READCAPACITY16(sd, NULL, i,
+        for (i = 0; i < 16; i++) {
+                READCAPACITY16(sd, NULL, i,
                                EXPECT_STATUS_GOOD);
-	}
+        }
 }

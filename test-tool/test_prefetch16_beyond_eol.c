@@ -28,30 +28,30 @@
 void
 test_prefetch16_beyond_eol(void)
 { 
-	int i;
+        int i;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test PREFETCH16 1-256 blocks one block beyond the end");
-	for (i = 1; i <= 256; i++) {
-		PREFETCH16(sd, num_blocks + 1 - i, i, 0, 0,
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test PREFETCH16 1-256 blocks one block beyond the end");
+        for (i = 1; i <= 256; i++) {
+                PREFETCH16(sd, num_blocks + 1 - i, i, 0, 0,
                            EXPECT_LBA_OOB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test PREFETCH16 1-256 blocks at LBA==2^63");
-	for (i = 1; i <= 256; i++) {
-		PREFETCH16(sd, 0x8000000000000000ULL, i, 0, 0,
+        logging(LOG_VERBOSE, "Test PREFETCH16 1-256 blocks at LBA==2^63");
+        for (i = 1; i <= 256; i++) {
+                PREFETCH16(sd, 0x8000000000000000ULL, i, 0, 0,
                            EXPECT_LBA_OOB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test PREFETCH16 1-256 blocks at LBA==-1");
-	for (i = 1; i <= 256; i++) {
-		PREFETCH16(sd, -1, i, 0, 0,
+        logging(LOG_VERBOSE, "Test PREFETCH16 1-256 blocks at LBA==-1");
+        for (i = 1; i <= 256; i++) {
+                PREFETCH16(sd, -1, i, 0, 0,
                            EXPECT_LBA_OOB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test PREFETCH16 2-256 blocks all but one block beyond the end");
-	for (i = 2; i <= 256; i++) {
-		 PREFETCH16(sd, num_blocks - 1, i, 0, 0,
+        logging(LOG_VERBOSE, "Test PREFETCH16 2-256 blocks all but one block beyond the end");
+        for (i = 2; i <= 256; i++) {
+                 PREFETCH16(sd, num_blocks - 1, i, 0, 0,
                             EXPECT_LBA_OOB);
-	}
+        }
 }

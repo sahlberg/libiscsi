@@ -18,8 +18,8 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef	_ISCSI_SUPPORT_H_
-#define	_ISCSI_SUPPORT_H_
+#ifndef        _ISCSI_SUPPORT_H_
+#define        _ISCSI_SUPPORT_H_
 
 #include <time.h>
 #include <sys/types.h>
@@ -70,115 +70,115 @@ void logging(int level, const char *format, ...) _R_(2,3);
  * define special flags for logging a blank line, so compiler
  * does not commplain when logging a ""
  */
-#define	LOG_BLANK_LINE " "
+#define        LOG_BLANK_LINE " "
 #define LOG_BLANK_LINE_CMP_LEN 2
 
-#define CHECK_FOR_DATALOSS						\
-do {									\
-	if (!data_loss) {						\
-		logging(LOG_NORMAL, "[SKIPPED] --dataloss flag is not " \
-				"set. Skipping test.");	       	      	\
-		CU_PASS("[SKIPPED] --dataloss flag is not set."		\
-			" Skipping test");				\
-		return;							\
-	}								\
+#define CHECK_FOR_DATALOSS                                                \
+do {                                                                        \
+        if (!data_loss) {                                                \
+                logging(LOG_NORMAL, "[SKIPPED] --dataloss flag is not " \
+                                "set. Skipping test.");                                     \
+                CU_PASS("[SKIPPED] --dataloss flag is not set."                \
+                        " Skipping test");                                \
+                return;                                                        \
+        }                                                                \
 } while (0);
 
-#define CHECK_FOR_SANITIZE						\
-do {									\
-	if (!allow_sanitize) {						\
-		logging(LOG_NORMAL, "[SKIPPED] --allow-sanitize flag " \
-			"is not set. Skipping test.");	       	      	\
-		CU_PASS("[SKIPPED] --allow-sanitize flag is not set."	\
-			" Skipping test");				\
-		return;							\
-	}								\
+#define CHECK_FOR_SANITIZE                                                \
+do {                                                                        \
+        if (!allow_sanitize) {                                                \
+                logging(LOG_NORMAL, "[SKIPPED] --allow-sanitize flag " \
+                        "is not set. Skipping test.");                                     \
+                CU_PASS("[SKIPPED] --allow-sanitize flag is not set."        \
+                        " Skipping test");                                \
+                return;                                                        \
+        }                                                                \
 } while (0);
 
-#define CHECK_FOR_READONLY						\
-do {									\
-	if (!readonly) {						\
-		logging(LOG_NORMAL, "[SKIPPED] Logical unit is not "	\
-				"write-protected. Skipping test.");	\
-		CU_PASS("[SKIPPED] Logical unit is not write-"		\
-				   "protected. Skipping test");		\
-		return;							\
-	}								\
+#define CHECK_FOR_READONLY                                                \
+do {                                                                        \
+        if (!readonly) {                                                \
+                logging(LOG_NORMAL, "[SKIPPED] Logical unit is not "        \
+                                "write-protected. Skipping test.");        \
+                CU_PASS("[SKIPPED] Logical unit is not write-"                \
+                                   "protected. Skipping test");                \
+                return;                                                        \
+        }                                                                \
 } while (0);
 
-#define CHECK_FOR_REMOVABLE						\
-do {									\
-	if (!inq->rmb) {						\
-		logging(LOG_NORMAL, "[SKIPPED] Logical unit is not "	\
-			"removable. Skipping test.");			\
-		CU_PASS("[SKIPPED] Logical unit is not removable"	\
-			" Skipping test");				\
-		return;							\
-	}								\
+#define CHECK_FOR_REMOVABLE                                                \
+do {                                                                        \
+        if (!inq->rmb) {                                                \
+                logging(LOG_NORMAL, "[SKIPPED] Logical unit is not "        \
+                        "removable. Skipping test.");                        \
+                CU_PASS("[SKIPPED] Logical unit is not removable"        \
+                        " Skipping test");                                \
+                return;                                                        \
+        }                                                                \
 } while (0);
 
-#define CHECK_FOR_THIN_PROVISIONING					\
-do {									\
-	if (rc16 == NULL || rc16->lbpme == 0) {	       		       	\
-		logging(LOG_NORMAL, "[SKIPPED] Logical unit is fully"	\
-			" provisioned. Skipping test");			\
-		CU_PASS("[SKIPPED] Logical unit is fully provisioned."	\
-			" Skipping test");				\
-		return;	  	   					\
-	}								\
+#define CHECK_FOR_THIN_PROVISIONING                                        \
+do {                                                                        \
+        if (rc16 == NULL || rc16->lbpme == 0) {                                              \
+                logging(LOG_NORMAL, "[SKIPPED] Logical unit is fully"        \
+                        " provisioned. Skipping test");                        \
+                CU_PASS("[SKIPPED] Logical unit is fully provisioned."        \
+                        " Skipping test");                                \
+                return;                                                             \
+        }                                                                \
 } while (0);
 
-#define CHECK_FOR_LBPWS10						\
-do {									\
-	if (inq_lbp->lbpws10 == 0) {	       				\
-		logging(LOG_NORMAL, "[SKIPPED] Logical unit does not"	\
-			" have LBPWS10. Skipping test");		\
-		CU_PASS("[SKIPPED] Logical unit does not have LBPWS10."	\
-			" Skipping test");				\
-		return;	  	   					\
-	}								\
+#define CHECK_FOR_LBPWS10                                                \
+do {                                                                        \
+        if (inq_lbp->lbpws10 == 0) {                                               \
+                logging(LOG_NORMAL, "[SKIPPED] Logical unit does not"        \
+                        " have LBPWS10. Skipping test");                \
+                CU_PASS("[SKIPPED] Logical unit does not have LBPWS10."        \
+                        " Skipping test");                                \
+                return;                                                             \
+        }                                                                \
 } while (0);
 
-#define CHECK_FOR_LBPWS							\
-do {									\
-	if (inq_lbp->lbpws == 0) {		       			\
-		logging(LOG_NORMAL, "[SKIPPED] Logical unit does not"	\
-			" have LBPWS. Skipping test");	     	  	\
-		CU_PASS("[SKIPPED] Logical unit does not have LBPWS."	\
-			" Skipping test");				\
-		return;	  	   					\
-	}								\
+#define CHECK_FOR_LBPWS                                                        \
+do {                                                                        \
+        if (inq_lbp->lbpws == 0) {                                               \
+                logging(LOG_NORMAL, "[SKIPPED] Logical unit does not"        \
+                        " have LBPWS. Skipping test");                               \
+                CU_PASS("[SKIPPED] Logical unit does not have LBPWS."        \
+                        " Skipping test");                                \
+                return;                                                             \
+        }                                                                \
 } while (0);
 
-#define CHECK_FOR_LBPU							\
-do {									\
-	if (inq_lbp->lbpu == 0) {		       			\
-		logging(LOG_NORMAL, "[SKIPPED] Logical unit does not"	\
-			" have LBPU. Skipping test");	     	  	\
-		CU_PASS("[SKIPPED] Logical unit does not have LBPU."	\
-			" Skipping test");				\
-		return;	  	   					\
-	}								\
+#define CHECK_FOR_LBPU                                                        \
+do {                                                                        \
+        if (inq_lbp->lbpu == 0) {                                               \
+                logging(LOG_NORMAL, "[SKIPPED] Logical unit does not"        \
+                        " have LBPU. Skipping test");                               \
+                CU_PASS("[SKIPPED] Logical unit does not have LBPU."        \
+                        " Skipping test");                                \
+                return;                                                             \
+        }                                                                \
 } while (0);
 
-#define CHECK_FOR_LBPPB_GT_1						\
-do {									\
-	if (lbppb < 2) {						\
-	  logging(LOG_NORMAL, "[SKIPPED] LBPPB < 2. Skipping test");	\
-		CU_PASS("[SKIPPED] LBPPB < 2. Skipping test");		\
-		return;	  	   					\
-	}								\
+#define CHECK_FOR_LBPPB_GT_1                                                \
+do {                                                                        \
+        if (lbppb < 2) {                                                \
+          logging(LOG_NORMAL, "[SKIPPED] LBPPB < 2. Skipping test");        \
+                CU_PASS("[SKIPPED] LBPPB < 2. Skipping test");                \
+                return;                                                             \
+        }                                                                \
 } while (0);
 
-#define CHECK_FOR_SBC							\
-do {									\
-	if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {\
-		logging(LOG_NORMAL, "[SKIPPED] Not SBC device."	\
-			" Skipping test");				\
-		CU_PASS("[SKIPPED] Not SBC device."			\
-			" Skipping test");				\
-		return;	  	   					\
-	}								\
+#define CHECK_FOR_SBC                                                        \
+do {                                                                        \
+        if (inq->device_type != SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {\
+                logging(LOG_NORMAL, "[SKIPPED] Not SBC device."        \
+                        " Skipping test");                                \
+                CU_PASS("[SKIPPED] Not SBC device."                        \
+                        " Skipping test");                                \
+                return;                                                             \
+        }                                                                \
 } while (0);
 
 #define COMPAREANDWRITE(...)                                            \
@@ -704,23 +704,23 @@ extern int sbc3_support;
 extern int maximum_transfer_length;
 
 struct scsi_device {
-	char *error_str;
+        char *error_str;
 
-	struct iscsi_context *iscsi_ctx;
-	int iscsi_lun;
-	char *iscsi_url;
+        struct iscsi_context *iscsi_ctx;
+        int iscsi_lun;
+        char *iscsi_url;
 
-	char *sgio_dev;
-	int sgio_fd;
+        char *sgio_dev;
+        int sgio_fd;
 };
 extern struct scsi_device *sd;
 
 struct iscsi_context *iscsi_context_login(const char *initiatorname, const char *url, int *lun);
 
 struct iscsi_async_state {
-	struct scsi_task *task;
-	int status;
-	int finished;
+        struct scsi_task *task;
+        int status;
+        int finished;
 };
 void wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_state *test_state);
 
@@ -735,32 +735,32 @@ struct scsi_command_descriptor *get_command_descriptor(int opcode, int sa);
 
 static inline long rand_key(void)
 {
-	static int seed = 0;
+        static int seed = 0;
 
-	if (!seed) {
-		struct timeval tv;
-		pid_t p;
-		unsigned int s;
+        if (!seed) {
+                struct timeval tv;
+                pid_t p;
+                unsigned int s;
 
-		gettimeofday(&tv, NULL);
-		p = getpid();
-		s = p ^ tv.tv_sec ^ tv.tv_usec;
-		srandom(s);
-	}
-	seed = 1;
-	return random();
+                gettimeofday(&tv, NULL);
+                p = getpid();
+                s = p ^ tv.tv_sec ^ tv.tv_usec;
+                srandom(s);
+        }
+        seed = 1;
+        return random();
 }
 
 static inline int pr_type_is_all_registrants(
-	enum scsi_persistent_out_type pr_type)
+        enum scsi_persistent_out_type pr_type)
 {
-	switch (pr_type) {
-	case SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS:
-	case SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS:
-		return 1;
-	default:
-		return 0;
-	}
+        switch (pr_type) {
+        case SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS:
+        case SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS:
+                return 1;
+        default:
+                return 0;
+        }
 }
 
 int all_zeroes(const unsigned char *buf, unsigned size);
@@ -783,13 +783,13 @@ int prout_release(struct scsi_device *sdev,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
 int prout_clear(struct scsi_device *sdev, unsigned long long key);
 int prout_preempt(struct scsi_device *sdev,
-		  unsigned long long sark, unsigned long long rk,
-		  enum scsi_persistent_out_type pr_type);
+                  unsigned long long sark, unsigned long long rk,
+                  enum scsi_persistent_out_type pr_type);
 int prin_verify_not_reserved(struct scsi_device *sdev);
 int prin_verify_reserved_as(struct scsi_device *sdev,
     unsigned long long key, enum scsi_persistent_out_type pr_type);
 int prin_report_caps(struct scsi_device *sdev, struct scsi_task **tp,
-	struct scsi_persistent_reserve_in_report_capabilities **_rcaps);
+        struct scsi_persistent_reserve_in_report_capabilities **_rcaps);
 int verify_read_works(struct scsi_device *sdev, unsigned char *buf);
 int verify_write_works(struct scsi_device *sdev, unsigned char *buf);
 int verify_read_fails(struct scsi_device *sdev, unsigned char *buf);
@@ -844,8 +844,8 @@ int populate_seg_desc_hdr(unsigned char *hdr, enum ec_descr_type_code desc_type,
 int populate_seg_desc_b2b(unsigned char *desc, int dc, int cat, int src_index, int dst_index, int num_blks, uint64_t src_lba, uint64_t dst_lba);
 void populate_param_header(unsigned char *buf, int list_id, int str, int list_id_usage, int prio, int tgt_desc_len, int seg_desc_len, int inline_data_len);
 int receive_copy_results(struct scsi_task **task, struct scsi_device *sdev,
-			 enum scsi_copy_results_sa sa, int list_id,
-			 void **datap, int status, enum scsi_sense_key key,
-			 int *ascq, int num_ascq);
+                         enum scsi_copy_results_sa sa, int list_id,
+                         void **datap, int status, enum scsi_sense_key key,
+                         int *ascq, int num_ascq);
 int test_iscsi_tur_until_good(struct scsi_device *iscsi_sd, int *num_uas);
-#endif	/* _ISCSI_SUPPORT_H_ */
+#endif        /* _ISCSI_SUPPORT_H_ */

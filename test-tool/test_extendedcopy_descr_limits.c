@@ -28,88 +28,88 @@
 #include "iscsi-test-cu.h"
 
 int init_xcopy_descr(unsigned char *buf, int offset, int num_tgt_desc,
-		int num_seg_desc, int *tgt_desc_len, int *seg_desc_len)
+                int num_seg_desc, int *tgt_desc_len, int *seg_desc_len)
 {
-	int i;
+        int i;
 
-	/* Initialize target descriptor list with num_tgt_desc
-	 * target descriptor */
-	for (i = 0; i < num_tgt_desc; i++)
-		offset += populate_tgt_desc(buf+offset, IDENT_DESCR_TGT_DESCR,
-				LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);
-	*tgt_desc_len = offset - XCOPY_DESC_OFFSET;
+        /* Initialize target descriptor list with num_tgt_desc
+         * target descriptor */
+        for (i = 0; i < num_tgt_desc; i++)
+                offset += populate_tgt_desc(buf+offset, IDENT_DESCR_TGT_DESCR,
+                                LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);
+        *tgt_desc_len = offset - XCOPY_DESC_OFFSET;
 
-	/* Iniitialize segment descriptor list with num_seg_desc
-	 * segment descriptor */
-	for (i = 0; i < num_seg_desc; i++)
-		offset += populate_seg_desc_b2b(buf+offset, 0, 0, 0, 0,
-				2048, 0, num_blocks - 2048);
-	*seg_desc_len = offset - XCOPY_DESC_OFFSET - *tgt_desc_len;
+        /* Iniitialize segment descriptor list with num_seg_desc
+         * segment descriptor */
+        for (i = 0; i < num_seg_desc; i++)
+                offset += populate_seg_desc_b2b(buf+offset, 0, 0, 0, 0,
+                                2048, 0, num_blocks - 2048);
+        *seg_desc_len = offset - XCOPY_DESC_OFFSET - *tgt_desc_len;
 
-	return offset;
+        return offset;
 }
 
 void
 test_extendedcopy_descr_limits(void)
 {
-	struct scsi_task *edl_task;
-	struct iscsi_data data;
-	unsigned char *xcopybuf;
-	struct scsi_copy_results_op_params *opp = NULL;
-	int tgt_desc_len = 0, seg_desc_len = 0;
-	unsigned int alloc_len;
+        struct scsi_task *edl_task;
+        struct iscsi_data data;
+        unsigned char *xcopybuf;
+        struct scsi_copy_results_op_params *opp = NULL;
+        int tgt_desc_len = 0, seg_desc_len = 0;
+        unsigned int alloc_len;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test EXTENDED COPY descriptor limits");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test EXTENDED COPY descriptor limits");
 
-	CHECK_FOR_DATALOSS;
+        CHECK_FOR_DATALOSS;
 
-	logging(LOG_VERBOSE, "Issue RECEIVE COPY RESULTS (OPERATING PARAMS)");
-	RECEIVE_COPY_RESULTS(&edl_task, sd, SCSI_COPY_RESULTS_OP_PARAMS, 0,
+        logging(LOG_VERBOSE, "Issue RECEIVE COPY RESULTS (OPERATING PARAMS)");
+        RECEIVE_COPY_RESULTS(&edl_task, sd, SCSI_COPY_RESULTS_OP_PARAMS, 0,
                              (void **)&opp, EXPECT_STATUS_GOOD);
 
-	/* Allocate buffer to accommodate (MAX+1) target and
-	 * segment descriptors */
-	alloc_len = XCOPY_DESC_OFFSET +
-		(opp->max_target_desc_count+1) *
-		get_desc_len(IDENT_DESCR_TGT_DESCR) +
-		(opp->max_segment_desc_count+1) *
-		get_desc_len(BLK_TO_BLK_SEG_DESCR);
-	data.data = alloca(alloc_len);
-	xcopybuf = data.data;
-	memset(xcopybuf, 0, alloc_len);
+        /* Allocate buffer to accommodate (MAX+1) target and
+         * segment descriptors */
+        alloc_len = XCOPY_DESC_OFFSET +
+                (opp->max_target_desc_count+1) *
+                get_desc_len(IDENT_DESCR_TGT_DESCR) +
+                (opp->max_segment_desc_count+1) *
+                get_desc_len(BLK_TO_BLK_SEG_DESCR);
+        data.data = alloca(alloc_len);
+        xcopybuf = data.data;
+        memset(xcopybuf, 0, alloc_len);
 
-	logging(LOG_VERBOSE,
-			"Test sending more than supported target descriptors");
-	data.size = init_xcopy_descr(xcopybuf, XCOPY_DESC_OFFSET,
-			(opp->max_target_desc_count+1), 1,
-			&tgt_desc_len, &seg_desc_len);
-	populate_param_header(xcopybuf, 1, 0, 0, 0,
-			tgt_desc_len, seg_desc_len, 0);
-	EXTENDEDCOPY(sd, &data, EXPECT_TOO_MANY_DESCR);
+        logging(LOG_VERBOSE,
+                        "Test sending more than supported target descriptors");
+        data.size = init_xcopy_descr(xcopybuf, XCOPY_DESC_OFFSET,
+                        (opp->max_target_desc_count+1), 1,
+                        &tgt_desc_len, &seg_desc_len);
+        populate_param_header(xcopybuf, 1, 0, 0, 0,
+                        tgt_desc_len, seg_desc_len, 0);
+        EXTENDEDCOPY(sd, &data, EXPECT_TOO_MANY_DESCR);
 
-	logging(LOG_VERBOSE,
-			"Test sending more than supported segment descriptors");
-	memset(xcopybuf, 0, alloc_len);
-	data.size = init_xcopy_descr(xcopybuf, XCOPY_DESC_OFFSET, 1,
-			(opp->max_segment_desc_count+1),
-			&tgt_desc_len, &seg_desc_len);
-	populate_param_header(xcopybuf, 2, 0, 0, 0,
-			tgt_desc_len, seg_desc_len, 0);
-	EXTENDEDCOPY(sd, &data, EXPECT_TOO_MANY_DESCR);
+        logging(LOG_VERBOSE,
+                        "Test sending more than supported segment descriptors");
+        memset(xcopybuf, 0, alloc_len);
+        data.size = init_xcopy_descr(xcopybuf, XCOPY_DESC_OFFSET, 1,
+                        (opp->max_segment_desc_count+1),
+                        &tgt_desc_len, &seg_desc_len);
+        populate_param_header(xcopybuf, 2, 0, 0, 0,
+                        tgt_desc_len, seg_desc_len, 0);
+        EXTENDEDCOPY(sd, &data, EXPECT_TOO_MANY_DESCR);
 
-	logging(LOG_VERBOSE,
-			"Test sending descriptors > Maximum Descriptor List Length");
-	memset(xcopybuf, 0, alloc_len);
-	if (opp->max_desc_list_length < alloc_len) {
-		data.size = init_xcopy_descr(xcopybuf, XCOPY_DESC_OFFSET,
-				(opp->max_target_desc_count+1),
-				(opp->max_segment_desc_count+1),
-				&tgt_desc_len, &seg_desc_len);
-		populate_param_header(xcopybuf, 3, 0, 0, 0,
-				tgt_desc_len, seg_desc_len, 0);
-		EXTENDEDCOPY(sd, &data, EXPECT_PARAM_LIST_LEN_ERR);
-	}
+        logging(LOG_VERBOSE,
+                        "Test sending descriptors > Maximum Descriptor List Length");
+        memset(xcopybuf, 0, alloc_len);
+        if (opp->max_desc_list_length < alloc_len) {
+                data.size = init_xcopy_descr(xcopybuf, XCOPY_DESC_OFFSET,
+                                (opp->max_target_desc_count+1),
+                                (opp->max_segment_desc_count+1),
+                                &tgt_desc_len, &seg_desc_len);
+                populate_param_header(xcopybuf, 3, 0, 0, 0,
+                                tgt_desc_len, seg_desc_len, 0);
+                EXTENDEDCOPY(sd, &data, EXPECT_PARAM_LIST_LEN_ERR);
+        }
 
-	scsi_free_scsi_task(edl_task);
+        scsi_free_scsi_task(edl_task);
 }

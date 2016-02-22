@@ -29,10 +29,10 @@
 void
 test_report_supported_opcodes_simple(void)
 {
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test basic READ_SUPPORTED_OPCODES");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test basic READ_SUPPORTED_OPCODES");
 
-	REPORT_SUPPORTED_OPCODES(sd, NULL,
+        REPORT_SUPPORTED_OPCODES(sd, NULL,
                                  0, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0,
                                  1024,
                                  EXPECT_STATUS_GOOD);

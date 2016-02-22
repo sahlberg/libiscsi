@@ -31,44 +31,44 @@
 void
 test_multipathio_simple(void)
 {
-	int write_path;
-	unsigned char *write_buf = alloca(256 * block_size);
-	unsigned char *read_buf = alloca(256 * block_size);
+        int write_path;
+        unsigned char *write_buf = alloca(256 * block_size);
+        unsigned char *read_buf = alloca(256 * block_size);
 
-	CHECK_FOR_DATALOSS;
-	CHECK_FOR_SBC;
-	MPATH_SKIP_IF_UNAVAILABLE(mp_sds, mp_num_sds);
+        CHECK_FOR_DATALOSS;
+        CHECK_FOR_SBC;
+        MPATH_SKIP_IF_UNAVAILABLE(mp_sds, mp_num_sds);
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	memset(write_buf, 0xa6, 256 * block_size);
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        memset(write_buf, 0xa6, 256 * block_size);
 
-	for (write_path = 0; write_path < mp_num_sds; write_path++) {
-		int i;
-		int read_path;
+        for (write_path = 0; write_path < mp_num_sds; write_path++) {
+                int i;
+                int read_path;
 
-		/* read back written data using a different path */
-		read_path = (write_path + 1) % mp_num_sds;
+                /* read back written data using a different path */
+                read_path = (write_path + 1) % mp_num_sds;
 
-		logging(LOG_VERBOSE,
-			"Test multipath WRITE10/READ10 of 1-256 blocks using "
-			"path %d", write_path);
+                logging(LOG_VERBOSE,
+                        "Test multipath WRITE10/READ10 of 1-256 blocks using "
+                        "path %d", write_path);
 
-		for (i = 1; i <= 256; i++) {
-			if (maximum_transfer_length
-					&& maximum_transfer_length < i) {
-				break;
-			}
-			WRITE10(mp_sds[write_path], 0, i * block_size,
-				      block_size, 0, 0, 0, 0, 0, write_buf,
-				      EXPECT_STATUS_GOOD);
-			READ10(mp_sds[read_path], NULL, 0, i * block_size,
+                for (i = 1; i <= 256; i++) {
+                        if (maximum_transfer_length
+                                        && maximum_transfer_length < i) {
+                                break;
+                        }
+                        WRITE10(mp_sds[write_path], 0, i * block_size,
+                                      block_size, 0, 0, 0, 0, 0, write_buf,
+                                      EXPECT_STATUS_GOOD);
+                        READ10(mp_sds[read_path], NULL, 0, i * block_size,
                                block_size, 0, 0, 0, 0, 0, read_buf,
                                EXPECT_STATUS_GOOD);
 
-			/* compare written and read data */
-			CU_ASSERT_EQUAL(0,
-				memcmp(write_buf, read_buf, i * block_size));
-		}
+                        /* compare written and read data */
+                        CU_ASSERT_EQUAL(0,
+                                memcmp(write_buf, read_buf, i * block_size));
+                }
 
-	}
+        }
 }

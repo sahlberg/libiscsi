@@ -29,42 +29,42 @@
 void
 test_writesame10_beyond_eol(void)
 { 
-	int i;
+        int i;
 
-	CHECK_FOR_DATALOSS;
-	CHECK_FOR_SBC;
+        CHECK_FOR_DATALOSS;
+        CHECK_FOR_SBC;
 
-	if (num_blocks >= 0x80000000) {
-		CU_PASS("LUN is too big for write-beyond-eol tests with WRITESAME10. Skipping test.\n");
-		return;
-	}
+        if (num_blocks >= 0x80000000) {
+                CU_PASS("LUN is too big for write-beyond-eol tests with WRITESAME10. Skipping test.\n");
+                return;
+        }
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test WRITESAME10 1-256 blocks one block beyond the end");
-	memset(scratch, 0, block_size);
-	for (i = 1; i <= 256; i++) {
-		WRITESAME10(sd, num_blocks - i + 1,
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test WRITESAME10 1-256 blocks one block beyond the end");
+        memset(scratch, 0, block_size);
+        for (i = 1; i <= 256; i++) {
+                WRITESAME10(sd, num_blocks - i + 1,
                             block_size, i, 0, 0, 0, 0, scratch,
                             EXPECT_LBA_OOB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test WRITESAME10 1-256 blocks at LBA==2^31");
-	for (i = 1; i <= 256; i++) {
-		WRITESAME10(sd, 0x80000000,
+        logging(LOG_VERBOSE, "Test WRITESAME10 1-256 blocks at LBA==2^31");
+        for (i = 1; i <= 256; i++) {
+                WRITESAME10(sd, 0x80000000,
                             block_size, i, 0, 0, 0, 0, scratch,
                             EXPECT_LBA_OOB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test WRITESAME10 1-256 blocks at LBA==-1");
-	for (i = 1; i <= 256; i++) {
-		WRITESAME10(sd, -1, block_size, i, 0, 0, 0, 0, scratch,
+        logging(LOG_VERBOSE, "Test WRITESAME10 1-256 blocks at LBA==-1");
+        for (i = 1; i <= 256; i++) {
+                WRITESAME10(sd, -1, block_size, i, 0, 0, 0, 0, scratch,
                             EXPECT_LBA_OOB);
-	}
+        }
 
-	logging(LOG_VERBOSE, "Test WRITESAME10 2-256 blocks all but one block beyond the end");
-	for (i = 2; i <= 256; i++) {
-		WRITESAME10(sd, num_blocks - 1,
+        logging(LOG_VERBOSE, "Test WRITESAME10 2-256 blocks all but one block beyond the end");
+        for (i = 2; i <= 256; i++) {
+                WRITESAME10(sd, num_blocks - 1,
                             block_size, i, 0, 0, 0, 0, scratch,
                             EXPECT_LBA_OOB);
-	}
+        }
 }

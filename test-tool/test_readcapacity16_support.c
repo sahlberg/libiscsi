@@ -31,19 +31,19 @@ test_readcapacity16_support(void)
 {
         int ret;
 
-	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test that READCAPACITY16 is supported on SBC3");
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test that READCAPACITY16 is supported on SBC3");
 
-	ret = readcapacity16(sd, NULL, 15,
-			     EXPECT_STATUS_GOOD);
-	if (ret == -2) {
-		if (sbc3_support) {
-			logging(LOG_NORMAL, "[FAILED] READCAPACITY16 is not available but the device claims SBC-3 support.");
-			CU_FAIL("READCAPACITY16 failed but the device claims SBC-3 support.");
-		} else {
-			logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented on this target and it does not claim SBC-3 support.");
-		}
-	} else {
-		CU_ASSERT_EQUAL(ret, 0);
-	}
+        ret = readcapacity16(sd, NULL, 15,
+                             EXPECT_STATUS_GOOD);
+        if (ret == -2) {
+                if (sbc3_support) {
+                        logging(LOG_NORMAL, "[FAILED] READCAPACITY16 is not available but the device claims SBC-3 support.");
+                        CU_FAIL("READCAPACITY16 failed but the device claims SBC-3 support.");
+                } else {
+                        logging(LOG_NORMAL, "[SKIPPED] READCAPACITY16 is not implemented on this target and it does not claim SBC-3 support.");
+                }
+        } else {
+                CU_ASSERT_EQUAL(ret, 0);
+        }
 }
