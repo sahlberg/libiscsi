@@ -31,6 +31,7 @@ void
 test_write10_simple(void)
 {
         int i;
+	uint32_t lba;
 
         CHECK_FOR_DATALOSS;
 
@@ -54,5 +55,20 @@ test_write10_simple(void)
                 WRITE10(sd, num_blocks - i,
                         i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
+        }
+
+        lba = ((4 * 1024 * 1024) / block_size) - 3;
+        if (num_blocks > (lba + 256)) {
+                logging(LOG_VERBOSE,
+                        "Test WRITE10 of 1-256 blocks at ~4MB offset");
+                for (i = 1; i <= 256; i++) {
+                        if (maximum_transfer_length
+                         && maximum_transfer_length < i) {
+                                break;
+                        }
+                        WRITE10(sd, lba, i * block_size,
+                                block_size, 0, 0, 0, 0, 0, scratch,
+                                EXPECT_STATUS_GOOD);
+                }
         }
 }
