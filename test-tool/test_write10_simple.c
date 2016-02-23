@@ -31,6 +31,7 @@ void
 test_write10_simple(void)
 {
 	int i, ret;
+	uint32_t lba;
 	unsigned char *buf = alloca(256 * block_size);
 
 
@@ -65,4 +66,25 @@ test_write10_simple(void)
 		CU_ASSERT_EQUAL(ret, 0);
 	}
 
+	lba = ((4 * 1024 * 1024) / block_size) - 3;
+	if (num_blocks > (lba + 256)) {
+		logging(LOG_VERBOSE,
+			"Test WRITE10 of 1-256 blocks at ~4MB offset");
+		for (i = 1; i <= 256; i++) {
+			if (maximum_transfer_length
+			 && maximum_transfer_length < i) {
+				break;
+			}
+			ret = write10(sd, lba, i * block_size,
+				      block_size, 0, 0, 0, 0, 0, buf,
+				      EXPECT_STATUS_GOOD);
+			if (ret == -2) {
+				logging(LOG_NORMAL,
+				       "[SKIPPED] WRITE10 is not implemented.");
+				CU_PASS("WRITE10 is not implemented.");
+				return;
+			}
+			CU_ASSERT_EQUAL(ret, 0);
+		}
+	}
 }
