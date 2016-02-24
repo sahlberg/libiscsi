@@ -127,7 +127,7 @@ static const unsigned char zeroBlock[4096];
 /**
  * Returns 1 if and only if buf[0..size-1] is zero.
  */
-int all_zeroes(const unsigned char *buf, unsigned size)
+int all_zero(const unsigned char *buf, unsigned size)
 {
         unsigned j, e;
 

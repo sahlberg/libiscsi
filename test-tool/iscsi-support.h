@@ -686,6 +686,17 @@ do {                                                                        \
                 CU_ASSERT_EQUAL(_r, 0);                                 \
         } while (0);
 
+#define ALL_ZERO(...)                                                   \
+        do {                                                            \
+                if (all_zero(__VA_ARGS__) == 0) {                       \
+                        logging(LOG_NORMAL, "[FAILED] Blocks did not "  \
+                                "read back as zero");                   \
+                        CU_FAIL("[FAILED] Blocks did not read back "    \
+                                "as zero");                             \
+                        return;                                         \
+                }                                                       \
+        } while (0);
+
 extern struct scsi_inquiry_standard *inq;
 extern struct scsi_inquiry_logical_block_provisioning *inq_lbp;
 extern struct scsi_inquiry_block_device_characteristics *inq_bdc;
@@ -763,7 +774,7 @@ static inline int pr_type_is_all_registrants(
         }
 }
 
-int all_zeroes(const unsigned char *buf, unsigned size);
+int all_zero(const unsigned char *buf, unsigned size);
 
 int prin_task(struct scsi_device *sdev, int service_action,
     int success_expected);

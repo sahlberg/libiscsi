@@ -69,7 +69,7 @@ test_writesame16_unmap_until_end(void)
                                i * block_size, block_size,
                                0, 0, 0, 0, 0, scratch,
                                EXPECT_STATUS_GOOD);
-                        CU_ASSERT(all_zeroes(scratch, i * block_size));
+                        ALL_ZERO(scratch, i * block_size);
                 } else {
                         logging(LOG_VERBOSE, "LBPRZ is clear. Skip the read "
                                 "and verify zero test");

@@ -64,15 +64,7 @@ test_unmap_simple(void)
                 if (rc16 && rc16->lbprz) {
                         logging(LOG_VERBOSE, "LBPRZ==1 All UNMAPPED blocks "
                                 "should read back as 0");
-                        if (all_zeroes(scratch, i * block_size) == 0) {
-                                logging(LOG_NORMAL, "[FAILED] Blocks did not "
-                                        "read back as zero");
-                                CU_FAIL("[FAILED] Blocks did not read back "
-                                        "as zero");
-                        } else {
-                                logging(LOG_VERBOSE, "[SUCCESS] Blocks read "
-                                        "back as zero");
-                        }
+                        ALL_ZERO(scratch, i * block_size);
                 }
         }
 
@@ -100,15 +92,7 @@ test_unmap_simple(void)
                 if (rc16 && rc16->lbprz) {
                         logging(LOG_VERBOSE, "LBPRZ==1 All UNMAPPED blocks "
                                 "should read back as 0");
-                        if (all_zeroes(scratch, i * block_size) == 0) {
-                                logging(LOG_NORMAL, "[FAILED] Blocks did not "
-                                        "read back as zero");
-                                CU_FAIL("[FAILED] Blocks did not read back "
-                                        "as zero");
-                        } else {
-                                logging(LOG_VERBOSE, "[SUCCESS] Blocks read "
-                                        "back as zero");
-                        }
+                        ALL_ZERO(scratch, i * block_size);
                 }
         }
 }
