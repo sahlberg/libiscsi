@@ -2011,11 +2011,11 @@ int
 release6(struct scsi_device *sdev)
 {
         struct scsi_task *task;
-        int i, res = 0;
+        int i, res = -1;
 
         logging(LOG_VERBOSE, "Send RELEASE6");
 
-        for (i = 0; i < 3 && res == 0; ++i) {
+        for (i = 0; i < 3 && res != 0; ++i) {
                 task = scsi_cdb_release6();
                 assert(task != NULL);
 
@@ -2035,6 +2035,8 @@ release6(struct scsi_device *sdev)
                                 "failed with sense. %s",
                                 iscsi_get_error(sdev->iscsi_ctx));
                         res = -1;
+                } else {
+                        res = 0;
                 }
                 scsi_free_scsi_task(task);
         }
@@ -2073,11 +2075,11 @@ int
 reserve6(struct scsi_device *sdev)
 {
         struct scsi_task *task;
-        int i, res = 0;
+        int i, res = -1;
 
         logging(LOG_VERBOSE, "Send RESERVE6");
 
-        for (i = 0; i < 3 && res == 0; ++i) {
+        for (i = 0; i < 3 && res != 0; ++i) {
                 task = scsi_cdb_reserve6();
                 assert(task != NULL);
 
@@ -2101,6 +2103,8 @@ reserve6(struct scsi_device *sdev)
                                 "failed with sense. %s",
                                 iscsi_get_error(sdev->iscsi_ctx));
                         res = -1;
+                } else {
+                        res = 0;
                 }
                 scsi_free_scsi_task(task);
         }
@@ -2114,11 +2118,11 @@ int
 reserve6_conflict(struct scsi_device *sdev)
 {
         struct scsi_task *task;
-        int i, res = 0;
+        int i, res = -1;
 
         logging(LOG_VERBOSE, "Send RESERVE6 (Expecting RESERVATION_CONFLICT)");
 
-        for (i = 0; i < 3 && res == 0; ++i) {
+        for (i = 0; i < 3 && res != 0; ++i) {
                 task = scsi_cdb_reserve6();
                 assert(task != NULL);
 
@@ -2141,6 +2145,8 @@ reserve6_conflict(struct scsi_device *sdev)
                         logging(LOG_NORMAL, "[FAILED] RESERVE6 command: "
                                 "should have failed with RESERVATION_CONFLICT");
                         res = -1;
+                } else {
+                        res = 0;
                 }
                 scsi_free_scsi_task(task);
         }
