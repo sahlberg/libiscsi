@@ -29,7 +29,7 @@
 void
 test_unmap_simple(void)
 {
-        int i, ret;
+        int i;
         struct unmap_list list[257];
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -77,7 +77,6 @@ test_unmap_simple(void)
                 block_size, 0, 0, 0, 0, 0, scratch,
                 EXPECT_STATUS_GOOD);
 
-        CU_ASSERT_EQUAL(ret, 0);
         for (i = 0; i < 256; i++) {
                 list[i].lba = i;
                 list[i].num = 1;
