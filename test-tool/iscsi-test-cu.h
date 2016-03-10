@@ -145,6 +145,7 @@ void test_read10_rdprotect(void);
 void test_read10_dpofua(void);
 void test_read10_residuals(void);
 void test_read10_invalid(void);
+void test_async_read(void);
 
 void test_read12_simple(void);
 void test_read12_beyond_eol(void);

@@ -227,6 +227,7 @@ static CU_TestInfo tests_read10[] = {
         { (char *)"ZeroBlocks", test_read10_0blocks },
         { (char *)"ReadProtect", test_read10_rdprotect },
         { (char *)"DpoFua", test_read10_dpofua },
+        { (char *)"Async", test_async_read },
         CU_TEST_INFO_NULL
 };
 
