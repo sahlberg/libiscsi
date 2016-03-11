@@ -309,5 +309,6 @@ void test_writeverify16_residuals(void);
 void test_multipathio_simple(void);
 void test_multipathio_reset(void);
 void test_multipathio_compareandwrite(void);
+void test_mpio_async_caw(void);
 
 #endif        /* _ISCSI_TEST_CU_H_ */
