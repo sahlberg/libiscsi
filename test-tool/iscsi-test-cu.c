@@ -378,6 +378,7 @@ static CU_TestInfo tests_write10[] = {
         { (char *)"ZeroBlocks", test_write10_0blocks },
         { (char *)"WriteProtect", test_write10_wrprotect },
         { (char *)"DpoFua", test_write10_dpofua },
+        { (char *)"Async", test_async_write },
         CU_TEST_INFO_NULL
 };
 
