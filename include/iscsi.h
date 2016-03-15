@@ -82,6 +82,11 @@ EXTERN int iscsi_service(struct iscsi_context *iscsi, int revents);
  * How many commands are in flight.
  */
 EXTERN int iscsi_queue_length(struct iscsi_context *iscsi);
+/*
+ * How many commands are queued for dispatch.
+ */
+EXTERN int iscsi_out_queue_length(struct iscsi_context *iscsi);
+
 
 /************************************************************
  * Timeout Handling.

@@ -439,6 +439,19 @@ iscsi_queue_length(struct iscsi_context *iscsi)
 	return i;
 }
 
+int
+iscsi_out_queue_length(struct iscsi_context *iscsi)
+{
+	int i = 0;
+	struct iscsi_pdu *pdu;
+
+	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
+		i++;
+	}
+
+	return i;
+}
+
 ssize_t
 iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *iovector, uint32_t pos, ssize_t count, int do_write)
 {
