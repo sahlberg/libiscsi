@@ -595,6 +595,17 @@ enum iscsi_task_mgmt_funcs {
      ISCSI_TM_TASK_REASSIGN     = 0x08
 };
 
+enum iscsi_task_mgmt_response {
+	ISCSI_TMR_FUNC_COMPLETE				= 0x0,
+	ISCSI_TMR_TASK_DOES_NOT_EXIST			= 0x1,
+	ISCSI_TMR_LUN_DOES_NOT_EXIST			= 0x2,
+	ISCSI_TMR_TASK_STILL_ALLEGIANT			= 0x3,
+	ISCSI_TMR_TASK_ALLEGIANCE_REASS_NOT_SUPPORTED	= 0x4,
+	ISCSI_TMR_TMF_NOT_SUPPORTED			= 0x5,
+	ISCSI_TMR_FUNC_AUTH_FAILED			= 0x6,
+	ISCSI_TMR_FUNC_REJECTED				= 0xFF
+};
+
 /*
  * Asynchronous call for task management
  *
