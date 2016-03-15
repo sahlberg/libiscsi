@@ -227,6 +227,7 @@ static CU_TestInfo tests_read10[] = {
         { (char *)"ZeroBlocks", test_read10_0blocks },
         { (char *)"ReadProtect", test_read10_rdprotect },
         { (char *)"DpoFua", test_read10_dpofua },
+        { (char *)"Async", test_async_read },
         CU_TEST_INFO_NULL
 };
 
@@ -377,6 +378,7 @@ static CU_TestInfo tests_write10[] = {
         { (char *)"ZeroBlocks", test_write10_0blocks },
         { (char *)"WriteProtect", test_write10_wrprotect },
         { (char *)"DpoFua", test_write10_dpofua },
+        { (char *)"Async", test_async_write },
         CU_TEST_INFO_NULL
 };
 
@@ -466,6 +468,7 @@ static CU_TestInfo tests_multipathio[] = {
         { (char *)"Simple", test_multipathio_simple },
         { (char *)"Reset", test_multipathio_reset },
         { (char *)"CompareAndWrite", test_multipathio_compareandwrite },
+        { (char *)"CompareAndWriteAsync", test_mpio_async_caw },
         CU_TEST_INFO_NULL
 };
 
