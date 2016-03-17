@@ -344,6 +344,10 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
 			 * All other PDUs are discarded at this point.
 			 * This includes DATA-OUT, NOP and task management.
 			 */
+			if (pdu->callback) {
+				pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
+				              NULL, pdu->private_data);
+			}
 			iscsi_free_pdu(old_iscsi, pdu);
 			continue;
 		}
