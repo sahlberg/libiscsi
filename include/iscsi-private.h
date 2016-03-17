@@ -233,8 +233,6 @@ struct iscsi_pdu {
 #define ISCSI_PDU_DROP_ON_RECONNECT	0x00000004
 /* stop sending after this PDU has been sent */
 #define ISCSI_PDU_CORK_WHEN_SENT	0x00000008
-/* Fail the command with error on reconnect */
-#define ISCSI_PDU_ERROR_ON_RECONNECT	0x00000016
 
 	uint32_t flags;
 
