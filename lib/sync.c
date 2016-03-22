@@ -276,8 +276,6 @@ int
 iscsi_task_mgmt_abort_task_sync(struct iscsi_context *iscsi,
 				struct scsi_task *task)
 {
-	iscsi_scsi_cancel_task(iscsi, task);
-
 	return iscsi_task_mgmt_sync(iscsi, task->lun,
 				    ISCSI_TM_ABORT_TASK,
 				    task->itt, task->cmdsn);
