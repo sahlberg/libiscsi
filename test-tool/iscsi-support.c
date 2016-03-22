@@ -3028,3 +3028,22 @@ test_iscsi_tur_until_good(struct scsi_device *iscsi_sd, int *num_uas)
 
         return -ETIMEDOUT;
 }
+
+uint64_t
+test_get_clock_sec(void)
+{
+	uint64_t secs;
+	int res;
+
+#ifdef HAVE_CLOCK_GETTIME
+	struct timespec ts;
+	res = clock_gettime(CLOCK_MONOTONIC, &ts);
+	secs = ts.tv_sec;
+#else
+	struct timeval tv;
+	res = gettimeofday(&tv, NULL);
+	secs = tv.tv_sec;
+#endif
+	assert(res == 0);
+	return secs;
+}

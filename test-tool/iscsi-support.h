@@ -859,4 +859,7 @@ int receive_copy_results(struct scsi_task **task, struct scsi_device *sdev,
                          void **datap, int status, enum scsi_sense_key key,
                          int *ascq, int num_ascq);
 int test_iscsi_tur_until_good(struct scsi_device *iscsi_sd, int *num_uas);
+
+uint64_t test_get_clock_sec(void);
+
 #endif        /* _ISCSI_SUPPORT_H_ */
