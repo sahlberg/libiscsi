@@ -666,9 +666,12 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		iscsi_set_error(iscsi, "Cannot create MD5 algorithm");
 		return -1;
 	}
+	printf("CHAP_I: %d\n", iscsi->chap_i);
 	gcry_md_putc(ctx, iscsi->chap_i);
+	printf("passwd: %.*s\n", (int) strlen(iscsi->passwd), iscsi->passwd);
 	gcry_md_write(ctx, (unsigned char *)iscsi->passwd, strlen(iscsi->passwd));
 
+	printf("CHAP_C: %.*s\n", MAX_STRING_SIZE+1, iscsi->chap_c);
 	strp = iscsi->chap_c;
 	while (*strp != 0) {
 		c = (h2i(strp[0]) << 4) | h2i(strp[1]);
@@ -685,16 +688,22 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return -1;
 	}
 
+	char chap_r_pbuf[CHAP_R_SIZE*2];
+
 	for (i = 0; i < CHAP_R_SIZE; i++) {
 		c = digest[i];
 		cc[0] = i2h((c >> 4)&0x0f);
 		cc[1] = i2h((c     )&0x0f);
+		chap_r_pbuf[2*i] = cc[0];
+		chap_r_pbuf[2*i+1] = cc[1];
 		if (iscsi_pdu_add_data(iscsi, pdu, &cc[0], 2) != 0) {
 			iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
 				"failed.");
 			return -1;
 		}
 	}
+	printf("CHAP_R: %.*s\n", CHAP_R_SIZE*2, chap_r_pbuf);
+
 	c = 0;
 	if (iscsi_pdu_add_data(iscsi, pdu, &c, 1) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
