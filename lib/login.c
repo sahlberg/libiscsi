@@ -695,6 +695,7 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 			return -1;
 		}
 	}
+
 	c = 0;
 	if (iscsi_pdu_add_data(iscsi, pdu, &c, 1) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data "
@@ -1153,7 +1154,15 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		}
 
 		if (!strncmp(ptr, "CHAP_C=0x", 9)) {
-			strncpy(iscsi->chap_c,ptr+9,MAX_STRING_SIZE);
+			if (len-9 > MAX_CHAP_C_LENGTH) {
+				iscsi_set_error(iscsi, "Wrong length of CHAP_C received from"
+						" target (%d, max: %d)", len-9, MAX_CHAP_C_LENGTH);
+				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+						  pdu->private_data);
+				return 0;
+			}
+			*iscsi->chap_c = '\0';
+			strncat(iscsi->chap_c,ptr+9,len-9);
 			iscsi->secneg_phase = ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE;
 		}
 

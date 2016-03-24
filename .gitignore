@@ -50,3 +50,5 @@ TAGS
 /utils/iscsi-readcapacity16
 /utils/iscsi-swp
 /libiscsi.pc
+/.cproject
+/.project
