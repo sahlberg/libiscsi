@@ -63,6 +63,9 @@ void iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *
 /* size of chap response field */
 #define CHAP_R_SIZE 16
 
+/* max length of chap challange */
+#define MAX_CHAP_C_LENGTH 2048
+
 struct iscsi_context {
 	char initiator_name[MAX_STRING_SIZE+1];
 	char target_name[MAX_STRING_SIZE+1];
@@ -74,7 +77,7 @@ struct iscsi_context {
 
 	char user[MAX_STRING_SIZE+1];
 	char passwd[MAX_STRING_SIZE+1];
-	char chap_c[MAX_STRING_SIZE+1];
+	char chap_c[MAX_CHAP_C_LENGTH+1];
 
 	char target_user[MAX_STRING_SIZE+1];
 	char target_passwd[MAX_STRING_SIZE+1];
