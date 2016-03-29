@@ -559,6 +559,11 @@ static CU_TestInfo tests_iscsi_residuals[] = {
         CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_iscsi_tmf[] = {
+        { (char *)"AbortTaskSimpleAsync", test_async_abort_simple },
+        CU_TEST_INFO_NULL
+};
+
 /* iSCSI protocol tests */
 static libiscsi_suite_info iscsi_suites[] = {
         { "iSCSIcmdsn", NON_PGR_FUNCS,
@@ -567,6 +572,8 @@ static libiscsi_suite_info iscsi_suites[] = {
           tests_iscsi_datasn },
         { "iSCSIResiduals", NON_PGR_FUNCS,
           tests_iscsi_residuals },
+	{ "iSCSITMF", NON_PGR_FUNCS,
+	  tests_iscsi_tmf },
         { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -621,6 +628,7 @@ static libiscsi_suite_info all_suites[] = {
         { "iSCSIcmdsn", NON_PGR_FUNCS, tests_iscsi_cmdsn },
         { "iSCSIdatasn", NON_PGR_FUNCS, tests_iscsi_datasn },
         { "iSCSIResiduals", NON_PGR_FUNCS, tests_iscsi_residuals },
+	{ "iSCSITMF", NON_PGR_FUNCS, tests_iscsi_tmf },
         { "MultipathIO", NON_PGR_FUNCS, tests_multipathio },
         { NULL, NULL, NULL, NULL, NULL, NULL },
 };

@@ -101,14 +101,11 @@ iscsi_process_task_mgmt_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 	return 0;
 }
 
-
 int
 iscsi_task_mgmt_abort_task_async(struct iscsi_context *iscsi,
 		      struct scsi_task *task,
 		      iscsi_command_cb cb, void *private_data)
 {
-	iscsi_scsi_cancel_task(iscsi, task);
-
 	return iscsi_task_mgmt_async(iscsi,
 		      task->lun, ISCSI_TM_ABORT_TASK,
 		      task->itt, task->cmdsn,
