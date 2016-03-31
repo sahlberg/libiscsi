@@ -174,6 +174,11 @@ void list_luns(struct client_state *clnt, const char *target, const char *portal
 	int full_report_size;
 	int i;
 
+	if (strncasecmp(portal, "[fe80:", 6) == 0) {
+		fprintf(stderr, "skipping link-local address\n");
+		return;
+	}
+
 	iscsi = iscsi_create_context(initiator);
 	if (iscsi == NULL) {
 		printf("Failed to create context\n");
