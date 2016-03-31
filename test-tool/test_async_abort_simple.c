@@ -87,7 +87,7 @@ void
 test_async_abort_simple(void)
 {
 	int ret;
-	struct tests_async_abort_state state = { 0 };
+	struct tests_async_abort_state state = { NULL, 0, 0, 0, 0 };
 	int blocksize = 512;
 	int blocks_per_io = 8;
 	unsigned char buf[blocksize * blocks_per_io];

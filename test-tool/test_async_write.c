@@ -58,7 +58,7 @@ void
 test_async_write(void)
 {
 	int i, ret;
-	struct tests_async_write_state state = { 0 };
+	struct tests_async_write_state state = { 0, 0, 0 };
 	int blocksize = 512;
 	int blocks_per_io = 8;
 	int num_ios = 1000;
