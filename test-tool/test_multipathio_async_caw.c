@@ -102,7 +102,7 @@ test_mpio_async_caw(void)
 {
 	int i, ret;
 	int sd_i;
-	struct test_mpio_async_caw_state state = { 0 };
+	struct test_mpio_async_caw_state state = { 0, 0, 0 };
 	int blocksize = 512;
 	int num_ios = 1000;
 	uint32_t lba = 0;

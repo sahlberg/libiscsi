@@ -59,7 +59,7 @@ void
 test_async_read(void)
 {
 	int i, ret;
-	struct tests_async_read_state state = { 0 };
+	struct tests_async_read_state state = { 0, 0, 0 };
 	int blocksize = 512;
 	int blocks_per_io = 8;
 	int num_ios = 1000;
