@@ -30,7 +30,7 @@
 void
 test_writeatomic16_simple(void)
 {
-        int i, gran;
+        int i, align, gran;
         const size_t bufsz = 256 * block_size;
 
         CHECK_FOR_DATALOSS;
@@ -60,7 +60,8 @@ test_writeatomic16_simple(void)
         }
 
         logging(LOG_VERBOSE, "Test WRITEATOMIC16 of 1-256 blocks at the end of the LUN");
-        for (i = gran; i <= 256; i += gran) {
+        align = inq_bl->atomic_align ? inq_bl->atomic_align : 1;
+        for (i = align; i <= 256; i += align) {
                 if (maximum_transfer_length && maximum_transfer_length < i) {
                         break;
                 }
