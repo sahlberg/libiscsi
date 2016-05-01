@@ -765,6 +765,7 @@ int
 suite_init(void)
 {
         int i;
+        char const *initiatornames[MPATH_MAX_DEVS] = { initiatorname1, initiatorname2 };
 
         for (i = 0; i < mp_num_sds; i++) {
                 if (!mp_sds[i]->iscsi_url) {
@@ -774,7 +775,7 @@ suite_init(void)
                         iscsi_logout_sync(mp_sds[i]->iscsi_ctx);
                         iscsi_destroy_context(mp_sds[i]->iscsi_ctx);
                 }
-                mp_sds[i]->iscsi_ctx = iscsi_context_login(initiatorname1,
+                mp_sds[i]->iscsi_ctx = iscsi_context_login(initiatornames[i],
                                                         mp_sds[i]->iscsi_url,
                                                         &mp_sds[i]->iscsi_lun);
                 if (mp_sds[i]->iscsi_ctx == NULL) {
