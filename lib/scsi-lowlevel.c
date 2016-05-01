@@ -1428,6 +1428,10 @@ scsi_inquiry_unmarshall_block_limits(struct scsi_task *task)
 	inq->max_atomic_xfer_len   = task_get_uint32(task, 44);
 	inq->atomic_align          = task_get_uint32(task, 48);
 	inq->atomic_gran           = task_get_uint32(task, 52);
+	inq->max_atomic_tl_with_atomic_boundary =
+                task_get_uint32(task, 56);
+	inq->max_atomic_boundary_size =
+                task_get_uint32(task, 60);
 
 	return inq;
 }
