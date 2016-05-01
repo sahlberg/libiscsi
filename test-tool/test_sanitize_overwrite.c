@@ -86,10 +86,6 @@ test_sanitize_overwrite(void)
                 "or a SSD device.");
         if (inq_bdc && inq_bdc->medium_rotation_rate == 0) {
                 logging(LOG_NORMAL, "This is a HDD device");
-                logging(LOG_NORMAL, "[WARNING] SANITIZE OVERWRITE opcode is "
-                        "supported but MediumRotationRate is 0 "
-                        "indicating that this is an SSD. Only HDDs should "
-                        "implement OVERWRITE");
         } else {
                 logging(LOG_NORMAL, "This is a SSD device");
         }

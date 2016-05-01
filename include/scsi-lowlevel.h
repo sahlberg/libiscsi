@@ -563,6 +563,8 @@ struct scsi_inquiry_block_limits {
 	uint32_t max_atomic_xfer_len;
 	uint32_t atomic_align;
 	uint32_t atomic_gran;
+	uint32_t max_atomic_tl_with_atomic_boundary;
+	uint32_t max_atomic_boundary_size;
 };
 
 struct scsi_inquiry_block_device_characteristics {
