@@ -78,7 +78,6 @@ iscsi_task_mgmt_async(struct iscsi_context *iscsi,
 	/* rcmdsn */
 	iscsi_pdu_set_rcmdsn(pdu, rcmdsn);
 
-	
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
 
@@ -97,7 +96,9 @@ iscsi_process_task_mgmt_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 {
 	uint32_t response = in->hdr[2];
 
-	pdu->callback(iscsi, SCSI_STATUS_GOOD, &response, pdu->private_data);
+	if (pdu->callback) {
+		pdu->callback(iscsi, SCSI_STATUS_GOOD, &response, pdu->private_data);
+	}
 	return 0;
 }
 

@@ -365,7 +365,7 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 
 	if (pdu->callback) {
 		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-					pdu->private_data);
+		              pdu->private_data);
 	}
 
 	ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
@@ -708,7 +708,7 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 		iscsi_dump_pdu_header(iscsi, pdu->outdata.data);
 		if (pdu->callback) {
 			pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
-					  NULL, pdu->private_data);
+			              NULL, pdu->private_data);
 		}
 		iscsi_free_pdu(iscsi, pdu);
 	}
@@ -728,7 +728,7 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 		iscsi_dump_pdu_header(iscsi, pdu->outdata.data);
 		if (pdu->callback) {
 			pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
-					  NULL, pdu->private_data);
+			              NULL, pdu->private_data);
 		}
 		iscsi_free_pdu(iscsi, pdu);
 	}

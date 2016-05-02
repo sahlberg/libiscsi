@@ -59,15 +59,19 @@ iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 	case SCSI_STATUS_CANCELLED:
 	case SCSI_STATUS_TIMEOUT:
 		scsi_cbdata->task->status = status;
-		scsi_cbdata->callback(iscsi, status, scsi_cbdata->task,
-				      scsi_cbdata->private_data);
+		if (scsi_cbdata->callback) {
+			scsi_cbdata->callback(iscsi, status, scsi_cbdata->task,
+			                      scsi_cbdata->private_data);
+		}
 		return;
 	default:
 		scsi_cbdata->task->status = SCSI_STATUS_ERROR;
 		iscsi_set_error(iscsi, "Cant handle  scsi status %d yet.",
-				status);
-		scsi_cbdata->callback(iscsi, SCSI_STATUS_ERROR, scsi_cbdata->task,
-				      scsi_cbdata->private_data);
+		                status);
+		if (scsi_cbdata->callback) {
+			scsi_cbdata->callback(iscsi, SCSI_STATUS_ERROR, scsi_cbdata->task,
+			                      scsi_cbdata->private_data);
+		}
 	}
 }
 
@@ -90,13 +94,7 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		if (pdu == NULL) {
 			iscsi_set_error(iscsi, "Out-of-memory, Failed to allocate "
 				"scsi data out pdu.");
-			ISCSI_LIST_REMOVE(&iscsi->outqueue, cmd_pdu);
-			ISCSI_LIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
-			cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-				     cmd_pdu->private_data);
-			iscsi_free_pdu(iscsi, cmd_pdu);
-			return -1;
-
+			goto error;
 		}
 		pdu->scsi_cbdata.task         = cmd_pdu->scsi_cbdata.task;
 		/* set the cmdsn in the pdu struct so we can compare with
@@ -134,19 +132,23 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 			iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"scsi pdu.");
-			ISCSI_LIST_REMOVE(&iscsi->outqueue, cmd_pdu);
-			ISCSI_LIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
-			cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-				     cmd_pdu->private_data);
-			iscsi_free_pdu(iscsi, cmd_pdu);
-			iscsi_free_pdu(iscsi, pdu);
-			return -1;
+			goto error;
 		}
 
 		tot_len -= len;
 		offset  += len;
 	}
 	return 0;
+
+error:
+	ISCSI_LIST_REMOVE(&iscsi->outqueue, cmd_pdu);
+	ISCSI_LIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
+	if (cmd_pdu->callback) {
+		cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+						  cmd_pdu->private_data);
+	}
+	iscsi_free_pdu(iscsi, cmd_pdu);
+	return -1;
 }
 
 static int
@@ -370,15 +372,19 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	if ((flags&ISCSI_PDU_DATA_FINAL) == 0) {
 		iscsi_set_error(iscsi, "scsi response pdu but Final bit is "
 				"not set: 0x%02x.", flags);
-		pdu->callback(iscsi, SCSI_STATUS_ERROR, task,
-			      pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_ERROR, task,
+			              pdu->private_data);
+		}
 		return -1;
 	}
 	if ((flags&ISCSI_PDU_DATA_ACK_REQUESTED) != 0) {
 		iscsi_set_error(iscsi, "scsi response asked for ACK "
 				"0x%02x.", flags);
-		pdu->callback(iscsi, SCSI_STATUS_ERROR, task,
-			      pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_ERROR, task,
+			              pdu->private_data);
+		}
 		return -1;
 	}
 
@@ -392,8 +398,10 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		if (response != 0) {
 			iscsi_set_error(iscsi, "protocol error: flags %#02x;"
 					" response %#02x.", flags, response);
-			pdu->callback(iscsi, SCSI_STATUS_ERROR, task,
-				      pdu->private_data);
+			if (pdu->callback) {
+				pdu->callback(iscsi, SCSI_STATUS_ERROR, task,
+				              pdu->private_data);
+			}
 			return -1;
 		}
 		task->residual = scsi_get_uint32(&in->hdr[44]);
@@ -421,8 +429,10 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		pdu->indata.data = NULL;
 		pdu->indata.size = 0;
 
-		pdu->callback(iscsi, SCSI_STATUS_GOOD, task,
-			      pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_GOOD, task,
+			              pdu->private_data);
+		}
 		break;
 	case SCSI_STATUS_CHECK_CONDITION:
 		task->datain.size = in->data_pos;
@@ -440,39 +450,52 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				task->sense.key,
 				scsi_sense_ascq_str(task->sense.ascq),
 				task->sense.ascq);
-		pdu->callback(iscsi, SCSI_STATUS_CHECK_CONDITION, task,
-			      pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_CHECK_CONDITION, task,
+			              pdu->private_data);
+		}
 		break;
 	case SCSI_STATUS_RESERVATION_CONFLICT:
 		iscsi_set_error(iscsi, "RESERVATION CONFLICT");
-		pdu->callback(iscsi, SCSI_STATUS_RESERVATION_CONFLICT,
-			task, pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_RESERVATION_CONFLICT,
+			              task, pdu->private_data);
+		}
 		break;
 	case SCSI_STATUS_TASK_SET_FULL:
 		iscsi_set_error(iscsi, "TASK_SET_FULL");
-		pdu->callback(iscsi, SCSI_STATUS_TASK_SET_FULL,
-			task, pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_TASK_SET_FULL,
+			              task, pdu->private_data);
+		}
 		break;
 	case SCSI_STATUS_ACA_ACTIVE:
 		iscsi_set_error(iscsi, "ACA_ACTIVE");
-		pdu->callback(iscsi, SCSI_STATUS_ACA_ACTIVE,
-			task, pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_ACA_ACTIVE,
+			              task, pdu->private_data);
+		}
 		break;
 	case SCSI_STATUS_TASK_ABORTED:
 		iscsi_set_error(iscsi, "TASK_ABORTED");
-		pdu->callback(iscsi, SCSI_STATUS_TASK_ABORTED,
-			task, pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_TASK_ABORTED,
+			              task, pdu->private_data);
+		}
 		break;
 	case SCSI_STATUS_BUSY:
 		iscsi_set_error(iscsi, "BUSY");
-		pdu->callback(iscsi, SCSI_STATUS_BUSY,
-			task, pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_BUSY,
+			              task, pdu->private_data);
+		}
 		break;
 	default:
 		iscsi_set_error(iscsi, "Unknown SCSI status :%d.", status);
-
-		pdu->callback(iscsi, SCSI_STATUS_ERROR, task,
-			      pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_ERROR,
+			              task, pdu->private_data);
+		}
 		return -1;
 	}
 
@@ -492,8 +515,10 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	if ((flags&ISCSI_PDU_DATA_ACK_REQUESTED) != 0) {
 		iscsi_set_error(iscsi, "scsi response asked for ACK "
 				"0x%02x.", flags);
-		pdu->callback(iscsi, SCSI_STATUS_ERROR, task,
-			      pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_ERROR, task,
+			              pdu->private_data);
+		}
 		return -1;
 	}
 	dsl = scsi_get_uint32(&in->hdr[4]) & 0x00ffffff;
@@ -550,7 +575,9 @@ iscsi_process_scsi_data_in(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	pdu->indata.data = NULL;
 	pdu->indata.size = 0;
 
-	pdu->callback(iscsi, status, task, pdu->private_data);
+	if (pdu->callback) {
+		pdu->callback(iscsi, status, task, pdu->private_data);
+	}
 
 	return 0;
 }
