@@ -131,9 +131,6 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		/* update data segment length */
 		scsi_set_uint32(&pdu->outdata.data[4], pdu->payload_len);
 
-		pdu->callback     = cmd_pdu->callback;
-		pdu->private_data = cmd_pdu->private_data;
-
 		if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 			iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"scsi pdu.");
