@@ -86,7 +86,7 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 					 ISCSI_PDU_DATA_OUT,
 					 ISCSI_PDU_NO_PDU,
 					 cmd_pdu->itt,
-					 ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_DELETE_WHEN_SENT|ISCSI_PDU_NO_CALLBACK);
+					 ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_DELETE_WHEN_SENT);
 		if (pdu == NULL) {
 			iscsi_set_error(iscsi, "Out-of-memory, Failed to allocate "
 				"scsi data out pdu.");
@@ -1891,7 +1891,7 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		if (pdu->itt == task->itt) {
 			ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
+			if (pdu->callback) {
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
 			}
@@ -1902,7 +1902,7 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
 		if (pdu->itt == task->itt) {
 			ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
-			if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
+			if (pdu->callback) {
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
 			}
@@ -1920,7 +1920,7 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 
 	while ((pdu = iscsi->waitpdu)) {
 		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
+		if (pdu->callback) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
 		}
@@ -1928,7 +1928,7 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 	}
 	while ((pdu = iscsi->outqueue)) {
 		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
-		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
+		if (pdu->callback) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
 		}
