@@ -101,7 +101,7 @@ iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt, uint32_t lu
 				 ISCSI_PDU_NOP_OUT,
 				 ISCSI_PDU_NO_PDU,
 				 0xffffffff,
-				 ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_DELETE_WHEN_SENT|ISCSI_PDU_NO_CALLBACK);
+				 ISCSI_PDU_DROP_ON_RECONNECT|ISCSI_PDU_DELETE_WHEN_SENT);
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Failed to allocate nop-out pdu");
 		return -1;
