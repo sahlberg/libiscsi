@@ -1094,6 +1094,8 @@ main(int argc, char *argv[])
         };
         int i, c;
         int opt_idx = 0;
+        unsigned int failures = 0;
+        int ret;
 
         while ((c = getopt_long(argc, argv, "?hli:I:t:sdgfAsSnvxV", long_opts,
                     &opt_idx)) > 0) {
@@ -1445,6 +1447,7 @@ main(int argc, char *argv[])
           printf("Tests completed with return value: %d\n", res);
         }
 
+        failures = CU_get_number_of_failures();
         CU_cleanup_registry();
 
         if (inq_task != NULL) {
@@ -1469,7 +1472,12 @@ main(int argc, char *argv[])
                 free_scsi_device(mp_sds[i]);
         }
         free(scratch);
-        return 0;
+        if (failures > 0) {
+            ret = 1;
+        } else {
+            ret = 0;
+        }
+        return ret;
 
 err_sds_free:
         for (i = 0; i < mp_num_sds; i++) {
