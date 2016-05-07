@@ -350,7 +350,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 			              pdu->private_data);
 		}
-		iscsi_free_pdu(iscsi, pdu);
+		iscsi->t->free_pdu(iscsi, pdu);
 	}
 	while ((pdu = iscsi->waitpdu)) {
 		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
@@ -361,11 +361,11 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 			              pdu->private_data);
 		}
-		iscsi_free_pdu(iscsi, pdu);
+		iscsi->t->free_pdu(iscsi, pdu);
 	}
 
 	if (iscsi->outqueue_current != NULL && iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
-		iscsi_free_pdu(iscsi, iscsi->outqueue_current);
+		iscsi->t->free_pdu(iscsi, iscsi->outqueue_current);
 	}
 
 	if (iscsi->incoming != NULL) {
