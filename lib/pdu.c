@@ -79,6 +79,16 @@ void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data) {
 	ISCSI_LOG(iscsi, 2, "PDU header:%s", dump);
 }
 
+struct iscsi_pdu*
+iscsi_tcp_new_pdu(struct iscsi_context *iscsi, size_t size)
+{
+	struct iscsi_pdu *pdu;
+
+	pdu = iscsi_szmalloc(iscsi, size);
+
+	return pdu;
+}
+
 struct iscsi_pdu *
 iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 		   enum iscsi_opcode response_opcode, uint32_t itt,
@@ -86,7 +96,7 @@ iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 {
 	struct iscsi_pdu *pdu;
 
-	pdu = iscsi_szmalloc(iscsi, sizeof(struct iscsi_pdu));
+	pdu = iscsi->t->new_pdu(iscsi, sizeof(struct iscsi_pdu));
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate pdu");
 		return NULL;
