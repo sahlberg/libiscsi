@@ -54,7 +54,8 @@ struct sockaddr;
   "<host>[:<port>]\""
 
 enum iscsi_transport_type {
-	TCP_TRANSPORT = 0
+	TCP_TRANSPORT = 0,
+	ISER_TRANSPORT = 1
 };
 
 EXTERN void iscsi_set_cache_allocations(struct iscsi_context *iscsi, int ca);
@@ -150,6 +151,7 @@ struct iscsi_url {
        char target_user[MAX_STRING_SIZE + 1];
        char target_passwd[MAX_STRING_SIZE + 1];
        int lun;
+       enum iscsi_transport_type transport;
        struct iscsi_context *iscsi;
 };
 
@@ -270,6 +272,7 @@ EXTERN int iscsi_init_transport(struct iscsi_context *iscsi,
  * <0: error
  */
 EXTERN int iscsi_set_alias(struct iscsi_context *iscsi, const char *alias);
+
 
 /*
  * Set the iqn name of the taqget to login to.

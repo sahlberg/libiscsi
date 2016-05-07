@@ -15,6 +15,10 @@
    You should have received a copy of the GNU Lesser General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #define _GNU_SOURCE
 
 #if defined(WIN32)
@@ -32,6 +36,9 @@
 #include <time.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
+#ifdef HAVE_LINUX_ISER
+#include "iser-private.h"
+#endif
 #include "slist.h"
 
 
@@ -42,6 +49,9 @@
 int iscsi_init_transport(struct iscsi_context *iscsi,
                          enum iscsi_transport_type transport) {
 	struct tcp_transport *tcp_transport;
+#ifdef HAVE_LINUX_ISER
+        struct iser_transport *iser_transport;
+#endif
 
         if (iscsi->t) {
                 iscsi_free(iscsi, iscsi->t);
@@ -59,6 +69,17 @@ int iscsi_init_transport(struct iscsi_context *iscsi,
 		iscsi->t = &tcp_transport->t;
 		iscsi_init_tcp_transport(iscsi);
                 break;
+#ifdef HAVE_LINUX_ISER
+        case ISER_TRANSPORT:
+		iser_transport = iscsi_malloc(iscsi, sizeof(struct iser_transport));
+		if (iser_transport == NULL) {
+			iscsi_set_error(iscsi, "Couldn't allocate memory for transport\n");
+			return -1;
+		}
+		iscsi->t = &iser_transport->t;
+		iscsi_init_iser_transport(iscsi);
+                break;
+#endif
 	default:
 		iscsi_set_error(iscsi, "Unfamiliar transport type");
 		return -1;
@@ -514,6 +535,9 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 	char *lun;
 	char *tmp;
 	int l = 0;
+#ifdef HAVE_LINUX_ISER
+	int is_iser = 0;
+#endif
 
 	if (strncmp(url, "iscsi://", 8)) {
 		if (full) {
@@ -554,6 +578,10 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 				target_user = value;
 			} else if (!strcmp(key, "target_password")) {
 				target_passwd = value;
+#ifdef HAVE_LINUX_ISER
+			} else if (!strcmp(key, "iser")) {
+				is_iser = 1;
+#endif
 			}
 			tmp = next;
 		}
@@ -646,6 +674,16 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 			strncpy(iscsi_url->target_passwd, target_passwd, MAX_STRING_SIZE);
 		}
 	}
+
+#ifdef HAVE_LINUX_ISER
+	if (iscsi) {
+		if (is_iser) {
+			if (iscsi_init_transport(iscsi, ISER_TRANSPORT))
+				iscsi_set_error(iscsi, "Cannot set transport to iSER");
+		}
+	}
+	iscsi_url->transport = is_iser;
+#endif
 
 	if (full) {
 		strncpy(iscsi_url->target, target, MAX_STRING_SIZE);

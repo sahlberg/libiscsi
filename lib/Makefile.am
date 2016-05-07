@@ -10,6 +10,10 @@ if !HAVE_LIBGCRYPT
 libiscsi_la_SOURCES += md5.c
 endif
 
+if HAVE_LINUX_ISER
+libiscsi_la_SOURCES += iser.c
+endif
+
 SOCURRENT=7
 SOREVISON=2
 SOAGE=0
@@ -17,11 +21,15 @@ libiscsi_la_LDFLAGS = \
 	-version-info $(SOCURRENT):$(SOREVISON):$(SOAGE) -bindir $(bindir) \
 	-no-undefined -export-symbols ${srcdir}/libiscsi.syms
 
+if HAVE_LINUX_ISER
+libiscsi_la_LDFLAGS += -libverbs -lrdmacm
+endif
+
 libiscsi_la_CPPFLAGS = -I${srcdir}/../include -I$(srcdir)/include \
 	"-D_U_=__attribute__((unused))" \
 	"-D_R_(A,B)=__attribute__((format(printf,A,B)))"
 
-AM_CFLAGS=$(WARN_CFLAGS)
+AM_CFLAGS=$(WARN_CFLAGS) -I/usr/include
 
 dist_noinst_DATA = libiscsi.syms libiscsi.def
 
