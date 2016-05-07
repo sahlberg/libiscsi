@@ -30,6 +30,8 @@
 extern "C" {
 #endif
 
+#include "scsi-lowlevel.h"
+
 struct iscsi_context;
 struct sockaddr;
 
@@ -837,13 +839,13 @@ iscsi_prefetch16_task(struct iscsi_context *iscsi, int lun,
 EXTERN struct scsi_task *
 iscsi_read6_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       uint32_t datalen, int blocksize, iscsi_command_cb cb,
-		       void *private_data);
+		       void *private_data, struct scsi_iovec *iov, int niov);
 
 EXTERN struct scsi_task *
 iscsi_read10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		  uint32_t datalen, int blocksize,
 		  int rdprotect, int dpo, int fua, int fua_nv, int group_number,
-		  iscsi_command_cb cb, void *private_data);
+		  iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov);
 EXTERN struct scsi_task *
 iscsi_write10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
@@ -858,7 +860,7 @@ EXTERN struct scsi_task *
 iscsi_read12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   uint32_t datalen, int blocksize,
 		   int rdprotect, int dpo, int fua, int fua_nv, int group_number,
-		   iscsi_command_cb cb, void *private_data);
+		   iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov);
 EXTERN struct scsi_task *
 iscsi_write12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,
@@ -873,7 +875,7 @@ EXTERN struct scsi_task *
 iscsi_read16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   uint32_t datalen, int blocksize,
 		   int rdprotect, int dpo, int fua, int fua_nv, int group_number,
-		   iscsi_command_cb cb, void *private_data);
+		   iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov);
 EXTERN struct scsi_task *
 iscsi_write16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   unsigned char *data, uint32_t datalen, int blocksize,

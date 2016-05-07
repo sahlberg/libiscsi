@@ -239,7 +239,7 @@ void read10_cb(struct iscsi_context *iscsi, int status, void *command_data, void
 
 	memset(&small_buffer[0], 0, 512);
 
-	if ((task = iscsi_read10_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, 0, 0, 0, 0, 0, read10_1_cb, private_data)) == NULL) {
+	if ((task = iscsi_read10_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, 0, 0, 0, 0, 0, read10_1_cb, private_data, NULL, 0)) == NULL) {
 		printf("failed to send read10 command\n");
 		exit(10);
 	}
@@ -278,7 +278,9 @@ void read6_cb(struct iscsi_context *iscsi, int status, void *command_data, void 
 
 	scsi_free_scsi_task(task);
 
-	if ((task = iscsi_read10_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, 0, 0, 0, 0, 0, read10_cb, private_data)) == NULL) {
+
+        /* for iSER need to provide buffer address already in the task creation */
+	if ((task = iscsi_read10_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, 0, 0, 0, 0, 0, read10_cb, private_data, NULL, 0)) == NULL) {	// Need to Change it
 		printf("failed to send read10 command\n");
 		exit(10);
 	}
@@ -321,7 +323,7 @@ void readcapacity10_cb(struct iscsi_context *iscsi, int status, void *command_da
 	clnt->block_size = rc10->block_size;
 	printf("READCAPACITY10 successful. Size:%d blocks  blocksize:%d. Read first block\n", rc10->lba, rc10->block_size);
 
-	if (iscsi_read6_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, read6_cb, private_data) == NULL) {
+	if (iscsi_read6_task(iscsi, clnt->lun, 0, clnt->block_size, clnt->block_size, read6_cb, private_data, NULL, 0) == NULL) {
 		printf("failed to send read6 command\n");
 		scsi_free_scsi_task(task);
 		exit(10);

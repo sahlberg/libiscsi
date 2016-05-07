@@ -740,7 +740,7 @@ iscsi_get_lba_status_task(struct iscsi_context *iscsi, int lun,
 struct scsi_task *
 iscsi_read6_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   uint32_t datalen, int blocksize,
-		   iscsi_command_cb cb, void *private_data)
+		   iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 
@@ -756,6 +756,10 @@ iscsi_read6_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 				"read6 cdb.");
 		return NULL;
 	}
+
+	if (iov != NULL)
+		scsi_task_set_iov_in(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     NULL, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -769,7 +773,7 @@ struct scsi_task *
 iscsi_read10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		  uint32_t datalen, int blocksize,
 		  int rdprotect, int dpo, int fua, int fua_nv, int group_number,
-		  iscsi_command_cb cb, void *private_data)
+		  iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 
@@ -786,6 +790,10 @@ iscsi_read10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 				"read10 cdb.");
 		return NULL;
 	}
+
+	if (iov != NULL)
+		scsi_task_set_iov_in(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     NULL, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -799,7 +807,7 @@ struct scsi_task *
 iscsi_read12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		   uint32_t datalen, int blocksize,
 		   int rdprotect, int dpo, int fua, int fua_nv, int group_number,
-		   iscsi_command_cb cb, void *private_data)
+		   iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 
@@ -816,6 +824,10 @@ iscsi_read12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 				"read12 cdb.");
 		return NULL;
 	}
+
+	if (iov != NULL)
+		scsi_task_set_iov_in(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     NULL, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -829,7 +841,7 @@ struct scsi_task *
 iscsi_read16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		   uint32_t datalen, int blocksize,
 		   int rdprotect, int dpo, int fua, int fua_nv, int group_number,
-		   iscsi_command_cb cb, void *private_data)
+		   iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 
@@ -846,6 +858,10 @@ iscsi_read16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 				"read16 cdb.");
 		return NULL;
 	}
+
+	if (iov != NULL)
+		scsi_task_set_iov_in(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     NULL, private_data) != 0) {
 		scsi_free_scsi_task(task);

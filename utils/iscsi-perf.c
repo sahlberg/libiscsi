@@ -147,7 +147,7 @@ void cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *p
 								client->lun, read16_cdb->lba,
 								read16_cdb->transfer_length * client->blocksize,
 								client->blocksize, 0, 0, 0, 0, 0,
-								cb, client);
+								cb, client, NULL, 0);
 		if (task2 == NULL) {
 			fprintf(stderr, "failed to send read16 command\n");
 			client->err_cnt++;
@@ -208,7 +208,7 @@ void fill_read_queue(struct client *client)
 								client->lun, client->pos,
 								num_blocks * client->blocksize,
 								client->blocksize, 0, 0, 0, 0, 0,
-								cb, client);
+								cb, client, NULL, 0);
 		if (task == NULL) {
 			fprintf(stderr, "failed to send read16 command\n");
 			iscsi_destroy_context(client->iscsi);

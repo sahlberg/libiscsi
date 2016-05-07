@@ -409,7 +409,7 @@ iscsi_read6_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 	memset(&state, 0, sizeof(state));
 
 	if (iscsi_read6_task(iscsi, lun, lba, datalen, blocksize,
-				       scsi_sync_cb, &state) == NULL) {
+				       scsi_sync_cb, &state, NULL, 0) == NULL) {
 		iscsi_set_error(iscsi,
 				"Failed to send Read6 command");
 		return NULL;
@@ -431,7 +431,7 @@ iscsi_read10_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 	if (iscsi_read10_task(iscsi, lun, lba, datalen, blocksize, rdprotect, 
 			      dpo, fua, fua_nv, group_number,
-			      scsi_sync_cb, &state) == NULL) {
+			      scsi_sync_cb, &state, NULL, 0) == NULL) {
 		iscsi_set_error(iscsi,
 				"Failed to send Read10 command");
 		return NULL;
@@ -453,7 +453,7 @@ iscsi_read12_sync(struct iscsi_context *iscsi, int lun, uint32_t lba,
 
 	if (iscsi_read12_task(iscsi, lun, lba, datalen, blocksize, rdprotect, 
 			      dpo, fua, fua_nv, group_number,
-			      scsi_sync_cb, &state) == NULL) {
+			      scsi_sync_cb, &state, NULL, 0) == NULL) {
 		iscsi_set_error(iscsi,
 				"Failed to send Read12 command");
 		return NULL;
@@ -475,7 +475,7 @@ iscsi_read16_sync(struct iscsi_context *iscsi, int lun, uint64_t lba,
 
 	if (iscsi_read16_task(iscsi, lun, lba, datalen, blocksize, rdprotect, 
 			      dpo, fua, fua_nv, group_number,
-			      scsi_sync_cb, &state) == NULL) {
+			      scsi_sync_cb, &state, NULL, 0) == NULL) {
 		iscsi_set_error(iscsi,
 				"Failed to send Read16 command");
 		return NULL;

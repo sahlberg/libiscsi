@@ -169,13 +169,13 @@ void fill_read_queue(struct client *client)
 									client->src_lun, client->pos,
 									num_blocks * client->src_blocksize,
 									client->src_blocksize, 0, 0, 0, 0, 0,
-									read_cb, client);
+									read_cb, client, NULL, 0);
 		} else {
 			task = iscsi_read10_task(client->src_iscsi,
 									client->src_lun, client->pos,
 									num_blocks * client->src_blocksize,
 									client->src_blocksize, 0, 0, 0, 0, 0,
-									read_cb, client);
+									read_cb, client, NULL, 0);
 		}
 		if (task == NULL) {
 			printf("failed to send read10/16 command\n");

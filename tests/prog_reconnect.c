@@ -140,7 +140,7 @@ void read_cb(struct iscsi_context *iscsi, int status,
 				      state->lun, r16_state->lba,
 				      state->block_size,
 				      state->block_size, 0, 0, 0, 0, 0,
-				      read_cb, r16_state) == NULL) {
+				      read_cb, r16_state, NULL, 0) == NULL) {
 			fprintf(stderr, "iscsi_read16_task failed : %s\n",
 				iscsi_get_error(iscsi));
 			exit(10);
@@ -323,7 +323,7 @@ int main(int argc, char *argv[])
 				      r16_state->lba,
 				      state.block_size,
 				      state.block_size, 0, 0, 0, 0, 0,
-				      read_cb, r16_state) == NULL) {
+				      read_cb, r16_state, NULL, 0) == NULL) {
 			fprintf(stderr, "iscsi_read16_task failed : %s\n",
 				iscsi_get_error(iscsi));
 			exit(10);
