@@ -74,13 +74,6 @@
 static uint32_t iface_rr = 0;
 struct iscsi_transport;
 
-void iscsi_init_tcp_transport(struct iscsi_context *iscsi)
-{
-	iscsi->t = NULL;
-
-	return;
-}
-
 void
 iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
@@ -191,11 +184,83 @@ static int set_tcp_syncnt(struct iscsi_context *iscsi)
 	return 0;
 }
 
-union socket_address {
-	struct sockaddr_in sin;
-	struct sockaddr_in6 sin6;
-	struct sockaddr sa;
-};
+static int iscsi_tcp_connect(struct iscsi_context *iscsi, union socket_address *sa, int ai_family) {
+
+	int socksize;
+
+	iscsi->fd = socket(ai_family, SOCK_STREAM, 0);
+	if (iscsi->fd == -1) {
+		iscsi_set_error(iscsi, "Failed to open iscsi socket. "
+				"Errno:%s(%d).", strerror(errno), errno);
+		return -1;
+	}
+
+	if (iscsi->old_iscsi && iscsi->fd != iscsi->old_iscsi->fd) {
+		if (dup2(iscsi->fd, iscsi->old_iscsi->fd) == -1) {
+			return -1;
+		}
+		close(iscsi->fd);
+		iscsi->fd = iscsi->old_iscsi->fd;
+	}
+
+	set_nonblocking(iscsi->fd);
+
+	iscsi_set_tcp_keepalive(iscsi, iscsi->tcp_keepidle, iscsi->tcp_keepcnt, iscsi->tcp_keepintvl);
+
+	if (iscsi->tcp_user_timeout > 0) {
+		set_tcp_user_timeout(iscsi);
+	}
+
+	if (iscsi->tcp_syncnt > 0) {
+		set_tcp_syncnt(iscsi);
+	}
+
+#if __linux
+	if (iscsi->bind_interfaces[0]) {
+		char *pchr = iscsi->bind_interfaces, *pchr2;
+		int iface_n = iface_rr++%iscsi->bind_interfaces_cnt;
+		int iface_c = 0;
+		do {
+			pchr2 = strchr(pchr,',');
+			if (iface_c == iface_n) {
+				if (pchr2) pchr2[0]=0x00;
+				break;
+			}
+			if (pchr2) {pchr=pchr2+1;}
+			iface_c++;
+		} while (pchr2);
+
+		int res = setsockopt(iscsi->fd, SOL_SOCKET, SO_BINDTODEVICE, pchr, strlen(pchr));
+		if (res < 0) {
+			ISCSI_LOG(iscsi,1,"failed to bind to interface '%s': %s",pchr,strerror(errno));
+		} else {
+			ISCSI_LOG(iscsi,3,"successfully bound to interface '%s'",pchr);
+		}
+		if (pchr2) pchr2[0]=',';
+	}
+#endif
+
+	if (set_tcp_sockopt(iscsi->fd, TCP_NODELAY, 1) != 0) {
+		ISCSI_LOG(iscsi,1,"failed to set TCP_NODELAY sockopt: %s",strerror(errno));
+	} else {
+		ISCSI_LOG(iscsi,3,"TCP_NODELAY set to 1");
+	}
+
+	socksize = sizeof(struct sockaddr_in);  // Work-around for now, need to fix it
+
+	if (connect(iscsi->fd, &sa->sa, socksize) != 0
+		&& errno != EINPROGRESS) {
+		iscsi_set_error(iscsi, "Connect failed with errno : "
+			"%s(%d)", strerror(errno), errno);
+		close(iscsi->fd);
+		iscsi->fd = -1;
+		return -1;
+	}
+
+	return 0;
+}
+
+
 
 int
 iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
@@ -259,7 +324,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		iscsi_set_error(iscsi, "Invalid target:%s  "
 			"Can not resolv into IPv4/v6.", portal);
 		return -1;
- 	}
+	}
 	iscsi_free(iscsi, addr);
 
 	memset(&sa, 0, sizeof(sa));
@@ -291,86 +356,13 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 
 	}
 
-	iscsi->fd = socket(ai->ai_family, SOCK_STREAM, 0);
-	if (iscsi->fd == -1) {
-		freeaddrinfo(ai);
-		iscsi_set_error(iscsi, "Failed to open iscsi socket. "
-				"Errno:%s(%d).", strerror(errno), errno);
-		return -1;
-
-	}
-
-	if (iscsi->old_iscsi && iscsi->fd != iscsi->old_iscsi->fd) {
-		if (dup2(iscsi->fd, iscsi->old_iscsi->fd) == -1) {
-			return -1;
-		}
-		close(iscsi->fd);
-		iscsi->fd = iscsi->old_iscsi->fd;
-	}
-
 	iscsi->socket_status_cb  = cb;
 	iscsi->connect_data      = private_data;
 
-	set_nonblocking(iscsi->fd);
-
-	iscsi_set_tcp_keepalive(iscsi, iscsi->tcp_keepidle, iscsi->tcp_keepcnt, iscsi->tcp_keepintvl);
-
-	if (iscsi->tcp_user_timeout > 0) {
-		set_tcp_user_timeout(iscsi);
-	}
-
-	if (iscsi->tcp_syncnt > 0) {
-		set_tcp_syncnt(iscsi);
-	}
-
-#if __linux
-	if (iscsi->bind_interfaces[0]) {
-		char *pchr = iscsi->bind_interfaces, *pchr2;
-		int iface_n = iface_rr++%iscsi->bind_interfaces_cnt;
-		int iface_c = 0;
-		do {
-			pchr2 = strchr(pchr,',');
-			if (iface_c == iface_n) {
-			 if (pchr2) pchr2[0]=0x00;
-			 break;
-			}
-			if (pchr2) {pchr=pchr2+1;}
-			iface_c++;
-		} while (pchr2);
-		
-		int res = setsockopt(iscsi->fd, SOL_SOCKET, SO_BINDTODEVICE, pchr, strlen(pchr));
-		if (res < 0) {
-			ISCSI_LOG(iscsi,1,"failed to bind to interface '%s': %s",pchr,strerror(errno));
-		} else {
-			ISCSI_LOG(iscsi,3,"successfully bound to interface '%s'",pchr);
-		}
-		if (pchr2) pchr2[0]=',';
-	}
-#endif
-
-	if (set_tcp_sockopt(iscsi->fd, TCP_NODELAY, 1) != 0) {
-		ISCSI_LOG(iscsi,1,"failed to set TCP_NODELAY sockopt: %s",strerror(errno));
-	} else {
-		ISCSI_LOG(iscsi,3,"TCP_NODELAY set to 1");
-	}
-
-	if (connect(iscsi->fd, &sa.sa, socksize) != 0
-#if defined(WIN32)
-	    && WSAGetLastError() != WSAEWOULDBLOCK) {
-#else
-	    && errno != EINPROGRESS) {
-#endif
-		iscsi_set_error(iscsi, "Connect failed with errno : "
-				"%s(%d)", strerror(errno), errno);
-		close(iscsi->fd);
-		iscsi->fd = -1;
-		freeaddrinfo(ai);
+	if(iscsi->t->connect(iscsi, &sa, ai->ai_family) < 0) {
+		iscsi_set_error(iscsi, "Couldn't connect transport");
 		return -1;
 	}
-
-	freeaddrinfo(ai);
-
-	strncpy(iscsi->connected_portal,portal,MAX_STRING_SIZE);
 
 	return 0;
 }
@@ -1057,4 +1049,11 @@ void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces _U
 #else
 	ISCSI_LOG(iscsi,1,"binding to an interface is not supported on your OS");
 #endif
+}
+
+void iscsi_init_tcp_transport(struct iscsi_context *iscsi)
+{
+	iscsi->t->connect = iscsi_tcp_connect;
+
+	return;
 }
