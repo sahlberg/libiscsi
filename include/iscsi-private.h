@@ -66,7 +66,21 @@ void iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *
 /* max length of chap challange */
 #define MAX_CHAP_C_LENGTH 2048
 
+struct iscsi_transport {
+
+	int temp;
+};
+
+struct tcp_transport {
+
+	struct iscsi_transport t;
+
+};
+
 struct iscsi_context {
+
+	struct iscsi_transport *t;
+	enum iscsi_transport_type transport;
 	char initiator_name[MAX_STRING_SIZE+1];
 	char target_name[MAX_STRING_SIZE+1];
 	char target_address[MAX_STRING_SIZE+1];  /* If a redirect */
@@ -371,6 +385,8 @@ void iscsi_timeout_scan(struct iscsi_context *iscsi);
 
 void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
                         void *command_data, void *private_data);
+
+void iscsi_init_tcp_transport(struct iscsi_context *iscsi);
 
 #ifdef __cplusplus
 }

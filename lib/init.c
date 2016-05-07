@@ -34,6 +34,39 @@
 #include "iscsi-private.h"
 #include "slist.h"
 
+
+/**
+ * Initialize transport type of session
+ */
+
+int iscsi_init_transport(struct iscsi_context *iscsi,
+                         enum iscsi_transport_type transport) {
+	struct tcp_transport *tcp_transport;
+
+        if (iscsi->t) {
+                iscsi_free(iscsi, iscsi->t);
+                iscsi->t = NULL;
+        }
+        iscsi->transport = transport;
+
+	switch (iscsi->transport) {
+        case TCP_TRANSPORT:
+                tcp_transport = iscsi_malloc(iscsi, sizeof(struct tcp_transport));
+		if (tcp_transport == NULL) {
+			iscsi_set_error(iscsi, "Couldn't allocate memory for transport\n");
+			return -1;
+		}
+		iscsi->t = &tcp_transport->t;
+		iscsi_init_tcp_transport(iscsi);
+                break;
+	default:
+		iscsi_set_error(iscsi, "Unfamiliar transport type");
+		return -1;
+	}
+
+	return 0;
+}
+
 /**
  * Whether or not the internal memory allocator caches allocations. Disable
  * memory allocation caching to improve the accuracy of Valgrind reports.
@@ -122,13 +155,19 @@ iscsi_create_context(const char *initiator_name)
 	if (iscsi == NULL) {
 		return NULL;
 	}
-	
+
 	memset(iscsi, 0, sizeof(struct iscsi_context));
+
+        /* initalize transport of context */
+	if (iscsi_init_transport(iscsi, TCP_TRANSPORT)) {
+		iscsi_set_error(iscsi, "Failed allocating transport");
+		return NULL;
+	}
 
 	strncpy(iscsi->initiator_name,initiator_name,MAX_STRING_SIZE);
 
 	iscsi->fd = -1;
-	
+
 	srand(time(NULL) ^ getpid() ^ (uint32_t) ((uintptr_t) iscsi));
 
 	/* initialize to a "random" isid */
@@ -648,7 +687,6 @@ iscsi_destroy_url(struct iscsi_url *iscsi_url)
 	else
 		free(iscsi_url);
 }
-
 
 int
 iscsi_set_initiator_username_pwd(struct iscsi_context *iscsi,

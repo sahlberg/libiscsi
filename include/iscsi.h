@@ -50,6 +50,9 @@ struct sockaddr;
 #define ISCSI_PORTAL_URL_SYNTAX "\"iscsi://[<username>[%<password>]@]" \
   "<host>[:<port>]\""
 
+enum iscsi_transport_type {
+	TCP_TRANSPORT = 0
+};
 
 EXTERN void iscsi_set_cache_allocations(struct iscsi_context *iscsi, int ca);
 
@@ -243,6 +246,18 @@ EXTERN struct iscsi_context *iscsi_create_context(const char *initiator_name);
  * <0: error
  */
 EXTERN int iscsi_destroy_context(struct iscsi_context *iscsi);
+
+/*
+ * Sets and initializes the transport type for a context.
+ * TCP_TRANSPORT is the default and is available on all platforms.
+ * ISER_TRANSPORT is conditionally supported on Linux where available.
+ *
+ * Returns:
+ *  0: success
+ * <0: error
+ */
+EXTERN int iscsi_init_transport(struct iscsi_context *iscsi,
+                                enum iscsi_transport_type transport);
 
 /*
  * Set an optional alias name to identify with when connecting to the target
