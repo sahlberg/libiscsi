@@ -129,7 +129,7 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		/* update data segment length */
 		scsi_set_uint32(&pdu->outdata.data[4], pdu->payload_len);
 
-		if (iscsi_queue_pdu(iscsi, pdu) != 0) {
+		if (iscsi->t->queue_pdu(iscsi, pdu) != 0) {
 			iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"scsi pdu.");
 			goto error;
@@ -280,7 +280,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	pdu->callback     = iscsi_scsi_response_cb;
 	pdu->private_data = &pdu->scsi_cbdata;
 
-	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
+	if (iscsi->t->queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"scsi pdu.");
 		iscsi_free_pdu(iscsi, pdu);

@@ -75,17 +75,6 @@ union socket_address {
 	struct sockaddr sa;
 };
 
-struct iscsi_transport {
-
-	int (*connect)(struct iscsi_context *iscsi, union socket_address *sa, int ai_family);
-};
-
-struct tcp_transport {
-
-	struct iscsi_transport t;
-
-};
-
 struct iscsi_context {
 
 	struct iscsi_transport *t;
@@ -306,7 +295,6 @@ void iscsi_pdu_set_datasn(struct iscsi_pdu *pdu, uint32_t datasn);
 void iscsi_pdu_set_bufferoffset(struct iscsi_pdu *pdu, uint32_t bufferoffset);
 int iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		       unsigned char *dptr, int dsize);
-int iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 int iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 		   unsigned char *dptr, int dsize, int pdualignment);
@@ -397,6 +385,15 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
 
 void iscsi_init_tcp_transport(struct iscsi_context *iscsi);
 
+struct iscsi_transport {
+	int (*connect)(struct iscsi_context *iscsi, union socket_address *sa, int ai_family);
+	int (*queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+};
+
+struct tcp_transport {
+	struct iscsi_transport t;
+};
+        
 #ifdef __cplusplus
 }
 #endif

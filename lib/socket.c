@@ -918,8 +918,8 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 	return 0;
 }
 
-int
-iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+static int iscsi_tcp_queue_pdu(struct iscsi_context *iscsi,
+                               struct iscsi_pdu *pdu)
 {
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "trying to queue NULL pdu");
@@ -1054,6 +1054,7 @@ void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces _U
 void iscsi_init_tcp_transport(struct iscsi_context *iscsi)
 {
 	iscsi->t->connect = iscsi_tcp_connect;
+	iscsi->t->queue_pdu = iscsi_tcp_queue_pdu;
 
 	return;
 }
