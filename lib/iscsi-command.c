@@ -875,7 +875,7 @@ struct scsi_task *
 iscsi_write10_task(struct iscsi_context *iscsi, int lun, uint32_t lba, 
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
-		   iscsi_command_cb cb, void *private_data)
+		   iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -896,6 +896,10 @@ iscsi_write10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 	d.data = data;
 	d.size = datalen;
 
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
+
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -909,7 +913,7 @@ struct scsi_task *
 iscsi_write12_task(struct iscsi_context *iscsi, int lun, uint32_t lba, 
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
-		   iscsi_command_cb cb, void *private_data)
+		   iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -930,6 +934,9 @@ iscsi_write12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 	d.data = data;
 	d.size = datalen;
 
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -943,7 +950,7 @@ struct scsi_task *
 iscsi_write16_task(struct iscsi_context *iscsi, int lun, uint64_t lba, 
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
-		   iscsi_command_cb cb, void *private_data)
+		   iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -964,6 +971,9 @@ iscsi_write16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 	d.data = data;
 	d.size = datalen;
 
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -977,7 +987,7 @@ struct scsi_task *
 iscsi_writeatomic16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 			 unsigned char *data, uint32_t datalen, int blocksize,
 			 int wrprotect, int dpo, int fua, int group_number,
-			 iscsi_command_cb cb, void *private_data)
+			 iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -998,6 +1008,9 @@ iscsi_writeatomic16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 	d.data = data;
 	d.size = datalen;
 
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -1011,7 +1024,7 @@ struct scsi_task *
 iscsi_orwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba, 
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
-		   iscsi_command_cb cb, void *private_data)
+		   iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1032,6 +1045,9 @@ iscsi_orwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 	d.data = data;
 	d.size = datalen;
 
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -1045,7 +1061,7 @@ struct scsi_task *
 iscsi_compareandwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba, 
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int fua, int fua_nv, int group_number,
-		   iscsi_command_cb cb, void *private_data)
+		   iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1066,6 +1082,9 @@ iscsi_compareandwrite_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 	d.data = data;
 	d.size = datalen;
 
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -1079,7 +1098,7 @@ struct scsi_task *
 iscsi_writeverify10_task(struct iscsi_context *iscsi, int lun, uint32_t lba, 
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int bytchk, int group_number,
-		   iscsi_command_cb cb, void *private_data)
+		   iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1100,6 +1119,9 @@ iscsi_writeverify10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 	d.data = data;
 	d.size = datalen;
 
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -1113,7 +1135,7 @@ struct scsi_task *
 iscsi_writeverify12_task(struct iscsi_context *iscsi, int lun, uint32_t lba, 
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int bytchk, int group_number,
-		   iscsi_command_cb cb, void *private_data)
+		   iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1134,6 +1156,9 @@ iscsi_writeverify12_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 	d.data = data;
 	d.size = datalen;
 
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -1147,7 +1172,7 @@ struct scsi_task *
 iscsi_writeverify16_task(struct iscsi_context *iscsi, int lun, uint64_t lba, 
 		   unsigned char *data, uint32_t datalen, int blocksize,
 		   int wrprotect, int dpo, int bytchk, int group_number,
-		   iscsi_command_cb cb, void *private_data)
+		   iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1168,6 +1193,9 @@ iscsi_writeverify16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 	d.data = data;
 	d.size = datalen;
 
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -1180,7 +1208,7 @@ iscsi_writeverify16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 struct scsi_task *
 iscsi_verify10_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		    uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize,
-		    iscsi_command_cb cb, void *private_data)
+		    iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1200,6 +1228,9 @@ iscsi_verify10_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 	d.data = data;
 	d.size = datalen;
 
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -1212,7 +1243,7 @@ iscsi_verify10_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 struct scsi_task *
 iscsi_verify12_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		    uint32_t datalen, uint32_t lba, int vprotect, int dpo, int bytchk, int blocksize,
-		    iscsi_command_cb cb, void *private_data)
+		    iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1232,6 +1263,9 @@ iscsi_verify12_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 	d.data = data;
 	d.size = datalen;
 
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
+
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     &d, private_data) != 0) {
 		scsi_free_scsi_task(task);
@@ -1244,7 +1278,7 @@ iscsi_verify12_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 struct scsi_task *
 iscsi_verify16_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 		    uint32_t datalen, uint64_t lba, int vprotect, int dpo, int bytchk, int blocksize,
-		    iscsi_command_cb cb, void *private_data)
+		    iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1263,6 +1297,9 @@ iscsi_verify16_task(struct iscsi_context *iscsi, int lun, unsigned char *data,
 	}
 	d.data = data;
 	d.size = datalen;
+
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
 
 	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
 				     &d, private_data) != 0) {
@@ -1583,7 +1620,7 @@ iscsi_writesame10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 		       unsigned char *data, uint32_t datalen,
 		       uint16_t num_blocks,
 		       int anchor, int unmap, int wrprotect, int group,
-		       iscsi_command_cb cb, void *private_data)
+		       iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1597,6 +1634,9 @@ iscsi_writesame10_task(struct iscsi_context *iscsi, int lun, uint32_t lba,
 	}
 	d.data = data;
 	d.size = datalen;
+
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
 
 	if (data != NULL) {
 		task->expxferlen = datalen;
@@ -1617,7 +1657,7 @@ iscsi_writesame16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 		       unsigned char *data, uint32_t datalen,
 		       uint32_t num_blocks,
 		       int anchor, int unmap, int wrprotect, int group,
-		       iscsi_command_cb cb, void *private_data)
+		       iscsi_command_cb cb, void *private_data, struct scsi_iovec *iov, int niov)
 {
 	struct scsi_task *task;
 	struct iscsi_data d;
@@ -1631,6 +1671,9 @@ iscsi_writesame16_task(struct iscsi_context *iscsi, int lun, uint64_t lba,
 	}
 	d.data = data;
 	d.size = datalen;
+
+	if (iov != NULL)
+		scsi_task_set_iov_out(task, iov, niov);
 
 	if (data != NULL) {
 		task->expxferlen = datalen;

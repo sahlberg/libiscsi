@@ -465,7 +465,7 @@ ssize_t write(int fd, const void *buf, size_t count)
 
 		iscsi_fd_list[fd].in_flight = 1;
 		LD_ISCSI_DPRINTF(4,"write16_sync: lun %d, lba %"PRIu64", num_blocks: %"PRIu64", block_size: %d, offset: %"PRIu64" count: %lu",iscsi_fd_list[fd].lun,lba,num_blocks,iscsi_fd_list[fd].block_size,offset,(unsigned long)count);
-		task = iscsi_write16_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, (unsigned char *) buf, count, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0);
+		task = iscsi_write16_sync(iscsi_fd_list[fd].iscsi, iscsi_fd_list[fd].lun, lba, (unsigned char *) buf, count, iscsi_fd_list[fd].block_size, 0, 0, 0, 0, 0, NULL, 0);
 		iscsi_fd_list[fd].in_flight = 0;
 		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
 			LD_ISCSI_DPRINTF(0,"failed to send write16 command");

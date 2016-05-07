@@ -131,7 +131,7 @@ void read_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, vo
 		task2 = iscsi_write16_task(client->dst_iscsi, client->dst_lun,
 									read16_cdb->lba, task->datain.data, task->datain.size,
 									client->dst_blocksize, 0, 0, 0, 0, 0,
-									write_cb, wt);
+									write_cb, wt, NULL, 0);
 	} else {
 		read10_cdb = scsi_cdb_unmarshall(task, SCSI_OPCODE_READ10);
 		if (read10_cdb == NULL) {
@@ -141,7 +141,7 @@ void read_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, vo
 		task2 = iscsi_write10_task(client->dst_iscsi, client->dst_lun,
 									read10_cdb->lba, task->datain.data, task->datain.size,
 									client->dst_blocksize, 0, 0, 0, 0, 0,
-									write_cb, wt);
+									write_cb, wt, NULL, 0);
 	}
 	if (task2 == NULL) {
 		printf("failed to send read16 command\n");

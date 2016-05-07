@@ -150,7 +150,7 @@ void write10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data,
 	}
 	task = iscsi_write10_task(iscsi, clnt->lun, 0, NULL, 512, 512,
 			0, 0, 0, 0, 0,
-			write10_1_cb, private_data);
+			write10_1_cb, private_data, NULL, 0);
 	if (task == NULL) {
 		printf("failed to send write10 command\n");
 		exit(10);
@@ -205,7 +205,7 @@ void read10_1_cb(struct iscsi_context *iscsi, int status, void *command_data, vo
 	}
 	task = iscsi_write10_task(iscsi, clnt->lun, 0, wb, 512, 512,
 			0, 0, 0, 0, 0,
-			write10_cb, private_data);
+			write10_cb, private_data, NULL, 0);
 	if (task == NULL) {
 		printf("failed to send write10 command\n");
 		exit(10);
