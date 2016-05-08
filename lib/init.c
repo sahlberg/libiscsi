@@ -304,25 +304,23 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 
 	while ((pdu = iscsi->outqueue)) {
 		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
-		if ( !(pdu->flags & ISCSI_PDU_NO_CALLBACK)) {
+		if (iscsi->is_loggedin && pdu->callback) {
 			/* If an error happened during connect/login, we don't want to
 			   call any of the callbacks.
 			 */
-			if (iscsi->is_loggedin && pdu->callback != NULL) {
-				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-						pdu->private_data);
-			}
+			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
+			              pdu->private_data);
 		}
 		iscsi_free_pdu(iscsi, pdu);
 	}
 	while ((pdu = iscsi->waitpdu)) {
 		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-		/* If an error happened during connect/login, we don't want to
-		   call any of the callbacks.
-		 */
-		if (iscsi->is_loggedin && pdu->callback != NULL) {
+		if (iscsi->is_loggedin && pdu->callback) {
+			/* If an error happened during connect/login, we don't want to
+			   call any of the callbacks.
+			 */
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-					pdu->private_data);
+			              pdu->private_data);
 		}
 		iscsi_free_pdu(iscsi, pdu);
 	}

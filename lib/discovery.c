@@ -127,8 +127,10 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	if (in->hdr[1] != ISCSI_PDU_TEXT_FINAL) {
 		iscsi_set_error(iscsi, "unsupported flags in text "
 				"reply %02x", in->hdr[1]);
-		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-			      pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			              pdu->private_data);
+		}
 		return -1;
 	}
 
@@ -141,8 +143,10 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			iscsi_set_error(iscsi, "NUL not found after offset %ld "
 					"when parsing discovery data",
 					(long)(ptr - in->data));
-			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-				      pdu->private_data);
+			if (pdu->callback) {
+				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+				              pdu->private_data);
+			}
 			iscsi_free_discovery_addresses(iscsi, targets);
 			return -1;
 		}
@@ -161,8 +165,10 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				iscsi_set_error(iscsi, "Failed to allocate "
 						"data for new discovered "
 						"target");
-				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-					      pdu->private_data);
+				if (pdu->callback) {
+					pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					              pdu->private_data);
+				}
 				iscsi_free_discovery_addresses(iscsi, targets);
 				return -1;
 			}
@@ -171,8 +177,10 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				iscsi_set_error(iscsi, "Failed to allocate "
 						"data for new discovered "
 						"target name");
-				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-					      pdu->private_data);
+				if (pdu->callback) {
+					pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					              pdu->private_data);
+				}
 				iscsi_free(iscsi, target);
 				target = NULL;
 				iscsi_free_discovery_addresses(iscsi, targets);
@@ -186,8 +194,10 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			if (targets == NULL) {
 				iscsi_set_error(iscsi, "Invalid discovery "
 						"reply");
-				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-					      pdu->private_data);
+				if (pdu->callback) {
+					pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					              pdu->private_data);
+				}
 				iscsi_free_discovery_addresses(iscsi, targets);
 				return -1;
 			}
@@ -195,8 +205,10 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			if (portal == NULL) {
 				iscsi_set_error(iscsi, "Failed to malloc "
 						"portal structure");
-				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-					      pdu->private_data);
+				if (pdu->callback) {
+					pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					              pdu->private_data);
+				}
 				iscsi_free_discovery_addresses(iscsi, targets);
 				return -1;
 			}
@@ -209,16 +221,20 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				iscsi_set_error(iscsi, "Failed to allocate "
 						"data for new discovered "
 						"target address");
-				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-					      pdu->private_data);
+				if (pdu->callback) {
+					pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					              pdu->private_data);
+				}
 				iscsi_free_discovery_addresses(iscsi, targets);
 				return -1;
 			}
 		} else {
 			iscsi_set_error(iscsi, "Don't know how to handle "
 					"discovery string : %s", ptr);
-			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-				      pdu->private_data);
+			if (pdu->callback) {
+				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+				              pdu->private_data);
+			}
 			iscsi_free_discovery_addresses(iscsi, targets);
 			return -1;
 		}
@@ -227,7 +243,9 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		size -= len + 1;
 	}
 
-	pdu->callback(iscsi, SCSI_STATUS_GOOD, targets, pdu->private_data);
+	if (pdu->callback) {
+		pdu->callback(iscsi, SCSI_STATUS_GOOD, targets, pdu->private_data);
+	}
 	iscsi_free_discovery_addresses(iscsi, targets);
 
 	return 0;

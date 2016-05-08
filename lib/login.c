@@ -1082,8 +1082,10 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			iscsi_set_error(iscsi, "NUL not found after offset %ld "
 					"when parsing login data",
 					(long)((unsigned char *)ptr - in->data));
-			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-				      pdu->private_data);
+			if (pdu->callback) {
+				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+				              pdu->private_data);
+			}
 			return -1;
 		}
 
@@ -1161,8 +1163,10 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			if (len-9 > MAX_CHAP_C_LENGTH) {
 				iscsi_set_error(iscsi, "Wrong length of CHAP_C received from"
 						" target (%d, max: %d)", len-9, MAX_CHAP_C_LENGTH);
-				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-						  pdu->private_data);
+				if (pdu->callback) {
+					pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					              pdu->private_data);
+				}
 				return 0;
 			}
 			*iscsi->chap_c = '\0';
@@ -1175,8 +1179,10 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				iscsi_set_error(iscsi, "Failed to log in to"
 						" target. Wrong CHAP targetname"
 						" received: %s", ptr + 7);
-				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-					      pdu->private_data);
+				if (pdu->callback) {
+					pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					              pdu->private_data);
+				}
 				return 0;
 			}
 			must_have_chap_n = 0;
@@ -1188,8 +1194,10 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			if (len != 9 + 2 * CHAP_R_SIZE) {
 				iscsi_set_error(iscsi, "Wrong size of CHAP_R"
 						" received from target.");
-				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-					      pdu->private_data);
+				if (pdu->callback) {
+					pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+					              pdu->private_data);
+				}
 				return 0;
 			}
 			for (i = 0; i < CHAP_R_SIZE; i++) {
@@ -1199,8 +1207,10 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 					iscsi_set_error(iscsi, "Authentication "
 						"failed. Invalid CHAP_R "
 						"response from the target");
-					pdu->callback(iscsi, SCSI_STATUS_ERROR,
-						      NULL, pdu->private_data);
+					if (pdu->callback) {
+						pdu->callback(iscsi, SCSI_STATUS_ERROR,
+						              NULL, pdu->private_data);
+					}
 					return 0;
 				}
 			}
@@ -1213,32 +1223,40 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 	if (status == SCSI_STATUS_REDIRECT && iscsi->target_address[0]) {
 		ISCSI_LOG(iscsi, 2, "target requests redirect to %s",iscsi->target_address);
-		pdu->callback(iscsi, SCSI_STATUS_REDIRECT, NULL,
-				  pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_REDIRECT, NULL,
+			              pdu->private_data);
+		}
 		return 0;
 	}
 
 	if (status != 0) {
 		iscsi_set_error(iscsi, "Failed to log in to target. Status: %s(%d)",
 				       login_error_str(status), status);
-		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-			      pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			              pdu->private_data);
+		}
 		return 0;
 	}
 
 	if (must_have_chap_n) {
 		iscsi_set_error(iscsi, "Failed to log in to target. "
 				"It did not return CHAP_N during SECNEG.");
-		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-			      pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			              pdu->private_data);
+		}
 		return 0;
 	}
 
 	if (must_have_chap_r) {
 		iscsi_set_error(iscsi, "Failed to log in to target. "
 				"It did not return CHAP_R during SECNEG.");
-		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
-			      pdu->private_data);
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			              pdu->private_data);
+		}
 		return 0;
 	}
 
@@ -1256,7 +1274,9 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	} else {
 		if (iscsi_login_async(iscsi, pdu->callback, pdu->private_data) != 0) {
 			iscsi_set_error(iscsi, "Failed to send continuation login pdu");
-			pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL, pdu->private_data);
+			if (pdu->callback) {
+				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL, pdu->private_data);
+			}
 		}
 	}
 
@@ -1315,7 +1335,9 @@ struct iscsi_in_pdu *in _U_)
 {
 	iscsi->is_loggedin = 0;
 	ISCSI_LOG(iscsi, 2, "logout successful");
-	pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
+	if (pdu->callback) {
+		pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
+	}
 
 	return 0;
 }
