@@ -99,6 +99,18 @@ if test x"$libiscsi_cv_HAVE_SG_IO" = x"yes"; then
     AC_DEFINE(HAVE_SG_IO,1,[Whether we have SG_IO support])
 fi
 
+AC_CACHE_CHECK([for iSER support],libiscsi_cv_HAVE_LINUX_ISER,[
+AC_TRY_COMPILE([
+#include <infiniband/verbs.h>
+#include <rdma/rdma_cma.h>
+#include <rdma/rdma_verbs.h>],
+[int ibv = IBV_WC_SEND;],
+libiscsi_cv_HAVE_LINUX_ISER=yes,libiscsi_cv_HAVE_LINUX_ISER=no)])
+if test x"$libiscsi_cv_HAVE_LINUX_ISER" = x"yes"; then
+    AC_DEFINE(HAVE_LINUX_ISER,1,[Whether we have iSER support])
+fi
+AM_CONDITIONAL([HAVE_LINUX_ISER], [test $libiscsi_cv_HAVE_LINUX_ISER = yes])
+
 AC_MSG_CHECKING(whether libcunit is available)
 ac_save_CFLAGS="$CFLAGS"
 ac_save_LIBS="$LIBS"
