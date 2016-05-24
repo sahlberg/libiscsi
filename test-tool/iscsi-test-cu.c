@@ -419,6 +419,7 @@ static CU_TestInfo tests_writesame10[] = {
         { (char *)"UnmapUnaligned", test_writesame10_unmap_unaligned },
         { (char *)"UnmapUntilEnd", test_writesame10_unmap_until_end },
         { (char *)"UnmapVPD", test_writesame10_unmap_vpd },
+        { (char *)"Check", test_writesame10_check },
         CU_TEST_INFO_NULL
 };
 
@@ -431,6 +432,7 @@ static CU_TestInfo tests_writesame16[] = {
         { (char *)"UnmapUnaligned", test_writesame16_unmap_unaligned },
         { (char *)"UnmapUntilEnd", test_writesame16_unmap_until_end },
         { (char *)"UnmapVPD", test_writesame16_unmap_vpd },
+        { (char *)"Check", test_writesame16_check },
         CU_TEST_INFO_NULL
 };
 
