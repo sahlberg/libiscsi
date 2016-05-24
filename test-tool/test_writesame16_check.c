@@ -33,7 +33,7 @@ test_writesame16_check(void)
 {
 	int i;
 	int ws_max_blocks = 256;
-	char read_buf[ws_max_blocks * block_size];
+	unsigned char read_buf[ws_max_blocks * block_size];
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
