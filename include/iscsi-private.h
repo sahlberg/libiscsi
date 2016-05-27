@@ -395,6 +395,9 @@ struct iscsi_transport {
 	struct iscsi_pdu* (*new_pdu)(struct iscsi_context *iscsi, size_t size);
 	int (*disconnect)(struct iscsi_context *iscsi);
 	void (*free_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+	int (*service)(struct iscsi_context *iscsi, int revents);
+	int (*get_fd)(struct iscsi_context *iscsi);
+	int (*which_events)(struct iscsi_context *iscsi);
 };
 
 struct tcp_transport {

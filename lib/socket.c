@@ -390,6 +390,7 @@ iscsi_tcp_disconnect(struct iscsi_context *iscsi)
 	return 0;
 }
 
+
 int
 iscsi_disconnect(struct iscsi_context *iscsi)
 {
@@ -397,7 +398,7 @@ iscsi_disconnect(struct iscsi_context *iscsi)
 }
 
 int
-iscsi_get_fd(struct iscsi_context *iscsi)
+iscsi_tcp_get_fd(struct iscsi_context *iscsi)
 {
 	if (iscsi->old_iscsi) {
 		return iscsi->old_iscsi->fd;
@@ -406,7 +407,13 @@ iscsi_get_fd(struct iscsi_context *iscsi)
 }
 
 int
-iscsi_which_events(struct iscsi_context *iscsi)
+iscsi_get_fd(struct iscsi_context *iscsi)
+{
+	return iscsi->t->get_fd(iscsi);
+}
+
+int
+iscsi_tcp_which_events(struct iscsi_context *iscsi)
 {
 	int events = iscsi->is_connected ? POLLIN : POLLOUT;
 
@@ -424,6 +431,12 @@ iscsi_which_events(struct iscsi_context *iscsi)
 		events |= POLLOUT;
 	}
 	return events;
+}
+
+int
+iscsi_which_events(struct iscsi_context *iscsi)
+{
+	return iscsi->t->which_events(iscsi);
 }
 
 int
@@ -823,7 +836,7 @@ iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 }
 
 int
-iscsi_service(struct iscsi_context *iscsi, int revents)
+iscsi_tcp_service(struct iscsi_context *iscsi, int revents)
 {
 	if (iscsi->fd < 0) {
 		return 0;
@@ -923,6 +936,12 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 	iscsi_timeout_scan(iscsi);
 
 	return 0;
+}
+
+int
+iscsi_service(struct iscsi_context *iscsi, int revents)
+{
+	return iscsi->t->service(iscsi, revents);
 }
 
 static int iscsi_tcp_queue_pdu(struct iscsi_context *iscsi,
@@ -1066,6 +1085,9 @@ void iscsi_init_tcp_transport(struct iscsi_context *iscsi)
 	iscsi->t->new_pdu = iscsi_tcp_new_pdu;
 	iscsi->t->disconnect = iscsi_tcp_disconnect;
 	iscsi->t->free_pdu = iscsi_tcp_free_pdu;
+	iscsi->t->service = iscsi_tcp_service;
+	iscsi->t->get_fd = iscsi_tcp_get_fd;
+	iscsi->t->which_events = iscsi_tcp_which_events;
 
 	return;
 }
