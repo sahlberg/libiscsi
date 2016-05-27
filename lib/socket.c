@@ -367,8 +367,8 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	return 0;
 }
 
-int
-iscsi_disconnect(struct iscsi_context *iscsi)
+static int
+iscsi_tcp_disconnect(struct iscsi_context *iscsi)
 {
 	if (iscsi->fd == -1) {
 		iscsi_set_error(iscsi, "Trying to disconnect "
@@ -388,6 +388,12 @@ iscsi_disconnect(struct iscsi_context *iscsi)
 	iscsi->is_corked = 0;
 
 	return 0;
+}
+
+int
+iscsi_disconnect(struct iscsi_context *iscsi)
+{
+        return iscsi->t->disconnect(iscsi);
 }
 
 int
@@ -1058,6 +1064,7 @@ void iscsi_init_tcp_transport(struct iscsi_context *iscsi)
 	iscsi->t->connect = iscsi_tcp_connect;
 	iscsi->t->queue_pdu = iscsi_tcp_queue_pdu;
 	iscsi->t->new_pdu = iscsi_tcp_new_pdu;
+	iscsi->t->disconnect = iscsi_tcp_disconnect;
 
 	return;
 }

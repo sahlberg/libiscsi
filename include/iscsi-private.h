@@ -391,6 +391,7 @@ struct iscsi_transport {
 	int (*connect)(struct iscsi_context *iscsi, union socket_address *sa, int ai_family);
 	int (*queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 	struct iscsi_pdu* (*new_pdu)(struct iscsi_context *iscsi, size_t size);
+	int (*disconnect)(struct iscsi_context *iscsi);
 };
 
 struct tcp_transport {
