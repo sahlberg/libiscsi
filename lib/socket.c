@@ -816,7 +816,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 	return 0;
 }
 
-static int
+int
 iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 {
 	if (iscsi->is_loggedin) {
