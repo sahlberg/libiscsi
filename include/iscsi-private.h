@@ -55,7 +55,7 @@ struct iscsi_in_pdu {
 	struct iscsi_in_pdu *next;
 
 	long long hdr_pos;
-	unsigned char hdr[ISCSI_RAW_HEADER_SIZE + ISCSI_DIGEST_SIZE];
+	unsigned char *hdr;
 
 	long long data_pos;
 	unsigned char *data;

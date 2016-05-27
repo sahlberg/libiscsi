@@ -549,6 +549,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 
 	if (iscsi->incoming == NULL) {
 		iscsi->incoming = iscsi_szmalloc(iscsi, sizeof(struct iscsi_in_pdu));
+		iscsi->incoming->hdr = iscsi_szmalloc(iscsi, ISCSI_RAW_HEADER_SIZE + ISCSI_DIGEST_SIZE);
 		if (iscsi->incoming == NULL) {
 			iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu");
 			return -1;
@@ -951,6 +952,7 @@ static int iscsi_tcp_queue_pdu(struct iscsi_context *iscsi,
 void
 iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 {
+	iscsi_free(iscsi, in->hdr);
 	iscsi_free(iscsi, in->data);
 	in->data=NULL;
 	iscsi_sfree(iscsi, in);
