@@ -83,7 +83,7 @@ iscsi_task_mgmt_async(struct iscsi_context *iscsi,
 
 	if (iscsi->t->queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "failed to queue iscsi taskmgmt pdu");
-		iscsi_free_pdu(iscsi, pdu);
+		iscsi->t->free_pdu(iscsi, pdu);
 		return -1;
 	}
 

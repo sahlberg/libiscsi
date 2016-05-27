@@ -796,7 +796,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			iscsi->is_corked = 1;
 		}
 		if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
-			iscsi_free_pdu(iscsi, pdu);
+			iscsi->t->free_pdu(iscsi, pdu);
 		}
 		iscsi->outqueue_current = NULL;
 	}
@@ -1065,6 +1065,7 @@ void iscsi_init_tcp_transport(struct iscsi_context *iscsi)
 	iscsi->t->queue_pdu = iscsi_tcp_queue_pdu;
 	iscsi->t->new_pdu = iscsi_tcp_new_pdu;
 	iscsi->t->disconnect = iscsi_tcp_disconnect;
+	iscsi->t->free_pdu = iscsi_tcp_free_pdu;
 
 	return;
 }

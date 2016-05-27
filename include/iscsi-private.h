@@ -387,17 +387,20 @@ struct iscsi_pdu *iscsi_tcp_new_pdu(struct iscsi_context *iscsi, size_t size);
 
 void iscsi_init_tcp_transport(struct iscsi_context *iscsi);
 
+void iscsi_tcp_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+
 struct iscsi_transport {
 	int (*connect)(struct iscsi_context *iscsi, union socket_address *sa, int ai_family);
 	int (*queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 	struct iscsi_pdu* (*new_pdu)(struct iscsi_context *iscsi, size_t size);
 	int (*disconnect)(struct iscsi_context *iscsi);
+	void (*free_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 };
 
 struct tcp_transport {
 	struct iscsi_transport t;
 };
-        
+
 #ifdef __cplusplus
 }
 #endif

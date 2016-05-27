@@ -277,7 +277,7 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
 			              NULL, pdu->private_data);
 		}
-		iscsi_free_pdu(iscsi, pdu);
+		iscsi->t->free_pdu(iscsi, pdu);
 	}
 	while ((pdu = iscsi->waitpdu)) {
 		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
@@ -288,7 +288,7 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
 			              NULL, pdu->private_data);
 		}
-		iscsi_free_pdu(iscsi, pdu);
+		iscsi->t->free_pdu(iscsi, pdu);
 	}
 }
 
@@ -332,7 +332,7 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
 
 		ISCSI_LIST_REMOVE(&old_iscsi->waitpdu, pdu);
 		if (pdu->itt == 0xffffffff) {
-			iscsi_free_pdu(old_iscsi, pdu);
+			iscsi->t->free_pdu(old_iscsi, pdu);
 			continue;
 		}
 
@@ -346,7 +346,7 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
 				              NULL, pdu->private_data);
 			}
-			iscsi_free_pdu(old_iscsi, pdu);
+			iscsi->t->free_pdu(old_iscsi, pdu);
 			continue;
 		}
 
@@ -364,7 +364,7 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
 					     pdu->scsi_cbdata.private_data)) {
 			/* not much we can really do at this point */
 		}
-		iscsi_free_pdu(old_iscsi, pdu);
+		iscsi->t->free_pdu(old_iscsi, pdu);
 	}
 
 	if (old_iscsi->incoming != NULL) {
@@ -375,7 +375,7 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
 	}
 
 	if (old_iscsi->outqueue_current != NULL && old_iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
-		iscsi_free_pdu(old_iscsi, old_iscsi->outqueue_current);
+		iscsi->t->free_pdu(old_iscsi, old_iscsi->outqueue_current);
 	}
 
 	for (i = 0; i < old_iscsi->smalloc_free; i++) {
