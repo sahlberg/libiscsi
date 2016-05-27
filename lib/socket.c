@@ -1055,6 +1055,7 @@ void iscsi_init_tcp_transport(struct iscsi_context *iscsi)
 {
 	iscsi->t->connect = iscsi_tcp_connect;
 	iscsi->t->queue_pdu = iscsi_tcp_queue_pdu;
+	iscsi->t->new_pdu = iscsi_tcp_new_pdu;
 
 	return;
 }
