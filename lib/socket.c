@@ -72,6 +72,14 @@
 #include "slist.h"
 
 static uint32_t iface_rr = 0;
+struct iscsi_transport;
+
+void iscsi_init_tcp_transport(struct iscsi_context *iscsi)
+{
+	iscsi->t = NULL;
+
+	return;
+}
 
 void
 iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
