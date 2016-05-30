@@ -181,6 +181,16 @@ do {                                                                        \
         }                                                                \
 } while (0);
 
+#define CHECK_SIZE(_min_blocks, _c)                                     \
+        do {                                                            \
+                if (num_blocks < _min_blocks) {                         \
+                        logging(LOG_VERBOSE, "[SKIPPED] "               \
+                                "LUN too small. Skipping assert");      \
+                } else {                                                \
+                        _c                                              \
+                }                                                       \
+        } while (0);
+
 #define COMPAREANDWRITE(...)                                            \
         do {                                                            \
                 int _r;                                                 \
