@@ -24,11 +24,10 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test-cu.h"
 
+
 void
 test_writesame10_0blocks(void)
 {
-        int ret;
-
         CHECK_FOR_DATALOSS;
         CHECK_FOR_SBC;
 
@@ -54,18 +53,39 @@ test_writesame10_0blocks(void)
                 return;
         }
 
-        ret = writesame10(sd, 0,
-                          block_size, 0, 0, 0, 0, 0, scratch,
-                          EXPECT_STATUS_GOOD);
-        if (ret == -2) {
-                CU_PASS("[SKIPPED] Target does not support WRITESAME10. Skipping test");
-                return;
-        } else if (ret == -3) {
-                CU_PASS("[SKIPPED] Target does not support WRITESAME10 with NUMBER OF LOGICAL BLOCKS == 0");
-        } else if (ret == -4) {
-                CU_PASS("[SKIPPED] Number of WRITESAME10 logical blocks to be written exceeds MAXIMUM WRITE SAME LENGTH");
+        if (inq_bl->max_ws_len > 0 && num_blocks >= inq_bl->max_ws_len) {
+            WRITESAME10(sd, 0, block_size, 0, 0, 0, 0, 0, scratch,
+                        EXPECT_INVALID_FIELD_IN_CDB);
         } else {
-                CU_ASSERT_EQUAL(ret, 0);
+            WRITESAME10(sd, 0, block_size, 0, 0, 0, 0, 0, scratch,
+                        EXPECT_STATUS_GOOD);
+        }
+
+        if (inq_bl->max_ws_len > 0) {
+            logging(LOG_VERBOSE,
+                    "Test WRITESAME10 at MAXIMUM WRITE SAME LENGTH + 1 blocks "
+                    "from end-of-LUN");
+            CHECK_SIZE((inq_bl->max_ws_len + 1),
+                       WRITESAME10(sd, num_blocks - (inq_bl->max_ws_len + 1),
+                                   block_size, 0, 0, 0, 0, 0, scratch,
+                                   EXPECT_INVALID_FIELD_IN_CDB));
+            logging(LOG_VERBOSE,
+                    "Test WRITESAME10 at MAXIMUM WRITE SAME LENGTH blocks "
+                    "from end-of-LUN");
+            CHECK_SIZE(inq_bl->max_ws_len,
+                       WRITESAME10(sd, num_blocks - inq_bl->max_ws_len,
+                                   block_size, 0, 0, 0, 0, 0, scratch,
+                                   EXPECT_STATUS_GOOD));
+            logging(LOG_VERBOSE,
+                    "Test WRITESAME10 at MAXIMUM WRITE SAME LENGTH - 1 blocks "
+                    "from end-of-LUN");
+            CHECK_SIZE((inq_bl->max_ws_len - 1),
+                       WRITESAME10(sd, num_blocks - (inq_bl->max_ws_len - 1),
+                                   block_size, 0, 0, 0, 0, 0, scratch,
+                                   EXPECT_STATUS_GOOD));
+        } else {
+            logging(LOG_VERBOSE, "[SKIPPING] No MAXIMUM WRITE SAME LENGTH - "
+                    "skipping MAXIMUM WRITE SAME LENGTH asserts.");
         }
 
         logging(LOG_VERBOSE, "Test WRITESAME10 0-blocks one block past end-of-LUN");
