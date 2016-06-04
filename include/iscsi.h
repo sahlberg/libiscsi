@@ -36,11 +36,12 @@ struct sockaddr;
 struct scsi_iovec;
 
 /* API VERSION */
-#define LIBISCSI_API_VERSION (20160501)
+#define LIBISCSI_API_VERSION (20160603)
 
 /* FEATURES */
 #define LIBISCSI_FEATURE_IOVECTOR (1)
 #define LIBISCSI_FEATURE_NOP_COUNTER (1)
+#define LIBISCSI_FEATURE_ISER (1)
 
 #define MAX_STRING_SIZE (255)
 
