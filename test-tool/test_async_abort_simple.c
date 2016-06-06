@@ -60,8 +60,12 @@ test_async_abort_cb(struct iscsi_context *iscsi __attribute__((unused)),
 		    int status, void *command_data,
 		    void *private_data)
 {
-	uint32_t tmf_response = *(uint32_t *)command_data;
+	uint32_t tmf_response;
 	struct tests_async_abort_state *state = private_data;
+
+	/* command_data NULL if a reconnect occured. see iscsi_reconnect_cb() */
+	CU_ASSERT_PTR_NOT_NULL_FATAL(command_data);
+	tmf_response = *(uint32_t *)command_data;
 
 	logging(LOG_VERBOSE, "ABORT TASK: TMF response %d for"
 		" RefCmdSN=0x%x, RefITT=0x%x",
