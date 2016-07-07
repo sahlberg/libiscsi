@@ -450,6 +450,9 @@ iscsi_process_scsi_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				task->sense.key,
 				scsi_sense_ascq_str(task->sense.ascq),
 				task->sense.ascq);
+		if (task->sense.key == SCSI_SENSE_ILLEGAL_REQUEST) {
+			iscsi_dump_pdu_header(iscsi, pdu->outdata.data);
+		}
 		if (pdu->callback) {
 			pdu->callback(iscsi, SCSI_STATUS_CHECK_CONDITION, task,
 			              pdu->private_data);

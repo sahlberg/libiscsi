@@ -391,6 +391,8 @@ void iscsi_tcp_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 int iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi);
 
+void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data);
+
 struct iscsi_transport {
 	int (*connect)(struct iscsi_context *iscsi, union socket_address *sa, int ai_family);
 	int (*queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
