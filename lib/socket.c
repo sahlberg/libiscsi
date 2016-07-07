@@ -359,11 +359,13 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	iscsi->socket_status_cb  = cb;
 	iscsi->connect_data      = private_data;
 
-	if(iscsi->t->connect(iscsi, &sa, ai->ai_family) < 0) {
+	if (iscsi->t->connect(iscsi, &sa, ai->ai_family) < 0) {
 		iscsi_set_error(iscsi, "Couldn't connect transport");
+		freeaddrinfo(ai);
 		return -1;
 	}
 
+	freeaddrinfo(ai);
 	return 0;
 }
 
