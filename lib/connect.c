@@ -378,6 +378,10 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
 		iscsi->t->free_pdu(old_iscsi, old_iscsi->outqueue_current);
 	}
 
+	if (old_iscsi->t) {
+		iscsi_free(old_iscsi, old_iscsi->t);
+	}
+
 	for (i = 0; i < old_iscsi->smalloc_free; i++) {
 		iscsi_free(old_iscsi, old_iscsi->smalloc_ptrs[i]);
 	}
