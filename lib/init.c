@@ -413,6 +413,10 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		iscsi_destroy_context(iscsi->old_iscsi);
 	}
 
+	if (iscsi->t) {
+		iscsi_free(iscsi, iscsi->t);
+	}
+
 	memset(iscsi, 0, sizeof(struct iscsi_context));
 	free(iscsi);
 
