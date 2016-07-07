@@ -263,6 +263,10 @@ void discovery_cb(struct iscsi_context *iscsi, int status, void *command_data, v
 
 		while (portal != NULL) {
 			if (useurls == 1 && showluns == 0) {
+				char *str = strrchr(portal->portal, ',');
+				if (str != NULL) {
+					str[0] = 0;
+				}
 				printf("iscsi://%s/%s/0\n", portal->portal, addr->target_name);
 			} else {
 				printf("Target:%s Portal:%s\n", addr->target_name, portal->portal);
