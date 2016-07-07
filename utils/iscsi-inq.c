@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <getopt.h>
+#include <inttypes.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -40,34 +41,34 @@ const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-inq";
 void inquiry_block_limits(struct scsi_inquiry_block_limits *inq)
 {
 	printf("wsnz:%d\n", inq->wsnz);
-	printf("maximum compare and write length:%d\n", inq->max_cmp);
-	printf("optimal transfer length granularity:%d\n", inq->opt_gran);
-	printf("maximum transfer length:%d\n", inq->max_xfer_len);
-	printf("optimal transfer length:%d\n",inq->opt_xfer_len);
-	printf("maximum prefetch xdread xdwrite transfer length:%d\n", inq->max_prefetch);
-	printf("maximum unmap lba count:%d\n", inq->max_unmap);
-	printf("maximum unmap block descriptor count:%d\n", inq->max_unmap_bdc);
-	printf("optimal unmap granularity:%d\n", inq->opt_unmap_gran);
+	printf("maximum compare and write length:%" PRIu8 "\n", inq->max_cmp);
+	printf("optimal transfer length granularity:%" PRIu16 "\n", inq->opt_gran);
+	printf("maximum transfer length:%" PRIu32 "\n", inq->max_xfer_len);
+	printf("optimal transfer length:%" PRIu32 "\n",inq->opt_xfer_len);
+	printf("maximum prefetch xdread xdwrite transfer length:%" PRIu32 "\n", inq->max_prefetch);
+	printf("maximum unmap lba count:%" PRIu32 "\n", inq->max_unmap);
+	printf("maximum unmap block descriptor count:%" PRIu32 "\n", inq->max_unmap_bdc);
+	printf("optimal unmap granularity:%" PRIu32 "\n", inq->opt_unmap_gran);
 	printf("ugavalid:%d\n", inq->ugavalid);
-	printf("unmap granularity alignment:%d\n", inq->unmap_gran_align);
-	printf("maximum write same length:%d\n", (int)inq->max_ws_len);
+	printf("unmap granularity alignment:%" PRIu32 "\n", inq->unmap_gran_align);
+	printf("maximum write same length:%" PRIu64 "\n", inq->max_ws_len);
 }
 
 void inquiry_logical_block_provisioning(struct scsi_inquiry_logical_block_provisioning *inq)
 {
-	printf("Threshold Exponent:%d\n", inq->threshold_exponent);	
-	printf("lbpu:%d\n", inq->lbpu);	
-	printf("lbpws:%d\n", inq->lbpws);	
-	printf("lbpws10:%d\n", inq->lbpws10);	
-	printf("lbprz:%d\n", inq->lbprz);	
-	printf("anc_sup:%d\n", inq->anc_sup);	
-	printf("dp:%d\n", inq->dp);	
-	printf("provisioning type:%d\n", inq->provisioning_type);	
+	printf("Threshold Exponent:%d\n", inq->threshold_exponent);
+	printf("lbpu:%d\n", inq->lbpu);
+	printf("lbpws:%d\n", inq->lbpws);
+	printf("lbpws10:%d\n", inq->lbpws10);
+	printf("lbprz:%d\n", inq->lbprz);
+	printf("anc_sup:%d\n", inq->anc_sup);
+	printf("dp:%d\n", inq->dp);
+	printf("provisioning type:%d\n", inq->provisioning_type);
 }
 
 void inquiry_block_device_characteristics(struct scsi_inquiry_block_device_characteristics *inq)
 {
-	printf("Medium Rotation Rate:%dRPM\n", inq->medium_rotation_rate);	
+	printf("Medium Rotation Rate:%dRPM\n", inq->medium_rotation_rate);
 }
 
 void inquiry_device_identification(struct scsi_inquiry_device_identification *inq)
