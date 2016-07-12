@@ -47,6 +47,7 @@ int max_in_flight = 32;
 int blocks_per_io = 8;
 uint64_t runtime = 0;
 uint64_t finished = 0;
+int logging = 0;
 
 struct client {
 	int finished;
@@ -116,6 +117,9 @@ void progress(struct client *client) {
 		printf ("%02" PRIu64 ":%02" PRIu64 ":%02" PRIu64 " - ", _runtime / 3600, (_runtime % 3600) / 60, _runtime % 60);
 		printf ("lba %" PRIu64 ", iops current %" PRIu64 " (%" PRIu64 " MB/s), ", client->pos, iops, mbps >> 20);
 		printf ("iops average %" PRIu64 " (%" PRIu64 " MB/s), in_flight %d, busy %d        ", aiops, ambps >> 20, client->in_flight, client->busy_cnt);
+	}
+	if (logging) {
+		printf ("\n");
 	}
 	fflush(stdout);
 	client->last_ns = now;
@@ -220,7 +224,7 @@ void fill_read_queue(struct client *client)
 }
 
 void usage(void) {
-	fprintf(stderr,"Usage: iscsi-perf [-i <initiator-name>] [-m <max_requests>] [-b blocks_per_request] [-t timeout] [-r|--random] [-n|--ignore-errors] [-x <max_reconnects>] <LUN>\n");
+	fprintf(stderr,"Usage: iscsi-perf [-i <initiator-name>] [-m <max_requests>] [-b blocks_per_request] [-t timeout] [-r|--random] [-l|--logging] [-n|--ignore-errors] [-x <max_reconnects>] <LUN>\n");
 	exit(1);
 }
 
@@ -254,6 +258,7 @@ int main(int argc, char *argv[])
 		{"runtime",        required_argument,    NULL,        't'},
 		{"random",         no_argument,          NULL,        'r'},
 		{"random-blocks",  no_argument,          NULL,        'R'},
+		{"logging",        no_argument,          NULL,        'l'},
 		{"ignore-errors",  no_argument,          NULL,        'n'},
 		{0, 0, 0, 0}
 	};
@@ -266,7 +271,7 @@ int main(int argc, char *argv[])
 	
 	printf("iscsi-perf version %s - (c) 2014-2015 by Peter Lieven <pl@ĸamp.de>\n\n", PERF_VERSION);
 
-	while ((c = getopt_long(argc, argv, "i:m:b:t:nrRx:", long_options,
+	while ((c = getopt_long(argc, argv, "i:m:b:t:lnrRx:", long_options,
 			&option_index)) != -1) {
 		switch (c) {
 		case 'i':
@@ -289,6 +294,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'R':
 			client.random_blocks = 1;
+			break;
+		case 'l':
+			logging = 1;
 			break;
 		case 'x':
 			client.max_reconnects = atoi(optarg);
