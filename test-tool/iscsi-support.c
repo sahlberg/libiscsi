@@ -145,14 +145,15 @@ int all_zero(const unsigned char *buf, unsigned size)
 static const char *scsi_status_str(int status)
 {
         switch(status) {
-        case SCSI_STATUS_GOOD:                        return "SUCCESS";
-        case SCSI_STATUS_CHECK_CONDITION:        return "CHECK_CONDITION";
-        case SCSI_STATUS_CONDITION_MET:                return "CONDITIONS_MET";
-        case SCSI_STATUS_BUSY:                        return "BUSY";
-        case SCSI_STATUS_RESERVATION_CONFLICT:        return "RESERVATION_CONFLICT";
-        case SCSI_STATUS_TASK_SET_FULL:                return "TASK_SET_FULL";
-        case SCSI_STATUS_ACA_ACTIVE:                return "ACA_ACTIVE";
-        case SCSI_STATUS_TASK_ABORTED:                return "TASK_ABORTED";
+        case SCSI_STATUS_GOOD:                 return "SUCCESS";
+        case SCSI_STATUS_TIMEOUT:              return "TIMEOUT";
+        case SCSI_STATUS_CHECK_CONDITION:      return "CHECK_CONDITION";
+        case SCSI_STATUS_CONDITION_MET:        return "CONDITIONS_MET";
+        case SCSI_STATUS_BUSY:                 return "BUSY";
+        case SCSI_STATUS_RESERVATION_CONFLICT: return "RESERVATION_CONFLICT";
+        case SCSI_STATUS_TASK_SET_FULL:        return "TASK_SET_FULL";
+        case SCSI_STATUS_ACA_ACTIVE:           return "ACA_ACTIVE";
+        case SCSI_STATUS_TASK_ABORTED:         return "TASK_ABORTED";
         }
         return "UNKNOWN";
 }

@@ -74,9 +74,9 @@ void test_iscsi_cmdsn_toolow(void)
         iscsi_set_timeout(sd->iscsi_ctx, 3);
 
         ret = testunitready(sd,
-                            EXPECT_STATUS_GOOD);
-        CU_ASSERT_EQUAL(ret, -1);
-        if (ret == -1) {
+                            EXPECT_STATUS_TIMEOUT);
+        CU_ASSERT_EQUAL(ret, 0);
+        if (ret == 0) {
                 logging(LOG_VERBOSE, "[SUCCESS] We did not receive a reply");
         } else {
                 logging(LOG_VERBOSE, "[FAILURE] We got a response from the target but SMDSN was outside of the window.");
