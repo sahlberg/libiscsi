@@ -743,3 +743,9 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 		iscsi->t->free_pdu(iscsi, pdu);
 	}
 }
+
+int
+iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+        return iscsi->t->queue_pdu(iscsi, pdu);
+}

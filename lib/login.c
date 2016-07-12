@@ -1002,7 +1002,7 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
 
-	if (iscsi->t->queue_pdu(iscsi, pdu) != 0) {
+	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"pdu.");
 		iscsi->t->free_pdu(iscsi, pdu);
@@ -1319,7 +1319,7 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
 
-	if (iscsi->t->queue_pdu(iscsi, pdu) != 0) {
+	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"logout pdu.");
 		iscsi->t->free_pdu(iscsi, pdu);

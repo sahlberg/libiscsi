@@ -78,7 +78,7 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		}
 	}
 
-	if (iscsi->t->queue_pdu(iscsi, pdu) != 0) {
+	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "failed to queue iscsi nop-out pdu");
 		iscsi->t->free_pdu(iscsi, pdu);
 		return -1;
@@ -122,7 +122,7 @@ iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt, uint32_t lu
 	/* cmdsn is not increased if Immediate delivery*/
 	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
 
-	if (iscsi->t->queue_pdu(iscsi, pdu) != 0) {
+	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "failed to queue iscsi nop-out pdu");
 		iscsi->t->free_pdu(iscsi, pdu);
 		return -1;
