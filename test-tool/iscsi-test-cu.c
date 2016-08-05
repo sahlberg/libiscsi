@@ -75,6 +75,7 @@ static CU_TestInfo tests_compareandwrite[] = {
         { (char *)"Simple", test_compareandwrite_simple },
         { (char *)"DpoFua", test_compareandwrite_dpofua },
         { (char *)"Miscompare", test_compareandwrite_miscompare },
+        { (char *)"Unwritten", test_compareandwrite_unwritten },
         CU_TEST_INFO_NULL
 };
 

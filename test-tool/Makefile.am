@@ -19,6 +19,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_compareandwrite_simple.c \
 	test_compareandwrite_dpofua.c \
 	test_compareandwrite_miscompare.c \
+	test_compareandwrite_unwritten.c \
 	test_extendedcopy_simple.c \
 	test_extendedcopy_param.c \
 	test_extendedcopy_descr_limits.c \
