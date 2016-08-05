@@ -33,22 +33,16 @@
 
 #ifdef __linux
 
-int cq_handle(struct iser_conn *iser_conn);
+static int cq_handle(struct iser_conn *iser_conn);
 
 /*
  * iscsi_iser_get_fd() - Return completion queue
  *                       event channel file descriptor.
  */
-int
+static int
 iscsi_iser_get_fd(struct iscsi_context *iscsi)
 {
-	struct iser_transport *iser_transport;
-	struct iser_conn *iser_conn;
-
-	iser_transport = container_of(iscsi->t, struct iser_transport, t);
-
-	iser_conn = &iser_transport->iser_conn;
-
+	struct iser_conn *iser_conn = iscsi->opaque;
 	return iser_conn->comp_channel->fd;
 }
 
@@ -61,7 +55,7 @@ iscsi_iser_get_fd(struct iscsi_context *iscsi)
  * will return same value of 1 each time.
  * Being used in QEMU iscsi block so we need compatability with TCP
  */
-int
+static int
 iscsi_iser_which_events(struct iscsi_context *iscsi _U_)
 {
 	/* iSER is waiting to events from CQ that are always POLLIN */
@@ -77,15 +71,11 @@ iscsi_iser_which_events(struct iscsi_context *iscsi _U_)
  * CQ can only create POLLIN events, hence this function
  * will poll the cq for completion until boundary or emptiness.
  */
-int
+static int
 iscsi_iser_service(struct iscsi_context *iscsi, int revents)
 {
-	struct iser_transport *iser_transport;
 	int ret = 0;
-	struct iser_conn *iser_conn;
-
-	iser_transport = container_of(iscsi->t, struct iser_transport, t);
-	iser_conn = &iser_transport->iser_conn;
+	struct iser_conn *iser_conn = iscsi->opaque;
 
 	if (revents == POLLIN)
 		ret = cq_handle(iser_conn);
@@ -106,7 +96,7 @@ iscsi_iser_service(struct iscsi_context *iscsi, int revents)
  * iser_free_rx_descriptors() - freeing descriptors memory
  * @iser_conn:    ib connection context
  */
-void
+static void
 iser_free_rx_descriptors(struct iser_conn *iser_conn)
 {
 	struct iser_rx_desc *rx_desc;
@@ -128,7 +118,7 @@ iser_free_rx_descriptors(struct iser_conn *iser_conn)
  * iser_free_login_buf() - freeing login buffer
  * @iser_conn:    ib connection context
  */
-void
+static void
 iser_free_login_buf(struct iser_conn *iser_conn)
 {
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
@@ -139,7 +129,7 @@ iser_free_login_buf(struct iser_conn *iser_conn)
 	return;
 }
 
-void
+static void
 iser_free_reg_mr(struct iser_conn *iser_conn)
 {
 	struct iser_tx_desc *tx_desc = iser_conn->tx_desc;
@@ -166,7 +156,7 @@ iser_free_reg_mr(struct iser_conn *iser_conn)
  * iser_free_iser_conn_res() - freeing ib context resources
  * @iser_conn:    ib connection context
  */
-void
+static void
 iser_free_iser_conn_res(struct iser_conn *iser_conn, bool destroy)
 {
 	int ret;
@@ -227,7 +217,7 @@ iser_free_iser_conn_res(struct iser_conn *iser_conn, bool destroy)
  *                       and destroying cm id
  * @iser_conn:    ib connection context
  */
-void
+static void
 iser_conn_release(struct iser_conn *iser_conn)
 {
 	int ret;
@@ -250,7 +240,7 @@ iser_conn_release(struct iser_conn *iser_conn)
  * iser_conn_terminate() - disconnecting rdma_cm
  * @iser_conn:    ib connection context
  */
-void
+static void
 iser_conn_terminate(struct iser_conn *iser_conn)
 {
 	int ret;
@@ -271,16 +261,13 @@ iser_conn_terminate(struct iser_conn *iser_conn)
  *                           freeing resources
  * @iser_conn:    ib connection context
  */
-int
+static int
 iscsi_iser_disconnect(struct iscsi_context *iscsi) {
 
-	struct iser_transport *iser_transport;
+	struct iser_conn *iser_conn = iscsi->opaque;
 
-	iser_transport = container_of(iscsi->t, struct iser_transport, t);
-
-	iser_conn_terminate(&iser_transport->iser_conn);
-
-	iser_conn_release(&iser_transport->iser_conn);
+	iser_conn_terminate(iser_conn);
+	iser_conn_release(iser_conn);
 
 	iscsi->fd  = -1;
 	iscsi->is_connected = 0;
@@ -289,7 +276,7 @@ iscsi_iser_disconnect(struct iscsi_context *iscsi) {
 	return 0;
 }
 
-struct iscsi_pdu*
+static struct iscsi_pdu*
 iscsi_iser_new_pdu(struct iscsi_context *iscsi, __attribute__((unused))size_t size) {
 
 	struct iscsi_pdu *pdu;
@@ -302,7 +289,7 @@ iscsi_iser_new_pdu(struct iscsi_context *iscsi, __attribute__((unused))size_t si
 	return pdu;
 }
 
-void
+static void
 iscsi_iser_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	struct iser_pdu *iser_pdu;
@@ -341,7 +328,8 @@ iscsi_iser_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
  **			   headers
  ** @iser_pdu:    iser pdu including iscsi pdu inside it
  **/
-void iser_create_send_desc(struct iser_pdu *iser_pdu) {
+static void
+iser_create_send_desc(struct iser_pdu *iser_pdu) {
 
 	unsigned char *iscsi_header = iser_pdu->iscsi_pdu.outdata.data;
 	struct iser_tx_desc *tx_desc = iser_pdu->desc;
@@ -357,8 +345,8 @@ void iser_create_send_desc(struct iser_pdu *iser_pdu) {
  *                     on receive queue
  * @iser_conn:    ib connection context
  */
-int iser_post_recvl(struct iser_conn *iser_conn) {
-
+static int
+iser_post_recvl(struct iser_conn *iser_conn) {
 	struct ibv_recv_wr rx_wr;
 	struct ibv_recv_wr *rx_wr_failed;
 	struct ibv_sge sge;
@@ -395,7 +383,8 @@ int iser_post_recvl(struct iser_conn *iser_conn) {
  * Notes:
  * Need to handle signal better
  */
-int iser_post_send(struct iser_conn *iser_conn, struct iser_tx_desc *tx_desc, bool signal) {
+static int
+iser_post_send(struct iser_conn *iser_conn, struct iser_tx_desc *tx_desc, bool signal) {
 
 	int ret;
 	struct ibv_send_wr send_wr;
@@ -425,10 +414,10 @@ int iser_post_send(struct iser_conn *iser_conn, struct iser_tx_desc *tx_desc, bo
  * @iser_transport:    iser connection context
  * @iser_pdu:     iser pdu to send
  */
-int iser_send_control(struct iser_transport *iser_transport, struct iser_pdu *iser_pdu) {
+static int
+iser_send_control(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu) {
 
 	struct iser_tx_desc *tx_desc;
-	struct iser_conn *iser_conn = &iser_transport->iser_conn;
 	int ret;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 	size_t datalen;
@@ -487,7 +476,7 @@ int iser_send_control(struct iser_transport *iser_transport, struct iser_pdu *is
  * @iser_pdu:     iser pdu
  * @iser_conn:       iser_connection context
  */
-int
+static int
 iser_initialize_headers(struct iser_pdu *iser_pdu, struct iser_conn *iser_conn)
 {
 	struct iser_tx_desc *tx_desc;
@@ -608,7 +597,7 @@ is_control_opcode(uint8_t opcode)
 	return is_control;
 }
 
-int
+static int
 overflow_data_size(struct iser_pdu *iser_pdu)
 {
 	int data_size;
@@ -627,12 +616,10 @@ overflow_data_size(struct iser_pdu *iser_pdu)
  * Nots:
  * Need to fix if failed prepareation return -1
  */
-int
-iser_send_command(struct iser_transport *iser_transport,
-                  struct iser_pdu *iser_pdu)
+static int
+iser_send_command(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu)
 {
 	struct iser_tx_desc *tx_desc = iser_pdu->desc;
-	struct iser_conn *iser_conn = &iser_transport->iser_conn;
 	int err = 0;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 
@@ -676,11 +663,11 @@ iser_send_command(struct iser_transport *iser_transport,
  * Need to be compatible to TCP which has real queue,
  * in iSER every queue pdu already sends all pdu (post_send)
  */
-int iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
+static int
+iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 
 	struct iser_pdu *iser_pdu;
-	struct iser_transport *iser_transport;
-	struct iser_conn *iser_conn;
+	struct iser_conn *iser_conn = iscsi->opaque;
 	uint8_t opcode;
 
 	if (pdu == NULL) {
@@ -689,8 +676,6 @@ int iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 	}
 
 	iser_pdu = container_of(pdu, struct iser_pdu, iscsi_pdu);
-	iser_transport = container_of(iscsi->t, struct iser_transport, t);
-	iser_conn = &iser_transport->iser_conn;
 	opcode = pdu->outdata.data[0];
 
 	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn + 1);
@@ -702,12 +687,12 @@ int iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 	}
 
 	if (unlikely(is_control_opcode(opcode))) {
-		if (iser_send_control(iser_transport, iser_pdu)) {
+		if (iser_send_control(iser_conn, iser_pdu)) {
 			iscsi_set_error(iscsi, "iser_send_command Failed\n");
 			return -1;
 		}
 	} else {
-                if (iser_send_command(iser_transport, iser_pdu)) {
+                if (iser_send_command(iser_conn, iser_pdu)) {
 			iscsi_set_error(iscsi, "iser_send_command Failed\n");
 			return -1;
 		}
@@ -725,7 +710,7 @@ static int iser_create_iser_conn_res(struct iser_conn *iser_conn) {
 
 	struct ibv_qp_init_attr init_attr;
 	int ret;
-	 struct iscsi_context *iscsi = iser_conn->cma_id->context;
+	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 
 	memset(&init_attr, 0, sizeof(struct ibv_qp_init_attr));
 	init_attr.qp_context       = (void *)iser_conn->cma_id->context;
@@ -754,14 +739,9 @@ static int iser_create_iser_conn_res(struct iser_conn *iser_conn) {
  * @cma_id:    connection manager id
  */
 static int iser_addr_handler(struct rdma_cm_id *cma_id) {
-
 	struct iscsi_context *iscsi = cma_id->context;
-	struct iser_transport *iser_transport;
-	struct iser_conn *iser_conn;
+	struct iser_conn *iser_conn = iscsi->opaque;
 	int ret, flags;
-
-	iser_transport = container_of(iscsi->t, struct iser_transport, t);
-	iser_conn = &iser_transport->iser_conn;
 
 	ret = rdma_resolve_route(cma_id, 1000);
 	if (ret) {
@@ -789,7 +769,7 @@ static int iser_addr_handler(struct rdma_cm_id *cma_id) {
 
 	iser_conn->cq = ibv_create_cq(cma_id->verbs,
 				      ISER_MAX_CQ_LEN,
-				      iser_transport,
+				      iser_conn,
 				      iser_conn->comp_channel,
 				      0);
 	if (!iser_conn->cq) {
@@ -836,14 +816,11 @@ pd_error:
  * @cma_id:    connection manager id
  */
 static int iser_route_handler(struct rdma_cm_id *cma_id) {
-
 	struct rdma_conn_param conn_param;
 	struct iser_cm_hdr req_hdr;
 	struct iscsi_context* iscsi = cma_id->context;
 	int ret;
-
-	struct iser_transport *iser_transport = container_of(iscsi->t, struct iser_transport, t);
-	struct iser_conn *iser_conn = &iser_transport->iser_conn;
+	struct iser_conn *iser_conn = iscsi->opaque;
 
 	ret = iser_create_iser_conn_res(iser_conn);
 	if (ret) {
@@ -864,7 +841,7 @@ static int iser_route_handler(struct rdma_cm_id *cma_id) {
 
 	ret = rdma_connect(cma_id, &conn_param);
 	if (ret) {
-		iscsi_set_error(iscsi, "conn %p failure connecting: %d", iser_transport, ret);
+		iscsi_set_error(iscsi, "conn %p failure connecting: %d", iser_conn, ret);
 		return -1;
 	}
 	return ret;
@@ -885,7 +862,8 @@ login_mr_error:
  * @iser_conn:     ib connection context
  * @cmds_max:    maximum in flight commands
  */
-int iser_alloc_rx_descriptors(struct iser_conn *iser_conn, int cmds_max)
+static int
+iser_alloc_rx_descriptors(struct iser_conn *iser_conn, int cmds_max)
 {
 	int i,j;
 	struct iser_rx_desc *rx_desc;
@@ -940,7 +918,7 @@ fail_alloc_mrs:
  * @iser_conn:  ib connection context
  * @count:    amount of receive requests to post on receive queue
  */
-int
+static int
 iser_post_recvm(struct iser_conn *iser_conn, int count)
 {
 	struct ibv_recv_wr *rx_wr, *rx_wr_failed;
@@ -972,7 +950,7 @@ iser_post_recvm(struct iser_conn *iser_conn, int count)
 	return ret;
 }
 
-int
+static int
 iser_reg_mr(struct iser_conn *iser_conn)
 {
 	int i;
@@ -1023,7 +1001,7 @@ iser_reg_mr(struct iser_conn *iser_conn)
  * commant about memcpy of data from iSER buffer to
  * App buffer
  */
-int
+static int
 iser_rcv_completion(struct iser_rx_desc *rx_desc,
 		    struct iser_conn *iser_conn)
 {
@@ -1127,7 +1105,7 @@ receive:
  * @iser_conn:       ib connection context
  *
  */
-int
+static int
 iser_snd_completion(struct iser_tx_desc *tx_desc _U_,
 		    struct iser_conn *iser_conn _U_)
 {
@@ -1213,7 +1191,7 @@ static int cq_event_handler(struct iser_conn *iser_conn)
  * Need to check if it is possible
  * to get cq event except POLLIN.
  */
-int cq_handle(struct iser_conn *iser_conn)
+static int cq_handle(struct iser_conn *iser_conn)
 {
 	void *ev_ctx = NULL;
 	int ret;
@@ -1248,16 +1226,12 @@ int cq_handle(struct iser_conn *iser_conn)
 static int iser_connected_handler(struct rdma_cm_id *cma_id) {
 
 	struct iscsi_context *iscsi = cma_id->context;
-	struct iser_transport *iser_transport;
-	struct iser_conn *iser_conn;
+	struct iser_conn *iser_conn = iscsi->opaque;
 
-	iser_transport = container_of(iscsi->t, struct iser_transport, t);
-	if (iser_transport == NULL) {
+	if (iser_conn == NULL) {
 		iscsi_set_error(iscsi, "Failed init of transport\n");
 		return -1;
 	}
-
-	iser_conn = &iser_transport->iser_conn;
 
 	iser_conn->post_recv_buf_count = 0;
 
@@ -1273,7 +1247,8 @@ static int iser_connected_handler(struct rdma_cm_id *cma_id) {
  * @event:     rdma cm event
  *
  */
-int iser_cma_handler(struct iser_conn *iser_conn,struct rdma_cm_id *cma_id, struct rdma_cm_event *event) {
+static int
+iser_cma_handler(struct iser_conn *iser_conn,struct rdma_cm_id *cma_id, struct rdma_cm_event *event) {
 
 	int ret = 0;
 
@@ -1360,18 +1335,16 @@ static void *cm_thread(void *arg)
  * Notes:
  * Need to move iser_reg_mr(headers) to iser_connected_handler.
  */
-int iscsi_iser_connect(struct iscsi_context *iscsi, union socket_address *sa,__attribute__((unused)) int ai_family) {
+static int
+iscsi_iser_connect(struct iscsi_context *iscsi, union socket_address *sa,__attribute__((unused)) int ai_family) {
 
-	struct iser_transport *iser_transport;
-	struct iser_conn *iser_conn;
+	struct iser_conn *iser_conn = iscsi->opaque;
 	int ret;
 
-	iser_transport = container_of(iscsi->t, struct iser_transport, t);
-	if (iser_transport == NULL) {
+	if (iser_conn == NULL) {
 		iscsi_set_error(iscsi, "Failed init of transport\n");
 		return -1;
 	}
-	iser_conn = &iser_transport->iser_conn;
 	sem_init(&iser_conn->sem_connect, 0, 0);
 
 	iser_conn->cma_channel = rdma_create_event_channel();
@@ -1426,18 +1399,22 @@ int iscsi_iser_connect(struct iscsi_context *iscsi, union socket_address *sa,__a
 	return 0;
 }
 
+static iscsi_transport iscsi_transport_iser = {
+	.connect      = iscsi_iser_connect,
+	.queue_pdu    = iscsi_iser_queue_pdu,
+	.new_pdu      = iscsi_iser_new_pdu,
+	.disconnect   = iscsi_iser_disconnect,
+	.free_pdu     = iscsi_iser_free_pdu,
+	.service      = iscsi_iser_service,
+	.get_fd       = iscsi_iser_get_fd,
+	.which_events = iscsi_iser_which_events,
+};
+
 void iscsi_init_iser_transport(struct iscsi_context *iscsi)
 {
-	iscsi->t->connect      = iscsi_iser_connect;
-	iscsi->t->queue_pdu    = iscsi_iser_queue_pdu;
-	iscsi->t->new_pdu      = iscsi_iser_new_pdu;
-	iscsi->t->disconnect   = iscsi_iser_disconnect;
-	iscsi->t->free_pdu     = iscsi_iser_free_pdu;
-	iscsi->t->service      = iscsi_iser_service;
-	iscsi->t->get_fd       = iscsi_iser_get_fd;
-	iscsi->t->which_events = iscsi_iser_which_events;
-
-	return;
+	iscsi->drv = &iscsi_transport_iser;
+	iscsi->opaque = iscsi_malloc(iscsi, sizeof(struct iser_conn));
+	iscsi->transport = ISER_TRANSPORT;
 }
 
 #endif

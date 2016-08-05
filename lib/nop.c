@@ -73,14 +73,14 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	if (data != NULL && len > 0) {
 		if (iscsi_pdu_add_data(iscsi, pdu, data, len) != 0) {
 			iscsi_set_error(iscsi, "Failed to add outdata to nop-out");
-			iscsi->t->free_pdu(iscsi, pdu);
+			iscsi->drv->free_pdu(iscsi, pdu);
 			return -1;
 		}
 	}
 
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "failed to queue iscsi nop-out pdu");
-		iscsi->t->free_pdu(iscsi, pdu);
+		iscsi->drv->free_pdu(iscsi, pdu);
 		return -1;
 	}
 
@@ -124,7 +124,7 @@ iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt, uint32_t lu
 
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "failed to queue iscsi nop-out pdu");
-		iscsi->t->free_pdu(iscsi, pdu);
+		iscsi->drv->free_pdu(iscsi, pdu);
 		return -1;
 	}
 
