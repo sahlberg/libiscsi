@@ -196,7 +196,7 @@ These names can be controlled by using the arguments
 The tests are all self-documented to describe what they test and how they test.
 Use -V with a test to print the documentation for a test.
 
-XLM/JUNIT
+XML/JUNIT
 =========
 iscsi-test-cu can produce machine-readable test results for consumption by your
 CI server. Use the --xml option with any test suite(s), and a file called
