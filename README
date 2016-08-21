@@ -203,7 +203,7 @@ CI server. Use the --xml option with any test suite(s), and a file called
 CUnitAutomated-Results.xml will be written to your current working directory.
 These results can be converted to JUnit format using this script:
 
-http://git.cyrusimap.org/cyrus-imapd/plain/cunit/cunit-to-junit.pl
+https://raw.githubusercontent.com/cyrusimap/cyrus-imapd/master/cunit/cunit-to-junit.pl
 
 See also:
 
