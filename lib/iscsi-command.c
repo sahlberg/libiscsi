@@ -147,7 +147,7 @@ error:
 		cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 						  cmd_pdu->private_data);
 	}
-	iscsi->t->free_pdu(iscsi, cmd_pdu);
+	iscsi->drv->free_pdu(iscsi, cmd_pdu);
 	return -1;
 }
 
@@ -283,7 +283,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"scsi pdu.");
-		iscsi->t->free_pdu(iscsi, pdu);
+		iscsi->drv->free_pdu(iscsi, pdu);
 		return -1;
 	}
 
@@ -2579,7 +2579,7 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
 			}
-			iscsi->t->free_pdu(iscsi, pdu);
+			iscsi->drv->free_pdu(iscsi, pdu);
 			return 0;
 		}
 	}
@@ -2590,7 +2590,7 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
 			}
-			iscsi->t->free_pdu(iscsi, pdu);
+			iscsi->drv->free_pdu(iscsi, pdu);
 			return 0;
 		}
 	}
@@ -2608,7 +2608,7 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
 		}
-		iscsi->t->free_pdu(iscsi, pdu);
+		iscsi->drv->free_pdu(iscsi, pdu);
 	}
 	while ((pdu = iscsi->outqueue)) {
 		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
@@ -2616,6 +2616,6 @@ iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
 		}
-		iscsi->t->free_pdu(iscsi, pdu);
+		iscsi->drv->free_pdu(iscsi, pdu);
 	}
 }

@@ -48,35 +48,14 @@
 
 int iscsi_init_transport(struct iscsi_context *iscsi,
 			 enum iscsi_transport_type transport) {
-	struct tcp_transport *tcp_transport;
-#ifdef HAVE_LINUX_ISER
-	struct iser_transport *iser_transport;
-#endif
-
-	if (iscsi->t) {
-		iscsi_free(iscsi, iscsi->t);
-		iscsi->t = NULL;
-	}
 	iscsi->transport = transport;
 
 	switch (iscsi->transport) {
 	case TCP_TRANSPORT:
-		tcp_transport = iscsi_malloc(iscsi, sizeof(struct tcp_transport));
-		if (tcp_transport == NULL) {
-			iscsi_set_error(iscsi, "Couldn't allocate memory for transport\n");
-			return -1;
-		}
-		iscsi->t = &tcp_transport->t;
 		iscsi_init_tcp_transport(iscsi);
 		break;
 #ifdef HAVE_LINUX_ISER
 	case ISER_TRANSPORT:
-		iser_transport = iscsi_malloc(iscsi, sizeof(struct iser_transport));
-		if (iser_transport == NULL) {
-			iscsi_set_error(iscsi, "Couldn't allocate memory for transport\n");
-			return -1;
-		}
-		iscsi->t = &iser_transport->t;
 		iscsi_init_iser_transport(iscsi);
 		break;
 #endif
@@ -371,7 +350,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 			              pdu->private_data);
 		}
-		iscsi->t->free_pdu(iscsi, pdu);
+		iscsi->drv->free_pdu(iscsi, pdu);
 	}
 	while ((pdu = iscsi->waitpdu)) {
 		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
@@ -382,11 +361,11 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 			              pdu->private_data);
 		}
-		iscsi->t->free_pdu(iscsi, pdu);
+		iscsi->drv->free_pdu(iscsi, pdu);
 	}
 
 	if (iscsi->outqueue_current != NULL && iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
-		iscsi->t->free_pdu(iscsi, iscsi->outqueue_current);
+		iscsi->drv->free_pdu(iscsi, iscsi->outqueue_current);
 	}
 
 	if (iscsi->incoming != NULL) {
@@ -413,9 +392,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		iscsi_destroy_context(iscsi->old_iscsi);
 	}
 
-	if (iscsi->t) {
-		iscsi_free(iscsi, iscsi->t);
-	}
+	iscsi_free(iscsi, iscsi->opaque);
 
 	memset(iscsi, 0, sizeof(struct iscsi_context));
 	free(iscsi);

@@ -73,7 +73,7 @@ iscsi_discovery_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
-		iscsi->t->free_pdu(iscsi, pdu);
+		iscsi->drv->free_pdu(iscsi, pdu);
 		return -1;
 	}
 
@@ -83,7 +83,7 @@ iscsi_discovery_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
 				"text pdu.");
-		iscsi->t->free_pdu(iscsi, pdu);
+		iscsi->drv->free_pdu(iscsi, pdu);
 		return -1;
 	}
 

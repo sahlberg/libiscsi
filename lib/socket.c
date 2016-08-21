@@ -359,7 +359,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	iscsi->socket_status_cb  = cb;
 	iscsi->connect_data      = private_data;
 
-	if (iscsi->t->connect(iscsi, &sa, ai->ai_family) < 0) {
+	if (iscsi->drv->connect(iscsi, &sa, ai->ai_family) < 0) {
 		iscsi_set_error(iscsi, "Couldn't connect transport");
 		freeaddrinfo(ai);
 		return -1;
@@ -396,10 +396,10 @@ iscsi_tcp_disconnect(struct iscsi_context *iscsi)
 int
 iscsi_disconnect(struct iscsi_context *iscsi)
 {
-        return iscsi->t->disconnect(iscsi);
+        return iscsi->drv->disconnect(iscsi);
 }
 
-int
+static int
 iscsi_tcp_get_fd(struct iscsi_context *iscsi)
 {
 	if (iscsi->old_iscsi) {
@@ -411,10 +411,10 @@ iscsi_tcp_get_fd(struct iscsi_context *iscsi)
 int
 iscsi_get_fd(struct iscsi_context *iscsi)
 {
-	return iscsi->t->get_fd(iscsi);
+	return iscsi->drv->get_fd(iscsi);
 }
 
-int
+static int
 iscsi_tcp_which_events(struct iscsi_context *iscsi)
 {
 	int events = iscsi->is_connected ? POLLIN : POLLOUT;
@@ -438,7 +438,7 @@ iscsi_tcp_which_events(struct iscsi_context *iscsi)
 int
 iscsi_which_events(struct iscsi_context *iscsi)
 {
-	return iscsi->t->which_events(iscsi);
+	return iscsi->drv->which_events(iscsi);
 }
 
 int
@@ -811,7 +811,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			iscsi->is_corked = 1;
 		}
 		if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
-			iscsi->t->free_pdu(iscsi, pdu);
+			iscsi->drv->free_pdu(iscsi, pdu);
 		}
 		iscsi->outqueue_current = NULL;
 	}
@@ -837,7 +837,7 @@ iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 	return -1;
 }
 
-int
+static int
 iscsi_tcp_service(struct iscsi_context *iscsi, int revents)
 {
 	if (iscsi->fd < 0) {
@@ -943,7 +943,7 @@ iscsi_tcp_service(struct iscsi_context *iscsi, int revents)
 int
 iscsi_service(struct iscsi_context *iscsi, int revents)
 {
-	return iscsi->t->service(iscsi, revents);
+	return iscsi->drv->service(iscsi, revents);
 }
 
 static int iscsi_tcp_queue_pdu(struct iscsi_context *iscsi,
@@ -1080,16 +1080,19 @@ void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces _U
 #endif
 }
 
+static iscsi_transport iscsi_transport_tcp = {
+	.connect      = iscsi_tcp_connect,
+	.queue_pdu    = iscsi_tcp_queue_pdu,
+	.new_pdu      = iscsi_tcp_new_pdu,
+	.disconnect   = iscsi_tcp_disconnect,
+	.free_pdu     = iscsi_tcp_free_pdu,
+	.service      = iscsi_tcp_service,
+	.get_fd       = iscsi_tcp_get_fd,
+	.which_events = iscsi_tcp_which_events,
+};
+
 void iscsi_init_tcp_transport(struct iscsi_context *iscsi)
 {
-	iscsi->t->connect = iscsi_tcp_connect;
-	iscsi->t->queue_pdu = iscsi_tcp_queue_pdu;
-	iscsi->t->new_pdu = iscsi_tcp_new_pdu;
-	iscsi->t->disconnect = iscsi_tcp_disconnect;
-	iscsi->t->free_pdu = iscsi_tcp_free_pdu;
-	iscsi->t->service = iscsi_tcp_service;
-	iscsi->t->get_fd = iscsi_tcp_get_fd;
-	iscsi->t->which_events = iscsi_tcp_which_events;
-
-	return;
+	iscsi->drv = &iscsi_transport_tcp;
+	iscsi->transport = TCP_TRANSPORT;
 }

@@ -202,13 +202,6 @@ struct iser_conn {
 	struct iser_tx_desc          *tx_desc;
 };
 
-
-struct iser_transport {       /* struct iser_conn */
-
-	struct iscsi_transport      t;
-	struct iser_conn            iser_conn;
-};
-
 void iscsi_init_iser_transport(struct iscsi_context *iscsi);
 
 #endif /* __linux */

@@ -76,9 +76,10 @@ union socket_address {
 };
 
 struct iscsi_context {
-
-	struct iscsi_transport *t;
+	struct iscsi_transport *drv;
+	void *opaque;
 	enum iscsi_transport_type transport;
+
 	char initiator_name[MAX_STRING_SIZE+1];
 	char target_name[MAX_STRING_SIZE+1];
 	char target_address[MAX_STRING_SIZE+1];  /* If a redirect */
@@ -393,7 +394,7 @@ int iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi);
 
 void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data);
 
-struct iscsi_transport {
+typedef struct iscsi_transport {
 	int (*connect)(struct iscsi_context *iscsi, union socket_address *sa, int ai_family);
 	int (*queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 	struct iscsi_pdu* (*new_pdu)(struct iscsi_context *iscsi, size_t size);
@@ -402,11 +403,7 @@ struct iscsi_transport {
 	int (*service)(struct iscsi_context *iscsi, int revents);
 	int (*get_fd)(struct iscsi_context *iscsi);
 	int (*which_events)(struct iscsi_context *iscsi);
-};
-
-struct tcp_transport {
-	struct iscsi_transport t;
-};
+} iscsi_transport;
 
 #ifdef __cplusplus
 }
