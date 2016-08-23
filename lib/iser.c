@@ -1228,11 +1228,6 @@ static int iser_connected_handler(struct rdma_cm_id *cma_id) {
 	struct iscsi_context *iscsi = cma_id->context;
 	struct iser_conn *iser_conn = iscsi->opaque;
 
-	if (iser_conn == NULL) {
-		iscsi_set_error(iscsi, "Failed init of transport\n");
-		return -1;
-	}
-
 	iser_conn->post_recv_buf_count = 0;
 
 	return iser_reg_mr(iser_conn);
@@ -1341,10 +1336,6 @@ iscsi_iser_connect(struct iscsi_context *iscsi, union socket_address *sa,__attri
 	struct iser_conn *iser_conn = iscsi->opaque;
 	int ret;
 
-	if (iser_conn == NULL) {
-		iscsi_set_error(iscsi, "Failed init of transport\n");
-		return -1;
-	}
 	sem_init(&iser_conn->sem_connect, 0, 0);
 
 	iser_conn->cma_channel = rdma_create_event_channel();
