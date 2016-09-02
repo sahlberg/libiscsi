@@ -34,6 +34,8 @@ iSCSI URL Format
 ================
 iSCSI devices are specified by a URL format of the following form :
     iscsi://[<username>[%<password>]@]<host>[:<port>]/<target-iqn>/<lun>[?<argument>[&<argument>]*]
+or
+    iser://[<username>[%<password>]@]<host>[:<port>]/<target-iqn>/<lun>[?<argument>[&<argument>]*]
 
 Arguments:
 Username and password for bidirectional CHAP authentication:

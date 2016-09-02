@@ -520,7 +520,11 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 	int is_iser = 0;
 #endif
 
-	if (strncmp(url, "iscsi://", 8)) {
+	if (strncmp(url, "iscsi://", 8)
+#ifdef HAVE_LINUX_ISER
+            && strncmp(url, "iser://", 7)
+#endif
+            ) {
 		if (full) {
 			iscsi_set_error(iscsi, "Invalid URL %s\niSCSI URL must "
 				"be of the form: %s",
@@ -533,7 +537,15 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 		return NULL;
 	}
 
-	strncpy(str,url + 8, MAX_STRING_SIZE);
+#ifdef HAVE_LINUX_ISER
+        if (!strncmp(url, "iser://", 7)) {
+                is_iser = 1;
+                strncpy(str, url + 7, MAX_STRING_SIZE);
+        }
+#endif
+        if (!strncmp(url, "iscsi://", 8)) {
+                strncpy(str, url + 8, MAX_STRING_SIZE);
+        }
 	portal = str;
 
 	user          = getenv("LIBISCSI_CHAP_USERNAME");
