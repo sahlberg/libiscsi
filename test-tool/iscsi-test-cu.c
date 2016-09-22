@@ -421,6 +421,7 @@ static CU_TestInfo tests_writesame10[] = {
         { (char *)"UnmapUntilEnd", test_writesame10_unmap_until_end },
         { (char *)"UnmapVPD", test_writesame10_unmap_vpd },
         { (char *)"Check", test_writesame10_check },
+        { (char *)"InvalidDataOutSize", test_writesame10_invalid_dataout_size },
         CU_TEST_INFO_NULL
 };
 
@@ -434,6 +435,7 @@ static CU_TestInfo tests_writesame16[] = {
         { (char *)"UnmapUntilEnd", test_writesame16_unmap_until_end },
         { (char *)"UnmapVPD", test_writesame16_unmap_vpd },
         { (char *)"Check", test_writesame16_check },
+        { (char *)"InvalidDataOutSize", test_writesame16_invalid_dataout_size },
         CU_TEST_INFO_NULL
 };
 

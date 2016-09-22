@@ -274,6 +274,7 @@ void test_writesame10_unmap_unaligned(void);
 void test_writesame10_unmap_until_end(void);
 void test_writesame10_unmap_vpd(void);
 void test_writesame10_check(void);
+void test_writesame10_invalid_dataout_size(void);
 
 void test_writesame16_simple(void);
 void test_writesame16_beyond_eol(void);
@@ -284,6 +285,7 @@ void test_writesame16_unmap_unaligned(void);
 void test_writesame16_unmap_until_end(void);
 void test_writesame16_unmap_vpd(void);
 void test_writesame16_check(void);
+void test_writesame16_invalid_dataout_size(void);
 
 void test_writeverify10_simple(void);
 void test_writeverify10_beyond_eol(void);

@@ -192,6 +192,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_writesame10_unmap_until_end.c \
 	test_writesame10_unmap_vpd.c \
 	test_writesame10_check.c \
+	test_writesame10_invalid_dataout_size.c \
 	test_writesame16_simple.c \
 	test_writesame16_beyond_eol.c \
 	test_writesame16_0blocks.c \
@@ -201,6 +202,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_writesame16_unmap_until_end.c \
 	test_writesame16_unmap_vpd.c \
 	test_writesame16_check.c \
+	test_writesame16_invalid_dataout_size.c \
 	test_writeverify10_simple.c \
 	test_writeverify10_beyond_eol.c \
 	test_writeverify10_0blocks.c \
