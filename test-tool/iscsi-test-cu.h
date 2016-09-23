@@ -170,6 +170,10 @@ void test_readcapacity16_protection(void);
 void test_readcapacity16_simple(void);
 void test_readcapacity16_support(void);
 
+void test_readdefectdata10_simple(void);
+
+void test_readdefectdata12_simple(void);
+
 void test_readonly_sbc(void);
 
 void test_receive_copy_results_copy_status(void);

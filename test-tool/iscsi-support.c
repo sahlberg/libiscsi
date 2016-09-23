@@ -2009,6 +2009,70 @@ readcapacity16(struct scsi_device *sdev, struct scsi_task **out_task, int alloc_
 }
 
 int
+readdefectdata10(struct scsi_device *sdev, struct scsi_task **out_task,
+                 int req_plist, int req_glist,
+                 int defect_list_format, uint16_t alloc_len,
+                 int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+{
+        struct scsi_task *task;
+        int ret;
+
+        logging(LOG_VERBOSE, "Send READDEFECTDATA10 (Expecting %s)"
+                " req_plist:%d req_glist:%d format:%d",
+                scsi_status_str(status),
+                req_plist, req_glist, defect_list_format);
+
+        task = scsi_cdb_readdefectdata10(req_plist, req_glist,
+                                         defect_list_format, alloc_len);
+        assert(task != NULL);
+
+        task = send_scsi_command(sdev, task, NULL);
+
+        ret = check_result("READDEFECTDATA10", sdev, task,
+                           status, key, ascq, num_ascq);
+        if (out_task) {
+                *out_task = task;
+        } else if (task) {
+                scsi_free_scsi_task(task);
+        }
+        return ret;
+}
+
+int
+readdefectdata12(struct scsi_device *sdev, struct scsi_task **out_task,
+                 int req_plist, int req_glist,
+                 int defect_list_format,
+                 uint32_t address_descriptor_index,
+                 uint32_t alloc_len,
+                 int status, enum scsi_sense_key key, int *ascq, int num_ascq)
+{
+        struct scsi_task *task;
+        int ret;
+
+        logging(LOG_VERBOSE, "Send READDEFECTDATA12 (Expecting %s)"
+                " req_plist:%d req_glist:%d format:%d",
+                scsi_status_str(status),
+                req_plist, req_glist, defect_list_format);
+
+        task = scsi_cdb_readdefectdata12(req_plist, req_glist,
+                                         defect_list_format,
+                                         address_descriptor_index,
+                                         alloc_len);
+        assert(task != NULL);
+
+        task = send_scsi_command(sdev, task, NULL);
+
+        ret = check_result("READDEFECTDATA12", sdev, task,
+                           status, key, ascq, num_ascq);
+        if (out_task) {
+                *out_task = task;
+        } else if (task) {
+                scsi_free_scsi_task(task);
+        }
+        return ret;
+}
+
+int
 release6(struct scsi_device *sdev)
 {
         struct scsi_task *task;

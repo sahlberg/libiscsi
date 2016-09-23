@@ -537,6 +537,75 @@ scsi_cdb_readcapacity10(int lba, int pmi)
 }
 
 /*
+ * READDEFECTDATA10
+ */
+struct scsi_task *
+scsi_cdb_readdefectdata10(int req_plist, int req_glist, int defect_list_format,
+                          uint16_t alloc_len)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_READ_DEFECT_DATA10;
+
+        if (req_plist) {
+                task->cdb[2] |= 0x10;
+	}
+        if (req_glist) {
+                task->cdb[2] |= 0x08;
+	}
+        task->cdb[2] |= (defect_list_format & 0x07);
+
+	scsi_set_uint16(&task->cdb[7], alloc_len);
+
+	task->cdb_size = 10;
+	task->xfer_dir = SCSI_XFER_READ;
+	task->expxferlen = alloc_len;
+
+	return task;
+}
+
+/*
+ * READDEFECTDATA12
+ */
+struct scsi_task *
+scsi_cdb_readdefectdata12(int req_plist, int req_glist, int defect_list_format,
+                          uint32_t address_descriptor_index, uint32_t alloc_len)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_READ_DEFECT_DATA12;
+
+        if (req_plist) {
+                task->cdb[2] |= 0x10;
+	}
+        if (req_glist) {
+                task->cdb[2] |= 0x08;
+	}
+        task->cdb[2] |= (defect_list_format & 0x07);
+
+	scsi_set_uint32(&task->cdb[2], address_descriptor_index);
+	scsi_set_uint32(&task->cdb[6], alloc_len);
+
+	task->cdb_size = 12;
+	task->xfer_dir = SCSI_XFER_READ;
+	task->expxferlen = alloc_len;
+
+	return task;
+}
+
+/*
  * READTOC
  */
 struct scsi_task *

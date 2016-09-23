@@ -719,6 +719,57 @@ iscsi_readcapacity16_task(struct iscsi_context *iscsi, int lun,
 }
 
 struct scsi_task *
+iscsi_readdefectdata10_task(struct iscsi_context *iscsi, int lun,
+                            int req_plist, int req_glist,
+                            int defect_list_format, uint16_t alloc_len,
+                            iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_readdefectdata10(req_plist, req_glist,
+                                         defect_list_format, alloc_len);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"readdefectdata10 cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
+				     NULL, private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
+iscsi_readdefectdata12_task(struct iscsi_context *iscsi, int lun,
+                            int req_plist, int req_glist,
+                            int defect_list_format,
+                            uint32_t address_descriptor_index,
+                            uint32_t alloc_len,
+                            iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_readdefectdata12(req_plist, req_glist,
+                                         defect_list_format,
+                                         address_descriptor_index, alloc_len);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"readdefectdata12 cdb.");
+		return NULL;
+	}
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
+				     NULL, private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
 iscsi_get_lba_status_task(struct iscsi_context *iscsi, int lun,
 			  uint64_t starting_lba, uint32_t alloc_len,
 			  iscsi_command_cb cb, void *private_data)

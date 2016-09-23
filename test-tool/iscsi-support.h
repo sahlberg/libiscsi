@@ -389,6 +389,34 @@ do {                                                                        \
                 CU_ASSERT_EQUAL(_r, 0);                                 \
         } while (0);
 
+#define READDEFECTDATA10(...)                                           \
+        do {                                                            \
+                int _r;                                                 \
+                _r = readdefectdata10(__VA_ARGS__);                     \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] READDEFECTDATA10 " \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "READDEFECTDATA10. Skipping test");     \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
+#define READDEFECTDATA12(...)                                           \
+        do {                                                            \
+                int _r;                                                 \
+                _r = readdefectdata12(__VA_ARGS__);                     \
+                if (_r == -2) {                                         \
+                        logging(LOG_NORMAL, "[SKIPPED] READDEFECTDATA12 " \
+                                "is not implemented.");                 \
+                        CU_PASS("[SKIPPED] Target does not support "    \
+                                "READDEFECTDATA12. Skipping test");     \
+                        return;                                         \
+                }                                                       \
+                CU_ASSERT_EQUAL(_r, 0);                                 \
+        } while (0);
+
 #define RECEIVE_COPY_RESULTS(...)                                       \
         do {                                                            \
                 int _r;                                                 \
@@ -833,6 +861,18 @@ int read12(struct scsi_device *sdev, struct scsi_task **task, uint32_t lba, uint
 int read16(struct scsi_device *sdev, struct scsi_task **task, uint64_t lba, uint32_t datalen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group, unsigned char *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int readcapacity10(struct scsi_device *sdev, struct scsi_task **task, uint32_t lba, int pmi, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int readcapacity16(struct scsi_device *sdev, struct scsi_task **task, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
+int readdefectdata10(struct scsi_device *sdev, struct scsi_task **task,
+                     int req_plist, int req_glist,
+                     int defect_list_format, uint16_t alloc_len,
+                     int status, enum scsi_sense_key key,
+                     int *ascq, int num_ascq);
+int readdefectdata12(struct scsi_device *sdev, struct scsi_task **task,
+                     int req_plist, int req_glist,
+                     int defect_list_format,
+                     uint32_t address_descriptor_index,
+                     uint32_t alloc_len,
+                     int status, enum scsi_sense_key key,
+                     int *ascq, int num_ascq);
 int report_supported_opcodes(struct scsi_device *sdev, struct scsi_task **save_task, int rctd, int options, int opcode, int sa, int alloc_len, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int release6(struct scsi_device *sdev);
 int reserve6(struct scsi_device *sdev);

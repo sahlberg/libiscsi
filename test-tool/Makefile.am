@@ -104,6 +104,8 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_readcapacity16_protection.c \
 	test_readcapacity16_simple.c \
 	test_readcapacity16_support.c \
+	test_readdefectdata10_simple.c \
+	test_readdefectdata12_simple.c \
 	test_readonly_sbc.c \
 	test_receive_copy_results_copy_status.c \
 	test_receive_copy_results_op_params.c \

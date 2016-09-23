@@ -46,6 +46,7 @@ enum scsi_opcode {
 	SCSI_OPCODE_VERIFY10           = 0x2F,
 	SCSI_OPCODE_PREFETCH10         = 0x34,
 	SCSI_OPCODE_SYNCHRONIZECACHE10 = 0x35,
+	SCSI_OPCODE_READ_DEFECT_DATA10 = 0x37,
 	SCSI_OPCODE_WRITE_SAME10       = 0x41,
 	SCSI_OPCODE_UNMAP              = 0x42,
 	SCSI_OPCODE_READTOC            = 0x43,
@@ -72,7 +73,8 @@ enum scsi_opcode {
 	SCSI_OPCODE_READ12             = 0xA8,
 	SCSI_OPCODE_WRITE12            = 0xAA,
 	SCSI_OPCODE_WRITE_VERIFY12     = 0xAE,
-	SCSI_OPCODE_VERIFY12           = 0xAF
+	SCSI_OPCODE_VERIFY12           = 0xAF,
+	SCSI_OPCODE_READ_DEFECT_DATA12 = 0xB7
 };
 
 enum scsi_persistent_in_sa {
@@ -1119,6 +1121,8 @@ EXTERN struct scsi_task *scsi_cdb_read10(uint32_t lba, uint32_t xferlen, int blo
 EXTERN struct scsi_task *scsi_cdb_read12(uint32_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);
 EXTERN struct scsi_task *scsi_cdb_read16(uint64_t lba, uint32_t xferlen, int blocksize, int rdprotect, int dpo, int fua, int fua_nv, int group_number);
 EXTERN struct scsi_task *scsi_cdb_readcapacity16(void);
+EXTERN struct scsi_task *scsi_cdb_readdefectdata10(int req_plist, int req_glist, int defect_list_format, uint16_t alloc_len);
+EXTERN struct scsi_task *scsi_cdb_readdefectdata12(int req_plist, int req_glist, int defect_list_format, uint32_t address_descriptor_index, uint32_t alloc_len);
 EXTERN struct scsi_task *scsi_cdb_report_supported_opcodes(int rctd, int options, enum scsi_opcode opcode, int sa, uint32_t alloc_len);
 EXTERN struct scsi_task *scsi_cdb_serviceactionin16(enum scsi_service_action_in sa, uint32_t xferlen);
 EXTERN struct scsi_task *scsi_cdb_startstopunit(int immed, int pcm, int pc, int no_flush, int loej, int start);

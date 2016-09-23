@@ -265,6 +265,16 @@ static CU_TestInfo tests_readcapacity16[] = {
         CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_readdefectdata10[] = {
+        { (char *)"Simple", test_readdefectdata10_simple },
+        CU_TEST_INFO_NULL
+};
+
+static CU_TestInfo tests_readdefectdata12[] = {
+        { (char *)"Simple", test_readdefectdata12_simple },
+        CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_readonly[] = {
         { (char *)"ReadOnlySBC", test_readonly_sbc },
         CU_TEST_INFO_NULL
@@ -516,6 +526,8 @@ static libiscsi_suite_info scsi_suites[] = {
         { "Read16", NON_PGR_FUNCS, tests_read16 },
         { "ReadCapacity10", NON_PGR_FUNCS, tests_readcapacity10 },
         { "ReadCapacity16", NON_PGR_FUNCS, tests_readcapacity16 },
+        { "ReadDefectData10", NON_PGR_FUNCS, tests_readdefectdata10 },
+        { "ReadDefectData12", NON_PGR_FUNCS, tests_readdefectdata12 },
         { "ReadOnly", NON_PGR_FUNCS, tests_readonly },
         { "ReceiveCopyResults", NON_PGR_FUNCS, tests_receive_copy_results },
         { "ReportSupportedOpcodes", NON_PGR_FUNCS,
@@ -611,6 +623,8 @@ static libiscsi_suite_info all_suites[] = {
         { "Read16", NON_PGR_FUNCS, tests_read16 },
         { "ReadCapacity10", NON_PGR_FUNCS, tests_readcapacity10 },
         { "ReadCapacity16", NON_PGR_FUNCS, tests_readcapacity16 },
+        { "ReadDefectData10", NON_PGR_FUNCS, tests_readdefectdata10 },
+        { "ReadDefectData12", NON_PGR_FUNCS, tests_readdefectdata12 },
         { "ReadOnly", NON_PGR_FUNCS, tests_readonly },
         { "ReceiveCopyResults", NON_PGR_FUNCS, tests_receive_copy_results },
         { "ReportSupportedOpcodes", NON_PGR_FUNCS,
@@ -654,6 +668,8 @@ static libiscsi_suite_info linux_suites[] = {
         { "Read16", NON_PGR_FUNCS, tests_read16 },
         { "ReadCapacity10", NON_PGR_FUNCS, tests_readcapacity10 },
         { "ReadCapacity16", NON_PGR_FUNCS, tests_readcapacity16 },
+        { "ReadDefectData10", NON_PGR_FUNCS, tests_readdefectdata10 },
+        { "ReadDefectData12", NON_PGR_FUNCS, tests_readdefectdata12 },
         { "ReadOnly", NON_PGR_FUNCS, tests_readonly },
         { "ReportSupportedOpcodes", NON_PGR_FUNCS,
           tests_report_supported_opcodes },
