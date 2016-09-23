@@ -76,6 +76,8 @@ static CU_TestInfo tests_compareandwrite[] = {
         { (char *)"DpoFua", test_compareandwrite_dpofua },
         { (char *)"Miscompare", test_compareandwrite_miscompare },
         { (char *)"Unwritten", test_compareandwrite_unwritten },
+        { (char *)"InvalidDataOutSize",
+          test_compareandwrite_invalid_dataout_size },
         CU_TEST_INFO_NULL
 };
 
