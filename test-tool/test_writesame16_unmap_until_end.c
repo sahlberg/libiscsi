@@ -38,9 +38,12 @@ test_writesame16_unmap_until_end(void)
         CHECK_FOR_SBC;
 
         if (inq_bl->wsnz) {
-            logging(LOG_NORMAL, "[SKIPPED] WRITESAME10 does not support 0-blocks.");
-            CU_PASS("[SKIPPED] WRITESAME10 does not support 0-blocks.");
-            return;
+                logging(LOG_NORMAL, "WRITESAME16 does not support 0-blocks."
+                        "WSNZ == 1");
+                WRITESAME16(sd, 0,
+                            0, 1, 0, 1, 0, 0, scratch,
+                            EXPECT_INVALID_FIELD_IN_CDB);
+                return;
         }
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
