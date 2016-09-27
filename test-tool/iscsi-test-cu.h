@@ -322,5 +322,6 @@ void test_multipathio_compareandwrite(void);
 void test_mpio_async_caw(void);
 
 void test_async_abort_simple(void);
+void test_async_lu_reset_simple(void);
 
 #endif        /* _ISCSI_TEST_CU_H_ */
