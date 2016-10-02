@@ -83,5 +83,4 @@ test_compareandwrite_invalid_dataout_size(void)
                         block_size, 0, 0, 0, 0,
                         EXPECT_STATUS_GENERIC_BAD);
 
-        local_iscsi_queue_pdu = NULL;
 }

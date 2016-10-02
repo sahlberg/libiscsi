@@ -773,6 +773,7 @@ test_setup(void)
 {
         task = NULL;
         read_write_buf = NULL;
+        local_iscsi_queue_pdu = NULL;
 }
 
 void
