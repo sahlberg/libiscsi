@@ -61,7 +61,7 @@ test_startstopunit_simple(void)
 
         logging(LOG_VERBOSE, "Verify we can read from the media.");
         TESTUNITREADY(sd,
-                      EXPECT_SANITIZE);
+                      EXPECT_STATUS_GOOD);
 
         logging(LOG_VERBOSE, "Test we can eject removable the media with IMMED==1");
         STARTSTOPUNIT(sd, 0, 0, 0, 0, 1, 0,
@@ -78,5 +78,5 @@ test_startstopunit_simple(void)
 
         logging(LOG_VERBOSE, "Verify we can access the media again.");
         TESTUNITREADY(sd,
-                      EXPECT_SANITIZE);
+                      EXPECT_STATUS_GOOD);
 }

@@ -46,7 +46,7 @@ test_startstopunit_pwrcnd(void)
 
                 logging(LOG_VERBOSE, "Test TESTUNITREADY that medium is not ejected.");
                 TESTUNITREADY(sd,
-                              EXPECT_SANITIZE);
+                              EXPECT_STATUS_GOOD);
         }
 
         logging(LOG_VERBOSE, "In case the target did eject the medium, load it again.");
