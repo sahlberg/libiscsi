@@ -57,7 +57,13 @@ test_preventallow_cold_reset(void)
         
         logging(LOG_VERBOSE, "Perform cold reset on target");
         ret = iscsi_task_mgmt_target_cold_reset_sync(sd->iscsi_ctx);
-        CU_ASSERT_EQUAL(ret, 0);
+        if (ret != 0) {
+                const char *err = "[SKIPPED] Task Management function"
+                        "for ColdReset is not working/implemented\n";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
 
         logging(LOG_VERBOSE, "Wait until all unit attentions clear");
         while (testunitready(sd, EXPECT_STATUS_GOOD) != 0)

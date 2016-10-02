@@ -57,7 +57,14 @@ test_preventallow_warm_reset(void)
         
         logging(LOG_VERBOSE, "Perform warm reset on target");
         ret = iscsi_task_mgmt_target_warm_reset_sync(sd->iscsi_ctx);
-        CU_ASSERT_EQUAL(ret, 0);
+        if (ret != 0) {
+                const char *err = "[SKIPPED] Task Management function"
+                        "for WarmReset is not working/implemented\n";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
+
         logging(LOG_VERBOSE, "Wait until all unit attentions clear");
         while (testunitready(sd, EXPECT_STATUS_GOOD) != 0)
                 ;
