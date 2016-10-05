@@ -1017,8 +1017,13 @@ static int connect_scsi_device(struct scsi_device *sdev, const char *initiatorna
                         close(sdev->sgio_fd);
                         return -1;
                 }
+                if (!strncmp(sdev->sgio_dev, "/dev/sg", 7)) {
+                        /* We can not set this until we have the block-size */
+                        printf("Can not use BLKSECTGET for /dev/sg devices\n");
+                        return 0;
+                }
                 if (ioctl(sdev->sgio_fd, BLKSECTGET, &maxsectors) < 0) {
-                        fprintf(stderr, "%s failed to read BLKMAXSECT\n", sdev->sgio_dev);
+                        fprintf(stderr, "%s failed to read BLKSECTGET\n", sdev->sgio_dev);
                         close(sdev->sgio_fd);
                         return -1;
                 }
@@ -1436,6 +1441,17 @@ main(int argc, char *argv[])
                 return -1;
         }
 
+        /* BLKSECTGET for /dev/sg* is a shitshow under linux.
+         * Even 4.2 kernels return number of bytes instead of number
+         * of sectors here. Just force it to 120k and let us get on with
+         * our lives.
+         */
+        if (!strncmp(sd->sgio_dev, "/dev/sg", 7)) {
+                printf("Looks like a /dev/sg device. Force max iosize "
+                       "to 120k as BLKSECTGET is just broken and can "
+                       "not be used for discovery.\n");
+                maxsectors = 120 * 1024 / block_size;
+        }
         if (maxsectors) {
                 maximum_transfer_length = maxsectors;
                 printf("Bus transfer size is limited to %d blocks. Clamping "
