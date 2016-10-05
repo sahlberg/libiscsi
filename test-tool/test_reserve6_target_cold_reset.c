@@ -49,9 +49,12 @@ test_reserve6_target_cold_reset(void)
         logging(LOG_VERBOSE, "Send a Cold Reset to the target");
         ret = iscsi_task_mgmt_target_cold_reset_sync(sd->iscsi_ctx);
         if (ret != 0) {
-                logging(LOG_NORMAL, "Cold reset failed. %s", iscsi_get_error(sd->iscsi_ctx));
+                const char *err = "[SKIPPED] Task Management function"
+                        "for ColdReset is not working/implemented\n";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
         }
-        CU_ASSERT_EQUAL(ret, 0);
 
         logging(LOG_VERBOSE, "Sleep for three seconds incase the target is slow to reset");
         sleep(3);
