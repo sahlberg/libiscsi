@@ -1446,7 +1446,7 @@ main(int argc, char *argv[])
          * of sectors here. Just force it to 120k and let us get on with
          * our lives.
          */
-        if (!strncmp(sd->sgio_dev, "/dev/sg", 7)) {
+        if (sd->sgio_dev && !strncmp(sd->sgio_dev, "/dev/sg", 7)) {
                 printf("Looks like a /dev/sg device. Force max iosize "
                        "to 120k as BLKSECTGET is just broken and can "
                        "not be used for discovery.\n");
