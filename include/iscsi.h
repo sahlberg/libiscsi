@@ -547,6 +547,17 @@ EXTERN int iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 EXTERN int iscsi_logout_sync(struct iscsi_context *iscsi);
 
 
+struct iscsi_target_portal {
+       struct iscsi_target_portal *next;
+       const char *portal;
+};
+
+struct iscsi_discovery_address {
+       struct iscsi_discovery_address *next;
+       const char *target_name;
+       struct iscsi_target_portal *portals;
+};
+
 /*
  * Asynchronous call to perform an ISCSI discovery.
  *
@@ -570,16 +581,23 @@ EXTERN int iscsi_logout_sync(struct iscsi_context *iscsi);
 EXTERN int iscsi_discovery_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 			  void *private_data);
 
-struct iscsi_target_portal {
-       struct iscsi_target_portal *next;
-       const char *portal;
-};
+/*
+ * Synchronous call to perform an ISCSI discovery.
+ *
+ * discoveries can only be done on connected and logged in discovery sessions.
+ *
+ * Returns:
+ *  NULL if there was an error.
+ *  struct iscsi_discovery_address* if the discovery was successfull.
+ *    The data returned must be released by calling iscsi_free_discovery_data.
+ */
+EXTERN struct iscsi_discovery_address *iscsi_discovery_sync(
+        struct iscsi_context *iscsi);
 
-struct iscsi_discovery_address {
-       struct iscsi_discovery_address *next;
-       const char *target_name;
-       struct iscsi_target_portal *portals;
-};
+/* Free the discovery data structures returned by iscsi_discovery_sync
+ */
+EXTERN void iscsi_free_discovery_data(struct iscsi_context *iscsi,
+                                      struct iscsi_discovery_address *da);
 
 /*
  * Asynchronous call to perform an ISCSI NOP-OUT call
