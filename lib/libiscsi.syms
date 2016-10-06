@@ -6,6 +6,8 @@ iscsi_destroy_context
 iscsi_destroy_url
 iscsi_disconnect
 iscsi_discovery_async
+iscsi_discovery_sync
+iscsi_free_discovery_data
 iscsi_full_connect_async
 iscsi_full_connect_sync
 iscsi_get_error

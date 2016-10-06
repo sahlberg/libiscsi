@@ -42,15 +42,16 @@
 #include "scsi-lowlevel.h"
 
 struct iscsi_sync_state {
-   int finished;
-   int status;
-   struct scsi_task *task;
+        int finished;
+        int status;
+        void *ptr;
+        struct scsi_task *task;
 };
 
 static void
 event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 {
-	struct pollfd pfd;
+        struct pollfd pfd;
 	int ret;
 
 	while (state->finished == 0) {
@@ -1767,4 +1768,78 @@ iscsi_modesense10_sync(struct iscsi_context *iscsi, int lun, int llbaa, int dbd,
 	event_loop(iscsi, &state);
 
 	return state.task;
+}
+
+void iscsi_free_discovery_data(struct iscsi_context *iscsi _U_,
+                               struct iscsi_discovery_address *da)
+{
+        while (da) {
+                struct iscsi_discovery_address *danext = da->next;
+
+                while (da->portals) {
+                        struct iscsi_target_portal *ponext = da->portals->next;
+                        free(discard_const(da->portals->portal));
+                        free(da->portals);
+                        da->portals = ponext;
+                }
+                free(discard_const(da->target_name));
+                free(da);
+                da = danext;
+        }
+}
+
+static void
+iscsi_discovery_cb(struct iscsi_context *iscsi _U_, int status,
+	      void *command_data, void *private_data)
+{
+	struct iscsi_sync_state *state = private_data;
+        struct iscsi_discovery_address *da;
+        struct iscsi_discovery_address *dahead = NULL;
+        struct iscsi_target_portal *po;
+
+        for (da = command_data; da != NULL; da = da->next) {
+                struct iscsi_discovery_address *datmp;
+
+                datmp = malloc(sizeof(struct iscsi_discovery_address));
+                memset(datmp, 0, sizeof(struct iscsi_discovery_address));
+                datmp->target_name = strdup(da->target_name);
+                datmp->next = dahead;
+                dahead = datmp;
+
+                for (po = da->portals; po != NULL; po = po->next) {
+                        struct iscsi_target_portal *potmp;
+
+                        potmp = malloc(sizeof(struct iscsi_target_portal));
+                        memset(potmp, 0, sizeof(struct iscsi_target_portal));
+                        potmp->portal = strdup(po->portal);
+
+                        potmp->next = dahead->portals;
+                        dahead->portals = potmp;
+                }
+        }
+
+	if (state != NULL) {
+		state->status    = status;
+		state->finished = 1;
+                state->ptr = dahead;
+	}
+}
+
+struct iscsi_discovery_address *
+iscsi_discovery_sync(struct iscsi_context *iscsi)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_discovery_async(iscsi, iscsi_discovery_cb, &state) != 0) {
+		iscsi_set_error(iscsi, "Failed to run discovery. %s",
+				iscsi_get_error(iscsi));
+                printf("async discovery call failed\n");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.ptr;
 }
