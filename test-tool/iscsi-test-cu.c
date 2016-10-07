@@ -580,6 +580,7 @@ static CU_TestInfo tests_iscsi_residuals[] = {
 
 static CU_TestInfo tests_iscsi_tmf[] = {
         { (char *)"AbortTaskSimpleAsync", test_async_abort_simple },
+        { (char *)"LUNResetSimpleAsync", test_async_lu_reset_simple },
         CU_TEST_INFO_NULL
 };
 
