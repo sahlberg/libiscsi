@@ -42,13 +42,10 @@ test_startstopunit_simple(void)
                                     EXPECT_STATUS_GOOD);
                 CU_ASSERT_EQUAL(ret, 0);
         } else {
-                logging(LOG_VERBOSE, "Media is not removable. STARTSTOPUNIT should fail");
-                ret = startstopunit(sd, 1, 0, 0, 0, 1, 0,
-                                    EXPECT_STATUS_GENERIC_BAD);
-                if (!inq->rmb) {
-                        CU_ASSERT_NOT_EQUAL(ret, 0);
-                        return;
-                }
+                const char *err = "[SKIPPED] Media is not removable.";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
 
         }
 
