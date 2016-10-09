@@ -19,7 +19,6 @@ start_target() {
     sleep 1
     ${TGTADM} --op new --mode target --tid 1 -T ${IQNTARGET}
     ${TGTADM} --op bind --mode target --tid 1 -I ALL
-    #${TGTADM} --op show --mode target
 }
 
 shutdown_target() {
@@ -33,6 +32,7 @@ create_lun() {
     # Setup LUN
     truncate --size=100M ${TGTLUN}
     ${TGTADM} --op new --mode logicalunit --tid 1 --lun 1 -b ${TGTLUN} --blocksize=4096
+    ${TGTADM} --op update --mode logicalunit --tid 1 --lun 1 --params thin_provisioning=1
 }
 
 delete_lun() {
@@ -57,6 +57,10 @@ add_disk_lun() {
 
 remove_disk_lun() {
     ${TGTADM} --op delete --mode logicalunit --tid 1 --lun $1
+}
+
+set_lun_removable() {
+    ${TGTADM} --op update --mode logicalunit --tid 1 --lun $1 --params removable=1
 }
 
 setup_chap() {
