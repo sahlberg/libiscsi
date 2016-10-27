@@ -30,6 +30,7 @@ void
 test_unmap_simple(void)
 {
         int i;
+        int max_nr_bdc = 256;
         struct unmap_list list[257];
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -68,23 +69,27 @@ test_unmap_simple(void)
                 }
         }
 
-        logging(LOG_VERBOSE, "Test UNMAP of 1-256 blocks at the start of the "
-                "LUN with one descriptor per block");
+        if (inq_bl->max_unmap_bdc > 0 && max_nr_bdc > (int)inq_bl->max_unmap_bdc) {
+          max_nr_bdc = (int)inq_bl->max_unmap_bdc;
+        }
 
-        logging(LOG_VERBOSE, "Write 'a' to the first 256 LBAs");
-        memset(scratch, 'a', 256 * block_size);
-        WRITE10(sd, 0, 256 * block_size,
+        logging(LOG_VERBOSE, "Test UNMAP of 1-%d blocks at the start of the "
+                "LUN with one descriptor per block", max_nr_bdc);
+
+        logging(LOG_VERBOSE, "Write 'a' to the first %d LBAs", max_nr_bdc);
+        memset(scratch, 'a', max_nr_bdc * block_size);
+        WRITE10(sd, 0, max_nr_bdc * block_size,
                 block_size, 0, 0, 0, 0, 0, scratch,
                 EXPECT_STATUS_GOOD);
 
-        for (i = 0; i < 256; i++) {
+        for (i = 0; i < max_nr_bdc; i++) {
                 list[i].lba = i;
                 list[i].num = 1;
                 UNMAP(sd, 0, list, i + 1,
                       EXPECT_STATUS_GOOD);
 
                 logging(LOG_VERBOSE, "Read blocks 0-%d", i);
-                READ10(sd, NULL, 0, i * block_size,
+                READ10(sd, NULL, 0, (i + 1) * block_size,
                        block_size, 0, 0, 0, 0, 0, scratch,
                        EXPECT_STATUS_GOOD);
 

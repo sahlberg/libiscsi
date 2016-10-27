@@ -30,6 +30,7 @@ void
 test_unmap_0blocks(void)
 {
         int i;
+        int max_nr_bdc = 256;
         struct unmap_list list[257];
 
         CHECK_FOR_DATALOSS;
@@ -60,19 +61,23 @@ test_unmap_0blocks(void)
                 return;
         }
 
-        logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-255  with one descriptor per block");
-        for (i = 0; i < 256; i++) {
+        if (inq_bl->max_unmap_bdc > 0 && max_nr_bdc > (int)inq_bl->max_unmap_bdc) {
+          max_nr_bdc = (int)inq_bl->max_unmap_bdc;
+        }
+
+        logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-%d  with one descriptor per block", max_nr_bdc - 1);
+        for (i = 0; i < max_nr_bdc; i++) {
                 list[i].lba = i;
                 list[i].num = 0;
                 UNMAP(sd, 0, list, i + 1,
                       EXPECT_STATUS_GOOD);
         }
 
-        logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-255  with one descriptor per block, possibly \"overlapping\".");
-        for (i = 0; i < 256; i++) {
+        logging(LOG_VERBOSE, "Test UNMAP of 0 blocks at LBA:0-%d  with one descriptor per block, possibly \"overlapping\".", max_nr_bdc - 1);
+        for (i = 0; i < max_nr_bdc; i++) {
                 list[i].lba = i/2;
                 list[i].num = 0;
         }
-        UNMAP(sd, 0, list, 256,
+        UNMAP(sd, 0, list, max_nr_bdc,
               EXPECT_STATUS_GOOD);
 }
