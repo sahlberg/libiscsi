@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <inttypes.h>
 #include "iscsi.h"
 #include "iser-private.h"
 #include "iscsi-private.h"
@@ -524,7 +525,7 @@ iser_prepare_read_cmd(struct iser_conn *iser_conn,struct iser_pdu *iser_pdu)
 		}
 
 		tx_desc->data_dir = DATA_READ;
-		hdr->read_va = htobe64((uint64_t)tx_desc->data_buff);
+		hdr->read_va = htobe64((intptr_t)tx_desc->data_buff);
 		hdr->read_stag = htobe32((uint32_t)tx_desc->data_mr->rkey);
 		hdr->flags |= ISER_RSV;
 
@@ -565,7 +566,7 @@ iser_prepare_write_cmd(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu)
 
 	hdr->flags     |= ISER_WSV;
 	hdr->write_stag = htobe32((uint32_t)(tx_desc->data_mr->rkey));
-	hdr->write_va   = htobe64((uint64_t)(tx_desc->data_buff));
+	hdr->write_va   = htobe64((intptr_t)(tx_desc->data_buff));
 
 	return 0;
 }
@@ -1146,7 +1147,7 @@ static int iser_handle_wc(struct ibv_wc *wc,struct iser_conn *iser_conn)
 					wc->wr_id, wc->status, wc->vendor_err);
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		} else {
-			iscsi_set_error(iscsi, "flush error: wr id %lx\n", wc->wr_id);
+			iscsi_set_error(iscsi, "flush error: wr id %" PRIx64 "\n", wc->wr_id);
 
 			return 0;
 		}

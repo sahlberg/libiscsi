@@ -41,13 +41,13 @@ test_writesame10_invalid_dataout_size(void)
         memset(scratch, 0xa6, block_size);
 
         logging(LOG_VERBOSE, "Check too small DataOut");
-        logging(LOG_VERBOSE, "Unmap with DataOut==%ld (block_size==%ld)",
+        logging(LOG_VERBOSE, "Unmap with DataOut==%zd (block_size==%zd)",
                 block_size / 2, block_size);
         WRITESAME10(sd, 0, block_size / 2, 1, 0, 1, 0, 0, scratch,
                     EXPECT_STATUS_GENERIC_BAD);
 
         logging(LOG_VERBOSE, "Check too large DataOut");
-        logging(LOG_VERBOSE, "Unmap with DataOut==%ld (block_size==%ld)",
+        logging(LOG_VERBOSE, "Unmap with DataOut==%zd (block_size==%zd)",
                 block_size * 2, block_size);
         WRITESAME10(sd, 0, block_size * 2, 1, 0, 1, 0, 0, scratch,
                     EXPECT_STATUS_GENERIC_BAD);
