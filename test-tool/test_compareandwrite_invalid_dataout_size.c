@@ -64,7 +64,7 @@ test_compareandwrite_invalid_dataout_size(void)
 
 
         logging(LOG_VERBOSE, "Check too small DataOut");
-        logging(LOG_VERBOSE, "COMPAREANDWRITE with DataOut==%ld (4 blocks) "
+        logging(LOG_VERBOSE, "COMPAREANDWRITE with DataOut==%zd (4 blocks) "
                 "and TL == 1 ", 4 * block_size);
 
         new_tl = 1;
@@ -74,7 +74,7 @@ test_compareandwrite_invalid_dataout_size(void)
                         EXPECT_STATUS_GENERIC_BAD);
 
         logging(LOG_VERBOSE, "Check too large DataOut");
-        logging(LOG_VERBOSE, "COMPAREANDWRITE with DataOut==%ld (4 blocks) "
+        logging(LOG_VERBOSE, "COMPAREANDWRITE with DataOut==%zd (4 blocks) "
                 "and TL == 3 ", 4 * block_size);
 
         new_tl = 2;
