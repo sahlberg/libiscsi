@@ -29,7 +29,7 @@ libiscsi_la_CPPFLAGS = -I${srcdir}/../include -I$(srcdir)/include \
 	"-D_U_=__attribute__((unused))" \
 	"-D_R_(A,B)=__attribute__((format(printf,A,B)))"
 
-AM_CFLAGS=$(WARN_CFLAGS) -I/usr/include
+AM_CFLAGS=$(WARN_CFLAGS)
 
 dist_noinst_DATA = libiscsi.syms libiscsi.def
 
