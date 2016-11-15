@@ -34,9 +34,11 @@ test_verify10_0blocks(void)
         VERIFY10(sd, num_blocks + 1, 0, block_size, 0, 0, 1, NULL,
                  EXPECT_LBA_OOB);
 
-        logging(LOG_VERBOSE, "Test VERIFY10 0-blocks at LBA==2^31");
-        VERIFY10(sd, 0x80000000, 0, block_size, 0, 0, 1, NULL,
-                 EXPECT_LBA_OOB);
+        if (num_blocks - 1 < 0x80000000) {
+          logging(LOG_VERBOSE, "Test VERIFY10 0-blocks at LBA==2^31");
+          VERIFY10(sd, 0x80000000, 0, block_size, 0, 0, 1, NULL,
+                   EXPECT_LBA_OOB);
+        }
 
         logging(LOG_VERBOSE, "Test VERIFY10 0-blocks at LBA==-1");
         VERIFY10(sd, -1, 0, block_size, 0, 0, 1, NULL,
