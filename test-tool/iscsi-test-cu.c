@@ -1198,7 +1198,8 @@ main(int argc, char *argv[])
                 memset(mp_sds[mp_num_sds], '\0', sizeof(struct scsi_device));
                 mp_sds[mp_num_sds]->sgio_fd = -1;
 
-                if (!strncmp(argv[optind], "iscsi://", 8)) {
+                if (!strncmp(argv[optind], "iscsi://", 8) ||
+                    !strncmp(argv[optind], "iser://", 7)) {
                         mp_sds[mp_num_sds]->iscsi_url = strdup(argv[optind++]);
 #ifdef HAVE_SG_IO
                 } else {
