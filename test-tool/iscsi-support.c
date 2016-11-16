@@ -276,6 +276,28 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 {
         static time_t last_time = 0;
 
+        /* We got an actual buffer from the application. Convert it to
+         * a data-out iovector.
+         * We need to attach the iovector to the task before calling
+         * iscsi_scsi_command_sync() as iSER needs all iovectors to be setup
+         * before we queue the task.
+         */
+        if (d != NULL && d->data != NULL) {
+                struct scsi_iovec *iov;
+
+                iov = scsi_malloc(task, sizeof(struct scsi_iovec));
+                iov->iov_base = d->data;
+                iov->iov_len  = d->size;
+                switch (task->xfer_dir) {
+                case SCSI_XFER_WRITE:
+                        scsi_task_set_iov_out(task, iov, 1);
+                        break;
+                case SCSI_XFER_READ:
+                        scsi_task_set_iov_in(task, iov, 1);
+                        break;
+                }
+        }
+
         if (sdev->iscsi_url) {
                 time_t current_time = time(NULL);
 
@@ -283,7 +305,7 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
                         free(discard_const(sdev->error_str));
                         sdev->error_str = NULL;
                 }
-                task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, d);
+                task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
                 if (task == NULL) {
                         sdev->error_str = strdup(iscsi_get_error(sdev->iscsi_ctx));
                 }
@@ -306,19 +328,6 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 
                 return task;
         }
-
-        /* We got an actual buffer from the application. Convert it to
-         * a data-out iovector.
-         */
-        if (d != NULL && d->data != NULL) {
-                struct scsi_iovec *iov;
-
-                iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-                iov->iov_base = d->data;
-                iov->iov_len  = d->size;
-                scsi_task_set_iov_out(task, iov, 1);
-        }
-
 
 #ifdef HAVE_SG_IO
         if (sdev->sgio_dev) {
