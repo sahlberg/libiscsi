@@ -72,6 +72,10 @@ test_unmap_simple(void)
         if (inq_bl->max_unmap_bdc > 0 && max_nr_bdc > (int)inq_bl->max_unmap_bdc) {
           max_nr_bdc = (int)inq_bl->max_unmap_bdc;
         }
+        if (max_nr_bdc < 0 || max_nr_bdc > 256) {
+                logging(LOG_VERBOSE, "Clamp max unmapped blocks to 256");
+                max_nr_bdc = 256;
+        }
 
         logging(LOG_VERBOSE, "Test UNMAP of 1-%d blocks at the start of the "
                 "LUN with one descriptor per block", max_nr_bdc);
