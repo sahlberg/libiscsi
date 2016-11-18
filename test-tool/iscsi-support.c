@@ -3121,3 +3121,16 @@ test_get_clock_sec(void)
 	assert(res == 0);
 	return secs;
 }
+
+/* Stores the id of the task to be freed, to avoid crash in case of late response (callback on a freed task) */
+int
+iscsi_set_task_freed(struct scsi_device *iscsi_sd, uint32_t itt)
+{   
+    if (iscsi_sd->iscsi_ctx->async_freed.nr_cmds < FREED_ASYNC_CMDS_CAPACITY) {
+        iscsi_sd->iscsi_ctx->async_freed.cmd_itts[iscsi_sd->iscsi_ctx->async_freed.nr_cmds] = itt;
+        iscsi_sd->iscsi_ctx->async_freed.nr_cmds++;
+        return 1;
+    }
+    
+    return 0;
+}

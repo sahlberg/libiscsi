@@ -191,5 +191,9 @@ test_async_lu_reset_simple(void)
 		CU_FAIL("unexpected WRITE/RESET state");
 	}
 
+	if (iscsi_set_task_freed(sd, state.wtask->itt) == 0) {
+		logging(LOG_VERBOSE, "Cannot add to freed async commands list (list full)");
+	}
+
 	scsi_free_scsi_task(state.wtask);
 }

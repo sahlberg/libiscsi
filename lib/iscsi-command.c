@@ -39,12 +39,38 @@
 #include "scsi-lowlevel.h"
 #include "slist.h"
 
+static int 
+iscsi_is_task_freed(struct iscsi_context *iscsi, uint32_t itt)
+{
+	/* return quickly if the list is empty */
+	if (iscsi->async_freed.nr_cmds == 0) {
+		return 0;
+	}
+
+	int i;
+	for (i = 0; (uint32_t)i < iscsi->async_freed.nr_cmds; i++) {
+		if (itt == iscsi->async_freed.cmd_itts[i]) {
+			/* remove found element from list by replacing with the last element */
+			iscsi->async_freed.cmd_itts[i] = iscsi->async_freed.cmd_itts[iscsi->async_freed.nr_cmds - 1];
+			iscsi->async_freed.cmd_itts[iscsi->async_freed.nr_cmds - 1] = 0;
+			iscsi->async_freed.nr_cmds--;			
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static void
 iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
 		       void *command_data _U_, void *private_data)
 {
 	struct iscsi_scsi_cbdata *scsi_cbdata =
 	  (struct iscsi_scsi_cbdata *)private_data;
+
+	if (iscsi_is_task_freed(iscsi, scsi_cbdata->task->itt)) {
+		return;
+	}
 
 	switch (status) {
 	case SCSI_STATUS_RESERVATION_CONFLICT:

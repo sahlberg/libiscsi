@@ -914,4 +914,6 @@ int test_iscsi_tur_until_good(struct scsi_device *iscsi_sd, int *num_uas);
 
 uint64_t test_get_clock_sec(void);
 
+int iscsi_set_task_freed(struct scsi_device *iscsi_sd, uint32_t itt);
+
 #endif        /* _ISCSI_SUPPORT_H_ */

@@ -75,6 +75,14 @@ union socket_address {
 	struct sockaddr sa;
 };
 
+/* size of list holding ids (ITT) of freed async commands */
+#define FREED_ASYNC_CMDS_CAPACITY 5
+
+struct freed_async_cmds {
+	uint32_t nr_cmds;
+	uint32_t cmd_itts[FREED_ASYNC_CMDS_CAPACITY];
+};
+
 struct iscsi_context {
 	struct iscsi_transport *drv;
 	void *opaque;
@@ -176,6 +184,8 @@ struct iscsi_context {
 	struct iscsi_context *old_iscsi;
 	int retry_cnt;
 	int no_ua_on_reconnect;
+
+	struct freed_async_cmds async_freed;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40
