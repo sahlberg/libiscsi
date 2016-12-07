@@ -91,8 +91,8 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		pdu->next = NULL;
 		return;
 	}
-	
-	/* queue pdus in ascending order of CmdSN. 
+
+	/* queue pdus in ascending order of CmdSN.
 	 * ensure that pakets with the same CmdSN are kept in FIFO order.
 	 * immediate PDUs are queued in front of queue with the CmdSN
 	 * of the first element in the outqueue.
@@ -117,7 +117,7 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		last=current;
 		current=current->next;
 	} while (current != NULL);
-	
+
 	last->next = pdu;
 	pdu->next = NULL;
 }
@@ -562,9 +562,11 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 	return n;
 }
 
-static int
-iscsi_read_from_socket(struct iscsi_context *iscsi)
-{
+/* read one pdu from socket
+ *
+ */
+static int iscsi_read_pdu_from_socket(struct iscsi_context *iscsi,
+									  struct iscsi_in_pdu **pdu) {
 	struct iscsi_in_pdu *in;
 	ssize_t data_size, count, padding_size;
 
@@ -586,6 +588,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		count = ISCSI_HEADER_SIZE - in->hdr_pos;
 		count = recv(iscsi->fd, &in->hdr[in->hdr_pos], count, 0);
 		if (count == 0) {
+			iscsi_set_error(iscsi, "read from closed socket");
 			return -1;
 		}
 		if (count < 0) {
@@ -636,8 +639,9 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			}
 			count = recv(iscsi->fd, buf, count, 0);
 		}
-		
+
 		if (count == 0) {
+			iscsi_set_error(iscsi, "read from closed socket");
 			return -1;
 		}
 		if (count < 0) {
@@ -653,6 +657,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		in->data_pos += count;
 	}
 
+	/* not enough data */
 	if (in->data_pos < data_size) {
 		return 0;
 	}
@@ -660,7 +665,29 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 	ISCSI_LIST_ADD_END(&iscsi->inqueue, in);
 	iscsi->incoming = NULL;
 
+	*pdu = in;
+	return 1;
+}
 
+// TODO(sahlberg) change this to 1 for AROS which doesn't support NONBLOCK io
+// actually
+#define READ_PDU_BATCH_COUNT 256
+
+static int iscsi_read_from_socket(struct iscsi_context *iscsi) {
+	int i;
+	/* we shouldn't do batch read on logging stage */
+	int batch_count  = iscsi->is_loggedin ? READ_PDU_BATCH_COUNT : 1;
+	for (i = 0; i < batch_count; ++i) {
+		struct iscsi_in_pdu *pdu;
+		int ret = iscsi_read_pdu_from_socket(iscsi, &pdu);
+		/* NODATA */
+		if (ret == 0) {
+			break;
+		}
+		if (ret < 0) {
+			return -1;
+		}
+	}
 	while (iscsi->inqueue != NULL) {
 		struct iscsi_in_pdu *current = iscsi->inqueue;
 
@@ -703,7 +730,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 				ISCSI_LOG(iscsi, 6, "iscsi_write_to_socket: socket is corked");
 				return 0;
 			}
-			
+
 			if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0
 				&& !(iscsi->outqueue->outdata.data[0] & ISCSI_PDU_IMMEDIATE)) {
 				/* stop sending for non-immediate PDUs. maxcmdsn is reached */
@@ -721,10 +748,10 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 				return -1;
 			}
 			iscsi->outqueue_current = iscsi->outqueue;
-			
+
 			/* set exp statsn */
 			iscsi_pdu_set_expstatsn(iscsi->outqueue_current, iscsi->statsn + 1);
-			
+
 			ISCSI_LIST_REMOVE(&iscsi->outqueue, iscsi->outqueue_current);
 			if (!(iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT)) {
 				/* we have to add the pdu to the waitqueue already here
