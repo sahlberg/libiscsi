@@ -26,6 +26,7 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 #include "iscsi-test-cu.h"
+#include "iscsi-private.h"
 
 int init_xcopy_descr(unsigned char *buf, int offset, int num_tgt_desc,
                 int num_seg_desc, int *tgt_desc_len, int *seg_desc_len)
@@ -39,7 +40,7 @@ int init_xcopy_descr(unsigned char *buf, int offset, int num_tgt_desc,
                                 LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);
         *tgt_desc_len = offset - XCOPY_DESC_OFFSET;
 
-        /* Iniitialize segment descriptor list with num_seg_desc
+        /* Initialize segment descriptor list with num_seg_desc
          * segment descriptor */
         for (i = 0; i < num_seg_desc; i++)
                 offset += populate_seg_desc_b2b(buf+offset, 0, 0, 0, 0,
@@ -56,7 +57,7 @@ test_extendedcopy_descr_limits(void)
         struct iscsi_data data;
         unsigned char *xcopybuf;
         struct scsi_copy_results_op_params *opp = NULL;
-        int tgt_desc_len = 0, seg_desc_len = 0;
+        int tgt_desc_len = 0, seg_desc_len = 0, seg_desc_count;
         unsigned int alloc_len;
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -75,7 +76,10 @@ test_extendedcopy_descr_limits(void)
                 get_desc_len(IDENT_DESCR_TGT_DESCR) +
                 (opp->max_segment_desc_count+1) *
                 get_desc_len(BLK_TO_BLK_SEG_DESCR);
-        data.data = alloca(alloc_len);
+        alloc_len = MAX(alloc_len, (XCOPY_DESC_OFFSET
+                                    + opp->max_desc_list_length
+                                    + get_desc_len(BLK_TO_BLK_SEG_DESCR)));
+        data.data = malloc(alloc_len);
         xcopybuf = data.data;
         memset(xcopybuf, 0, alloc_len);
 
@@ -101,15 +105,19 @@ test_extendedcopy_descr_limits(void)
         logging(LOG_VERBOSE,
                         "Test sending descriptors > Maximum Descriptor List Length");
         memset(xcopybuf, 0, alloc_len);
-        if (opp->max_desc_list_length < alloc_len) {
-                data.size = init_xcopy_descr(xcopybuf, XCOPY_DESC_OFFSET,
-                                (opp->max_target_desc_count+1),
-                                (opp->max_segment_desc_count+1),
-                                &tgt_desc_len, &seg_desc_len);
-                populate_param_header(xcopybuf, 3, 0, 0, 0,
-                                tgt_desc_len, seg_desc_len, 0);
-                EXTENDEDCOPY(sd, &data, EXPECT_PARAM_LIST_LEN_ERR);
-        }
+        tgt_desc_len = (opp->max_target_desc_count + 1)
+                                * get_desc_len(IDENT_DESCR_TGT_DESCR);
+        /* Overfill remaining max_desc_list_length with segment descriptors */
+        seg_desc_len = alloc_len - XCOPY_DESC_OFFSET - tgt_desc_len;
+        seg_desc_count = seg_desc_len / get_desc_len(BLK_TO_BLK_SEG_DESCR);
+        data.size = init_xcopy_descr(xcopybuf, XCOPY_DESC_OFFSET,
+                        (opp->max_target_desc_count+1),
+                        seg_desc_count,
+                        &tgt_desc_len, &seg_desc_len);
+        populate_param_header(xcopybuf, 3, 0, 0, 0,
+                        tgt_desc_len, seg_desc_len, 0);
+        EXTENDEDCOPY(sd, &data, EXPECT_PARAM_LIST_LEN_ERR);
 
         scsi_free_scsi_task(edl_task);
+        free(xcopybuf);
 }
