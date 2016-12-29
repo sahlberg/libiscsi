@@ -31,6 +31,8 @@ void
 test_extendedcopy_validate_tgt_descr(void)
 {
         int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
+        int ret;
+        struct scsi_inquiry_standard *std_inq;
         struct iscsi_data data;
         unsigned char *xcopybuf;
 
@@ -38,6 +40,12 @@ test_extendedcopy_validate_tgt_descr(void)
         logging(LOG_VERBOSE, "Test EXTENDED COPY target descriptor fields");
 
         CHECK_FOR_DATALOSS;
+
+        ret = inquiry(sd, &task, 0, 0, 260,
+                      EXPECT_STATUS_GOOD);
+        CU_ASSERT_EQUAL(ret, 0);
+        std_inq = scsi_datain_unmarshall(task);
+        CU_ASSERT_NOT_EQUAL(std_inq, NULL);
 
         data.size = XCOPY_DESC_OFFSET +
                 get_desc_len(IDENT_DESCR_TGT_DESCR) +
@@ -57,8 +65,19 @@ test_extendedcopy_validate_tgt_descr(void)
         populate_param_header(xcopybuf, 1, 0, 0, 0,
                         tgt_desc_len, seg_desc_len, 0);
 
-        EXTENDEDCOPY(sd, &data, EXPECT_INVALID_FIELD_IN_CDB);
+        if (std_inq->version >= 6) {
+                /* SPC-4 - LU ID should be ignored "*/
+                EXTENDEDCOPY(sd, &data, EXPECT_STATUS_GOOD);
+        } else {
+                /* SPC-3 - LU ID is reserved */
+                EXTENDEDCOPY(sd, &data, EXPECT_INVALID_FIELD_IN_CDB);
+        }
 
+        if (std_inq->version >= 6) {
+                /* NUL bit is obsolete in SPC-4 */
+                CU_PASS("[SKIPPED] Target is SPC-4+. Skipping NUL bit test");
+                return;
+        }
         logging(LOG_VERBOSE, "Test NUL bit in target descriptor");
         /* NUL bit */
         memset(xcopybuf, 0, data.size);
