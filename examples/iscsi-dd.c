@@ -477,14 +477,56 @@ void cscd_param_check(struct iscsi_context *iscsi,
 	scsi_free_scsi_task(task);
 }
 
+void readcap(struct iscsi_context *iscsi, int lun, int use_16,
+		int *_blocksize, uint64_t *_num_blocks)
+{
+	struct scsi_task *task;
+
+	if (use_16) {
+		struct scsi_readcapacity16 *rc16;
+
+		task = iscsi_readcapacity16_sync(iscsi, lun);
+		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+			fprintf(stderr,
+				"failed to send readcapacity command\n");
+			exit(10);
+		}
+		rc16 = scsi_datain_unmarshall(task);
+		if (rc16 == NULL) {
+			fprintf(stderr,
+				"failed to unmarshall readcapacity16 data\n");
+			exit(10);
+		}
+		*_blocksize  = rc16->block_length;
+		*_num_blocks  = rc16->returned_lba + 1;
+	} else {
+		struct scsi_readcapacity10 *rc10;
+
+		task = iscsi_readcapacity10_sync(iscsi, lun, 0, 0);
+		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+			fprintf(stderr,
+				"failed to send readcapacity command\n");
+			exit(10);
+		}
+		rc10 = scsi_datain_unmarshall(task);
+		if (rc10 == NULL) {
+			fprintf(stderr,
+				"failed to unmarshall readcapacity10 data\n");
+			exit(10);
+		}
+		*_blocksize  = rc10->block_size;
+		*_num_blocks  = rc10->lba;
+	}
+
+	scsi_free_scsi_task(task);
+	return;
+}
+
 int main(int argc, char *argv[])
 {
 	char *src_url = NULL;
 	char *dst_url = NULL;
 	struct iscsi_url *iscsi_url;
-	struct scsi_task *task;
-	struct scsi_readcapacity10 *rc10;
-	struct scsi_readcapacity16 *rc16;
 	int c;
 	struct pollfd pfd[2];
 	struct client client;
@@ -586,35 +628,8 @@ int main(int argc, char *argv[])
 	client.src_lun = iscsi_url->lun;
 	iscsi_destroy_url(iscsi_url);
 
-	if (client.use_16_for_rw) {
-		task = iscsi_readcapacity16_sync(client.src_iscsi, client.src_lun);
-		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-			fprintf(stderr, "failed to send readcapacity command\n");
-			exit(10);
-		}
-		rc16 = scsi_datain_unmarshall(task);
-		if (rc16 == NULL) {
-			fprintf(stderr, "failed to unmarshall readcapacity16 data\n");
-			exit(10);
-		}
-		client.src_blocksize  = rc16->block_length;
-		client.src_num_blocks  = rc16->returned_lba + 1;
-		scsi_free_scsi_task(task);
-	} else {
-		task = iscsi_readcapacity10_sync(client.src_iscsi, client.src_lun, 0, 0);
-		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-			fprintf(stderr, "failed to send readcapacity command\n");
-			exit(10);
-		}
-		rc10 = scsi_datain_unmarshall(task);
-		if (rc10 == NULL) {
-			fprintf(stderr, "failed to unmarshall readcapacity10 data\n");
-			exit(10);
-		}
-		client.src_blocksize  = rc10->block_size;
-		client.src_num_blocks  = rc10->lba;
-		scsi_free_scsi_task(task);
-	}
+	readcap(client.src_iscsi, client.src_lun, client.use_16_for_rw,
+		&client.src_blocksize, &client.src_num_blocks);
 
 	if (client.use_xcopy) {
 		cscd_ident_inq(client.src_iscsi, client.src_lun,
@@ -645,35 +660,8 @@ int main(int argc, char *argv[])
 	client.dst_lun = iscsi_url->lun;
 	iscsi_destroy_url(iscsi_url);
 
-	if (client.use_16_for_rw) {
-		task = iscsi_readcapacity16_sync(client.dst_iscsi, client.dst_lun);
-		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-			fprintf(stderr, "failed to send readcapacity command\n");
-			exit(10);
-		}
-		rc16 = scsi_datain_unmarshall(task);
-		if (rc16 == NULL) {
-			fprintf(stderr, "failed to unmarshall readcapacity16 data\n");
-			exit(10);
-		}
-		client.dst_blocksize  = rc16->block_length;
-		client.dst_num_blocks  = rc16->returned_lba + 1;
-		scsi_free_scsi_task(task);
-	} else {
-		task = iscsi_readcapacity10_sync(client.dst_iscsi, client.dst_lun, 0, 0);
-		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-			fprintf(stderr, "failed to send readcapacity command\n");
-			exit(10);
-		}
-		rc10 = scsi_datain_unmarshall(task);
-		if (rc10 == NULL) {
-			fprintf(stderr, "failed to unmarshall readcapacity10 data\n");
-			exit(10);
-		}
-		client.dst_blocksize  = rc10->block_size;
-		client.dst_num_blocks  = rc10->lba;
-		scsi_free_scsi_task(task);
-	}
+	readcap(client.dst_iscsi, client.dst_lun, client.use_16_for_rw,
+		&client.dst_blocksize, &client.dst_num_blocks);
 
 	if (client.use_xcopy) {
 		cscd_ident_inq(client.dst_iscsi, client.dst_lun,
