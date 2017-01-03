@@ -2635,6 +2635,29 @@ iscsi_receive_copy_results_task(struct iscsi_context *iscsi, int lun,
 }
 
 struct scsi_task *
+iscsi_extended_copy_task(struct iscsi_context *iscsi, int lun,
+			 struct iscsi_data *param_data,
+			 iscsi_command_cb cb, void *private_data)
+{
+	struct scsi_task *task;
+
+	task = scsi_cdb_extended_copy(param_data->size);
+	if (task == NULL) {
+		iscsi_set_error(iscsi, "Out-of-memory: Failed to create "
+				"EXTENDED COPY cdb.");
+		return NULL;
+	}
+
+	if (iscsi_scsi_command_async(iscsi, lun, task, cb,
+				     param_data, private_data) != 0) {
+		scsi_free_scsi_task(task);
+		return NULL;
+	}
+
+	return task;
+}
+
+struct scsi_task *
 iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu)
 {
 	return pdu->scsi_cbdata.task;

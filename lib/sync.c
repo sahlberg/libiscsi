@@ -1688,6 +1688,26 @@ iscsi_receive_copy_results_sync(struct iscsi_context *iscsi, int lun,
 }
 
 struct scsi_task *
+iscsi_extended_copy_sync(struct iscsi_context *iscsi, int lun,
+			 struct iscsi_data *param_data)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_extended_copy_task(iscsi, lun, param_data,
+					scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi, "Failed to send EXTENDED COPY"
+				" command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
 iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
 			struct scsi_task *task, struct iscsi_data *data)
 {

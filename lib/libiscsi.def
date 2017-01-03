@@ -83,6 +83,8 @@ iscsi_release6_sync
 iscsi_release6_task
 iscsi_report_supported_opcodes_sync
 iscsi_report_supported_opcodes_task
+iscsi_extended_copy_sync
+iscsi_extended_copy_task
 iscsi_receive_copy_results_sync
 iscsi_receive_copy_results_task
 iscsi_reconnect
