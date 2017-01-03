@@ -567,6 +567,9 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 {
 	struct iscsi_in_pdu *in;
 	ssize_t data_size, count, padding_size;
+	int waitpdu_len, inqueue_len = 0;
+
+	ISCSI_LIST_LENGTH(&iscsi->waitpdu, waitpdu_len);
 
 	do {
 		if (iscsi->incoming == NULL) {
@@ -638,7 +641,6 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 				}
 				count = recv(iscsi->fd, buf, count, 0);
 			}
-			
 			if (count == 0) {
 				/* remote side has closed the socket. */
 				return -1;
@@ -652,7 +654,6 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 						iscsi_get_error(iscsi));
 				return -1;
 			}
-
 			in->data_pos += count;
 		}
 
@@ -661,8 +662,9 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		}
 
 		ISCSI_LIST_ADD_END(&iscsi->inqueue, in);
+		inqueue_len++;
 		iscsi->incoming = NULL;
-	} while (iscsi->is_loggedin && iscsi->tcp_nonblocking);
+	} while (iscsi->tcp_nonblocking && inqueue_len < waitpdu_len && iscsi->is_loggedin);
 
 	while (iscsi->inqueue != NULL) {
 		struct iscsi_in_pdu *current = iscsi->inqueue;
