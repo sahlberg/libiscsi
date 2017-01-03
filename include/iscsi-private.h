@@ -351,6 +351,7 @@ void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);
 void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size);
 void iscsi_free(struct iscsi_context *iscsi, void* ptr);
 char* iscsi_strdup(struct iscsi_context *iscsi, const char* str);
+void* iscsi_smalloc(struct iscsi_context *iscsi, size_t size);
 void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size);
 void iscsi_sfree(struct iscsi_context *iscsi, void* ptr);
 
