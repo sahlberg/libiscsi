@@ -23,16 +23,17 @@
 #include <poll.h>
 #include <getopt.h>
 #include <unistd.h>
+#include <limits.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
 const char *initiator = "iqn.2010-11.ronnie:iscsi-inq";
-int max_in_flight = 50;
-int blocks_per_io = 200;
+uint32_t max_in_flight = 50;
+uint32_t blocks_per_io = 200;
 
 struct client {
 	int finished;
-	int in_flight;
+	uint32_t in_flight;
 
 	struct iscsi_context *src_iscsi;
 	int src_lun;
@@ -153,7 +154,7 @@ void read_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, vo
 
 void fill_read_queue(struct client *client)
 {
-	int num_blocks;
+	uint32_t num_blocks;
 
 	while(client->in_flight < max_in_flight && client->pos < client->src_num_blocks) {
 		struct scsi_task *task;
@@ -214,6 +215,8 @@ int main(int argc, char *argv[])
 
 	while ((c = getopt_long(argc, argv, "d:s:i:m:b:p6n", long_options,
 			&option_index)) != -1) {
+		char *endptr;
+
 		switch (c) {
 		case 'd':
 			dst_url = optarg;
@@ -231,10 +234,20 @@ int main(int argc, char *argv[])
 			client.use_16_for_rw = 1;
 			break;
 		case 'm':
-			max_in_flight = atoi(optarg);
+			max_in_flight = strtoul(optarg, &endptr, 10);
+			if (*endptr != '\0' || max_in_flight == UINT_MAX) {
+				fprintf(stderr, "Invalid max in flight: %s\n",
+					optarg);
+				exit(10);
+			}
 			break;
 		case 'b':
-			blocks_per_io = atoi(optarg);
+			blocks_per_io = strtoul(optarg, &endptr, 10);
+			if (*endptr != '\0' || blocks_per_io == UINT_MAX) {
+				fprintf(stderr, "Invalid blocks per I/O: %s\n",
+					optarg);
+				exit(10);
+			}
 			break;
 		case 'n':
 			client.ignore_errors = 1;
