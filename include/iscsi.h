@@ -1129,6 +1129,16 @@ iscsi_report_supported_opcodes_task(struct iscsi_context *iscsi, int lun,
 				    uint32_t alloc_len,
 				    iscsi_command_cb cb, void *private_data);
 
+EXTERN struct scsi_task *
+iscsi_receive_copy_results_task(struct iscsi_context *iscsi, int lun,
+				int sa, int list_id, int alloc_len,
+				iscsi_command_cb cb, void *private_data);
+
+EXTERN struct scsi_task *
+iscsi_extended_copy_task(struct iscsi_context *iscsi, int lun,
+			 struct iscsi_data *param_data,
+			 iscsi_command_cb cb, void *private_data);
+
 /*
  * Sync commands for SCSI
  */
@@ -1453,6 +1463,14 @@ iscsi_report_supported_opcodes_sync(struct iscsi_context *iscsi, int lun,
 				    int rctd, int options,
 				    int opcode, int sa,
 				    uint32_t alloc_len);
+
+EXTERN struct scsi_task *
+iscsi_extended_copy_sync(struct iscsi_context *iscsi, int lun,
+			 struct iscsi_data *param_data);
+
+EXTERN struct scsi_task *
+iscsi_receive_copy_results_sync(struct iscsi_context *iscsi, int lun,
+				int sa, int list_id, int alloc_len);
 
 /*
  * These functions are used when the application wants to specify its own buffers to read the data
