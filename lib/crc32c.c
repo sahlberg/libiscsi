@@ -43,7 +43,7 @@
 /*                                                               */
 /*****************************************************************/
 
-static unsigned long crctable[256] = {
+uint32_t crctable[256] = {
  0x00000000L, 0xF26B8303L, 0xE13B70F7L, 0x1350F3F4L,
  0xC79A971FL, 0x35F1141CL, 0x26A1E7E8L, 0xD4CA64EBL,
  0x8AD958CFL, 0x78B2DBCCL, 0x6BE22838L, 0x9989AB3BL,
@@ -110,9 +110,9 @@ static unsigned long crctable[256] = {
  0xBE2DA0A5L, 0x4C4623A6L, 0x5F16D052L, 0xAD7D5351L
 };
 
-unsigned long crc32c(char *buf, int len)
+uint32_t crc32c(uint8_t *buf, int len)
 {
-	unsigned long crc = 0xffffffff;
+	uint32_t crc = 0xffffffff;
 	while (len-- > 0) {
 		crc = (crc>>8) ^ crctable[(crc ^ (*buf++)) & 0xFF];
 	}

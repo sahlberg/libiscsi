@@ -677,7 +677,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 
 static int iscsi_pdu_update_headerdigest(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	unsigned long crc;
+	uint32_t crc;
 
 	if (pdu->outdata.size < ISCSI_RAW_HEADER_SIZE + ISCSI_DIGEST_SIZE) {
 		iscsi_set_error(iscsi, "PDU too small (%u) to contain header digest",
@@ -685,12 +685,12 @@ static int iscsi_pdu_update_headerdigest(struct iscsi_context *iscsi, struct isc
 		return -1;
 	}
 
-	crc = crc32c((char *)pdu->outdata.data, ISCSI_RAW_HEADER_SIZE);
+	crc = crc32c(pdu->outdata.data, ISCSI_RAW_HEADER_SIZE);
 
-	pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+3] = (crc >> 24)&0xff;
-	pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+2] = (crc >> 16)&0xff;
-	pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+1] = (crc >>  8)&0xff;
-	pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+0] = (crc)      &0xff;
+	pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+3] = (crc >> 24);
+	pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+2] = (crc >> 16);
+	pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+1] = (crc >>  8);
+	pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+0] = (crc);
 	return 0;
 }
 
