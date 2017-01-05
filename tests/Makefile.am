@@ -4,7 +4,8 @@ AM_CFLAGS = $(WARN_CFLAGS)
 LDADD = ../lib/libiscsi.la
 
 noinst_PROGRAMS = prog_reconnect prog_reconnect_timeout prog_noop_reply \
-	prog_readwrite_iov prog_timeout prog_read_all_pdus
+	prog_readwrite_iov prog_timeout prog_read_all_pdus \
+	prog_header_digest
 
 T = `ls test_*.sh`
 

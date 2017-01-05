@@ -28,6 +28,10 @@ shutdown_target() {
     ${TGTADM} --op delete --mode system
 }
 
+enable_header_digest() {
+    ${TGTADM} --op update --mode target --tid 1 -n HeaderDigest -v CRC32C
+}
+
 create_lun() {
     # Setup LUN
     truncate --size=100M ${TGTLUN}
