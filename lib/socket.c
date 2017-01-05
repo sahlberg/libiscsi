@@ -366,6 +366,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	}
 
 	freeaddrinfo(ai);
+	strncpy(iscsi->connected_portal, portal, MAX_STRING_SIZE);
 	return 0;
 }
 
