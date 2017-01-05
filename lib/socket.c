@@ -675,6 +675,25 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 	return 0;
 }
 
+static int iscsi_pdu_update_headerdigest(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	unsigned long crc;
+
+	if (pdu->outdata.size < ISCSI_RAW_HEADER_SIZE + ISCSI_DIGEST_SIZE) {
+		iscsi_set_error(iscsi, "PDU too small (%u) to contain header digest",
+				(unsigned int) pdu->outdata.size);
+		return -1;
+	}
+
+	crc = crc32c((char *)pdu->outdata.data, ISCSI_RAW_HEADER_SIZE);
+
+	pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+3] = (crc >> 24)&0xff;
+	pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+2] = (crc >> 16)&0xff;
+	pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+1] = (crc >>  8)&0xff;
+	pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+0] = (crc)      &0xff;
+	return 0;
+}
+
 static int
 iscsi_write_to_socket(struct iscsi_context *iscsi)
 {
@@ -724,7 +743,13 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			
 			/* set exp statsn */
 			iscsi_pdu_set_expstatsn(iscsi->outqueue_current, iscsi->statsn + 1);
-			
+
+			/* calculate header checksum */
+			if (iscsi->header_digest != ISCSI_HEADER_DIGEST_NONE &&
+				iscsi_pdu_update_headerdigest(iscsi, iscsi->outqueue_current) != 0) {
+				return -1;
+			}
+
 			ISCSI_LIST_REMOVE(&iscsi->outqueue, iscsi->outqueue_current);
 			if (!(iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT)) {
 				/* we have to add the pdu to the waitqueue already here
@@ -952,23 +977,6 @@ static int iscsi_tcp_queue_pdu(struct iscsi_context *iscsi,
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "trying to queue NULL pdu");
 		return -1;
-	}
-
-	if (iscsi->header_digest != ISCSI_HEADER_DIGEST_NONE) {
-		unsigned long crc;
-
-		if (pdu->outdata.size < ISCSI_RAW_HEADER_SIZE + 4) {
-			iscsi_set_error(iscsi, "PDU too small (%u) to contain header digest",
-					(unsigned int) pdu->outdata.size);
-			return -1;
-		}
-
-		crc = crc32c((char *)pdu->outdata.data, ISCSI_RAW_HEADER_SIZE);
-
-		pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+3] = (crc >> 24)&0xff;
-		pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+2] = (crc >> 16)&0xff;
-		pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+1] = (crc >>  8)&0xff;
-		pdu->outdata.data[ISCSI_RAW_HEADER_SIZE+0] = (crc)      &0xff;
 	}
 
 	iscsi_add_to_outqueue(iscsi, pdu);
