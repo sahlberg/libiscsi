@@ -567,9 +567,6 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 {
 	struct iscsi_in_pdu *in;
 	ssize_t data_size, count, padding_size;
-	int waitpdu_len, inqueue_len = 0;
-
-	ISCSI_LIST_LENGTH(&iscsi->waitpdu, waitpdu_len);
 
 	do {
 		if (iscsi->incoming == NULL) {
@@ -661,20 +658,13 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			break;
 		}
 
-		ISCSI_LIST_ADD_END(&iscsi->inqueue, in);
-		inqueue_len++;
 		iscsi->incoming = NULL;
-	} while (iscsi->tcp_nonblocking && inqueue_len < waitpdu_len && iscsi->is_loggedin);
-
-	while (iscsi->inqueue != NULL) {
-		struct iscsi_in_pdu *current = iscsi->inqueue;
-
-		if (iscsi_process_pdu(iscsi, current) != 0) {
+		if (iscsi_process_pdu(iscsi, in) != 0) {
+			iscsi_free_iscsi_in_pdu(iscsi, in);
 			return -1;
 		}
-		ISCSI_LIST_REMOVE(&iscsi->inqueue, current);
-		iscsi_free_iscsi_in_pdu(iscsi, current);
-	}
+		iscsi_free_iscsi_in_pdu(iscsi, in);
+	} while (iscsi->tcp_nonblocking && iscsi->waitpdu && iscsi->is_loggedin);
 
 	return 0;
 }
@@ -988,16 +978,6 @@ iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 	in->data=NULL;
 	iscsi_sfree(iscsi, in);
 	in=NULL;
-}
-
-void
-iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *inqueue)
-{
-	while (inqueue != NULL) {
-	      struct iscsi_in_pdu *next = inqueue->next;
-	      iscsi_free_iscsi_in_pdu(iscsi, inqueue);
-	      inqueue = next;
-	}
 }
 
 void iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value)
