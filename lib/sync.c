@@ -1668,6 +1668,46 @@ iscsi_report_supported_opcodes_sync(struct iscsi_context *iscsi, int lun,
 }
 
 struct scsi_task *
+iscsi_receive_copy_results_sync(struct iscsi_context *iscsi, int lun,
+				int sa, int list_id, int alloc_len)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_receive_copy_results_task(iscsi, lun, sa, list_id, alloc_len,
+					    scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi, "Failed to send RECEIVE COPY RESULTS"
+				" command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
+iscsi_extended_copy_sync(struct iscsi_context *iscsi, int lun,
+			 struct iscsi_data *param_data)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_extended_copy_task(iscsi, lun, param_data,
+					scsi_sync_cb, &state) == NULL) {
+		iscsi_set_error(iscsi, "Failed to send EXTENDED COPY"
+				" command");
+		return NULL;
+	}
+
+	event_loop(iscsi, &state);
+
+	return state.task;
+}
+
+struct scsi_task *
 iscsi_scsi_command_sync(struct iscsi_context *iscsi, int lun,
 			struct scsi_task *task, struct iscsi_data *data)
 {

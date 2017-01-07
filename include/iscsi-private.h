@@ -350,10 +350,11 @@ void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);
 void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size);
 void iscsi_free(struct iscsi_context *iscsi, void* ptr);
 char* iscsi_strdup(struct iscsi_context *iscsi, const char* str);
+void* iscsi_smalloc(struct iscsi_context *iscsi, size_t size);
 void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size);
 void iscsi_sfree(struct iscsi_context *iscsi, void* ptr);
 
-unsigned long crc32c(char *buf, int len);
+uint32_t crc32c(uint8_t *buf, int len);
 
 struct scsi_task *iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu);
 
