@@ -1217,6 +1217,8 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			must_have_chap_r = 0;
 		}
 
+		ISCSI_LOG(iscsi, 6, "TargetLoginReply: %s", ptr);
+
 		ptr  += len + 1;
 		size -= len + 1;
 	}

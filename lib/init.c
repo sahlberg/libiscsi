@@ -111,15 +111,22 @@ char* iscsi_strdup(struct iscsi_context *iscsi, const char* str) {
 	return str2;
 }
 
-void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size) {
+void* iscsi_smalloc(struct iscsi_context *iscsi, size_t size) {
 	void *ptr;
 	if (size > iscsi->smalloc_size) return NULL;
 	if (iscsi->smalloc_free > 0) {
 		ptr = iscsi->smalloc_ptrs[--iscsi->smalloc_free];
-		memset(ptr, 0, iscsi->smalloc_size);
 		iscsi->smallocs++;
 	} else {
-		ptr = iscsi_zmalloc(iscsi, iscsi->smalloc_size);
+		ptr = iscsi_malloc(iscsi, iscsi->smalloc_size);
+	}
+	return ptr;
+}
+
+void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size) {
+	void *ptr = iscsi_smalloc(iscsi, size);
+	if (ptr) {
+		memset(ptr, 0, size);
 	}
 	return ptr;
 }

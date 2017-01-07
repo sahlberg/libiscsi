@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
@@ -428,6 +429,20 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 	enum iscsi_opcode opcode = in->hdr[0] & 0x3f;
 	uint8_t ahslen = in->hdr[4];
 	struct iscsi_pdu *pdu;
+
+	/* verify header checksum */
+	if (iscsi->header_digest != ISCSI_HEADER_DIGEST_NONE) {
+		uint32_t crc, crc_rcvd = 0;
+		crc = crc32c(in->hdr, ISCSI_RAW_HEADER_SIZE);
+		crc_rcvd |= in->hdr[ISCSI_RAW_HEADER_SIZE+0];
+		crc_rcvd |= in->hdr[ISCSI_RAW_HEADER_SIZE+1] << 8;
+		crc_rcvd |= in->hdr[ISCSI_RAW_HEADER_SIZE+2] << 16;
+		crc_rcvd |= in->hdr[ISCSI_RAW_HEADER_SIZE+3] << 24;
+		if (crc != crc_rcvd) {
+			iscsi_set_error(iscsi, "header checksum verification failed: calculated 0x%" PRIx32 " received 0x%" PRIx32, crc, crc_rcvd);
+			return -1;
+		}
+	}
 
 	if (ahslen != 0) {
 		iscsi_set_error(iscsi, "cant handle expanded headers yet");
