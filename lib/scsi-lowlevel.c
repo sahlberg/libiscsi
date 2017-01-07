@@ -3421,7 +3421,9 @@ scsi_cdb_extended_copy(int param_len)
 	task->cdb[13]	= param_len & 0xFF;
 	/* Inititalize other fields in CDB */
 	task->cdb_size = 16;
-	task->xfer_dir = SCSI_XFER_WRITE;
+        if (param_len) {
+                task->xfer_dir = SCSI_XFER_WRITE;
+        }
 	task->expxferlen = param_len;
 
 	return task;
