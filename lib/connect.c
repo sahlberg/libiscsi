@@ -370,9 +370,6 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
 	if (old_iscsi->incoming != NULL) {
 		iscsi_free_iscsi_in_pdu(old_iscsi, old_iscsi->incoming);
 	}
-	if (old_iscsi->inqueue != NULL) {
-		iscsi_free_iscsi_inqueue(old_iscsi, old_iscsi->inqueue);
-	}
 
 	if (old_iscsi->outqueue_current != NULL && old_iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
 		iscsi->drv->free_pdu(old_iscsi, old_iscsi->outqueue_current);

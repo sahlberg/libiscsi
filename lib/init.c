@@ -378,9 +378,6 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	if (iscsi->incoming != NULL) {
 		iscsi_free_iscsi_in_pdu(iscsi, iscsi->incoming);
 	}
-	if (iscsi->inqueue != NULL) {
-		iscsi_free_iscsi_inqueue(iscsi, iscsi->inqueue);
-	}
 
 	iscsi->connect_data = NULL;
 

@@ -126,15 +126,15 @@ void iscsi_decrement_iface_rr() {
 	iface_rr--;
 }
 
-static void set_nonblocking(int fd)
+static int set_nonblocking(int fd)
 {
 #if defined(WIN32)
 	unsigned long opt = 1;
-	ioctlsocket(fd, FIONBIO, &opt);
+	return ioctlsocket(fd, FIONBIO, &opt);
 #else
 	unsigned v;
 	v = fcntl(fd, F_GETFL, 0);
-	fcntl(fd, F_SETFL, v | O_NONBLOCK);
+	return fcntl(fd, F_SETFL, v | O_NONBLOCK);
 #endif
 }
 
@@ -203,7 +203,7 @@ static int iscsi_tcp_connect(struct iscsi_context *iscsi, union socket_address *
 		iscsi->fd = iscsi->old_iscsi->fd;
 	}
 
-	set_nonblocking(iscsi->fd);
+	iscsi->tcp_nonblocking = !set_nonblocking(iscsi->fd);
 
 	iscsi_set_tcp_keepalive(iscsi, iscsi->tcp_keepidle, iscsi->tcp_keepcnt, iscsi->tcp_keepintvl);
 
@@ -569,109 +569,103 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 	struct iscsi_in_pdu *in;
 	ssize_t data_size, count, padding_size;
 
-	if (iscsi->incoming == NULL) {
-		iscsi->incoming = iscsi_szmalloc(iscsi, sizeof(struct iscsi_in_pdu));
-		iscsi->incoming->hdr = iscsi_smalloc(iscsi, ISCSI_HEADER_SIZE);
+	do {
 		if (iscsi->incoming == NULL) {
-			iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu");
-			return -1;
-		}
-	}
-	in = iscsi->incoming;
-
-	/* first we must read the header, including any digests */
-	if (in->hdr_pos < ISCSI_HEADER_SIZE) {
-		/* try to only read the header, the socket is nonblocking, so
-		 * no need to limit the read to what is available in the socket
-		 */
-		count = ISCSI_HEADER_SIZE - in->hdr_pos;
-		count = recv(iscsi->fd, &in->hdr[in->hdr_pos], count, 0);
-		if (count == 0) {
-			return -1;
-		}
-		if (count < 0) {
-			if (errno == EINTR || errno == EAGAIN) {
-				return 0;
+			iscsi->incoming = iscsi_szmalloc(iscsi, sizeof(struct iscsi_in_pdu));
+			iscsi->incoming->hdr = iscsi_szmalloc(iscsi, ISCSI_RAW_HEADER_SIZE + ISCSI_DIGEST_SIZE);
+			if (iscsi->incoming == NULL) {
+				iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu");
+				return -1;
 			}
-			iscsi_set_error(iscsi, "read from socket failed, "
-				"errno:%d", errno);
-			return -1;
 		}
-		in->hdr_pos  += count;
-	}
+		in = iscsi->incoming;
 
-	if (in->hdr_pos < ISCSI_HEADER_SIZE) {
-		/* we don't have the full header yet, so return */
-		return 0;
-	}
-
-	padding_size = iscsi_get_pdu_padding_size(&in->hdr[0]);
-	data_size = iscsi_get_pdu_data_size(&in->hdr[0]) + padding_size;
-
-	if (data_size < 0 || data_size > (ssize_t)iscsi->initiator_max_recv_data_segment_length) {
-		iscsi_set_error(iscsi, "Invalid data size received from target (%d)", (int)data_size);
-		return -1;
-	}
-	if (data_size != 0) {
-		unsigned char padding_buf[3];
-		unsigned char *buf = padding_buf;
-		struct scsi_iovector * iovector_in;
-
-		count = data_size - in->data_pos;
-
-		/* first try to see if we already have a user buffer */
-		iovector_in = iscsi_get_scsi_task_iovector_in(iscsi, in);
-		if (iovector_in != NULL && count > padding_size) {
-			uint32_t offset = scsi_get_uint32(&in->hdr[40]);
-			count = iscsi_iovector_readv_writev(iscsi, iovector_in, in->data_pos + offset, count - padding_size, 0);
-		} else {
-			if (iovector_in == NULL) {
-				if (in->data == NULL) {
-					in->data = iscsi_malloc(iscsi, data_size);
-					if (in->data == NULL) {
-						iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu->data(%d)", (int)data_size);
-						return -1;
-					}
+		/* first we must read the header, including any digests */
+		if (in->hdr_pos < ISCSI_HEADER_SIZE) {
+			/* try to only read the header, the socket is nonblocking, so
+			 * no need to limit the read to what is available in the socket
+			 */
+			count = ISCSI_HEADER_SIZE - in->hdr_pos;
+			count = recv(iscsi->fd, &in->hdr[in->hdr_pos], count, 0);
+			if (count == 0) {
+				/* remote side has closed the socket. */
+				return -1;
+			}
+			if (count < 0) {
+				if (errno == EINTR || errno == EAGAIN) {
+					break;
 				}
-				buf = &in->data[in->data_pos];
+				iscsi_set_error(iscsi, "read from socket failed, "
+					"errno:%d", errno);
+				return -1;
 			}
-			count = recv(iscsi->fd, buf, count, 0);
+			in->hdr_pos  += count;
 		}
-		
-		if (count == 0) {
+
+		if (in->hdr_pos < ISCSI_HEADER_SIZE) {
+			/* we don't have the full header yet, so return */
+			break;
+		}
+
+		padding_size = iscsi_get_pdu_padding_size(&in->hdr[0]);
+		data_size = iscsi_get_pdu_data_size(&in->hdr[0]) + padding_size;
+
+		if (data_size < 0 || data_size > (ssize_t)iscsi->initiator_max_recv_data_segment_length) {
+			iscsi_set_error(iscsi, "Invalid data size received from target (%d)", (int)data_size);
 			return -1;
 		}
-		if (count < 0) {
-			if (errno == EINTR || errno == EAGAIN) {
-				return 0;
+		if (data_size != 0) {
+			unsigned char padding_buf[3];
+			unsigned char *buf = padding_buf;
+			struct scsi_iovector * iovector_in;
+
+			count = data_size - in->data_pos;
+
+			/* first try to see if we already have a user buffer */
+			iovector_in = iscsi_get_scsi_task_iovector_in(iscsi, in);
+			if (iovector_in != NULL && count > padding_size) {
+				uint32_t offset = scsi_get_uint32(&in->hdr[40]);
+				count = iscsi_iovector_readv_writev(iscsi, iovector_in, in->data_pos + offset, count - padding_size, 0);
+			} else {
+				if (iovector_in == NULL) {
+					if (in->data == NULL) {
+						in->data = iscsi_malloc(iscsi, data_size);
+						if (in->data == NULL) {
+							iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu->data(%d)", (int)data_size);
+							return -1;
+						}
+					}
+					buf = &in->data[in->data_pos];
+				}
+				count = recv(iscsi->fd, buf, count, 0);
 			}
-			iscsi_set_error(iscsi, "read from socket failed, "
-					"errno:%d %s", errno,
-					iscsi_get_error(iscsi));
-			return -1;
+			if (count == 0) {
+				/* remote side has closed the socket. */
+				return -1;
+			}
+			if (count < 0) {
+				if (errno == EINTR || errno == EAGAIN) {
+					break;
+				}
+				iscsi_set_error(iscsi, "read from socket failed, "
+						"errno:%d %s", errno,
+						iscsi_get_error(iscsi));
+				return -1;
+			}
+			in->data_pos += count;
 		}
 
-		in->data_pos += count;
-	}
+		if (in->data_pos < data_size) {
+			break;
+		}
 
-	if (in->data_pos < data_size) {
-		return 0;
-	}
-
-	ISCSI_LIST_ADD_END(&iscsi->inqueue, in);
-	iscsi->incoming = NULL;
-
-
-	while (iscsi->inqueue != NULL) {
-		struct iscsi_in_pdu *current = iscsi->inqueue;
-
-		if (iscsi_process_pdu(iscsi, current) != 0) {
+		iscsi->incoming = NULL;
+		if (iscsi_process_pdu(iscsi, in) != 0) {
+			iscsi_free_iscsi_in_pdu(iscsi, in);
 			return -1;
 		}
-		ISCSI_LIST_REMOVE(&iscsi->inqueue, current);
-		iscsi_free_iscsi_in_pdu(iscsi, current);
-	}
-
+		iscsi_free_iscsi_in_pdu(iscsi, in);
+	} while (iscsi->tcp_nonblocking && iscsi->waitpdu && iscsi->is_loggedin);
 
 	return 0;
 }
@@ -993,16 +987,6 @@ iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 	in->data=NULL;
 	iscsi_sfree(iscsi, in);
 	in=NULL;
-}
-
-void
-iscsi_free_iscsi_inqueue(struct iscsi_context *iscsi, struct iscsi_in_pdu *inqueue)
-{
-	while (inqueue != NULL) {
-	      struct iscsi_in_pdu *next = inqueue->next;
-	      iscsi_free_iscsi_in_pdu(iscsi, inqueue);
-	      inqueue = next;
-	}
 }
 
 void iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value)
