@@ -188,6 +188,20 @@ static int iscsi_tcp_connect(struct iscsi_context *iscsi, union socket_address *
 
 	int socksize;
 
+	switch (ai_family) {
+	case AF_INET:
+                socksize = sizeof(struct sockaddr_in);
+                break;
+	case AF_INET6:
+                socksize = sizeof(struct sockaddr_in6);
+                break;
+        default:
+		iscsi_set_error(iscsi, "Unknown address family :%d. "
+				"Only IPv4/IPv6 supported so far.",
+				ai_family);
+                return -1;
+        }
+
 	iscsi->fd = socket(ai_family, SOCK_STREAM, 0);
 	if (iscsi->fd == -1) {
 		iscsi_set_error(iscsi, "Failed to open iscsi socket. "
@@ -245,8 +259,6 @@ static int iscsi_tcp_connect(struct iscsi_context *iscsi, union socket_address *
 	} else {
 		ISCSI_LOG(iscsi,3,"TCP_NODELAY set to 1");
 	}
-
-	socksize = sizeof(struct sockaddr_in);  // Work-around for now, need to fix it
 
 	if (connect(iscsi->fd, &sa->sa, socksize) != 0
 		&& errno != EINPROGRESS) {
@@ -332,6 +344,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	case AF_INET:
 		socksize = sizeof(struct sockaddr_in);
 		memcpy(&sa.sin, ai->ai_addr, socksize);
+                sa.sin.sin_family = AF_INET;
 		sa.sin.sin_port = htons(port);
 #ifdef HAVE_SOCK_SIN_LEN
 		sa.sin.sin_len = socksize;
@@ -341,6 +354,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	case AF_INET6:
 		socksize = sizeof(struct sockaddr_in6);
 		memcpy(&sa.sin6, ai->ai_addr, socksize);
+                sa.sin6.sin6_family = AF_INET6;
 		sa.sin6.sin6_port = htons(port);
 #ifdef HAVE_SOCK_SIN_LEN
 		sa.sin6.sin6_len = socksize;
