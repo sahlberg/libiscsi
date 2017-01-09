@@ -186,7 +186,7 @@ out:
 
 void fill_read_queue(struct client *client)
 {
-	int num_blocks;
+	int64_t num_blocks;
 
 	if (finished) return;
 
@@ -210,7 +210,7 @@ void fill_read_queue(struct client *client)
 
 		task = iscsi_read16_task(client->iscsi,
 								client->lun, client->pos,
-								num_blocks * client->blocksize,
+								(uint32_t)(num_blocks * client->blocksize),
 								client->blocksize, 0, 0, 0, 0, 0,
 								cb, client);
 		if (task == NULL) {
