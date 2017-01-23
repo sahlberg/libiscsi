@@ -111,7 +111,7 @@ iscsi_connect_sync(struct iscsi_context *iscsi, const char *portal)
 	/* clear connect_data so it doesnt point to our stack */
 	iscsi->connect_data = NULL;
 
-	return state.status;
+	return (state.status == SCSI_STATUS_GOOD) ? 0 : -1;
 }
 
 int
@@ -132,7 +132,7 @@ iscsi_full_connect_sync(struct iscsi_context *iscsi,
 
 	event_loop(iscsi, &state);
 
-	return state.status;
+	return (state.status == SCSI_STATUS_GOOD) ? 0 : -1;
 }
 
 int iscsi_login_sync(struct iscsi_context *iscsi)
@@ -149,7 +149,7 @@ int iscsi_login_sync(struct iscsi_context *iscsi)
 
 	event_loop(iscsi, &state);
 
-	return state.status;
+	return (state.status == SCSI_STATUS_GOOD) ? 0 : -1;
 }
 
 int iscsi_logout_sync(struct iscsi_context *iscsi)
@@ -166,7 +166,7 @@ int iscsi_logout_sync(struct iscsi_context *iscsi)
 
 	event_loop(iscsi, &state);
 
-	return state.status;
+	return (state.status == SCSI_STATUS_GOOD) ? 0 : -1;
 }
 
 static void
@@ -213,7 +213,7 @@ int iscsi_reconnect_sync(struct iscsi_context *iscsi)
 
 	reconnect_event_loop(iscsi, &state);
 
-	return state.status;
+	return (state.status == SCSI_STATUS_GOOD) ? 0 : -1;
 }
 
 static void
@@ -270,7 +270,7 @@ iscsi_task_mgmt_sync(struct iscsi_context *iscsi,
 
 	event_loop(iscsi, &state);
 
-	return state.status;
+	return (state.status == SCSI_STATUS_GOOD) ? 0 : -1;
 }
 
 int
