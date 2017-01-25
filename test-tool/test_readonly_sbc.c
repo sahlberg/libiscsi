@@ -82,7 +82,7 @@ static void
 test_writeverify10(void)
 {
         logging(LOG_VERBOSE, "Test WRITEVERIFY10 fails with WRITE_PROTECTED");
-        WRITEVERIFY10(sd, 0, block_size, block_size, 0, 0, 0, 0, scratch,
+        WRITEVERIFY10(sd, 0, block_size, block_size, 0, 0, 1, 0, scratch,
                       EXPECT_WRITE_PROTECTED);
 }
 
@@ -90,7 +90,7 @@ static void
 test_writeverify12(void)
 {
         logging(LOG_VERBOSE, "Test WRITEVERIFY12 fails with WRITE_PROTECTED");
-        WRITEVERIFY12(sd, 0, block_size, block_size, 0, 0, 0, 0, scratch,
+        WRITEVERIFY12(sd, 0, block_size, block_size, 0, 0, 1, 0, scratch,
                       EXPECT_WRITE_PROTECTED);
 }
 
@@ -98,7 +98,7 @@ static void
 test_writeverify16(void)
 {
         logging(LOG_VERBOSE, "Test WRITEVERIFY16 fails with WRITE_PROTECTED");
-        WRITEVERIFY16(sd, 0, block_size, block_size, 0, 0, 0, 0, scratch,
+        WRITEVERIFY16(sd, 0, block_size, block_size, 0, 0, 1, 0, scratch,
                       EXPECT_WRITE_PROTECTED);
 }
 

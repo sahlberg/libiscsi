@@ -43,7 +43,7 @@ test_writeverify16_simple(void)
                         break;
                 }
                 WRITEVERIFY16(sd, 0, i * block_size,
-                              block_size, 0, 0, 0, 0, scratch,
+                              block_size, 0, 0, 1, 0, scratch,
                               EXPECT_STATUS_GOOD);
         }
 
@@ -53,7 +53,7 @@ test_writeverify16_simple(void)
                         break;
                 }
                 WRITEVERIFY16(sd, num_blocks - i,
-                              i * block_size, block_size, 0, 0, 0, 0, scratch,
+                              i * block_size, block_size, 0, 0, 1, 0, scratch,
                               EXPECT_STATUS_GOOD);
         }
 }

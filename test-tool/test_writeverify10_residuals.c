@@ -62,6 +62,7 @@ test_writeverify10_residuals(void)
 
         memset(task, 0, sizeof(struct scsi_task));
         task->cdb[0] = SCSI_OPCODE_WRITE_VERIFY10;
+        task->cdb[1] = 2; /* BYTCHK = 1 */
         task->cdb[8] = 1;
         task->cdb_size = 10;
         task->xfer_dir = SCSI_XFER_WRITE;
@@ -121,6 +122,7 @@ test_writeverify10_residuals(void)
 
         memset(task, 0, sizeof(struct scsi_task));
         task->cdb[0] = SCSI_OPCODE_WRITE_VERIFY10;
+        task->cdb[1] = 2; /* BYTCHK = 1 */
         task->cdb[8] = 1;
         task->cdb_size = 10;
         task->xfer_dir = SCSI_XFER_WRITE;
@@ -164,6 +166,7 @@ test_writeverify10_residuals(void)
 
         memset(task, 0, sizeof(struct scsi_task));
         task->cdb[0] = SCSI_OPCODE_WRITE_VERIFY10;
+        task->cdb[1] = 2; /* BYTCHK = 1 */
         task->cdb[8] = 1;
         task->cdb_size = 10;
         task->xfer_dir = SCSI_XFER_WRITE;
@@ -213,6 +216,7 @@ test_writeverify10_residuals(void)
 
         memset(task, 0, sizeof(struct scsi_task));
         task->cdb[0] = SCSI_OPCODE_WRITE_VERIFY10;
+        task->cdb[1] = 2; /* BYTCHK = 1 */
         task->cdb[8] = 2;
         task->cdb_size = 10;
         task->xfer_dir = SCSI_XFER_WRITE;
@@ -266,6 +270,7 @@ test_writeverify10_residuals(void)
 
         memset(task, 0, sizeof(struct scsi_task));
         task->cdb[0] = SCSI_OPCODE_WRITE_VERIFY10;
+        task->cdb[1] = 2; /* BYTCHK = 1 */
         task->cdb[8] = 1;
         task->cdb_size = 10;
         task->xfer_dir = SCSI_XFER_WRITE;
@@ -338,6 +343,7 @@ test_writeverify10_residuals(void)
 
         memset(task, 0, sizeof(struct scsi_task));
         task->cdb[0] = SCSI_OPCODE_WRITE_VERIFY10;
+        task->cdb[1] = 2; /* BYTCHK = 1 */
         task->cdb[8] = 2;
         task->cdb_size = 10;
         task->xfer_dir = SCSI_XFER_WRITE;
