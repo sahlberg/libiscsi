@@ -60,26 +60,28 @@ test_async_read(void)
 {
 	int i, ret;
 	struct tests_async_read_state state = { 0, 0, 0 };
-	int blocksize = 512;
-	int blocks_per_io = 8;
-	int num_ios = 1000;
+	const int blocksize = 512;
+	const int blocks_per_io = 8;
+	const int num_ios = 1000;
 	/* IOs in flight concurrently, so need a buffer large enough for all */
-	unsigned char buf[blocksize * blocks_per_io * num_ios];
+	unsigned char *buf = calloc(blocksize * blocks_per_io, num_ios);
+
+	CU_ASSERT_NOT_EQUAL(buf, NULL);
+	if (!buf)
+		goto out;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 	if (sd->iscsi_ctx == NULL) {
                 CU_PASS("[SKIPPED] Non-iSCSI");
-		return;
+		goto out;
 	}
 
 	if (maximum_transfer_length
 	 && (maximum_transfer_length < (blocks_per_io * num_ios))) {
 		CU_PASS("[SKIPPED] device too small for async_read test");
-		return;
+		goto out;
 	}
-
-	memset(buf, 0, blocksize * blocks_per_io * num_ios);
 
 	for (i = 0; i < num_ios; i++) {
 		uint32_t lba = i * blocks_per_io;
@@ -116,4 +118,7 @@ test_async_read(void)
 		ret = iscsi_service(sd->iscsi_ctx, pfd.revents);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
+
+out:
+	free(buf);
 }

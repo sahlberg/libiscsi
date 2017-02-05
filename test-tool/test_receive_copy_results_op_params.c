@@ -32,14 +32,16 @@ test_receive_copy_results_op_params(void)
 {
         struct scsi_task *op_task = NULL;
         struct scsi_copy_results_op_params *opp;
+        int ret;
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test RECEIVE COPY RESULTS, OPERATING PARAMS");
 
-        RECEIVE_COPY_RESULTS(&op_task, sd, SCSI_COPY_RESULTS_OP_PARAMS, 0,
-                             (void **)&opp, EXPECT_STATUS_GOOD);
+        ret = RECEIVE_COPY_RESULTS(&op_task, sd, SCSI_COPY_RESULTS_OP_PARAMS, 0,
+                                   (void **)&opp, EXPECT_STATUS_GOOD);
 
-        logging(LOG_NORMAL,
+        if (ret == 0)
+                logging(LOG_NORMAL,
                         "max_target_desc=%d, max_seg_desc=%d",
                         opp->max_target_desc_count,
                         opp->max_segment_desc_count);

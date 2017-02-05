@@ -89,7 +89,7 @@ test_sanitize_reset(void)
         }
 
 
-        logging(LOG_VERBOSE, "Sleep for three seconds incase the target is "
+        logging(LOG_VERBOSE, "Sleep for three seconds in case the target is "
                 "slow to start the SANITIZE");
         sleep(3);
 
@@ -151,7 +151,7 @@ test_sanitize_reset(void)
         logging(LOG_VERBOSE, "Disconnect from the target.");
         iscsi_destroy_context(sd->iscsi_ctx);
 
-        logging(LOG_VERBOSE, "Sleep for one seconds incase the target is "
+        logging(LOG_VERBOSE, "Sleep for one seconds in case the target is "
                 "slow to reset");
         sleep(1);
 
