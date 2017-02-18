@@ -571,6 +571,19 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 			if (value != NULL) {
 				*value++ = 0;
 			}
+                        if (!strcmp(key, "header_digest")) {
+                                if (!strcmp(value, "crc32c")) {
+                                        iscsi_set_header_digest(
+                                            iscsi, ISCSI_HEADER_DIGEST_CRC32C);
+                                } else if (!strcmp(value, "none")) {
+                                        iscsi_set_header_digest(
+                                            iscsi, ISCSI_HEADER_DIGEST_NONE);
+                                } else {
+                                        iscsi_set_error(iscsi,
+                                            "Invalid URL argument for header_digest: %s", value);
+                                        return NULL;
+                                }
+                        }
 			if (!strcmp(key, "target_user")) {
 				target_user = value;
 			} else if (!strcmp(key, "target_password")) {

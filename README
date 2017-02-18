@@ -41,6 +41,7 @@ Arguments:
 Username and password for bidirectional CHAP authentication:
 target_user=<account>
 target_password=<password>
+header_digest=<crc32c|none>
 Transport:
 iser
 
