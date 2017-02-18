@@ -418,6 +418,9 @@ int main(int argc, char *argv[])
 		exit(10);
 	}
 
+	iscsi_set_session_type(iscsi, ISCSI_SESSION_DISCOVERY);
+        iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE);
+
 	if (debug > 0) {
 		iscsi_set_log_level(iscsi, debug);
 		iscsi_set_log_fn(iscsi, iscsi_log_to_stderr);
@@ -434,8 +437,6 @@ int main(int argc, char *argv[])
 			iscsi_get_error(iscsi));
 		exit(10);
 	}
-
-	iscsi_set_session_type(iscsi, ISCSI_SESSION_DISCOVERY);
 
 	state.username = iscsi_url->user;
 	state.password = iscsi_url->passwd;
