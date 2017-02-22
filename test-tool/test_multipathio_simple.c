@@ -34,6 +34,7 @@ test_multipathio_simple(void)
         int write_path;
         unsigned char *write_buf = alloca(256 * block_size);
         unsigned char *read_buf = alloca(256 * block_size);
+        int ret;
 
         CHECK_FOR_DATALOSS;
         CHECK_FOR_SBC;
@@ -58,16 +59,19 @@ test_multipathio_simple(void)
                                         && maximum_transfer_length < i) {
                                 break;
                         }
-                        WRITE10(mp_sds[write_path], 0, i * block_size,
+                        ret = WRITE10(mp_sds[write_path], 0, i * block_size,
                                       block_size, 0, 0, 0, 0, 0, write_buf,
                                       EXPECT_STATUS_GOOD);
-                        READ10(mp_sds[read_path], NULL, 0, i * block_size,
-                               block_size, 0, 0, 0, 0, 0, read_buf,
-                               EXPECT_STATUS_GOOD);
-
+                        if (ret < 0)
+                                continue;
+                        ret = READ10(mp_sds[read_path], NULL, 0, i * block_size,
+                                     block_size, 0, 0, 0, 0, 0, read_buf,
+                                     EXPECT_STATUS_GOOD);
+                        if (ret < 0)
+                                continue;
                         /* compare written and read data */
-                        CU_ASSERT_EQUAL(0,
-                                memcmp(write_buf, read_buf, i * block_size));
+                        ret = memcmp(write_buf, read_buf, i * block_size);
+                        CU_ASSERT_EQUAL(0, ret);
                 }
 
         }
