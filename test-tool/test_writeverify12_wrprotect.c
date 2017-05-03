@@ -46,7 +46,7 @@ test_writeverify12_wrprotect(void)
                 logging(LOG_VERBOSE, "Device does not support/use protection information. All commands should fail.");
                 for (i = 1; i < 8; i++) {
                         WRITEVERIFY12(sd, 0, block_size, block_size,
-                                      i, 0, 0, 0, scratch,
+                                      i, 0, 1, 0, scratch,
                                       EXPECT_INVALID_FIELD_IN_CDB);
                 }
                 return;

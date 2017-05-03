@@ -93,7 +93,7 @@ static void
 test_writeverify10(void)
 {
         logging(LOG_VERBOSE, "Test WRITEVERIFY10 when medium is ejected.");
-        WRITEVERIFY10(sd, 0, block_size, block_size, 0, 0, 0, 0, scratch,
+        WRITEVERIFY10(sd, 0, block_size, block_size, 0, 0, 1, 0, scratch,
                       EXPECT_NO_MEDIUM);
 }
 
@@ -101,7 +101,7 @@ static void
 test_writeverify12(void)
 {
         logging(LOG_VERBOSE, "Test WRITEVERIFY12 when medium is ejected.");
-        WRITEVERIFY12(sd, 0, block_size, block_size, 0, 0, 0, 0, scratch,
+        WRITEVERIFY12(sd, 0, block_size, block_size, 0, 0, 1, 0, scratch,
                       EXPECT_NO_MEDIUM);
 }
 
@@ -109,7 +109,7 @@ static void
 test_writeverify16(void)
 {
         logging(LOG_VERBOSE, "Test WRITEVERIFY16 when medium is ejected.");
-        WRITEVERIFY16(sd, 0, block_size, block_size, 0, 0, 0, 0, scratch,
+        WRITEVERIFY16(sd, 0, block_size, block_size, 0, 0, 1, 0, scratch,
                       EXPECT_NO_MEDIUM);
 }
 

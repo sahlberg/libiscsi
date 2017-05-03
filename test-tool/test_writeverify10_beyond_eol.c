@@ -46,7 +46,7 @@ test_writeverify10_beyond_eol(void)
                         break;
                 }
                 WRITEVERIFY10(sd, num_blocks + 1 - i,
-                              i * block_size, block_size, 0, 0, 0, 0, scratch,
+                              i * block_size, block_size, 0, 0, 1, 0, scratch,
                               EXPECT_LBA_OOB);
         }
 
@@ -56,7 +56,7 @@ test_writeverify10_beyond_eol(void)
                         break;
                 }
                 WRITEVERIFY10(sd, 0x80000000,
-                              i * block_size, block_size, 0, 0, 0, 0, scratch,
+                              i * block_size, block_size, 0, 0, 1, 0, scratch,
                               EXPECT_LBA_OOB);
         }
 
@@ -66,7 +66,7 @@ test_writeverify10_beyond_eol(void)
                         break;
                 }
                 WRITEVERIFY10(sd, -1, i * block_size,
-                              block_size, 0, 0, 0, 0, scratch,
+                              block_size, 0, 0, 1, 0, scratch,
                               EXPECT_LBA_OOB);
         }
 
@@ -76,7 +76,7 @@ test_writeverify10_beyond_eol(void)
                         break;
                 }
                 WRITEVERIFY10(sd, num_blocks - 1,
-                              i * block_size, block_size, 0, 0, 0, 0, scratch,
+                              i * block_size, block_size, 0, 0, 1, 0, scratch,
                               EXPECT_LBA_OOB);
         }
 }

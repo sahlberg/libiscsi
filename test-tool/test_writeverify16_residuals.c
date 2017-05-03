@@ -53,7 +53,7 @@ test_writeverify16_residuals(void)
         }
 
         /* check if writeverify16 is supported */
-        WRITEVERIFY16(sd, 0, 0, block_size, 0, 0, 0, 0, NULL,
+        WRITEVERIFY16(sd, 0, 0, block_size, 0, 0, 1, 0, NULL,
                       EXPECT_STATUS_GOOD);
 
         if (sd->iscsi_ctx == NULL) {

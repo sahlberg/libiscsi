@@ -42,7 +42,7 @@ test_writeverify16_beyond_eol(void)
                         break;
                 }
                 WRITEVERIFY16(sd, num_blocks + 1 - i,
-                              i * block_size, block_size, 0, 0, 0, 0, scratch,
+                              i * block_size, block_size, 0, 0, 1, 0, scratch,
                               EXPECT_LBA_OOB);
         }
 
@@ -52,7 +52,7 @@ test_writeverify16_beyond_eol(void)
                         break;
                 }
                 WRITEVERIFY16(sd, 0x8000000000000000ULL,
-                              i * block_size, block_size, 0, 0, 0, 0, scratch,
+                              i * block_size, block_size, 0, 0, 1, 0, scratch,
                               EXPECT_LBA_OOB);
         }
 
@@ -62,7 +62,7 @@ test_writeverify16_beyond_eol(void)
                         break;
                 }
                 WRITEVERIFY16(sd, -1,
-                              i * block_size, block_size, 0, 0, 0, 0, scratch,
+                              i * block_size, block_size, 0, 0, 1, 0, scratch,
                               EXPECT_LBA_OOB);
         }
 
@@ -72,7 +72,7 @@ test_writeverify16_beyond_eol(void)
                         break;
                 }
                 WRITEVERIFY16(sd, num_blocks - 1,
-                              i * block_size, block_size, 0, 0, 0, 0, scratch,
+                              i * block_size, block_size, 0, 0, 1, 0, scratch,
                               EXPECT_LBA_OOB);
         }
 }

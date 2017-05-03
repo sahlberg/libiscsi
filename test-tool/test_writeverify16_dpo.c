@@ -65,11 +65,11 @@ test_writeverify16_dpo(void)
         memset(scratch, 0xa6, block_size);
         if (dpofua) {
                 WRITEVERIFY16(sd, 0, block_size,
-                              block_size, 0, 1, 0, 0, scratch,
+                              block_size, 0, 1, 1, 0, scratch,
                               EXPECT_STATUS_GOOD);
         } else {
                 WRITEVERIFY16(sd, 0, block_size,
-                              block_size, 0, 1, 0, 0, scratch,
+                              block_size, 0, 1, 1, 0, scratch,
                               EXPECT_INVALID_FIELD_IN_CDB);
         }
 

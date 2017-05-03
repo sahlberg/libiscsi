@@ -64,11 +64,11 @@ test_writeverify12_dpo(void)
         logging(LOG_VERBOSE, "Test WRITEVERIFY12 with DPO==1");
         if (dpofua) {
                 WRITEVERIFY12(sd, 0, block_size,
-                              block_size, 0, 1, 0, 0, scratch,
+                              block_size, 0, 1, 1, 0, scratch,
                               EXPECT_STATUS_GOOD);
         } else {
                 WRITEVERIFY12(sd, 0, block_size,
-                              block_size, 0, 1, 0, 0, scratch,
+                              block_size, 0, 1, 1, 0, scratch,
                               EXPECT_INVALID_FIELD_IN_CDB);
         }
 
