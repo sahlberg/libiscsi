@@ -33,18 +33,27 @@ test_extendedcopy_simple(void)
         int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
         struct iscsi_data data;
         unsigned char *xcopybuf;
-        unsigned char *buf1 = malloc(2048*block_size);
-        unsigned char *buf2 = malloc(2048*block_size);
+        unsigned int copied_blocks;
+        unsigned char *buf1;
+        unsigned char *buf2;
+
+
+        copied_blocks = num_blocks / 2;
+        if (copied_blocks > 2048)
+                copied_blocks = 2048;
+        buf1 = malloc(copied_blocks * block_size);
+        buf2 = malloc(copied_blocks * block_size);
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE,
-                        "Test EXTENDED COPY of 2048 blocks from start of LUN to end of LUN");
+                "Test EXTENDED COPY of %u blocks from start of LUN to end of LUN",
+                copied_blocks);
 
         CHECK_FOR_DATALOSS;
 
-        logging(LOG_VERBOSE, "Write 2048 blocks of 'A' at LBA:0");
-        memset(buf1, 'A', 2048*block_size);
-        WRITE16(sd, 0, 2048*block_size, block_size, 0, 0, 0, 0, 0,
+        logging(LOG_VERBOSE, "Write %u blocks of 'A' at LBA:0", copied_blocks);
+        memset(buf1, 'A', copied_blocks * block_size);
+        WRITE16(sd, 0, copied_blocks * block_size, block_size, 0, 0, 0, 0, 0,
                 buf1, EXPECT_STATUS_GOOD);
 
         data.size = XCOPY_DESC_OFFSET +
@@ -61,7 +70,7 @@ test_extendedcopy_simple(void)
 
         /* Iniitialize segment descriptor list with one segment descriptor */
         offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 0,
-                        2048, 0, num_blocks - 2048);
+                        copied_blocks, 0, num_blocks - copied_blocks);
         seg_desc_len = offset - XCOPY_DESC_OFFSET - tgt_desc_len;
 
         /* Initialize the parameter list header */
@@ -70,12 +79,13 @@ test_extendedcopy_simple(void)
 
         EXTENDEDCOPY(sd, &data, EXPECT_STATUS_GOOD);
 
-        logging(LOG_VERBOSE, "Read 2048 blocks from end of the LUN");
-        READ16(sd, NULL, num_blocks - 2048, 2048*block_size,
+        logging(LOG_VERBOSE, "Read %u blocks from end of the LUN",
+                copied_blocks);
+        READ16(sd, NULL, num_blocks - copied_blocks, copied_blocks * block_size,
                block_size, 0, 0, 0, 0, 0, buf2,
                EXPECT_STATUS_GOOD);
 
-        if (memcmp(buf1, buf2, 2048*block_size)) {
+        if (memcmp(buf1, buf2, copied_blocks * block_size)) {
                 CU_FAIL("Blocks were not copied correctly");
         }
         
