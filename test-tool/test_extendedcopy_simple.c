@@ -75,7 +75,7 @@ test_extendedcopy_simple(void)
                block_size, 0, 0, 0, 0, 0, buf2,
                EXPECT_STATUS_GOOD);
 
-        if (memcmp(buf1, buf2, 2048)) {
+        if (memcmp(buf1, buf2, 2048*block_size)) {
                 CU_FAIL("Blocks were not copied correctly");
         }
         
