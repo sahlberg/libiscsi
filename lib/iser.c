@@ -34,6 +34,13 @@
 
 #ifdef __linux
 
+/* MUST keep in sync with socket.c */
+union socket_address {
+	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
+	struct sockaddr sa;
+};
+
 static int cq_handle(struct iser_conn *iser_conn);
 
 /*

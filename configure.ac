@@ -70,9 +70,25 @@ if test x"$libiscsi_cv_NEED_SYS_FILIO_H" = x"yes"; then
     AC_DEFINE(NEED_SYS_FILIO_H,1,[Whether we need sys/filio.h])
 fi
 
+# check for sys/socket.h
+dnl Check for sys/socket.h
+AC_CHECK_HEADERS([sys/socket.h])
+
+# check for netinet/tcp.h
+dnl Check for netinet/tcp.h
+AC_CHECK_HEADERS([netinet/tcp.h])
+
+# check for netinet/in.h
+dnl Check for netinet/in.h
+AC_CHECK_HEADERS([netinet/in.h])
+
 # check for arpa/inet.h
 dnl Check for arpa/inet.h
 AC_CHECK_HEADERS([arpa/inet.h])
+
+# check for sys/uio.h
+dnl Check for sys/uio.h
+AC_CHECK_HEADERS([sys/uio.h])
 
 # check for poll.h
 dnl Check for poll.h

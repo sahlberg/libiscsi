@@ -39,16 +39,17 @@
 #include "aros/aros_compat.h"
 #endif
 
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
 #if defined(WIN32)
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "win32/win32_compat.h"
-#define ioctl ioctlsocket
-#define close closesocket
 #else
 #include <strings.h>
 #include <netdb.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/ioctl.h>
@@ -58,7 +59,10 @@
 #include <sys/filio.h>
 #endif
 
+#ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,6 +77,13 @@
 
 static uint32_t iface_rr = 0;
 struct iscsi_transport;
+
+/* MUST keep in sync with iser.c */
+union socket_address {
+	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
+	struct sockaddr sa;
+};
 
 void
 iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
@@ -1087,6 +1098,18 @@ void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces _U
 #endif
 }
 
+#ifdef WIN32
+static iscsi_transport iscsi_transport_tcp = {
+	iscsi_tcp_connect,
+	iscsi_tcp_queue_pdu,
+	iscsi_tcp_new_pdu,
+	iscsi_tcp_disconnect,
+	iscsi_tcp_free_pdu,
+	iscsi_tcp_service,
+	iscsi_tcp_get_fd,
+	iscsi_tcp_which_events,
+};
+#else
 static iscsi_transport iscsi_transport_tcp = {
 	.connect      = iscsi_tcp_connect,
 	.queue_pdu    = iscsi_tcp_queue_pdu,
@@ -1097,6 +1120,7 @@ static iscsi_transport iscsi_transport_tcp = {
 	.get_fd       = iscsi_tcp_get_fd,
 	.which_events = iscsi_tcp_which_events,
 };
+#endif
 
 void iscsi_init_tcp_transport(struct iscsi_context *iscsi)
 {

@@ -40,9 +40,6 @@ extern "C" {
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-
 #define ISCSI_RAW_HEADER_SIZE			48
 #define ISCSI_DIGEST_SIZE			 4
 
@@ -67,12 +64,6 @@ void iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *i
 
 /* max length of chap challange */
 #define MAX_CHAP_C_LENGTH 2048
-
-union socket_address {
-	struct sockaddr_in sin;
-	struct sockaddr_in6 sin6;
-	struct sockaddr sa;
-};
 
 struct iscsi_context {
 	struct iscsi_transport *drv;
@@ -393,6 +384,8 @@ void iscsi_tcp_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 int iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi);
 
 void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data);
+
+union socket_address;
 
 typedef struct iscsi_transport {
 	int (*connect)(struct iscsi_context *iscsi, union socket_address *sa, int ai_family);
