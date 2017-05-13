@@ -37,6 +37,22 @@ THE SOFTWARE.
 
 #define SOL_TCP IPPROTO_TCP
 
+#if(_WIN32_WINNT < 0x0600)
+
+#define POLLIN      0x0001    /* There is data to read */
+#define POLLPRI     0x0002    /* There is urgent data to read */
+#define POLLOUT     0x0004    /* Writing now will not block */
+#define POLLERR     0x0008    /* Error condition */
+#define POLLHUP     0x0010    /* Hung up */
+#define POLLNVAL    0x0020    /* Invalid request: fd not open */
+
+struct pollfd {
+    SOCKET fd;        /* file descriptor */
+    short events;     /* requested events */
+    short revents;    /* returned events */
+};
+#endif
+
 typedef int ssize_t;
 typedef int uid_t;
 typedef int gid_t;
@@ -47,10 +63,11 @@ typedef int socklen_t;
 #define ioctl                ioctlsocket
 #define readv                win32_readv
 #define writev               win32_writev
+#define strncasecmp          _strnicmp
+#define strdup               _strdup
 #define poll(x, y, z)        win32_poll(x, y, z)
 #define inet_pton(x,y,z)     win32_inet_pton(x,y,z)
 #define sleep(x)             Sleep(x * 1000)
-#define snprintf             sprintf_s
 #define snprintf(a, b, c, ...) _snprintf_s(a, b, b, c, ## __VA_ARGS__)
 int     win32_inet_pton(int af, const char * src, void * dst);
 int     win32_poll(struct pollfd *fds, unsigned int nfsd, int timeout);

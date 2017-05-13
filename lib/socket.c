@@ -272,7 +272,10 @@ static int iscsi_tcp_connect(struct iscsi_context *iscsi, union socket_address *
 	}
 
 	if (connect(iscsi->fd, &sa->sa, socksize) != 0
-		&& errno != EINPROGRESS) {
+#if defined(WIN32)
+            && WSAGetLastError() != WSAEWOULDBLOCK
+#endif
+            && errno != EINPROGRESS) {
 		iscsi_set_error(iscsi, "Connect failed with errno : "
 			"%s(%d)", strerror(errno), errno);
 		close(iscsi->fd);
@@ -385,7 +388,8 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	iscsi->connect_data      = private_data;
 
 	if (iscsi->drv->connect(iscsi, &sa, ai->ai_family) < 0) {
-		iscsi_set_error(iscsi, "Couldn't connect transport");
+		iscsi_set_error(iscsi, "Couldn't connect transport: %s",
+                                iscsi_get_error(iscsi));
 		freeaddrinfo(ai);
 		return -1;
 	}

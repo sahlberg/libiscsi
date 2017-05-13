@@ -19,6 +19,13 @@
 #include "config.h"
 #endif
 
+#if defined(WIN32)
+#include <winsock2.h>
+#include "win32_compat.h"
+#pragma comment(lib, "ws2_32.lib")
+WSADATA wsaData;
+#endif
+
 #ifdef HAVE_POLL_H
 #include <poll.h>
 #endif
@@ -31,8 +38,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <getopt.h>
-#include <unistd.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -194,7 +199,8 @@ void list_luns(struct client_state *clnt, const char *target, const char *portal
 	iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
 
 	if (iscsi_full_connect_sync(iscsi, portal, -1) != 0) {
-		printf("iscsi_connect failed. %s\n", iscsi_get_error(iscsi));
+		printf("list_luns: iscsi_connect failed. %s\n",
+                       iscsi_get_error(iscsi));
 		exit(10);
 	}
 
@@ -343,48 +349,40 @@ int main(int argc, char *argv[])
 	struct iscsi_url *iscsi_url = NULL;
 	struct client_state state;
 	const char *url = NULL;
-	int c;
+	int i;
 	static int show_help = 0, show_usage = 0, debug = 0;
 
-	static struct option long_options[] = {
-		{"help",           no_argument,          NULL,        'h'},
-		{"usage",          no_argument,          NULL,        'u'},
-		{"debug",          no_argument,          NULL,        'd'},
-		{"show-luns",      no_argument,          NULL,        's'},
-		{"url",            no_argument,          NULL,        'U'},
-		{"initiator-name", required_argument,    NULL,        'i'},
-		{0, 0, 0, 0}
-	};
-	int option_index;
-
-	while ((c = getopt_long(argc, argv, "h?uUdi:s", long_options,
-			&option_index)) != -1) {
-		switch (c) {
-		case 'h':
-		case '?':
-			show_help = 1;
-			break;
-		case 'u':
-			show_usage = 1;
-			break;
-		case 'U':
-			useurls = 1;
-			break;
-		case 'd':
-			debug = 1;
-			break;
-		case 'i':
-			initiator = optarg;
-			break;
-		case 's':
-			showluns = 1;
-			break;
-		default:
-			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
-			print_help();
-			exit(0);
-		}
+#ifdef WIN32
+	if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
+		printf("Failed to start Winsock2\n");
+		exit(10);
 	}
+#endif
+
+        for (i = 1; i < argc; i++) {
+                if (!strcmp(argv[i], "-?") ||
+                    !strcmp(argv[i], "-h") ||
+                    !strcmp(argv[i], "--help")) {
+                                show_help = 1;
+                } else if (!strcmp(argv[i], "-u") ||
+                           !strcmp(argv[i], "-usage")) {
+			show_usage = 1;
+                } else if (!strcmp(argv[i], "-d") ||
+                           !strcmp(argv[i], "--debug")) {
+			debug = 1;
+                } else if (!strcmp(argv[i], "-i") ||
+                           !strcmp(argv[i], "--initiator-name")) {
+			initiator = argv[++i];
+                } else if (!strcmp(argv[i], "-s") ||
+                           !strcmp(argv[i], "--show-luns")) {
+			showluns = 1;
+                } else if (!strcmp(argv[i], "-U") ||
+                           !strcmp(argv[i], "--url")) {
+			useurls = 1;
+                } else if (!strncmp("iscsi://", argv[i], 8)) {
+                        url = strdup(argv[i]);
+                }
+        }
 
 	if (show_help != 0) {
 		print_help();
@@ -396,16 +394,8 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-	if (optind != argc -1) {
-		print_usage();
-		exit(0);
-	}
-
 	memset(&state, 0, sizeof(state));
 
-	if (argv[optind] != NULL) {
-		url = strdup(argv[optind]);
-	}
 	if (url == NULL) {
 		fprintf(stderr, "You must specify iscsi target portal.\n");
 		print_usage();
@@ -442,7 +432,8 @@ int main(int argc, char *argv[])
 	state.password = iscsi_url->passwd;
 
 	if (iscsi_connect_async(iscsi, iscsi_url->portal, discoveryconnect_cb, &state) != 0) {
-		fprintf(stderr, "iscsi_connect failed. %s\n", iscsi_get_error(iscsi));
+		fprintf(stderr, "connect_async: iscsi_connect failed. %s\n",
+                        iscsi_get_error(iscsi));
 		exit(10);
 	}
 
