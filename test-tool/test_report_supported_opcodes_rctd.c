@@ -70,6 +70,8 @@ test_report_supported_opcodes_rctd(void)
         logging(LOG_VERBOSE, "Unmarshall the DATA-IN buffer");
         rsoc = scsi_datain_unmarshall(rso_task);
         CU_ASSERT_NOT_EQUAL(rsoc, NULL);
+        if (!rsoc)
+                goto free_task;
 
         logging(LOG_VERBOSE, "Verify that all returned command descriptors "
                 "have a timeout description");
@@ -94,5 +96,6 @@ test_report_supported_opcodes_rctd(void)
                 }
         }
 
+free_task:
         scsi_free_scsi_task(rso_task);
 }
