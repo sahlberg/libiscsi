@@ -23,7 +23,7 @@
 		<command>iscsi-ls</command>
 		<arg choice="opt">-i --initiator-name=&lt;IQN&gt;</arg>
 		<arg choice="opt">-s --show-luns</arg>
-		<arg choice="opt">-d --debug=&lt;INTEGER&gt;</arg>
+		<arg choice="opt">-d --debug</arg>
 		<arg choice="opt">-? --help</arg>
 		<arg choice="opt">--usage</arg>
 	</cmdsynopsis>
@@ -101,10 +101,10 @@
         </listitem>
       </varlistentry>
 
-      <varlistentry><term>-d --debug=&lt;INTEGER&gt;</term>
+      <varlistentry><term>-d --debug</term>
         <listitem>
           <para>
-	    Debug level.
+	    Print debug information.
 	  </para>
         </listitem>
       </varlistentry>

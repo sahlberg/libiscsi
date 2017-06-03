@@ -319,14 +319,16 @@ void discoveryconnect_cb(struct iscsi_context *iscsi, int status, void *command_
 
 void print_usage(void)
 {
-	fprintf(stderr, "Usage: iscsi-ls [-?|--help] [--usage] [-i|--initiator-name=iqn-name]\n"
-			"\t\t[-s|--show-luns] <iscsi-portal-url>\n");
+	fprintf(stderr, "Usage: iscsi-ls [-?|--help] [-d|--debug] "
+                "[--usage] [-i|--initiator-name=iqn-name]\n"
+                "\t\t[-s|--show-luns] <iscsi-portal-url>\n");
 }
 
 void print_help(void)
 {
 	fprintf(stderr, "Usage: iscsi-ls [OPTION...] <iscsi-url>\n");
 	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
+	fprintf(stderr, "  -d, --debug                       Print debug information\n");
 	fprintf(stderr, "  -s, --show-luns                   Show the luns for each target\n");
 	fprintf(stderr, "      --url                         Output targets in URL format\n");
 	fprintf(stderr, "                                    (does not work with -s)\n");

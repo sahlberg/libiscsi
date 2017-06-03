@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: iscsi-ls
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 03/24/2014
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/03/2017
 .\"    Manual: iscsi-ls: list iSCSI targets and LUNs
 .\"    Source: iscsi-ls
 .\"  Language: English
 .\"
-.TH "ISCSI\-LS" "1" "03/24/2014" "iscsi\-ls" "iscsi\-ls: list iSCSI targets"
+.TH "ISCSI\-LS" "1" "06/03/2017" "iscsi\-ls" "iscsi\-ls: list iSCSI targets"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -33,7 +33,7 @@ iscsi-ls \- Utility to list iSCSI targets and LUNs
 .HP \w'\fBiscsi\-ls\ [\ OPTIONS\ ]\ <ISCSI\-PORTAL>\fR\ 'u
 \fBiscsi\-ls [ OPTIONS ] <ISCSI\-PORTAL>\fR
 .HP \w'\fBiscsi\-ls\fR\ 'u
-\fBiscsi\-ls\fR [\-i\ \-\-initiator\-name=<IQN>] [\-s\ \-\-show\-luns] [\-d\ \-\-debug=<INTEGER>] [\-?\ \-\-help] [\-\-usage]
+\fBiscsi\-ls\fR [\-i\ \-\-initiator\-name=<IQN>] [\-s\ \-\-show\-luns] [\-d\ \-\-debug] [\-?\ \-\-help] [\-\-usage]
 .SH "DESCRIPTION"
 .PP
 iscsi\-ls is a utility to list all targets and LUNs for an iSCSI portal\&.
@@ -75,9 +75,9 @@ In addition to listing all the targets at the specified portal also list all the
 In order to display the type of LUN iscsi\-ls need to be able to perform a normal login on the targets\&. If the target is using access\-control you will need to specify an initiator\-name that allows normal logins to the target\&.
 .RE
 .PP
-\-d \-\-debug=<INTEGER>
+\-d \-\-debug
 .RS 4
-Debug level\&.
+Print debug information\&.
 .RE
 .PP
 \-? \-\-help
