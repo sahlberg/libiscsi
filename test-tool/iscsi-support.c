@@ -2939,8 +2939,6 @@ void populate_ident_tgt_desc(unsigned char *buf, struct scsi_device *dev)
                                         tgt_desig = desig;
                                         prev_type = desig->designator_type;
                                 }
-                        default:
-                                continue;
                 }
         }
         if (tgt_desig == NULL) {
