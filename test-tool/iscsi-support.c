@@ -2931,14 +2931,17 @@ void populate_ident_tgt_desc(unsigned char *buf, struct scsi_device *dev)
 
         for (desig = inq_di->designators; desig; desig = desig->next) {
                 switch (desig->designator_type) {
-                        case SCSI_DESIGNATOR_TYPE_VENDOR_SPECIFIC:
-                        case SCSI_DESIGNATOR_TYPE_T10_VENDORT_ID:
-                        case SCSI_DESIGNATOR_TYPE_EUI_64:
-                        case SCSI_DESIGNATOR_TYPE_NAA:
-                                if (prev_type <= desig->designator_type) {
-                                        tgt_desig = desig;
-                                        prev_type = desig->designator_type;
-                                }
+                case SCSI_DESIGNATOR_TYPE_VENDOR_SPECIFIC:
+                case SCSI_DESIGNATOR_TYPE_T10_VENDORT_ID:
+                case SCSI_DESIGNATOR_TYPE_EUI_64:
+                case SCSI_DESIGNATOR_TYPE_NAA:
+                        if (prev_type <= desig->designator_type) {
+                                tgt_desig = desig;
+                                prev_type = desig->designator_type;
+                        }
+                        continue;
+                default:
+                        continue;
                 }
         }
         if (tgt_desig == NULL) {
