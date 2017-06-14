@@ -208,4 +208,20 @@ ssize_t win32_writev(int fd, const struct iovec *iov, int iovcnt)
 	return send(fd, iov[0].iov_base, iov[0].iov_len, 0);
 }
 
+/* Something is broken with how I use dup2 for windows and I do not know
+ * win32 API well enought to figure out why, thus our dup2 for win32 will be
+ * a NO-OP.
+ * The only consequence of this is that the filedescriptor for libiscsi may
+ * now suddenly change under win32. As long as the application just calls
+ * iscsi_get_fd() before poll or its equivalent every time ot goes through
+ * its event loop, everything should work.
+ * IF the app tries to be clever/optimized and only calls iscsi_get_fd()
+ * one single time and re-uses that file descriptor number throughout
+ * any future iterations in the event loop, then things will break :-(
+ */
+int win32_dup2(int oldfd, int newfd)
+{
+	return 0;
+}
+
 #endif
