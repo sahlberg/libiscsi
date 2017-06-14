@@ -200,12 +200,12 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz)
 
 ssize_t win32_readv(int fd, const struct iovec *iov, int iovcnt)
 {
-	return read(fd, iov[0].iov_base, iov[0].iov_len);
+	return recv(fd, iov[0].iov_base, iov[0].iov_len, 0);
 }
 
 ssize_t win32_writev(int fd, const struct iovec *iov, int iovcnt)
 {
-	return write(fd, iov[0].iov_base, iov[0].iov_len);
+	return send(fd, iov[0].iov_base, iov[0].iov_len, 0);
 }
 
 #endif
