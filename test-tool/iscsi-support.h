@@ -320,7 +320,7 @@ do {                                                                        \
         } while (0);
 
 #define READ10(...)                                                     \
-        do {                                                            \
+        ({								\
                 int _r;                                                 \
                 _r = read10(__VA_ARGS__);                               \
                 if (_r == -2) {                                         \
@@ -331,7 +331,8 @@ do {                                                                        \
                         return;                                         \
                 }                                                       \
                 CU_ASSERT_EQUAL(_r, 0);                                 \
-        } while (0);
+		_r;							\
+        })
 
 #define READ12(...)                                                     \
         do {                                                            \
@@ -602,7 +603,7 @@ do {                                                                        \
         } while (0);
 
 #define WRITE10(...)                                                    \
-        do {                                                            \
+        ({								\
                 int _r;                                                 \
                 _r = write10(__VA_ARGS__);                              \
                 if (_r == -2) {                                         \
@@ -613,7 +614,8 @@ do {                                                                        \
                         return;                                         \
                 }                                                       \
                 CU_ASSERT_EQUAL(_r, 0);                                 \
-        } while (0);
+		_r;							\
+        })
 
 #define WRITE12(...)                                                    \
         do {                                                            \

@@ -203,4 +203,9 @@ test_async_abort_simple(void)
 	}
 
 	scsi_free_scsi_task(state.wtask);
+
+	/* Avoid that callbacks get invoked after this test finished */
+        iscsi_logout_sync(sd->iscsi_ctx);
+        iscsi_destroy_context(sd->iscsi_ctx);
+	sd->iscsi_ctx = NULL;
 }
