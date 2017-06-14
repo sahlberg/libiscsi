@@ -65,6 +65,7 @@ typedef int socklen_t;
 #define writev               win32_writev
 #define strncasecmp          _strnicmp
 #define strdup               _strdup
+#define dup2(x, y, z)        win32_dup2(x, y)
 #define poll(x, y, z)        win32_poll(x, y, z)
 #define inet_pton(x,y,z)     win32_inet_pton(x,y,z)
 #define sleep(x)             Sleep(x * 1000)
