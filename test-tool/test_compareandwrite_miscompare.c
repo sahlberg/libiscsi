@@ -31,7 +31,7 @@
 void
 test_compareandwrite_miscompare(void)
 {
-        int i;
+        int i, n;
         unsigned j;
         int maxbl;
 
@@ -44,10 +44,16 @@ test_compareandwrite_miscompare(void)
                 /* Assume we are not limited */
                 maxbl = 256;
         }
+
+        n = 256;
+        if (n + 0U > num_blocks)
+                n = num_blocks;
+
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
-        logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1-256 blocks at the "
-                "start of the LUN. One Byte miscompare in the final block.");
-        for (i = 1; i < 256; i++) {
+        logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1-%d blocks at the "
+                "start of the LUN. One Byte miscompare in the final block.",
+                n);
+        for (i = 1; i <= n; i++) {
                 logging(LOG_VERBOSE, "Write %d blocks of 'A' at LBA:0", i);
                 memset(scratch, 'A', 2 * i * block_size);
                 if (maximum_transfer_length && maximum_transfer_length < i) {
@@ -98,9 +104,9 @@ test_compareandwrite_miscompare(void)
         }
 
 
-        logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1-256 blocks at the "
-                "end of the LUN");
-        for (i = 1; i < 256; i++) {
+        logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1-%d blocks at the "
+                "end of the LUN", n);
+        for (i = 1; i <= n; i++) {
                 logging(LOG_VERBOSE, "Write %d blocks of 'A' at LBA:%" PRIu64,
                         i, num_blocks - i);
                 memset(scratch, 'A', 2 * i * block_size);

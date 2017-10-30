@@ -32,15 +32,19 @@
 void
 test_compareandwrite_unwritten(void)
 {
-	int i;
+	int i, n;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
+        n = 256;
+        if (n + 0U > num_blocks)
+                n = num_blocks;
+        
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
-	logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1-256 blocks at the "
-		"start of the LUN, 1 block at a time");
-	for (i = 1; i < 256; i++) {
+	logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1-%d blocks at the "
+		"start of the LUN, 1 block at a time", n);
+	for (i = 1; i <= n; i++) {
 		int caw_ret;
 		unsigned char read_buf[block_size];
 

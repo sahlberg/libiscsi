@@ -34,7 +34,7 @@ test_multipathio_compareandwrite(void)
 {
         int io_bl = 1;        /* 1 block CAW IOs */
         int path;
-        int i, ret;
+        int i, n, ret;
         int maxbl;
 
         CHECK_FOR_DATALOSS;
@@ -52,6 +52,10 @@ test_multipathio_compareandwrite(void)
                 return;
         }
 
+        n = 256;
+        if (n + 0U > num_blocks)
+                n = num_blocks;
+        
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Initialising data prior to COMPARE_AND_WRITE");
 
@@ -66,7 +70,7 @@ test_multipathio_compareandwrite(void)
         CU_ASSERT_EQUAL(ret, 0);
 
         logging(LOG_VERBOSE, "Test multipath COMPARE_AND_WRITE");
-        for (i = 0; i < 256; i++) {
+        for (i = 0; i <= n; i++) {
 
                 for (path = 0; path < mp_num_sds; path++) {
                         logging(LOG_VERBOSE,
