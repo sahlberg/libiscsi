@@ -33,6 +33,8 @@ struct tests_async_reset_state {
 	uint32_t reset_ok;
 };
 
+static int reconnect_succeeded;
+
 static void
 test_async_write_cb(struct iscsi_context *iscsi __attribute__((unused)),
 		    int status, void *command_data,
@@ -63,7 +65,9 @@ test_async_reset_cb(struct iscsi_context *iscsi __attribute__((unused)),
 	struct tests_async_reset_state *state = private_data;
 
 	/* command_data NULL if a reconnect occured. see iscsi_reconnect_cb() */
-	CU_ASSERT_PTR_NOT_NULL_FATAL(command_data);
+	reconnect_succeeded = command_data != NULL;
+	if (!reconnect_succeeded)
+		return;
 	tmf_response = *(uint32_t *)command_data;
 
 	logging(LOG_VERBOSE, "LU RESET: TMF response %d for"
@@ -150,6 +154,9 @@ test_async_lu_reset_simple(void)
 				    0xffffffff, 0,
 				    test_async_reset_cb, &state);
 	CU_ASSERT_EQUAL(ret, 0);
+	CU_ASSERT_EQUAL(reconnect_succeeded, 1);
+	if (!reconnect_succeeded)
+		goto out;
 
 	logging(LOG_VERBOSE, "LU RESET queued");
 
@@ -191,6 +198,7 @@ test_async_lu_reset_simple(void)
 		CU_FAIL("unexpected WRITE/RESET state");
 	}
 
+out:
 	scsi_free_scsi_task(state.wtask);
 
 	/* Avoid that callbacks get invoked after this test finished */
