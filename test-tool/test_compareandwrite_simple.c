@@ -119,7 +119,7 @@ test_compareandwrite_simple(void)
                                 "BlockLimits.MaximumCompareAndWriteLength(%d). "
                                 "Command should fail with INVALID_FIELD_IN_CDB",
                                 i, maxbl);
-                        COMPAREANDWRITE(sd, 0,
+                        COMPAREANDWRITE(sd, num_blocks - i,
                                         scratch, 2 * i * block_size,
                                         block_size, 0, 0, 0, 0,
                                         EXPECT_INVALID_FIELD_IN_CDB);
