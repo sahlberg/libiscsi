@@ -204,9 +204,9 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
                 return -2;
         }
         if (status == SCSI_STATUS_GOOD && task->status != SCSI_STATUS_GOOD) {
-                logging(LOG_NORMAL, "[FAILED] %s command failed with "
-                        "sense. %s(0x%02x)/%s(0x%04x)",
-                        opcode,
+                logging(LOG_NORMAL,
+                        "[FAILED] %s command failed with status %d / sense key %s(0x%02x) / ASCQ %s(0x%04x)",
+                        opcode, task->status,
                         scsi_sense_key_str(task->sense.key), task->sense.key,
                         scsi_sense_ascq_str(task->sense.ascq), task->sense.ascq);
                 return -1;
