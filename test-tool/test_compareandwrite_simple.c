@@ -48,6 +48,8 @@ test_compareandwrite_simple(void)
         n = 256;
         if (n + 0U > num_blocks)
                 n = num_blocks;
+        if (maxbl + 0U > num_blocks)
+                maxbl = num_blocks;
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1-%d blocks at the "
