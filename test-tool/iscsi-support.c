@@ -407,6 +407,15 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
                         return task;
                 }
 
+                if(io_hdr.status == SCSI_STATUS_RESERVATION_CONFLICT){
+                        task->status = SCSI_STATUS_RESERVATION_CONFLICT;
+                        if (sdev->error_str != NULL) {
+                                free(discard_const(sdev->error_str));
+                        }
+                        sdev->error_str = strdup("Reservation Conflict");
+                        return task;
+                }
+
                 if(io_hdr.masked_status){
                         task->status = SCSI_STATUS_ERROR;
                         task->sense.key = 0x0f;
@@ -714,7 +723,7 @@ prout_register_and_ignore(struct scsi_device *sdev,
         /* register our reservation key with the target */
         logging(LOG_VERBOSE,
                 "Send PROUT/REGISTER_AND_IGNORE to register init=%s",
-                sdev->iscsi_ctx->initiator_name);
+                sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
         if (!data_loss) {
                 printf("--dataloss flag is not set in. Skipping PROUT\n");
@@ -765,7 +774,7 @@ prout_register_key(struct scsi_device *sdev,
 
         logging(LOG_VERBOSE, "Send PROUT/REGISTER to %s init=%s",
                 sark != 0 ? "register" : "unregister",
-                sdev->iscsi_ctx->initiator_name);
+                sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
         if (!data_loss) {
                 printf("--dataloss flag is not set in. Skipping PROUT\n");
@@ -819,7 +828,7 @@ prin_verify_key_presence(struct scsi_device *sdev,
         logging(LOG_VERBOSE,
                 "Send PRIN/READ_KEYS to verify key %s init=%s... ",
                 present ? "present" : "absent",
-                sdev->iscsi_ctx->initiator_name);
+                sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
         task = scsi_cdb_persistent_reserve_in(SCSI_PERSISTENT_RESERVE_READ_KEYS,
             buf_sz);
@@ -887,7 +896,7 @@ prout_reregister_key_fails(struct scsi_device *sdev,
 
         logging(LOG_VERBOSE,
                 "Send PROUT/REGISTER to ensure reregister fails init=%s",
-                sdev->iscsi_ctx->initiator_name);
+                sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
         if (!data_loss) {
                 printf("--dataloss flag is not set in. Skipping PROUT\n");
@@ -937,7 +946,7 @@ prout_reserve(struct scsi_device *sdev,
         logging(LOG_VERBOSE,
                 "Send PROUT/RESERVE to reserve, type=%d (%s) init=%s",
                 pr_type, scsi_pr_type_str(pr_type),
-                sdev->iscsi_ctx->initiator_name);
+                sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
         if (!data_loss) {
                 printf("--dataloss flag is not set in. Skipping PROUT\n");
@@ -987,7 +996,7 @@ prout_release(struct scsi_device *sdev,
 
         logging(LOG_VERBOSE,
                 "Send PROUT/RELEASE to release reservation, type=%d init=%s",
-                pr_type, sdev->iscsi_ctx->initiator_name);
+                pr_type, sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
         if (!data_loss) {
                 printf("--dataloss flag is not set in. Skipping PROUT\n");
@@ -1139,7 +1148,7 @@ prin_verify_reserved_as(struct scsi_device *sdev,
 
         logging(LOG_VERBOSE,
                 "Send PRIN/READ_RESERVATION to verify type=%d init=%s... ",
-                pr_type, sdev->iscsi_ctx->initiator_name);
+                pr_type, sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
         task = scsi_cdb_persistent_reserve_in(
             SCSI_PERSISTENT_RESERVE_READ_RESERVATION, buf_sz);
@@ -1213,7 +1222,7 @@ prin_verify_not_reserved(struct scsi_device *sdev)
 
         logging(LOG_VERBOSE,
                 "Send PRIN/READ_RESERVATION to verify not reserved init=%s",
-                sdev->iscsi_ctx->initiator_name);
+                sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
         task = scsi_cdb_persistent_reserve_in(
             SCSI_PERSISTENT_RESERVE_READ_RESERVATION, buf_sz);
@@ -1321,7 +1330,7 @@ verify_read_works(struct scsi_device *sdev, unsigned char *buf)
          */
 
         logging(LOG_VERBOSE, "Send READ10 to verify READ works init=%s",
-                sdev->iscsi_ctx->initiator_name);
+                sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
         task = scsi_cdb_read10(lba, datalen, blksize, 0, 0, 0, 0, 0);
         assert(task != NULL);
@@ -1364,7 +1373,7 @@ verify_write_works(struct scsi_device *sdev, unsigned char *buf)
          */
 
         logging(LOG_VERBOSE, "Send WRITE10 to verify WRITE works init=%s",
-                sdev->iscsi_ctx->initiator_name);
+                sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
         task = scsi_cdb_write10(lba, datalen, blksize, 0, 0, 0, 0, 0);
         assert(task != NULL);
@@ -1405,7 +1414,7 @@ verify_read_fails(struct scsi_device *sdev, unsigned char *buf)
 
         logging(LOG_VERBOSE,
                 "Send READ10 to verify READ does not work init=%s",
-                sdev->iscsi_ctx->initiator_name);
+                sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
         task = scsi_cdb_read10(lba, datalen, blksize, 0, 0, 0, 0, 0);
         assert(task != NULL);
@@ -1452,7 +1461,7 @@ verify_write_fails(struct scsi_device *sdev, unsigned char *buf)
 
         logging(LOG_VERBOSE,
                 "Send WRITE10 to verify WRITE does not work init=%s",
-                sdev->iscsi_ctx->initiator_name);
+                sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
         task = scsi_cdb_write10(lba, datalen, blksize, 0, 0, 0, 0, 0);
         assert(task != NULL);
@@ -1610,7 +1619,7 @@ testunitready_clear_ua(struct scsi_device *sdev)
 
         logging(LOG_VERBOSE,
                 "Send TESTUNITREADY (To Clear Possible UA) init=%s",
-                sdev->iscsi_ctx->initiator_name);
+                sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
         task = scsi_cdb_testunitready();
         assert(task != NULL);
