@@ -338,7 +338,6 @@ iscsi_set_targetname(struct iscsi_context *iscsi, const char *target_name)
 int
 iscsi_destroy_context(struct iscsi_context *iscsi)
 {
-	struct iscsi_pdu *pdu;
 	int i;
 
 	if (iscsi == NULL) {
@@ -349,28 +348,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		iscsi_disconnect(iscsi);
 	}
 
-	while ((pdu = iscsi->outqueue)) {
-		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
-		if (iscsi->is_loggedin && pdu->callback) {
-			/* If an error happened during connect/login, we don't want to
-			   call any of the callbacks.
-			 */
-			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-			              pdu->private_data);
-		}
-		iscsi->drv->free_pdu(iscsi, pdu);
-	}
-	while ((pdu = iscsi->waitpdu)) {
-		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-		if (iscsi->is_loggedin && pdu->callback) {
-			/* If an error happened during connect/login, we don't want to
-			   call any of the callbacks.
-			 */
-			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-			              pdu->private_data);
-		}
-		iscsi->drv->free_pdu(iscsi, pdu);
-	}
+	iscsi_cancel_pdus(iscsi);
 
 	if (iscsi->outqueue_current != NULL && iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
 		iscsi->drv->free_pdu(iscsi, iscsi->outqueue_current);

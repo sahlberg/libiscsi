@@ -2697,22 +2697,5 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 void
 iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 {
-	struct iscsi_pdu *pdu;
-
-	while ((pdu = iscsi->waitpdu)) {
-		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-		if (pdu->callback) {
-			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-				      pdu->private_data);
-		}
-		iscsi->drv->free_pdu(iscsi, pdu);
-	}
-	while ((pdu = iscsi->outqueue)) {
-		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
-		if (pdu->callback) {
-			pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-				      pdu->private_data);
-		}
-		iscsi->drv->free_pdu(iscsi, pdu);
-	}
+	iscsi_cancel_pdus(iscsi);
 }

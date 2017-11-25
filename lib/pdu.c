@@ -768,3 +768,32 @@ iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	return iscsi->drv->queue_pdu(iscsi, pdu);
 }
+
+void
+iscsi_cancel_pdus(struct iscsi_context *iscsi)
+{
+	struct iscsi_pdu *pdu;
+
+	while ((pdu = iscsi->outqueue)) {
+		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
+		if (iscsi->is_loggedin && pdu->callback) {
+			/* If an error happened during connect/login,
+			   we don't want to call any of the callbacks.
+			*/
+			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
+			              NULL, pdu->private_data);
+		}
+		iscsi->drv->free_pdu(iscsi, pdu);
+	}
+	while ((pdu = iscsi->waitpdu)) {
+		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+		if (iscsi->is_loggedin && pdu->callback) {
+			/* If an error happened during connect/login,
+			   we don't want to call any of the callbacks.
+			*/
+			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
+			              NULL, pdu->private_data);
+		}
+		iscsi->drv->free_pdu(iscsi, pdu);
+	}
+}
