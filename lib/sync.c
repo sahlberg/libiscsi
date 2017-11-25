@@ -135,6 +135,11 @@ iscsi_full_connect_sync(struct iscsi_context *iscsi,
 
 	event_loop(iscsi, &state);
 
+	/* in case of error, clear loggedin flag to prevent pending pdu callbacks */
+	if (state.status != 0) {
+		iscsi->is_loggedin = 0;
+	}
+
 	return (state.status == SCSI_STATUS_GOOD) ? 0 : -1;
 }
 

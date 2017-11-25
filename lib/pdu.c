@@ -168,7 +168,6 @@ iscsi_tcp_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	iscsi_sfree(iscsi, pdu);
 }
 
-
 int
 iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 	       unsigned char *dptr, int dsize, int pdualignment)
@@ -252,7 +251,6 @@ iscsi_get_pdu_data_size(const unsigned char *hdr)
 	return size;
 }
 
-
 int
 iscsi_get_pdu_padding_size(const unsigned char *hdr)
 {
@@ -332,7 +330,6 @@ int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
 	return 0;
 }
 
-
 static void iscsi_reconnect_after_logout(struct iscsi_context *iscsi, int status,
                         void *command_data _U_, void *opaque _U_)
 {
@@ -391,7 +388,6 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 	iscsi->drv->free_pdu(iscsi, pdu);
 	return 0;
 }
-
 
 static void iscsi_process_pdu_serials(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 {
