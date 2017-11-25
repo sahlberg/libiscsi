@@ -114,6 +114,11 @@ iscsi_connect_sync(struct iscsi_context *iscsi, const char *portal)
 	/* clear connect_data so it doesnt point to our stack */
 	iscsi->connect_data = NULL;
 
+	/* in case of error, cancel any pending pdus */
+	if (state.status != SCSI_STATUS_GOOD) {
+		iscsi_cancel_pdus(iscsi);
+	}
+
 	return (state.status == SCSI_STATUS_GOOD) ? 0 : -1;
 }
 
@@ -135,9 +140,9 @@ iscsi_full_connect_sync(struct iscsi_context *iscsi,
 
 	event_loop(iscsi, &state);
 
-	/* in case of error, clear loggedin flag to prevent pending pdu callbacks */
-	if (state.status != 0) {
-		iscsi->is_loggedin = 0;
+	/* in case of error, cancel any pending pdus */
+	if (state.status != SCSI_STATUS_GOOD) {
+		iscsi_cancel_pdus(iscsi);
 	}
 
 	return (state.status == SCSI_STATUS_GOOD) ? 0 : -1;
