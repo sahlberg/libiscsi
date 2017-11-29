@@ -34,7 +34,7 @@
 #define PRIx32 "x"
 #endif
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "win32/win32_compat.h"

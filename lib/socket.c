@@ -43,7 +43,7 @@
 #include <sys/socket.h>
 #endif
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include "win32/win32_compat.h"
@@ -139,7 +139,7 @@ void iscsi_decrement_iface_rr() {
 
 static int set_nonblocking(int fd)
 {
-#if defined(WIN32)
+#if defined(_WIN32)
 	unsigned long opt = 1;
 	return ioctlsocket(fd, FIONBIO, &opt);
 #else
@@ -272,7 +272,7 @@ static int iscsi_tcp_connect(struct iscsi_context *iscsi, union socket_address *
 	}
 
 	if (connect(iscsi->fd, &sa->sa, socksize) != 0
-#if defined(WIN32)
+#if defined(_WIN32)
             && WSAGetLastError() != WSAEWOULDBLOCK
 #endif
             && errno != EINPROGRESS) {
@@ -1102,7 +1102,7 @@ void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces _U
 #endif
 }
 
-#ifdef WIN32
+#if defined(_MSC_VER) && _MSC_VER < 1900
 static iscsi_transport iscsi_transport_tcp = {
 	iscsi_tcp_connect,
 	iscsi_tcp_queue_pdu,

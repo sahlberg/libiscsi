@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define EXTERN __declspec( dllexport )
 #else
 #define EXTERN
@@ -166,7 +166,7 @@ enum iscsi_immediate_data {
 	ISCSI_IMMEDIATE_DATA_NO  = 0,
 	ISCSI_IMMEDIATE_DATA_YES = 1
 };
-int iscsi_set_immediate_data(struct iscsi_context *iscsi, enum iscsi_immediate_data immediate_data);
+EXTERN int iscsi_set_immediate_data(struct iscsi_context *iscsi, enum iscsi_immediate_data immediate_data);
 
 /*
  * This function is used to set the desired mode for initial_r2t
@@ -179,7 +179,7 @@ enum iscsi_initial_r2t {
 	ISCSI_INITIAL_R2T_NO  = 0,
 	ISCSI_INITIAL_R2T_YES = 1
 };
-int
+EXTERN int
 iscsi_set_initial_r2t(struct iscsi_context *iscsi, enum iscsi_initial_r2t initial_r2t);
 
 

@@ -17,7 +17,7 @@
 #ifndef __scsi_lowlevel_h__
 #define __scsi_lowlevel_h__
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define EXTERN __declspec( dllexport )
 #else
 #define EXTERN

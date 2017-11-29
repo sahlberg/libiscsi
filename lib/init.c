@@ -21,7 +21,8 @@
 
 #define _GNU_SOURCE
 
-#if defined(WIN32)
+#if defined(_WIN32)
+#include "win32/win32_compat.h"
 #else
 #include <strings.h>
 #include <unistd.h>
