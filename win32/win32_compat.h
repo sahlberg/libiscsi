@@ -25,7 +25,7 @@ THE SOFTWARE.
 #ifndef win32_COMPAT_H_
 #define win32_COMPAT_H_
 
-#ifdef WIN32
+#ifdef _WIN32
 #define NO_IPv6 1
 
 #include <winsock2.h>
@@ -90,5 +90,5 @@ struct iovec {
 
 #define inline
 
-#endif // WIN32
+#endif // _WIN32
 #endif // win32_COMPAT_H_

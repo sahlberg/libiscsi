@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define EXTERN __declspec( dllexport )
 #else
 #define EXTERN

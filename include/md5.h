@@ -23,7 +23,7 @@
 #ifndef MD5_H
 #define MD5_H
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #else
 #include <netinet/in.h>
 #endif

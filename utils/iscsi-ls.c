@@ -19,7 +19,7 @@
 #include "config.h"
 #endif
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <winsock2.h>
 #include "win32_compat.h"
 #pragma comment(lib, "ws2_32.lib")
@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
 	int i;
 	static int show_help = 0, show_usage = 0, debug = 0;
 
-#ifdef WIN32
+#ifdef _WIN32
 	if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
 		printf("Failed to start Winsock2\n");
 		exit(10);

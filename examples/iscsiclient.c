@@ -34,7 +34,7 @@
 /* This is the host/port we connect to.*/
 #define TARGET "127.0.0.1:3260"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <winsock2.h>
 #include "win32/win32_compat.h"
 #pragma comment(lib, "ws2_32.lib")
@@ -625,7 +625,7 @@ int main(int argc _U_, char *argv[] _U_)
 	struct client_state clnt;
 
 	printf("iscsi client\n");
-#if defined(WIN32)
+#if defined(_WIN32)
 	if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
 		printf("Failed to start Winsock2\n");
 		exit(10);
