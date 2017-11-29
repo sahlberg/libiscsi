@@ -1102,7 +1102,7 @@ void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces _U
 #endif
 }
 
-#ifdef WIN32
+#if defined(_MSC_VER) && _MSC_VER < 1900
 static iscsi_transport iscsi_transport_tcp = {
 	iscsi_tcp_connect,
 	iscsi_tcp_queue_pdu,

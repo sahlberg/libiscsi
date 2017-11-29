@@ -22,9 +22,10 @@ THE SOFTWARE.
 */
 /*Adaptions by memphiz@xbmc.org*/
 
-#ifdef WIN32
 #ifndef win32_COMPAT_H_
 #define win32_COMPAT_H_
+
+#ifdef WIN32
 #define NO_IPv6 1
 
 #include <winsock2.h>
@@ -65,16 +66,22 @@ typedef int socklen_t;
 #define writev               win32_writev
 #define strncasecmp          _strnicmp
 #define strdup               _strdup
-#define dup2(x, y, z)        win32_dup2(x, y)
+#define dup2(x, y)           win32_dup2(x, y)
 #define poll(x, y, z)        win32_poll(x, y, z)
 #define inet_pton(x,y,z)     win32_inet_pton(x,y,z)
 #define sleep(x)             Sleep(x * 1000)
+#define getpid               GetCurrentProcessId
+
+#if defined(_MSC_VER) && _MSC_VER < 1900
 #define snprintf(a, b, c, ...) _snprintf_s(a, b, b, c, ## __VA_ARGS__)
+#endif
+
 int     win32_inet_pton(int af, const char * src, void * dst);
 int     win32_poll(struct pollfd *fds, unsigned int nfsd, int timeout);
 int     win32_gettimeofday(struct timeval *tv, struct timezone *tz);
 ssize_t win32_writev(int fd, const struct iovec *iov, int iovcnt);
 ssize_t win32_readv(int fd, const struct iovec *iov, int iovcnt);
+int     win32_dup2(int oldfd, int newfd);
 
 struct iovec {
     void *iov_base;
@@ -83,5 +90,5 @@ struct iovec {
 
 #define inline
 
-#endif//win32_COMPAT_H_
-#endif//WIN32
+#endif // WIN32
+#endif // win32_COMPAT_H_
