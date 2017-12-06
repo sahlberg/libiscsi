@@ -270,34 +270,11 @@ void iscsi_set_reconnect_max_retries(struct iscsi_context *iscsi, int count)
 
 void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 {
-	struct iscsi_pdu *pdu;
-
 	iscsi->reconnect_deferred = 1;
 
 	ISCSI_LOG(iscsi, 2, "reconnect deferred, cancelling all tasks");
 
-	while ((pdu = iscsi->outqueue)) {
-		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
-		if (iscsi->is_loggedin && pdu->callback) {
-			/* If an error happened during connect/login,
-			   we don't want to call any of the callbacks.
-			 */
-			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
-			              NULL, pdu->private_data);
-		}
-		iscsi->drv->free_pdu(iscsi, pdu);
-	}
-	while ((pdu = iscsi->waitpdu)) {
-		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-		if (iscsi->is_loggedin && pdu->callback) {
-			/* If an error happened during connect/login,
-			   we don't want to call any of the callbacks.
-			 */
-			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
-			              NULL, pdu->private_data);
-		}
-		iscsi->drv->free_pdu(iscsi, pdu);
-	}
+	iscsi_cancel_pdus(iscsi);
 }
 
 void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
