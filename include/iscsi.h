@@ -1595,6 +1595,16 @@ iscsi_set_tcp_syncnt(struct iscsi_context *iscsi, int value);
 EXTERN void
 iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces);
 
+/*
+ * This function is to disable auto reconnect logic.
+ *
+ *  0 - Disable this feature (auto reconnect)
+ *  1 - Enable this feature (no auto reconnect)
+ */
+EXTERN void
+iscsi_set_noautoreconnect(struct iscsi_context *iscsi, int state);
+
+
 /* This function is to set if we should retry a failed reconnect
    
    count is defined as follows:

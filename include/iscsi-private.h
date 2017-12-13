@@ -350,8 +350,6 @@ uint32_t crc32c(uint8_t *buf, int len);
 
 struct scsi_task *iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu);
 
-void iscsi_set_noautoreconnect(struct iscsi_context *iscsi, int state);
-
 void iscsi_decrement_iface_rr(void);
 
 #define ISCSI_LOG(iscsi, level, format, ...) \
