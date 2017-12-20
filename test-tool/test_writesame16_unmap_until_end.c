@@ -40,8 +40,8 @@ test_writesame16_unmap_until_end(void)
         if (inq_bl->wsnz) {
                 logging(LOG_NORMAL, "WRITESAME16 does not support 0-blocks."
                         "WSNZ == 1");
-                WRITESAME16(sd, 0,
-                            0, 1, 0, 1, 0, 0, scratch,
+                memset(scratch, 0, block_size);
+                WRITESAME16(sd, 0, block_size, 0, 0, 1, 0, 0, scratch,
                             EXPECT_INVALID_FIELD_IN_CDB);
                 return;
         }
@@ -55,7 +55,7 @@ test_writesame16_unmap_until_end(void)
                 WRITE16(sd, num_blocks - i,
                         i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
-                
+
                 logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME16", i);
                 memset(scratch, 0, block_size);
                 WRITESAME16(sd, num_blocks - i,

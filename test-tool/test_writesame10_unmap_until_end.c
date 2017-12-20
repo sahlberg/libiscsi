@@ -39,8 +39,8 @@ test_writesame10_unmap_until_end(void)
         if (inq_bl->wsnz) {
                 logging(LOG_NORMAL, "WRITESAME10 does not support 0-blocks."
                         "WSNZ == 1");
-                WRITESAME10(sd, 0,
-                            0, 1, 0, 1, 0, 0, scratch,
+                memset(scratch, 0, block_size);
+                WRITESAME10(sd, 0, block_size, 0, 0, 1, 0, 0, scratch,
                             EXPECT_INVALID_FIELD_IN_CDB);
                 return;
         }
