@@ -547,7 +547,7 @@ int main(int argc, char *argv[])
 
 	memset(&client, 0, sizeof(client));
 
-	while ((c = getopt_long(argc, argv, "d:s:i:m:b:p6n", long_options,
+	while ((c = getopt_long(argc, argv, "d:s:i:m:b:p6nx", long_options,
 			&option_index)) != -1) {
 		char *endptr;
 
