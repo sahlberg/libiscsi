@@ -51,7 +51,7 @@ test_prin_report_caps_simple(void)
         int ret = 0;
         const unsigned long long key = rand_key();
         struct scsi_task *tsk;
-        struct scsi_persistent_reserve_in_report_capabilities *rcaps;
+        struct scsi_persistent_reserve_in_report_capabilities *rcaps = NULL;
         struct test_prin_report_caps_types *type;
 
         CHECK_FOR_DATALOSS;
@@ -71,6 +71,10 @@ test_prin_report_caps_simple(void)
 
         ret = prin_report_caps(sd, &tsk, &rcaps);
         CU_ASSERT_EQUAL(ret, 0);
+        CU_ASSERT_NOT_EQUAL(rcaps, NULL);
+
+        if (!rcaps)
+                return;
 
         logging(LOG_VERBOSE,
                 "Checking PERSISTENT RESERVE IN REPORT CAPABILITIES fields.");

@@ -33,7 +33,7 @@ test_prout_clear_simple(void)
         uint32_t old_gen;
         const unsigned long long key = rand_key();
         struct scsi_task *tsk;
-        struct scsi_persistent_reserve_in_read_keys *rk;
+        struct scsi_persistent_reserve_in_read_keys *rk = NULL;
 
         CHECK_FOR_DATALOSS;
 
@@ -51,6 +51,9 @@ test_prout_clear_simple(void)
 
         ret = prin_read_keys(sd, &tsk, &rk);
         CU_ASSERT_EQUAL(ret, 0);
+        CU_ASSERT_NOT_EQUAL(rk, NULL);
+        if (!rk)
+                goto out;
 
         CU_ASSERT_NOT_EQUAL(rk->num_keys, 0);
         /* retain PR generation number to check for increments */
@@ -78,11 +81,15 @@ test_prout_clear_simple(void)
 
         ret = prin_read_keys(sd, &tsk, &rk);
         CU_ASSERT_EQUAL(ret, 0);
+        CU_ASSERT_NOT_EQUAL(rk, NULL);
+        if (!rk)
+                goto out;
 
         CU_ASSERT_EQUAL(rk->num_keys, 0);
         /* generation incremented once for CLEAR (not for RESERVE) */
         CU_ASSERT_EQUAL(rk->prgeneration, old_gen + 1);
 
+out:
         scsi_free_scsi_task(tsk);
         rk = NULL;        /* freed with tsk */
 }

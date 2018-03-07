@@ -406,6 +406,7 @@ void cscd_ident_inq(struct iscsi_context *iscsi,
 					tgt_desig = desig;
 					prev_type = desig->designator_type;
 				}
+				/* fall through */
 			default:
 				continue;
 		}

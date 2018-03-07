@@ -31,7 +31,7 @@
 void
 test_compareandwrite_simple(void)
 {
-        int i;
+        int i, n;
         unsigned j;
         int maxbl;
 
@@ -45,10 +45,16 @@ test_compareandwrite_simple(void)
                 maxbl = 256;
         }
 
+        n = 256;
+        if (n + 0U > num_blocks)
+                n = num_blocks;
+        if (maxbl + 0U > num_blocks)
+                maxbl = num_blocks;
+
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
-        logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1-256 blocks at the "
-                "start of the LUN");
-        for (i = 1; i < 256; i++) {
+        logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1-%d blocks at the "
+                "start of the LUN", n);
+        for (i = 1; i <= n; i++) {
                 logging(LOG_VERBOSE, "Write %d blocks of 'A' at LBA:0", i);
                 memset(scratch, 'A', 2 * i * block_size);
                 if (maximum_transfer_length && maximum_transfer_length < i) {
@@ -97,9 +103,9 @@ test_compareandwrite_simple(void)
         }
 
 
-        logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1-256 blocks at the "
-                "end of the LUN");
-        for (i = 1; i < 256; i++) {
+        logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1-%d blocks at the "
+                "end of the LUN", n);
+        for (i = 1; i <= n; i++) {
                 logging(LOG_VERBOSE, "Write %d blocks of 'A' at LBA:%" PRIu64,
                         i, num_blocks - i);
                 memset(scratch, 'A', 2 * i * block_size);
@@ -115,7 +121,7 @@ test_compareandwrite_simple(void)
                                 "BlockLimits.MaximumCompareAndWriteLength(%d). "
                                 "Command should fail with INVALID_FIELD_IN_CDB",
                                 i, maxbl);
-                        COMPAREANDWRITE(sd, 0,
+                        COMPAREANDWRITE(sd, num_blocks - i,
                                         scratch, 2 * i * block_size,
                                         block_size, 0, 0, 0, 0,
                                         EXPECT_INVALID_FIELD_IN_CDB);
