@@ -43,7 +43,6 @@ test_prout_clear_simple(void)
         /* register our reservation key with the target */
         ret = prout_register_and_ignore(sd, key);
         if (ret == -2) {
-                logging(LOG_NORMAL, "[SKIPPED] PERSISTENT RESERVE OUT is not implemented.");
                 CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
                 return;
         }        

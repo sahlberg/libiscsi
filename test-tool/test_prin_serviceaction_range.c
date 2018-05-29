@@ -40,7 +40,6 @@ test_prin_serviceaction_range(void)
         /* verify PRIN/READ_KEYS works -- XXX redundant -- remove this? */
         ret = prin_read_keys(sd, &task, NULL);
         if (ret == -2) {
-                logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE IN is not implemented.");
                 CU_PASS("PERSISTENT RESERVE IN is not implemented.");
                 return;
         }        

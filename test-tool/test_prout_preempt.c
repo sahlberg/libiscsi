@@ -54,7 +54,6 @@ test_prout_preempt_rm_reg(void)
 
         ret = prout_register_and_ignore(sd, k1);
         if (ret == -2) {
-                logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE OUT is not implemented.");
                 CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
                 return;
         }
