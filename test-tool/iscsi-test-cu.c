@@ -158,6 +158,7 @@ static CU_TestInfo tests_preventallow[] = {
 
 static CU_TestInfo tests_prin_read_keys[] = {
         { (char *)"Simple", test_prin_read_keys_simple },
+        { (char *)"Truncate", test_prin_read_keys_truncate },
         CU_TEST_INFO_NULL
 };
 
@@ -1069,7 +1070,7 @@ static int clear_pr(struct scsi_device *sdev)
         struct scsi_persistent_reserve_in_read_keys *rk;
 
         res = 0;
-        if (prin_read_keys(sdev, &pr_task, &rk) != 0)
+        if (prin_read_keys(sdev, &pr_task, &rk, 16384) != 0)
                 goto out;
 
         res = -1;

@@ -962,7 +962,9 @@ scsi_receivecopyresults_datain_unmarshall(struct scsi_task *task)
 	}
 }
 
-
+#ifndef MIN /* instead of including all of iscsi-private.h */
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#endif
 static void *
 scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 {
@@ -972,21 +974,44 @@ scsi_persistentreservein_datain_unmarshall(struct scsi_task *task)
 	int i;
 
 	switch (scsi_persistentreservein_sa(task)) {
-	case SCSI_PERSISTENT_RESERVE_READ_KEYS:
-		i = task_get_uint32(task, 4);
+	case SCSI_PERSISTENT_RESERVE_READ_KEYS: {
+		uint32_t cdb_keys_len;
+		uint32_t data_keys_len;
+		uint32_t keys_len;
 
-		rk = scsi_malloc(task, offsetof(struct scsi_persistent_reserve_in_read_keys, keys) + i);
+		if (task->datain.size < 8) {
+			return NULL;
+		}
+
+		/*
+		 * SPC5r17: 6.16.2 READ KEYS service action
+		 * The ADDITIONAL LENGTH field indicates the number of bytes in
+		 * the Reservation key list. The contents of the ADDITIONAL
+		 * LENGTH field are not altered based on the allocation length.
+		 */
+		cdb_keys_len = task_get_uint32(task, 4);
+		data_keys_len = task->datain.size - 8;
+		/*
+		 * Only process as many keys as permitted by the given
+		 * ADDITIONAL LENGTH and data-in size limits.
+		 */
+		keys_len = MIN(cdb_keys_len, data_keys_len);
+
+		rk = scsi_malloc(task,
+			offsetof(struct scsi_persistent_reserve_in_read_keys,
+				 keys) + keys_len);
 		if (rk == NULL) {
 			return NULL;
 		}
 		rk->prgeneration      = task_get_uint32(task, 0);
-		rk->additional_length = task_get_uint32(task, 4);
+		rk->additional_length = cdb_keys_len;
 
-		rk->num_keys = rk->additional_length / 8;
+		rk->num_keys = keys_len / 8;
 		for (i = 0; i < (int)rk->num_keys; i++) {
 			rk->keys[i] = task_get_uint64(task, 8 + i * 8);
 		}
 		return rk;
+	}
 	case SCSI_PERSISTENT_RESERVE_READ_RESERVATION: {
 		size_t	alloc_sz;
 

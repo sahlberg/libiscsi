@@ -38,12 +38,11 @@ test_prin_serviceaction_range(void)
         logging(LOG_VERBOSE, "Test Persistent Reserve IN Serviceaction range.");
 
         /* verify PRIN/READ_KEYS works -- XXX redundant -- remove this? */
-        ret = prin_read_keys(sd, &task, NULL);
+        ret = prin_read_keys(sd, &task, NULL, 16384);
         if (ret == -2) {
-                logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE IN is not implemented.");
                 CU_PASS("PERSISTENT RESERVE IN is not implemented.");
                 return;
-        }        
+        }
         CU_ASSERT_EQUAL(ret, 0);
 
         /* verify that PRIN/SA={0,1,2,3} works ... */

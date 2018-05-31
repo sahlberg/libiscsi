@@ -47,7 +47,6 @@ verify_persistent_reserve_ownership(struct scsi_device *sd1, struct scsi_device 
         /* register our reservation key with the target */
         ret = prout_register_and_ignore(sd1, key1);
         if (ret == -2) {
-                logging(LOG_NORMAL, "[SKIPPED] PERSISTEN RESERVE OUT is not implemented.");
                 CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
                 return;
         }        

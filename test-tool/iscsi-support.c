@@ -667,17 +667,18 @@ prin_task(struct scsi_device *sdev, int service_action,
 }
 
 int
-prin_read_keys(struct scsi_device *sdev, struct scsi_task **tp,
-        struct scsi_persistent_reserve_in_read_keys **rkp)
+prin_read_keys(struct scsi_device *sdev,
+               struct scsi_task **tp,
+               struct scsi_persistent_reserve_in_read_keys **rkp,
+               uint16_t allocation_len)
 {
-        const int buf_sz = 16384;
         struct scsi_persistent_reserve_in_read_keys *rk = NULL;
 
 
         logging(LOG_VERBOSE, "Send PRIN/READ_KEYS");
 
         *tp = scsi_cdb_persistent_reserve_in(SCSI_PERSISTENT_RESERVE_READ_KEYS,
-            buf_sz);
+                                             allocation_len);
         assert(*tp != NULL);
 
         *tp = send_scsi_command(sdev, *tp, NULL);
