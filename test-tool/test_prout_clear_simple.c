@@ -45,10 +45,10 @@ test_prout_clear_simple(void)
         if (ret == -2) {
                 CU_PASS("PERSISTENT RESERVE OUT is not implemented.");
                 return;
-        }        
+        }
         CU_ASSERT_EQUAL(ret, 0);
 
-        ret = prin_read_keys(sd, &tsk, &rk);
+        ret = prin_read_keys(sd, &tsk, &rk, 16384);
         CU_ASSERT_EQUAL(ret, 0);
         CU_ASSERT_NOT_EQUAL(rk, NULL);
         if (!rk)
@@ -78,7 +78,7 @@ test_prout_clear_simple(void)
         ret = prin_verify_not_reserved(sd);
         CU_ASSERT_EQUAL(ret, 0);
 
-        ret = prin_read_keys(sd, &tsk, &rk);
+        ret = prin_read_keys(sd, &tsk, &rk, 16384);
         CU_ASSERT_EQUAL(ret, 0);
         CU_ASSERT_NOT_EQUAL(rk, NULL);
         if (!rk)

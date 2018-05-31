@@ -78,7 +78,7 @@ test_prout_preempt_rm_reg(void)
         CU_ASSERT_EQUAL(ret, 0);
 
         /* confirm that k1 and k2 are registered */
-        ret = prin_read_keys(sd, &tsk, &rk);
+        ret = prin_read_keys(sd, &tsk, &rk, 16384);
         CU_ASSERT_EQUAL_FATAL(ret, 0);
 
         CU_ASSERT_EQUAL(rk->num_keys, 2);
@@ -99,7 +99,7 @@ test_prout_preempt_rm_reg(void)
         ret = test_iscsi_tur_until_good(sd2, &num_uas);
         CU_ASSERT_EQUAL(ret, 0);
 
-        ret = prin_read_keys(sd, &tsk, &rk);
+        ret = prin_read_keys(sd, &tsk, &rk, 16384);
         CU_ASSERT_EQUAL_FATAL(ret, 0);
 
         CU_ASSERT_EQUAL(rk->num_keys, 1);

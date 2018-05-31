@@ -822,7 +822,8 @@ int all_zero(const unsigned char *buf, unsigned size);
 int prin_task(struct scsi_device *sdev, int service_action,
     int success_expected);
 int prin_read_keys(struct scsi_device *sdev, struct scsi_task **tp,
-    struct scsi_persistent_reserve_in_read_keys **rkp);
+                   struct scsi_persistent_reserve_in_read_keys **rkp,
+                   uint16_t allocation_len);
 int prout_register_and_ignore(struct scsi_device *sdev,
     unsigned long long key);
 int prout_register_key(struct scsi_device *sdev,
