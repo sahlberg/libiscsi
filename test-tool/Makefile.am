@@ -70,6 +70,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_preventallow_lun_reset.c \
 	test_preventallow_2_itnexuses.c \
 	test_prin_read_keys_simple.c \
+	test_prin_read_keys_truncate.c \
 	test_prin_serviceaction_range.c \
 	test_prin_report_caps.c \
 	test_prout_register_simple.c \

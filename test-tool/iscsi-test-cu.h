@@ -115,6 +115,7 @@ void test_preventallow_lun_reset(void);
 void test_preventallow_2_itnexuses(void);
 
 void test_prin_read_keys_simple(void);
+void test_prin_read_keys_truncate(void);
 void test_prin_serviceaction_range(void);
 void test_prin_report_caps_simple(void);
 

@@ -158,6 +158,7 @@ static CU_TestInfo tests_preventallow[] = {
 
 static CU_TestInfo tests_prin_read_keys[] = {
         { (char *)"Simple", test_prin_read_keys_simple },
+        { (char *)"Truncate", test_prin_read_keys_truncate },
         CU_TEST_INFO_NULL
 };
 
