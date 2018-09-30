@@ -153,6 +153,7 @@ iscsi_create_context(const char *initiator_name)
 {
 	struct iscsi_context *iscsi;
 	size_t required = ISCSI_RAW_HEADER_SIZE + ISCSI_DIGEST_SIZE;
+	static uint32_t ctx_seq = 0;
 	char *ca;
 
 	if (!initiator_name[0]) {
@@ -176,7 +177,7 @@ iscsi_create_context(const char *initiator_name)
 
 	iscsi->fd = -1;
 
-	srand(time(NULL) ^ getpid() ^ (uint32_t) ((uintptr_t) iscsi));
+	srand(time(NULL) ^ getpid() ^ (uint32_t) ((uintptr_t) iscsi) ^ ctx_seq++);
 
 	/* initialize to a "random" isid */
 	iscsi_set_isid_random(iscsi, rand(), 0);
