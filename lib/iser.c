@@ -964,7 +964,7 @@ iser_post_recvm(struct iser_conn *iser_conn, int count)
 	iser_conn->post_recv_buf_count += count;
 	ret = ibv_post_recv(iser_conn->qp, iser_conn->rx_wr, &rx_wr_failed);
 	if (ret) {
-		iscsi_set_error(iscsi, "ib_post_recv failed ret=%d", ret);
+		iscsi_set_error(iscsi, "posting %d rx bufs, ib_post_recv failed ret=%d", count, ret);
 		iser_conn->post_recv_buf_count -= count;
 	} else
 		iser_conn->rx_desc_head = my_rx_head;
@@ -1037,12 +1037,13 @@ iser_rcv_completion(struct iser_rx_desc *rx_desc,
 		if (iscsi->session_type == ISCSI_SESSION_NORMAL) {
 			if(iser_alloc_rx_descriptors(iser_conn,255)) {
 				iscsi_set_error(iscsi, "iser_alloc_rx_descriptors Failed\n");
-				return -1;
+				err = -1;
+				goto error;
 			}
 			err = iser_post_recvm(iser_conn, ISER_MIN_POSTED_RX);
 			if (err) {
-				iscsi_set_error(iscsi, "posting %d rx bufs err %d", count, err);
-				return -1;
+				err = -1;
+				goto error;
 			}
 		}
 	in->hdr = (unsigned char*)rx_desc->iscsi_header;
@@ -1089,7 +1090,6 @@ iser_rcv_completion(struct iser_rx_desc *rx_desc,
 	ISCSI_LIST_ADD_END(&iser_conn->tx_desc, iser_pdu->desc);
 
 nop_target:
-
 	/* decrementing conn->post_recv_buf_count only --after-- freeing the   *
 	 * task eliminates the need to worry on tasks which are completed in   *
 	 * parallel to the execution of iser_conn_term. So the code that waits *
@@ -1107,16 +1107,16 @@ nop_target:
 			count = iser_conn->qp_max_recv_dtos - outstanding;
 		err = iser_post_recvm(iser_conn, count);
 		if (err) {
-			iscsi_set_error(iscsi, "posting %d rx bufs err %d", count, err);
-			return -1;
+			err = -1;
+			goto error;
 		}
 	}
 
 receive:
-
 	err = iscsi_process_pdu(iscsi, in);
-	iscsi_free(iscsi, in);
 
+error:
+	iscsi_free(iscsi, in);
 	return err;
 }
 
