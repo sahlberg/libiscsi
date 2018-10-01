@@ -53,7 +53,7 @@ test_writesame10_0blocks(void)
                 return;
         }
 
-        if (inq_bl->max_ws_len > 0 && num_blocks >= inq_bl->max_ws_len) {
+        if (inq_bl->max_ws_len > 0 && num_blocks > inq_bl->max_ws_len) {
             WRITESAME10(sd, 0, block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_INVALID_FIELD_IN_CDB);
         } else {
