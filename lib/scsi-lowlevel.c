@@ -1086,6 +1086,7 @@ scsi_maintenancein_datain_getfullsize(struct scsi_task *task)
 				(task_get_uint8(task, 1) & 0x80) ? 12 : 0 +
 				task_get_uint16(task, 2);
 		}
+		return -1;
 	default:
 		return -1;
 	}
