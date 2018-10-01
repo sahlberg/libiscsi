@@ -1028,7 +1028,7 @@ iser_rcv_completion(struct iser_rx_desc *rx_desc,
 		    struct iser_conn *iser_conn)
 {
 	struct iscsi_in_pdu *in = NULL;
-	int outstanding, count = 0, err;
+	int empty, err;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 
 	in = iscsi_malloc(iscsi, sizeof(*in));
@@ -1096,23 +1096,17 @@ nop_target:
 	 * for the posted rx bufs refcount to become zero handles everything   */
 	iser_conn->post_recv_buf_count--;
 
-	if ((unsigned char *)rx_desc == iser_conn->login_resp_buf)
-		goto receive;
-
-	outstanding = iser_conn->post_recv_buf_count;
-	if (outstanding + iser_conn->min_posted_rx <= iser_conn->qp_max_recv_dtos) {
-		if(iser_conn->qp_max_recv_dtos - outstanding > iser_conn->min_posted_rx)
-			count = iser_conn->min_posted_rx;
-		else
-			count = iser_conn->qp_max_recv_dtos - outstanding;
-		err = iser_post_recvm(iser_conn, count);
-		if (err) {
-			err = -1;
-			goto error;
+	if ((unsigned char *)rx_desc != iser_conn->login_resp_buf) {
+		empty = iser_conn->qp_max_recv_dtos - iser_conn->post_recv_buf_count;
+		if (empty >= iser_conn->min_posted_rx) {
+			err = iser_post_recvm(iser_conn, empty);
+			if (err) {
+				err = -1;
+				goto error;
+			}
 		}
 	}
 
-receive:
 	err = iscsi_process_pdu(iscsi, in);
 
 error:
