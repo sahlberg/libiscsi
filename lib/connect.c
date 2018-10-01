@@ -280,7 +280,7 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
                         void *command_data _U_, void *private_data _U_)
 {
-        struct iscsi_context *old_iscsi;
+	struct iscsi_context *old_iscsi;
 	int i;
 
 	if (status != SCSI_STATUS_GOOD) {
@@ -379,13 +379,13 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
 	iscsi->pending_reconnect = 0;
 }
 
-int iscsi_reconnect(struct iscsi_context *old_iscsi)
+int iscsi_reconnect(struct iscsi_context *iscsi)
 {
-	struct iscsi_context *iscsi;
+	struct iscsi_context *tmp_iscsi;
 
 	/* if there is already a deferred reconnect do not try again */
-	if (old_iscsi->reconnect_deferred) {
-		ISCSI_LOG(old_iscsi, 2, "reconnect initiated, but reconnect is already deferred");
+	if (iscsi->reconnect_deferred) {
+		ISCSI_LOG(iscsi, 2, "reconnect initiated, but reconnect is already deferred");
 		return -1;
 	}
 
@@ -393,77 +393,76 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 	   reconnect but rather want the commands to fail with an error
 	   if the target drops the session.
 	 */
-	if (old_iscsi->no_auto_reconnect) {
-		iscsi_defer_reconnect(old_iscsi);
+	if (iscsi->no_auto_reconnect) {
+		iscsi_defer_reconnect(iscsi);
 		return 0;
 	}
 
-	if (old_iscsi->old_iscsi && !old_iscsi->pending_reconnect) {
+	if (iscsi->old_iscsi && !iscsi->pending_reconnect) {
 		return 0;
 	}
 
-	if (time(NULL) < old_iscsi->next_reconnect) {
-		old_iscsi->pending_reconnect = 1;
+	if (time(NULL) < iscsi->next_reconnect) {
+		iscsi->pending_reconnect = 1;
 		return 0;
 	}
 
-	if (old_iscsi->reconnect_max_retries != -1 && old_iscsi->old_iscsi &&
-	    old_iscsi->old_iscsi->retry_cnt > old_iscsi->reconnect_max_retries) {
-		iscsi_defer_reconnect(old_iscsi);
+	if (iscsi->reconnect_max_retries != -1 && iscsi->old_iscsi &&
+	    iscsi->old_iscsi->retry_cnt > iscsi->reconnect_max_retries) {
+		iscsi_defer_reconnect(iscsi);
 		return -1;
 	}
 
-	iscsi = iscsi_create_context(old_iscsi->initiator_name);
-	if (iscsi == NULL) {
-		ISCSI_LOG(old_iscsi, 2, "failed to create new context for reconnection");
+	tmp_iscsi = iscsi_create_context(iscsi->initiator_name);
+	if (tmp_iscsi == NULL) {
+		ISCSI_LOG(iscsi, 2, "failed to create new context for reconnection");
 		return -1;
 	}
 
-	ISCSI_LOG(old_iscsi, 2, "reconnect initiated");
+	ISCSI_LOG(iscsi, 2, "reconnect initiated");
 
-	iscsi_set_targetname(iscsi, old_iscsi->target_name);
+	iscsi_set_targetname(tmp_iscsi, iscsi->target_name);
 
-	iscsi_set_header_digest(iscsi, old_iscsi->want_header_digest);
+	iscsi_set_header_digest(tmp_iscsi, iscsi->want_header_digest);
 
-	iscsi_set_initiator_username_pwd(iscsi, old_iscsi->user, old_iscsi->passwd);
-	iscsi_set_target_username_pwd(iscsi, old_iscsi->target_user, old_iscsi->target_passwd);
+	iscsi_set_initiator_username_pwd(tmp_iscsi, iscsi->user, iscsi->passwd);
+	iscsi_set_target_username_pwd(tmp_iscsi, iscsi->target_user, iscsi->target_passwd);
 
-	iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
+	iscsi_set_session_type(tmp_iscsi, ISCSI_SESSION_NORMAL);
 
-	iscsi->lun = old_iscsi->lun;
+	tmp_iscsi->lun = iscsi->lun;
 
-	strncpy(iscsi->portal,old_iscsi->portal,MAX_STRING_SIZE);
+	strncpy(tmp_iscsi->portal, iscsi->portal, MAX_STRING_SIZE);
 	
-	strncpy(iscsi->bind_interfaces,old_iscsi->bind_interfaces,MAX_STRING_SIZE);
-	iscsi->bind_interfaces_cnt = old_iscsi->bind_interfaces_cnt;
+	strncpy(tmp_iscsi->bind_interfaces, iscsi->bind_interfaces, MAX_STRING_SIZE);
+	tmp_iscsi->bind_interfaces_cnt = iscsi->bind_interfaces_cnt;
 	
-	iscsi->log_level = old_iscsi->log_level;
-	iscsi->log_fn = old_iscsi->log_fn;
-	iscsi->tcp_user_timeout = old_iscsi->tcp_user_timeout;
-	iscsi->tcp_keepidle = old_iscsi->tcp_keepidle;
-	iscsi->tcp_keepcnt = old_iscsi->tcp_keepcnt;
-	iscsi->tcp_keepintvl = old_iscsi->tcp_keepintvl;
-	iscsi->tcp_syncnt = old_iscsi->tcp_syncnt;
-	iscsi->cache_allocations = old_iscsi->cache_allocations;
-	iscsi->scsi_timeout = old_iscsi->scsi_timeout;
-	iscsi->no_ua_on_reconnect = old_iscsi->no_ua_on_reconnect;
+	tmp_iscsi->log_level = iscsi->log_level;
+	tmp_iscsi->log_fn = iscsi->log_fn;
+	tmp_iscsi->tcp_user_timeout = iscsi->tcp_user_timeout;
+	tmp_iscsi->tcp_keepidle = iscsi->tcp_keepidle;
+	tmp_iscsi->tcp_keepcnt = iscsi->tcp_keepcnt;
+	tmp_iscsi->tcp_keepintvl = iscsi->tcp_keepintvl;
+	tmp_iscsi->tcp_syncnt = iscsi->tcp_syncnt;
+	tmp_iscsi->cache_allocations = iscsi->cache_allocations;
+	tmp_iscsi->scsi_timeout = iscsi->scsi_timeout;
+	tmp_iscsi->no_ua_on_reconnect = iscsi->no_ua_on_reconnect;
 
-	iscsi->reconnect_max_retries = old_iscsi->reconnect_max_retries;
+	tmp_iscsi->reconnect_max_retries = iscsi->reconnect_max_retries;
 
-	if (old_iscsi->old_iscsi) {
+	if (iscsi->old_iscsi) {
 		int i;
-		for (i = 0; i < old_iscsi->smalloc_free; i++) {
-			iscsi_free(old_iscsi, old_iscsi->smalloc_ptrs[i]);
+		for (i = 0; i < iscsi->smalloc_free; i++) {
+			iscsi_free(iscsi, iscsi->smalloc_ptrs[i]);
 		}
-		iscsi->old_iscsi = old_iscsi->old_iscsi;
+		tmp_iscsi->old_iscsi = iscsi->old_iscsi;
 	} else {
 		iscsi->old_iscsi = malloc(sizeof(struct iscsi_context));
-		memcpy(iscsi->old_iscsi, old_iscsi, sizeof(struct iscsi_context));
+		memcpy(tmp_iscsi->old_iscsi, iscsi, sizeof(struct iscsi_context));
 	}
-	memcpy(old_iscsi, iscsi, sizeof(struct iscsi_context));
-	free(iscsi);
+	memcpy(iscsi, tmp_iscsi, sizeof(struct iscsi_context));
+	free(tmp_iscsi);
 
-	return  iscsi_full_connect_async(old_iscsi, old_iscsi->portal,
-					 old_iscsi->lun, iscsi_reconnect_cb,
-					 NULL);
+	return iscsi_full_connect_async(iscsi, iscsi->portal,
+	                                iscsi->lun, iscsi_reconnect_cb, NULL);
 }
