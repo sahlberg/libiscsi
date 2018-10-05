@@ -28,6 +28,8 @@
 #include <unistd.h>
 #endif
 
+#include <fcntl.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -148,12 +150,58 @@ void iscsi_sfree(struct iscsi_context *iscsi, void* ptr) {
 	}
 }
 
+static bool rd_set = false;
+static pthread_mutex_t rd_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static void
+iscsi_srand_init(struct iscsi_context *iscsi) {
+	unsigned int seed;
+	int urand_fd;
+	ssize_t rc;
+	int err;
+
+	if (rd_set) {
+		/* fast case, seed has been set */
+		return;
+	}
+
+	err = pthread_mutex_lock(&rd_mutex);
+	assert(err == 0);
+
+	if (rd_set) {
+		/* another thread initialized it in the meantime */
+		goto out;
+	}
+
+	urand_fd = open("/dev/urandom", O_RDONLY);
+	if (urand_fd == -1) {
+		goto fallback;
+	}
+
+	rc = read(urand_fd, &seed, sizeof(seed));
+	close(urand_fd);
+	if (rc == -1) {
+		goto fallback;
+	}
+
+	srand(seed);
+	goto out;
+
+fallback:
+	/* seed based on @iscsi */
+	srand(getpid() ^ (uint32_t)((uintptr_t) iscsi));
+
+out:
+	rd_set = true;
+	err = pthread_mutex_unlock(&rd_mutex);
+	assert(err == 0);
+}
+
 struct iscsi_context *
 iscsi_create_context(const char *initiator_name)
 {
 	struct iscsi_context *iscsi;
 	size_t required = ISCSI_RAW_HEADER_SIZE + ISCSI_DIGEST_SIZE;
-	static uint32_t ctx_seq = 0;
 	char *ca;
 
 	if (!initiator_name[0]) {
@@ -177,9 +225,8 @@ iscsi_create_context(const char *initiator_name)
 
 	iscsi->fd = -1;
 
-	srand(time(NULL) ^ getpid() ^ (uint32_t) ((uintptr_t) iscsi) ^ ctx_seq++);
-
 	/* initialize to a "random" isid */
+	iscsi_srand_init(iscsi);
 	iscsi_set_isid_random(iscsi, rand(), 0);
 
 	/* assume we start in security negotiation phase */
