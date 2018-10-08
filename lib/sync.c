@@ -88,10 +88,8 @@ iscsi_sync_cb(struct iscsi_context *iscsi _U_, int status,
 {
 	struct iscsi_sync_state *state = private_data;
 
-	if (state != NULL) {
-		state->status    = status;
-		state->finished = 1;
-	}
+	state->status    = status;
+	state->finished = 1;
 }
 
 int
@@ -1871,11 +1869,9 @@ iscsi_discovery_cb(struct iscsi_context *iscsi _U_, int status,
                 }
         }
 
-	if (state != NULL) {
-		state->status    = status;
-		state->finished = 1;
-                state->ptr = dahead;
-	}
+	state->status    = status;
+	state->finished = 1;
+	state->ptr = dahead;
 }
 
 struct iscsi_discovery_address *
