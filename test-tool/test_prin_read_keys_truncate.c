@@ -58,15 +58,17 @@ test_prin_read_keys_truncate(void)
         }
         CU_ASSERT_EQUAL(ret, 0);
 
-        /*
-         * SPC5r17: 6.16.2 READ KEYS service action
-         * The ADDITIONAL LENGTH field indicates the number of bytes in
-         * the Reservation key list. The contents of the ADDITIONAL
-         * LENGTH field are not altered based on the allocation length.
-         */
-        CU_ASSERT_NOT_EQUAL(rk->additional_length, 0);
-        /* key array should have been truncated in the response */
-        CU_ASSERT_EQUAL(rk->num_keys, 0);
+        if (rk) {
+                /*
+                 * SPC5r17: 6.16.2 READ KEYS service action
+                 * The ADDITIONAL LENGTH field indicates the number of bytes in
+                 * the Reservation key list. The contents of the ADDITIONAL
+                 * LENGTH field are not altered based on the allocation length.
+                 */
+                CU_ASSERT_NOT_EQUAL(rk->additional_length, 0);
+                /* key array should have been truncated in the response */
+                CU_ASSERT_EQUAL(rk->num_keys, 0);
+        }
 
         /* remove our key from the target */
         ret = prout_register_key(sd, 0, key);
