@@ -599,7 +599,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 	ssize_t hdr_size, data_size, count, padding_size;
 
 	do {
-		hdr_size = ISCSI_HEADER_SIZE;
+		hdr_size = ISCSI_HEADER_SIZE(iscsi->header_digest);
 		if (iscsi->incoming == NULL) {
 			iscsi->incoming = iscsi_szmalloc(iscsi, sizeof(struct iscsi_in_pdu));
 			if (iscsi->incoming == NULL) {
