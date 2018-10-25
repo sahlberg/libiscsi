@@ -163,7 +163,7 @@ iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	data.data = NULL;
 	data.size = 0;
 
-	if (in->data_pos > ISCSI_HEADER_SIZE) {
+	if (in->data_pos) {
 		data.data = in->data;
 		data.size = in->data_pos;
 	}
