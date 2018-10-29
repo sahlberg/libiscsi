@@ -596,25 +596,30 @@ static int
 iscsi_read_from_socket(struct iscsi_context *iscsi)
 {
 	struct iscsi_in_pdu *in;
-	ssize_t data_size, count, padding_size;
+	ssize_t hdr_size, data_size, count, padding_size;
 
 	do {
+		hdr_size = ISCSI_HEADER_SIZE(iscsi->header_digest);
 		if (iscsi->incoming == NULL) {
 			iscsi->incoming = iscsi_szmalloc(iscsi, sizeof(struct iscsi_in_pdu));
-			iscsi->incoming->hdr = iscsi_smalloc(iscsi, ISCSI_HEADER_SIZE);
 			if (iscsi->incoming == NULL) {
 				iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu");
+				return -1;
+			}
+			iscsi->incoming->hdr = iscsi_smalloc(iscsi, hdr_size);
+			if (iscsi->incoming->hdr == NULL) {
+				iscsi_set_error(iscsi, "Out-of-memory");
 				return -1;
 			}
 		}
 		in = iscsi->incoming;
 
 		/* first we must read the header, including any digests */
-		if (in->hdr_pos < ISCSI_HEADER_SIZE) {
+		if (in->hdr_pos < hdr_size) {
 			/* try to only read the header, the socket is nonblocking, so
 			 * no need to limit the read to what is available in the socket
 			 */
-			count = ISCSI_HEADER_SIZE - in->hdr_pos;
+			count = hdr_size - in->hdr_pos;
 			count = recv(iscsi->fd, &in->hdr[in->hdr_pos], count, 0);
 			if (count == 0) {
 				/* remote side has closed the socket. */
@@ -631,7 +636,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			in->hdr_pos  += count;
 		}
 
-		if (in->hdr_pos < ISCSI_HEADER_SIZE) {
+		if (in->hdr_pos < hdr_size) {
 			/* we don't have the full header yet, so return */
 			break;
 		}

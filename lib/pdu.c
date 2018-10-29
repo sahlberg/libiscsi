@@ -111,7 +111,7 @@ iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 		return NULL;
 	}
 
-	pdu->outdata.size = ISCSI_HEADER_SIZE;
+	pdu->outdata.size = ISCSI_HEADER_SIZE(iscsi->header_digest);
 	pdu->outdata.data = iscsi_szmalloc(iscsi, pdu->outdata.size);
 
 	if (pdu->outdata.data == NULL) {
@@ -236,7 +236,7 @@ iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 
 	/* update data segment length */
 	scsi_set_uint32(&pdu->outdata.data[4], pdu->outdata.size
-					       - ISCSI_HEADER_SIZE);
+				- ISCSI_HEADER_SIZE(iscsi->header_digest));
 
 	return 0;
 }

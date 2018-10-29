@@ -43,8 +43,8 @@ extern "C" {
 #define ISCSI_RAW_HEADER_SIZE			48
 #define ISCSI_DIGEST_SIZE			 4
 
-#define ISCSI_HEADER_SIZE (ISCSI_RAW_HEADER_SIZE	\
-  + (iscsi->header_digest == ISCSI_HEADER_DIGEST_NONE?0:ISCSI_DIGEST_SIZE))
+#define ISCSI_HEADER_SIZE(hdr_digest) (ISCSI_RAW_HEADER_SIZE	\
+  + (hdr_digest == ISCSI_HEADER_DIGEST_NONE?0:ISCSI_DIGEST_SIZE))
 
 #define SMALL_ALLOC_MAX_FREE (128) /* must be power of 2 */
 

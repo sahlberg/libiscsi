@@ -86,7 +86,8 @@ void nop_out_cb(struct iscsi_context *iscsi, int status, void *command_data, voi
 
 	printf("NOP-IN status:%d\n", status);
 	if (data->size > 0) {
-		printf("NOP-IN data:%s\n", data->data);
+		printf("NOP-IN (%zu) data:%.*s\n",
+		       data->size, (int)data->size, data->data);
 	}
 	printf("Send SYNCHRONIZECACHE10\n");
 	task = iscsi_synchronizecache10_task(iscsi, 2, 0, 0, 0, 0, synccache10_cb, private_data);
