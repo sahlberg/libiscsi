@@ -47,6 +47,14 @@ AC_ARG_ENABLE([manpages],
 AM_CONDITIONAL(BUILD_MANPAGES,
                [expr "$ENABLE_MANPAGES" : yes > /dev/null 2>&1])
 
+AC_ARG_ENABLE([tests],
+              [AC_HELP_STRING([--enable-tests],
+                              [Enable building tests])],
+              [ENABLE_TESTS=$enableval],
+              [ENABLE_TESTS=yes])
+AM_CONDITIONAL([BUILD_TESTS],
+               [expr "$ENABLE_TESTS" : yes > /dev/null 2>&1])
+
 AC_CONFIG_HEADER(config.h)
 
 AC_CHECK_LIB([gcrypt], [gcry_control])
