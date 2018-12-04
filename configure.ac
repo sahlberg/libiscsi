@@ -47,6 +47,14 @@ AC_ARG_ENABLE([manpages],
 AM_CONDITIONAL(BUILD_MANPAGES,
                [expr "$ENABLE_MANPAGES" : yes > /dev/null 2>&1])
 
+AC_ARG_ENABLE([test_tool],
+              [AC_HELP_STRING([--enable-test-tool],
+                              [Enable building test-tool (to test a remote server)])],
+              [ENABLE_TEST_TOOL=$enableval],
+              [ENABLE_TEST_TOOL=yes])
+AM_CONDITIONAL([BUILD_TEST_TOOL],
+               [expr "$ENABLE_TEST_TOOL" : yes > /dev/null 2>&1])
+
 AC_ARG_ENABLE([tests],
               [AC_HELP_STRING([--enable-tests],
                               [Enable building tests])],

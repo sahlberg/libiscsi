@@ -1,5 +1,8 @@
 # Generic definitions
-SUBDIRS = lib doc utils test-tool examples
+SUBDIRS = lib doc utils examples
+if BUILD_TEST_TOOL
+SUBDIRS += test-tool
+endif
 if BUILD_TESTS
 SUBDIRS += tests
 endif
