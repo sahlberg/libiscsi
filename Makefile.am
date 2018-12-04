@@ -1,10 +1,13 @@
 # Generic definitions
-SUBDIRS = lib doc utils examples
+SUBDIRS = lib doc utils
 if BUILD_TEST_TOOL
 SUBDIRS += test-tool
 endif
 if BUILD_TESTS
 SUBDIRS += tests
+endif
+if BUILD_EXAMPLES
+SUBDIRS += examples
 endif
 
 ACLOCAL_AMFLAGS =-I m4

@@ -63,6 +63,14 @@ AC_ARG_ENABLE([tests],
 AM_CONDITIONAL([BUILD_TESTS],
                [expr "$ENABLE_TESTS" : yes > /dev/null 2>&1])
 
+AC_ARG_ENABLE([examples],
+              [AC_HELP_STRING([--enable-examples],
+                              [Enable building examples])],
+              [ENABLE_EXAMPLES=$enableval],
+              [ENABLE_EXAMPLES=yes])
+AM_CONDITIONAL([BUILD_EXAMPLES],
+               [expr "$ENABLE_EXAMPLES" : yes > /dev/null 2>&1])
+
 AC_CONFIG_HEADER(config.h)
 
 AC_CHECK_LIB([gcrypt], [gcry_control])
