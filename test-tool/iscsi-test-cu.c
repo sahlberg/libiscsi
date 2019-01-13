@@ -787,8 +787,12 @@ static int clear_pr(struct scsi_device *sdev)
 
         res = 0;
         for (i = 0; i < rk->num_keys; i++) {
-                prout_register_and_ignore(sdev, rk->keys[i]);
-                prout_register_key(sdev, 0, rk->keys[i]);
+                res = prout_register_and_ignore(sdev, rk->keys[i]);
+                if (res)
+                        break;
+                res = prout_register_key(sdev, 0, rk->keys[i]);
+                if (res)
+                        break;
         }
 
         scsi_free_scsi_task(pr_task);
@@ -857,6 +861,7 @@ suite_cleanup(void)
         for (i = 0; i < mp_num_sds; i++) {
                 if (mp_sds[i]->iscsi_url) {
                         if (mp_sds[i]->iscsi_ctx) {
+                                clear_pr(mp_sds[i]);
                                 iscsi_logout_sync(mp_sds[i]->iscsi_ctx);
                                 iscsi_destroy_context(mp_sds[i]->iscsi_ctx);
                                 mp_sds[i]->iscsi_ctx = NULL;
@@ -1241,6 +1246,10 @@ main(int argc, char *argv[])
                                 "Failed to connect to SCSI device %d\n", i);
                         goto err_sds_free;
                 }
+                if (clear_pr(mp_sds[i]) < 0) {
+                        printf("One or more persistent reservations keys have been registered\n");
+                        return -1;
+                }
         }
 
         if (mp_num_sds > 1) {
@@ -1438,11 +1447,6 @@ main(int argc, char *argv[])
                 readonly = !!(ms->device_specific_parameter & 0x80);
         }
         scsi_free_scsi_task(task);
-
-        if (clear_pr(sd) < 0) {
-                printf("One or more persistent reservations keys have been registered\n");
-                return -1;
-        }
 
         /* BLKSECTGET for /dev/sg* is a shitshow under linux.
          * Even 4.2 kernels return number of bytes instead of number
