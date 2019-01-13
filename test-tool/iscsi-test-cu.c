@@ -770,6 +770,33 @@ print_usage(void)
         fprintf(stderr, "\n");
 }
 
+/* Clear persistent reservations and reservation keys left by a previous run */
+static int clear_pr(struct scsi_device *sdev)
+{
+        int i, res;
+        struct scsi_task *pr_task;
+        struct scsi_persistent_reserve_in_read_keys *rk;
+
+        res = 0;
+        if (prin_read_keys(sdev, &pr_task, &rk, 16384) != 0)
+                goto out;
+
+        res = -1;
+        if (rk->num_keys && data_loss == 0)
+                goto out;
+
+        res = 0;
+        for (i = 0; i < rk->num_keys; i++) {
+                prout_register_and_ignore(sdev, rk->keys[i]);
+                prout_register_key(sdev, 0, rk->keys[i]);
+        }
+
+        scsi_free_scsi_task(pr_task);
+
+out:
+        return res;
+}
+
 void
 test_setup(void)
 {
@@ -1060,33 +1087,6 @@ static void free_scsi_device(struct scsi_device *sdev)
                 sdev->sgio_fd = -1;
         }
         free(sdev);
-}
-
-/* Clear persistent reservations and reservation keys left by a previous run */
-static int clear_pr(struct scsi_device *sdev)
-{
-        int i, res;
-        struct scsi_task *pr_task;
-        struct scsi_persistent_reserve_in_read_keys *rk;
-
-        res = 0;
-        if (prin_read_keys(sdev, &pr_task, &rk, 16384) != 0)
-                goto out;
-
-        res = -1;
-        if (rk->num_keys && data_loss == 0)
-                goto out;
-
-        res = 0;
-        for (i = 0; i < rk->num_keys; i++) {
-                prout_register_and_ignore(sdev, rk->keys[i]);
-                prout_register_key(sdev, 0, rk->keys[i]);
-        }
-
-        scsi_free_scsi_task(pr_task);
-
-out:
-        return res;
 }
 
 int
