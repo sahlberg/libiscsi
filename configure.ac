@@ -47,6 +47,30 @@ AC_ARG_ENABLE([manpages],
 AM_CONDITIONAL(BUILD_MANPAGES,
                [expr "$ENABLE_MANPAGES" : yes > /dev/null 2>&1])
 
+AC_ARG_ENABLE([test_tool],
+              [AC_HELP_STRING([--enable-test-tool],
+                              [Enable building test-tool (to test a remote server)])],
+              [ENABLE_TEST_TOOL=$enableval],
+              [ENABLE_TEST_TOOL=yes])
+AM_CONDITIONAL([BUILD_TEST_TOOL],
+               [expr "$ENABLE_TEST_TOOL" : yes > /dev/null 2>&1])
+
+AC_ARG_ENABLE([tests],
+              [AC_HELP_STRING([--enable-tests],
+                              [Enable building tests])],
+              [ENABLE_TESTS=$enableval],
+              [ENABLE_TESTS=yes])
+AM_CONDITIONAL([BUILD_TESTS],
+               [expr "$ENABLE_TESTS" : yes > /dev/null 2>&1])
+
+AC_ARG_ENABLE([examples],
+              [AC_HELP_STRING([--enable-examples],
+                              [Enable building examples])],
+              [ENABLE_EXAMPLES=$enableval],
+              [ENABLE_EXAMPLES=yes])
+AM_CONDITIONAL([BUILD_EXAMPLES],
+               [expr "$ENABLE_EXAMPLES" : yes > /dev/null 2>&1])
+
 AC_CONFIG_HEADER(config.h)
 
 AC_CHECK_LIB([gcrypt], [gcry_control])
@@ -128,20 +152,18 @@ if test x"$libiscsi_cv_HAVE_LINUX_ISER" = x"yes"; then
 fi
 AM_CONDITIONAL([HAVE_LINUX_ISER], [test $libiscsi_cv_HAVE_LINUX_ISER = yes])
 
-AC_MSG_CHECKING(whether libcunit is available)
-ac_save_CFLAGS="$CFLAGS"
-ac_save_LIBS="$LIBS"
-CFLAGS="$CFLAGS $GLIB_CFLAGS"
-LIBS="$GLIB_LIBS $LIBS -lcunit"
-AC_TRY_LINK([
-#include <CUnit/CUnit.h>
-], [], [ac_cv_have_cunit=yes], [ac_cv_have_cunit=no])
-CFLAGS="$ac_save_CFLAGS"
-LIBS="$ac_save_LIBS"
-if test "$ac_cv_have_cunit" = yes ; then
-  AC_MSG_RESULT(yes)
-else
-  AC_MSG_RESULT(no)
+AC_CACHE_CHECK([whether libcunit is available],
+               [ac_cv_have_cunit],
+               [ac_save_CFLAGS="$CFLAGS"
+                ac_save_LIBS="$LIBS"
+                CFLAGS="$CFLAGS $GLIB_CFLAGS"
+                LIBS="$GLIB_LIBS $LIBS -lcunit"
+                AC_TRY_LINK([
+                    #include <CUnit/CUnit.h>
+                    ], [], [ac_cv_have_cunit=yes], [ac_cv_have_cunit=no])
+                CFLAGS="$ac_save_CFLAGS"
+                LIBS="$ac_save_LIBS"])
+if ! test "$ac_cv_have_cunit" = yes ; then
   AC_MSG_NOTICE(You need libcunit to build the test suite.)
   AC_MSG_NOTICE(The scsi/iscsi test suite will not be built.)
 fi
