@@ -457,7 +457,7 @@ int iscsi_reconnect(struct iscsi_context *iscsi)
 		}
 		tmp_iscsi->old_iscsi = iscsi->old_iscsi;
 	} else {
-		iscsi->old_iscsi = malloc(sizeof(struct iscsi_context));
+		tmp_iscsi->old_iscsi = malloc(sizeof(struct iscsi_context));
 		memcpy(tmp_iscsi->old_iscsi, iscsi, sizeof(struct iscsi_context));
 	}
 	memcpy(iscsi, tmp_iscsi, sizeof(struct iscsi_context));
