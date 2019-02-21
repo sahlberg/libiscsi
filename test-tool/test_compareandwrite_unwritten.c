@@ -1,4 +1,3 @@
-/* -*-  mode:c; tab-width:8; c-basic-offset:8; indent-tabs-mode:nil;  -*- */
 /*
    Copyright (C) SUSE LINUX GmbH 2016
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
