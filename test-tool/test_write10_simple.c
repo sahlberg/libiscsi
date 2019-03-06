@@ -1,3 +1,4 @@
+/* -*-  mode:c; tab-width:8; c-basic-offset:8; indent-tabs-mode:nil;  -*- */
 /* 
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -33,7 +34,7 @@ test_write10_simple(void)
 	uint32_t lba;
 
         CHECK_FOR_DATALOSS;
-
+	printf("\nTest WRITE10 of 1-256 blocks at the start of the LUN\n");
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test WRITE10 of 1-256 blocks at the start of the LUN");
         memset(scratch, 0xa6, 256 * block_size);

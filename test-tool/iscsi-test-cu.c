@@ -1,3 +1,4 @@
+/* -*-  mode:c; tab-width:8; c-basic-offset:8; indent-tabs-mode:nil;  -*- */
 /*
    iscsi-test tool
 
@@ -70,153 +71,6 @@ int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
  * list of tests and test suites
  *
  *****************************************************************/
-static CU_TestInfo tests_compareandwrite[] = {
-        { (char *)"Simple", test_compareandwrite_simple },
-        { (char *)"DpoFua", test_compareandwrite_dpofua },
-        { (char *)"Miscompare", test_compareandwrite_miscompare },
-        { (char *)"Unwritten", test_compareandwrite_unwritten },
-        { (char *)"InvalidDataOutSize",
-          test_compareandwrite_invalid_dataout_size },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_get_lba_status[] = {
-        { (char *)"Simple", test_get_lba_status_simple },
-        { (char *)"BeyondEol", test_get_lba_status_beyond_eol },
-        { (char *)"UnmapSingle", test_get_lba_status_unmap_single },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_inquiry[] = {
-        { (char *)"Standard", test_inquiry_standard },
-        { (char *)"AllocLength", test_inquiry_alloc_length},
-        { (char *)"EVPD", test_inquiry_evpd},
-        { (char *)"BlockLimits", test_inquiry_block_limits},
-        { (char *)"MandatoryVPDSBC", test_inquiry_mandatory_vpd_sbc},
-        { (char *)"SupportedVPD", test_inquiry_supported_vpd},
-        { (char *)"VersionDescriptors", test_inquiry_version_descriptors},
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_mandatory[] = {
-        { (char *)"MandatorySBC", test_mandatory_sbc },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_modesense6[] = {
-        { (char *)"AllPages", test_modesense6_all_pages },
-        { (char *)"Control", test_modesense6_control },
-        { (char *)"Control-D_SENSE", test_modesense6_control_d_sense },
-        { (char *)"Control-SWP", test_modesense6_control_swp },
-        { (char *)"Residuals", test_modesense6_residuals },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_nomedia[] = {
-        { (char *)"NoMediaSBC", test_nomedia_sbc },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_orwrite[] = {
-        { (char *)"Simple", test_orwrite_simple },
-        { (char *)"BeyondEol", test_orwrite_beyond_eol },
-        { (char *)"ZeroBlocks", test_orwrite_0blocks },
-        { (char *)"Protect", test_orwrite_wrprotect },
-        { (char *)"DpoFua", test_orwrite_dpofua },
-        { (char *)"Verify", test_orwrite_verify },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_prefetch10[] = {
-        { (char *)"Simple", test_prefetch10_simple },
-        { (char *)"BeyondEol", test_prefetch10_beyond_eol },
-        { (char *)"ZeroBlocks", test_prefetch10_0blocks },
-        { (char *)"Flags", test_prefetch10_flags },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_prefetch16[] = {
-        { (char *)"Simple", test_prefetch16_simple },
-        { (char *)"BeyondEol", test_prefetch16_beyond_eol },
-        { (char *)"ZeroBlocks", test_prefetch16_0blocks },
-        { (char *)"Flags", test_prefetch16_flags },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_preventallow[] = {
-        { (char *)"Simple", test_preventallow_simple },
-        { (char *)"Eject", test_preventallow_eject },
-        { (char *)"ITNexusLoss", test_preventallow_itnexus_loss },
-        { (char *)"Logout", test_preventallow_logout },
-        { (char *)"WarmReset", test_preventallow_warm_reset },
-        { (char *)"ColdReset", test_preventallow_cold_reset },
-        { (char *)"LUNReset", test_preventallow_lun_reset },
-        { (char *)"2ITNexuses", test_preventallow_2_itnexuses },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_prin_read_keys[] = {
-        { (char *)"Simple", test_prin_read_keys_simple },
-        { (char *)"Truncate", test_prin_read_keys_truncate },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_prin_report_caps[] = {
-        { (char *)"Simple", test_prin_report_caps_simple },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_prout_register[] = {
-        { (char *)"Simple", test_prout_register_simple },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_prout_reserve[] = {
-        { (char *)"Simple",
-          test_prout_reserve_simple },
-        { (char *)"AccessEA",
-          test_prout_reserve_access_ea },
-        { (char *)"AccessWE",
-          test_prout_reserve_access_we },
-        { (char *)"AccessEARO",
-          test_prout_reserve_access_earo },
-        { (char *)"AccessWERO",
-          test_prout_reserve_access_wero },
-        { (char *)"AccessEAAR",
-          test_prout_reserve_access_eaar },
-        { (char *)"AccessWEAR",
-          test_prout_reserve_access_wear },
-        { (char *)"OwnershipEA",
-          test_prout_reserve_ownership_ea },
-        { (char *)"OwnershipWE",
-          test_prout_reserve_ownership_we },
-        { (char *)"OwnershipEARO",
-          test_prout_reserve_ownership_earo },
-        { (char *)"OwnershipWERO",
-          test_prout_reserve_ownership_wero },
-        { (char *)"OwnershipEAAR",
-          test_prout_reserve_ownership_eaar },
-        { (char *)"OwnershipWEAR",
-          test_prout_reserve_ownership_wear },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_prout_clear[] = {
-        { (char *)"Simple",
-          test_prout_clear_simple },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_prout_preempt[] = {
-        { (char *)"RemoveRegistration",
-          test_prout_preempt_rm_reg },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_prin_serviceaction_range[] = {
-        { (char *)"Range", test_prin_serviceaction_range },
-        CU_TEST_INFO_NULL
-};
 
 static CU_TestInfo tests_read6[] = {
         { (char *)"Simple", test_read6_simple },
@@ -252,136 +106,10 @@ static CU_TestInfo tests_read16[] = {
         CU_TEST_INFO_NULL
 };
 
-static CU_TestInfo tests_readcapacity10[] = {
-        { (char *)"Simple", test_readcapacity10_simple },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_readcapacity16[] = {
-        { (char *)"Simple", test_readcapacity16_simple },
-        { (char *)"Alloclen", test_readcapacity16_alloclen },
-        { (char *)"PI", test_readcapacity16_protection },
-        { (char *)"Support", test_readcapacity16_support },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_readdefectdata10[] = {
-        { (char *)"Simple", test_readdefectdata10_simple },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_readdefectdata12[] = {
-        { (char *)"Simple", test_readdefectdata12_simple },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_readonly[] = {
-        { (char *)"ReadOnlySBC", test_readonly_sbc },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_sanitize[] = {
-        { (char *)"BlockErase", test_sanitize_block_erase },
-        { (char *)"BlockEraseReserved", test_sanitize_block_erase_reserved },
-        { (char *)"CryptoErase", test_sanitize_crypto_erase },
-        { (char *)"CryptoEraseReserved", test_sanitize_crypto_erase_reserved },
-        { (char *)"ExitFailureMode", test_sanitize_exit_failure_mode },
-        { (char *)"InvalidServiceAction", test_sanitize_invalid_serviceaction },
-        { (char *)"Overwrite", test_sanitize_overwrite },
-        { (char *)"OverwriteReserved", test_sanitize_overwrite_reserved },
-        { (char *)"Readonly", test_sanitize_readonly },
-        { (char *)"Reservations", test_sanitize_reservations },
-        { (char *)"Reset", test_sanitize_reset },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_extended_copy[] = {
-        { (char *)"Simple", test_extendedcopy_simple },
-        { (char *)"ParamHdr", test_extendedcopy_param },
-        { (char *)"DescrLimits", test_extendedcopy_descr_limits },
-        { (char *)"DescrType", test_extendedcopy_descr_type },
-        { (char *)"ValidTgtDescr", test_extendedcopy_validate_tgt_descr },
-        { (char *)"ValidSegDescr", test_extendedcopy_validate_seg_descr },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_receive_copy_results[] = {
-        { (char *)"CopyStatus", test_receive_copy_results_copy_status },
-        { (char *)"OpParams", test_receive_copy_results_op_params },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_report_supported_opcodes[] = {
-        { (char *)"Simple", test_report_supported_opcodes_simple },
-        { (char *)"OneCommand", test_report_supported_opcodes_one_command },
-        { (char *)"RCTD", test_report_supported_opcodes_rctd },
-        { (char *)"SERVACTV", test_report_supported_opcodes_servactv },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_reserve6[] = {
-        { (char *)"Simple", test_reserve6_simple },
-        { (char *)"2Initiators", test_reserve6_2initiators },
-        { (char *)"Logout", test_reserve6_logout },
-        { (char *)"ITNexusLoss", test_reserve6_itnexus_loss },
-        { (char *)"TargetColdReset", test_reserve6_target_cold_reset },
-        { (char *)"TargetWarmReset", test_reserve6_target_warm_reset },
-        { (char *)"LUNReset", test_reserve6_lun_reset },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_testunitready[] = {
-        { (char *)"Simple", test_testunitready_simple },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_startstopunit[] = {
-        { (char *)"Simple", test_startstopunit_simple },
-        { (char *)"PwrCnd", test_startstopunit_pwrcnd },
-        { (char *)"NoLoej", test_startstopunit_noloej },
-        CU_TEST_INFO_NULL
-};
-
 static CU_TestInfo tests_unmap[] = {
         { (char *)"Simple", test_unmap_simple },
         { (char *)"VPD", test_unmap_vpd },
         { (char *)"ZeroBlocks", test_unmap_0blocks },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_verify10[] = {
-        { (char *)"Simple", test_verify10_simple },
-        { (char *)"BeyondEol", test_verify10_beyond_eol },
-        { (char *)"ZeroBlocks", test_verify10_0blocks },
-        { (char *)"VerifyProtect", test_verify10_vrprotect },
-        { (char *)"Flags", test_verify10_flags },
-        { (char *)"Dpo", test_verify10_dpo },
-        { (char *)"Mismatch", test_verify10_mismatch },
-        { (char *)"MismatchNoCmp", test_verify10_mismatch_no_cmp },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_verify12[] = {
-        { (char *)"Simple", test_verify12_simple },
-        { (char *)"BeyondEol", test_verify12_beyond_eol },
-        { (char *)"ZeroBlocks", test_verify12_0blocks },
-        { (char *)"VerifyProtect", test_verify12_vrprotect },
-        { (char *)"Flags", test_verify12_flags },
-        { (char *)"Dpo", test_verify12_dpo },
-        { (char *)"Mismatch", test_verify12_mismatch },
-        { (char *)"MismatchNoCmp", test_verify12_mismatch_no_cmp },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_verify16[] = {
-        { (char *)"Simple", test_verify16_simple },
-        { (char *)"BeyondEol", test_verify16_beyond_eol },
-        { (char *)"ZeroBlocks", test_verify16_0blocks },
-        { (char *)"VerifyProtect", test_verify16_vrprotect },
-        { (char *)"Flags", test_verify16_flags },
-        { (char *)"Dpo", test_verify16_dpo },
-        { (char *)"Mismatch", test_verify16_mismatch },
-        { (char *)"MismatchNoCmp", test_verify16_mismatch_no_cmp },
         CU_TEST_INFO_NULL
 };
 
@@ -413,82 +141,6 @@ static CU_TestInfo tests_write16[] = {
         CU_TEST_INFO_NULL
 };
 
-static CU_TestInfo tests_writeatomic16[] = {
-        { (char *)"Simple", test_writeatomic16_simple },
-        { (char *)"BeyondEol", test_writeatomic16_beyond_eol },
-        { (char *)"ZeroBlocks", test_writeatomic16_0blocks },
-        { (char *)"WriteProtect", test_writeatomic16_wrprotect },
-        { (char *)"DpoFua", test_writeatomic16_dpofua },
-        { (char *)"VPD", test_writeatomic16_vpd },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_writesame10[] = {
-        { (char *)"Simple", test_writesame10_simple },
-        { (char *)"BeyondEol", test_writesame10_beyond_eol },
-        { (char *)"ZeroBlocks", test_writesame10_0blocks },
-        { (char *)"WriteProtect", test_writesame10_wrprotect },
-        { (char *)"Unmap", test_writesame10_unmap },
-        { (char *)"UnmapUnaligned", test_writesame10_unmap_unaligned },
-        { (char *)"UnmapUntilEnd", test_writesame10_unmap_until_end },
-        { (char *)"UnmapVPD", test_writesame10_unmap_vpd },
-        { (char *)"Check", test_writesame10_check },
-        { (char *)"InvalidDataOutSize", test_writesame10_invalid_dataout_size },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_writesame16[] = {
-        { (char *)"Simple", test_writesame16_simple },
-        { (char *)"BeyondEol", test_writesame16_beyond_eol },
-        { (char *)"ZeroBlocks", test_writesame16_0blocks },
-        { (char *)"WriteProtect", test_writesame16_wrprotect },
-        { (char *)"Unmap", test_writesame16_unmap },
-        { (char *)"UnmapUnaligned", test_writesame16_unmap_unaligned },
-        { (char *)"UnmapUntilEnd", test_writesame16_unmap_until_end },
-        { (char *)"UnmapVPD", test_writesame16_unmap_vpd },
-        { (char *)"Check", test_writesame16_check },
-        { (char *)"InvalidDataOutSize", test_writesame16_invalid_dataout_size },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_writeverify10[] = {
-        { (char *)"Simple", test_writeverify10_simple },
-        { (char *)"BeyondEol", test_writeverify10_beyond_eol },
-        { (char *)"ZeroBlocks", test_writeverify10_0blocks },
-        { (char *)"WriteProtect", test_writeverify10_wrprotect },
-        { (char *)"Flags", test_writeverify10_flags },
-        { (char *)"Dpo", test_writeverify10_dpo },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_writeverify12[] = {
-        { (char *)"Simple", test_writeverify12_simple },
-        { (char *)"BeyondEol", test_writeverify12_beyond_eol },
-        { (char *)"ZeroBlocks", test_writeverify12_0blocks },
-        { (char *)"WriteProtect", test_writeverify12_wrprotect },
-        { (char *)"Flags", test_writeverify12_flags },
-        { (char *)"Dpo", test_writeverify12_dpo },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_writeverify16[] = {
-        { (char *)"Simple", test_writeverify16_simple },
-        { (char *)"BeyondEol", test_writeverify16_beyond_eol },
-        { (char *)"ZeroBlocks", test_writeverify16_0blocks },
-        { (char *)"WriteProtect", test_writeverify16_wrprotect },
-        { (char *)"Flags", test_writeverify16_flags },
-        { (char *)"Dpo", test_writeverify16_dpo },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_multipathio[] = {
-        { (char *)"Simple", test_multipathio_simple },
-        { (char *)"Reset", test_multipathio_reset },
-        { (char *)"CompareAndWrite", test_multipathio_compareandwrite },
-        { (char *)"CompareAndWriteAsync", test_mpio_async_caw },
-        CU_TEST_INFO_NULL
-};
-
 typedef struct libiscsi_suite_info {
         const char       *pName;         /**< Suite name. */
         CU_InitializeFunc pInitFunc;     /**< Suite initialization function. */
@@ -500,196 +152,24 @@ typedef struct libiscsi_suite_info {
 
 #define NON_PGR_FUNCS suite_init, suite_cleanup, test_setup, test_teardown
 
-/* SCSI protocol tests */
-static libiscsi_suite_info scsi_suites[] = {
-        { "CompareAndWrite", NON_PGR_FUNCS, tests_compareandwrite },
-        { "ExtendedCopy", NON_PGR_FUNCS, tests_extended_copy },
-        { "GetLBAStatus", NON_PGR_FUNCS, tests_get_lba_status },
-        { "Inquiry", NON_PGR_FUNCS, tests_inquiry },
-        { "Mandatory", NON_PGR_FUNCS, tests_mandatory },
-        { "ModeSense6", NON_PGR_FUNCS, tests_modesense6 },
-        { "NoMedia", NON_PGR_FUNCS, tests_nomedia },
-        { "OrWrite", NON_PGR_FUNCS, tests_orwrite },
-        { "Prefetch10", NON_PGR_FUNCS, tests_prefetch10 },
-        { "Prefetch16", NON_PGR_FUNCS, tests_prefetch16 },
-        { "PreventAllow", NON_PGR_FUNCS, tests_preventallow },
-        { "PrinReadKeys", NON_PGR_FUNCS, tests_prin_read_keys },
-        { "PrinServiceactionRange", NON_PGR_FUNCS, tests_prin_serviceaction_range },
-        { "PrinReportCapabilities", NON_PGR_FUNCS, tests_prin_report_caps },
-        { "ProutRegister", NON_PGR_FUNCS, tests_prout_register },
-        { "ProutReserve", NON_PGR_FUNCS, tests_prout_reserve },
-        { "ProutClear", NON_PGR_FUNCS, tests_prout_clear },
-        { "ProutPreempt", NON_PGR_FUNCS, tests_prout_preempt },
-        { "Read6", NON_PGR_FUNCS, tests_read6 },
-        { "Read10", NON_PGR_FUNCS, tests_read10 },
-        { "Read12", NON_PGR_FUNCS, tests_read12 },
-        { "Read16", NON_PGR_FUNCS, tests_read16 },
-        { "ReadCapacity10", NON_PGR_FUNCS, tests_readcapacity10 },
-        { "ReadCapacity16", NON_PGR_FUNCS, tests_readcapacity16 },
-        { "ReadDefectData10", NON_PGR_FUNCS, tests_readdefectdata10 },
-        { "ReadDefectData12", NON_PGR_FUNCS, tests_readdefectdata12 },
-        { "ReadOnly", NON_PGR_FUNCS, tests_readonly },
-        { "ReceiveCopyResults", NON_PGR_FUNCS, tests_receive_copy_results },
-        { "ReportSupportedOpcodes", NON_PGR_FUNCS,
-          tests_report_supported_opcodes },
-        { "Reserve6", NON_PGR_FUNCS, tests_reserve6 },
-        { "Sanitize", NON_PGR_FUNCS, tests_sanitize },
-        { "StartStopUnit", NON_PGR_FUNCS, tests_startstopunit },
-        { "TestUnitReady", NON_PGR_FUNCS, tests_testunitready },
-        { "Unmap", NON_PGR_FUNCS, tests_unmap },
-        { "Verify10", NON_PGR_FUNCS, tests_verify10 },
-        { "Verify12", NON_PGR_FUNCS, tests_verify12 },
-        { "Verify16", NON_PGR_FUNCS, tests_verify16 },
-        { "Write10", NON_PGR_FUNCS, tests_write10 },
-        { "Write12", NON_PGR_FUNCS, tests_write12 },
-        { "Write16", NON_PGR_FUNCS, tests_write16 },
-        { "WriteAtomic16", NON_PGR_FUNCS, tests_writeatomic16 },
-        { "WriteSame10", NON_PGR_FUNCS, tests_writesame10 },
-        { "WriteSame16", NON_PGR_FUNCS, tests_writesame16 },
-        { "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
-        { "WriteVerify12", NON_PGR_FUNCS, tests_writeverify12 },
-        { "WriteVerify16", NON_PGR_FUNCS, tests_writeverify16 },
-        { "MultipathIO", NON_PGR_FUNCS, tests_multipathio },
-        { NULL, NULL, NULL, NULL, NULL, NULL }
-};
-
-static CU_TestInfo tests_iscsi_cmdsn[] = {
-        { (char *)"iSCSICmdSnTooHigh", test_iscsi_cmdsn_toohigh },
-        { (char *)"iSCSICmdSnTooLow", test_iscsi_cmdsn_toolow },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_iscsi_datasn[] = {
-        { (char *)"iSCSIDataSnInvalid", test_iscsi_datasn_invalid },
-        CU_TEST_INFO_NULL
-};
-
-static CU_TestInfo tests_iscsi_residuals[] = {
-        { (char *)"Read10Invalid", test_read10_invalid },
-        { (char *)"Read10Residuals", test_read10_residuals },
-        { (char *)"Read12Residuals", test_read12_residuals },
-        { (char *)"Read16Residuals", test_read16_residuals },
-        { (char *)"Write10Residuals", test_write10_residuals },
-        { (char *)"Write12Residuals", test_write12_residuals },
-        { (char *)"Write16Residuals", test_write16_residuals },
-        { (char *)"WriteVerify10Residuals", test_writeverify10_residuals },
-        { (char *)"WriteVerify12Residuals", test_writeverify12_residuals },
-        { (char *)"WriteVerify16Residuals", test_writeverify16_residuals },
-        CU_TEST_INFO_NULL
-};
 
 static CU_TestInfo tests_iscsi_tmf[] = {
         { (char *)"AbortTaskSimpleAsync", test_async_abort_simple },
-        { (char *)"LUNResetSimpleAsync", test_async_lu_reset_simple },
         CU_TEST_INFO_NULL
 };
 
-/* iSCSI protocol tests */
-static libiscsi_suite_info iscsi_suites[] = {
-        { "iSCSIcmdsn", NON_PGR_FUNCS,
-          tests_iscsi_cmdsn },
-        { "iSCSIdatasn", NON_PGR_FUNCS,
-          tests_iscsi_datasn },
-        { "iSCSIResiduals", NON_PGR_FUNCS,
-          tests_iscsi_residuals },
-	{ "iSCSITMF", NON_PGR_FUNCS,
-	  tests_iscsi_tmf },
-        { NULL, NULL, NULL, NULL, NULL, NULL }
-};
-
-/* All tests */
-static libiscsi_suite_info all_suites[] = {
-        { "CompareAndWrite", NON_PGR_FUNCS, tests_compareandwrite },
-        { "ExtendedCopy", NON_PGR_FUNCS, tests_extended_copy },
-        { "GetLBAStatus", NON_PGR_FUNCS, tests_get_lba_status },
-        { "Inquiry", NON_PGR_FUNCS, tests_inquiry },
-        { "Mandatory", NON_PGR_FUNCS, tests_mandatory },
-        { "ModeSense6", NON_PGR_FUNCS, tests_modesense6 },
-        { "NoMedia", NON_PGR_FUNCS, tests_nomedia },
-        { "OrWrite", NON_PGR_FUNCS, tests_orwrite },
-        { "Prefetch10", NON_PGR_FUNCS, tests_prefetch10 },
-        { "Prefetch16", NON_PGR_FUNCS, tests_prefetch16 },
-        { "PreventAllow", NON_PGR_FUNCS, tests_preventallow },
-        { "PrinReadKeys", NON_PGR_FUNCS, tests_prin_read_keys },
-        { "PrinServiceactionRange", NON_PGR_FUNCS,
-          tests_prin_serviceaction_range },
-        { "PrinReportCapabilities", NON_PGR_FUNCS, tests_prin_report_caps },
-        { "ProutRegister", NON_PGR_FUNCS, tests_prout_register },
-        { "ProutReserve", NON_PGR_FUNCS, tests_prout_reserve },
-        { "ProutClear", NON_PGR_FUNCS, tests_prout_clear },
-        { "ProutPreempt", NON_PGR_FUNCS, tests_prout_preempt },
+/* SCSI protocol tests */
+static libiscsi_suite_info scsi_suites[] = {
         { "Read6", NON_PGR_FUNCS, tests_read6 },
         { "Read10", NON_PGR_FUNCS, tests_read10 },
         { "Read12", NON_PGR_FUNCS, tests_read12 },
         { "Read16", NON_PGR_FUNCS, tests_read16 },
-        { "ReadCapacity10", NON_PGR_FUNCS, tests_readcapacity10 },
-        { "ReadCapacity16", NON_PGR_FUNCS, tests_readcapacity16 },
-        { "ReadDefectData10", NON_PGR_FUNCS, tests_readdefectdata10 },
-        { "ReadDefectData12", NON_PGR_FUNCS, tests_readdefectdata12 },
-        { "ReadOnly", NON_PGR_FUNCS, tests_readonly },
-        { "ReceiveCopyResults", NON_PGR_FUNCS, tests_receive_copy_results },
-        { "ReportSupportedOpcodes", NON_PGR_FUNCS,
-          tests_report_supported_opcodes },
-        { "Reserve6", NON_PGR_FUNCS, tests_reserve6 },
-        { "Sanitize", NON_PGR_FUNCS, tests_sanitize },
-        { "StartStopUnit", NON_PGR_FUNCS, tests_startstopunit },
-        { "TestUnitReady", NON_PGR_FUNCS, tests_testunitready },
         { "Unmap", NON_PGR_FUNCS, tests_unmap },
-        { "Verify10", NON_PGR_FUNCS, tests_verify10 },
-        { "Verify12", NON_PGR_FUNCS, tests_verify12 },
-        { "Verify16", NON_PGR_FUNCS, tests_verify16 },
         { "Write10", NON_PGR_FUNCS, tests_write10 },
         { "Write12", NON_PGR_FUNCS, tests_write12 },
         { "Write16", NON_PGR_FUNCS, tests_write16 },
-        { "WriteAtomic16", NON_PGR_FUNCS, tests_writeatomic16 },
-        { "WriteSame10", NON_PGR_FUNCS, tests_writesame10 },
-        { "WriteSame16", NON_PGR_FUNCS, tests_writesame16 },
-        { "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
-        { "WriteVerify12", NON_PGR_FUNCS, tests_writeverify12 },
-        { "WriteVerify16", NON_PGR_FUNCS, tests_writeverify16 },
-        { "iSCSIcmdsn", NON_PGR_FUNCS, tests_iscsi_cmdsn },
-        { "iSCSIdatasn", NON_PGR_FUNCS, tests_iscsi_datasn },
-        { "iSCSIResiduals", NON_PGR_FUNCS, tests_iscsi_residuals },
 	{ "iSCSITMF", NON_PGR_FUNCS, tests_iscsi_tmf },
-        { "MultipathIO", NON_PGR_FUNCS, tests_multipathio },
-        { NULL, NULL, NULL, NULL, NULL, NULL },
-};
-
-static libiscsi_suite_info linux_suites[] = {
-        { "CompareAndWrite", NON_PGR_FUNCS, tests_compareandwrite },
-        { "GetLBAStatus", NON_PGR_FUNCS, tests_get_lba_status },
-        { "Inquiry", NON_PGR_FUNCS, tests_inquiry },
-        { "Mandatory", NON_PGR_FUNCS, tests_mandatory },
-        { "ModeSense6", NON_PGR_FUNCS, tests_modesense6 },
-        { "OrWrite", NON_PGR_FUNCS, tests_orwrite },
-        { "Prefetch10", NON_PGR_FUNCS, tests_prefetch10 },
-        { "Prefetch16", NON_PGR_FUNCS, tests_prefetch16 },
-        { "Read10", NON_PGR_FUNCS, tests_read10 },
-        { "Read12", NON_PGR_FUNCS, tests_read12 },
-        { "Read16", NON_PGR_FUNCS, tests_read16 },
-        { "ReadCapacity10", NON_PGR_FUNCS, tests_readcapacity10 },
-        { "ReadCapacity16", NON_PGR_FUNCS, tests_readcapacity16 },
-        { "ReadDefectData10", NON_PGR_FUNCS, tests_readdefectdata10 },
-        { "ReadDefectData12", NON_PGR_FUNCS, tests_readdefectdata12 },
-        { "ReadOnly", NON_PGR_FUNCS, tests_readonly },
-        { "ReportSupportedOpcodes", NON_PGR_FUNCS,
-          tests_report_supported_opcodes },
-        { "TestUnitReady", NON_PGR_FUNCS, tests_testunitready },
-        { "Unmap", NON_PGR_FUNCS, tests_unmap },
-        { "Verify10", NON_PGR_FUNCS, tests_verify10 },
-        { "Verify12", NON_PGR_FUNCS, tests_verify12 },
-        { "Verify16", NON_PGR_FUNCS, tests_verify16 },
-        { "Write10", NON_PGR_FUNCS, tests_write10 },
-        { "Write12", NON_PGR_FUNCS, tests_write12 },
-        { "Write16", NON_PGR_FUNCS, tests_write16 },
-        { "WriteAtomic16", NON_PGR_FUNCS, tests_writeatomic16 },
-        { "WriteSame10", NON_PGR_FUNCS, tests_writesame10 },
-        { "WriteSame16", NON_PGR_FUNCS, tests_writesame16 },
-        { "WriteVerify10", NON_PGR_FUNCS, tests_writeverify10 },
-        { "WriteVerify12", NON_PGR_FUNCS, tests_writeverify12 },
-        { "WriteVerify16", NON_PGR_FUNCS, tests_writeverify16 },
-        { "MultipathIO", NON_PGR_FUNCS, tests_multipathio },
-        { NULL, NULL, NULL, NULL, NULL, NULL },
+        { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
 struct test_family {
@@ -698,10 +178,7 @@ struct test_family {
 };
 
 static struct test_family families[] = {
-        { "ALL",                all_suites },
         { "SCSI",                scsi_suites },
-        { "iSCSI",                iscsi_suites },
-        { "LINUX",                linux_suites },
         { NULL, NULL}
 };
 
@@ -1213,7 +690,6 @@ main(int argc, char *argv[])
                 }
                 mp_num_sds++;
         }
-
         /* So that we can override iscsi_queue_pdu in tests
          * and replace or mutate the blob that we are about to write to the
          * wire.
@@ -1368,6 +844,7 @@ main(int argc, char *argv[])
         }
 
         /* try reading block device characteristics vpd */
+	/*
         inquiry(sd, &inq_bdc_task, 1, SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS, 255,
                 EXPECT_STATUS_GOOD);
         if (inq_bdc_task == NULL || inq_bdc_task->status != SCSI_STATUS_GOOD) {
@@ -1379,7 +856,7 @@ main(int argc, char *argv[])
                         goto err_sds_free;
                 }
         }
-
+	*/
         /* if thin provisioned we also need to read the VPD page for it */
         if (rc16 && rc16->lbpme != 0){
                 inq_lbp_task = NULL;

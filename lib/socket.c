@@ -1,3 +1,4 @@
+/* -*-  mode:c; tab-width:8; c-basic-offset:8; indent-tabs-mode:nil;  -*- */
 /*
    Copyright (C) 2010 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
 
@@ -269,7 +270,7 @@ static int iscsi_tcp_connect(struct iscsi_context *iscsi, union socket_address *
 	} else {
 		ISCSI_LOG(iscsi,3,"TCP_NODELAY set to 1");
 	}
-
+	printf("##### Connecting");
 	if (connect(iscsi->fd, &sa->sa, socksize) != 0
 #if defined(_WIN32)
             && WSAGetLastError() != WSAEWOULDBLOCK

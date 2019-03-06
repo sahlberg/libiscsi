@@ -10,75 +10,11 @@ dist_noinst_HEADERS = iscsi-support.h \
 		      iscsi-test-cu.h iscsi-multipath.h
 
 # libiscsi test tool using cunit
-if ISCSITEST
 bin_PROGRAMS = iscsi-test-cu
 iscsi_test_cu_LDFLAGS = -ldl -lcunit
 iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	iscsi-support.c \
 	iscsi-multipath.c \
-	test_compareandwrite_simple.c \
-	test_compareandwrite_dpofua.c \
-	test_compareandwrite_miscompare.c \
-	test_compareandwrite_unwritten.c \
-	test_compareandwrite_invalid_dataout_size.c \
-	test_extendedcopy_simple.c \
-	test_extendedcopy_param.c \
-	test_extendedcopy_descr_limits.c \
-	test_extendedcopy_descr_type.c \
-	test_extendedcopy_validate_tgt_descr.c \
-	test_extendedcopy_validate_seg_descr.c \
-	test_get_lba_status_simple.c \
-	test_get_lba_status_beyond_eol.c \
-	test_get_lba_status_unmap_single.c \
-	test_inquiry_alloc_length.c \
-	test_inquiry_block_limits.c \
-	test_inquiry_evpd.c \
-	test_inquiry_mandatory_vpd_sbc.c \
-	test_inquiry_standard.c \
-	test_inquiry_supported_vpd.c \
-	test_inquiry_version_descriptors.c \
-	test_iscsi_cmdsn_toohigh.c \
-	test_iscsi_cmdsn_toolow.c \
-	test_iscsi_datasn_invalid.c \
-	test_mandatory_sbc.c \
-	test_modesense6_all_pages.c \
-	test_modesense6_control.c \
-	test_modesense6_control_d_sense.c \
-	test_modesense6_control_swp.c \
-	test_modesense6_residuals.c \
-	test_nomedia_sbc.c \
-	test_orwrite_simple.c \
-	test_orwrite_beyond_eol.c \
-	test_orwrite_0blocks.c \
-	test_orwrite_wrprotect.c \
-	test_orwrite_dpofua.c \
-	test_orwrite_verify.c \
-	test_prefetch10_simple.c \
-	test_prefetch10_beyond_eol.c \
-	test_prefetch10_0blocks.c \
-	test_prefetch10_flags.c \
-	test_prefetch16_simple.c \
-	test_prefetch16_beyond_eol.c \
-	test_prefetch16_0blocks.c \
-	test_prefetch16_flags.c \
-	test_preventallow_simple.c \
-	test_preventallow_eject.c \
-	test_preventallow_itnexus_loss.c \
-	test_preventallow_logout.c \
-	test_preventallow_warm_reset.c \
-	test_preventallow_cold_reset.c \
-	test_preventallow_lun_reset.c \
-	test_preventallow_2_itnexuses.c \
-	test_prin_read_keys_simple.c \
-	test_prin_read_keys_truncate.c \
-	test_prin_serviceaction_range.c \
-	test_prin_report_caps.c \
-	test_prout_register_simple.c \
-	test_prout_reserve_simple.c \
-	test_prout_reserve_access.c \
-	test_prout_reserve_ownership.c \
-	test_prout_clear_simple.c \
-	test_prout_preempt.c \
 	test_read6_simple.c \
 	test_read6_beyond_eol.c \
 	test_read10_simple.c \
@@ -100,69 +36,9 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_read16_rdprotect.c \
 	test_read16_dpofua.c \
 	test_read16_residuals.c \
-	test_readcapacity10_simple.c \
-	test_readcapacity16_alloclen.c \
-	test_readcapacity16_protection.c \
-	test_readcapacity16_simple.c \
-	test_readcapacity16_support.c \
-	test_readdefectdata10_simple.c \
-	test_readdefectdata12_simple.c \
-	test_readonly_sbc.c \
-	test_receive_copy_results_copy_status.c \
-	test_receive_copy_results_op_params.c \
-	test_report_supported_opcodes_one_command.c \
-	test_report_supported_opcodes_rctd.c \
-	test_report_supported_opcodes_servactv.c \
-	test_report_supported_opcodes_simple.c \
-	test_reserve6_simple.c \
-	test_reserve6_2initiators.c \
-	test_reserve6_logout.c \
-	test_reserve6_itnexus_loss.c \
-	test_reserve6_target_warm_reset.c \
-	test_reserve6_target_cold_reset.c \
-	test_reserve6_lun_reset.c \
-	test_sanitize_block_erase.c \
-	test_sanitize_block_erase_reserved.c \
-	test_sanitize_crypto_erase.c \
-	test_sanitize_crypto_erase_reserved.c \
-	test_sanitize_exit_failure_mode.c \
-	test_sanitize_invalid_serviceaction.c \
-	test_sanitize_overwrite.c \
-	test_sanitize_overwrite_reserved.c \
-	test_sanitize_readonly.c \
-	test_sanitize_reservations.c \
-	test_sanitize_reset.c \
-	test_startstopunit_simple.c \
-	test_startstopunit_pwrcnd.c \
-	test_startstopunit_noloej.c \
-	test_testunitready_simple.c \
 	test_unmap_simple.c \
 	test_unmap_0blocks.c \
 	test_unmap_vpd.c \
-	test_verify10_simple.c \
-	test_verify10_beyond_eol.c \
-	test_verify10_0blocks.c \
-	test_verify10_vrprotect.c \
-	test_verify10_flags.c \
-	test_verify10_dpo.c \
-	test_verify10_mismatch.c \
-	test_verify10_mismatch_no_cmp.c \
-	test_verify12_simple.c \
-	test_verify12_beyond_eol.c \
-	test_verify12_0blocks.c \
-	test_verify12_vrprotect.c \
-	test_verify12_flags.c \
-	test_verify12_dpo.c \
-	test_verify12_mismatch.c \
-	test_verify12_mismatch_no_cmp.c \
-	test_verify16_simple.c \
-	test_verify16_beyond_eol.c \
-	test_verify16_0blocks.c \
-	test_verify16_vrprotect.c \
-	test_verify16_flags.c \
-	test_verify16_dpo.c \
-	test_verify16_mismatch.c \
-	test_verify16_mismatch_no_cmp.c \
 	test_write10_simple.c \
 	test_write10_beyond_eol.c \
 	test_write10_0blocks.c \
@@ -181,63 +57,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_write16_wrprotect.c \
 	test_write16_dpofua.c \
 	test_write16_residuals.c \
-	test_writeatomic16_simple.c \
-	test_writeatomic16_beyond_eol.c \
-	test_writeatomic16_0blocks.c \
-	test_writeatomic16_wrprotect.c \
-	test_writeatomic16_dpofua.c \
-	test_writeatomic16_vpd.c \
-	test_writesame10_simple.c \
-	test_writesame10_beyond_eol.c \
-	test_writesame10_0blocks.c \
-	test_writesame10_wrprotect.c \
-	test_writesame10_unmap.c \
-	test_writesame10_unmap_unaligned.c \
-	test_writesame10_unmap_until_end.c \
-	test_writesame10_unmap_vpd.c \
-	test_writesame10_check.c \
-	test_writesame10_invalid_dataout_size.c \
-	test_writesame16_simple.c \
-	test_writesame16_beyond_eol.c \
-	test_writesame16_0blocks.c \
-	test_writesame16_wrprotect.c \
-	test_writesame16_unmap.c \
-	test_writesame16_unmap_unaligned.c \
-	test_writesame16_unmap_until_end.c \
-	test_writesame16_unmap_vpd.c \
-	test_writesame16_check.c \
-	test_writesame16_invalid_dataout_size.c \
-	test_writeverify10_simple.c \
-	test_writeverify10_beyond_eol.c \
-	test_writeverify10_0blocks.c \
-	test_writeverify10_wrprotect.c \
-	test_writeverify10_flags.c \
-	test_writeverify10_dpo.c \
-	test_writeverify10_residuals.c \
-	test_writeverify12_simple.c \
-	test_writeverify12_beyond_eol.c \
-	test_writeverify12_0blocks.c \
-	test_writeverify12_wrprotect.c \
-	test_writeverify12_flags.c \
-	test_writeverify12_dpo.c \
-	test_writeverify12_residuals.c \
-	test_writeverify16_simple.c \
-	test_writeverify16_beyond_eol.c \
-	test_writeverify16_0blocks.c \
-	test_writeverify16_wrprotect.c \
-	test_writeverify16_flags.c \
-	test_writeverify16_dpo.c \
-	test_writeverify16_residuals.c \
-	test_multipathio_simple.c \
-	test_multipathio_reset.c \
-	test_multipathio_compareandwrite.c \
-	test_multipathio_async_caw.c \
 	test_async_read.c \
 	test_async_write.c \
-	test_async_abort_simple.c \
-	test_async_lu_reset_simple.c
-
-endif
-
-
+	test_async_abort_simple.c
 

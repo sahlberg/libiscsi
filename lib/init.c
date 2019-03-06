@@ -1,3 +1,4 @@
+/* -*-  mode:c; tab-width:8; c-basic-offset:8; indent-tabs-mode:nil;  -*- */
 /*
    Copyright (C) 2010 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
 
@@ -225,7 +226,7 @@ iscsi_create_context(const char *initiator_name)
 	strncpy(iscsi->initiator_name,initiator_name,MAX_STRING_SIZE);
 
 	iscsi->fd = -1;
-
+	printf("\niscsi->initiator_name:%s", iscsi->initiator_name);
 	/* initialize to a "random" isid */
 	iscsi_srand_init(iscsi);
 	iscsi_set_isid_random(iscsi, rand(), 0);

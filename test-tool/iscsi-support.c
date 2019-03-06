@@ -1,3 +1,4 @@
+/* -*-  mode:c; tab-width:8; c-basic-offset:8; indent-tabs-mode:nil;  -*- */
 /*
    iscsi-test tool support
 
@@ -460,11 +461,8 @@ void logging(int level, const char *format, ...)
         va_list ap;
         static char message[1024];
         int ret;
-
         if (loglevel < level) {
-                return;
         }
-
         if (strncmp(LOG_BLANK_LINE, format, LOG_BLANK_LINE_CMP_LEN)==0) {
                 printf("\n");
                 return;

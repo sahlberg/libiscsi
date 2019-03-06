@@ -1352,6 +1352,7 @@ iscsi_iser_connect(struct iscsi_context *iscsi, union socket_address *sa,__attri
 	struct iser_conn *iser_conn = iscsi->opaque;
 	int ret;
 
+	printf("\n####iser connecting");
 	sem_init(&iser_conn->sem_connect, 0, 0);
 
 	iser_conn->cma_channel = rdma_create_event_channel();

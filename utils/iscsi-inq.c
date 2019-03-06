@@ -1,3 +1,4 @@
+/* -*-  mode:c; tab-width:8; c-basic-offset:8; indent-tabs-mode:nil;  -*- */
 /* 
    Copyright (C) 2010 by Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -253,6 +254,7 @@ int main(int argc, char *argv[])
 	};
 	int option_index;
 
+	printf("\nISCSI INQ:");
 	while ((c = getopt_long(argc, argv, "h?udi:e:c:", long_options,
 			&option_index)) != -1) {
 		switch (c) {
@@ -326,6 +328,7 @@ int main(int argc, char *argv[])
 	iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
 	iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
 
+	printf("\n#### Calling iscsi_full_connect_sync\n");
 	if (iscsi_full_connect_sync(iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
 		fprintf(stderr, "Login Failed. %s\n", iscsi_get_error(iscsi));
 		iscsi_destroy_url(iscsi_url);

@@ -97,6 +97,7 @@ test_async_abort_simple(void)
 	unsigned char buf[blocksize * blocks_per_io];
 	uint64_t timeout_sec;
 
+	printf("\nCalled test_async_abort_simple");
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 	if (sd->iscsi_ctx == NULL) {

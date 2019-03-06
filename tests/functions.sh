@@ -1,11 +1,17 @@
 export TGT_IPC_SOCKET=`pwd`/tgtd.socket 
 
-TGTD="tgtd"
+TGTD="/usr/sbin/tgtd"
 TGTADM="tgtadm"
 TGTLUN=`pwd`/LUN
-TGTPORTAL=127.0.0.1:3269
+TGTPORTAL=127.0.0.1:3260
+ETCDIP="http://127.0.0.1:2379"
+SVC_LABLE="tgt_svc"
+TGT_VERSION="v1.0"
+HA_SVC_PORT=9001
+STORD_IP="127.0.0.1"
+STORD_PORT="9876"
 
-IQNTARGET=iqn.libiscsi.unittest.target
+IQNTARGET=test-1
 IQNINITIATOR=iqn.libiscsi.unittest.initiator
 TGTURL=iscsi://${TGTPORTAL}/${IQNTARGET}/1
 
@@ -13,12 +19,12 @@ start_target() {
     # in case we have one still running from a previous run
     ${TGTADM} --op delete --force --mode target --tid 1 2>/dev/null
     ${TGTADM} --op delete --mode system 2>/dev/null
-    # Setup target
-    echo "Starting iSCSI target"
-    ${TGTD} --iscsi portal=${TGTPORTAL},${1}
-    sleep 1
-    ${TGTADM} --op new --mode target --tid 1 -T ${IQNTARGET}
+    tgtadm --op new --mode target --tid 1 -T iqn.libiscsi.unittest.target
+    echo "status:$?"
+    echo "${TGTADM} --op new --mode target --tid 1 -T ${IQNTARGET}"
     ${TGTADM} --op bind --mode target --tid 1 -I ALL
+    echo "status:$?"
+    echo "${TGTADM} --op bind --mode target --tid 1 -I ALL"
 }
 
 shutdown_target() {
@@ -48,6 +54,9 @@ create_disk_lun() {
     # Setup LUN
     truncate --size=$2 ${TGTLUN}.$1
     ${TGTADM} --op new --mode logicalunit --tid 1 --lun $1 -b ${TGTLUN}.$1 --blocksize=512
+
+    iscsiadm -m discovery -t sendtargets -p 127.0.0.1:3260
+    iscsiadm -m node --targetname "iqn.libiscsi.unittest.target" --portal "127.0.0.1:3260" --login
 }
 
 delete_disk_lun() {

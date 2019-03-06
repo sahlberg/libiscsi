@@ -1,3 +1,4 @@
+/* -*-  mode:c; tab-width:8; c-basic-offset:8; indent-tabs-mode:nil;  -*- */
 /* 
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -32,14 +33,18 @@ test_unmap_simple(void)
         int max_nr_bdc = 256;
         struct unmap_list list[257];
 
+	printf("\ntest_unmap_simple");
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test basic UNMAP");
 
+	printf("\nCheck for dataloss");
         CHECK_FOR_DATALOSS;
+	printf("\nCheck for thin provisioning");
         CHECK_FOR_THIN_PROVISIONING;
+	printf("\nCheck for sbc");
         CHECK_FOR_SBC;
 
-
+	printf("\nTest UNMAP of 1-256 blocks at the start of the");
         logging(LOG_VERBOSE, "Test UNMAP of 1-256 blocks at the start of the "
                 "LUN as a single descriptor");
 

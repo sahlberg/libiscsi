@@ -1,0 +1,18 @@
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+fd0      2:0    1    4K  0 disk 
+loop0    7:0    0   91M  1 loop /snap/core/6405
+loop1    7:1    0   91M  1 loop /snap/core/6350
+loop2    7:2    0 91.1M  1 loop /snap/core/6259
+sda      8:0    0  128G  0 disk 
+├─sda1   8:1    0    1M  0 part 
+└─sda2   8:2    0  128G  0 part /
+sr0     11:0    1 1024M  0 rom  
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+fd0      2:0    1    4K  0 disk 
+loop0    7:0    0   91M  1 loop /snap/core/6405
+loop1    7:1    0   91M  1 loop /snap/core/6350
+loop2    7:2    0 91.1M  1 loop /snap/core/6259
+sda      8:0    0  128G  0 disk 
+├─sda1   8:1    0    1M  0 part 
+└─sda2   8:2    0  128G  0 part /
+sr0     11:0    1 1024M  0 rom  

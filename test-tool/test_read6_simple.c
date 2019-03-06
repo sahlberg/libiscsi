@@ -1,3 +1,4 @@
+/* -*-  mode:c; tab-width:8; c-basic-offset:8; indent-tabs-mode:nil;  -*- */
 /* 
    Copyright (C) 2013 Ronnie Sahlberg <ronniesahlberg@gmail.com>
    
@@ -30,6 +31,7 @@ test_read6_simple(void)
 {
         int i;
 
+	printf("Test READ6 of 1-255 blocks at the start of the LUN");
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test READ6 of 1-255 blocks at the start of the LUN");
         for (i = 1; i <= 255; i++) {
