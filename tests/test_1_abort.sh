@@ -2,12 +2,11 @@
 
 . ./functions.sh
 
-echo "iscsi-test-cu Read6 test"
+echo "ABORT - TASK MANAGEMENT FUNCTION TEST"
 
 python3 ./utils/tgt_crash_test.py
-echo -n "SCSI.iSCSITMF ... "
+echo -n "../test-tool/iscsi-test-cu -i ${IQNINITIATOR} iscsi://${TGTPORTAL}/${IQNTARGET}/1 -t SCSI.iSCSITMF --dataloss"
 ../test-tool/iscsi-test-cu -i ${IQNINITIATOR} iscsi://${TGTPORTAL}/${IQNTARGET}/1 -t SCSI.iSCSITMF --dataloss || failure
-#../test-tool/iscsi-test-cu -i ${IQNINITIATOR} iscsi://${TGTPORTAL}/${IQNTARGET}/1 -t SCSI.Unmap --dataloss || failure
 success
 
 shutdown_target
