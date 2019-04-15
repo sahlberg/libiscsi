@@ -1245,11 +1245,12 @@ main(int argc, char *argv[])
                                 "Failed to connect to SCSI device %d\n", i);
                         goto err_sds_free;
                 }
-                if (clear_pr(mp_sds[i]) < 0) {
-                        printf("One or more persistent reservations keys have been registered\n");
-                        return -1;
-                }
         }
+
+	if (clear_pr(sd) < 0) {
+		printf("One or more persistent reservations keys have been registered\n");
+		goto err_sds_free;
+	}
 
         if (mp_num_sds > 1) {
                 /* check that all multipath sds identify as the same LU */
