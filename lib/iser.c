@@ -1422,6 +1422,9 @@ void iscsi_init_iser_transport(struct iscsi_context *iscsi)
 	iscsi->drv = &iscsi_transport_iser;
 	iscsi->opaque = iscsi_malloc(iscsi, sizeof(struct iser_conn));
 	iscsi->transport = ISER_TRANSPORT;
+	/* Update iSCSI params as per iSER transport */
+	iscsi->initiator_max_recv_data_segment_length = ISCSI_DEF_MAX_RECV_SEG_LEN;
+	iscsi->target_max_recv_data_segment_length = ISCSI_DEF_MAX_RECV_SEG_LEN;
 }
 
 #endif
