@@ -585,6 +585,87 @@ iscsi_login_add_chap_username(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 }
 
 static int
+iscsi_login_add_rdma_extensions(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char str[MAX_STRING_SIZE+1];
+
+	/* We only send DataSequenceInOrder during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+	/* RDMAExtensions is only valid for iSER transport */
+	if (iscsi->transport != ISER_TRANSPORT)
+	{
+		return 0;
+	}
+	strncpy(str,"RDMAExtensions=Yes",MAX_STRING_SIZE);
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+	    != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_initiatorrecvdatasegmentlength(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char str[MAX_STRING_SIZE+1];
+
+	/* We only send InitiatorRecvDataSegmentLength during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+	/* InitiatorRecvDataSegmentLength is only valid for iSER transport */
+	if (iscsi->transport != ISER_TRANSPORT)
+	{
+		return 0;
+	}
+
+	if (snprintf(str, MAX_STRING_SIZE, "InitiatorRecvDataSegmentLength=%d",
+                 iscsi->initiator_max_recv_data_segment_length) == -1) {
+		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
+		return -1;
+	}
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1) != 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+iscsi_login_add_targetrecvdatasegmentlength(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	char str[MAX_STRING_SIZE+1];
+
+	/* We only send InitiatorRecvDataSegmentLength during opneg */
+	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG) {
+		return 0;
+	}
+	/* TargetRecvDataSegmentLength is only valid for iSER transport */
+	if (iscsi->transport != ISER_TRANSPORT)
+	{
+		return 0;
+	}
+
+	if (snprintf(str, MAX_STRING_SIZE, "TargetRecvDataSegmentLength=%d",
+				 iscsi->target_max_recv_data_segment_length) == -1) {
+		iscsi_set_error(iscsi, "Out-of-memory: aprintf failed.");
+		return -1;
+	}
+	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
+		!= 0) {
+		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
 h2i(int h)
 {
 	if (h >= 'a' && h <= 'f') {
@@ -997,6 +1078,23 @@ iscsi_login_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		return -1;
 	}
 
+	/* rdmaextensions */
+	if (iscsi_login_add_rdma_extensions(iscsi, pdu) != 0) {
+		iscsi->drv->free_pdu(iscsi, pdu);
+		return -1;
+	}
+
+	/* initiator recv data segment length */
+	if (iscsi_login_add_initiatorrecvdatasegmentlength(iscsi, pdu) != 0) {
+		iscsi->drv->free_pdu(iscsi, pdu);
+		return -1;
+	}
+
+	/* target recv data segment length */
+	if (iscsi_login_add_targetrecvdatasegmentlength(iscsi, pdu) != 0) {
+		iscsi->drv->free_pdu(iscsi, pdu);
+		return -1;
+	}
 
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
@@ -1141,6 +1239,17 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		if (!strncmp(ptr, "MaxRecvDataSegmentLength=", 25)) {
 			iscsi->target_max_recv_data_segment_length = strtol(ptr + 25, NULL, 10);
 		}
+
+        /* iSER specific keys */
+        if (!strncmp(ptr, "InitiatorRecvDataSegmentLength=", 31)) {
+			iscsi->initiator_max_recv_data_segment_length = MIN(strtol(ptr + 31, NULL, 10),
+                                                             iscsi->initiator_max_recv_data_segment_length);
+        }
+        if (!strncmp(ptr, "TargetRecvDataSegmentLength=", 28)) {
+			iscsi->target_max_recv_data_segment_length = MIN(strtol(ptr + 28, NULL, 10),
+                                                             iscsi->target_max_recv_data_segment_length);
+        }
+
 
 		if (!strncmp(ptr, "AuthMethod=", 11)) {
 			if (!strcmp(ptr + 11, "CHAP")) {
