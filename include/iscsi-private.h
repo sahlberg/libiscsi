@@ -25,6 +25,8 @@
 #define ssize_t SSIZE_T
 #endif
 
+#include "iscsi.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

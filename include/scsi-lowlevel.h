@@ -23,6 +23,9 @@
 #define EXTERN
 #endif
 
+#include <stdint.h>
+#include <sys/types.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

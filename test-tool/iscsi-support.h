@@ -27,6 +27,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include "iscsi.h"
+#include "scsi-lowlevel.h"
+
 #ifndef discard_const
 #define discard_const(ptr) ((void *)((intptr_t)(ptr)))
 #endif

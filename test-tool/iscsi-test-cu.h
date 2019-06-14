@@ -29,6 +29,7 @@
 #include "config.h"
 #endif
 
+#include "iscsi.h"
 #include "iscsi-support.h"
 
 /* globals between setup, tests, and teardown */
