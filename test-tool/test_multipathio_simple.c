@@ -40,11 +40,12 @@ test_multipathio_simple(void)
         MPATH_SKIP_IF_UNAVAILABLE(mp_sds, mp_num_sds);
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
-        memset(write_buf, 0xa6, 256 * block_size);
 
         for (write_path = 0; write_path < mp_num_sds; write_path++) {
                 int i;
                 int read_path;
+
+                memset(write_buf, 0xa6 ^ write_path, 256 * block_size);
 
                 /* read back written data using a different path */
                 read_path = (write_path + 1) % mp_num_sds;
