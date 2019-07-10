@@ -103,11 +103,10 @@ test_mpio_async_caw(void)
 	int i, ret;
 	int sd_i;
 	struct test_mpio_async_caw_state state = { 0, 0, 0 };
-	int blocksize = 512;
 	int num_ios = 1000;
 	uint32_t lba = 0;
-	unsigned char cmp_buf[blocksize * mp_num_sds];
-	unsigned char wr_buf[blocksize * mp_num_sds];
+	unsigned char cmp_buf[block_size * mp_num_sds];
+	unsigned char wr_buf[block_size * mp_num_sds];
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -119,27 +118,27 @@ test_mpio_async_caw(void)
 	WRITESAME10(mp_sds[0], 0, block_size, 1, 0, 0, 0, 0, wr_buf,
 		    EXPECT_STATUS_GOOD);
 
-	test_mpio_async_caw_init_bufs(cmp_buf, wr_buf, blocksize, mp_num_sds);
+	test_mpio_async_caw_init_bufs(cmp_buf, wr_buf, block_size, mp_num_sds);
 
 	for (i = 0; i < num_ios; i++) {
 		/* queue a one-block CAW task on each MPIO sessions */
 		for (sd_i = 0; sd_i < mp_num_sds; sd_i++) {
 			struct scsi_task *atask;
-			int buf_off = sd_i * blocksize;
+			int buf_off = sd_i * block_size;
 
-			atask = scsi_cdb_compareandwrite(lba, blocksize * 2,
-							 blocksize,
+			atask = scsi_cdb_compareandwrite(lba, block_size * 2,
+							 block_size,
 							 0, 0, 0, 0, 0);
 			CU_ASSERT_PTR_NOT_NULL_FATAL(atask);
 
 			/* compare data is first, followed by write data */
 			ret = scsi_task_add_data_out_buffer(atask,
-							    blocksize,
+							    block_size,
 							    &cmp_buf[buf_off]);
 			CU_ASSERT_EQUAL(ret, 0);
 
 			ret = scsi_task_add_data_out_buffer(atask,
-							    blocksize,
+							    block_size,
 							    &wr_buf[buf_off]);
 			CU_ASSERT_EQUAL(ret, 0);
 
