@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.18.0
+Version: 1.19.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -110,6 +110,13 @@ Test tool for iSCSI/SCSI targets
 
 
 %changelog
+* Sun Jul 14 2019 : 1.19.0
+ - iSER improvements
+ - Add support to senable/disable digests via URL arguments
+ - Add XCOPY support to examples/dd
+ - Add support for EXTENDED_COPY and RECEIVE_COPY_RESULTS
+ - Performance improvements for reading from the socket.
+ - Test improvements
 * Sun Oct 9 2016 : 1.18.0
  - Various updates to the test utility
  - Add transport abstraction

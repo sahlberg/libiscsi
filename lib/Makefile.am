@@ -14,7 +14,7 @@ if HAVE_LINUX_ISER
 libiscsi_la_SOURCES += iser.c
 endif
 
-SOCURRENT=8
+SOCURRENT=9
 SOREVISON=0
 SOAGE=0
 libiscsi_la_LDFLAGS = \
