@@ -21,7 +21,7 @@ EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt \
 	     packaging/RPM/libiscsi.spec.in packaging/RPM/makerpms.sh \
 	     aros/aros_compat.c aros/aros_compat.h aros/iscsi-ls.c \
 	     aros/Makefile.AROS test-tool/iscsi-multipath.h \
-	     win32/vsbuild.bat win32/win32_compat.c win32/win32_compat.h \
+	     win32/win32_compat.c win32/win32_compat.h \
 	     patches/mtx-iscsi.diff patches/README patches/sg3_utils-1.32.patch
 
 pkgconfigdir = $(libdir)/pkgconfig
