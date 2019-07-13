@@ -60,11 +60,10 @@ test_async_read(void)
 {
 	int i, ret;
 	struct tests_async_read_state state = { 0, 0, 0 };
-	const int blocksize = 512;
 	const int blocks_per_io = 8;
 	const int num_ios = 1000;
 	/* IOs in flight concurrently, so need a buffer large enough for all */
-	unsigned char *buf = calloc(blocksize * blocks_per_io, num_ios);
+	unsigned char *buf = calloc(block_size * blocks_per_io, num_ios);
 
 	CU_ASSERT_NOT_EQUAL(buf, NULL);
 	if (!buf)
@@ -87,13 +86,13 @@ test_async_read(void)
 		uint32_t lba = i * blocks_per_io;
 		struct scsi_task *atask;
 
-		atask = scsi_cdb_read10(lba, blocks_per_io * blocksize,
-				       blocksize, 0, 0, 0, 0, 0);
+		atask = scsi_cdb_read10(lba, blocks_per_io * block_size,
+				       block_size, 0, 0, 0, 0, 0);
 		CU_ASSERT_PTR_NOT_NULL_FATAL(atask);
 
 		ret = scsi_task_add_data_in_buffer(atask,
-						   blocks_per_io * blocksize,
-						   &buf[lba * blocksize]);
+						   blocks_per_io * block_size,
+						   &buf[lba * block_size]);
 		CU_ASSERT_EQUAL(ret, 0);
 
 		ret = iscsi_scsi_command_async(sd->iscsi_ctx, sd->iscsi_lun,

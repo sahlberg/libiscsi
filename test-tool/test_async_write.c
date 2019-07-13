@@ -59,11 +59,10 @@ test_async_write(void)
 {
 	int i, ret;
 	struct tests_async_write_state state = { 0, 0, 0 };
-	int blocksize = 512;
 	int blocks_per_io = 8;
 	int num_ios = 1000;
 	/* IOs in flight concurrently, but all using the same src buffer */
-	unsigned char buf[blocksize * blocks_per_io];
+	unsigned char buf[block_size * blocks_per_io];
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -78,18 +77,18 @@ test_async_write(void)
 		return;
 	}
 
-	memset(buf, 0, blocksize * blocks_per_io);
+	memset(buf, 0, block_size * blocks_per_io);
 
 	for (i = 0; i < num_ios; i++) {
 		uint32_t lba = i * blocks_per_io;
 		struct scsi_task *atask;
 
-		atask = scsi_cdb_write10(lba, blocks_per_io * blocksize,
-					 blocksize, 0, 0, 0, 0, 0);
+		atask = scsi_cdb_write10(lba, blocks_per_io * block_size,
+					 block_size, 0, 0, 0, 0, 0);
 		CU_ASSERT_PTR_NOT_NULL_FATAL(atask);
 
 		ret = scsi_task_add_data_out_buffer(atask,
-						    blocks_per_io * blocksize,
+						    blocks_per_io * block_size,
 						    buf);
 		CU_ASSERT_EQUAL(ret, 0);
 
