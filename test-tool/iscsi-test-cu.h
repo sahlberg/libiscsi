@@ -78,6 +78,7 @@ void test_iscsi_cmdsn_toohigh(void);
 void test_iscsi_cmdsn_toolow(void);
 
 void test_iscsi_datasn_invalid(void);
+void test_iscsi_sendtargets_simple(void);
 
 void test_mandatory_sbc(void);
 

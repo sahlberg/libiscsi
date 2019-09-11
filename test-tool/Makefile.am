@@ -40,6 +40,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_iscsi_cmdsn_toohigh.c \
 	test_iscsi_cmdsn_toolow.c \
 	test_iscsi_datasn_invalid.c \
+	test_iscsi_sendtargets.c \
 	test_mandatory_sbc.c \
 	test_modesense6_all_pages.c \
 	test_modesense6_control.c \
