@@ -39,12 +39,6 @@ iscsi_discovery_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	struct iscsi_pdu *pdu;
 	char *str;
 
-	if (iscsi->session_type != ISCSI_SESSION_DISCOVERY) {
-		iscsi_set_error(iscsi, "Trying to do discovery on "
-				"non-discovery session.");
-		return -1;
-	}
-
 	pdu = iscsi_allocate_pdu(iscsi, ISCSI_PDU_TEXT_REQUEST,
 				 ISCSI_PDU_TEXT_RESPONSE,
 				 iscsi_itt_post_increment(iscsi),
