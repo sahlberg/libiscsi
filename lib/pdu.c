@@ -169,7 +169,7 @@ iscsi_tcp_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 
 int
 iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
-	       unsigned char *dptr, int dsize, int pdualignment)
+	       const unsigned char *dptr, int dsize, int pdualignment)
 {
 	size_t len, aligned;
 
@@ -216,7 +216,7 @@ iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 
 int
 iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
-		   unsigned char *dptr, int dsize)
+		   const unsigned char *dptr, int dsize)
 {
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "trying to add data to NULL pdu");
