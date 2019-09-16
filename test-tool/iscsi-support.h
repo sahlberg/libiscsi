@@ -782,7 +782,6 @@ struct iscsi_async_state {
 void wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_state *test_state);
 
 struct iscsi_pdu;
-int (*local_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 struct scsi_command_descriptor *get_command_descriptor(int opcode, int sa);
 
