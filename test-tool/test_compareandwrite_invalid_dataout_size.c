@@ -53,6 +53,13 @@ test_compareandwrite_invalid_dataout_size(void)
         CHECK_FOR_THIN_PROVISIONING;
         CHECK_FOR_LBPPB_GT_1;
         CHECK_FOR_SBC;
+        if (sd->iscsi_ctx == NULL) {
+                const char *err = "[SKIPPED] This test is "
+                        "only supported for iSCSI backends";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
 
         local_iscsi_queue_pdu = my_iscsi_queue_pdu;
         
