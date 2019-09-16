@@ -27,11 +27,12 @@
 
 
 static int new_tl;
+static struct iscsi_transport iscsi_drv_orig;
 
-static int my_iscsi_queue_pdu(struct iscsi_context *iscsi _U_, struct iscsi_pdu *pdu _U_)
+static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
         if (pdu->outdata.data[0] != ISCSI_PDU_SCSI_REQUEST) {
-                return 0;
+                goto out;
         }
         switch (new_tl) {
         case 1:
@@ -43,7 +44,8 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi _U_, struct iscsi_pdu 
                 pdu->outdata.data[32 + 13] = 3;
                 break;
         }
-        return 0;
+out:
+        return iscsi_drv_orig.queue_pdu(iscsi, pdu);
 }
 
 void
@@ -61,8 +63,10 @@ test_compareandwrite_invalid_dataout_size(void)
                 return;
         }
 
-        local_iscsi_queue_pdu = my_iscsi_queue_pdu;
-        
+        /* override transport queue_pdu callback for PDU manipulation */
+        iscsi_drv_orig = *sd->iscsi_ctx->drv;
+        sd->iscsi_ctx->drv->queue_pdu = my_iscsi_queue_pdu;
+
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test that COMPAREANDWRITE fails for invalid "
                 "(too small/too large) DataOut sizes.");
@@ -89,4 +93,6 @@ test_compareandwrite_invalid_dataout_size(void)
                         block_size, 0, 0, 0, 0,
                         EXPECT_STATUS_GENERIC_BAD);
 
+        /* restore transport callbacks */
+        *(sd->iscsi_ctx->drv) = iscsi_drv_orig;
 }
