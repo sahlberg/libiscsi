@@ -25,8 +25,9 @@
 #include "iscsi-test-cu.h"
 
 static int change_num;
+static struct iscsi_transport iscsi_drv_orig;
 
-static int my_iscsi_queue_pdu(struct iscsi_context *iscsi _U_, struct iscsi_pdu *pdu)
+static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
         switch (change_num) {
         case 1:
@@ -43,12 +44,12 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi _U_, struct iscsi_pdu 
                 break;
         }
 
-        change_num = 0;        
-        return 0;
+        change_num = 0;
+        return iscsi_drv_orig.queue_pdu(iscsi, pdu);
 }
 
 void test_sanitize_crypto_erase_reserved(void)
-{ 
+{
         int i;
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -64,8 +65,9 @@ void test_sanitize_crypto_erase_reserved(void)
                 return;
         }
 
-        local_iscsi_queue_pdu = my_iscsi_queue_pdu;
-
+        /* override transport queue_pdu callback for PDU manipulation */
+        iscsi_drv_orig = *sd->iscsi_ctx->drv;
+        sd->iscsi_ctx->drv->queue_pdu = my_iscsi_queue_pdu;
 
         logging(LOG_VERBOSE, "Send SANITIZE command with the reserved "
                 "bit in byte 1 set to 1");
@@ -81,4 +83,7 @@ void test_sanitize_crypto_erase_reserved(void)
                 SANITIZE(sd, 0, 0, SCSI_SANITIZE_CRYPTO_ERASE, 0, NULL,
                          EXPECT_INVALID_FIELD_IN_CDB);
         }
+
+        /* restore transport callbacks */
+        *(sd->iscsi_ctx->drv) = iscsi_drv_orig;
 }
