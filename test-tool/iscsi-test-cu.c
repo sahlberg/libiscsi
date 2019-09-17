@@ -560,6 +560,7 @@ static CU_TestInfo tests_iscsi_datasn[] = {
 
 static CU_TestInfo tests_iscsi_sendtargets[] = {
         { (char *)"Simple", test_iscsi_sendtargets_simple },
+        { (char *)"Invalid", test_iscsi_sendtargets_invalid },
         CU_TEST_INFO_NULL
 };
 
