@@ -59,12 +59,6 @@ int loglevel = LOG_NORMAL;
 struct scsi_device *sd = NULL;        /* mp_sds[0] alias */
 static unsigned int maxsectors;
 
-/*
- * this allows us to redefine how PDU are queued, at times, for
- * testing purposes
- */
-int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
-
 /*****************************************************************
  *
  * list of tests and test suites
@@ -805,7 +799,6 @@ test_setup(void)
 {
         task = NULL;
         read_write_buf = NULL;
-        local_iscsi_queue_pdu = NULL;
 }
 
 void
@@ -1213,14 +1206,6 @@ main(int argc, char *argv[])
                 }
                 mp_num_sds++;
         }
-
-        /* So that we can override iscsi_queue_pdu in tests
-         * and replace or mutate the blob that we are about to write to the
-         * wire.
-         * This allows such tests to do their mutates and then call out
-         * to the real queueing function once they have modified the data.
-         */
-        real_iscsi_queue_pdu = dlsym(RTLD_NEXT, "iscsi_queue_pdu");
 
         if ((mp_num_sds == 0) || (mp_sds[0]->iscsi_url == NULL
                                         && mp_sds[0]->sgio_dev == NULL)) {

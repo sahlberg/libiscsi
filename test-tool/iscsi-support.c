@@ -119,8 +119,6 @@ int readonly;
 int sbc3_support;
 int maximum_transfer_length;
 
-int (*real_iscsi_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
-
 static const unsigned char zeroBlock[4096];
 
 /**
@@ -567,15 +565,6 @@ wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_state *
                         break;
                 }
         }
-}
-
-int
-iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
-{
-        if (local_iscsi_queue_pdu != NULL) {
-                local_iscsi_queue_pdu(iscsi, pdu);
-        }
-        return real_iscsi_queue_pdu(iscsi, pdu);
 }
 
 int

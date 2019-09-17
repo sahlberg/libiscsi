@@ -25,13 +25,14 @@
 #include "iscsi-test-cu.h"
 
 static int change_datasn;
+static struct iscsi_transport iscsi_drv_orig;
 
-static int my_iscsi_queue_pdu(struct iscsi_context *iscsi _U_, struct iscsi_pdu *pdu _U_)
+static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
         uint32_t datasn;
 
         if (pdu->outdata.data[0] != ISCSI_PDU_DATA_OUT) {
-                return 0;
+                goto out;
         }
         switch (change_datasn) {
         case 1:
@@ -52,11 +53,12 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi _U_, struct iscsi_pdu 
                 scsi_set_uint32(&pdu->outdata.data[36], 1 - datasn);
                 break;
         }
-        return 0;
+out:
+        return iscsi_drv_orig.queue_pdu(iscsi, pdu);
 }
 
 void test_iscsi_datasn_invalid(void)
-{ 
+{
         int ret;
 
         CHECK_FOR_DATALOSS;
@@ -77,7 +79,9 @@ void test_iscsi_datasn_invalid(void)
 
         sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
         sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
-        local_iscsi_queue_pdu = my_iscsi_queue_pdu;
+        /* override transport queue_pdu callback for PDU manipulation */
+        iscsi_drv_orig = *sd->iscsi_ctx->drv;
+        sd->iscsi_ctx->drv->queue_pdu = my_iscsi_queue_pdu;
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
         iscsi_set_timeout(sd->iscsi_ctx, 3);
 
@@ -89,81 +93,63 @@ void test_iscsi_datasn_invalid(void)
         if (ret == -2) {
                 logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
                 CU_PASS("WRITE10 is not implemented.");
-                local_iscsi_queue_pdu = NULL;
-                return;
-        }        
+                goto out_ctx_restore;
+        }
         CU_ASSERT_NOT_EQUAL(ret, 0);
 
+        /* avoid changing DataSN during reconnect */
+        *(sd->iscsi_ctx->drv) = iscsi_drv_orig;
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
-
 
         logging(LOG_VERBOSE, "Send Data-Out PDU with DataSN==27. Should fail");
         change_datasn = 2;
 
         sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
         sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
-        local_iscsi_queue_pdu = my_iscsi_queue_pdu;
+        sd->iscsi_ctx->drv->queue_pdu = my_iscsi_queue_pdu;
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
         iscsi_set_timeout(sd->iscsi_ctx, 3);
 
         ret = write10(sd, 100, block_size,
                       block_size, 0, 0, 0, 0, 0, scratch,
                       EXPECT_STATUS_GOOD);
-        if (ret == -2) {
-                logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
-                CU_PASS("WRITE10 is not implemented.");
-                local_iscsi_queue_pdu = NULL;
-                return;
-        }        
         CU_ASSERT_NOT_EQUAL(ret, 0);
 
+        *(sd->iscsi_ctx->drv) = iscsi_drv_orig;
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
-
 
         logging(LOG_VERBOSE, "Send Data-Out PDU with DataSN==-1. Should fail");
         change_datasn = 3;
 
         sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
         sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
-        local_iscsi_queue_pdu = my_iscsi_queue_pdu;
+        sd->iscsi_ctx->drv->queue_pdu = my_iscsi_queue_pdu;
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
         iscsi_set_timeout(sd->iscsi_ctx, 3);
 
         ret = write10(sd, 100, block_size,
                       block_size, 0, 0, 0, 0, 0, scratch,
                       EXPECT_STATUS_GOOD);
-        if (ret == -2) {
-                logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
-                CU_PASS("WRITE10 is not implemented.");
-                local_iscsi_queue_pdu = NULL;
-                return;
-        }        
         CU_ASSERT_NOT_EQUAL(ret, 0);
 
+        *(sd->iscsi_ctx->drv) = iscsi_drv_orig;
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
-
-
 
         logging(LOG_VERBOSE, "Send Data-Out PDU's in reverse order (DataSN == 1,0). Should fail");
         change_datasn = 4;
 
         sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
         sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
-        local_iscsi_queue_pdu = my_iscsi_queue_pdu;
+        sd->iscsi_ctx->drv->queue_pdu = my_iscsi_queue_pdu;
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
         iscsi_set_timeout(sd->iscsi_ctx, 3);
 
         ret = write10(sd, 100, 2 * block_size,
                       block_size, 0, 0, 0, 0, 0, scratch,
                       EXPECT_STATUS_GOOD);
-        if (ret == -2) {
-                logging(LOG_NORMAL, "[SKIPPED] WRITE10 is not implemented.");
-                CU_PASS("WRITE10 is not implemented.");
-                local_iscsi_queue_pdu = NULL;
-                return;
-        }        
         CU_ASSERT_NOT_EQUAL(ret, 0);
-
-        local_iscsi_queue_pdu = NULL;
+out_ctx_restore:
+        /* restore transport callbacks and autoreconnect */
+        *(sd->iscsi_ctx->drv) = iscsi_drv_orig;
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 }
