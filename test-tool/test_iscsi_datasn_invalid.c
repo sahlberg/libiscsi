@@ -37,20 +37,20 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
         switch (change_datasn) {
         case 1:
                 /* change DataSN to 0 */
-                scsi_set_uint32(&pdu->outdata.data[36], 0);
+                iscsi_pdu_set_datasn(pdu, 0);
                 break;
         case 2:
                 /* change DataSN to 27 */
-                scsi_set_uint32(&pdu->outdata.data[36], 27);
+                iscsi_pdu_set_datasn(pdu, 27);
                 break;
         case 3:
                 /* change DataSN to -1 */
-                scsi_set_uint32(&pdu->outdata.data[36], -1);
+                iscsi_pdu_set_datasn(pdu, -1);
                 break;
         case 4:
                 /* change DataSN from (0,1) to (1,0) */
                 datasn = scsi_get_uint32(&pdu->outdata.data[36]);
-                scsi_set_uint32(&pdu->outdata.data[36], 1 - datasn);
+                iscsi_pdu_set_datasn(pdu, 1 - datasn);
                 break;
         }
 out:
