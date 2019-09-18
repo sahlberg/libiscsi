@@ -31,7 +31,10 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 {
         switch (change_cmdsn) {
         case 1:
-                /* change the cmdsn so it becomes too big */
+                /*
+		 * change the cmdsn so it becomes too big. TODO: use
+		 * iscsi_pdu_set_cmdsn(), which also changes pdu->cmdsn?
+		 */
                 scsi_set_uint32(&pdu->outdata.data[24], iscsi->maxcmdsn + 1);
                 /* fudge the cmdsn value back to where it should be if this
                  * pdu is ignored.
@@ -40,12 +43,12 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
                 break;
         }
 
-        change_cmdsn = 0;        
+        change_cmdsn = 0;
         return iscsi_drv_orig.queue_pdu(iscsi, pdu);
 }
 
 void test_iscsi_cmdsn_toohigh(void)
-{ 
+{
         int ret;
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
