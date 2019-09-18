@@ -55,13 +55,7 @@ void test_iscsi_cmdsn_toohigh(void)
         logging(LOG_VERBOSE, "Test sending invalid iSCSI CMDSN");
         logging(LOG_VERBOSE, "CMDSN MUST be in the range EXPCMDSN and MAXCMDSN");
 
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This test is "
-                        "only supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         logging(LOG_VERBOSE, "RFC3720:3.2.2.1 CMDSN > MAXCMDSN must be silently ignored by the target");
         logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == MAXCMDSN+1. Should be ignored by the target.");

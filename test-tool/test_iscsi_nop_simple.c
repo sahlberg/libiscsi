@@ -83,13 +83,7 @@ test_iscsi_nop_simple(void)
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test Nop Out Pings");
 
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This test is "
-                        "only supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         memset(&state, 0, sizeof(state));
         strncpy(state.nop_buf, "nopping", sizeof(state.nop_buf));

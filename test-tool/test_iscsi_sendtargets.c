@@ -106,13 +106,7 @@ test_iscsi_sendtargets_simple(void)
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test SendTargets in FFP");
 
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This test is "
-                        "only supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         memset(&state, 0, sizeof(state));
         ret = iscsi_discovery_async(sd->iscsi_ctx,
@@ -172,13 +166,7 @@ test_iscsi_sendtargets_invalid(void)
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test invalid SendTargets Text requests");
 
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This test is "
-                        "only supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         memset(&state, 0, sizeof(state));
         ret = test_iscsi_text_req_queue(sd->iscsi_ctx,

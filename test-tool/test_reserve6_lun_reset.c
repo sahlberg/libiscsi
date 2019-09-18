@@ -34,13 +34,7 @@ test_reserve6_lun_reset(void)
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test that RESERVE6 is released on lun reset");
 
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This RESERVE6 test is only "
-                        "supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         logging(LOG_VERBOSE, "Take out a RESERVE6 from the first initiator");
         RESERVE6(sd);

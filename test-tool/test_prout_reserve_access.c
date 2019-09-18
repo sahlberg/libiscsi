@@ -123,13 +123,7 @@ test_prout_reserve_access_ea(void)
         struct scsi_device *sd2;
         int ret;
 
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
-                        "only supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         ret = mpath_sd2_get_or_clone(sd, &sd2);
         CU_ASSERT_EQUAL(ret, 0);
@@ -147,13 +141,7 @@ test_prout_reserve_access_we(void)
         struct scsi_device *sd2;
         int ret;
 
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
-                        "only supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         ret = mpath_sd2_get_or_clone(sd, &sd2);
         CU_ASSERT_EQUAL(ret, 0);
@@ -171,13 +159,7 @@ test_prout_reserve_access_earo(void)
         struct scsi_device *sd2;
         int ret;
 
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
-                        "only supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         ret = mpath_sd2_get_or_clone(sd, &sd2);
         CU_ASSERT_EQUAL(ret, 0);
@@ -195,13 +177,7 @@ test_prout_reserve_access_wero(void)
         struct scsi_device *sd2;
         int ret;
 
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
-                        "only supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         ret = mpath_sd2_get_or_clone(sd, &sd2);
         CU_ASSERT_EQUAL(ret, 0);
@@ -219,13 +195,7 @@ test_prout_reserve_access_eaar(void)
         struct scsi_device *sd2;
         int ret;
 
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
-                        "only supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         ret = mpath_sd2_get_or_clone(sd, &sd2);
         CU_ASSERT_EQUAL(ret, 0);
@@ -243,13 +213,7 @@ test_prout_reserve_access_wear(void)
         struct scsi_device *sd2;
         int ret;
 
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
-                        "only supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         ret = mpath_sd2_get_or_clone(sd, &sd2);
         CU_ASSERT_EQUAL(ret, 0);

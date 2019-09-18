@@ -62,17 +62,10 @@ void test_iscsi_datasn_invalid(void)
         int ret;
 
         CHECK_FOR_DATALOSS;
+        CHECK_FOR_ISCSI(sd);
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test sending invalid iSCSI DataSN");
-
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This test is "
-                        "only supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
 
         logging(LOG_VERBOSE, "Send two Data-Out PDU's with DataSN==0. Should fail.");
         change_datasn = 1;

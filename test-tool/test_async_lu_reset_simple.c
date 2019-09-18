@@ -98,10 +98,7 @@ test_async_lu_reset_simple(void)
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
-	if (sd->iscsi_ctx == NULL) {
-                CU_PASS("[SKIPPED] Non-iSCSI");
-		return;
-	}
+	CHECK_FOR_ISCSI(sd);
 
 	if (maximum_transfer_length
 	 && (maximum_transfer_length < (int)(blocks_per_io))) {

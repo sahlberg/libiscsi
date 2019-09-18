@@ -62,19 +62,17 @@ test_async_read(void)
 	struct tests_async_read_state state = { 0, 0, 0 };
 	const int blocks_per_io = 8;
 	const int num_ios = 1000;
-	/* IOs in flight concurrently, so need a buffer large enough for all */
-	unsigned char *buf = calloc(block_size * blocks_per_io, num_ios);
-
-	CU_ASSERT_NOT_EQUAL(buf, NULL);
-	if (!buf)
-		goto out;
+	unsigned char *buf = NULL;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
-	if (sd->iscsi_ctx == NULL) {
-                CU_PASS("[SKIPPED] Non-iSCSI");
+	CHECK_FOR_ISCSI(sd);
+
+	/* IOs in flight concurrently, so need a buffer large enough for all */
+	buf = calloc(block_size * blocks_per_io, num_ios);
+	CU_ASSERT_NOT_EQUAL(buf, NULL);
+	if (!buf)
 		goto out;
-	}
 
 	if (maximum_transfer_length
 	 && (maximum_transfer_length < (blocks_per_io * num_ios))) {
