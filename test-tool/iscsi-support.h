@@ -186,6 +186,16 @@ do {                                                                        \
         }                                                                \
 } while (0);
 
+#define CHECK_FOR_ISCSI(_sd)                                            \
+do {                                                                    \
+        if (_sd->iscsi_ctx == NULL) {                                   \
+                logging(LOG_NORMAL, "[SKIPPED] Not an iSCSI device."    \
+                        " Skipping test");                              \
+                CU_PASS("[SKIPPED] Not an iSCSI device. Skipping test"); \
+                return;                                                 \
+        }                                                               \
+} while (0);
+
 #define CHECK_SIZE(_min_blocks, _c)                                     \
         do {                                                            \
                 if (num_blocks < _min_blocks) {                         \
