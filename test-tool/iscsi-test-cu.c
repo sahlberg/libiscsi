@@ -569,6 +569,12 @@ static CU_TestInfo tests_iscsi_nop[] = {
         CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_iscsi_chap[] = {
+        { (char *)"Simple", test_iscsi_chap_simple },
+        { (char *)"Invalid", test_iscsi_chap_invalid },
+        CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_iscsi_residuals[] = {
         { (char *)"Read10Invalid", test_read10_invalid },
         { (char *)"Read10Residuals", test_read10_residuals },
@@ -603,6 +609,8 @@ static libiscsi_suite_info iscsi_suites[] = {
 	  tests_iscsi_sendtargets },
 	{ "iSCSINop", NON_PGR_FUNCS,
 	  tests_iscsi_nop },
+	{ "iSCSICHAP", NON_PGR_FUNCS,
+	  tests_iscsi_chap },
         { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -662,6 +670,7 @@ static libiscsi_suite_info all_suites[] = {
 	{ "iSCSITMF", NON_PGR_FUNCS, tests_iscsi_tmf },
 	{ "iSCSISendTargets", NON_PGR_FUNCS, tests_iscsi_sendtargets },
 	{ "iSCSINop", NON_PGR_FUNCS, tests_iscsi_nop },
+	{ "iSCSICHAP", NON_PGR_FUNCS, tests_iscsi_chap },
         { "MultipathIO", NON_PGR_FUNCS, tests_multipathio },
         { NULL, NULL, NULL, NULL, NULL, NULL },
 };

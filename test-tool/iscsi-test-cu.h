@@ -81,6 +81,8 @@ void test_iscsi_datasn_invalid(void);
 void test_iscsi_sendtargets_simple(void);
 void test_iscsi_sendtargets_invalid(void);
 void test_iscsi_nop_simple(void);
+void test_iscsi_chap_simple(void);
+void test_iscsi_chap_invalid(void);
 
 void test_mandatory_sbc(void);
 
