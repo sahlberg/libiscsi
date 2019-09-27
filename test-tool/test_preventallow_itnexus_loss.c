@@ -29,17 +29,10 @@ test_preventallow_itnexus_loss(void)
 {
         CHECK_FOR_SBC;
         CHECK_FOR_REMOVABLE;
+        CHECK_FOR_ISCSI(sd);
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test that IT-Nexus loss clears PREVENT MEDIUM REMOVAL");
-
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This PREVENTALLOW test is "
-                        "only supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
 
         logging(LOG_VERBOSE, "Set the PREVENT flag");
         PREVENTALLOW(sd, 1);

@@ -39,14 +39,7 @@ test_prout_preempt_rm_reg(void)
         struct scsi_persistent_reserve_in_read_keys *rk;
 
         CHECK_FOR_DATALOSS;
-
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This PERSISTENT RESERVE test is "
-                        "only supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test Persistent Reserve IN PREEMPT works.");

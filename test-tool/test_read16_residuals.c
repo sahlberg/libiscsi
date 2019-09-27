@@ -36,13 +36,7 @@ test_read16_residuals(void)
         logging(LOG_VERBOSE, "Test READ16 commands with residuals");
         logging(LOG_VERBOSE, "Block size is %zu", block_size);
 
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This READ16 test is only "
-                        "supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         task = malloc(sizeof(struct scsi_task));
         CU_ASSERT_PTR_NOT_NULL_FATAL(task);

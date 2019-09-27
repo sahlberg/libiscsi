@@ -42,14 +42,7 @@ test_write10_residuals(void)
 
         CHECK_FOR_DATALOSS;
         CHECK_FOR_SBC;
-
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This WRITE10 test is only "
-                        "supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         /* Try a write10 of 1 block but xferlength == 0 */
         task = malloc(sizeof(struct scsi_task));

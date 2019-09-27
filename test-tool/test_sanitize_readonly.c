@@ -40,14 +40,7 @@ test_sanitize_readonly(void)
 
         CHECK_FOR_SANITIZE;
         CHECK_FOR_DATALOSS;
-
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This SANITIZE test is only "
-                        "supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         logging(LOG_VERBOSE, "Create a second connection to the target");
         ret = mpath_sd2_get_or_clone(sd, &sd2);

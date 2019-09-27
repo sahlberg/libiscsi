@@ -42,26 +42,11 @@ test_writeverify16_residuals(void)
 
         CHECK_FOR_DATALOSS;
         CHECK_FOR_SBC;
-
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] This WRITEVERIFY16 test is only "
-                        "supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
+        CHECK_FOR_ISCSI(sd);
 
         /* check if writeverify16 is supported */
         WRITEVERIFY16(sd, 0, 0, block_size, 0, 0, 1, 0, NULL,
                       EXPECT_STATUS_GOOD);
-
-        if (sd->iscsi_ctx == NULL) {
-                const char *err = "[SKIPPED] WRITEVERIFY16 tests are only "
-                        "supported for iSCSI backends";
-                logging(LOG_NORMAL, "%s", err);
-                CU_PASS(err);
-                return;
-        }
 
         /* Try a writeverify16 of 1 block but xferlength == 0 */
         task = malloc(sizeof(struct scsi_task));
