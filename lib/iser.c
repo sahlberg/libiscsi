@@ -1216,7 +1216,7 @@ static int cq_handle(struct iser_conn *iser_conn)
 	ibv_get_cq_event(iser_conn->comp_channel, &iser_conn->cq, &ev_ctx);
 	ret = ibv_req_notify_cq(iser_conn->cq, 0);
 
-	/* FIXME: aggregate ack cq event for efficiency */
+	/* TODO: aggregate ack cq event for efficiency */
 	ibv_ack_cq_events(iser_conn->cq, 1);
 	if (ret) {
 		iscsi_set_error(iscsi, "failed notify or ack CQ");
