@@ -58,7 +58,7 @@ struct client {
 	struct scsi_iovec perf_iov;
 
 	int lun;
-	int blocksize;
+	uint16_t blocksize;
 	uint64_t num_blocks;
 	uint64_t pos;
 	uint64_t last_ns;
@@ -131,6 +131,8 @@ void cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *p
 	struct client *client = (struct client *)private_data;
 	struct scsi_task *task = command_data, *task2 = NULL;
 	struct scsi_read16_cdb *read16_cdb = NULL;
+        uint64_t tmp;
+        uint32_t datalen;
 
 	read16_cdb = scsi_cdb_unmarshall(task, SCSI_OPCODE_READ16);
 	if (read16_cdb == NULL) {
@@ -138,6 +140,13 @@ void cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *p
 		client->err_cnt++;
 		goto out;
 	}
+
+        tmp = (uint64_t)read16_cdb->transfer_length * client->blocksize;
+        if (tmp > 0xffffffff) {
+		client->err_cnt++;
+		goto out;
+	}
+        datalen = tmp & 0xffffffff;
 
 	if (status == SCSI_STATUS_BUSY ||
 		(status == SCSI_STATUS_CHECK_CONDITION && task->sense.key == SCSI_SENSE_UNIT_ATTENTION)) {
@@ -147,10 +156,10 @@ void cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *p
 			goto out;
 		}
 		task2 = iscsi_read16_task(client->iscsi,
-								client->lun, read16_cdb->lba,
-								read16_cdb->transfer_length * client->blocksize,
-								client->blocksize, 0, 0, 0, 0, 0,
-								cb, client);
+                                          client->lun, read16_cdb->lba,
+                                          datalen,
+                                          client->blocksize, 0, 0, 0, 0, 0,
+                                          cb, client);
 		if (task2 == NULL) {
 			fprintf(stderr, "failed to send read16 command\n");
 			client->err_cnt++;
@@ -163,7 +172,7 @@ void cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *p
 		client->err_cnt++;
 	} else if (status == SCSI_STATUS_GOOD) {
 		client->retry_cnt = 0;
-		client->bytes += read16_cdb->transfer_length * client->blocksize;
+		client->bytes += datalen;
 	} else {
 		fprintf(stderr, "Read16 failed with %s\n", iscsi_get_error(iscsi));
 		if (!client->ignore_errors) {
