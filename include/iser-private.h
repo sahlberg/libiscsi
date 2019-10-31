@@ -85,9 +85,6 @@ enum data_dir{
 #define ISER_MIN_POSTED_RX     (ISER_DEF_XMIT_CMDS_MAX >> 2)
 
 
-#define ISER_RX_PAD_SIZE	(256 - (ISER_RX_PAYLOAD_SIZE + \
-					sizeof(struct ibv_mr*) + sizeof(struct ibv_sge)))
-
 /**
  * struct iser_hdr - iSER header
  *
@@ -121,13 +118,15 @@ struct iser_hdr {
 
 struct iser_rx_desc {
 	struct iser_hdr              iser_header;
+        char                         pad1[4];
 	char                         iscsi_header[ISCSI_RAW_HEADER_SIZE];
 	char		             data[ISER_RECV_DATA_SEG_LEN];
 	struct ibv_sge		     rx_sg;
 	struct ibv_mr               *hdr_mr;
-	char		             pad[ISER_RX_PAD_SIZE];
-} __attribute__((packed));
+        char                         pad2[24];
+};
 
+static_assert(sizeof(struct iser_rx_desc) == 256, "iser_rx_desc size != 256");
 
 /**
  * struct iser_tx_desc - iSER TX descriptor (for send wr_id)

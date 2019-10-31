@@ -370,10 +370,14 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
                 io_hdr.timeout = 5000;
 
                 if(ioctl(sdev->sgio_fd, SG_IO, &io_hdr) < 0){
+                        int err = errno;
+
                         if (sdev->error_str != NULL) {
                                 free(discard_const(sdev->error_str));
                         }
-                        sdev->error_str = strdup("SG_IO ioctl failed");
+                        if (asprintf(&sdev->error_str, "SG_IO ioctl failed: %s",
+                                     strerror(err)) < 0)
+                                sdev->error_str = NULL;
                         return NULL;
                 }
 
