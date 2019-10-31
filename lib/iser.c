@@ -624,6 +624,9 @@ overflow_data_size(struct iser_pdu *iser_pdu)
 {
 	int data_size;
 
+    if (!iser_pdu->iscsi_pdu.scsi_cbdata.task) {
+        return 0;
+    }
 	data_size = iser_pdu->iscsi_pdu.scsi_cbdata.task->expxferlen;
 
 	return (data_size > DATA_BUFFER_SIZE);
