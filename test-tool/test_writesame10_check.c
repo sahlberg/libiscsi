@@ -32,13 +32,18 @@ test_writesame10_check(void)
 {
 	int i;
 	int ws_max_blocks = 256;
-	unsigned char read_buf[ws_max_blocks * block_size];
+	unsigned char *read_buf;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test WRITESAME10 of 1-256 blocks at the start of the LUN");
+
+	read_buf = malloc(ws_max_blocks * block_size);
+	CU_ASSERT(read_buf != NULL);
+	if (!read_buf)
+		return;
 
 	for (i = 1; i <= ws_max_blocks; i++) {
 		/*
@@ -71,4 +76,6 @@ test_writesame10_check(void)
 
 		CU_ASSERT_EQUAL(0, memcmp(read_buf, scratch, i));
 	}
+
+	free(read_buf);
 }

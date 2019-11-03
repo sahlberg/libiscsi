@@ -31,6 +31,7 @@
 void
 test_compareandwrite_unwritten(void)
 {
+	unsigned char *read_buf;
 	int i, n;
 
 	CHECK_FOR_DATALOSS;
@@ -39,13 +40,17 @@ test_compareandwrite_unwritten(void)
         n = 256;
         if (n + 0U > num_blocks)
                 n = num_blocks;
-        
+
+	read_buf = malloc(block_size);
+	CU_ASSERT(read_buf != NULL);
+	if (!read_buf)
+		return;
+
 	logging(LOG_VERBOSE, LOG_BLANK_LINE);
 	logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1-%d blocks at the "
 		"start of the LUN, 1 block at a time", n);
 	for (i = 1; i <= n; i++) {
 		int caw_ret;
-		unsigned char read_buf[block_size];
 
 		/* semi-unique 'compare' buffer to trigger miscompare */
 		memset(scratch, '%', block_size);
@@ -78,4 +83,6 @@ test_compareandwrite_unwritten(void)
 					       block_size), 0);
 		}
 	}
+
+	free(read_buf);
 }

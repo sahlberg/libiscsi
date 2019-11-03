@@ -329,8 +329,8 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
 #ifdef HAVE_SG_IO
         if (sdev->sgio_dev) {
                 sg_io_hdr_t io_hdr;
-                unsigned int sense_len=32;
-                unsigned char sense[sense_len];
+                unsigned char sense[32];
+                const unsigned int sense_len = sizeof(sense);
                 char buf[1024];
 
                 memset(sense, 0, sizeof(sense));

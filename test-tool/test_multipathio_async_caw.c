@@ -105,13 +105,27 @@ test_mpio_async_caw(void)
 	struct test_mpio_async_caw_state state = { 0, 0, 0 };
 	int num_ios = 1000;
 	uint32_t lba = 0;
-	unsigned char cmp_buf[block_size * mp_num_sds];
-	unsigned char wr_buf[block_size * mp_num_sds];
+	unsigned char *cmp_buf;
+	unsigned char *wr_buf;
+	struct pollfd *pfd;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
 	MPATH_SKIP_IF_UNAVAILABLE(mp_sds, mp_num_sds);
 	MPATH_SKIP_UNLESS_ISCSI(mp_sds, mp_num_sds);
+
+	cmp_buf = malloc(block_size * mp_num_sds);
+	CU_ASSERT(cmp_buf != NULL);
+	if (!cmp_buf)
+		return;
+	wr_buf = malloc(block_size * mp_num_sds);
+	CU_ASSERT(wr_buf != NULL);
+	if (!wr_buf)
+		goto free_cmp_buf;
+	pfd = malloc(mp_num_sds * sizeof(struct pollfd));
+	CU_ASSERT(pfd != NULL);
+	if (!pfd)
+		goto free_wr_buf;
 
 	/* synchronously initialise zeros for first CAW */
 	memset(wr_buf, 0, block_size);
@@ -157,8 +171,6 @@ test_mpio_async_caw(void)
 	}
 
 	while (state.completed < state.dispatched) {
-		struct pollfd pfd[mp_num_sds];
-
 		for (sd_i = 0; sd_i < mp_num_sds; sd_i++) {
 			pfd[sd_i].fd = iscsi_get_fd(mp_sds[sd_i]->iscsi_ctx);
 			pfd[sd_i].events
@@ -180,4 +192,9 @@ test_mpio_async_caw(void)
 
 	logging(LOG_VERBOSE, "[OK] All %d COMPARE_AND_WRITE IOs complete, with "
 		"%d mismatch(es)", state.completed, state.mismatches);
+
+free_wr_buf:
+	free(wr_buf);
+free_cmp_buf:
+	free(cmp_buf);
 }
