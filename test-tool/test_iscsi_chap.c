@@ -29,8 +29,6 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test-cu.h"
 
-static struct iscsi_transport iscsi_drv_orig;
-
 static int
 test_iscsi_strip_tag(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		     const char *tag)
@@ -103,10 +101,8 @@ chap_mod_strip_replace_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		return ret;
 	}
 	logging(LOG_VERBOSE, "replaced Login PDU CHAP_A setting with %s", new_chap_a);
-	/* restore drv */
-        *iscsi->drv = iscsi_drv_orig;
 out:
-        return iscsi_drv_orig.queue_pdu(iscsi, pdu);
+        return orig_queue_pdu(iscsi, pdu);
 
 }
 
@@ -157,7 +153,6 @@ test_iscsi_chap_login(int (*test_queue_pdu)(struct iscsi_context *iscsi,
 					 iscsi_url->passwd);
 
         /* override transport queue_pdu callback for PDU manipulation */
-        iscsi_drv_orig = *iscsi->drv;
         iscsi->drv->queue_pdu = test_queue_pdu;
 
         ret = iscsi_full_connect_sync(iscsi, iscsi_url->portal, iscsi_url->lun);
@@ -169,7 +164,6 @@ test_iscsi_chap_login(int (*test_queue_pdu)(struct iscsi_context *iscsi,
 	ret = 0;
 err_url_destroy:
 	iscsi_destroy_url(iscsi_url);
-	/* XXX no need to restore iscsi_drv_orig */
 err_iscsi_destroy:
 	iscsi_destroy_context(iscsi);
 	return ret;

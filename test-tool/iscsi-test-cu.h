@@ -35,6 +35,8 @@
 /* globals between setup, tests, and teardown */
 extern struct scsi_task *task;
 extern unsigned char *read_write_buf;
+extern int (*orig_queue_pdu)(struct iscsi_context *iscsi,
+                             struct iscsi_pdu *pdu);
 
 #ifndef HAVE_CU_SUITEINFO_PSETUPFUNC
 /* libcunit version 1 */
