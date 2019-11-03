@@ -25,7 +25,6 @@
 #include "iscsi-test-cu.h"
 
 static int change_cmdsn;
-static struct iscsi_transport iscsi_drv_orig;
 
 static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
@@ -44,7 +43,7 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
         }
 
         change_cmdsn = 0;
-        return iscsi_drv_orig.queue_pdu(iscsi, pdu);
+        return orig_queue_pdu(iscsi, pdu);
 }
 
 void test_iscsi_cmdsn_toohigh(void)
@@ -63,7 +62,6 @@ void test_iscsi_cmdsn_toohigh(void)
         sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
         sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
         /* override transport queue_pdu callback for PDU manipulation */
-        iscsi_drv_orig = *sd->iscsi_ctx->drv;
         sd->iscsi_ctx->drv->queue_pdu = my_iscsi_queue_pdu;
         change_cmdsn = 1;
         /* we don't want autoreconnect since some targets will incorrectly
@@ -85,7 +83,4 @@ void test_iscsi_cmdsn_toohigh(void)
         logging(LOG_VERBOSE, "Send a TESTUNITREADY with CMDSN == EXPCMDSN. should work again");
         TESTUNITREADY(sd,
                       EXPECT_STATUS_GOOD);
-
-        /* restore transport callbacks */
-        *(sd->iscsi_ctx->drv) = iscsi_drv_orig;
 }

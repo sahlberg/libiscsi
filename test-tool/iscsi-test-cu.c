@@ -730,6 +730,7 @@ static struct test_family families[] = {
  */
 struct scsi_task *task;
 unsigned char *read_write_buf;
+int (*orig_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 static void
 print_usage(void)
@@ -825,11 +826,14 @@ test_setup(void)
 {
         task = NULL;
         read_write_buf = NULL;
+        orig_queue_pdu = sd->iscsi_ctx ? sd->iscsi_ctx->drv->queue_pdu : NULL;
 }
 
 void
 test_teardown(void)
 {
+        if (sd->iscsi_ctx)
+                sd->iscsi_ctx->drv->queue_pdu = orig_queue_pdu;
         free(read_write_buf);
         read_write_buf = NULL;
         scsi_free_scsi_task(task);

@@ -25,12 +25,15 @@
 #include "iscsi-test-cu.h"
 
 static int change_datasn;
-static struct iscsi_transport iscsi_drv_orig;
 
 static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
         uint32_t datasn;
 
+        /* avoid changing DataSN during reconnect */
+	if (!iscsi->no_auto_reconnect)
+	        goto out;
+        
         if (pdu->outdata.data[0] != ISCSI_PDU_DATA_OUT) {
                 goto out;
         }
@@ -54,7 +57,7 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
                 break;
         }
 out:
-        return iscsi_drv_orig.queue_pdu(iscsi, pdu);
+        return orig_queue_pdu(iscsi, pdu);
 }
 
 void test_iscsi_datasn_invalid(void)
@@ -73,7 +76,6 @@ void test_iscsi_datasn_invalid(void)
         sd->iscsi_ctx->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
         sd->iscsi_ctx->target_max_recv_data_segment_length = block_size;
         /* override transport queue_pdu callback for PDU manipulation */
-        iscsi_drv_orig = *sd->iscsi_ctx->drv;
         sd->iscsi_ctx->drv->queue_pdu = my_iscsi_queue_pdu;
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
         iscsi_set_timeout(sd->iscsi_ctx, 3);
@@ -90,8 +92,6 @@ void test_iscsi_datasn_invalid(void)
         }
         CU_ASSERT_NOT_EQUAL(ret, 0);
 
-        /* avoid changing DataSN during reconnect */
-        *(sd->iscsi_ctx->drv) = iscsi_drv_orig;
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 
         logging(LOG_VERBOSE, "Send Data-Out PDU with DataSN==27. Should fail");
@@ -108,7 +108,6 @@ void test_iscsi_datasn_invalid(void)
                       EXPECT_STATUS_GOOD);
         CU_ASSERT_NOT_EQUAL(ret, 0);
 
-        *(sd->iscsi_ctx->drv) = iscsi_drv_orig;
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 
         logging(LOG_VERBOSE, "Send Data-Out PDU with DataSN==-1. Should fail");
@@ -125,7 +124,6 @@ void test_iscsi_datasn_invalid(void)
                       EXPECT_STATUS_GOOD);
         CU_ASSERT_NOT_EQUAL(ret, 0);
 
-        *(sd->iscsi_ctx->drv) = iscsi_drv_orig;
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 
         logging(LOG_VERBOSE, "Send Data-Out PDU's in reverse order (DataSN == 1,0). Should fail");
@@ -142,7 +140,6 @@ void test_iscsi_datasn_invalid(void)
                       EXPECT_STATUS_GOOD);
         CU_ASSERT_NOT_EQUAL(ret, 0);
 out_ctx_restore:
-        /* restore transport callbacks and autoreconnect */
-        *(sd->iscsi_ctx->drv) = iscsi_drv_orig;
+        /* restore autoreconnect */
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 0);
 }
