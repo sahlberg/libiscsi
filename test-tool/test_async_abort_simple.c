@@ -199,10 +199,9 @@ test_async_abort_simple(void)
 		CU_FAIL("unexpected WRITE/ABORT state");
 	}
 
-	scsi_free_scsi_task(state.wtask);
-
 	/* Avoid that callbacks get invoked after this test finished */
-        iscsi_logout_sync(sd->iscsi_ctx);
-        iscsi_destroy_context(sd->iscsi_ctx);
+	iscsi_logout_sync(sd->iscsi_ctx);
+	iscsi_destroy_context(sd->iscsi_ctx);
+	scsi_free_scsi_task(state.wtask);
 	sd->iscsi_ctx = NULL;
 }
