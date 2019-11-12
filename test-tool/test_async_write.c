@@ -62,7 +62,7 @@ test_async_write(void)
 	int blocks_per_io = 8;
 	int num_ios = 1000;
 	/* IOs in flight concurrently, but all using the same src buffer */
-	unsigned char buf[block_size * blocks_per_io];
+	unsigned char *buf;
 
 	CHECK_FOR_DATALOSS;
 	CHECK_FOR_SBC;
@@ -74,7 +74,10 @@ test_async_write(void)
 		return;
 	}
 
-	memset(buf, 0, block_size * blocks_per_io);
+	buf = calloc(block_size, blocks_per_io);
+	CU_ASSERT(buf != NULL);
+	if (!buf)
+		return;
 
 	for (i = 0; i < num_ios; i++) {
 		uint32_t lba = i * blocks_per_io;
@@ -111,4 +114,6 @@ test_async_write(void)
 		ret = iscsi_service(sd->iscsi_ctx, pfd.revents);
 		CU_ASSERT_EQUAL(ret, 0);
 	}
+
+	free(buf);
 }
