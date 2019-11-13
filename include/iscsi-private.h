@@ -361,7 +361,7 @@ void iscsi_decrement_iface_rr(void);
 		} \
 	} while (0)
 
-void
+void __attribute__((format(printf, 3, 4)))
 iscsi_log_message(struct iscsi_context *iscsi, int level, const char *format, ...);
 
 void
