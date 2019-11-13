@@ -1082,7 +1082,7 @@ scsi_maintenancein_datain_getfullsize(struct scsi_task *task)
 		case SCSI_REPORT_SUPPORTING_OPCODE:
 		case SCSI_REPORT_SUPPORTING_SERVICEACTION:
 			return 4 +
-				(task_get_uint8(task, 1) & 0x80) ? 12 : 0 +
+				((task_get_uint8(task, 1) & 0x80) ? 12 : 0) +
 				task_get_uint16(task, 2);
 		}
 		return -1;
