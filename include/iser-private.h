@@ -44,8 +44,12 @@
 #define ISER_WSV                        0x08
 #define ISER_RSV                        0x04
 
-#define NUM_MRS				0x100
-#define DATA_BUFFER_SIZE		0x40000
+#define DATA_BUFFER_UNIT_SHIFT        SHIFT_4K
+#define DATA_BUFFER_UNIT_SIZE         SIZE_4K
+#define DATA_BUFFER_CHUNK_SHIFT       22
+#define DATA_BUFFER_CHUNK_SIZE        (1ULL << DATA_BUFFER_CHUNK_SHIFT)
+#define DATA_BUFFER_CHUNK_UNITS_SHIFT (DATA_BUFFER_CHUNK_SHIFT - DATA_BUFFER_UNIT_SHIFT)
+#define DATA_BUFFER_CHUNK_UNITS       (1 << DATA_BUFFER_CHUNK_UNITS_SHIFT)
 
 #define ISER_HEADERS_LEN  (sizeof(struct iser_hdr) + ISCSI_RAW_HEADER_SIZE)
 
@@ -165,6 +169,13 @@ struct iser_pdu {
 	struct iser_tx_desc           *desc;
 };
 
+struct iser_buf_chunk {
+    unsigned char *buf;
+    struct ibv_mr *mr;
+    struct iser_buf_chunk *next;
+    int8_t tree[DATA_BUFFER_CHUNK_UNITS << 1];
+};
+
 struct iser_conn {
 	struct rdma_cm_id            *cma_id;
 	struct rdma_event_channel    *cma_channel;
@@ -180,9 +191,6 @@ struct iser_conn {
 	sem_t                        sem_connect;
 
 	struct ibv_mr                *login_resp_mr;
-	struct ibv_mr                *login_req_mr;
-	unsigned char                *login_buf;
-	unsigned char                *login_req_buf;
 	unsigned char                *login_resp_buf;
 
 	pthread_t                    cmthread;
@@ -199,6 +207,7 @@ struct iser_conn {
 	enum conn_state              conn_state;
 
 	struct iser_tx_desc          *tx_desc;
+	struct iser_buf_chunk        *buf_chunk;
 };
 
 void iscsi_init_iser_transport(struct iscsi_context *iscsi);
