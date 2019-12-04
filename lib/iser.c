@@ -56,6 +56,7 @@ union socket_address {
 };
 
 static int cq_handle(struct iser_conn *iser_conn);
+static int iscsi_iser_revive_queued_pdus(struct iscsi_context *iscsi);
 
 /*
  * iscsi_iser_get_fd() - Return completion queue
@@ -111,7 +112,7 @@ iscsi_iser_service(struct iscsi_context *iscsi, int revents)
 		return -1;
 	}
 
-	return 0;
+	return iscsi_iser_revive_queued_pdus(iscsi);
 }
 
 /*
@@ -691,28 +692,11 @@ iser_send_command(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu)
 	return 0;
 }
 
-
-/*
- * iser_queue_pdu() - sending iscsi pdu
- *
- * @iscsi_context:    iscsi context
- * @iscsi_pdu:     iscsi pdu
- *
- * Notes:
- * Need to be compatible to TCP which has real queue,
- * in iSER every queue pdu already sends all pdu (post_send)
- */
 static int
-iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
-
+iscsi_iser_send_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 	struct iser_pdu *iser_pdu;
 	struct iser_conn *iser_conn = iscsi->opaque;
 	uint8_t opcode;
-
-	if (pdu == NULL) {
-		iscsi_set_error(iscsi, "trying to queue NULL pdu");
-		return -1;
-	}
 
 	iser_pdu = container_of(pdu, struct iser_pdu, iscsi_pdu);
 	opcode = pdu->outdata.data[0];
@@ -731,7 +715,7 @@ iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 			return -1;
 		}
 	} else {
-                if (iser_send_command(iser_conn, iser_pdu)) {
+		if (iser_send_command(iser_conn, iser_pdu)) {
 			iscsi_set_error(iscsi, "iser_send_command Failed\n");
 			return -1;
 		}
@@ -739,6 +723,56 @@ iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 
 	return 0;
 }
+
+static int
+iscsi_iser_revive_queued_pdus(struct iscsi_context *iscsi) {
+	struct iscsi_pdu *pdu;
+
+	while (iscsi->outqueue != NULL) {
+		if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0) {
+			break;
+		}
+
+		pdu = iscsi->outqueue;
+		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
+
+		if (iscsi_iser_send_pdu(iscsi, pdu) < 0) {
+			ISCSI_LIST_ADD(&iscsi->outqueue, pdu);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+
+/*
+ * iser_queue_pdu() - sending iscsi pdu
+ *
+ * @iscsi_context:    iscsi context
+ * @iscsi_pdu:     iscsi pdu
+ *
+ * Notes:
+ * Need to be compatible to TCP which has real queue,
+ * in iSER pdus with cmdsn not exceeds maxcmdsn are already sent.
+ */
+static int
+iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
+	if (pdu == NULL) {
+		iscsi_set_error(iscsi, "trying to queue NULL pdu");
+		return -1;
+	}
+
+	if (iscsi->outqueue != NULL ||
+		(iscsi_serial32_compare(pdu->cmdsn, iscsi->maxcmdsn) > 0
+		 && !(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE))) {
+		iscsi_add_to_outqueue(iscsi, pdu);
+		return 0;
+	}
+
+	return iscsi_iser_send_pdu(iscsi, pdu);
+}
+
 
 /*
  * iser_create_iser_conn_res() - creating ib connections resources
