@@ -570,7 +570,8 @@ iser_prepare_write_cmd(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu)
 	struct iser_hdr *hdr = &iser_pdu->desc->iser_header;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 	struct iser_tx_desc *tx_desc = iser_pdu->desc;
-	struct scsi_iovector *iovector = iscsi_get_scsi_task_iovector_out(iscsi, &iser_pdu->iscsi_pdu);
+	struct iscsi_pdu *iscsi_pdu = &iser_pdu->iscsi_pdu;
+	struct scsi_iovector *iovector = iscsi_get_scsi_task_iovector_out(iscsi, iscsi_pdu);
 	int i, offset = 0;
 
 	if (iovector == NULL) {
@@ -587,7 +588,20 @@ iser_prepare_write_cmd(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu)
 
 	hdr->flags     |= ISER_WSV;
 	hdr->write_stag = htobe32((uint32_t)(tx_desc->data_mr->rkey));
-	hdr->write_va   = htobe64((intptr_t)(tx_desc->data_buff));
+
+	// ImmediateData
+	if (iscsi_pdu->payload_len > 0) {
+		struct ibv_sge *tx_dsg = &tx_desc->tx_sg[1];
+
+		tx_dsg->addr     = (uintptr_t)tx_desc->data_buff;
+		tx_dsg->length   = iscsi_pdu->payload_len;
+		tx_dsg->lkey     = tx_desc->data_mr->lkey;
+		tx_desc->num_sge = 2;
+
+		hdr->write_va = htobe64((intptr_t)(tx_desc->data_buff + iscsi_pdu->payload_len));
+	} else {
+		hdr->write_va = htobe64((intptr_t)(tx_desc->data_buff));
+	}
 
 	return 0;
 }
