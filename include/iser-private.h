@@ -158,7 +158,7 @@ struct iser_tx_desc {
 struct iser_cm_hdr {
 	uint8_t      flags;
 	uint8_t      rsvd[3];
-} __packed;
+};
 
 struct iser_pdu {
 	struct iscsi_pdu              iscsi_pdu;
