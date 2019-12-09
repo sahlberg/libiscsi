@@ -729,15 +729,6 @@ iser_send_control(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu) {
 		tx_desc->num_sge   = 2;
 	}
 
-	if (iser_pdu->iscsi_pdu.response_opcode == ISCSI_PDU_LOGIN_RESPONSE ||
-			iscsi->session_type == ISCSI_SESSION_DISCOVERY) {
-		ret = iser_post_recvl(iser_conn);
-		if (ret) {
-			iscsi_set_error(iscsi, "Failed Post Recv login");
-			return -1;
-		}
-	}
-
 	ret = iser_post_send(iser_conn, tx_desc, true);
 	if (ret) {
 		iscsi_set_error(iscsi, "Failed to post send");
@@ -1331,19 +1322,6 @@ iser_rcv_completion(struct iser_rx_desc *rx_desc,
 
 	in = iscsi_malloc(iscsi, sizeof(*in));
 
-	if ((unsigned char *)rx_desc == iser_conn->login_resp_buf)
-		if (iscsi->session_type == ISCSI_SESSION_NORMAL) {
-			if(iser_alloc_rx_descriptors(iser_conn,255)) {
-				iscsi_set_error(iscsi, "iser_alloc_rx_descriptors Failed\n");
-				err = -1;
-				goto error;
-			}
-			err = iser_post_recvm(iser_conn, ISER_MIN_POSTED_RX);
-			if (err) {
-				err = -1;
-				goto error;
-			}
-		}
 	in->hdr = (unsigned char*)rx_desc->iscsi_header;
 	in->data_pos = iscsi_get_pdu_data_size(&in->hdr[0]);
 	in->data = (unsigned char*)rx_desc->data;
@@ -1400,6 +1378,23 @@ nop_target:
 				err = -1;
 				goto error;
 			}
+		}
+	} else if (iscsi->is_loggedin) {
+		if(iser_alloc_rx_descriptors(iser_conn, 255)) {
+			iscsi_set_error(iscsi, "iser_alloc_rx_descriptors Failed\n");
+			err = -1;
+			goto error;
+		}
+		err = iser_post_recvm(iser_conn, ISER_MIN_POSTED_RX);
+		if (err) {
+			err = -1;
+			goto error;
+		}
+	} else {
+		if (iser_post_recvl(iser_conn)) {
+			iscsi_set_error(iscsi, "Failed Post Recv login");
+			err = -1;
+			goto error;
 		}
 	}
 
@@ -1558,6 +1553,11 @@ static int iser_connected_handler(struct rdma_cm_id *cma_id) {
 
 	iser_conn->post_recv_buf_count = 0;
 	iscsi->is_connected = 1;
+
+	if (iser_post_recvl(iser_conn)) {
+		iscsi_set_error(iscsi, "Failed Post Recv login");
+		return -1;
+	}
 
 	return 0;
 }
