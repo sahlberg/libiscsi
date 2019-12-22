@@ -1301,6 +1301,10 @@ main(int argc, char *argv[])
         block_size = rc10->block_size;
         num_blocks = rc10->lba + 1;
         scsi_free_scsi_task(task);
+        if (block_size == 0) {
+                printf("block_size is zero - giving up.\n");
+                goto err_sds_free;
+        }
 
         rc16_task = NULL;
         readcapacity16(sd, &rc16_task, 96, EXPECT_STATUS_GOOD);
@@ -1318,6 +1322,10 @@ main(int argc, char *argv[])
                 block_size = rc16->block_length;
                 num_blocks = rc16->returned_lba + 1;
                 lbppb = 1 << rc16->lbppbe;
+                if (block_size == 0) {
+                        printf("block_size is zero - giving up.\n");
+                        goto err_sds_free;
+                }
         }
 
         /* create a really big buffer we can use in the tests */
