@@ -18,6 +18,7 @@
 #define __iser_private_h__
 
 #include <stdint.h>
+#include <stddef.h>
 #include <time.h>
 
 #include "iscsi-private.h"
@@ -118,15 +119,14 @@ struct iser_hdr {
 
 struct iser_rx_desc {
 	struct iser_hdr              iser_header;
-        char                         pad1[4];
 	char                         iscsi_header[ISCSI_RAW_HEADER_SIZE];
-	char		             data[ISER_RECV_DATA_SEG_LEN];
-	struct ibv_sge		     rx_sg;
+	char                         data[ISER_RECV_DATA_SEG_LEN];
+	char                         pad[4];
 	struct ibv_mr               *hdr_mr;
-        char                         pad2[24];
+	struct ibv_sge               rx_sg;
 };
 
-static_assert(sizeof(struct iser_rx_desc) == 256, "iser_rx_desc size != 256");
+static_assert(offsetof(struct iser_rx_desc, hdr_mr) % 8 == 0, "iser_rx_desc is not aligned on 8-byte boundary");
 
 /**
  * struct iser_tx_desc - iSER TX descriptor (for send wr_id)
@@ -158,7 +158,7 @@ struct iser_tx_desc {
 struct iser_cm_hdr {
 	uint8_t      flags;
 	uint8_t      rsvd[3];
-} __packed;
+};
 
 struct iser_pdu {
 	struct iscsi_pdu              iscsi_pdu;

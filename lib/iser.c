@@ -56,6 +56,7 @@ union socket_address {
 };
 
 static int cq_handle(struct iser_conn *iser_conn);
+static int iscsi_iser_revive_queued_pdus(struct iscsi_context *iscsi);
 
 /*
  * iscsi_iser_get_fd() - Return completion queue
@@ -111,7 +112,7 @@ iscsi_iser_service(struct iscsi_context *iscsi, int revents)
 		return -1;
 	}
 
-	return 0;
+	return iscsi_iser_revive_queued_pdus(iscsi);
 }
 
 /*
@@ -570,7 +571,8 @@ iser_prepare_write_cmd(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu)
 	struct iser_hdr *hdr = &iser_pdu->desc->iser_header;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 	struct iser_tx_desc *tx_desc = iser_pdu->desc;
-	struct scsi_iovector *iovector = iscsi_get_scsi_task_iovector_out(iscsi, &iser_pdu->iscsi_pdu);
+	struct iscsi_pdu *iscsi_pdu = &iser_pdu->iscsi_pdu;
+	struct scsi_iovector *iovector = iscsi_get_scsi_task_iovector_out(iscsi, iscsi_pdu);
 	int i, offset = 0;
 
 	if (iovector == NULL) {
@@ -587,7 +589,20 @@ iser_prepare_write_cmd(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu)
 
 	hdr->flags     |= ISER_WSV;
 	hdr->write_stag = htobe32((uint32_t)(tx_desc->data_mr->rkey));
-	hdr->write_va   = htobe64((intptr_t)(tx_desc->data_buff));
+
+	// ImmediateData
+	if (iscsi_pdu->payload_len > 0) {
+		struct ibv_sge *tx_dsg = &tx_desc->tx_sg[1];
+
+		tx_dsg->addr     = (uintptr_t)tx_desc->data_buff;
+		tx_dsg->length   = iscsi_pdu->payload_len;
+		tx_dsg->lkey     = tx_desc->data_mr->lkey;
+		tx_desc->num_sge = 2;
+
+		hdr->write_va = htobe64((intptr_t)(tx_desc->data_buff + iscsi_pdu->payload_len));
+	} else {
+		hdr->write_va = htobe64((intptr_t)(tx_desc->data_buff));
+	}
 
 	return 0;
 }
@@ -677,28 +692,11 @@ iser_send_command(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu)
 	return 0;
 }
 
-
-/*
- * iser_queue_pdu() - sending iscsi pdu
- *
- * @iscsi_context:    iscsi context
- * @iscsi_pdu:     iscsi pdu
- *
- * Notes:
- * Need to be compatible to TCP which has real queue,
- * in iSER every queue pdu already sends all pdu (post_send)
- */
 static int
-iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
-
+iscsi_iser_send_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 	struct iser_pdu *iser_pdu;
 	struct iser_conn *iser_conn = iscsi->opaque;
 	uint8_t opcode;
-
-	if (pdu == NULL) {
-		iscsi_set_error(iscsi, "trying to queue NULL pdu");
-		return -1;
-	}
 
 	iser_pdu = container_of(pdu, struct iser_pdu, iscsi_pdu);
 	opcode = pdu->outdata.data[0];
@@ -717,7 +715,7 @@ iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 			return -1;
 		}
 	} else {
-                if (iser_send_command(iser_conn, iser_pdu)) {
+		if (iser_send_command(iser_conn, iser_pdu)) {
 			iscsi_set_error(iscsi, "iser_send_command Failed\n");
 			return -1;
 		}
@@ -725,6 +723,56 @@ iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 
 	return 0;
 }
+
+static int
+iscsi_iser_revive_queued_pdus(struct iscsi_context *iscsi) {
+	struct iscsi_pdu *pdu;
+
+	while (iscsi->outqueue != NULL) {
+		if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0) {
+			break;
+		}
+
+		pdu = iscsi->outqueue;
+		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
+
+		if (iscsi_iser_send_pdu(iscsi, pdu) < 0) {
+			ISCSI_LIST_ADD(&iscsi->outqueue, pdu);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+
+/*
+ * iser_queue_pdu() - sending iscsi pdu
+ *
+ * @iscsi_context:    iscsi context
+ * @iscsi_pdu:     iscsi pdu
+ *
+ * Notes:
+ * Need to be compatible to TCP which has real queue,
+ * in iSER pdus with cmdsn not exceeds maxcmdsn are already sent.
+ */
+static int
+iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
+	if (pdu == NULL) {
+		iscsi_set_error(iscsi, "trying to queue NULL pdu");
+		return -1;
+	}
+
+	if (iscsi->outqueue != NULL ||
+		(iscsi_serial32_compare(pdu->cmdsn, iscsi->maxcmdsn) > 0
+		 && !(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE))) {
+		iscsi_add_to_outqueue(iscsi, pdu);
+		return 0;
+	}
+
+	return iscsi_iser_send_pdu(iscsi, pdu);
+}
+
 
 /*
  * iser_create_iser_conn_res() - creating ib connections resources
