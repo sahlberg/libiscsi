@@ -2281,7 +2281,6 @@ scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persis
 		}
 		break;
 	case SCSI_PERSISTENT_RESERVE_REGISTER_AND_MOVE:
-		/* XXX FIXME */
 		goto err;
 	default:
 		goto err;
