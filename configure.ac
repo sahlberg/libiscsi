@@ -169,8 +169,6 @@ if ! test "$ac_cv_have_cunit" = yes ; then
 fi
 AM_CONDITIONAL(ISCSITEST, [test "$ac_cv_have_cunit" = yes -a "$enable_shared" = "yes"])
 
-AM_CONDITIONAL(LD_ISCSI, [expr "(" "$host_os" : "linux" ")" "&" "$enable_shared" "=" "yes"])
-
 AC_CHECK_MEMBER([struct CU_SuiteInfo.pSetUpFunc],
 		[AC_DEFINE([HAVE_CU_SUITEINFO_PSETUPFUNC], 1,
 		 [Define to 1 if struct CU_SuiteInfo has a member called pSetUpFunc])],

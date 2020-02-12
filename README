@@ -237,39 +237,6 @@ To run the tests:
   make test
 
 
-LD_PRELOAD FUN
-==============
-There is a small LD_PRELOAD hack in the src directory that intercepts a handful
-of system calls and converts iSCSI URLs to look and behave as if they are normal
-read-only files.
-This allows using standard UNIX tools to become iSCSI-aware with no
-modifications.
-
-For example:
-The stat command: this shows the size of the iSCSI LUN as if it was a normal file:
-$ LD_PRELOAD=ld_iscsi.so stat iscsi://127.0.0.1:3262/iqn.ronnie.test/2
-  File: `iscsi://127.0.0.1:3262/iqn.ronnie.test/2'
-  Size: 3431540736	Blocks: 0          IO Block: 0      regular file
-Device: 0h/0d	Inode: 0           Links: 0
-Access: (0444/-r--r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
-Access: 1970-01-01 10:00:00.000000000 +1000
-Modify: 1970-01-01 10:00:00.000000000 +1000
-Change: 1970-01-01 10:00:00.000000000 +1000
-
-The cat command, which allows you to read/dump a iSCSI LUN to a file :
-$ LD_PRELOAD=ld_iscsi.so cat iscsi://127.0.0.1:3262/iqn.ronnie.test/2 >copy_of_iscsi_lun
-
-Or using dd even :
-$ LD_PRELOAD=ld_iscsi.so dd if=iscsi://127.0.0.1:3262/iqn.ronnie.test/2 of=copy_of_LUN bs=10M count=1
-
-The LD_PRELOAD hack is incomplete and needs more functions to be intercepted
-before becoming fully functional. Patches welcome!
-
-For now, it is sufficiently complete for trivial commands like stat and cat.
-You probably need to implement at least lseek, pread, pwrite before it becomes
-really useful.
-
-
 SUPPORTED PLATFORMS
 ===================
 libiscsi is pure POSIX and should with some tweaks run on any host that
