@@ -53,9 +53,11 @@ test_writesame10_unmap_until_end(void)
                         i * block_size, block_size, 0, 0, 0, 0, 0, scratch,
                         EXPECT_STATUS_GOOD);
 
+                // write 0-buffer to entire range.
+                memset(scratch, 0, block_size * i);
                 logging(LOG_VERBOSE, "Unmap %d blocks using WRITESAME10", i);
                 WRITESAME10(sd, num_blocks - i,
-                            block_size, 0, 0, 1, 0, 0, scratch,
+                            block_size, i, 0, 1, 0, 0, scratch,
                             EXPECT_STATUS_GOOD);
 
                 if (rc16->lbprz) {
