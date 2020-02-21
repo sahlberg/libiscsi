@@ -24,6 +24,7 @@
 #include <getopt.h>
 #include <unistd.h>
 #include <limits.h>
+#include <time.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -540,6 +541,26 @@ static void usage_exit(int status)
 	exit(status);
 }
 
+static void show_perf(struct timespec *start_time,
+		      struct timespec *end_time,
+		      uint64_t num_blocks,
+		      uint64_t block_size)
+{
+	const char u[] = { 'b', 'K', 'M', 'G', 'T'};
+	double elapsed = (end_time->tv_sec + 1.0e-9 * end_time->tv_nsec)
+			- (start_time->tv_sec + 1.0e-9 * start_time->tv_nsec);
+	double ubytes_per_sec = num_blocks * block_size / elapsed;
+	unsigned int i = 0;
+
+	while (ubytes_per_sec > 1024 && i < sizeof(u) - 1) {
+		ubytes_per_sec = ubytes_per_sec / 1024;
+		i++;
+	}
+
+	printf("\r%"PRIu64" blocks (%"PRIu64" sized) copied in %g seconds,"
+	   " %g%c/s.\n", num_blocks, block_size, elapsed, ubytes_per_sec, u[i]);
+}
+
 int main(int argc, char *argv[])
 {
 	char *src_url = NULL;
@@ -548,6 +569,8 @@ int main(int argc, char *argv[])
 	int c;
 	struct pollfd pfd[2];
 	struct client client;
+	struct timespec start_time;
+	struct timespec end_time;
 
 	static struct option long_options[] = {
 		{"dst",            required_argument,    NULL,        'd'},
@@ -702,6 +725,8 @@ int main(int argc, char *argv[])
 		exit(10);
 	}
 
+	clock_gettime(CLOCK_MONOTONIC, &start_time);
+
 	if (client.use_xcopy) {
 		fill_xcopy_queue(&client);
 	} else {
@@ -732,6 +757,9 @@ int main(int argc, char *argv[])
 			break;
 		}
 	}
+
+	clock_gettime(CLOCK_MONOTONIC, &end_time);
+	show_perf(&start_time, &end_time, client.pos, client.src_blocksize);
 
 	iscsi_logout_sync(client.src_iscsi);
 	iscsi_destroy_context(client.src_iscsi);
