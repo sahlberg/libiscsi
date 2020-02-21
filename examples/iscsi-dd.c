@@ -523,6 +523,23 @@ void readcap(struct iscsi_context *iscsi, int lun, int use_16,
 	return;
 }
 
+static void usage_exit(int status)
+{
+	fprintf(stderr, "Usage:\n"
+"-s, --src <URL>               source iSCSI URL             (required)\n"
+"-d, --dst <URL>               destination iSCSI URL        (required)\n"
+"-i, --initiator-name <IQN>    iSCSI initiator name         (default=%s)\n"
+"-p, --progress                show progress while copying\n"
+"-6, --16                      use READ16 & WRITE16 SCSI commands\n"
+"-x, --xcopy                   offload I/O to the target via XCOPY\n"
+"-m, --max <NUM>               maximum requests in flight   (default=%u)\n"
+"-b, --blocks <NUM>            blocks per I/O               (default=%u)\n"
+"-n, --ignore-errors           ignore any I/O errors\n"
+"-h, --help                    show this usage message\n",
+		initiator, max_in_flight, blocks_per_io);
+	exit(status);
+}
+
 int main(int argc, char *argv[])
 {
 	char *src_url = NULL;
@@ -542,13 +559,14 @@ int main(int argc, char *argv[])
 		{"max",            required_argument,    NULL,        'm'},
 		{"blocks",         required_argument,    NULL,        'b'},
 		{"ignore-errors",  no_argument,          NULL,        'n'},
+		{"help",           no_argument,          NULL,        'h'},
 		{0, 0, 0, 0}
 	};
 	int option_index;
 
 	memset(&client, 0, sizeof(client));
 
-	while ((c = getopt_long(argc, argv, "d:s:i:m:b:p6nx", long_options,
+	while ((c = getopt_long(argc, argv, "d:s:i:m:b:p6nxh", long_options,
 			&option_index)) != -1) {
 		char *endptr;
 
@@ -590,21 +608,24 @@ int main(int argc, char *argv[])
 		case 'n':
 			client.ignore_errors = 1;
 			break;
+		case 'h':
+			usage_exit(0);
+			break;
 		default:
 			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
-			exit(1);
+			usage_exit(1);
 		}
 	}
 
 	if (src_url == NULL) {
-		fprintf(stderr, "You must specify source url\n");
-		fprintf(stderr, "  --src iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
-		exit(10);
+		fprintf(stderr, "You must specify source url\n"
+			"  --src iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
+		usage_exit(10);
 	}
 	if (dst_url == NULL) {
-		fprintf(stderr, "You must specify destination url\n");
-		fprintf(stderr, "  --dst iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
-		exit(10);
+		fprintf(stderr, "You must specify destination url\n"
+			"  --dst iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
+		usage_exit(10);
 	}
 
 	client.src_iscsi = iscsi_create_context(initiator);
