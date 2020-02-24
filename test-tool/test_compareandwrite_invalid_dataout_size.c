@@ -27,7 +27,6 @@
 
 
 static int new_tl;
-static struct iscsi_transport iscsi_drv_orig;
 
 static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
@@ -45,7 +44,7 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
                 break;
         }
 out:
-        return iscsi_drv_orig.queue_pdu(iscsi, pdu);
+        return orig_queue_pdu(iscsi, pdu);
 }
 
 void
@@ -58,7 +57,6 @@ test_compareandwrite_invalid_dataout_size(void)
         CHECK_FOR_ISCSI(sd);
 
         /* override transport queue_pdu callback for PDU manipulation */
-        iscsi_drv_orig = *sd->iscsi_ctx->drv;
         sd->iscsi_ctx->drv->queue_pdu = my_iscsi_queue_pdu;
 
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
@@ -86,7 +84,4 @@ test_compareandwrite_invalid_dataout_size(void)
                         scratch, 4 * block_size,
                         block_size, 0, 0, 0, 0,
                         EXPECT_STATUS_GENERIC_BAD);
-
-        /* restore transport callbacks */
-        *(sd->iscsi_ctx->drv) = iscsi_drv_orig;
 }
