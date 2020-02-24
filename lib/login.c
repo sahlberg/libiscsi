@@ -54,9 +54,7 @@ iscsi_login_add_initiatorname(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 	char str[MAX_STRING_SIZE+1];
 
 	/* We only send InitiatorName during opneg or the first leg of secneg */
-	if ((iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
-	&& iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP)
-	|| iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
+	if (iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
 		return 0;
 	}
 
@@ -78,9 +76,7 @@ iscsi_login_add_alias(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	char str[MAX_STRING_SIZE+1];
 
 	/* We only send InitiatorAlias during opneg or the first leg of secneg */
-	if ((iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
-	&& iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP)
-	|| iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
+	if (iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
 		return 0;
 	}
 
@@ -134,9 +130,7 @@ iscsi_login_add_sessiontype(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	char str[MAX_STRING_SIZE+1];
 
 	/* We only send SessionType during opneg or the first leg of secneg */
-	if ((iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_OPNEG
-	&& iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP)
-	|| iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
+	if (iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP) {
 		return 0;
 	}
 
