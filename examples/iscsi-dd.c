@@ -24,6 +24,7 @@
 #include <getopt.h>
 #include <unistd.h>
 #include <limits.h>
+#include <time.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -523,6 +524,43 @@ void readcap(struct iscsi_context *iscsi, int lun, int use_16,
 	return;
 }
 
+static void usage_exit(int status)
+{
+	fprintf(stderr, "Usage:\n"
+"-s, --src <URL>               source iSCSI URL             (required)\n"
+"-d, --dst <URL>               destination iSCSI URL        (required)\n"
+"-i, --initiator-name <IQN>    iSCSI initiator name         (default=%s)\n"
+"-p, --progress                show progress while copying\n"
+"-6, --16                      use READ16 & WRITE16 SCSI commands\n"
+"-x, --xcopy                   offload I/O to the target via XCOPY\n"
+"-m, --max <NUM>               maximum requests in flight   (default=%u)\n"
+"-b, --blocks <NUM>            blocks per I/O               (default=%u)\n"
+"-n, --ignore-errors           ignore any I/O errors\n"
+"-h, --help                    show this usage message\n",
+		initiator, max_in_flight, blocks_per_io);
+	exit(status);
+}
+
+static void show_perf(struct timespec *start_time,
+		      struct timespec *end_time,
+		      uint64_t num_blocks,
+		      uint64_t block_size)
+{
+	const char u[] = { 'b', 'K', 'M', 'G', 'T'};
+	double elapsed = (end_time->tv_sec + 1.0e-9 * end_time->tv_nsec)
+			- (start_time->tv_sec + 1.0e-9 * start_time->tv_nsec);
+	double ubytes_per_sec = num_blocks * block_size / elapsed;
+	unsigned int i = 0;
+
+	while (ubytes_per_sec > 1024 && i < sizeof(u) - 1) {
+		ubytes_per_sec = ubytes_per_sec / 1024;
+		i++;
+	}
+
+	printf("\r%"PRIu64" blocks (%"PRIu64" sized) copied in %g seconds,"
+	   " %g%c/s.\n", num_blocks, block_size, elapsed, ubytes_per_sec, u[i]);
+}
+
 int main(int argc, char *argv[])
 {
 	char *src_url = NULL;
@@ -531,6 +569,8 @@ int main(int argc, char *argv[])
 	int c;
 	struct pollfd pfd[2];
 	struct client client;
+	struct timespec start_time;
+	struct timespec end_time;
 
 	static struct option long_options[] = {
 		{"dst",            required_argument,    NULL,        'd'},
@@ -542,13 +582,14 @@ int main(int argc, char *argv[])
 		{"max",            required_argument,    NULL,        'm'},
 		{"blocks",         required_argument,    NULL,        'b'},
 		{"ignore-errors",  no_argument,          NULL,        'n'},
+		{"help",           no_argument,          NULL,        'h'},
 		{0, 0, 0, 0}
 	};
 	int option_index;
 
 	memset(&client, 0, sizeof(client));
 
-	while ((c = getopt_long(argc, argv, "d:s:i:m:b:p6nx", long_options,
+	while ((c = getopt_long(argc, argv, "d:s:i:m:b:p6nxh", long_options,
 			&option_index)) != -1) {
 		char *endptr;
 
@@ -590,21 +631,24 @@ int main(int argc, char *argv[])
 		case 'n':
 			client.ignore_errors = 1;
 			break;
+		case 'h':
+			usage_exit(0);
+			break;
 		default:
 			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
-			exit(1);
+			usage_exit(1);
 		}
 	}
 
 	if (src_url == NULL) {
-		fprintf(stderr, "You must specify source url\n");
-		fprintf(stderr, "  --src iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
-		exit(10);
+		fprintf(stderr, "You must specify source url\n"
+			"  --src iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
+		usage_exit(10);
 	}
 	if (dst_url == NULL) {
-		fprintf(stderr, "You must specify destination url\n");
-		fprintf(stderr, "  --dst iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
-		exit(10);
+		fprintf(stderr, "You must specify destination url\n"
+			"  --dst iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
+		usage_exit(10);
 	}
 
 	client.src_iscsi = iscsi_create_context(initiator);
@@ -681,6 +725,8 @@ int main(int argc, char *argv[])
 		exit(10);
 	}
 
+	clock_gettime(CLOCK_MONOTONIC, &start_time);
+
 	if (client.use_xcopy) {
 		fill_xcopy_queue(&client);
 	} else {
@@ -711,6 +757,9 @@ int main(int argc, char *argv[])
 			break;
 		}
 	}
+
+	clock_gettime(CLOCK_MONOTONIC, &end_time);
+	show_perf(&start_time, &end_time, client.pos, client.src_blocksize);
 
 	iscsi_logout_sync(client.src_iscsi);
 	iscsi_destroy_context(client.src_iscsi);
