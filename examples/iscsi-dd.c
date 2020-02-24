@@ -571,7 +571,7 @@ int main(int argc, char *argv[])
 	struct client client;
 	struct timespec start_time;
 	struct timespec end_time;
-
+	int gettime_ret;
 	static struct option long_options[] = {
 		{"dst",            required_argument,    NULL,        'd'},
 		{"src",            required_argument,    NULL,        's'},
@@ -725,7 +725,10 @@ int main(int argc, char *argv[])
 		exit(10);
 	}
 
-	clock_gettime(CLOCK_MONOTONIC, &start_time);
+	gettime_ret = clock_gettime(CLOCK_MONOTONIC, &start_time);
+	if (gettime_ret < 0) {
+		fprintf(stderr, "clock_gettime(CLOCK_MONOTONIC) failed\n");
+	}
 
 	if (client.use_xcopy) {
 		fill_xcopy_queue(&client);
@@ -758,8 +761,14 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	show_perf(&start_time, &end_time, client.pos, client.src_blocksize);
+	if (gettime_ret == 0) {
+		/* start_time is valid, so dump perf with a valid end_time */
+		gettime_ret = clock_gettime(CLOCK_MONOTONIC, &end_time);
+		if (gettime_ret == 0) {
+			show_perf(&start_time, &end_time, client.pos,
+				  client.src_blocksize);
+		}
+	}
 
 	iscsi_logout_sync(client.src_iscsi);
 	iscsi_destroy_context(client.src_iscsi);
