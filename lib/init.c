@@ -218,7 +218,7 @@ iscsi_create_context(const char *initiator_name)
 
 	/* initalize transport of context */
 	if (iscsi_init_transport(iscsi, TCP_TRANSPORT)) {
-		iscsi_set_error(iscsi, "Failed allocating transport");
+		free(iscsi);
 		return NULL;
 	}
 
