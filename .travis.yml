@@ -1,0 +1,21 @@
+language: c
+
+os:
+  - linux
+  - osx
+
+addons:
+  apt:
+    packages:
+      - dpkg
+      - gcc
+      - libcunit1-dev
+      - libibverbs-dev
+      - librdmacm-dev
+      - make
+      - pkg-config
+
+sudo: required
+
+script:
+  ci/build.sh
