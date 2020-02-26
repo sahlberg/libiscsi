@@ -198,6 +198,7 @@ iser_free_iser_conn_res(struct iser_conn *iser_conn, bool destroy)
 
 		if (iser_conn->cmthread) {
 			pthread_cancel(iser_conn->cmthread);
+			pthread_join(iser_conn->cmthread, NULL);
 			iser_conn->cmthread = 0;
 		}
 
