@@ -425,6 +425,9 @@ iscsi_tcp_disconnect(struct iscsi_context *iscsi)
 int
 iscsi_disconnect(struct iscsi_context *iscsi)
 {
+	if (!iscsi || !iscsi->drv || !iscsi->drv->disconnect)
+		return -1;
+
         return iscsi->drv->disconnect(iscsi);
 }
 

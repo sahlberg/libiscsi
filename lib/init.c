@@ -393,9 +393,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		return 0;
 	}
 
-	if (iscsi->fd != -1) {
-		iscsi_disconnect(iscsi);
-	}
+	iscsi_disconnect(iscsi);
 
 	iscsi_cancel_pdus(iscsi);
 
