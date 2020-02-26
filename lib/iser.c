@@ -1036,7 +1036,7 @@ iser_reg_mr(struct iser_conn *iser_conn)
 
 	for (i = 0 ; i < NUM_MRS ; i++) {
 
-			tx_desc = iscsi_malloc(iscsi, sizeof(*tx_desc));
+			tx_desc = iscsi_zmalloc(iscsi, sizeof(*tx_desc));
 			if (tx_desc == NULL) {
 				iscsi_set_error(iscsi, "Out-Of-Memory, failed to allocate data buffer");
 				return -1;
@@ -1478,7 +1478,7 @@ static iscsi_transport iscsi_transport_iser = {
 void iscsi_init_iser_transport(struct iscsi_context *iscsi)
 {
 	iscsi->drv = &iscsi_transport_iser;
-	iscsi->opaque = iscsi_malloc(iscsi, sizeof(struct iser_conn));
+	iscsi->opaque = iscsi_zmalloc(iscsi, sizeof(struct iser_conn));
 	iscsi->transport = ISER_TRANSPORT;
 	/* Update iSCSI params as per iSER transport */
 	iscsi->initiator_max_recv_data_segment_length = ISCSI_DEF_MAX_RECV_SEG_LEN;
