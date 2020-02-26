@@ -17,6 +17,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/prctl.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include "slist.h"
@@ -47,6 +48,9 @@
 
 
 #ifdef __linux
+
+/* the  name  can  be up to 16 bytes long, including the terminating null byte*/
+#define ISER_CM_THREAD_NAME "iscsi_cm_thread"
 
 /* MUST keep in sync with socket.c */
 union socket_address {
@@ -1369,6 +1373,9 @@ static void *cm_thread(void *arg)
 	struct rdma_cm_event event_copy;
 	int ret;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
+
+	/* supported since Linux 2.6.9, not fatal error, ignore return value */
+	prctl(PR_SET_NAME, ISER_CM_THREAD_NAME);
 
 	while (1) {
 		ret = rdma_get_cm_event(iser_conn->cma_channel, &iser_conn->cma_event);
