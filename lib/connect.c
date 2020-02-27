@@ -418,6 +418,14 @@ int iscsi_reconnect(struct iscsi_context *iscsi)
 		return -1;
 	}
 
+	/* default transport is initialized as TCP in iscsi_create_context,
+	   we have to overwrite transport in new iscsi as old iscsi.
+	 */
+	if (iscsi_init_transport(tmp_iscsi, iscsi->transport)) {
+		ISCSI_LOG(iscsi, 2, "failed to initializing transport for reconnection");
+		return -1;
+	}
+
 	ISCSI_LOG(iscsi, 2, "reconnect initiated");
 
 	iscsi_set_targetname(tmp_iscsi, iscsi->target_name);
