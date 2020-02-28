@@ -294,8 +294,10 @@ iscsi_iser_disconnect(struct iscsi_context *iscsi) {
 
 	struct iser_conn *iser_conn = iscsi->opaque;
 
-	iser_conn_terminate(iser_conn);
-	iser_conn_release(iser_conn);
+	if (iser_conn) {
+		iser_conn_terminate(iser_conn);
+		iser_conn_release(iser_conn);
+	}
 
 	iscsi->fd  = -1;
 	iscsi->is_connected = 0;
@@ -1461,6 +1463,25 @@ iscsi_iser_connect(struct iscsi_context *iscsi, union socket_address *sa,__attri
 	iscsi->is_connected = 1;
 	iscsi->socket_status_cb(iscsi, SCSI_STATUS_GOOD, NULL, iscsi->connect_data);
 	iscsi->socket_status_cb = NULL;
+
+	if (iscsi->old_iscsi && iscsi->opaque != iscsi->old_iscsi->opaque) {
+		struct iser_conn *old_iser_conn = iscsi->old_iscsi->opaque;
+		int oldfd = old_iser_conn->comp_channel->fd;
+		int newfd = iser_conn->comp_channel->fd;
+
+		iser_conn_terminate(old_iser_conn);
+		iser_conn_release(old_iser_conn);
+
+		if (dup2(newfd, oldfd) == -1) {
+			return -1;
+		}
+
+		close(newfd);
+		iser_conn->comp_channel->fd = oldfd;
+
+		iscsi_free(iscsi->old_iscsi, iscsi->old_iscsi->opaque);
+		iscsi->old_iscsi->opaque = NULL;
+	}
 
 	return 0;
 }
