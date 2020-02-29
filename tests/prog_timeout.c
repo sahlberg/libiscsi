@@ -38,10 +38,6 @@
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
 
-#ifndef discard_const
-#define discard_const(ptr) ((void *)((intptr_t)(ptr)))
-#endif
-
 const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:prog-timeout";
 
 void print_usage(void)
@@ -108,7 +104,7 @@ int main(int argc, char *argv[])
 {
 	struct iscsi_context *iscsi;
 	struct iscsi_url *iscsi_url = NULL;
-	const char *url = NULL;
+	char *url = NULL;
 	int c;
 	static int show_help = 0, show_usage = 0, debug = 0;
 	uint32_t count;
@@ -182,9 +178,7 @@ int main(int argc, char *argv[])
 
 	iscsi_url = iscsi_parse_full_url(iscsi, url);
 	
-	if (url) {
-		free(discard_const(url));
-	}
+        free(url);
 
 	if (iscsi_url == NULL) {
 		fprintf(stderr, "Failed to parse URL: %s\n", 

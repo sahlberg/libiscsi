@@ -31,10 +31,6 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
-#ifndef discard_const
-#define discard_const(ptr) ((void *)((intptr_t)(ptr)))
-#endif
-
 const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-inq";
 
 void inquiry_block_limits(struct scsi_inquiry_block_limits *inq)
@@ -236,7 +232,7 @@ void print_help(void)
 int main(int argc, char *argv[])
 {
 	struct iscsi_context *iscsi;
-	const char *url = NULL;
+	char *url = NULL;
 	struct iscsi_url *iscsi_url = NULL;
 	int evpd = 0, pagecode = 0;
 	int show_help = 0, show_usage = 0, debug = 0;
@@ -312,10 +308,8 @@ int main(int argc, char *argv[])
 		exit(10);
 	}
 	iscsi_url = iscsi_parse_full_url(iscsi, url);
-	
-	if (url) {
-		free(discard_const(url));
-	}
+
+        free(url);
 
 	if (iscsi_url == NULL) {
 		fprintf(stderr, "Failed to parse URL: %s\n", 

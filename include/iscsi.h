@@ -549,12 +549,12 @@ EXTERN int iscsi_logout_sync(struct iscsi_context *iscsi);
 
 struct iscsi_target_portal {
        struct iscsi_target_portal *next;
-       const char *portal;
+       char *portal;
 };
 
 struct iscsi_discovery_address {
        struct iscsi_discovery_address *next;
-       const char *target_name;
+       char *target_name;
        struct iscsi_target_portal *portals;
 };
 

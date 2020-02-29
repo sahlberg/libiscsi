@@ -298,10 +298,8 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
         if (sdev->iscsi_url) {
                 time_t current_time = time(NULL);
 
-                if (sdev->error_str != NULL) {
-                        free(discard_const(sdev->error_str));
-                        sdev->error_str = NULL;
-                }
+                free(sdev->error_str);
+                sdev->error_str = NULL;
                 task = iscsi_scsi_command_sync(sdev->iscsi_ctx, sdev->iscsi_lun, task, NULL);
                 if (task == NULL) {
                         sdev->error_str = strdup(iscsi_get_error(sdev->iscsi_ctx));
@@ -372,9 +370,7 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
                 if(ioctl(sdev->sgio_fd, SG_IO, &io_hdr) < 0){
                         int err = errno;
 
-                        if (sdev->error_str != NULL) {
-                                free(discard_const(sdev->error_str));
-                        }
+                        free(sdev->error_str);
                         if (asprintf(&sdev->error_str, "SG_IO ioctl failed: %s",
                                      strerror(err)) < 0)
                                 sdev->error_str = NULL;
@@ -401,18 +397,14 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
                                  task->sense.key,
                                  scsi_sense_ascq_str(task->sense.ascq),
                                  task->sense.ascq);
-                        if (sdev->error_str != NULL) {
-                                free(discard_const(sdev->error_str));
-                        }
+                        free(sdev->error_str);
                         sdev->error_str = strdup(buf);
                         return task;
                 }
 
                 if(io_hdr.status == SCSI_STATUS_RESERVATION_CONFLICT){
                         task->status = SCSI_STATUS_RESERVATION_CONFLICT;
-                        if (sdev->error_str != NULL) {
-                                free(discard_const(sdev->error_str));
-                        }
+                        free(sdev->error_str);
                         sdev->error_str = strdup("Reservation Conflict");
                         return task;
                 }
@@ -422,9 +414,7 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
                         task->sense.key = 0x0f;
                         task->sense.ascq  = 0xffff;
 
-                        if (sdev->error_str != NULL) {
-                                free(discard_const(sdev->error_str));
-                        }
+                        free(sdev->error_str);
                         sdev->error_str = strdup("SCSI masked error");
                         return NULL;
                 }
@@ -434,9 +424,7 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
                         task->sense.ascq  = 0xffff;
 
                         snprintf(buf, sizeof(buf), "SCSI host error. Status=0x%x", io_hdr.host_status);
-                        if (sdev->error_str != NULL) {
-                                free(discard_const(sdev->error_str));
-                        }
+                        free(sdev->error_str);
                         sdev->error_str = strdup(buf);
                         return task;
                 }
@@ -445,9 +433,7 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
                         task->sense.key = 0x0f;
                         task->sense.ascq  = 0xffff;
 
-                        if (sdev->error_str != NULL) {
-                                free(discard_const(sdev->error_str));
-                        }
+                        free(sdev->error_str);
                         sdev->error_str = strdup("SCSI driver error");
                         return NULL;
                 }

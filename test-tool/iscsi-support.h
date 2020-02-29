@@ -30,10 +30,6 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
-#ifndef discard_const
-#define discard_const(ptr) ((void *)((intptr_t)(ptr)))
-#endif
-
 extern const char *initiatorname1;
 extern const char *initiatorname2;
 

@@ -34,10 +34,6 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
-#ifndef discard_const
-#define discard_const(ptr) ((void *)((intptr_t)(ptr)))
-#endif
-
 const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:prog-reconnect-timeout";
 
 struct client_state {
@@ -217,7 +213,7 @@ int main(int argc, char *argv[])
 	struct iscsi_context *iscsi;
 	struct iscsi_url *iscsi_url = NULL;
 	struct client_state state;
-	const char *url = NULL;
+	char *url = NULL;
 	int i, c;
 	static int show_help = 0, show_usage = 0, debug = 0;
 	struct scsi_readcapacity10 *rc10;
@@ -293,10 +289,8 @@ int main(int argc, char *argv[])
 	}
 
 	iscsi_url = iscsi_parse_full_url(iscsi, url);
-	
-	if (url) {
-		free(discard_const(url));
-	}
+
+        free(url);
 
 	if (iscsi_url == NULL) {
 		fprintf(stderr, "Failed to parse URL: %s\n", 

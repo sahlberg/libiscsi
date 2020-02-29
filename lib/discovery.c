@@ -89,14 +89,14 @@ iscsi_free_discovery_addresses(struct iscsi_context *iscsi, struct iscsi_discove
 	while (addresses != NULL) {
 		struct iscsi_discovery_address *next = addresses->next;
 
-		iscsi_free(iscsi, discard_const(addresses->target_name));
+		iscsi_free(iscsi, addresses->target_name);
 		addresses->target_name = NULL;
 
 		while (addresses->portals != NULL) {
 			struct iscsi_target_portal *next_portal = addresses->portals->next;
 
-			iscsi_free(iscsi, discard_const(addresses->portals->portal));
-			iscsi_free(iscsi, discard_const(addresses->portals));
+			iscsi_free(iscsi, addresses->portals->portal);
+			iscsi_free(iscsi, addresses->portals);
 
 			addresses->portals = next_portal;
 		}
