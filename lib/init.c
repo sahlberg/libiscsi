@@ -218,7 +218,7 @@ iscsi_create_context(const char *initiator_name)
 
 	/* initalize transport of context */
 	if (iscsi_init_transport(iscsi, TCP_TRANSPORT)) {
-		iscsi_set_error(iscsi, "Failed allocating transport");
+		free(iscsi);
 		return NULL;
 	}
 
@@ -393,9 +393,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		return 0;
 	}
 
-	if (iscsi->fd != -1) {
-		iscsi_disconnect(iscsi);
-	}
+	iscsi_disconnect(iscsi);
 
 	iscsi_cancel_pdus(iscsi);
 

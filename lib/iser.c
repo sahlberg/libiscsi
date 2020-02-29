@@ -17,6 +17,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/prctl.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include "slist.h"
@@ -47,6 +48,9 @@
 
 
 #ifdef __linux
+
+/* the  name  can  be up to 16 bytes long, including the terminating null byte*/
+#define ISER_CM_THREAD_NAME "iscsi_cm_thread"
 
 /* MUST keep in sync with socket.c */
 union socket_address {
@@ -194,6 +198,7 @@ iser_free_iser_conn_res(struct iser_conn *iser_conn, bool destroy)
 
 		if (iser_conn->cmthread) {
 			pthread_cancel(iser_conn->cmthread);
+			pthread_join(iser_conn->cmthread, NULL);
 			iser_conn->cmthread = 0;
 		}
 
@@ -289,8 +294,10 @@ iscsi_iser_disconnect(struct iscsi_context *iscsi) {
 
 	struct iser_conn *iser_conn = iscsi->opaque;
 
-	iser_conn_terminate(iser_conn);
-	iser_conn_release(iser_conn);
+	if (iser_conn) {
+		iser_conn_terminate(iser_conn);
+		iser_conn_release(iser_conn);
+	}
 
 	iscsi->fd  = -1;
 	iscsi->is_connected = 0;
@@ -1032,7 +1039,7 @@ iser_reg_mr(struct iser_conn *iser_conn)
 
 	for (i = 0 ; i < NUM_MRS ; i++) {
 
-			tx_desc = iscsi_malloc(iscsi, sizeof(*tx_desc));
+			tx_desc = iscsi_zmalloc(iscsi, sizeof(*tx_desc));
 			if (tx_desc == NULL) {
 				iscsi_set_error(iscsi, "Out-Of-Memory, failed to allocate data buffer");
 				return -1;
@@ -1370,6 +1377,9 @@ static void *cm_thread(void *arg)
 	int ret;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 
+	/* supported since Linux 2.6.9, not fatal error, ignore return value */
+	prctl(PR_SET_NAME, ISER_CM_THREAD_NAME);
+
 	while (1) {
 		ret = rdma_get_cm_event(iser_conn->cma_channel, &iser_conn->cma_event);
 		if (ret) {
@@ -1454,6 +1464,25 @@ iscsi_iser_connect(struct iscsi_context *iscsi, union socket_address *sa,__attri
 	iscsi->socket_status_cb(iscsi, SCSI_STATUS_GOOD, NULL, iscsi->connect_data);
 	iscsi->socket_status_cb = NULL;
 
+	if (iscsi->old_iscsi && iscsi->opaque != iscsi->old_iscsi->opaque) {
+		struct iser_conn *old_iser_conn = iscsi->old_iscsi->opaque;
+		int oldfd = old_iser_conn->comp_channel->fd;
+		int newfd = iser_conn->comp_channel->fd;
+
+		iser_conn_terminate(old_iser_conn);
+		iser_conn_release(old_iser_conn);
+
+		if (dup2(newfd, oldfd) == -1) {
+			return -1;
+		}
+
+		close(newfd);
+		iser_conn->comp_channel->fd = oldfd;
+
+		iscsi_free(iscsi->old_iscsi, iscsi->old_iscsi->opaque);
+		iscsi->old_iscsi->opaque = NULL;
+	}
+
 	return 0;
 }
 
@@ -1471,7 +1500,7 @@ static iscsi_transport iscsi_transport_iser = {
 void iscsi_init_iser_transport(struct iscsi_context *iscsi)
 {
 	iscsi->drv = &iscsi_transport_iser;
-	iscsi->opaque = iscsi_malloc(iscsi, sizeof(struct iser_conn));
+	iscsi->opaque = iscsi_zmalloc(iscsi, sizeof(struct iser_conn));
 	iscsi->transport = ISER_TRANSPORT;
 	/* Update iSCSI params as per iSER transport */
 	iscsi->initiator_max_recv_data_segment_length = ISCSI_DEF_MAX_RECV_SEG_LEN;
