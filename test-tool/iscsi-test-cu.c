@@ -65,421 +65,421 @@ static unsigned int maxsectors;
  *
  *****************************************************************/
 static CU_TestInfo tests_compareandwrite[] = {
-        { (char *)"Simple", test_compareandwrite_simple },
-        { (char *)"DpoFua", test_compareandwrite_dpofua },
-        { (char *)"Miscompare", test_compareandwrite_miscompare },
-        { (char *)"Unwritten", test_compareandwrite_unwritten },
-        { (char *)"InvalidDataOutSize",
+        { "Simple", test_compareandwrite_simple },
+        { "DpoFua", test_compareandwrite_dpofua },
+        { "Miscompare", test_compareandwrite_miscompare },
+        { "Unwritten", test_compareandwrite_unwritten },
+        { "InvalidDataOutSize",
           test_compareandwrite_invalid_dataout_size },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_get_lba_status[] = {
-        { (char *)"Simple", test_get_lba_status_simple },
-        { (char *)"BeyondEol", test_get_lba_status_beyond_eol },
-        { (char *)"UnmapSingle", test_get_lba_status_unmap_single },
+        { "Simple", test_get_lba_status_simple },
+        { "BeyondEol", test_get_lba_status_beyond_eol },
+        { "UnmapSingle", test_get_lba_status_unmap_single },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_inquiry[] = {
-        { (char *)"Standard", test_inquiry_standard },
-        { (char *)"AllocLength", test_inquiry_alloc_length},
-        { (char *)"EVPD", test_inquiry_evpd},
-        { (char *)"BlockLimits", test_inquiry_block_limits},
-        { (char *)"MandatoryVPDSBC", test_inquiry_mandatory_vpd_sbc},
-        { (char *)"SupportedVPD", test_inquiry_supported_vpd},
-        { (char *)"VersionDescriptors", test_inquiry_version_descriptors},
+        { "Standard", test_inquiry_standard },
+        { "AllocLength", test_inquiry_alloc_length},
+        { "EVPD", test_inquiry_evpd},
+        { "BlockLimits", test_inquiry_block_limits},
+        { "MandatoryVPDSBC", test_inquiry_mandatory_vpd_sbc},
+        { "SupportedVPD", test_inquiry_supported_vpd},
+        { "VersionDescriptors", test_inquiry_version_descriptors},
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_mandatory[] = {
-        { (char *)"MandatorySBC", test_mandatory_sbc },
+        { "MandatorySBC", test_mandatory_sbc },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_modesense6[] = {
-        { (char *)"AllPages", test_modesense6_all_pages },
-        { (char *)"Control", test_modesense6_control },
-        { (char *)"Control-D_SENSE", test_modesense6_control_d_sense },
-        { (char *)"Control-SWP", test_modesense6_control_swp },
-        { (char *)"Residuals", test_modesense6_residuals },
+        { "AllPages", test_modesense6_all_pages },
+        { "Control", test_modesense6_control },
+        { "Control-D_SENSE", test_modesense6_control_d_sense },
+        { "Control-SWP", test_modesense6_control_swp },
+        { "Residuals", test_modesense6_residuals },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_nomedia[] = {
-        { (char *)"NoMediaSBC", test_nomedia_sbc },
+        { "NoMediaSBC", test_nomedia_sbc },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_orwrite[] = {
-        { (char *)"Simple", test_orwrite_simple },
-        { (char *)"BeyondEol", test_orwrite_beyond_eol },
-        { (char *)"ZeroBlocks", test_orwrite_0blocks },
-        { (char *)"Protect", test_orwrite_wrprotect },
-        { (char *)"DpoFua", test_orwrite_dpofua },
-        { (char *)"Verify", test_orwrite_verify },
+        { "Simple", test_orwrite_simple },
+        { "BeyondEol", test_orwrite_beyond_eol },
+        { "ZeroBlocks", test_orwrite_0blocks },
+        { "Protect", test_orwrite_wrprotect },
+        { "DpoFua", test_orwrite_dpofua },
+        { "Verify", test_orwrite_verify },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prefetch10[] = {
-        { (char *)"Simple", test_prefetch10_simple },
-        { (char *)"BeyondEol", test_prefetch10_beyond_eol },
-        { (char *)"ZeroBlocks", test_prefetch10_0blocks },
-        { (char *)"Flags", test_prefetch10_flags },
+        { "Simple", test_prefetch10_simple },
+        { "BeyondEol", test_prefetch10_beyond_eol },
+        { "ZeroBlocks", test_prefetch10_0blocks },
+        { "Flags", test_prefetch10_flags },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prefetch16[] = {
-        { (char *)"Simple", test_prefetch16_simple },
-        { (char *)"BeyondEol", test_prefetch16_beyond_eol },
-        { (char *)"ZeroBlocks", test_prefetch16_0blocks },
-        { (char *)"Flags", test_prefetch16_flags },
+        { "Simple", test_prefetch16_simple },
+        { "BeyondEol", test_prefetch16_beyond_eol },
+        { "ZeroBlocks", test_prefetch16_0blocks },
+        { "Flags", test_prefetch16_flags },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_preventallow[] = {
-        { (char *)"Simple", test_preventallow_simple },
-        { (char *)"Eject", test_preventallow_eject },
-        { (char *)"ITNexusLoss", test_preventallow_itnexus_loss },
-        { (char *)"Logout", test_preventallow_logout },
-        { (char *)"WarmReset", test_preventallow_warm_reset },
-        { (char *)"ColdReset", test_preventallow_cold_reset },
-        { (char *)"LUNReset", test_preventallow_lun_reset },
-        { (char *)"2ITNexuses", test_preventallow_2_itnexuses },
+        { "Simple", test_preventallow_simple },
+        { "Eject", test_preventallow_eject },
+        { "ITNexusLoss", test_preventallow_itnexus_loss },
+        { "Logout", test_preventallow_logout },
+        { "WarmReset", test_preventallow_warm_reset },
+        { "ColdReset", test_preventallow_cold_reset },
+        { "LUNReset", test_preventallow_lun_reset },
+        { "2ITNexuses", test_preventallow_2_itnexuses },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prin_read_keys[] = {
-        { (char *)"Simple", test_prin_read_keys_simple },
-        { (char *)"Truncate", test_prin_read_keys_truncate },
+        { "Simple", test_prin_read_keys_simple },
+        { "Truncate", test_prin_read_keys_truncate },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prin_report_caps[] = {
-        { (char *)"Simple", test_prin_report_caps_simple },
+        { "Simple", test_prin_report_caps_simple },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prout_register[] = {
-        { (char *)"Simple", test_prout_register_simple },
+        { "Simple", test_prout_register_simple },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prout_reserve[] = {
-        { (char *)"Simple",
+        { "Simple",
           test_prout_reserve_simple },
-        { (char *)"AccessEA",
+        { "AccessEA",
           test_prout_reserve_access_ea },
-        { (char *)"AccessWE",
+        { "AccessWE",
           test_prout_reserve_access_we },
-        { (char *)"AccessEARO",
+        { "AccessEARO",
           test_prout_reserve_access_earo },
-        { (char *)"AccessWERO",
+        { "AccessWERO",
           test_prout_reserve_access_wero },
-        { (char *)"AccessEAAR",
+        { "AccessEAAR",
           test_prout_reserve_access_eaar },
-        { (char *)"AccessWEAR",
+        { "AccessWEAR",
           test_prout_reserve_access_wear },
-        { (char *)"OwnershipEA",
+        { "OwnershipEA",
           test_prout_reserve_ownership_ea },
-        { (char *)"OwnershipWE",
+        { "OwnershipWE",
           test_prout_reserve_ownership_we },
-        { (char *)"OwnershipEARO",
+        { "OwnershipEARO",
           test_prout_reserve_ownership_earo },
-        { (char *)"OwnershipWERO",
+        { "OwnershipWERO",
           test_prout_reserve_ownership_wero },
-        { (char *)"OwnershipEAAR",
+        { "OwnershipEAAR",
           test_prout_reserve_ownership_eaar },
-        { (char *)"OwnershipWEAR",
+        { "OwnershipWEAR",
           test_prout_reserve_ownership_wear },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prout_clear[] = {
-        { (char *)"Simple",
+        { "Simple",
           test_prout_clear_simple },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prout_preempt[] = {
-        { (char *)"RemoveRegistration",
+        { "RemoveRegistration",
           test_prout_preempt_rm_reg },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_prin_serviceaction_range[] = {
-        { (char *)"Range", test_prin_serviceaction_range },
+        { "Range", test_prin_serviceaction_range },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_read6[] = {
-        { (char *)"Simple", test_read6_simple },
-        { (char *)"BeyondEol", test_read6_beyond_eol },
+        { "Simple", test_read6_simple },
+        { "BeyondEol", test_read6_beyond_eol },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_read10[] = {
-        { (char *)"Simple", test_read10_simple },
-        { (char *)"BeyondEol", test_read10_beyond_eol },
-        { (char *)"ZeroBlocks", test_read10_0blocks },
-        { (char *)"ReadProtect", test_read10_rdprotect },
-        { (char *)"DpoFua", test_read10_dpofua },
-        { (char *)"Async", test_async_read },
+        { "Simple", test_read10_simple },
+        { "BeyondEol", test_read10_beyond_eol },
+        { "ZeroBlocks", test_read10_0blocks },
+        { "ReadProtect", test_read10_rdprotect },
+        { "DpoFua", test_read10_dpofua },
+        { "Async", test_async_read },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_read12[] = {
-        { (char *)"Simple", test_read12_simple },
-        { (char *)"BeyondEol", test_read12_beyond_eol },
-        { (char *)"ZeroBlocks", test_read12_0blocks },
-        { (char *)"ReadProtect", test_read12_rdprotect },
-        { (char *)"DpoFua", test_read12_dpofua },
+        { "Simple", test_read12_simple },
+        { "BeyondEol", test_read12_beyond_eol },
+        { "ZeroBlocks", test_read12_0blocks },
+        { "ReadProtect", test_read12_rdprotect },
+        { "DpoFua", test_read12_dpofua },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_read16[] = {
-        { (char *)"Simple", test_read16_simple },
-        { (char *)"BeyondEol", test_read16_beyond_eol },
-        { (char *)"ZeroBlocks", test_read16_0blocks },
-        { (char *)"ReadProtect", test_read16_rdprotect },
-        { (char *)"DpoFua", test_read16_dpofua },
+        { "Simple", test_read16_simple },
+        { "BeyondEol", test_read16_beyond_eol },
+        { "ZeroBlocks", test_read16_0blocks },
+        { "ReadProtect", test_read16_rdprotect },
+        { "DpoFua", test_read16_dpofua },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_readcapacity10[] = {
-        { (char *)"Simple", test_readcapacity10_simple },
+        { "Simple", test_readcapacity10_simple },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_readcapacity16[] = {
-        { (char *)"Simple", test_readcapacity16_simple },
-        { (char *)"Alloclen", test_readcapacity16_alloclen },
-        { (char *)"PI", test_readcapacity16_protection },
-        { (char *)"Support", test_readcapacity16_support },
+        { "Simple", test_readcapacity16_simple },
+        { "Alloclen", test_readcapacity16_alloclen },
+        { "PI", test_readcapacity16_protection },
+        { "Support", test_readcapacity16_support },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_readdefectdata10[] = {
-        { (char *)"Simple", test_readdefectdata10_simple },
+        { "Simple", test_readdefectdata10_simple },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_readdefectdata12[] = {
-        { (char *)"Simple", test_readdefectdata12_simple },
+        { "Simple", test_readdefectdata12_simple },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_readonly[] = {
-        { (char *)"ReadOnlySBC", test_readonly_sbc },
+        { "ReadOnlySBC", test_readonly_sbc },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_sanitize[] = {
-        { (char *)"BlockErase", test_sanitize_block_erase },
-        { (char *)"BlockEraseReserved", test_sanitize_block_erase_reserved },
-        { (char *)"CryptoErase", test_sanitize_crypto_erase },
-        { (char *)"CryptoEraseReserved", test_sanitize_crypto_erase_reserved },
-        { (char *)"ExitFailureMode", test_sanitize_exit_failure_mode },
-        { (char *)"InvalidServiceAction", test_sanitize_invalid_serviceaction },
-        { (char *)"Overwrite", test_sanitize_overwrite },
-        { (char *)"OverwriteReserved", test_sanitize_overwrite_reserved },
-        { (char *)"Readonly", test_sanitize_readonly },
-        { (char *)"Reservations", test_sanitize_reservations },
-        { (char *)"Reset", test_sanitize_reset },
+        { "BlockErase", test_sanitize_block_erase },
+        { "BlockEraseReserved", test_sanitize_block_erase_reserved },
+        { "CryptoErase", test_sanitize_crypto_erase },
+        { "CryptoEraseReserved", test_sanitize_crypto_erase_reserved },
+        { "ExitFailureMode", test_sanitize_exit_failure_mode },
+        { "InvalidServiceAction", test_sanitize_invalid_serviceaction },
+        { "Overwrite", test_sanitize_overwrite },
+        { "OverwriteReserved", test_sanitize_overwrite_reserved },
+        { "Readonly", test_sanitize_readonly },
+        { "Reservations", test_sanitize_reservations },
+        { "Reset", test_sanitize_reset },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_extended_copy[] = {
-        { (char *)"Simple", test_extendedcopy_simple },
-        { (char *)"ParamHdr", test_extendedcopy_param },
-        { (char *)"DescrLimits", test_extendedcopy_descr_limits },
-        { (char *)"DescrType", test_extendedcopy_descr_type },
-        { (char *)"ValidTgtDescr", test_extendedcopy_validate_tgt_descr },
-        { (char *)"ValidSegDescr", test_extendedcopy_validate_seg_descr },
+        { "Simple", test_extendedcopy_simple },
+        { "ParamHdr", test_extendedcopy_param },
+        { "DescrLimits", test_extendedcopy_descr_limits },
+        { "DescrType", test_extendedcopy_descr_type },
+        { "ValidTgtDescr", test_extendedcopy_validate_tgt_descr },
+        { "ValidSegDescr", test_extendedcopy_validate_seg_descr },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_receive_copy_results[] = {
-        { (char *)"CopyStatus", test_receive_copy_results_copy_status },
-        { (char *)"OpParams", test_receive_copy_results_op_params },
+        { "CopyStatus", test_receive_copy_results_copy_status },
+        { "OpParams", test_receive_copy_results_op_params },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_report_supported_opcodes[] = {
-        { (char *)"Simple", test_report_supported_opcodes_simple },
-        { (char *)"OneCommand", test_report_supported_opcodes_one_command },
-        { (char *)"RCTD", test_report_supported_opcodes_rctd },
-        { (char *)"SERVACTV", test_report_supported_opcodes_servactv },
+        { "Simple", test_report_supported_opcodes_simple },
+        { "OneCommand", test_report_supported_opcodes_one_command },
+        { "RCTD", test_report_supported_opcodes_rctd },
+        { "SERVACTV", test_report_supported_opcodes_servactv },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_reserve6[] = {
-        { (char *)"Simple", test_reserve6_simple },
-        { (char *)"2Initiators", test_reserve6_2initiators },
-        { (char *)"Logout", test_reserve6_logout },
-        { (char *)"ITNexusLoss", test_reserve6_itnexus_loss },
-        { (char *)"TargetColdReset", test_reserve6_target_cold_reset },
-        { (char *)"TargetWarmReset", test_reserve6_target_warm_reset },
-        { (char *)"LUNReset", test_reserve6_lun_reset },
+        { "Simple", test_reserve6_simple },
+        { "2Initiators", test_reserve6_2initiators },
+        { "Logout", test_reserve6_logout },
+        { "ITNexusLoss", test_reserve6_itnexus_loss },
+        { "TargetColdReset", test_reserve6_target_cold_reset },
+        { "TargetWarmReset", test_reserve6_target_warm_reset },
+        { "LUNReset", test_reserve6_lun_reset },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_testunitready[] = {
-        { (char *)"Simple", test_testunitready_simple },
+        { "Simple", test_testunitready_simple },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_startstopunit[] = {
-        { (char *)"Simple", test_startstopunit_simple },
-        { (char *)"PwrCnd", test_startstopunit_pwrcnd },
-        { (char *)"NoLoej", test_startstopunit_noloej },
+        { "Simple", test_startstopunit_simple },
+        { "PwrCnd", test_startstopunit_pwrcnd },
+        { "NoLoej", test_startstopunit_noloej },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_unmap[] = {
-        { (char *)"Simple", test_unmap_simple },
-        { (char *)"VPD", test_unmap_vpd },
-        { (char *)"ZeroBlocks", test_unmap_0blocks },
+        { "Simple", test_unmap_simple },
+        { "VPD", test_unmap_vpd },
+        { "ZeroBlocks", test_unmap_0blocks },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_verify10[] = {
-        { (char *)"Simple", test_verify10_simple },
-        { (char *)"BeyondEol", test_verify10_beyond_eol },
-        { (char *)"ZeroBlocks", test_verify10_0blocks },
-        { (char *)"VerifyProtect", test_verify10_vrprotect },
-        { (char *)"Flags", test_verify10_flags },
-        { (char *)"Dpo", test_verify10_dpo },
-        { (char *)"Mismatch", test_verify10_mismatch },
-        { (char *)"MismatchNoCmp", test_verify10_mismatch_no_cmp },
+        { "Simple", test_verify10_simple },
+        { "BeyondEol", test_verify10_beyond_eol },
+        { "ZeroBlocks", test_verify10_0blocks },
+        { "VerifyProtect", test_verify10_vrprotect },
+        { "Flags", test_verify10_flags },
+        { "Dpo", test_verify10_dpo },
+        { "Mismatch", test_verify10_mismatch },
+        { "MismatchNoCmp", test_verify10_mismatch_no_cmp },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_verify12[] = {
-        { (char *)"Simple", test_verify12_simple },
-        { (char *)"BeyondEol", test_verify12_beyond_eol },
-        { (char *)"ZeroBlocks", test_verify12_0blocks },
-        { (char *)"VerifyProtect", test_verify12_vrprotect },
-        { (char *)"Flags", test_verify12_flags },
-        { (char *)"Dpo", test_verify12_dpo },
-        { (char *)"Mismatch", test_verify12_mismatch },
-        { (char *)"MismatchNoCmp", test_verify12_mismatch_no_cmp },
+        { "Simple", test_verify12_simple },
+        { "BeyondEol", test_verify12_beyond_eol },
+        { "ZeroBlocks", test_verify12_0blocks },
+        { "VerifyProtect", test_verify12_vrprotect },
+        { "Flags", test_verify12_flags },
+        { "Dpo", test_verify12_dpo },
+        { "Mismatch", test_verify12_mismatch },
+        { "MismatchNoCmp", test_verify12_mismatch_no_cmp },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_verify16[] = {
-        { (char *)"Simple", test_verify16_simple },
-        { (char *)"BeyondEol", test_verify16_beyond_eol },
-        { (char *)"ZeroBlocks", test_verify16_0blocks },
-        { (char *)"VerifyProtect", test_verify16_vrprotect },
-        { (char *)"Flags", test_verify16_flags },
-        { (char *)"Dpo", test_verify16_dpo },
-        { (char *)"Mismatch", test_verify16_mismatch },
-        { (char *)"MismatchNoCmp", test_verify16_mismatch_no_cmp },
+        { "Simple", test_verify16_simple },
+        { "BeyondEol", test_verify16_beyond_eol },
+        { "ZeroBlocks", test_verify16_0blocks },
+        { "VerifyProtect", test_verify16_vrprotect },
+        { "Flags", test_verify16_flags },
+        { "Dpo", test_verify16_dpo },
+        { "Mismatch", test_verify16_mismatch },
+        { "MismatchNoCmp", test_verify16_mismatch_no_cmp },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_write10[] = {
-        { (char *)"Simple", test_write10_simple },
-        { (char *)"BeyondEol", test_write10_beyond_eol },
-        { (char *)"ZeroBlocks", test_write10_0blocks },
-        { (char *)"WriteProtect", test_write10_wrprotect },
-        { (char *)"DpoFua", test_write10_dpofua },
-        { (char *)"Async", test_async_write },
+        { "Simple", test_write10_simple },
+        { "BeyondEol", test_write10_beyond_eol },
+        { "ZeroBlocks", test_write10_0blocks },
+        { "WriteProtect", test_write10_wrprotect },
+        { "DpoFua", test_write10_dpofua },
+        { "Async", test_async_write },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_write12[] = {
-        { (char *)"Simple", test_write12_simple },
-        { (char *)"BeyondEol", test_write12_beyond_eol },
-        { (char *)"ZeroBlocks", test_write12_0blocks },
-        { (char *)"WriteProtect", test_write12_wrprotect },
-        { (char *)"DpoFua", test_write12_dpofua },
+        { "Simple", test_write12_simple },
+        { "BeyondEol", test_write12_beyond_eol },
+        { "ZeroBlocks", test_write12_0blocks },
+        { "WriteProtect", test_write12_wrprotect },
+        { "DpoFua", test_write12_dpofua },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_write16[] = {
-        { (char *)"Simple", test_write16_simple },
-        { (char *)"BeyondEol", test_write16_beyond_eol },
-        { (char *)"ZeroBlocks", test_write16_0blocks },
-        { (char *)"WriteProtect", test_write16_wrprotect },
-        { (char *)"DpoFua", test_write16_dpofua },
+        { "Simple", test_write16_simple },
+        { "BeyondEol", test_write16_beyond_eol },
+        { "ZeroBlocks", test_write16_0blocks },
+        { "WriteProtect", test_write16_wrprotect },
+        { "DpoFua", test_write16_dpofua },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_writeatomic16[] = {
-        { (char *)"Simple", test_writeatomic16_simple },
-        { (char *)"BeyondEol", test_writeatomic16_beyond_eol },
-        { (char *)"ZeroBlocks", test_writeatomic16_0blocks },
-        { (char *)"WriteProtect", test_writeatomic16_wrprotect },
-        { (char *)"DpoFua", test_writeatomic16_dpofua },
-        { (char *)"VPD", test_writeatomic16_vpd },
+        { "Simple", test_writeatomic16_simple },
+        { "BeyondEol", test_writeatomic16_beyond_eol },
+        { "ZeroBlocks", test_writeatomic16_0blocks },
+        { "WriteProtect", test_writeatomic16_wrprotect },
+        { "DpoFua", test_writeatomic16_dpofua },
+        { "VPD", test_writeatomic16_vpd },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_writesame10[] = {
-        { (char *)"Simple", test_writesame10_simple },
-        { (char *)"BeyondEol", test_writesame10_beyond_eol },
-        { (char *)"ZeroBlocks", test_writesame10_0blocks },
-        { (char *)"WriteProtect", test_writesame10_wrprotect },
-        { (char *)"Unmap", test_writesame10_unmap },
-        { (char *)"UnmapUnaligned", test_writesame10_unmap_unaligned },
-        { (char *)"UnmapUntilEnd", test_writesame10_unmap_until_end },
-        { (char *)"UnmapVPD", test_writesame10_unmap_vpd },
-        { (char *)"Check", test_writesame10_check },
-        { (char *)"InvalidDataOutSize", test_writesame10_invalid_dataout_size },
+        { "Simple", test_writesame10_simple },
+        { "BeyondEol", test_writesame10_beyond_eol },
+        { "ZeroBlocks", test_writesame10_0blocks },
+        { "WriteProtect", test_writesame10_wrprotect },
+        { "Unmap", test_writesame10_unmap },
+        { "UnmapUnaligned", test_writesame10_unmap_unaligned },
+        { "UnmapUntilEnd", test_writesame10_unmap_until_end },
+        { "UnmapVPD", test_writesame10_unmap_vpd },
+        { "Check", test_writesame10_check },
+        { "InvalidDataOutSize", test_writesame10_invalid_dataout_size },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_writesame16[] = {
-        { (char *)"Simple", test_writesame16_simple },
-        { (char *)"BeyondEol", test_writesame16_beyond_eol },
-        { (char *)"ZeroBlocks", test_writesame16_0blocks },
-        { (char *)"WriteProtect", test_writesame16_wrprotect },
-        { (char *)"Unmap", test_writesame16_unmap },
-        { (char *)"UnmapUnaligned", test_writesame16_unmap_unaligned },
-        { (char *)"UnmapUntilEnd", test_writesame16_unmap_until_end },
-        { (char *)"UnmapVPD", test_writesame16_unmap_vpd },
-        { (char *)"Check", test_writesame16_check },
-        { (char *)"InvalidDataOutSize", test_writesame16_invalid_dataout_size },
+        { "Simple", test_writesame16_simple },
+        { "BeyondEol", test_writesame16_beyond_eol },
+        { "ZeroBlocks", test_writesame16_0blocks },
+        { "WriteProtect", test_writesame16_wrprotect },
+        { "Unmap", test_writesame16_unmap },
+        { "UnmapUnaligned", test_writesame16_unmap_unaligned },
+        { "UnmapUntilEnd", test_writesame16_unmap_until_end },
+        { "UnmapVPD", test_writesame16_unmap_vpd },
+        { "Check", test_writesame16_check },
+        { "InvalidDataOutSize", test_writesame16_invalid_dataout_size },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_writeverify10[] = {
-        { (char *)"Simple", test_writeverify10_simple },
-        { (char *)"BeyondEol", test_writeverify10_beyond_eol },
-        { (char *)"ZeroBlocks", test_writeverify10_0blocks },
-        { (char *)"WriteProtect", test_writeverify10_wrprotect },
-        { (char *)"Flags", test_writeverify10_flags },
-        { (char *)"Dpo", test_writeverify10_dpo },
+        { "Simple", test_writeverify10_simple },
+        { "BeyondEol", test_writeverify10_beyond_eol },
+        { "ZeroBlocks", test_writeverify10_0blocks },
+        { "WriteProtect", test_writeverify10_wrprotect },
+        { "Flags", test_writeverify10_flags },
+        { "Dpo", test_writeverify10_dpo },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_writeverify12[] = {
-        { (char *)"Simple", test_writeverify12_simple },
-        { (char *)"BeyondEol", test_writeverify12_beyond_eol },
-        { (char *)"ZeroBlocks", test_writeverify12_0blocks },
-        { (char *)"WriteProtect", test_writeverify12_wrprotect },
-        { (char *)"Flags", test_writeverify12_flags },
-        { (char *)"Dpo", test_writeverify12_dpo },
+        { "Simple", test_writeverify12_simple },
+        { "BeyondEol", test_writeverify12_beyond_eol },
+        { "ZeroBlocks", test_writeverify12_0blocks },
+        { "WriteProtect", test_writeverify12_wrprotect },
+        { "Flags", test_writeverify12_flags },
+        { "Dpo", test_writeverify12_dpo },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_writeverify16[] = {
-        { (char *)"Simple", test_writeverify16_simple },
-        { (char *)"BeyondEol", test_writeverify16_beyond_eol },
-        { (char *)"ZeroBlocks", test_writeverify16_0blocks },
-        { (char *)"WriteProtect", test_writeverify16_wrprotect },
-        { (char *)"Flags", test_writeverify16_flags },
-        { (char *)"Dpo", test_writeverify16_dpo },
+        { "Simple", test_writeverify16_simple },
+        { "BeyondEol", test_writeverify16_beyond_eol },
+        { "ZeroBlocks", test_writeverify16_0blocks },
+        { "WriteProtect", test_writeverify16_wrprotect },
+        { "Flags", test_writeverify16_flags },
+        { "Dpo", test_writeverify16_dpo },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_multipathio[] = {
-        { (char *)"Simple", test_multipathio_simple },
-        { (char *)"Reset", test_multipathio_reset },
-        { (char *)"CompareAndWrite", test_multipathio_compareandwrite },
-        { (char *)"CompareAndWriteAsync", test_mpio_async_caw },
+        { "Simple", test_multipathio_simple },
+        { "Reset", test_multipathio_reset },
+        { "CompareAndWrite", test_multipathio_compareandwrite },
+        { "CompareAndWriteAsync", test_mpio_async_caw },
         CU_TEST_INFO_NULL
 };
 
@@ -548,50 +548,50 @@ static libiscsi_suite_info scsi_suites[] = {
 };
 
 static CU_TestInfo tests_iscsi_cmdsn[] = {
-        { (char *)"iSCSICmdSnTooHigh", test_iscsi_cmdsn_toohigh },
-        { (char *)"iSCSICmdSnTooLow", test_iscsi_cmdsn_toolow },
+        { "iSCSICmdSnTooHigh", test_iscsi_cmdsn_toohigh },
+        { "iSCSICmdSnTooLow", test_iscsi_cmdsn_toolow },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_iscsi_datasn[] = {
-        { (char *)"iSCSIDataSnInvalid", test_iscsi_datasn_invalid },
+        { "iSCSIDataSnInvalid", test_iscsi_datasn_invalid },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_iscsi_sendtargets[] = {
-        { (char *)"Simple", test_iscsi_sendtargets_simple },
-        { (char *)"Invalid", test_iscsi_sendtargets_invalid },
+        { "Simple", test_iscsi_sendtargets_simple },
+        { "Invalid", test_iscsi_sendtargets_invalid },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_iscsi_nop[] = {
-        { (char *)"Simple", test_iscsi_nop_simple },
+        { "Simple", test_iscsi_nop_simple },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_iscsi_chap[] = {
-        { (char *)"Simple", test_iscsi_chap_simple },
-        { (char *)"Invalid", test_iscsi_chap_invalid },
+        { "Simple", test_iscsi_chap_simple },
+        { "Invalid", test_iscsi_chap_invalid },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_iscsi_residuals[] = {
-        { (char *)"Read10Invalid", test_read10_invalid },
-        { (char *)"Read10Residuals", test_read10_residuals },
-        { (char *)"Read12Residuals", test_read12_residuals },
-        { (char *)"Read16Residuals", test_read16_residuals },
-        { (char *)"Write10Residuals", test_write10_residuals },
-        { (char *)"Write12Residuals", test_write12_residuals },
-        { (char *)"Write16Residuals", test_write16_residuals },
-        { (char *)"WriteVerify10Residuals", test_writeverify10_residuals },
-        { (char *)"WriteVerify12Residuals", test_writeverify12_residuals },
-        { (char *)"WriteVerify16Residuals", test_writeverify16_residuals },
+        { "Read10Invalid", test_read10_invalid },
+        { "Read10Residuals", test_read10_residuals },
+        { "Read12Residuals", test_read12_residuals },
+        { "Read16Residuals", test_read16_residuals },
+        { "Write10Residuals", test_write10_residuals },
+        { "Write12Residuals", test_write12_residuals },
+        { "Write16Residuals", test_write16_residuals },
+        { "WriteVerify10Residuals", test_writeverify10_residuals },
+        { "WriteVerify12Residuals", test_writeverify12_residuals },
+        { "WriteVerify16Residuals", test_writeverify16_residuals },
         CU_TEST_INFO_NULL
 };
 
 static CU_TestInfo tests_iscsi_tmf[] = {
-        { (char *)"AbortTaskSimpleAsync", test_async_abort_simple },
-        { (char *)"LUNResetSimpleAsync", test_async_lu_reset_simple },
+        { "AbortTaskSimpleAsync", test_async_abort_simple },
+        { "LUNResetSimpleAsync", test_async_lu_reset_simple },
         CU_TEST_INFO_NULL
 };
 

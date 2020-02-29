@@ -141,7 +141,7 @@ test_iscsi_text_req_queue(struct iscsi_context *iscsi,
         iscsi_pdu_set_pduflags(pdu, ISCSI_PDU_TEXT_FINAL);
         iscsi_pdu_set_ttt(pdu, 0xffffffff);
 
-        ret = iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)kv_data,
+        ret = iscsi_pdu_add_data(iscsi, pdu, (const unsigned char *)kv_data,
                                  strlen(kv_data) + 1);
         CU_ASSERT_EQUAL_FATAL(ret, 0);
 

@@ -37,7 +37,7 @@ iscsi_discovery_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		      void *private_data)
 {
 	struct iscsi_pdu *pdu;
-	char *str;
+	const char *str;
 
 	pdu = iscsi_allocate_pdu(iscsi, ISCSI_PDU_TEXT_REQUEST,
 				 ISCSI_PDU_TEXT_RESPONSE,
@@ -62,9 +62,9 @@ iscsi_discovery_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	iscsi_pdu_set_ttt(pdu, 0xffffffff);
 
 	/* sendtargets */
-	str = (char *)"SendTargets=All";
-	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
-	    != 0) {
+	str = "SendTargets=All";
+	if (iscsi_pdu_add_data(iscsi, pdu, (const unsigned char *)str,
+                               strlen(str) + 1) != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
 		iscsi->drv->free_pdu(iscsi, pdu);
 		return -1;
