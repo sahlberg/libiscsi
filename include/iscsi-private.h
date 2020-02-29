@@ -31,10 +31,6 @@
 extern "C" {
 #endif
 
-#ifndef discard_const
-#define discard_const(ptr) ((void *)((intptr_t)(ptr)))
-#endif
-
 #ifndef MIN
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #endif

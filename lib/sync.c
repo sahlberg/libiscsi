@@ -1828,11 +1828,12 @@ void iscsi_free_discovery_data(struct iscsi_context *iscsi _U_,
 
                 while (da->portals) {
                         struct iscsi_target_portal *ponext = da->portals->next;
-                        free(discard_const(da->portals->portal));
+
+                        free(da->portals->portal);
                         free(da->portals);
                         da->portals = ponext;
                 }
-                free(discard_const(da->target_name));
+                free(da->target_name);
                 free(da);
                 da = danext;
         }

@@ -37,10 +37,6 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
-#ifndef discard_const
-#define discard_const(ptr) ((void *)((intptr_t)(ptr)))
-#endif
-
 int showluns;
 const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-ls";
 
@@ -318,7 +314,7 @@ int main(int argc, char *argv[])
 	struct iscsi_context *iscsi;
 	struct iscsi_url *iscsi_url = NULL;
 	struct client_state state;
-	const char *url = NULL;
+	char *url = NULL;
 	int c;
 	static int show_help = 0, show_usage = 0, debug = 0;
 
@@ -384,9 +380,7 @@ int main(int argc, char *argv[])
 
 	iscsi_url = iscsi_parse_portal_url(iscsi, url);
 
-	if (url) {
-		free(discard_const(url));
-	}
+        free(url);
 
 	if (iscsi_url == NULL) {
 		fprintf(stderr, "Failed to parse URL: %s\n",
