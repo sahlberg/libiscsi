@@ -109,6 +109,8 @@ struct iscsi_context {
 	int tcp_syncnt;
 	int tcp_nonblocking;
 
+	unsigned char rdma_ack_timeout;
+
 	int current_phase;
 	int next_phase;
 #define ISCSI_LOGIN_SECNEG_PHASE_OFFER_CHAP         0
