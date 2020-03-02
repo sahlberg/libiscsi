@@ -152,6 +152,11 @@ if test x"$libiscsi_cv_HAVE_LINUX_ISER" = x"yes"; then
 fi
 AM_CONDITIONAL([HAVE_LINUX_ISER], [test $libiscsi_cv_HAVE_LINUX_ISER = yes])
 
+AC_TRY_COMPILE([
+#include <rdma/rdma_cma.h>],
+[return RDMA_OPTION_ID_ACK_TIMEOUT;],
+[AC_DEFINE([HAVE_RDMA_ACK_TIMEOUT],[1],[Define to 1 if you have RDMA ack timeout support])],)
+
 AC_CACHE_CHECK([whether libcunit is available],
                [ac_cv_have_cunit],
                [ac_save_CFLAGS="$CFLAGS"

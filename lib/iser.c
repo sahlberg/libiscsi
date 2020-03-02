@@ -15,6 +15,10 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/prctl.h>
@@ -812,6 +816,40 @@ static int iser_create_iser_conn_res(struct iser_conn *iser_conn) {
 	return ret;
 }
 
+void iscsi_set_rdma_ack_timetout(struct iscsi_context *iscsi, unsigned char value)
+{
+	iscsi->rdma_ack_timeout = value;
+	ISCSI_LOG(iscsi, 2, "RDMA ACK TIMEOUT will be set to %d on next rdma qp creation", value);
+}
+
+/*
+ * iser_rdma_set_option() - set rdma options
+ * currently support RDMA ack timeout.
+ * @cma_id:    connection manager id
+ * @iscsi:   iscsi context
+ */
+int iser_rdma_set_option(struct rdma_cm_id *cma_id, struct iscsi_context *iscsi) {
+	int ret = 0;
+	unsigned char timeout = iscsi->rdma_ack_timeout;
+
+	if (timeout) {
+#ifdef HAVE_RDMA_ACK_TIMEOUT
+		/* calculate according to the formula 4.096 * 2^(timeout) usec.
+		   Ex, 8 means 1048.576 usec (0.00104 sec) */
+		ret = rdma_set_option(cma_id, RDMA_OPTION_ID, RDMA_OPTION_ID_ACK_TIMEOUT, &timeout, sizeof(timeout));
+		if (ret) {
+			ISCSI_LOG(iscsi, 1, "failed to set RDMA ACK TIMEOUT: %s", strerror(errno));
+		} else {
+			ISCSI_LOG(iscsi, 3, "RDMA ACK TIMEOUT set to %d", timeout);
+		}
+#else
+		ISCSI_LOG(iscsi, 1, "failed to set RDMA ACK TIMEOUT(%d) for cma_id(%p), please update your kernel&librdmacm", timeout, cma_id);
+#endif
+	}
+
+	return ret;
+}
+
 /*
  * iser_addr_handler() - handles RDMA_CM_EVENT_ADDR_RESOLVED
  *                       event in rdma_cm
@@ -822,6 +860,8 @@ static int iser_addr_handler(struct rdma_cm_id *cma_id) {
 	struct iscsi_context *iscsi = cma_id->context;
 	struct iser_conn *iser_conn = iscsi->opaque;
 	int ret, flags;
+
+	iser_rdma_set_option(cma_id, iscsi);
 
 	ret = rdma_resolve_route(cma_id, 1000);
 	if (ret) {
