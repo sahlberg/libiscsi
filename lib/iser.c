@@ -278,14 +278,10 @@ iser_conn_terminate(struct iser_conn *iser_conn)
 	int ret;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 
-	if(iser_conn->cma_id) {
-		ret = rdma_disconnect(iser_conn->cma_id);
-		if (ret)
-			iscsi_set_error(iscsi, "Failed to disconnect, conn: 0x%p, err %d\n",
-					iser_conn, ret);
-	}
-
-	return;
+	ret = rdma_disconnect(iser_conn->cma_id);
+	if (ret)
+		iscsi_set_error(iscsi, "Failed to disconnect, conn: 0x%p, err %d\n",
+				iser_conn, ret);
 }
 
 /*
