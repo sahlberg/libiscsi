@@ -830,7 +830,7 @@ void iscsi_set_rdma_ack_timetout(struct iscsi_context *iscsi, unsigned char valu
  */
 int iser_rdma_set_option(struct rdma_cm_id *cma_id, struct iscsi_context *iscsi) {
 	int ret = 0;
-	unsigned char timeout = iscsi->rdma_ack_timeout;
+	uint8_t timeout = iscsi->rdma_ack_timeout;
 
 	if (timeout) {
 #ifdef HAVE_RDMA_ACK_TIMEOUT

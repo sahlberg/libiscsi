@@ -89,6 +89,7 @@ struct iscsi_context {
 
 	enum iscsi_session_type session_type;
 	unsigned char isid[6];
+	uint8_t rdma_ack_timeout;
 	uint32_t itt;
 	uint32_t cmdsn;
 	uint32_t min_cmdsn_waiting;
@@ -108,8 +109,6 @@ struct iscsi_context {
 	int tcp_keepidle;
 	int tcp_syncnt;
 	int tcp_nonblocking;
-
-	unsigned char rdma_ack_timeout;
 
 	int current_phase;
 	int next_phase;

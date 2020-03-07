@@ -281,7 +281,7 @@ iscsi_create_context(const char *initiator_name)
 	}
 
 	if (getenv("LIBISCSI_RDMA_ACK_TIMEOUT") != NULL) {
-		iscsi->rdma_ack_timeout = (unsigned char)atoi(getenv("LIBISCSI_RDMA_ACK_TIMEOUT"));
+		iscsi->rdma_ack_timeout = atoi(getenv("LIBISCSI_RDMA_ACK_TIMEOUT"));
 	}
 
 	/* iscsi->smalloc_size is the size for small allocations. this should be
@@ -622,7 +622,7 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 			} else if (!strcmp(key, "iser")) {
 				is_iser = 1;
 			} else if (!strcmp(key, "LIBISCSI_RDMA_ACK_TIMEOUT")) {
-				iscsi->rdma_ack_timeout = (unsigned char)atoi(value);
+				iscsi->rdma_ack_timeout = atoi(value);
 #endif
 			}
 			tmp = next;
