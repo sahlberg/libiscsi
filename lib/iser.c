@@ -711,6 +711,13 @@ iscsi_iser_send_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn + 1);
 	ISCSI_LIST_ADD_END(&iscsi->waitpdu, pdu);
 
+	/*
+         * because of async reconnection, before reconnecting successfully,
+	 * the argument 'iscsi' is the 'old_iscsi' with a empty connection.
+	 */
+	if (!iser_conn)
+		return 0;
+
 	if (iser_initialize_headers(iser_pdu, iser_conn)) {
 		iscsi_set_error(iscsi, "initialize headers Failed\n");
 		return -1;
