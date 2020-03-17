@@ -2867,6 +2867,7 @@ int extendedcopy(struct scsi_device *sdev, struct iscsi_data *data, int status, 
         return ret;
 }
 
+/* return the length for a give descriptor type, including any SD header */
 int get_desc_len(enum ec_descr_type_code desc_type)
 {
         int desc_len = 0;
@@ -2874,16 +2875,16 @@ int get_desc_len(enum ec_descr_type_code desc_type)
                 /* Segment Descriptors */
                 case BLK_TO_STRM_SEG_DESCR:
                 case STRM_TO_BLK_SEG_DESCR:
-                        desc_len = 0x18;
+                        desc_len = 0x14 + SEG_DESC_SRC_INDEX_OFFSET;
                         break;
                 case BLK_TO_BLK_SEG_DESCR:
-                        desc_len = 0x1C;
+                        desc_len = 0x18 + SEG_DESC_SRC_INDEX_OFFSET;
                         break;
                 case STRM_TO_STRM_SEG_DESCR:
-                        desc_len = 0x14;
+                        desc_len = 0x10 + SEG_DESC_SRC_INDEX_OFFSET;
                         break;
 
-                        /* Target Descriptors */
+                /* Target Descriptors */
                 case IPV6_TGT_DESCR:
                 case IP_COPY_SVC_TGT_DESCR:
                         desc_len = 64;
