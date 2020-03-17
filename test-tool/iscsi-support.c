@@ -2946,12 +2946,11 @@ void populate_ident_tgt_desc(unsigned char *buf, struct scsi_device *dev)
         scsi_free_scsi_task(inq_di_task);
 }
 
-int populate_tgt_desc(unsigned char *desc, enum ec_descr_type_code desc_type, int luid_type, int nul, int peripheral_type, int rel_init_port_id, int pad, struct scsi_device *dev)
+int populate_tgt_desc(unsigned char *desc, enum ec_descr_type_code desc_type, int luid_type, int nul, int peripheral_type, uint16_t rel_init_port_id, int pad, struct scsi_device *dev)
 {
         desc[0] = desc_type;
         desc[1] = (luid_type << 6) | (nul << 5) | peripheral_type;
-        desc[2] = (rel_init_port_id >> 8) & 0xFF;
-        desc[3] = rel_init_port_id & 0xFF;
+        scsi_set_uint16(&desc[2], rel_init_port_id);
 
         if (desc_type == IDENT_DESCR_TGT_DESCR)
                 populate_ident_tgt_desc(desc+4, dev);
@@ -2967,44 +2966,27 @@ int populate_tgt_desc(unsigned char *desc, enum ec_descr_type_code desc_type, in
         return get_desc_len(desc_type);
 }
 
-int populate_seg_desc_hdr(unsigned char *hdr, enum ec_descr_type_code desc_type, int dc, int cat, int src_index, int dst_index)
+int populate_seg_desc_hdr(unsigned char *hdr, enum ec_descr_type_code desc_type, int dc, int cat, uint16_t src_index, uint16_t dst_index)
 {
         int desc_len = get_desc_len(desc_type);
 
         hdr[0] = desc_type;
         hdr[1] = ((dc << 1) | cat) & 0xFF;
-        hdr[2] = (desc_len >> 8) & 0xFF;
-        hdr[3] = (desc_len - SEG_DESC_SRC_INDEX_OFFSET) & 0xFF; /* don't account for the first 4 bytes in descriptor header*/
-        hdr[4] = (src_index >> 8) & 0xFF;
-        hdr[5] = src_index & 0xFF;
-        hdr[6] = (dst_index >> 8) & 0xFF;
-        hdr[7] = dst_index & 0xFF;
+        /* don't account for the first 4 bytes in descriptor header */
+        scsi_set_uint16(&hdr[2], (desc_len - SEG_DESC_SRC_INDEX_OFFSET));
+        scsi_set_uint16(&hdr[4], src_index);
+        scsi_set_uint16(&hdr[6], dst_index);
 
         return desc_len;
 }
 
-int populate_seg_desc_b2b(unsigned char *desc, int dc, int cat, int src_index, int dst_index, int num_blks, uint64_t src_lba, uint64_t dst_lba)
+int populate_seg_desc_b2b(unsigned char *desc, int dc, int cat, int src_index, int dst_index, uint16_t num_blks, uint64_t src_lba, uint64_t dst_lba)
 {
         int desc_len = populate_seg_desc_hdr(desc, BLK_TO_BLK_SEG_DESCR, dc, cat, src_index, dst_index);
 
-        desc[10] = (num_blks >> 8) & 0xFF;
-        desc[11] = num_blks & 0xFF;
-        desc[12] = (src_lba >> 56) & 0xFF;
-        desc[13] = (src_lba >> 48) & 0xFF;
-        desc[14] = (src_lba >> 40) & 0xFF;
-        desc[15] = (src_lba >> 32) & 0xFF;
-        desc[16] = (src_lba >> 24) & 0xFF;
-        desc[17] = (src_lba >> 16) & 0xFF;
-        desc[18] = (src_lba >> 8) & 0xFF;
-        desc[19] = src_lba & 0xFF;
-        desc[20] = (dst_lba >> 56) & 0xFF;
-        desc[21] = (dst_lba >> 48) & 0xFF;
-        desc[22] = (dst_lba >> 40) & 0xFF;
-        desc[23] = (dst_lba >> 32) & 0xFF;
-        desc[24] = (dst_lba >> 24) & 0xFF;
-        desc[25] = (dst_lba >> 16) & 0xFF;
-        desc[26] = (dst_lba >> 8) & 0xFF;
-        desc[27] = dst_lba & 0xFF;
+        scsi_set_uint16(&desc[10], num_blks);
+        scsi_set_uint64(&desc[12], src_lba);
+        scsi_set_uint64(&desc[20], dst_lba);
 
         return desc_len;
 }
@@ -3013,16 +2995,9 @@ void populate_param_header(unsigned char *buf, int list_id, int str, int list_id
 {
         buf[0] = list_id;
         buf[1] = ((str & 1) << 5) | ((list_id_usage & 3) << 3) | (prio & 7);
-        buf[2] = (tgt_desc_len >> 8) & 0xFF;
-        buf[3] = tgt_desc_len & 0xFF;
-        buf[8] = (seg_desc_len >> 24) & 0xFF;
-        buf[9] = (seg_desc_len >> 16) & 0xFF;
-        buf[10] = (seg_desc_len >> 8) & 0xFF;
-        buf[11] = seg_desc_len & 0xFF;
-        buf[12] = (inline_data_len >> 24) & 0xFF;
-        buf[13] = (inline_data_len >> 16) & 0xFF;
-        buf[14] = (inline_data_len >> 8) & 0xFF;
-        buf[15] = inline_data_len & 0xFF;
+        scsi_set_uint16(&buf[2], tgt_desc_len);
+        scsi_set_uint32(&buf[8], seg_desc_len);
+        scsi_set_uint32(&buf[12], inline_data_len);
 }
 
 int receive_copy_results(struct scsi_task **task, struct scsi_device *sdev,
