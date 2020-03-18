@@ -35,7 +35,7 @@ test_extendedcopy_simple(void)
         unsigned int copied_blocks;
         unsigned char *buf1;
         unsigned char *buf2;
-
+        uint64_t cp_dst_lba;
 
         copied_blocks = num_blocks / 2;
         if (copied_blocks > 2048)
@@ -50,6 +50,12 @@ test_extendedcopy_simple(void)
 
         CHECK_FOR_DATALOSS;
 
+        cp_dst_lba = num_blocks - copied_blocks;
+        logging(LOG_VERBOSE, "Zero %u blocks at the end of the LUN (LBA:%llu)",
+                copied_blocks, (unsigned long long)cp_dst_lba);
+        memset(buf1, '\0', copied_blocks * block_size);
+        WRITE16(sd, cp_dst_lba, copied_blocks * block_size,
+                block_size, 0, 0, 0, 0, 0, buf1, EXPECT_STATUS_GOOD);
         logging(LOG_VERBOSE, "Write %u blocks of 'A' at LBA:0", copied_blocks);
         memset(buf1, 'A', copied_blocks * block_size);
         WRITE16(sd, 0, copied_blocks * block_size, block_size, 0, 0, 0, 0, 0,
@@ -67,9 +73,9 @@ test_extendedcopy_simple(void)
                         LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);
         tgt_desc_len = offset - XCOPY_DESC_OFFSET;
 
-        /* Iniitialize segment descriptor list with one segment descriptor */
+        /* Initialize segment descriptor list with one segment descriptor */
         offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 0,
-                        copied_blocks, 0, num_blocks - copied_blocks);
+                        copied_blocks, 0, cp_dst_lba);
         seg_desc_len = offset - XCOPY_DESC_OFFSET - tgt_desc_len;
 
         /* Initialize the parameter list header */
@@ -80,14 +86,14 @@ test_extendedcopy_simple(void)
 
         logging(LOG_VERBOSE, "Read %u blocks from end of the LUN",
                 copied_blocks);
-        READ16(sd, NULL, num_blocks - copied_blocks, copied_blocks * block_size,
+        READ16(sd, NULL, cp_dst_lba, copied_blocks * block_size,
                block_size, 0, 0, 0, 0, 0, buf2,
                EXPECT_STATUS_GOOD);
 
         if (memcmp(buf1, buf2, copied_blocks * block_size)) {
                 CU_FAIL("Blocks were not copied correctly");
         }
-        
+
         free(buf1);
         free(buf2);
 }
