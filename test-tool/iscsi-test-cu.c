@@ -296,6 +296,7 @@ static CU_TestInfo tests_extended_copy[] = {
         { "DescrType", test_extendedcopy_descr_type },
         { "ValidTgtDescr", test_extendedcopy_validate_tgt_descr },
         { "ValidSegDescr", test_extendedcopy_validate_seg_descr },
+        { "Large", test_extendedcopy_large },
         CU_TEST_INFO_NULL
 };
 

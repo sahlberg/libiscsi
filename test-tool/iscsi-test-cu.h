@@ -63,6 +63,7 @@ void test_extendedcopy_descr_limits(void);
 void test_extendedcopy_descr_type(void);
 void test_extendedcopy_validate_tgt_descr(void);
 void test_extendedcopy_validate_seg_descr(void);
+void test_extendedcopy_large(void);
 
 void test_get_lba_status_simple(void);
 void test_get_lba_status_beyond_eol(void);

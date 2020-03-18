@@ -917,6 +917,10 @@ int get_desc_len(enum ec_descr_type_code desc_type);
 int populate_tgt_desc(unsigned char *desc, enum ec_descr_type_code desc_type, int luid_type, int nul, int peripheral_type, uint16_t rel_init_port_id, int pad, struct scsi_device *dev);
 int populate_seg_desc_hdr(unsigned char *hdr, enum ec_descr_type_code desc_type, int dc, int cat, uint16_t src_index, uint16_t dst_index);
 int populate_seg_desc_b2b(unsigned char *desc, int dc, int cat, int src_index, int dst_index, uint16_t num_blks, uint64_t src_lba, uint64_t dst_lba);
+int populate_seg_desc_b2b_off(unsigned char *desc, int cat, int src_index,
+                              int dst_index, uint32_t num_bytes,
+                              uint64_t src_lba, uint64_t dst_lba,
+                              uint16_t src_byte_off, uint16_t dst_byte_off);
 void populate_param_header(unsigned char *buf, int list_id, int str, int list_id_usage, int prio, int tgt_desc_len, int seg_desc_len, int inline_data_len);
 int receive_copy_results(struct scsi_task **task, struct scsi_device *sdev,
                          enum scsi_copy_results_sa sa, int list_id,
