@@ -2883,6 +2883,9 @@ int get_desc_len(enum ec_descr_type_code desc_type)
                 case STRM_TO_STRM_SEG_DESCR:
                         desc_len = 0x10 + SEG_DESC_SRC_INDEX_OFFSET;
                         break;
+                case BLK_TO_BLK_OFF_SEG_DESCR:
+                        desc_len = 0x1C + SEG_DESC_SRC_INDEX_OFFSET;
+                        break;
 
                 /* Target Descriptors */
                 case IPV6_TGT_DESCR:
@@ -2988,6 +2991,23 @@ int populate_seg_desc_b2b(unsigned char *desc, int dc, int cat, int src_index, i
         scsi_set_uint16(&desc[10], num_blks);
         scsi_set_uint64(&desc[12], src_lba);
         scsi_set_uint64(&desc[20], dst_lba);
+
+        return desc_len;
+}
+
+int populate_seg_desc_b2b_off(unsigned char *desc, int cat, int src_index,
+                              int dst_index, uint32_t num_bytes,
+                              uint64_t src_lba, uint64_t dst_lba,
+                              uint16_t src_byte_off, uint16_t dst_byte_off)
+{
+        int desc_len = populate_seg_desc_hdr(desc, BLK_TO_BLK_OFF_SEG_DESCR, 0,
+                                             cat, src_index, dst_index);
+
+        scsi_set_uint32(&desc[8], num_bytes);
+        scsi_set_uint64(&desc[12], src_lba);
+        scsi_set_uint64(&desc[20], dst_lba);
+        scsi_set_uint16(&desc[28], src_byte_off);
+        scsi_set_uint16(&desc[30], dst_byte_off);
 
         return desc_len;
 }

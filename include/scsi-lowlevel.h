@@ -1167,6 +1167,7 @@ enum ec_descr_type_code {
 	STRM_TO_BLK_SEG_DESCR	= 0x01,
 	BLK_TO_BLK_SEG_DESCR	= 0x02,
 	STRM_TO_STRM_SEG_DESCR	= 0x03,
+	BLK_TO_BLK_OFF_SEG_DESCR = 0x0A,
 
 	/* Target descriptors : 0xEO to 0xFE */
 	IDENT_DESCR_TGT_DESCR	= 0xE4,
