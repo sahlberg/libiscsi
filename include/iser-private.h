@@ -189,6 +189,7 @@ struct iser_conn {
 	uint32_t                     num_rx_descs;
 	unsigned int                 rx_desc_head;
 
+	unsigned int                 cq_nevents;
 	int                          post_recv_buf_count;
 	int                          qp_max_recv_dtos;
 	int                          min_posted_rx;

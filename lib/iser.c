@@ -33,6 +33,7 @@
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
 #include <sys/eventfd.h>
+#include <limits.h>
 #include <poll.h>
 
 
@@ -444,6 +445,10 @@ iser_free_iser_conn_res(struct iser_conn *iser_conn, bool destroy)
 		}
 
 		if (iser_conn->cq) {
+			if (iser_conn->cq_nevents > 0) {
+				ibv_ack_cq_events(iser_conn->cq, iser_conn->cq_nevents);
+				iser_conn->cq_nevents = 0;
+			}
 			ret = ibv_destroy_cq(iser_conn->cq);
 			if (ret)
 				iscsi_set_error(iscsi, "Failed to destroy cq");
@@ -1132,6 +1137,7 @@ static int iser_addr_handler(struct rdma_cm_id *cma_id) {
 		iscsi_set_error(iscsi, "Failed to create cq\n");
 		goto pd_error;
 	}
+	iser_conn->cq_nevents = 0;
 
 	if (ibv_req_notify_cq(iser_conn->cq, 0)) {
 		iscsi_set_error(iscsi, "ibv_req_notify_cq failed\n");
@@ -1514,8 +1520,11 @@ static int cq_handle(struct iser_conn *iser_conn)
 
 	ret = ibv_req_notify_cq(iser_conn->cq, 0);
 
-	/* TODO: aggregate ack cq event for efficiency */
-	ibv_ack_cq_events(iser_conn->cq, 1);
+	if (++iser_conn->cq_nevents >= INT_MAX) {
+		ibv_ack_cq_events(iser_conn->cq, iser_conn->cq_nevents);
+		iser_conn->cq_nevents = 0;
+	}
+
 	if (ret) {
 		iscsi_set_error(iscsi, "failed notify or ack CQ");
 		return -1;
