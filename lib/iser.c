@@ -462,6 +462,11 @@ iser_conn_release(struct iser_conn *iser_conn)
 		iser_conn->cma_id = NULL;
 	}
 
+	if (iser_conn->cma_channel != NULL) {
+		rdma_destroy_event_channel(iser_conn->cma_channel);
+		iser_conn->cma_channel = NULL;
+	}
+
 	return;
 }
 
