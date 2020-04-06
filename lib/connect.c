@@ -462,6 +462,7 @@ int iscsi_reconnect(struct iscsi_context *iscsi)
 		for (i = 0; i < iscsi->smalloc_free; i++) {
 			iscsi_free(iscsi, iscsi->smalloc_ptrs[i]);
 		}
+		iscsi_free(iscsi, iscsi->opaque);
 		tmp_iscsi->old_iscsi = iscsi->old_iscsi;
 	} else {
 		tmp_iscsi->old_iscsi = malloc(sizeof(struct iscsi_context));
