@@ -333,6 +333,29 @@ release:
 	return NULL;
 }
 
+static void
+iser_free_queued_pdu_tx_desc(struct iscsi_context *iscsi)
+{
+	struct iscsi_pdu *pdu;
+	struct iser_pdu *iser_pdu;
+
+	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
+		iser_pdu = container_of(pdu, struct iser_pdu, iscsi_pdu);
+		if (iser_pdu->desc) {
+			iser_tx_desc_free(iscsi, iser_pdu->desc);
+			iser_pdu->desc = NULL;
+		}
+	}
+
+	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
+		iser_pdu = container_of(pdu, struct iser_pdu, iscsi_pdu);
+		if (iser_pdu->desc) {
+			iser_tx_desc_free(iscsi, iser_pdu->desc);
+			iser_pdu->desc = NULL;
+		}
+	}
+}
+
 /*
  * iser_free_rx_descriptors() - freeing descriptors memory
  * @iser_conn:    ib connection context
@@ -445,14 +468,15 @@ iser_free_iser_conn_res(struct iser_conn *iser_conn, bool destroy)
 /*
  * iser_conn_release() - releasing ib resources
  *                       and destroying cm id
- * @iser_conn:    ib connection context
+ * @iscsi_context:    iscsi context
  */
 static void
-iser_conn_release(struct iser_conn *iser_conn)
+iser_conn_release(struct iscsi_context *iscsi)
 {
 	int ret;
-	struct iscsi_context *iscsi = iser_conn->cma_id->context;
+	struct iser_conn *iser_conn = iscsi->opaque;
 
+	iser_free_queued_pdu_tx_desc(iscsi);
 	iser_free_iser_conn_res(iser_conn, true);
 
 	if (iser_conn->cma_id) {
@@ -504,7 +528,7 @@ iscsi_iser_disconnect(struct iscsi_context *iscsi) {
 
 	if (iser_conn->cma_id) {
 		iser_conn_terminate(iser_conn);
-		iser_conn_release(iser_conn);
+		iser_conn_release(iscsi);
 	}
 
 	if (iscsi->fd != -1) {
@@ -1587,7 +1611,7 @@ iscsi_iser_cm_event(struct iscsi_context *iscsi) {
 				/* connect failed, cleanup itself */
 				if (iser_conn->cma_id) {
 					iser_conn_terminate(iser_conn);
-					iser_conn_release(iser_conn);
+					iser_conn_release(iscsi);
 					iser_conn->cma_id = NULL;
 				}
 
@@ -1637,7 +1661,7 @@ iscsi_iser_connect(struct iscsi_context *iscsi, union socket_address *sa,__attri
 		if (old_iser_conn) {
 			if (old_iser_conn->cma_id) {
 				iser_conn_terminate(old_iser_conn);
-				iser_conn_release(old_iser_conn);
+				iser_conn_release(old_iscsi);
 			}
 
 			iscsi_free(old_iscsi, old_iser_conn);
