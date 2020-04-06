@@ -123,6 +123,210 @@ iscsi_iser_service(struct iscsi_context *iscsi, int revents)
 	return iscsi_iser_revive_queued_pdus(iscsi);
 }
 
+static inline int
+fls(int x)
+{
+    if (!x)
+        return 0;
+
+    return sizeof(int) * 8 - __builtin_clz(x);
+}
+
+static inline void
+iser_buf_chunk_tree_propagate(int8_t *tree, int pos, int level) {
+	int value;
+
+	for (pos >>= 1, level++; pos; pos >>= 1, level++) {
+		if (tree[pos << 1] == level - 1) {
+			if (tree[(pos << 1) | 1] == level - 1) {
+				value = level;
+			} else {
+				value = level - 1;
+			}
+		} else {
+			value = (tree[pos << 1] > tree[(pos << 1) | 1] ?
+			         tree[pos << 1] : tree[(pos << 1) | 1]);
+		}
+
+		if (value == tree[pos])
+			break;
+
+		tree[pos] = value;
+	}
+}
+
+static inline void
+iser_buf_chunk_free(struct iser_buf_chunk *chunk, void *ptr) {
+	int8_t *tree = chunk->tree;
+	int unit = ((unsigned char *)ptr - chunk->buf) >> DATA_BUFFER_UNIT_SHIFT;
+	int pos = unit + DATA_BUFFER_CHUNK_UNITS;
+	int level = 1;
+
+	for (; tree[pos]; pos >>= 1, level++) {
+	}
+
+	tree[pos] = level;
+	iser_buf_chunk_tree_propagate(tree, pos, level);
+}
+
+static inline void *
+iser_buf_chunk_alloc(struct iser_buf_chunk *chunk, int want) {
+	int8_t *tree = chunk->tree;
+	int pos, level, unit;
+	void *result;
+
+	/* satisfy ? */
+	if (tree[1] < want) {
+		return NULL;
+	}
+
+	/* lookup */
+	for (pos = 1, level = DATA_BUFFER_CHUNK_UNITS_SHIFT + 1; want < level; level--) {
+		pos = pos << 1;
+		pos = tree[pos] >= want ? pos : (pos | 1);
+	}
+
+	/* pick the node */
+	tree[pos] = 0;
+	unit = (pos << (level - 1)) - DATA_BUFFER_CHUNK_UNITS;
+	result = chunk->buf + (unit << DATA_BUFFER_UNIT_SHIFT);
+
+	/* propagate */
+	iser_buf_chunk_tree_propagate(tree, pos, level);
+
+	return result;
+}
+
+static inline int
+iser_buf_chunk_contains(struct iser_buf_chunk *chunk, void *ptr) {
+	return ((unsigned char *)ptr >= chunk->buf &&
+	        (unsigned char *)ptr < chunk->buf + DATA_BUFFER_CHUNK_SIZE);
+}
+
+static void
+iser_tx_desc_free(struct iscsi_context *iscsi, struct iser_tx_desc *tx_desc)
+{
+	struct iser_conn *iser_conn = iscsi->opaque;
+	struct iser_buf_chunk *chunk = iser_conn->buf_chunk;
+
+	if (tx_desc->data_mr != NULL) {
+		for (; chunk != NULL; chunk = chunk->next) {
+			if (chunk->mr == tx_desc->data_mr) {
+				iser_buf_chunk_free(chunk, tx_desc->data_buff);
+				break;
+			}
+		}
+		if (chunk == NULL) {
+			ibv_dereg_mr(tx_desc->data_mr);
+			iscsi_free(iscsi, tx_desc->data_buff);
+		}
+	}
+
+	ISCSI_LIST_ADD(&iser_conn->tx_desc, tx_desc);
+}
+
+static struct iser_tx_desc *
+iser_tx_desc_alloc(struct iscsi_context *iscsi, size_t data_size) {
+	struct iser_conn *iser_conn = iscsi->opaque;
+	struct iser_tx_desc *tx_desc = iser_conn->tx_desc;
+	struct iser_buf_chunk **buf_chunk = &iser_conn->buf_chunk;
+	struct iser_buf_chunk *chunk;
+	int want, i;
+	void *buf;
+
+	if (tx_desc != NULL) {
+		ISCSI_LIST_REMOVE(&iser_conn->tx_desc, tx_desc);
+	} else {
+		tx_desc = iscsi_malloc(iscsi, sizeof(*tx_desc));
+		if (tx_desc == NULL) {
+			iscsi_set_error(iscsi, "Out-Of-Memory, failed to allocate data buffer");
+			return NULL;
+		}
+
+		tx_desc->hdr_mr = ibv_reg_mr(iser_conn->pd, tx_desc, ISER_HEADERS_LEN, IBV_ACCESS_LOCAL_WRITE);
+		if (tx_desc->hdr_mr == NULL) {
+			iscsi_free(iscsi, tx_desc);
+			iscsi_set_error(iscsi, "Failed to register data mr");
+			return NULL;
+		}
+	}
+
+	if (data_size == 0) {
+		tx_desc->data_buff = NULL;
+		tx_desc->data_mr = NULL;
+		return tx_desc;
+	} else if (data_size > DATA_BUFFER_CHUNK_SIZE) {
+		tx_desc->data_buff = iscsi_malloc(iscsi, data_size);
+		if (tx_desc->data_buff == NULL) {
+			iscsi_set_error(iscsi, "Out-Of-Memory, failed to allocate data buffer");
+			goto release;
+		}
+
+		tx_desc->data_mr = ibv_reg_mr(iser_conn->pd, tx_desc->data_buff, data_size,
+				IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
+		if (tx_desc->data_mr == NULL) {
+			iscsi_free(iscsi, tx_desc->data_buff);
+			iscsi_set_error(iscsi, "Failed to register data mr");
+			goto release;
+		}
+		return tx_desc;
+	}
+
+	want = fls((data_size * 2 - 1) / DATA_BUFFER_UNIT_SIZE / 2) + 1;
+
+	for (; *buf_chunk != NULL; buf_chunk = &(*buf_chunk)->next) {
+		buf = iser_buf_chunk_alloc(*buf_chunk, want);
+		if (buf != NULL) {
+			tx_desc->data_buff = buf;
+			tx_desc->data_mr = (*buf_chunk)->mr;
+			return tx_desc;
+		}
+	}
+
+	chunk = iscsi_malloc(iscsi, sizeof(struct iser_buf_chunk));
+	if (chunk == NULL) {
+		iscsi_set_error(iscsi, "Out-Of-Memory, failed to allocate data buffer");
+		goto release;
+	}
+
+	chunk->buf = iscsi_malloc(iscsi, DATA_BUFFER_CHUNK_SIZE);
+	if (chunk == NULL) {
+		iscsi_set_error(iscsi, "Out-Of-Memory, failed to allocate data buffer");
+		goto free_chunk;
+	}
+
+	chunk->mr = ibv_reg_mr(iser_conn->pd, chunk->buf, DATA_BUFFER_CHUNK_SIZE,
+			IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
+
+	if (chunk->mr == NULL) {
+		iscsi_set_error(iscsi, "Failed to register data mr");
+		goto free_chunk_buf;
+	}
+
+	for (i = 0; i < DATA_BUFFER_CHUNK_UNITS_SHIFT + 1; i++) {
+		memset(chunk->tree + (1 << i),
+		       DATA_BUFFER_CHUNK_UNITS_SHIFT - i + 1, (1 << i));
+	}
+	chunk->next = NULL;
+	*buf_chunk = chunk;
+
+	tx_desc->data_buff = iser_buf_chunk_alloc(chunk, want);
+	tx_desc->data_mr = chunk->mr;
+
+	return tx_desc;
+
+free_chunk_buf:
+	iscsi_free(iscsi, chunk->buf);
+
+free_chunk:
+	iscsi_free(iscsi, chunk);
+
+release:
+	ISCSI_LIST_ADD(&iser_conn->tx_desc, tx_desc);
+
+	return NULL;
+}
+
 /*
  * iser_free_rx_descriptors() - freeing descriptors memory
  * @iser_conn:    ib connection context
@@ -145,40 +349,32 @@ iser_free_rx_descriptors(struct iser_conn *iser_conn)
 	return;
 }
 
-/*
- * iser_free_login_buf() - freeing login buffer
- * @iser_conn:    ib connection context
- */
-static void
-iser_free_login_buf(struct iser_conn *iser_conn)
-{
-	struct iscsi_context *iscsi = iser_conn->cma_id->context;
-
-	iscsi_free(iscsi, iser_conn->login_buf);
-	iser_conn->login_buf = NULL;
-
-	return;
-}
-
 static void
 iser_free_reg_mr(struct iser_conn *iser_conn)
 {
 	struct iser_tx_desc *tx_desc = iser_conn->tx_desc;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 	struct iser_tx_desc *temp_tx_desc;
+	struct iser_buf_chunk *chunk, *temp_chunk;
 
 	while (tx_desc) {
 		ibv_dereg_mr(tx_desc->hdr_mr);
-		ibv_dereg_mr(tx_desc->data_mr);
-
-		if (tx_desc->data_buff)
-			iscsi_free(iscsi, tx_desc->data_buff);
 
 		temp_tx_desc = tx_desc;
 		tx_desc = tx_desc->next;
 		iscsi_free(iscsi, temp_tx_desc);
 	}
 	iser_conn->tx_desc = NULL;
+
+	for (chunk = iser_conn->buf_chunk; chunk; ) {
+		ibv_dereg_mr(chunk->mr);
+		iscsi_free(iscsi, chunk->buf);
+
+		temp_chunk = chunk;
+		chunk = temp_chunk->next;
+		iscsi_free(iscsi, temp_chunk);
+	}
+	iser_conn->buf_chunk = NULL;
 
 	return;
 }
@@ -207,9 +403,6 @@ iser_free_iser_conn_res(struct iser_conn *iser_conn, bool destroy)
 
 		iser_free_reg_mr(iser_conn);
 
-		if (iser_conn->login_buf)
-			iser_free_login_buf(iser_conn);
-
 		if (iser_conn->rx_descs) {
 			iser_free_rx_descriptors(iser_conn);
 			iser_conn->rx_descs = NULL;
@@ -219,6 +412,11 @@ iser_free_iser_conn_res(struct iser_conn *iser_conn, bool destroy)
 			ret = ibv_dereg_mr(iser_conn->login_resp_mr);
 			if (ret)
 				iscsi_set_error(iscsi, "Failed to deregister login response mr");
+		}
+
+		if (iser_conn->login_resp_buf) {
+			iscsi_free(iscsi, iser_conn->login_resp_buf);
+			iser_conn->login_resp_buf = NULL;
 		}
 
 		if (iser_conn->cq) {
@@ -330,6 +528,11 @@ iscsi_iser_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 
 	iser_pdu = container_of(pdu, struct iser_pdu, iscsi_pdu);
 
+	if (iser_pdu->desc != NULL) {
+		iser_tx_desc_free(iscsi, iser_pdu->desc);
+		iser_pdu->desc = NULL;
+	}
+
 	if (pdu->outdata.size <= iscsi->smalloc_size) {
 		iscsi_sfree(iscsi, pdu->outdata.data);
 	} else {
@@ -437,6 +640,15 @@ iser_post_send(struct iser_conn *iser_conn, struct iser_tx_desc *tx_desc, bool s
 	return 0;
 }
 
+static inline int
+get_data_size(struct iser_pdu *iser_pdu)
+{
+	if (!iser_pdu->iscsi_pdu.scsi_cbdata.task)
+		return iser_pdu->iscsi_pdu.outdata.size - ISCSI_RAW_HEADER_SIZE;
+
+	return iser_pdu->iscsi_pdu.scsi_cbdata.task->expxferlen;
+}
+
 /*
  * iser_send_control() - sending iscsi pdu of type CONTROL
  *
@@ -465,19 +677,12 @@ iser_send_control(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu) {
 		char* data = (char*)&iser_pdu->iscsi_pdu.outdata.data[ISCSI_RAW_HEADER_SIZE];
 		struct ibv_sge *tx_dsg = &tx_desc->tx_sg[1];
 
-		iser_conn->login_req_mr = ibv_reg_mr(iser_conn->pd, iser_conn->login_req_buf,
-							datalen , IBV_ACCESS_LOCAL_WRITE);
-		if (iser_conn->login_req_mr == NULL) {
-			iscsi_set_error(iscsi, "Failed Reg iser_conn->login_req_mr");
-			return -1;
-		}
+		memcpy(tx_desc->data_buff, data, datalen);
 
-		memcpy(iser_conn->login_req_buf, data, datalen);
-
-		tx_dsg->addr       = (uintptr_t)iser_conn->login_req_buf;
+		tx_dsg->addr       = (uintptr_t)tx_desc->data_buff;
 		tx_dsg->length     = datalen;
-		tx_dsg->lkey       = iser_conn->login_req_mr->lkey;
-		tx_desc->num_sge     = 2;
+		tx_dsg->lkey       = tx_desc->data_mr->lkey;
+		tx_desc->num_sge   = 2;
 	}
 
 	if (iser_pdu->iscsi_pdu.response_opcode == ISCSI_PDU_LOGIN_RESPONSE ||
@@ -506,12 +711,14 @@ iser_send_control(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu) {
  * @iser_conn:       iser_connection context
  */
 static int
-iser_initialize_headers(struct iser_pdu *iser_pdu, struct iser_conn *iser_conn)
+iser_initialize_headers(struct iser_pdu *iser_pdu, struct iscsi_context *iscsi)
 {
 	struct iser_tx_desc *tx_desc;
 
-	tx_desc = iser_conn->tx_desc;
-	ISCSI_LIST_REMOVE(&iser_conn->tx_desc, tx_desc);
+	tx_desc = iser_tx_desc_alloc(iscsi, get_data_size(iser_pdu));
+	if (tx_desc == NULL) {
+		return -1;
+	}
 
 	iser_pdu->desc = tx_desc;
 
@@ -640,19 +847,6 @@ is_control_opcode(uint8_t opcode)
 	return is_control;
 }
 
-static int
-overflow_data_size(struct iser_pdu *iser_pdu)
-{
-	int data_size;
-
-    if (!iser_pdu->iscsi_pdu.scsi_cbdata.task) {
-        return 0;
-    }
-	data_size = iser_pdu->iscsi_pdu.scsi_cbdata.task->expxferlen;
-
-	return (data_size > DATA_BUFFER_SIZE);
-}
-
 /*
  * iser_send_command() - sending iscsi pdu of type COMMAND
  *
@@ -672,11 +866,6 @@ iser_send_command(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu)
 	tx_desc->type = ISCSI_COMMAND;
 
 	iser_create_send_desc(iser_pdu);
-
-	if (overflow_data_size(iser_pdu)) {
-		iscsi_set_error(iscsi, "Libiscsi-iSER supports messages smaller than 512k\n");
-		return -1;
-	}
 
 	if (iser_pdu->desc->iscsi_header[1] & BHSSC_FLAGS_R) {
 		err = iser_prepare_read_cmd(iser_conn, iser_pdu);
@@ -717,7 +906,7 @@ iscsi_iser_send_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 	if (!iser_conn)
 		return 0;
 
-	if (iser_initialize_headers(iser_pdu, iser_conn)) {
+	if (iser_initialize_headers(iser_pdu, iscsi)) {
 		iscsi_set_error(iscsi, "initialize headers Failed\n");
 		return -1;
 	}
@@ -904,20 +1093,17 @@ static int iser_addr_handler(struct rdma_cm_id *cma_id) {
 		goto cq_error;
 	}
 
-	iser_conn->login_buf = iscsi_malloc(iscsi, ISCSI_DEF_MAX_RECV_SEG_LEN + ISER_RX_LOGIN_SIZE);
-	if (!iser_conn->login_buf) {
-		iscsi_set_error(iscsi, "Failed to allocate memory for login_buf\n");
-		iscsi_free(iscsi, iser_conn->login_buf);
+	iser_conn->login_resp_buf = iscsi_malloc(iscsi, ISER_RX_LOGIN_SIZE);
+	if (!iser_conn->login_resp_buf) {
+		iscsi_set_error(iscsi, "Failed to allocate memory for login_resp_buf\n");
 		goto cq_error;
 	}
 
-	iser_conn->login_req_buf = iser_conn->login_buf;
-	iser_conn->login_resp_buf = iser_conn->login_buf + ISCSI_DEF_MAX_RECV_SEG_LEN;
 	iser_conn->login_resp_mr = ibv_reg_mr(iser_conn->pd, iser_conn->login_resp_buf,
 					    ISER_RX_LOGIN_SIZE, IBV_ACCESS_LOCAL_WRITE);
 	if(!iser_conn->login_resp_mr) {
 		iscsi_set_error(iscsi, "Failed to reg login_resp_mr\n");
-		iscsi_free(iscsi, iser_conn->login_buf);
+		iscsi_free(iscsi, iser_conn->login_resp_buf);
 		goto cq_error;
 	}
 
@@ -1072,46 +1258,6 @@ iser_post_recvm(struct iser_conn *iser_conn, int count)
 	return ret;
 }
 
-static int
-iser_reg_mr(struct iser_conn *iser_conn)
-{
-	int i;
-	struct iscsi_context *iscsi = iser_conn->cma_id->context;
-	struct iser_tx_desc *tx_desc;
-
-	for (i = 0 ; i < NUM_MRS ; i++) {
-
-			tx_desc = iscsi_zmalloc(iscsi, sizeof(*tx_desc));
-			if (tx_desc == NULL) {
-				iscsi_set_error(iscsi, "Out-Of-Memory, failed to allocate data buffer");
-				return -1;
-			}
-
-			tx_desc->hdr_mr = ibv_reg_mr(iser_conn->pd, tx_desc, ISER_HEADERS_LEN, IBV_ACCESS_LOCAL_WRITE);
-			if (tx_desc->hdr_mr == NULL) {
-				iscsi_set_error(iscsi, "Failed to register data mr");
-				return -1;
-			}
-
-			tx_desc->data_buff = iscsi_malloc(iscsi, DATA_BUFFER_SIZE);
-			if (tx_desc->data_buff == NULL) {
-				iscsi_set_error(iscsi, "Out-Of-Memory, failed to allocate data buffer");
-				return -1;
-			}
-
-			tx_desc->data_mr = ibv_reg_mr(iser_conn->pd, tx_desc->data_buff, DATA_BUFFER_SIZE,
-							IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
-			if (tx_desc->data_mr == NULL) {
-				iscsi_set_error(iscsi, "Failed to register data mr");
-				return -1;
-			}
-
-			ISCSI_LIST_ADD_END(&iser_conn->tx_desc, tx_desc);
-	}
-
-	return 0;
-}
-
 /**
  * iser_rcv_completion() - handling and processing receive completion
  *
@@ -1186,8 +1332,6 @@ iser_rcv_completion(struct iser_rx_desc *rx_desc,
 			}
 		}
 	}
-
-	ISCSI_LIST_ADD_END(&iser_conn->tx_desc, iser_pdu->desc);
 
 nop_target:
 	/* decrementing conn->post_recv_buf_count only --after-- freeing the   *
@@ -1346,8 +1490,7 @@ static int iser_connected_handler(struct rdma_cm_id *cma_id) {
 
 	iser_conn->post_recv_buf_count = 0;
 
-	return iser_reg_mr(iser_conn);
-
+	return 0;
 }
 
 /*
