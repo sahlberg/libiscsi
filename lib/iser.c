@@ -21,7 +21,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/prctl.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include "slist.h"
@@ -33,8 +32,8 @@
 #include "iser-private.h"
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
-#include <pthread.h>
-#include <semaphore.h>
+#include <sys/eventfd.h>
+#include <limits.h>
 #include <poll.h>
 
 
@@ -53,9 +52,6 @@
 
 #ifdef __linux
 
-/* the  name  can  be up to 16 bytes long, including the terminating null byte*/
-#define ISER_CM_THREAD_NAME "iscsi_cm_thread"
-
 /* MUST keep in sync with socket.c */
 union socket_address {
 	struct sockaddr_in sin;
@@ -65,6 +61,7 @@ union socket_address {
 
 static int cq_handle(struct iser_conn *iser_conn);
 static int iscsi_iser_revive_queued_pdus(struct iscsi_context *iscsi);
+static int iscsi_iser_cm_event(struct iscsi_context *iscsi);
 
 /*
  * iscsi_iser_get_fd() - Return completion queue
@@ -73,8 +70,7 @@ static int iscsi_iser_revive_queued_pdus(struct iscsi_context *iscsi);
 static int
 iscsi_iser_get_fd(struct iscsi_context *iscsi)
 {
-	struct iser_conn *iser_conn = iscsi->opaque;
-	return iser_conn->comp_channel->fd;
+	return iscsi->fd;
 }
 
 /*
@@ -108,16 +104,27 @@ iscsi_iser_service(struct iscsi_context *iscsi, int revents)
 	int ret = 0;
 	struct iser_conn *iser_conn = iscsi->opaque;
 
+	if (iscsi->pending_reconnect) {
+		if (time(NULL) >= iscsi->next_reconnect) {
+			return iscsi_reconnect(iscsi);
+		} else {
+			if (iscsi->old_iscsi) {
+				return 0;
+			}
+		}
+	}
+
 	if (revents == POLLIN)
-		ret = cq_handle(iser_conn);
-	else {
+		ret = iscsi->is_connected ? cq_handle(iser_conn) : iscsi_iser_cm_event(iscsi);
+	else if (!revents) {
+		ret = iscsi_iser_cm_event(iscsi);
+	} else {
 		iscsi_set_error(iscsi, "revents is not POLLIN");
 		return -1;
 	}
 
 	if (ret) {
-		iscsi_set_error(iscsi, "CQ handle Failed");
-		return -1;
+		return iscsi_service_reconnect_if_loggedin(iscsi);
 	}
 
 	return iscsi_iser_revive_queued_pdus(iscsi);
@@ -327,6 +334,29 @@ release:
 	return NULL;
 }
 
+static void
+iser_free_queued_pdu_tx_desc(struct iscsi_context *iscsi)
+{
+	struct iscsi_pdu *pdu;
+	struct iser_pdu *iser_pdu;
+
+	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
+		iser_pdu = container_of(pdu, struct iser_pdu, iscsi_pdu);
+		if (iser_pdu->desc) {
+			iser_tx_desc_free(iscsi, iser_pdu->desc);
+			iser_pdu->desc = NULL;
+		}
+	}
+
+	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
+		iser_pdu = container_of(pdu, struct iser_pdu, iscsi_pdu);
+		if (iser_pdu->desc) {
+			iser_tx_desc_free(iscsi, iser_pdu->desc);
+			iser_pdu->desc = NULL;
+		}
+	}
+}
+
 /*
  * iser_free_rx_descriptors() - freeing descriptors memory
  * @iser_conn:    ib connection context
@@ -396,11 +426,6 @@ iser_free_iser_conn_res(struct iser_conn *iser_conn, bool destroy)
 
 	if (destroy) {
 
-		if (iser_conn->cmthread) {
-			pthread_join(iser_conn->cmthread, NULL);
-			iser_conn->cmthread = 0;
-		}
-
 		iser_free_reg_mr(iser_conn);
 
 		if (iser_conn->rx_descs) {
@@ -420,6 +445,10 @@ iser_free_iser_conn_res(struct iser_conn *iser_conn, bool destroy)
 		}
 
 		if (iser_conn->cq) {
+			if (iser_conn->cq_nevents > 0) {
+				ibv_ack_cq_events(iser_conn->cq, iser_conn->cq_nevents);
+				iser_conn->cq_nevents = 0;
+			}
 			ret = ibv_destroy_cq(iser_conn->cq);
 			if (ret)
 				iscsi_set_error(iscsi, "Failed to destroy cq");
@@ -444,15 +473,16 @@ iser_free_iser_conn_res(struct iser_conn *iser_conn, bool destroy)
 /*
  * iser_conn_release() - releasing ib resources
  *                       and destroying cm id
- * @iser_conn:    ib connection context
+ * @iscsi_context:    iscsi context
  */
 static void
-iser_conn_release(struct iser_conn *iser_conn)
+iser_conn_release(struct iscsi_context *iscsi)
 {
 	int ret;
-	struct iscsi_context *iscsi = iser_conn->cma_id->context;
+	struct iser_conn *iser_conn = iscsi->opaque;
 
-	iser_free_iser_conn_res(iser_conn,true);
+	iser_free_queued_pdu_tx_desc(iscsi);
+	iser_free_iser_conn_res(iser_conn, true);
 
 	if (iser_conn->cma_id) {
 		ret = rdma_destroy_id(iser_conn->cma_id);
@@ -460,6 +490,11 @@ iser_conn_release(struct iser_conn *iser_conn)
 			iscsi_set_error(iscsi, "Failed destroying cm id");
 
 		iser_conn->cma_id = NULL;
+	}
+
+	if (iser_conn->cma_channel != NULL) {
+		rdma_destroy_event_channel(iser_conn->cma_channel);
+		iser_conn->cma_channel = NULL;
 	}
 
 	return;
@@ -475,10 +510,15 @@ iser_conn_terminate(struct iser_conn *iser_conn)
 	int ret;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 
-	ret = rdma_disconnect(iser_conn->cma_id);
-	if (ret)
-		iscsi_set_error(iscsi, "Failed to disconnect, conn: 0x%p, err %d\n",
-				iser_conn, ret);
+	if(iser_conn->rdma_connect_sent) {
+		ret = rdma_disconnect(iser_conn->cma_id);
+		iser_conn->rdma_connect_sent = 0;
+		if (ret)
+			iscsi_set_error(iscsi, "Failed to disconnect, conn: 0x%p, err %d\n",
+					iser_conn, ret);
+	}
+
+	return;
 }
 
 /*
@@ -491,9 +531,13 @@ iscsi_iser_disconnect(struct iscsi_context *iscsi) {
 
 	struct iser_conn *iser_conn = iscsi->opaque;
 
-	if (iser_conn) {
+	if (iser_conn->cma_id) {
 		iser_conn_terminate(iser_conn);
-		iser_conn_release(iser_conn);
+		iser_conn_release(iscsi);
+	}
+
+	if (iscsi->fd != -1) {
+		close(iscsi->fd);
 	}
 
 	iscsi->fd  = -1;
@@ -965,6 +1009,12 @@ iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 		return -1;
 	}
 
+	if (pdu->outdata.data[0] == ISCSI_PDU_NOP_OUT &&
+		iscsi_iser_cm_event(iscsi) != 0) {
+		iscsi_service_reconnect_if_loggedin(iscsi);
+		return -1;
+	}
+
 	if (iscsi->outqueue != NULL ||
 		(iscsi_serial32_compare(pdu->cmdsn, iscsi->maxcmdsn) > 0
 		 && !(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE))) {
@@ -1087,6 +1137,7 @@ static int iser_addr_handler(struct rdma_cm_id *cma_id) {
 		iscsi_set_error(iscsi, "Failed to create cq\n");
 		goto pd_error;
 	}
+	iser_conn->cq_nevents = 0;
 
 	if (ibv_req_notify_cq(iser_conn->cq, 0)) {
 		iscsi_set_error(iscsi, "ibv_req_notify_cq failed\n");
@@ -1152,6 +1203,7 @@ static int iser_route_handler(struct rdma_cm_id *cma_id) {
 		iscsi_set_error(iscsi, "conn %p failure connecting: %d", iser_conn, ret);
 		return -1;
 	}
+	iser_conn->rdma_connect_sent = 1;
 	return ret;
 
 login_mr_error:
@@ -1457,16 +1509,28 @@ static int cq_handle(struct iser_conn *iser_conn)
 	int ret;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 
-	ibv_get_cq_event(iser_conn->comp_channel, &iser_conn->cq, &ev_ctx);
+	ret = ibv_get_cq_event(iser_conn->comp_channel, &iser_conn->cq, &ev_ctx);
+	if (ret) {
+		if (errno != EAGAIN && errno != EWOULDBLOCK) {
+			iscsi_set_error(iscsi, "failed get cq event %s", strerror(errno));
+			return -1;
+		}
+		goto out;
+	}
+
 	ret = ibv_req_notify_cq(iser_conn->cq, 0);
 
-	/* TODO: aggregate ack cq event for efficiency */
-	ibv_ack_cq_events(iser_conn->cq, 1);
+	if (++iser_conn->cq_nevents >= INT_MAX) {
+		ibv_ack_cq_events(iser_conn->cq, iser_conn->cq_nevents);
+		iser_conn->cq_nevents = 0;
+	}
+
 	if (ret) {
 		iscsi_set_error(iscsi, "failed notify or ack CQ");
 		return -1;
 	}
 
+out:
 	ret = cq_event_handler(iser_conn);
 	if (ret) {
 		iscsi_set_error(iscsi, "failed CQ handler");
@@ -1488,7 +1552,12 @@ static int iser_connected_handler(struct rdma_cm_id *cma_id) {
 	struct iscsi_context *iscsi = cma_id->context;
 	struct iser_conn *iser_conn = iscsi->opaque;
 
+	if (dup2(iser_conn->comp_channel->fd, iscsi->fd) == -1) {
+		return -1;
+	}
+
 	iser_conn->post_recv_buf_count = 0;
+	iscsi->is_connected = 1;
 
 	return 0;
 }
@@ -1502,8 +1571,7 @@ static int iser_connected_handler(struct rdma_cm_id *cma_id) {
  *
  */
 static int
-iser_cma_handler(struct iser_conn *iser_conn,struct rdma_cm_id *cma_id, struct rdma_cm_event *event) {
-
+iser_cma_handler(struct rdma_cm_id *cma_id, struct rdma_cm_event *event) {
 	int ret = 0;
 
 	switch(event->event) {
@@ -1516,69 +1584,64 @@ iser_cma_handler(struct iser_conn *iser_conn,struct rdma_cm_id *cma_id, struct r
 			break;
 		case RDMA_CM_EVENT_ESTABLISHED:
 			ret = iser_connected_handler(cma_id);
-			if(ret)
-				iser_conn->conn_state = CONN_ERROR;
-			else
-				iser_conn->conn_state = CONN_ESTABLISHED;
-			sem_post(&iser_conn->sem_connect);
 			break;
 		case RDMA_CM_EVENT_ADDR_ERROR:
 		case RDMA_CM_EVENT_ROUTE_ERROR:
 		case RDMA_CM_EVENT_CONNECT_ERROR:
 		case RDMA_CM_EVENT_UNREACHABLE:
 		case RDMA_CM_EVENT_REJECTED:
-			iser_conn->conn_state = CONN_ERROR;
 			ret = -1;
-			sem_post(&iser_conn->sem_connect);
 			break;
 		case RDMA_CM_EVENT_DISCONNECTED:
 		case RDMA_CM_EVENT_ADDR_CHANGE:
 		case RDMA_CM_EVENT_TIMEWAIT_EXIT:
-			iser_conn->conn_state = CONN_DISCONNECTED;
 			ret = -1;
-			sem_post(&iser_conn->sem_connect);
 			break;
 		default:
-			iser_conn->conn_state = CONN_ERROR;
 			ret = -1;
-			sem_post(&iser_conn->sem_connect);
 			break;
 	}
 	return ret;
 }
 
-/*
- * iser_connected_handler() - thread to catch rdma cm events
- *
- * @arg:    ib connection context
- *
- * Notes:
- * Need to check if copying event is necessery
- */
-static void *cm_thread(void *arg)
-{
-	struct iser_conn *iser_conn = arg;
-	struct rdma_cm_event event_copy;
+static int
+iscsi_iser_cm_event(struct iscsi_context *iscsi) {
+	struct iser_conn *iser_conn = iscsi->opaque;
+	struct rdma_event_channel *channel = iser_conn->cma_channel;
+	struct rdma_cm_event *event;
 	int ret;
-	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 
-	/* supported since Linux 2.6.9, not fatal error, ignore return value */
-	prctl(PR_SET_NAME, ISER_CM_THREAD_NAME);
+	while (rdma_get_cm_event(channel, &event) == 0) {
+		ret = iser_cma_handler(iser_conn->cma_id, event);
+		rdma_ack_cm_event(event);
 
-	while (1) {
-		ret = rdma_get_cm_event(iser_conn->cma_channel, &iser_conn->cma_event);
 		if (ret) {
-			iscsi_set_error(iscsi, "Failed to get RDMA-CM Event\n");
-			pthread_exit(NULL);
+			if (iscsi->socket_status_cb != NULL) {
+				/* connect failed, cleanup itself */
+				if (iser_conn->cma_id) {
+					iser_conn_terminate(iser_conn);
+					iser_conn_release(iscsi);
+					iser_conn->cma_id = NULL;
+				}
+
+				iscsi->socket_status_cb(iscsi, SCSI_STATUS_ERROR, NULL, iscsi->connect_data);
+				iscsi->socket_status_cb = NULL;
+			}
+			return -1;
 		}
-		memcpy(&event_copy, iser_conn->cma_event, sizeof(struct rdma_cm_event));
-		ret = iser_cma_handler(iser_conn, iser_conn->cma_id, &event_copy);
-		rdma_ack_cm_event(iser_conn->cma_event);
-		if (ret) {
-			iscsi_set_error(iscsi, "Failed to handle event\n");
-			pthread_exit(NULL);
+
+		if (iscsi->is_connected && iscsi->socket_status_cb != NULL) {
+			iscsi->socket_status_cb(iscsi, SCSI_STATUS_GOOD, NULL, iscsi->connect_data);
+			iscsi->socket_status_cb = NULL;
 		}
 	}
+
+	if (errno != EAGAIN && errno != EWOULDBLOCK) {
+		iscsi_set_error(iscsi, "Failed to get RDMA-CM Event\n");
+		return -1;
+	}
+
+	return 0;
 }
 
 /*
@@ -1596,9 +1659,33 @@ static int
 iscsi_iser_connect(struct iscsi_context *iscsi, union socket_address *sa,__attribute__((unused)) int ai_family) {
 
 	struct iser_conn *iser_conn = iscsi->opaque;
-	int ret;
+	int flag;
 
-	sem_init(&iser_conn->sem_connect, 0, 0);
+	if (iscsi->old_iscsi && iscsi->fd != iscsi->old_iscsi->fd) {
+		struct iscsi_context *old_iscsi = iscsi->old_iscsi;
+		struct iser_conn *old_iser_conn = old_iscsi->opaque;
+
+		iscsi->fd = old_iscsi->fd;
+
+		if (old_iser_conn) {
+			if (old_iser_conn->cma_id) {
+				iser_conn_terminate(old_iser_conn);
+				iser_conn_release(old_iscsi);
+			}
+
+			iscsi_free(old_iscsi, old_iser_conn);
+			old_iscsi->opaque = NULL;
+		}
+	}
+
+	/* create mock file descriptor */
+	if (iscsi->fd == -1) {
+		iscsi->fd = eventfd(0, EFD_CLOEXEC);
+
+		if (iscsi->fd < 0) {
+			return -1;
+		}
+	}
 
 	iser_conn->cma_channel = rdma_create_event_channel();
 
@@ -1607,68 +1694,40 @@ iscsi_iser_connect(struct iscsi_context *iscsi, union socket_address *sa,__attri
 		return -1;
 	}
 
-	if (rdma_create_id(iser_conn->cma_channel, &iser_conn->cma_id, (void *)iscsi, RDMA_PS_TCP)) {
-		iscsi_set_error(iscsi, "Failed create channel_id");
-		return -1;
+	flag = fcntl(iser_conn->cma_channel->fd, F_GETFL);
+	if (fcntl(iser_conn->cma_channel->fd, F_SETFL, flag | O_NONBLOCK) < 0) {
+		iscsi_set_error(iscsi, "Cannot set event channel to non blocking");
+		goto error;
 	}
 
-	ret = pthread_create(&iser_conn->cmthread, NULL, cm_thread, iser_conn);
-	if(ret) {
-		iscsi_set_error(iscsi, "Failed create Connection Manager Thread");
-		return -1;
+	if (rdma_create_id(iser_conn->cma_channel, &iser_conn->cma_id, (void *)iscsi, RDMA_PS_TCP)) {
+		iscsi_set_error(iscsi, "Failed create channel_id");
+		goto error;
+	}
+
+	if (dup2(iser_conn->cma_channel->fd, iscsi->fd) < 0) {
+		iscsi_set_error(iscsi, "Failed dup event channel fd");
+		goto error;
 	}
 
 	if(rdma_resolve_addr(iser_conn->cma_id, NULL, &sa->sa, 2000)) {
 		iscsi_set_error(iscsi, "Failed resolve address");
-		return -1;
-	}
-
-	sem_wait(&iser_conn->sem_connect);
-
-	switch(iser_conn->conn_state) {
-
-		case CONN_ERROR:
-			iscsi_set_error(iscsi, "Conn Error event");
-			return -1;
-
-		case CONN_DISCONNECTED:
-			iscsi_set_error(iscsi, "Conn disconnected event");
-			return -1;
-
-		case CONN_ESTABLISHED:
-			break;
-
-		default:
-			iscsi_set_error(iscsi, "Unknown State of connection");
-			return -1;
-
-	}
-
-
-	iscsi->is_connected = 1;
-	iscsi->socket_status_cb(iscsi, SCSI_STATUS_GOOD, NULL, iscsi->connect_data);
-	iscsi->socket_status_cb = NULL;
-
-	if (iscsi->old_iscsi && iscsi->opaque != iscsi->old_iscsi->opaque) {
-		struct iser_conn *old_iser_conn = iscsi->old_iscsi->opaque;
-		int oldfd = old_iser_conn->comp_channel->fd;
-		int newfd = iser_conn->comp_channel->fd;
-
-		iser_conn_terminate(old_iser_conn);
-		iser_conn_release(old_iser_conn);
-
-		if (dup2(newfd, oldfd) == -1) {
-			return -1;
-		}
-
-		close(newfd);
-		iser_conn->comp_channel->fd = oldfd;
-
-		iscsi_free(iscsi->old_iscsi, iscsi->old_iscsi->opaque);
-		iscsi->old_iscsi->opaque = NULL;
+		goto error;
 	}
 
 	return 0;
+
+error:
+	if (iser_conn->cma_id) {
+		rdma_destroy_id(iser_conn->cma_id);
+		iser_conn->cma_id = NULL;
+	}
+	if (iser_conn->cma_channel) {
+		rdma_destroy_event_channel(iser_conn->cma_channel);
+		iser_conn->cma_channel = NULL;
+	}
+
+	return -1;
 }
 
 static iscsi_transport iscsi_transport_iser = {

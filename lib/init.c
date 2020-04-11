@@ -415,6 +415,8 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		iscsi_free(iscsi, iscsi->smalloc_ptrs[i]);
 	}
 
+	iscsi_free(iscsi, iscsi->opaque);
+
 	if (iscsi->mallocs != iscsi->frees) {
 		ISCSI_LOG(iscsi,1,"%d memory blocks lost at iscsi_destroy_context() after %d malloc(s), %d realloc(s), %d free(s) and %d reused small allocations",iscsi->mallocs-iscsi->frees,iscsi->mallocs,iscsi->reallocs,iscsi->frees,iscsi->smallocs);
 	} else {
@@ -425,8 +427,6 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		iscsi->old_iscsi->fd = -1;
 		iscsi_destroy_context(iscsi->old_iscsi);
 	}
-
-	iscsi_free(iscsi, iscsi->opaque);
 
 	memset(iscsi, 0, sizeof(struct iscsi_context));
 	free(iscsi);

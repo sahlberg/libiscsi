@@ -29,8 +29,6 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/ioctl.h>
-#include <pthread.h>
-#include <semaphore.h>
 
 #ifdef __linux
 
@@ -71,11 +69,6 @@
 enum desc_type {
 	ISCSI_CONTROL = 0,
 	ISCSI_COMMAND};
-
-enum conn_state{
-	CONN_ERROR = 0,
-	CONN_DISCONNECTED,
-	CONN_ESTABLISHED};
 
 enum data_dir{
 	DATA_WRITE = 0,
@@ -179,32 +172,28 @@ struct iser_buf_chunk {
 struct iser_conn {
 	struct rdma_cm_id            *cma_id;
 	struct rdma_event_channel    *cma_channel;
-	struct rdma_cm_event         *cma_event;
 
 	struct ibv_pd                *pd;
 	struct ibv_cq                *cq;
 	struct ibv_qp                *qp;
 	struct ibv_comp_channel      *comp_channel;
 
-	struct ibv_recv_wr           rx_wr[ISER_MIN_POSTED_RX];
+	int                          rdma_connect_sent;
 
-	sem_t                        sem_connect;
+	struct ibv_recv_wr           rx_wr[ISER_MIN_POSTED_RX];
 
 	struct ibv_mr                *login_resp_mr;
 	unsigned char                *login_resp_buf;
-
-	pthread_t                    cmthread;
 
 	struct iser_rx_desc          *rx_descs;
 	uint32_t                     num_rx_descs;
 	unsigned int                 rx_desc_head;
 
+	unsigned int                 cq_nevents;
 	int                          post_recv_buf_count;
 	int                          qp_max_recv_dtos;
 	int                          min_posted_rx;
 	uint16_t                     max_cmds;
-
-	enum conn_state              conn_state;
 
 	struct iser_tx_desc          *tx_desc;
 	struct iser_buf_chunk        *buf_chunk;
