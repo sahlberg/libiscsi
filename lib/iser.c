@@ -553,7 +553,7 @@ iscsi_iser_new_pdu(struct iscsi_context *iscsi, __attribute__((unused))size_t si
 	struct iscsi_pdu *pdu;
 	struct iser_pdu *iser_pdu;
 
-	iser_pdu = iscsi_zmalloc(iscsi, sizeof(*iser_pdu));
+	iser_pdu = iscsi_szmalloc(iscsi, sizeof(*iser_pdu));
 	pdu = &iser_pdu->iscsi_pdu;
 	pdu->indata.data = NULL;
 
@@ -596,7 +596,7 @@ iscsi_iser_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		iscsi->outqueue_current = NULL;
 	}
 
-	iscsi_free(iscsi, iser_pdu);
+	iscsi_sfree(iscsi, iser_pdu);
 }
 
 /**
@@ -727,15 +727,6 @@ iser_send_control(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu) {
 		tx_dsg->length     = datalen;
 		tx_dsg->lkey       = tx_desc->data_mr->lkey;
 		tx_desc->num_sge   = 2;
-	}
-
-	if (iser_pdu->iscsi_pdu.response_opcode == ISCSI_PDU_LOGIN_RESPONSE ||
-			iscsi->session_type == ISCSI_SESSION_DISCOVERY) {
-		ret = iser_post_recvl(iser_conn);
-		if (ret) {
-			iscsi_set_error(iscsi, "Failed Post Recv login");
-			return -1;
-		}
 	}
 
 	ret = iser_post_send(iser_conn, tx_desc, true);
@@ -1325,31 +1316,16 @@ static int
 iser_rcv_completion(struct iser_rx_desc *rx_desc,
 		    struct iser_conn *iser_conn)
 {
-	struct iscsi_in_pdu *in = NULL;
+	struct iscsi_in_pdu in;
 	int empty, err;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 
-	in = iscsi_malloc(iscsi, sizeof(*in));
+	in.hdr = (unsigned char*)rx_desc->iscsi_header;
+	in.data_pos = iscsi_get_pdu_data_size(&in.hdr[0]);
+	in.data = (unsigned char*)rx_desc->data;
 
-	if ((unsigned char *)rx_desc == iser_conn->login_resp_buf)
-		if (iscsi->session_type == ISCSI_SESSION_NORMAL) {
-			if(iser_alloc_rx_descriptors(iser_conn,255)) {
-				iscsi_set_error(iscsi, "iser_alloc_rx_descriptors Failed\n");
-				err = -1;
-				goto error;
-			}
-			err = iser_post_recvm(iser_conn, ISER_MIN_POSTED_RX);
-			if (err) {
-				err = -1;
-				goto error;
-			}
-		}
-	in->hdr = (unsigned char*)rx_desc->iscsi_header;
-	in->data_pos = iscsi_get_pdu_data_size(&in->hdr[0]);
-	in->data = (unsigned char*)rx_desc->data;
-
-	enum iscsi_opcode opcode = in->hdr[0] & 0x3f;
-	uint32_t itt = scsi_get_uint32(&in->hdr[16]);
+	enum iscsi_opcode opcode = in.hdr[0] & 0x3f;
+	uint32_t itt = scsi_get_uint32(&in.hdr[16]);
 
 	if (opcode == ISCSI_PDU_NOP_IN && itt == 0xffffffff)
 		goto nop_target;
@@ -1397,17 +1373,26 @@ nop_target:
 		if (empty >= iser_conn->min_posted_rx) {
 			err = iser_post_recvm(iser_conn, empty);
 			if (err) {
-				err = -1;
-				goto error;
+				return -1;
 			}
+		}
+	} else if (iscsi->is_loggedin) {
+		if(iser_alloc_rx_descriptors(iser_conn, 255)) {
+			iscsi_set_error(iscsi, "iser_alloc_rx_descriptors Failed\n");
+			return -1;
+		}
+		err = iser_post_recvm(iser_conn, ISER_MIN_POSTED_RX);
+		if (err) {
+			return -1;
+		}
+	} else {
+		if (iser_post_recvl(iser_conn)) {
+			iscsi_set_error(iscsi, "Failed Post Recv login");
+			return -1;
 		}
 	}
 
-	err = iscsi_process_pdu(iscsi, in);
-
-error:
-	iscsi_free(iscsi, in);
-	return err;
+	return iscsi_process_pdu(iscsi, &in);
 }
 
 /**
@@ -1558,6 +1543,11 @@ static int iser_connected_handler(struct rdma_cm_id *cma_id) {
 
 	iser_conn->post_recv_buf_count = 0;
 	iscsi->is_connected = 1;
+
+	if (iser_post_recvl(iser_conn)) {
+		iscsi_set_error(iscsi, "Failed Post Recv login");
+		return -1;
+	}
 
 	return 0;
 }
@@ -1749,6 +1739,11 @@ void iscsi_init_iser_transport(struct iscsi_context *iscsi)
 	/* Update iSCSI params as per iSER transport */
 	iscsi->initiator_max_recv_data_segment_length = ISCSI_DEF_MAX_RECV_SEG_LEN;
 	iscsi->target_max_recv_data_segment_length = ISCSI_DEF_MAX_RECV_SEG_LEN;
+
+	/* ensure smalloc_size is enough for iser_pdu */
+	while (iscsi->smalloc_size < sizeof(struct iser_pdu)) {
+		iscsi->smalloc_size <<= 1;
+	}
 }
 
 #endif
