@@ -288,9 +288,10 @@ sg_send_scsi_cmd(struct scsi_device *sdev, struct scsi_task *task)
         io_hdr.sbp = sense;
         io_hdr.mx_sb_len = sense_len;
 
-        /* Transfer direction, either in or out. Linux does not yet
-           support bidirectional SCSI transfers ?
-        */
+        /*
+         * Transfer direction, either in or out. Support for bidirectional SCSI
+         * transfers has been removed from the Linux kernel.
+         */
         switch (task->xfer_dir) {
         case SCSI_XFER_WRITE:
                 io_hdr.dxfer_direction = SG_DXFER_TO_DEV;
