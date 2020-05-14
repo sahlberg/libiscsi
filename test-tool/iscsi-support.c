@@ -274,7 +274,7 @@ sg_send_scsi_cmd(struct scsi_device *sdev, struct scsi_task *task)
         sg_io_hdr_t io_hdr;
         unsigned char sense[32];
         const unsigned int sense_len = sizeof(sense);
-        char buf[1024];
+        char *buf;
 
         memset(sense, 0, sizeof(sense));
         memset(&io_hdr, 0, sizeof(sg_io_hdr_t));
@@ -338,13 +338,14 @@ sg_send_scsi_cmd(struct scsi_device *sdev, struct scsi_task *task)
         if (io_hdr.sb_len_wr > 0) {
                 task->status = SCSI_STATUS_CHECK_CONDITION;
                 scsi_parse_sense_data(&task->sense, sense);
-                snprintf(buf, sizeof(buf), "SENSE KEY:%s(%d) ASCQ:%s(0x%04x)",
-                         scsi_sense_key_str(task->sense.key),
-                         task->sense.key,
-                         scsi_sense_ascq_str(task->sense.ascq),
-                         task->sense.ascq);
+                if (asprintf(&buf, "SENSE KEY:%s(%d) ASCQ:%s(0x%04x)",
+                             scsi_sense_key_str(task->sense.key),
+                             task->sense.key,
+                             scsi_sense_ascq_str(task->sense.ascq),
+                             task->sense.ascq) < 0)
+                        buf = NULL;
                 free(sdev->error_str);
-                sdev->error_str = strdup(buf);
+                sdev->error_str = buf;
                 return task;
         }
         if (io_hdr.status == SCSI_STATUS_RESERVATION_CONFLICT) {
@@ -368,9 +369,11 @@ sg_send_scsi_cmd(struct scsi_device *sdev, struct scsi_task *task)
                 task->sense.key = 0x0f;
                 task->sense.ascq  = 0xffff;
 
-                snprintf(buf, sizeof(buf), "SCSI host error. Status=0x%x", io_hdr.host_status);
+                if (asprintf(&buf, "SCSI host error. Status=0x%x",
+                             io_hdr.host_status) < 0)
+                        buf = NULL;
                 free(sdev->error_str);
-                sdev->error_str = strdup(buf);
+                sdev->error_str = buf;
                 return task;
         }
         if (io_hdr.driver_status) {
