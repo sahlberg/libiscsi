@@ -267,6 +267,122 @@ static size_t iov_tot_len(struct scsi_iovec *iov, int niov)
                 len += iov[i].iov_len;
         return len;
 }
+
+static struct scsi_task *
+sg_send_scsi_cmd(struct scsi_device *sdev, struct scsi_task *task)
+{
+        sg_io_hdr_t io_hdr;
+        unsigned char sense[32];
+        const unsigned int sense_len = sizeof(sense);
+        char buf[1024];
+
+        memset(sense, 0, sizeof(sense));
+        memset(&io_hdr, 0, sizeof(sg_io_hdr_t));
+        io_hdr.interface_id = 'S';
+
+        /* CDB */
+        io_hdr.cmdp = task->cdb;
+        io_hdr.cmd_len = task->cdb_size;
+
+        /* Where to store the sense_data, if there was an error */
+        io_hdr.sbp = sense;
+        io_hdr.mx_sb_len = sense_len;
+
+        /* Transfer direction, either in or out. Linux does not yet
+           support bidirectional SCSI transfers ?
+        */
+        switch (task->xfer_dir) {
+        case SCSI_XFER_WRITE:
+                io_hdr.dxfer_direction = SG_DXFER_TO_DEV;
+                io_hdr.iovec_count = task->iovector_out.niov;
+                io_hdr.dxferp = task->iovector_out.iov;
+                io_hdr.dxfer_len = iov_tot_len(task->iovector_out.iov,
+                                               task->iovector_out.niov);
+                break;
+        case SCSI_XFER_READ:
+                io_hdr.dxfer_direction = SG_DXFER_FROM_DEV;
+                task->datain.size = task->expxferlen;
+                task->datain.data = malloc(task->datain.size);
+                memset(task->datain.data, 0, task->datain.size);
+                io_hdr.dxferp = task->datain.data;
+                io_hdr.dxfer_len = task->datain.size;
+                break;
+        }
+
+        /* SCSI timeout in ms */
+        io_hdr.timeout = 5000;
+
+        if (ioctl(sdev->sgio_fd, SG_IO, &io_hdr) < 0) {
+                int err = errno;
+
+                free(sdev->error_str);
+                if (asprintf(&sdev->error_str, "SG_IO ioctl failed: %s",
+                             strerror(err)) < 0)
+                        sdev->error_str = NULL;
+                return NULL;
+        }
+
+        task->residual_status = SCSI_RESIDUAL_NO_RESIDUAL;
+        task->residual = 0;
+
+        if (io_hdr.resid) {
+                task->residual_status = SCSI_RESIDUAL_UNDERFLOW;
+                task->residual = io_hdr.resid;
+        }
+
+        if (task->xfer_dir == SCSI_XFER_READ)
+                task->datain.size -= task->residual;
+
+        /* now for the error processing */
+        if (io_hdr.sb_len_wr > 0) {
+                task->status = SCSI_STATUS_CHECK_CONDITION;
+                scsi_parse_sense_data(&task->sense, sense);
+                snprintf(buf, sizeof(buf), "SENSE KEY:%s(%d) ASCQ:%s(0x%04x)",
+                         scsi_sense_key_str(task->sense.key),
+                         task->sense.key,
+                         scsi_sense_ascq_str(task->sense.ascq),
+                         task->sense.ascq);
+                free(sdev->error_str);
+                sdev->error_str = strdup(buf);
+                return task;
+        }
+        if (io_hdr.status == SCSI_STATUS_RESERVATION_CONFLICT) {
+                task->status = SCSI_STATUS_RESERVATION_CONFLICT;
+                free(sdev->error_str);
+                sdev->error_str = strdup("Reservation Conflict");
+                return task;
+        }
+
+        if (io_hdr.masked_status) {
+                task->status = SCSI_STATUS_ERROR;
+                task->sense.key = 0x0f;
+                task->sense.ascq  = 0xffff;
+
+                free(sdev->error_str);
+                sdev->error_str = strdup("SCSI masked error");
+                return NULL;
+        }
+        if (io_hdr.host_status) {
+                task->status = SCSI_STATUS_ERROR;
+                task->sense.key = 0x0f;
+                task->sense.ascq  = 0xffff;
+
+                snprintf(buf, sizeof(buf), "SCSI host error. Status=0x%x", io_hdr.host_status);
+                free(sdev->error_str);
+                sdev->error_str = strdup(buf);
+                return task;
+        }
+        if (io_hdr.driver_status) {
+                task->status = SCSI_STATUS_ERROR;
+                task->sense.key = 0x0f;
+                task->sense.ascq  = 0xffff;
+
+                free(sdev->error_str);
+                sdev->error_str = strdup("SCSI driver error");
+                return NULL;
+        }
+        return task;
+}
 #endif
 
 static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi_task *task, struct iscsi_data *d)
@@ -325,121 +441,10 @@ static struct scsi_task *send_scsi_command(struct scsi_device *sdev, struct scsi
         }
 
 #ifdef HAVE_SG_IO
-        if (sdev->sgio_dev) {
-                sg_io_hdr_t io_hdr;
-                unsigned char sense[32];
-                const unsigned int sense_len = sizeof(sense);
-                char buf[1024];
-
-                memset(sense, 0, sizeof(sense));
-                memset(&io_hdr, 0, sizeof(sg_io_hdr_t));
-                io_hdr.interface_id = 'S';
-
-                /* CDB */
-                io_hdr.cmdp = task->cdb;
-                io_hdr.cmd_len = task->cdb_size;
-
-                /* Where to store the sense_data, if there was an error */
-                io_hdr.sbp = sense;
-                io_hdr.mx_sb_len = sense_len;
-
-                /* Transfer direction, either in or out. Linux does not yet
-                   support bidirectional SCSI transfers ?
-                */
-                switch (task->xfer_dir) {
-                case SCSI_XFER_WRITE:
-                  io_hdr.dxfer_direction = SG_DXFER_TO_DEV;
-                  io_hdr.iovec_count = task->iovector_out.niov;
-                  io_hdr.dxferp = task->iovector_out.iov;
-                  io_hdr.dxfer_len = iov_tot_len(task->iovector_out.iov,
-                                                 task->iovector_out.niov);
-                  break;
-                case SCSI_XFER_READ:
-                  io_hdr.dxfer_direction = SG_DXFER_FROM_DEV;
-                  task->datain.size = task->expxferlen;
-                  task->datain.data = malloc(task->datain.size);
-                  memset(task->datain.data, 0, task->datain.size);
-                  io_hdr.dxferp = task->datain.data;
-                  io_hdr.dxfer_len = task->datain.size;
-                  break;
-                }
-
-                /* SCSI timeout in ms */
-                io_hdr.timeout = 5000;
-
-                if(ioctl(sdev->sgio_fd, SG_IO, &io_hdr) < 0){
-                        int err = errno;
-
-                        free(sdev->error_str);
-                        if (asprintf(&sdev->error_str, "SG_IO ioctl failed: %s",
-                                     strerror(err)) < 0)
-                                sdev->error_str = NULL;
-                        return NULL;
-                }
-
-                task->residual_status = SCSI_RESIDUAL_NO_RESIDUAL;
-                task->residual = 0;
-
-                if (io_hdr.resid) {
-                        task->residual_status = SCSI_RESIDUAL_UNDERFLOW;
-                        task->residual = io_hdr.resid;
-                }
-
-                if (task->xfer_dir == SCSI_XFER_READ)
-                        task->datain.size -= task->residual;
-
-                /* now for the error processing */
-                if(io_hdr.sb_len_wr > 0){
-                        task->status = SCSI_STATUS_CHECK_CONDITION;
-                        scsi_parse_sense_data(&task->sense, sense);
-                        snprintf(buf, sizeof(buf), "SENSE KEY:%s(%d) ASCQ:%s(0x%04x)",
-                                 scsi_sense_key_str(task->sense.key),
-                                 task->sense.key,
-                                 scsi_sense_ascq_str(task->sense.ascq),
-                                 task->sense.ascq);
-                        free(sdev->error_str);
-                        sdev->error_str = strdup(buf);
-                        return task;
-                }
-
-                if(io_hdr.status == SCSI_STATUS_RESERVATION_CONFLICT){
-                        task->status = SCSI_STATUS_RESERVATION_CONFLICT;
-                        free(sdev->error_str);
-                        sdev->error_str = strdup("Reservation Conflict");
-                        return task;
-                }
-
-                if(io_hdr.masked_status){
-                        task->status = SCSI_STATUS_ERROR;
-                        task->sense.key = 0x0f;
-                        task->sense.ascq  = 0xffff;
-
-                        free(sdev->error_str);
-                        sdev->error_str = strdup("SCSI masked error");
-                        return NULL;
-                }
-                if(io_hdr.host_status){
-                        task->status = SCSI_STATUS_ERROR;
-                        task->sense.key = 0x0f;
-                        task->sense.ascq  = 0xffff;
-
-                        snprintf(buf, sizeof(buf), "SCSI host error. Status=0x%x", io_hdr.host_status);
-                        free(sdev->error_str);
-                        sdev->error_str = strdup(buf);
-                        return task;
-                }
-                if(io_hdr.driver_status){
-                        task->status = SCSI_STATUS_ERROR;
-                        task->sense.key = 0x0f;
-                        task->sense.ascq  = 0xffff;
-
-                        free(sdev->error_str);
-                        sdev->error_str = strdup("SCSI driver error");
-                        return NULL;
-                }
-                return task;
-        }
+        if (sdev->sgio_dev)
+                return sg_send_scsi_cmd(sdev, task);
 #endif
+
         return NULL;
 }
 
