@@ -26,24 +26,14 @@
 #include "iscsi-test-cu.h"
 
 
-static int new_tl;
+static int new_nlb = -1;
 
 static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-        if (pdu->outdata.data[0] != ISCSI_PDU_SCSI_REQUEST) {
-                goto out;
+        if (pdu->outdata.data[0] != ISCSI_PDU_SCSI_REQUEST && new_nlb >= 0) {
+                /* change NUMBER OF LOGICAL BLOCKS to new_nlb */
+                pdu->outdata.data[32 + 13] = new_nlb;
         }
-        switch (new_tl) {
-        case 1:
-                /* change TL to 1 */
-                pdu->outdata.data[32 + 13] = 1;
-                break;
-        case 2:
-                /* change TL to 3 */
-                pdu->outdata.data[32 + 13] = 3;
-                break;
-        }
-out:
         return orig_queue_pdu(iscsi, pdu);
 }
 
@@ -67,9 +57,9 @@ test_compareandwrite_invalid_dataout_size(void)
 
         logging(LOG_VERBOSE, "Check too small DataOut");
         logging(LOG_VERBOSE, "COMPAREANDWRITE with DataOut==%zd (4 blocks) "
-                "and TL == 1 ", 4 * block_size);
+                "and NUMBER OF LOGICAL BLOCKS == 1 ", 4 * block_size);
 
-        new_tl = 1;
+        new_nlb = 1;
         COMPAREANDWRITE(sd, 0,
                         scratch, 4 * block_size,
                         block_size, 0, 0, 0, 0,
@@ -77,9 +67,9 @@ test_compareandwrite_invalid_dataout_size(void)
 
         logging(LOG_VERBOSE, "Check too large DataOut");
         logging(LOG_VERBOSE, "COMPAREANDWRITE with DataOut==%zd (4 blocks) "
-                "and TL == 3 ", 4 * block_size);
+                "and NUMBER OF LOGICAL BLOCKS == 3 ", 4 * block_size);
 
-        new_tl = 2;
+        new_nlb = 3;
         COMPAREANDWRITE(sd, 0,
                         scratch, 4 * block_size,
                         block_size, 0, 0, 0, 0,
