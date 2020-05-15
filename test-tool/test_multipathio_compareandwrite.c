@@ -44,14 +44,14 @@ test_multipathio_compareandwrite(void)
                 maxbl = inq_bl->max_cmp;
         } else {
                 /* Assume we are not limited */
-                maxbl = 256;
+                maxbl = 255;
         }
         if (maxbl < io_bl) {
                 CU_PASS("[SKIPPED] MAXIMUM_COMPARE_AND_WRITE_LENGTH too small");
                 return;
         }
 
-        n = 256;
+        n = 255;
         if (n + 0U > num_blocks)
                 n = num_blocks;
         

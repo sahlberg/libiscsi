@@ -41,10 +41,10 @@ test_compareandwrite_miscompare(void)
                 maxbl = inq_bl->max_cmp;
         } else {
                 /* Assume we are not limited */
-                maxbl = 256;
+                maxbl = 255;
         }
 
-        n = 256;
+        n = 255;
         if (n + 0U > num_blocks)
                 n = num_blocks;
 
