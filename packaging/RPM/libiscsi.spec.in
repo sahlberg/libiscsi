@@ -70,7 +70,6 @@ to iSCSI servers without having to set up the Linux iSCSI initiator.
 
 %files utils
 %doc COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt README TODO
-%{_bindir}/ld_iscsi.so
 %{_bindir}/iscsi-ls
 %{_bindir}/iscsi-inq
 %{_bindir}/iscsi-perf
