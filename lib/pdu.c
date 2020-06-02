@@ -719,10 +719,14 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 	struct iscsi_pdu *pdu;
 	struct iscsi_pdu *next_pdu;
 	time_t t = time(NULL);
+	uint32_t cmdsn_gap = 0;
 
 	for (pdu = iscsi->outqueue; pdu; pdu = next_pdu) {
 		next_pdu = pdu->next;
 
+                if (cmdsn_gap > 0) {
+			iscsi_pdu_set_cmdsn(pdu, pdu->cmdsn - cmdsn_gap);
+                }
 		if (pdu->scsi_timeout == 0) {
 			/* no timeout for this pdu */
 			continue;
@@ -730,6 +734,11 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 		if (t < pdu->scsi_timeout) {
 			/* not expired yet */
 			continue;
+		}
+		if (!(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE) &&
+		    (pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT) {
+			iscsi->cmdsn--;
+			cmdsn_gap++;
 		}
 		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
 		iscsi_set_error(iscsi, "command timed out");
@@ -783,6 +792,12 @@ iscsi_cancel_pdus(struct iscsi_context *iscsi)
 			              NULL, pdu->private_data);
 		}
 		iscsi->drv->free_pdu(iscsi, pdu);
+		if (!(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE) &&
+		    (pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT) {
+			iscsi->cmdsn--;
+		}
+
+
 	}
 	while ((pdu = iscsi->waitpdu)) {
 		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
