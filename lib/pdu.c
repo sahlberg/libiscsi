@@ -784,10 +784,7 @@ iscsi_cancel_pdus(struct iscsi_context *iscsi)
 
 	while ((pdu = iscsi->outqueue)) {
 		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
-		if (iscsi->is_loggedin && pdu->callback) {
-			/* If an error happened during connect/login,
-			   we don't want to call any of the callbacks.
-			*/
+		if (pdu->callback) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
 			              NULL, pdu->private_data);
 		}
@@ -801,10 +798,7 @@ iscsi_cancel_pdus(struct iscsi_context *iscsi)
 	}
 	while ((pdu = iscsi->waitpdu)) {
 		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-		if (iscsi->is_loggedin && pdu->callback) {
-			/* If an error happened during connect/login,
-			   we don't want to call any of the callbacks.
-			*/
+		if (pdu->callback) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
 			              NULL, pdu->private_data);
 		}
