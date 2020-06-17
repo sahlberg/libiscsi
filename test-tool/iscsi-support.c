@@ -1308,19 +1308,18 @@ verify_read_works(struct scsi_device *sdev, unsigned char *buf)
 {
         struct scsi_task *task;
         const uint32_t lba = 1;
-        const int blksize = 512;
-        const uint32_t datalen = 1 * blksize;
+        const uint32_t datalen = 1 * block_size;
         int ret = 0;
 
 
         /*
-         * try to read the second 512-byte block
+         * try to read the second block
          */
 
         logging(LOG_VERBOSE, "Send READ10 to verify READ works init=%s",
                 sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
-        task = scsi_cdb_read10(lba, datalen, blksize, 0, 0, 0, 0, 0);
+        task = scsi_cdb_read10(lba, datalen, block_size, 0, 0, 0, 0, 0);
         assert(task != NULL);
 
         task = send_scsi_command(sdev, task, NULL);
@@ -1351,19 +1350,18 @@ verify_write_works(struct scsi_device *sdev, unsigned char *buf)
         struct scsi_task *task;
         struct iscsi_data d;
         const uint32_t lba = 1;
-        const int blksize = 512;
-        const uint32_t datalen = 1 * blksize;
+        const uint32_t datalen = 1 * block_size;
         int ret = 0;
 
 
         /*
-         * try to write the second 512-byte block
+         * try to write the second block
          */
 
         logging(LOG_VERBOSE, "Send WRITE10 to verify WRITE works init=%s",
                 sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
-        task = scsi_cdb_write10(lba, datalen, blksize, 0, 0, 0, 0, 0);
+        task = scsi_cdb_write10(lba, datalen, block_size, 0, 0, 0, 0, 0);
         assert(task != NULL);
 
         d.data = buf;
@@ -1391,20 +1389,19 @@ verify_read_fails(struct scsi_device *sdev, unsigned char *buf)
 {
         struct scsi_task *task;
         const uint32_t lba = 1;
-        const int blksize = 512;
-        const uint32_t datalen = 1 * blksize;
+        const uint32_t datalen = 1 * block_size;
         int ret = 0;
 
 
         /*
-         * try to read the second 512-byte block -- should fail
+         * try to read the second block -- should fail
          */
 
         logging(LOG_VERBOSE,
                 "Send READ10 to verify READ does not work init=%s",
                 sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
-        task = scsi_cdb_read10(lba, datalen, blksize, 0, 0, 0, 0, 0);
+        task = scsi_cdb_read10(lba, datalen, block_size, 0, 0, 0, 0, 0);
         assert(task != NULL);
 
         task = send_scsi_command(sdev, task, NULL);
@@ -1438,20 +1435,19 @@ verify_write_fails(struct scsi_device *sdev, unsigned char *buf)
         struct scsi_task *task;
         struct iscsi_data d;
         const uint32_t lba = 1;
-        const int blksize = 512;
-        const uint32_t datalen = 1 * blksize;
+        const uint32_t datalen = 1 * block_size;
         int ret = 0;
 
 
         /*
-         * try to write the second 512-byte block
+         * try to write the second block
          */
 
         logging(LOG_VERBOSE,
                 "Send WRITE10 to verify WRITE does not work init=%s",
                 sdev->iscsi_ctx ? sdev->iscsi_ctx->initiator_name : sdev->sgio_dev);
 
-        task = scsi_cdb_write10(lba, datalen, blksize, 0, 0, 0, 0, 0);
+        task = scsi_cdb_write10(lba, datalen, block_size, 0, 0, 0, 0, 0);
         assert(task != NULL);
 
         d.data = buf;
