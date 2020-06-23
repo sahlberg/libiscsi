@@ -2708,6 +2708,11 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 			}
 		}
 	}
+
+	if (iscsi->old_iscsi) {
+		return iscsi_scsi_cancel_task(iscsi->old_iscsi, task);
+	}
+
 	return ret;
 }
 
@@ -2715,4 +2720,8 @@ void
 iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 {
 	iscsi_cancel_pdus(iscsi);
+
+	if (iscsi->old_iscsi) {
+		iscsi_cancel_pdus(iscsi->old_iscsi);
+	}
 }
