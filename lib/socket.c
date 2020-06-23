@@ -913,7 +913,7 @@ iscsi_tcp_service(struct iscsi_context *iscsi, int revents)
 			return iscsi_reconnect(iscsi);
 		} else {
 			if (iscsi->old_iscsi) {
-				return 0;
+				goto check_timeout;
 			}
 		}
 	}
@@ -999,7 +999,13 @@ iscsi_tcp_service(struct iscsi_context *iscsi, int revents)
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 	}
+
+check_timeout:
 	iscsi_timeout_scan(iscsi);
+
+	if (iscsi->old_iscsi) {
+		iscsi_timeout_scan(iscsi->old_iscsi);
+	}
 
 	return 0;
 }
