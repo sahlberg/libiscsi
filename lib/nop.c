@@ -64,7 +64,7 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	iscsi_pdu_set_lun(pdu, 0);
 
 	/* cmdsn */
-	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn++);
+	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
 
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
@@ -83,6 +83,7 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		return -1;
 	}
 
+	iscsi->cmdsn++;
 	iscsi->nops_in_flight++;
 	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
 	          "NOP Out Send (nops_in_flight: %d, pdu->cmdsn %08x, pdu->itt %08x, pdu->ttt %08x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x)",

@@ -271,7 +271,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	iscsi_pdu_set_expxferlen(pdu, task->expxferlen);
 
 	/* cmdsn */
-	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn++);
+	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
 
 	/* cdb */
 	iscsi_pdu_set_cdb(pdu, task);
@@ -285,6 +285,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 		iscsi->drv->free_pdu(iscsi, pdu);
 		return -1;
 	}
+	iscsi->cmdsn++;
 
 	/* The F flag is not set. This means we haven't sent all the unsolicited
 	 * data yet. Sent as much as we are allowed as a train of DATA-OUT PDUs.
@@ -2667,6 +2668,9 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 		       struct scsi_task *task)
 {
 	struct iscsi_pdu *pdu;
+	struct iscsi_pdu *next_pdu;
+	uint32_t cmdsn_gap = 0;
+	int ret = -1;
 
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		if (pdu->itt == task->itt) {
@@ -2679,22 +2683,45 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 			return 0;
 		}
 	}
-	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
+	for (pdu = iscsi->outqueue; pdu; pdu = next_pdu) {
+		next_pdu = pdu->next;
+
+		if (cmdsn_gap > 0) {
+			iscsi_pdu_set_cmdsn(pdu, pdu->cmdsn - cmdsn_gap);
+		}
+
 		if (pdu->itt == task->itt) {
 			ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
 			if (pdu->callback) {
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
 			}
+			if (!(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE) &&
+			    (pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT) {
+				iscsi->cmdsn--;
+				cmdsn_gap++;
+			}
 			iscsi->drv->free_pdu(iscsi, pdu);
-			return 0;
+			ret = 0;
+			if (!cmdsn_gap) {
+				break;
+			}
 		}
 	}
-	return -1;
+
+	if (iscsi->old_iscsi) {
+		return iscsi_scsi_cancel_task(iscsi->old_iscsi, task);
+	}
+
+	return ret;
 }
 
 void
 iscsi_scsi_cancel_all_tasks(struct iscsi_context *iscsi)
 {
 	iscsi_cancel_pdus(iscsi);
+
+	if (iscsi->old_iscsi) {
+		iscsi_cancel_pdus(iscsi->old_iscsi);
+	}
 }
