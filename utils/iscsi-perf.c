@@ -369,12 +369,12 @@ int main(int argc, char *argv[])
 
 	scsi_free_scsi_task(task);
 
-	client.perf_iov.iov_base = malloc(blocks_per_io * client.blocksize);
+	client.perf_iov.iov_base = malloc((size_t)(blocks_per_io * client.blocksize));
 	if (!client.perf_iov.iov_base) {
 		fprintf(stderr, "Out of Memory\n");
 		exit(10);
 	}
-	client.perf_iov.iov_len = blocks_per_io * client.blocksize;
+	client.perf_iov.iov_len = (size_t)(blocks_per_io * client.blocksize);
 
 	printf("capacity is %" PRIu64 " blocks or %" PRIu64 " byte (%" PRIu64 " MB)\n", client.num_blocks, client.num_blocks * client.blocksize,
 	                                                        (client.num_blocks * client.blocksize) >> 20);
