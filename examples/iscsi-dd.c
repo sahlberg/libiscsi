@@ -562,11 +562,59 @@ static void show_perf(struct timespec *start_time,
 	   " %g%c/s.\n", num_blocks, block_size, elapsed, ubytes_per_sec, u[i]);
 }
 
+static void iscsi_endpoint_init(const char *url,
+				const char *usage,
+				int use_16_for_rw,
+				int use_xcopy,
+				struct iscsi_endpoint *endpoint)
+{
+	struct iscsi_url *iscsi_url;
+
+	if (url == NULL) {
+		fprintf(stderr, "You must specify a %s url\n"
+			"  --%s iscsi://<host>[:<port>]/<target-iqn>/<lun>\n",
+			usage, usage);
+		usage_exit(10);
+	}
+
+	endpoint->iscsi = iscsi_create_context(initiator);
+	if (endpoint->iscsi == NULL) {
+		fprintf(stderr, "Failed to create context\n");
+		exit(10);
+	}
+	iscsi_url = iscsi_parse_full_url(endpoint->iscsi, url);
+	if (iscsi_url == NULL) {
+		fprintf(stderr, "Failed to parse URL: %s\n",
+			iscsi_get_error(endpoint->iscsi));
+		iscsi_destroy_context(endpoint->iscsi);
+		exit(10);
+	}
+	iscsi_set_session_type(endpoint->iscsi, ISCSI_SESSION_NORMAL);
+	iscsi_set_header_digest(endpoint->iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
+	if (iscsi_full_connect_sync(endpoint->iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
+		fprintf(stderr, "Login Failed. %s\n", iscsi_get_error(endpoint->iscsi));
+		iscsi_destroy_url(iscsi_url);
+		iscsi_destroy_context(endpoint->iscsi);
+		exit(10);
+	}
+	endpoint->lun = iscsi_url->lun;
+	iscsi_destroy_url(iscsi_url);
+
+	readcap(endpoint->iscsi, endpoint->lun, use_16_for_rw,
+		&endpoint->blocksize, &endpoint->num_blocks);
+
+	if (use_xcopy) {
+		cscd_ident_inq(endpoint->iscsi, endpoint->lun,
+				&endpoint->tgt_desig);
+		cscd_param_check(endpoint->iscsi, endpoint->lun,
+				 endpoint->blocksize);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	char *src_url = NULL;
 	char *dst_url = NULL;
-	struct iscsi_url *iscsi_url;
 	int c;
 	struct pollfd pfd[2];
 	struct client client;
@@ -641,80 +689,10 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (src_url == NULL) {
-		fprintf(stderr, "You must specify source url\n"
-			"  --src iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
-		usage_exit(10);
-	}
-	if (dst_url == NULL) {
-		fprintf(stderr, "You must specify destination url\n"
-			"  --dst iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
-		usage_exit(10);
-	}
-
-	client.src.iscsi = iscsi_create_context(initiator);
-	if (client.src.iscsi == NULL) {
-		fprintf(stderr, "Failed to create context\n");
-		exit(10);
-	}
-	iscsi_url = iscsi_parse_full_url(client.src.iscsi, src_url);
-	if (iscsi_url == NULL) {
-		fprintf(stderr, "Failed to parse URL: %s\n",
-			iscsi_get_error(client.src.iscsi));
-		exit(10);
-	}
-	iscsi_set_session_type(client.src.iscsi, ISCSI_SESSION_NORMAL);
-	iscsi_set_header_digest(client.src.iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	if (iscsi_full_connect_sync(client.src.iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
-		fprintf(stderr, "Login Failed. %s\n", iscsi_get_error(client.src.iscsi));
-		iscsi_destroy_url(iscsi_url);
-		iscsi_destroy_context(client.src.iscsi);
-		exit(10);
-	}
-	client.src.lun = iscsi_url->lun;
-	iscsi_destroy_url(iscsi_url);
-
-	readcap(client.src.iscsi, client.src.lun, client.use_16_for_rw,
-		&client.src.blocksize, &client.src.num_blocks);
-
-	if (client.use_xcopy) {
-		cscd_ident_inq(client.src.iscsi, client.src.lun,
-				&client.src.tgt_desig);
-		cscd_param_check(client.src.iscsi, client.src.lun,
-				 client.src.blocksize);
-	}
-
-	client.dst.iscsi = iscsi_create_context(initiator);
-	if (client.dst.iscsi == NULL) {
-		fprintf(stderr, "Failed to create context\n");
-		exit(10);
-	}
-	iscsi_url = iscsi_parse_full_url(client.dst.iscsi, dst_url);
-	if (iscsi_url == NULL) {
-		fprintf(stderr, "Failed to parse URL: %s\n",
-			iscsi_get_error(client.dst.iscsi));
-		exit(10);
-	}
-	iscsi_set_session_type(client.dst.iscsi, ISCSI_SESSION_NORMAL);
-	iscsi_set_header_digest(client.dst.iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	if (iscsi_full_connect_sync(client.dst.iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
-		fprintf(stderr, "Login Failed. %s\n", iscsi_get_error(client.dst.iscsi));
-		iscsi_destroy_url(iscsi_url);
-		iscsi_destroy_context(client.dst.iscsi);
-		exit(10);
-	}
-	client.dst.lun = iscsi_url->lun;
-	iscsi_destroy_url(iscsi_url);
-
-	readcap(client.dst.iscsi, client.dst.lun, client.use_16_for_rw,
-		&client.dst.blocksize, &client.dst.num_blocks);
-
-	if (client.use_xcopy) {
-		cscd_ident_inq(client.dst.iscsi, client.dst.lun,
-				&client.dst.tgt_desig);
-		cscd_param_check(client.dst.iscsi, client.dst.lun,
-				 client.dst.blocksize);
-	}
+	iscsi_endpoint_init(src_url, "src", client.use_16_for_rw,
+			    client.use_xcopy, &client.src);
+	iscsi_endpoint_init(dst_url, "dst", client.use_16_for_rw,
+			    client.use_xcopy, &client.dst);
 
 	if (client.src.blocksize != client.dst.blocksize) {
 		fprintf(stderr, "source LUN has different blocksize than destination than destination (%d != %d sectors)\n", client.src.blocksize, client.dst.blocksize);
