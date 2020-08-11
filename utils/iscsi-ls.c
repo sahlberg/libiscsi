@@ -376,7 +376,8 @@ int main(int argc, char *argv[])
                 } else if (!strcmp(argv[i], "-U") ||
                            !strcmp(argv[i], "--url")) {
 			useurls = 1;
-                } else if (!strncmp("iscsi://", argv[i], 8)) {
+                } else if (!strncmp("iscsi://", argv[i], 8) ||
+                           !strncmp("iser://", argv[i], 7)) {
                         url = strdup(argv[i]);
                 }
         }
