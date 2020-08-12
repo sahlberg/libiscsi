@@ -92,7 +92,6 @@ test_async_abort_simple(void)
 {
 	int ret;
 	struct tests_async_abort_state state = { NULL, 0, 0, 0, 0 };
-	int blocksize = 512;
 	int blocks_per_io = 8;
 	unsigned char *buf;
 	uint64_t timeout_sec;
@@ -107,18 +106,18 @@ test_async_abort_simple(void)
 		return;
 	}
 
-	buf = calloc(blocksize, blocks_per_io);
+	buf = calloc(block_size, blocks_per_io);
 	CU_ASSERT(buf != NULL);
 	if (!buf)
 		return;
 
 	/* queue and dispatch write before the abort */
-	state.wtask = scsi_cdb_write10(0, blocks_per_io * blocksize,
-				 blocksize, 0, 0, 0, 0, 0);
+	state.wtask = scsi_cdb_write10(0, blocks_per_io * block_size,
+				 block_size, 0, 0, 0, 0, 0);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(state.wtask);
 
 	ret = scsi_task_add_data_out_buffer(state.wtask,
-					    blocks_per_io * blocksize,
+					    blocks_per_io * block_size,
 					    buf);
 	CU_ASSERT_EQUAL(ret, 0);
 
