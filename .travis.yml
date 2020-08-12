@@ -6,6 +6,9 @@ os:
 arch:
   - ppc64le
 
+arch:
+  - ppc64le
+
 addons:
   apt:
     packages:
