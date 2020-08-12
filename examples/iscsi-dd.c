@@ -32,22 +32,23 @@ const char *initiator = "iqn.2010-11.ronnie:iscsi-inq";
 uint32_t max_in_flight = 50;
 uint32_t blocks_per_io = 200;
 
+struct iscsi_endpoint {
+	struct iscsi_context *iscsi;
+	int lun;
+	int blocksize;
+	uint64_t num_blocks;
+	struct scsi_inquiry_device_designator tgt_desig;
+};
+
 struct client {
 	int finished;
 	uint32_t in_flight;
 
-	struct iscsi_context *src_iscsi;
-	int src_lun;
-	int src_blocksize;
-	uint64_t src_num_blocks;
-	struct scsi_inquiry_device_designator src_tgt_desig;
+	struct iscsi_endpoint src;
+	struct iscsi_endpoint dst;
+
 	uint64_t pos;
 
-	struct iscsi_context *dst_iscsi;
-	int dst_lun;
-	int dst_blocksize;
-	uint64_t dst_num_blocks;
-	struct scsi_inquiry_device_designator dst_tgt_desig;
 	int use_16_for_rw;
 	int use_xcopy;
 	int progress;
@@ -87,10 +88,10 @@ void write_cb(struct iscsi_context *iscsi, int status, void *command_data, void 
 	fill_read_queue(client);
 
 	if (client->progress) {
-		printf("\r%"PRIu64" of %"PRIu64" blocks transferred.", client->pos, client->src_num_blocks);
+		printf("\r%"PRIu64" of %"PRIu64" blocks transferred.", client->pos, client->src.num_blocks);
 	}
 
-	if ((client->in_flight == 0) && (client->pos == client->src_num_blocks)) {
+	if ((client->in_flight == 0) && (client->pos == client->src.num_blocks)) {
 		client->finished = 1;
 		if (client->progress) {
 			printf("\n");
@@ -134,20 +135,20 @@ void read_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, vo
 			printf("Failed to unmarshall READ16 CDB.\n");
 			exit(10);
 		}
-		task2 = iscsi_write16_task(client->dst_iscsi, client->dst_lun,
-									read16_cdb->lba, task->datain.data, task->datain.size,
-									client->dst_blocksize, 0, 0, 0, 0, 0,
-									write_cb, wt);
+		task2 = iscsi_write16_task(client->dst.iscsi, client->dst.lun,
+					   read16_cdb->lba, task->datain.data, task->datain.size,
+					   client->dst.blocksize, 0, 0, 0, 0, 0,
+					   write_cb, wt);
 	} else {
 		read10_cdb = scsi_cdb_unmarshall(task, SCSI_OPCODE_READ10);
 		if (read10_cdb == NULL) {
 			printf("Failed to unmarshall READ16 CDB.\n");
 			exit(10);
 		}
-		task2 = iscsi_write10_task(client->dst_iscsi, client->dst_lun,
-									read10_cdb->lba, task->datain.data, task->datain.size,
-									client->dst_blocksize, 0, 0, 0, 0, 0,
-									write_cb, wt);
+		task2 = iscsi_write10_task(client->dst.iscsi, client->dst.lun,
+					   read10_cdb->lba, task->datain.data, task->datain.size,
+					   client->dst.blocksize, 0, 0, 0, 0, 0,
+					   write_cb, wt);
 	}
 	if (task2 == NULL) {
 		printf("failed to send read16 command\n");
@@ -161,27 +162,27 @@ void fill_read_queue(struct client *client)
 {
 	uint32_t num_blocks;
 
-	while(client->in_flight < max_in_flight && client->pos < client->src_num_blocks) {
+	while(client->in_flight < max_in_flight && client->pos < client->src.num_blocks) {
 		struct scsi_task *task;
 		client->in_flight++;
 
-		num_blocks = client->src_num_blocks - client->pos;
+		num_blocks = client->src.num_blocks - client->pos;
 		if (num_blocks > blocks_per_io) {
 			num_blocks = blocks_per_io;
 		}
 
 		if (client->use_16_for_rw) {
-			task = iscsi_read16_task(client->src_iscsi,
-									client->src_lun, client->pos,
-									num_blocks * client->src_blocksize,
-									client->src_blocksize, 0, 0, 0, 0, 0,
-									read_cb, client);
+			task = iscsi_read16_task(client->src.iscsi,
+						 client->src.lun, client->pos,
+						 num_blocks * client->src.blocksize,
+						 client->src.blocksize, 0, 0, 0, 0, 0,
+						 read_cb, client);
 		} else {
-			task = iscsi_read10_task(client->src_iscsi,
-									client->src_lun, client->pos,
-									num_blocks * client->src_blocksize,
-									client->src_blocksize, 0, 0, 0, 0, 0,
-									read_cb, client);
+			task = iscsi_read10_task(client->src.iscsi,
+						 client->src.lun, client->pos,
+						 num_blocks * client->src.blocksize,
+						 client->src.blocksize, 0, 0, 0, 0, 0,
+						 read_cb, client);
 		}
 		if (task == NULL) {
 			printf("failed to send read10/16 command\n");
@@ -300,10 +301,10 @@ void xcopy_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, v
 
 	if (client->progress) {
 		printf("\r%"PRIu64" of %"PRIu64" blocks transferred.",
-			client->pos, client->src_num_blocks);
+			client->pos, client->src.num_blocks);
 	}
 
-	if ((client->in_flight == 0) && (client->pos == client->src_num_blocks)) {
+	if ((client->in_flight == 0) && (client->pos == client->src.num_blocks)) {
 		client->finished = 1;
 		if (client->progress) {
 			printf("\n");
@@ -314,7 +315,7 @@ void xcopy_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, v
 
 void fill_xcopy_queue(struct client *client)
 {
-	while (client->in_flight < max_in_flight && client->pos < client->src_num_blocks) {
+	while (client->in_flight < max_in_flight && client->pos < client->src.num_blocks) {
 		struct scsi_task *task;
 		struct iscsi_data data;
 		unsigned char *xcopybuf;
@@ -325,7 +326,7 @@ void fill_xcopy_queue(struct client *client)
 
 		client->in_flight++;
 
-		num_blocks = client->src_num_blocks - client->pos;
+		num_blocks = client->src.num_blocks - client->pos;
 		if (num_blocks > blocks_per_io) {
 			num_blocks = blocks_per_io;
 		}
@@ -345,11 +346,11 @@ void fill_xcopy_queue(struct client *client)
 		/* Initialise CSCD list with one src + one dst descriptor */
 		offset = XCOPY_DESC_OFFSET;
 		offset += populate_tgt_desc(xcopybuf + offset,
-					&client->src_tgt_desig,
-					0, client->src_blocksize);
+					&client->src.tgt_desig,
+					0, client->src.blocksize);
 		offset += populate_tgt_desc(xcopybuf + offset,
-					&client->dst_tgt_desig,
-					0, client->dst_blocksize);
+					&client->dst.tgt_desig,
+					0, client->dst.blocksize);
 		tgt_desc_len = offset - XCOPY_DESC_OFFSET;
 
 		/* Initialise one segment descriptor */
@@ -361,8 +362,8 @@ void fill_xcopy_queue(struct client *client)
 		populate_param_header(xcopybuf, 1, 0, LIST_ID_USAGE_DISCARD, 0,
 				tgt_desc_len, seg_desc_len, 0);
 
-		task = iscsi_extended_copy_task(client->src_iscsi,
-						client->src_lun,
+		task = iscsi_extended_copy_task(client->src.iscsi,
+						client->src.lun,
 						&data, xcopy_cb, client);
 		if (task == NULL) {
 			printf("failed to send XCOPY command\n");
@@ -561,11 +562,59 @@ static void show_perf(struct timespec *start_time,
 	   " %g%c/s.\n", num_blocks, block_size, elapsed, ubytes_per_sec, u[i]);
 }
 
+static void iscsi_endpoint_init(const char *url,
+				const char *usage,
+				int use_16_for_rw,
+				int use_xcopy,
+				struct iscsi_endpoint *endpoint)
+{
+	struct iscsi_url *iscsi_url;
+
+	if (url == NULL) {
+		fprintf(stderr, "You must specify a %s url\n"
+			"  --%s iscsi://<host>[:<port>]/<target-iqn>/<lun>\n",
+			usage, usage);
+		usage_exit(10);
+	}
+
+	endpoint->iscsi = iscsi_create_context(initiator);
+	if (endpoint->iscsi == NULL) {
+		fprintf(stderr, "Failed to create context\n");
+		exit(10);
+	}
+	iscsi_url = iscsi_parse_full_url(endpoint->iscsi, url);
+	if (iscsi_url == NULL) {
+		fprintf(stderr, "Failed to parse URL: %s\n",
+			iscsi_get_error(endpoint->iscsi));
+		iscsi_destroy_context(endpoint->iscsi);
+		exit(10);
+	}
+	iscsi_set_session_type(endpoint->iscsi, ISCSI_SESSION_NORMAL);
+	iscsi_set_header_digest(endpoint->iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
+	if (iscsi_full_connect_sync(endpoint->iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
+		fprintf(stderr, "Login Failed. %s\n", iscsi_get_error(endpoint->iscsi));
+		iscsi_destroy_url(iscsi_url);
+		iscsi_destroy_context(endpoint->iscsi);
+		exit(10);
+	}
+	endpoint->lun = iscsi_url->lun;
+	iscsi_destroy_url(iscsi_url);
+
+	readcap(endpoint->iscsi, endpoint->lun, use_16_for_rw,
+		&endpoint->blocksize, &endpoint->num_blocks);
+
+	if (use_xcopy) {
+		cscd_ident_inq(endpoint->iscsi, endpoint->lun,
+				&endpoint->tgt_desig);
+		cscd_param_check(endpoint->iscsi, endpoint->lun,
+				 endpoint->blocksize);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	char *src_url = NULL;
 	char *dst_url = NULL;
-	struct iscsi_url *iscsi_url;
 	int c;
 	struct pollfd pfd[2];
 	struct client client;
@@ -640,88 +689,18 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (src_url == NULL) {
-		fprintf(stderr, "You must specify source url\n"
-			"  --src iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
-		usage_exit(10);
-	}
-	if (dst_url == NULL) {
-		fprintf(stderr, "You must specify destination url\n"
-			"  --dst iscsi://<host>[:<port>]/<target-iqn>/<lun>\n");
-		usage_exit(10);
-	}
+	iscsi_endpoint_init(src_url, "src", client.use_16_for_rw,
+			    client.use_xcopy, &client.src);
+	iscsi_endpoint_init(dst_url, "dst", client.use_16_for_rw,
+			    client.use_xcopy, &client.dst);
 
-	client.src_iscsi = iscsi_create_context(initiator);
-	if (client.src_iscsi == NULL) {
-		fprintf(stderr, "Failed to create context\n");
-		exit(10);
-	}
-	iscsi_url = iscsi_parse_full_url(client.src_iscsi, src_url);
-	if (iscsi_url == NULL) {
-		fprintf(stderr, "Failed to parse URL: %s\n",
-			iscsi_get_error(client.src_iscsi));
-		exit(10);
-	}
-	iscsi_set_session_type(client.src_iscsi, ISCSI_SESSION_NORMAL);
-	iscsi_set_header_digest(client.src_iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	if (iscsi_full_connect_sync(client.src_iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
-		fprintf(stderr, "Login Failed. %s\n", iscsi_get_error(client.src_iscsi));
-		iscsi_destroy_url(iscsi_url);
-		iscsi_destroy_context(client.src_iscsi);
-		exit(10);
-	}
-	client.src_lun = iscsi_url->lun;
-	iscsi_destroy_url(iscsi_url);
-
-	readcap(client.src_iscsi, client.src_lun, client.use_16_for_rw,
-		&client.src_blocksize, &client.src_num_blocks);
-
-	if (client.use_xcopy) {
-		cscd_ident_inq(client.src_iscsi, client.src_lun,
-				&client.src_tgt_desig);
-		cscd_param_check(client.src_iscsi, client.src_lun,
-				 client.src_blocksize);
-	}
-
-	client.dst_iscsi = iscsi_create_context(initiator);
-	if (client.dst_iscsi == NULL) {
-		fprintf(stderr, "Failed to create context\n");
-		exit(10);
-	}
-	iscsi_url = iscsi_parse_full_url(client.dst_iscsi, dst_url);
-	if (iscsi_url == NULL) {
-		fprintf(stderr, "Failed to parse URL: %s\n",
-			iscsi_get_error(client.dst_iscsi));
-		exit(10);
-	}
-	iscsi_set_session_type(client.dst_iscsi, ISCSI_SESSION_NORMAL);
-	iscsi_set_header_digest(client.dst_iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	if (iscsi_full_connect_sync(client.dst_iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
-		fprintf(stderr, "Login Failed. %s\n", iscsi_get_error(client.dst_iscsi));
-		iscsi_destroy_url(iscsi_url);
-		iscsi_destroy_context(client.dst_iscsi);
-		exit(10);
-	}
-	client.dst_lun = iscsi_url->lun;
-	iscsi_destroy_url(iscsi_url);
-
-	readcap(client.dst_iscsi, client.dst_lun, client.use_16_for_rw,
-		&client.dst_blocksize, &client.dst_num_blocks);
-
-	if (client.use_xcopy) {
-		cscd_ident_inq(client.dst_iscsi, client.dst_lun,
-				&client.dst_tgt_desig);
-		cscd_param_check(client.dst_iscsi, client.dst_lun,
-				 client.dst_blocksize);
-	}
-
-	if (client.src_blocksize != client.dst_blocksize) {
-		fprintf(stderr, "source LUN has different blocksize than destination than destination (%d != %d sectors)\n", client.src_blocksize, client.dst_blocksize);
+	if (client.src.blocksize != client.dst.blocksize) {
+		fprintf(stderr, "source LUN has different blocksize than destination than destination (%d != %d sectors)\n", client.src.blocksize, client.dst.blocksize);
 		exit(10);
 	}
 
-	if (client.src_num_blocks > client.dst_num_blocks) {
-		fprintf(stderr, "source LUN is bigger than destination (%"PRIu64" > %"PRIu64" sectors)\n", client.src_num_blocks, client.dst_num_blocks);
+	if (client.src.num_blocks > client.dst.num_blocks) {
+		fprintf(stderr, "source LUN is bigger than destination (%"PRIu64" > %"PRIu64" sectors)\n", client.src.num_blocks, client.dst.num_blocks);
 		exit(10);
 	}
 
@@ -737,10 +716,10 @@ int main(int argc, char *argv[])
 	}
 
 	while (client.finished == 0) {
-		pfd[0].fd = iscsi_get_fd(client.src_iscsi);
-		pfd[0].events = iscsi_which_events(client.src_iscsi);
-		pfd[1].fd = iscsi_get_fd(client.dst_iscsi);
-		pfd[1].events = iscsi_which_events(client.dst_iscsi);
+		pfd[0].fd = iscsi_get_fd(client.src.iscsi);
+		pfd[0].events = iscsi_which_events(client.src.iscsi);
+		pfd[1].fd = iscsi_get_fd(client.dst.iscsi);
+		pfd[1].events = iscsi_which_events(client.dst.iscsi);
 
 		if (!pfd[0].events && !pfd[1].events) {
 			sleep(1);
@@ -751,12 +730,12 @@ int main(int argc, char *argv[])
 			printf("Poll failed");
 			exit(10);
 		}
-		if (iscsi_service(client.src_iscsi, pfd[0].revents) < 0) {
-			printf("iscsi_service failed with : %s\n", iscsi_get_error(client.src_iscsi));
+		if (iscsi_service(client.src.iscsi, pfd[0].revents) < 0) {
+			printf("iscsi_service failed with : %s\n", iscsi_get_error(client.src.iscsi));
 			break;
 		}
-		if (iscsi_service(client.dst_iscsi, pfd[1].revents) < 0) {
-			printf("iscsi_service failed with : %s\n", iscsi_get_error(client.dst_iscsi));
+		if (iscsi_service(client.dst.iscsi, pfd[1].revents) < 0) {
+			printf("iscsi_service failed with : %s\n", iscsi_get_error(client.dst.iscsi));
 			break;
 		}
 	}
@@ -766,14 +745,14 @@ int main(int argc, char *argv[])
 		gettime_ret = clock_gettime(CLOCK_MONOTONIC, &end_time);
 		if (gettime_ret == 0) {
 			show_perf(&start_time, &end_time, client.pos,
-				  client.src_blocksize);
+				  client.src.blocksize);
 		}
 	}
 
-	iscsi_logout_sync(client.src_iscsi);
-	iscsi_destroy_context(client.src_iscsi);
-	iscsi_logout_sync(client.dst_iscsi);
-	iscsi_destroy_context(client.dst_iscsi);
+	iscsi_logout_sync(client.src.iscsi);
+	iscsi_destroy_context(client.src.iscsi);
+	iscsi_logout_sync(client.dst.iscsi);
+	iscsi_destroy_context(client.dst.iscsi);
 
 	return 0;
 }
