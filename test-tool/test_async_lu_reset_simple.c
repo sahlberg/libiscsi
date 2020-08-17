@@ -66,6 +66,7 @@ test_async_reset_cb(struct iscsi_context *iscsi __attribute__((unused)),
 
 	/* command_data NULL if a reconnect occured. see iscsi_reconnect_cb() */
 	reconnect_succeeded = command_data != NULL;
+	CU_ASSERT_EQUAL(reconnect_succeeded, 1);
 	if (!reconnect_succeeded)
 		return;
 	tmf_response = *(uint32_t *)command_data;
@@ -153,9 +154,6 @@ test_async_lu_reset_simple(void)
 				    0xffffffff, 0,
 				    test_async_reset_cb, &state);
 	CU_ASSERT_EQUAL(ret, 0);
-	CU_ASSERT_EQUAL(reconnect_succeeded, 1);
-	if (!reconnect_succeeded)
-		goto out;
 
 	logging(LOG_VERBOSE, "LU RESET queued");
 
@@ -196,8 +194,6 @@ test_async_lu_reset_simple(void)
 	} else {
 		CU_FAIL("unexpected WRITE/RESET state");
 	}
-
-out:
 
 	/* Avoid that callbacks get invoked after this test finished */
 	iscsi_logout_sync(sd->iscsi_ctx);
