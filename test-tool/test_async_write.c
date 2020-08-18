@@ -27,8 +27,8 @@
 #include "iscsi-test-cu.h"
 
 struct tests_async_write_state {
-	uint32_t dispatched;
-	uint32_t completed;
+	uint32_t io_dispatched;
+	uint32_t io_completed;
 	uint32_t prev_cmdsn;
 };
 
@@ -39,12 +39,13 @@ test_async_write_cb(struct iscsi_context *iscsi __attribute__((unused)),
 	struct scsi_task *atask = command_data;
 	struct tests_async_write_state *state = private_data;
 
-	state->completed++;
+	state->io_completed++;
 	logging(LOG_VERBOSE, "WRITE10 completed: %d of %d (CmdSN=%d)",
-		state->completed, state->dispatched, atask->cmdsn);
+		state->io_completed, state->io_dispatched, atask->cmdsn);
 	CU_ASSERT_NOT_EQUAL(status, SCSI_STATUS_CHECK_CONDITION);
 
-	if ((state->completed > 1) && (atask->cmdsn != state->prev_cmdsn + 1)) {
+	if ((state->io_completed > 1)
+	 && (atask->cmdsn != state->prev_cmdsn + 1)) {
 		logging(LOG_VERBOSE,
 			"out of order completion (CmdSN=%d, prev=%d)",
 			atask->cmdsn, state->prev_cmdsn);
@@ -97,12 +98,12 @@ test_async_write(void)
 					       &state);
 		CU_ASSERT_EQUAL(ret, 0);
 
-		state.dispatched++;
+		state.io_dispatched++;
 		logging(LOG_VERBOSE, "WRITE10 dispatched: %d of %d (cmdsn=%d)",
-			state.dispatched, num_ios, atask->cmdsn);
+			state.io_dispatched, num_ios, atask->cmdsn);
 	}
 
-	while (state.completed < state.dispatched) {
+	while (state.io_completed < state.io_dispatched) {
 		struct pollfd pfd;
 
 		pfd.fd = iscsi_get_fd(sd->iscsi_ctx);
