@@ -258,6 +258,7 @@ void test_write10_wrprotect(void);
 void test_write10_dpofua(void);
 void test_write10_residuals(void);
 void test_async_write(void);
+void test_async_io_logout(void);
 
 void test_write12_simple(void);
 void test_write12_beyond_eol(void);
