@@ -788,13 +788,11 @@ iscsi_cancel_pdus(struct iscsi_context *iscsi)
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
 			              NULL, pdu->private_data);
 		}
-		iscsi->drv->free_pdu(iscsi, pdu);
 		if (!(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE) &&
 		    (pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT) {
 			iscsi->cmdsn--;
 		}
-
-
+		iscsi->drv->free_pdu(iscsi, pdu);
 	}
 	while ((pdu = iscsi->waitpdu)) {
 		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
