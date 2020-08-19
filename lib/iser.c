@@ -204,12 +204,6 @@ iser_buf_chunk_alloc(struct iser_buf_chunk *chunk, int want) {
 	return result;
 }
 
-static inline int
-iser_buf_chunk_contains(struct iser_buf_chunk *chunk, void *ptr) {
-	return ((unsigned char *)ptr >= chunk->buf &&
-	        (unsigned char *)ptr < chunk->buf + DATA_BUFFER_CHUNK_SIZE);
-}
-
 static void
 iser_tx_desc_free(struct iscsi_context *iscsi, struct iser_tx_desc *tx_desc)
 {
