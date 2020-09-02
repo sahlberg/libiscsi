@@ -35,10 +35,12 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		 * iscsi_pdu_set_cmdsn(), which also changes pdu->cmdsn?
 		 */
                 scsi_set_uint32(&pdu->outdata.data[24], iscsi->expcmdsn - 1);
-                /* fudge the cmdsn value back to where it should be if this
-                 * pdu is ignored.
+                /*
+                 * Fudge the cmdsn value back to where it should be if this pdu
+                 * is ignored. The cmdsn value will be incremented by the
+                 * orig_queue_pdu(), so it's off by one.
                  */
-                iscsi->cmdsn = iscsi->expcmdsn;
+                iscsi->cmdsn = iscsi->expcmdsn - 1;
                 break;
         }
 
