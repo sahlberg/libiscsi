@@ -1360,8 +1360,12 @@ main(int argc, char *argv[])
 
         sbc3_support = 0;
         for (i = 0; i < 8; i++) {
-                if (inq->version_descriptor[i] == 0x04C0) {
-                        sbc3_support = 1;
+                switch (inq->version_descriptor[i]) {
+                        case 0x04C0: // SBC-3 (no version claimed)
+                        case 0x04C3: // SBC-3 T10/BSR INCITS 514 revision 35
+                        case 0x04C5: // SBC-3 T10/BSR INCITS 514 revision 36
+                        case 0x04C8: // SBC-3 ANSI INCITS 514-2014
+                                sbc3_support = 1;
                 }
         }
 
