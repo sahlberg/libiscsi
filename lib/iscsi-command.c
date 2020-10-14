@@ -354,6 +354,10 @@ void scsi_parse_sense_data(struct scsi_sense *sense, const uint8_t *sb)
 	case 0x71:
 		/* Fixed format */
 		sense->key  = sb[2] & 0x0f;
+		if (sb[0] & 0x80) {	/* VALID */
+			sense->info_valid = 1;
+			sense->information = scsi_get_uint32(sb + 3);
+		}
 		sense->ascq = scsi_get_uint16(&sb[12]);
 		parse_sense_spec(sense, sb + 15);
 		break;
