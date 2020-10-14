@@ -330,6 +330,13 @@ static void parse_sense_descriptors(struct scsi_sense *sense, const uint8_t *sb,
 		if (addl_len < 4)
 			break;
 		switch (p[0]) {
+		case 0:
+			/* Information descriptor with VALID flag */
+			if (addl_len == 0x0a && p[2] & 0x80) {
+				sense->info_valid = 1;
+				sense->information = scsi_get_uint64(p + 4);
+			}
+			break;
 		case 2:
 			/* Sense key specific sense data descriptor */
 			if (addl_len == 0x06)

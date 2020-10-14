@@ -281,8 +281,10 @@ struct scsi_sense {
 	unsigned            sense_specific:1;
 	unsigned            ill_param_in_cdb:1;
 	unsigned            bit_pointer_valid:1;
+	unsigned            info_valid:1;
 	unsigned char       bit_pointer;
 	uint16_t            field_pointer;
+	uint64_t            information;
 };
 
 struct scsi_data {
