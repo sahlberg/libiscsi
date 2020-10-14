@@ -158,3 +158,79 @@ test_compareandwrite_miscompare(void)
                 }
         }
 }
+
+void
+test_compareandwrite_miscompare_sense(void)
+{
+        unsigned i;
+
+        CHECK_FOR_DATALOSS;
+        CHECK_FOR_SBC;
+        CHECK_FOR_ISCSI(sd);
+
+        if (inq_bl->max_cmp < 1) {
+                logging(LOG_NORMAL, "[SKIPPED] COMPAREANDWRITE "
+                        "max_cmp less than 1.");
+                CU_PASS("[SKIPPED] single block COMPAREANDWRITE not supported "
+                        "Skipping test");
+                return;
+        }
+
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test COMPARE_AND_WRITE of 1 block at the "
+                "start of the LUN");
+
+        logging(LOG_VERBOSE, "Write 1 block of 'A' at LBA:0");
+        memset(scratch, 'A', 2 * block_size);
+
+        WRITE16(sd, 0, block_size,
+                block_size, 0, 0, 0, 0, 0, scratch,
+                EXPECT_STATUS_GOOD);
+
+        memset(scratch + block_size, 'B', block_size);
+
+        logging(LOG_VERBOSE, "Overwrite blocks with 'B' "
+                "at LBA:0 (if they all contain 'A')");
+        COMPAREANDWRITE(sd, 0,
+                        scratch, 2 * block_size, block_size,
+                        0, 0, 0, 0,
+                        EXPECT_STATUS_GOOD);
+        /* we've confirmed that c&w is supported, time for the proper test... */
+
+        logging(LOG_VERBOSE, "Vary location of miscompare in %zd bytes and check"
+                "sense", block_size);
+        memset(scratch + block_size, 'C', block_size);
+
+        for (i = 0; i < block_size; i++) {
+                struct scsi_task *tsk;
+                struct scsi_iovec iov;
+
+                logging(LOG_VERBOSE, "Fill buffer with 'B' except for %d "
+                        "offset", i);
+                memset(scratch, 'B', block_size);
+                scratch[i] = 'Z';
+
+                tsk = scsi_cdb_compareandwrite(0, 2 * block_size, block_size,
+                                                0, 0, 0, 0, 0);
+                CU_ASSERT(tsk != NULL);
+
+                iov.iov_base = scratch;
+                iov.iov_len  = 2 * block_size;
+                scsi_task_set_iov_out(tsk, &iov, 1);
+
+                tsk = iscsi_scsi_command_sync(sd->iscsi_ctx, sd->iscsi_lun,
+                                               tsk, NULL);
+                CU_ASSERT_FATAL(tsk != NULL);
+                CU_ASSERT(tsk->status == SCSI_STATUS_CHECK_CONDITION);
+                CU_ASSERT(tsk->sense.key == SCSI_SENSE_MISCOMPARE);
+                CU_ASSERT(tsk->sense.ascq
+                                == SCSI_SENSE_ASCQ_MISCOMPARE_DURING_VERIFY);
+                if (tsk->sense.info_valid) {
+                        logging(LOG_VERBOSE, "Check Information field provided"
+                                " with miscompare sense response");
+                        CU_ASSERT_EQUAL(tsk->sense.information, i);
+                }
+
+                scsi_free_scsi_task(tsk);
+        }
+}

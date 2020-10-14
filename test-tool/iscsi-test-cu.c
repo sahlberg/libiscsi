@@ -68,6 +68,7 @@ static CU_TestInfo tests_compareandwrite[] = {
         { "Simple", test_compareandwrite_simple },
         { "DpoFua", test_compareandwrite_dpofua },
         { "Miscompare", test_compareandwrite_miscompare },
+        { "MiscompareSense", test_compareandwrite_miscompare_sense },
         { "Unwritten", test_compareandwrite_unwritten },
         { "InvalidDataOutSize",
           test_compareandwrite_invalid_dataout_size },
