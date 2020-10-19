@@ -328,8 +328,6 @@ static void parse_sense_descriptors(struct scsi_sense *sense, const uint8_t *sb,
 	for (p = sb; p < end; p += p[1]) {
 		if (p[1] < 4) /* length */
 			break;
-		if (!(p[2] & 0x80)) /* VALID bit */
-			break;
 		switch (p[0]) {
 		case 2:
 			/* Sense key specific sense data descriptor */
