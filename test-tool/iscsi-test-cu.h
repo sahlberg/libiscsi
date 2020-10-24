@@ -54,6 +54,7 @@ void test_teardown(void);
 void test_compareandwrite_simple(void);
 void test_compareandwrite_dpofua(void);
 void test_compareandwrite_miscompare(void);
+void test_compareandwrite_miscompare_sense(void);
 void test_compareandwrite_unwritten(void);
 void test_compareandwrite_invalid_dataout_size(void);
 

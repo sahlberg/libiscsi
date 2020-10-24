@@ -326,14 +326,21 @@ static void parse_sense_descriptors(struct scsi_sense *sense, const uint8_t *sb,
 	const unsigned char *p, *const end = sb + sb_len;
 
 	for (p = sb; p < end; p += p[1]) {
-		if (p[1] < 4) /* length */
-			break;
-		if (!(p[2] & 0x80)) /* VALID bit */
+		uint8_t addl_len = p[1];
+		if (addl_len < 4)
 			break;
 		switch (p[0]) {
+		case 0:
+			/* Information descriptor with VALID flag */
+			if (addl_len == 0x0a && p[2] & 0x80) {
+				sense->info_valid = 1;
+				sense->information = scsi_get_uint64(p + 4);
+			}
+			break;
 		case 2:
 			/* Sense key specific sense data descriptor */
-			parse_sense_spec(sense, p + 4);
+			if (addl_len == 0x06)
+				parse_sense_spec(sense, p + 4);
 			break;
 		}
 	}
@@ -347,6 +354,10 @@ void scsi_parse_sense_data(struct scsi_sense *sense, const uint8_t *sb)
 	case 0x71:
 		/* Fixed format */
 		sense->key  = sb[2] & 0x0f;
+		if (sb[0] & 0x80) {	/* VALID */
+			sense->info_valid = 1;
+			sense->information = scsi_get_uint32(sb + 3);
+		}
 		sense->ascq = scsi_get_uint16(&sb[12]);
 		parse_sense_spec(sense, sb + 15);
 		break;
