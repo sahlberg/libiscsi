@@ -1322,7 +1322,10 @@ iser_rcv_completion(struct iser_rx_desc *rx_desc,
 	uint32_t itt = scsi_get_uint32(&in.hdr[16]);
 
 	if (opcode == ISCSI_PDU_NOP_IN && itt == 0xffffffff)
-		goto nop_target;
+		goto no_waitpdu;
+
+	if (opcode == ISCSI_PDU_ASYNC_MSG)
+		goto no_waitpdu;
 
 	struct iscsi_pdu *iscsi_pdu;
 	struct iser_pdu *iser_pdu;
@@ -1355,7 +1358,7 @@ iser_rcv_completion(struct iser_rx_desc *rx_desc,
 		}
 	}
 
-nop_target:
+no_waitpdu:
 	/* decrementing conn->post_recv_buf_count only --after-- freeing the   *
 	 * task eliminates the need to worry on tasks which are completed in   *
 	 * parallel to the execution of iser_conn_term. So the code that waits *
