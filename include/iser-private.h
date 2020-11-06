@@ -72,7 +72,8 @@ enum desc_type {
 
 enum data_dir{
 	DATA_WRITE = 0,
-	DATA_READ};
+	DATA_READ,
+	DATA_NONE};
 
 #define SHIFT_4K	12
 #define SIZE_4K	(1ULL << SHIFT_4K)

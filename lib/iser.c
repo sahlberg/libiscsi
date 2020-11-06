@@ -908,7 +908,8 @@ iser_send_command(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu)
 			iscsi_set_error(iscsi, "error in prepare write cmd\n");
 			return -1;
 		}
-	}
+	} else
+		iser_pdu->desc->data_dir = DATA_NONE;
 
 	err = iser_post_send(iser_conn, tx_desc, true);
 	if (err)
