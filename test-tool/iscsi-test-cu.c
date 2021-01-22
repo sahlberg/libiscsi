@@ -307,6 +307,11 @@ static CU_TestInfo tests_receive_copy_results[] = {
         CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo tests_report_luns[] = {
+	{ "Simple", test_report_luns_simple },
+	CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_report_supported_opcodes[] = {
         { "Simple", test_report_supported_opcodes_simple },
         { "OneCommand", test_report_supported_opcodes_one_command },
@@ -526,6 +531,7 @@ static libiscsi_suite_info scsi_suites[] = {
         { "ReadDefectData12", NON_PGR_FUNCS, tests_readdefectdata12 },
         { "ReadOnly", NON_PGR_FUNCS, tests_readonly },
         { "ReceiveCopyResults", NON_PGR_FUNCS, tests_receive_copy_results },
+        { "ReportLUNs", NON_PGR_FUNCS, tests_report_luns },
         { "ReportSupportedOpcodes", NON_PGR_FUNCS,
           tests_report_supported_opcodes },
         { "Reserve6", NON_PGR_FUNCS, tests_reserve6 },

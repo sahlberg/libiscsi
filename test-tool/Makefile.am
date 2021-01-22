@@ -113,6 +113,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_readonly_sbc.c \
 	test_receive_copy_results_copy_status.c \
 	test_receive_copy_results_op_params.c \
+	test_report_luns.c \
 	test_report_supported_opcodes_one_command.c \
 	test_report_supported_opcodes_rctd.c \
 	test_report_supported_opcodes_servactv.c \
