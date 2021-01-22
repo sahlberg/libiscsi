@@ -293,7 +293,7 @@ iscsi_create_context(const char *initiator_name)
 	while (iscsi->smalloc_size < required) {
 		iscsi->smalloc_size <<= 1;
 	}
-	ISCSI_LOG(iscsi,5,"small allocation size is %lu byte", iscsi->smalloc_size);
+	ISCSI_LOG(iscsi,5,"small allocation size is %zu byte", iscsi->smalloc_size);
 
 	ca = getenv("LIBISCSI_CACHE_ALLOCATIONS");
 	if (!ca || atoi(ca) != 0) {
