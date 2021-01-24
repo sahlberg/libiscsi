@@ -309,6 +309,7 @@ static CU_TestInfo tests_receive_copy_results[] = {
 
 static CU_TestInfo tests_report_luns[] = {
 	{ "Simple", test_report_luns_simple },
+	{ "AllocLen", test_report_luns_alloclen },
 	CU_TEST_INFO_NULL
 };
 

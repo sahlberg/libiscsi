@@ -191,6 +191,7 @@ void test_receive_copy_results_copy_status(void);
 void test_receive_copy_results_op_params(void);
 
 void test_report_luns_simple(void);
+void test_report_luns_alloclen(void);
 
 void test_report_supported_opcodes_one_command(void);
 void test_report_supported_opcodes_rctd(void);
