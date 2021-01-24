@@ -4,6 +4,8 @@ os:
   - linux
   - osx
 
+dist: focal # 20.04
+
 arch:
   - amd64
   - ppc64le
@@ -18,8 +20,7 @@ addons:
       - librdmacm-dev
       - make
       - pkg-config
-
-sudo: required
+      - xsltproc
 
 script:
   ci/build.sh
