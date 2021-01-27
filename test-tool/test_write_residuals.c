@@ -35,10 +35,13 @@ write_residuals_test(const struct residuals_test_data *tdata)
 {
         struct iscsi_data data;
         struct scsi_task *task_ret;
+        struct task_status status;
         int ok;
-        int scsi_status;
+        unsigned int expected_write_size;
+        unsigned int max_len;
         unsigned int xfer_len_byte = 8;
         unsigned int i;
+        unsigned int transfer_length;
         unsigned int scsi_opcode_write = SCSI_OPCODE_WRITE10;
         const char *residual = tdata->residuals_kind == SCSI_RESIDUAL_OVERFLOW ? "overflow" : "underflow";
 
@@ -57,36 +60,42 @@ write_residuals_test(const struct residuals_test_data *tdata)
                 break;
         }
 
-        if (tdata->check_overwrite) {
-                logging(LOG_VERBOSE, "Write two blocks of 'a'");
-                memset(scratch, 'a', (2 * block_size));
+        if (tdata->xfer_len * block_size > tdata->buf_len) /* SPDTL > EDTL */ {
+                /* Transfer has to be truncated up to EDTL */
+                expected_write_size = tdata->buf_len;
+                max_len = (tdata->xfer_len * block_size);
+        } else /* SPDTL <= EDTL */ {
+                /* Transfer has to be truncated up to SPDTL */
+                expected_write_size = (tdata->xfer_len * block_size);
+                max_len = tdata->buf_len;
+        }
+        transfer_length = DIV_ROUND_UP(max_len, block_size) * block_size;
 
-                switch (tdata->cdb_size) {
-                case 10:
-                        WRITE10(sd, 0, 2 * block_size, block_size, 0, 0, 0, 0, 0, scratch, EXPECT_STATUS_GOOD);
-                        break;
-                case 12:
-                        WRITE12(sd, 0, 2 * block_size, block_size, 0, 0, 0, 0, 0, scratch, EXPECT_STATUS_GOOD);
-                        break;
-                case 16:
-                        WRITE16(sd, 0, 2 * block_size, block_size, 0, 0, 0, 0, 0, scratch, EXPECT_STATUS_GOOD);
-                        break;
-                }
+        logging(LOG_VERBOSE, "Write %ld block(s) of 'a'", transfer_length / block_size);
+        memset(scratch, 'a', transfer_length);
 
-                logging(LOG_VERBOSE, "Write %u block(s) of 'b' but set iSCSI EDTL to %u block(s).",
-                        tdata->xfer_len,
-                        tdata->xfer_len % 2 + 1);
+        switch (tdata->cdb_size) {
+        case 10:
+                WRITE10(sd, 0, transfer_length, block_size, 0, 0, 0, 0, 0,
+                        scratch, EXPECT_STATUS_GOOD);
+                break;
+        case 12:
+                WRITE12(sd, 0, transfer_length, block_size, 0, 0, 0, 0, 0,
+                        scratch, EXPECT_STATUS_GOOD);
+                break;
+        case 16:
+                WRITE16(sd, 0, transfer_length, block_size, 0, 0, 0, 0, 0,
+                        scratch, EXPECT_STATUS_GOOD);
+                break;
         }
 
         task = malloc(sizeof(*task));
         CU_ASSERT_PTR_NOT_NULL_FATAL(task);
         memset(task, 0, sizeof(*task));
 
-        if (tdata->check_overwrite) {
-                memset(scratch, 'b', tdata->buf_len);
-        } else {
-                memset(scratch, 0xa6, tdata->buf_len);
-        }
+        logging(LOG_VERBOSE, "Write 'b' with the transfer length "
+                "being set to %d block(s)", tdata->xfer_len);
+        memset(scratch, 'b', tdata->buf_len);
 
         task->cdb[0] = scsi_opcode_write;
         task->cdb[xfer_len_byte] = tdata->xfer_len;
@@ -113,7 +122,11 @@ write_residuals_test(const struct residuals_test_data *tdata)
 
         logging(LOG_VERBOSE, "Verify that target returns SUCCESS or INVALID "
                 "FIELD IN INFORMATION UNIT");
-        scsi_status = task->status;
+
+        status.status     = task->status;
+        status.sense.key  = task->sense.key;
+        status.sense.ascq = task->sense.ascq;
+
         ok = task->status     == SCSI_STATUS_GOOD ||
             (task->status     == SCSI_STATUS_CHECK_CONDITION &&
              task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST &&
@@ -142,36 +155,65 @@ write_residuals_test(const struct residuals_test_data *tdata)
         scsi_free_scsi_task(task);
         task = NULL;
 
-        if (!tdata->check_overwrite) {
-                return;
-        }
-
-        logging(LOG_VERBOSE, "Read the two blocks");
+        logging(LOG_VERBOSE, "Read %ld block(s)", transfer_length / block_size);
         switch (tdata->cdb_size) {
         case 10:
-                READ10(sd, NULL, 0, 2* block_size, block_size, 0, 0, 0, 0, 0,
-                       scratch, EXPECT_STATUS_GOOD);
+                READ10(sd, NULL, 0, transfer_length, block_size,
+                       0, 0, 0, 0, 0, scratch, EXPECT_STATUS_GOOD);
                 break;
         case 12:
-                READ12(sd, NULL, 0, 2* block_size, block_size, 0, 0, 0, 0, 0,
-                       scratch, EXPECT_STATUS_GOOD);
+                READ12(sd, NULL, 0, transfer_length, block_size,
+                       0, 0, 0, 0, 0, scratch, EXPECT_STATUS_GOOD);
                 break;
         case 16:
-                READ16(sd, NULL, 0, 2* block_size, block_size, 0, 0, 0, 0, 0,
-                       scratch, EXPECT_STATUS_GOOD);
+                READ16(sd, NULL, 0, transfer_length, block_size,
+                       0, 0, 0, 0, 0, scratch, EXPECT_STATUS_GOOD);
                 break;
         }
 
-        /* According to FCP target could transfer no data and return 
-           CHECK CONDITION status with the sense key set to 
-           ILLEGAL REQUEST and the additional sense code set to 
-           INVALID FIELD IN COMMAND INFORMATION UNIT; this check prevent
-           false assert*/
+        /* According to FCP-4:
+           If the command requested that data beyond the length specified by 
+           the FCP_DL field be transferred, then the device server shall set 
+           the FCP_RESID_OVER bit (see 9.5.8) to one in the FCP_RSP IU and:
 
-        if (scsi_status != SCSI_STATUS_GOOD) {
-                logging(LOG_VERBOSE, "Verify that blocks were NOT "
-                        "overwritten and still contain 'a'");
-                for (i = 0; i < 2 * block_size; i++) {
+           a) process the command normally except that data beyond the FCP_DL 
+              count shall not be requested or transferred; */
+
+        if (status.status == SCSI_STATUS_GOOD) {
+
+                switch (tdata->residuals_kind) {
+                case SCSI_RESIDUAL_OVERFLOW:
+                        logging(LOG_VERBOSE, "Verify that if iSCSI EDTL < SCSI TL "
+                                "then we only write iSCSI EDTL amount of data");
+                        break;
+                case SCSI_RESIDUAL_UNDERFLOW:
+                        logging(LOG_VERBOSE, "Verify that if iSCSI EDTL > SCSI TL "
+                                "then we only write SCSI TL amount of data");
+                        break;
+                }
+
+                logging(LOG_VERBOSE, "Verify that the first %d bytes were "
+                        "changed to 'b'", expected_write_size);
+                for (i = 0; i < expected_write_size; i++) {
+                        if (scratch[i] != 'b') {
+                                logging(LOG_NORMAL, "Blocks did not contain "
+                                        "expected 'b'");
+                                CU_FAIL("Blocks was not written correctly");
+                                break;
+                        }
+                }
+
+        /* b) transfer no data and return CHECK CONDITION status with the sense 
+              key set to ILLEGAL REQUEST and the additional sense code set to 
+              INVALID FIELD IN COMMAND INFORMATION UNIT; */
+
+        } else if (status.status     == SCSI_STATUS_CHECK_CONDITION &&
+                   status.sense.key  == SCSI_SENSE_ILLEGAL_REQUEST &&
+                   status.sense.ascq == SCSI_SENSE_ASCQ_INVALID_FIELD_IN_INFORMATION_UNIT) {
+
+                logging(LOG_VERBOSE, "Verify that first %d bytes were NOT "
+                        "overwritten and still contain 'a'", expected_write_size);
+                for (i = 0; i < expected_write_size; i++) {
                         if (scratch[i] != 'a') {
                                 logging(LOG_NORMAL, "Blocks were overwritten "
                                         "and no longer contain 'a'");
@@ -179,26 +221,24 @@ write_residuals_test(const struct residuals_test_data *tdata)
                                 break;
                         }
                 }
-                return;
         }
 
-        logging(LOG_VERBOSE, "Verify that the first block was changed to 'b'");
-        for (i = 0; i < block_size; i++) {
-                if (scratch[i] != 'b') {
-                        logging(LOG_NORMAL, "First block did not contain "
-                                "expected 'b'");
-                        CU_FAIL("Block was not written correctly");
-                        break;
-                }
-        }
+        /* c) may transfer data and return CHECK CONDITION status with the 
+              sense key set to ABORTED COMMAND and the additional sense code 
+              set to INVALID FIELD IN COMMAND INFORMATION UNIT.
 
-        logging(LOG_VERBOSE, "Verify that the second block was NOT "
-                "overwritten and still contains 'a'");
-        for (i = block_size; i < 2 * block_size; i++) {
+             (not implemented yet) */
+
+        /* Regardless of the executed target scenario, data beyond expected 
+           truncation point should not be overwritten */
+
+        logging(LOG_VERBOSE, "Verify that the last %ld bytes were NOT "
+                "overwritten and still contain 'a'", tdata->residuals_amount);
+        for (i = expected_write_size; i < max_len; i++) {
                 if (scratch[i] != 'a') {
-                        logging(LOG_NORMAL, "Second block was overwritten "
+                        logging(LOG_NORMAL, "Data was overwritten "
                                 "and no longer contain 'a'");
-                        CU_FAIL("Second block was incorrectly overwritten");
+                        CU_FAIL("Data was incorrectly overwritten");
                         break;
                 }
         }

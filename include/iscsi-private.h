@@ -40,6 +40,9 @@ extern "C" {
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
+#ifndef DIV_ROUND_UP
+#define DIV_ROUND_UP(x, y) (((x) + (y) - 1) / (y))
+#endif
 
 #define ISCSI_RAW_HEADER_SIZE			48
 #define ISCSI_DIGEST_SIZE			 4

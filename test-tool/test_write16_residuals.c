@@ -32,24 +32,21 @@ test_write16_residuals(void)
 {
         /* testing scenarios */
         const struct residuals_test_data write16_residuals[] = {
-        /* cdb_size, xfer_len,        buf_len,          residuals_kind,   residuals_amount, check_overwrite */
-                {16,        1,              0,  SCSI_RESIDUAL_OVERFLOW,         block_size, false,
+        /* cdb_size, xfer_len,        buf_len,          residuals_kind,   residuals_amount */
+                {16,        1,              0,  SCSI_RESIDUAL_OVERFLOW,   block_size,
                  "Try writing one block but with iSCSI expected transfer length==0"},
 
-                {16,        1,          10000, SCSI_RESIDUAL_UNDERFLOW, 10000 - block_size, false,
+                {16,        1, 2 * block_size, SCSI_RESIDUAL_UNDERFLOW,   block_size,
+                 "Try writing one block but set iSCSI EDTL to 2 blocks"},
+
+                {16,        2,     block_size,  SCSI_RESIDUAL_OVERFLOW,   block_size,
+                 "Try writing two blocks but set iSCSI EDTL to 1 block"},
+
+                {16,        1,          10000,  SCSI_RESIDUAL_UNDERFLOW,  10000 - block_size,
                  "Try writing one block but with iSCSI expected transfer length==10000"},
 
-                {16,        1,            200,  SCSI_RESIDUAL_OVERFLOW,   block_size - 200, false,
+                {16,        1,            200,  SCSI_RESIDUAL_OVERFLOW,   block_size - 200,
                  "Try writing one block but with iSCSI expected transfer length==200"},
-
-                {16,        2,     block_size,  SCSI_RESIDUAL_OVERFLOW,         block_size, false,
-                 "Try writing two blocks but iSCSI expected one block transfer length"},
-
-                {16,        1, 2 * block_size, SCSI_RESIDUAL_UNDERFLOW,         block_size,  true,
-                 "Verify that if iSCSI EDTL > SCSI TL then we only write SCSI TL amount of data"},
-
-                {16,        2,     block_size,  SCSI_RESIDUAL_OVERFLOW,         block_size,  true,
-                 "Verify that if iSCSI EDTL < SCSI TL then we only write iSCSI EDTL amount of data"},
         };
 
         unsigned int i = 0;

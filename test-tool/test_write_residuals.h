@@ -34,9 +34,12 @@ struct residuals_test_data {
 
   size_t residuals_amount;     /* The amount of residual data in bytes */
 
-  bool check_overwrite;        /* Whether the test checks for overwrite or not */
-
   const char *log_messages;    /* Test case description */
+};
+
+struct task_status {
+  int status;
+  struct scsi_sense sense;
 };
 
 extern bool command_is_implemented;
