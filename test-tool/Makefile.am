@@ -7,6 +7,7 @@ LDADD = ../lib/libiscsipriv.la
 EXTRA_DIST = README
 
 dist_noinst_HEADERS = iscsi-support.h \
+		      test_write_residuals.h \
 		      iscsi-test-cu.h iscsi-multipath.h
 
 # libiscsi test tool using cunit
@@ -239,9 +240,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_async_read.c \
 	test_async_write.c \
 	test_async_abort_simple.c \
-	test_async_lu_reset_simple.c
+	test_async_lu_reset_simple.c \
+	test_write_residuals.c
 
 endif
-
-
-
