@@ -90,7 +90,6 @@ test_write12_residuals(void)
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
 
         for (i = 0; i < ARRAY_SIZE(write12_residuals); i++) {
-                logging(LOG_VERBOSE, "\n%s", write12_residuals[i].description);
                 write_residuals_test(&write12_residuals[i]);
 
                 if (!command_is_implemented) {

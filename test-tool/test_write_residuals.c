@@ -44,7 +44,10 @@ write_residuals_test(const struct residuals_test_data *tdata)
         unsigned int i;
         unsigned int transfer_length;
         unsigned int scsi_opcode_write = SCSI_OPCODE_WRITE10;
-        const char *residual = tdata->residual_type == SCSI_RESIDUAL_OVERFLOW ? "overflow" : "underflow";
+        const char *residual = tdata->residual_type == SCSI_RESIDUAL_OVERFLOW ?
+          "overflow" : "underflow";
+
+        logging(LOG_VERBOSE, "\n%s", tdata->description);
 
         switch (tdata->cdb_size) {
         case 10:
