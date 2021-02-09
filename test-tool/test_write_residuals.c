@@ -59,6 +59,8 @@ write_residuals_test(const struct residuals_test_data *tdata)
                 scsi_opcode_write = SCSI_OPCODE_WRITE16;
                 xfer_len_byte = 13;
                 break;
+        default:
+                assert(false);
         }
 
         if (tdata->xfer_len * block_size > tdata->buf_len) /* SPDTL > EDTL */ {
@@ -88,6 +90,8 @@ write_residuals_test(const struct residuals_test_data *tdata)
                 WRITE16(sd, 0, transfer_length, block_size, 0, 0, 0, 0, 0,
                         scratch, EXPECT_STATUS_GOOD);
                 break;
+        default:
+                assert(false);
         }
 
         task = malloc(sizeof(*task));
@@ -170,6 +174,8 @@ write_residuals_test(const struct residuals_test_data *tdata)
                 READ16(sd, NULL, 0, transfer_length, block_size,
                        0, 0, 0, 0, 0, scratch, EXPECT_STATUS_GOOD);
                 break;
+        default:
+                assert(false);
         }
 
         /* According to FCP-4:
