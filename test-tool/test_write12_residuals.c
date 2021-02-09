@@ -32,21 +32,45 @@ test_write12_residuals(void)
 {
         /* testing scenarios */
         const struct residuals_test_data write12_residuals[] = {
-        /* cdb_size, xfer_len,        buf_len,          residuals_kind,   residuals_amount */
-                {12,        1,              0,  SCSI_RESIDUAL_OVERFLOW,   block_size,
-                 "Try writing one block but with iSCSI expected transfer length==0"},
+                {.cdb_size	= 12,
+                 .xfer_len	= 1,
+                 .buf_len	= 0,
+                 .residual_type	= SCSI_RESIDUAL_OVERFLOW,
+                 .residual	= block_size,
+                 .description	=
+                 "Try writing one block but with iSCSI EDTL==0"},
 
-                {12,        1, 2 * block_size, SCSI_RESIDUAL_UNDERFLOW,   block_size,
+                {.cdb_size	= 12,
+                 .xfer_len	= 1,
+                 .buf_len	= 2 * block_size,
+                 .residual_type	= SCSI_RESIDUAL_UNDERFLOW,
+                 .residual	= block_size,
+                 .description	=
                  "Try writing one block but set iSCSI EDTL to 2 blocks"},
 
-                {12,        2,     block_size,  SCSI_RESIDUAL_OVERFLOW,   block_size,
+                {.cdb_size	= 12,
+                 .xfer_len	= 2,
+                 .buf_len	= block_size,
+                 .residual_type	= SCSI_RESIDUAL_OVERFLOW,
+                 .residual	= block_size,
+                 .description	=
                  "Try writing two blocks but set iSCSI EDTL to 1 block"},
 
-                {12,        1,          10000,  SCSI_RESIDUAL_UNDERFLOW,  10000 - block_size,
-                 "Try writing one block but with iSCSI expected transfer length==10000"},
+                {.cdb_size	= 12,
+                 .xfer_len	= 1,
+                 .buf_len	= 10000,
+                 .residual_type	= SCSI_RESIDUAL_UNDERFLOW,
+                 .residual	= 10000 - block_size,
+                 .description	=
+                 "Try writing one block but with iSCSI EDTL==10000"},
 
-                {12,        1,            200,  SCSI_RESIDUAL_OVERFLOW,   block_size - 200,
-                 "Try writing one block but with iSCSI expected transfer length==200"},
+                {.cdb_size	= 12,
+                 .xfer_len	= 1,
+                 .buf_len	= 200,
+                 .residual_type	= SCSI_RESIDUAL_OVERFLOW,
+                 .residual	= block_size - 200,
+                 .description	=
+                 "Try writing one block but with iSCSI EDTL==200"},
         };
 
         unsigned int i = 0;
@@ -66,7 +90,7 @@ test_write12_residuals(void)
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
 
         for (i = 0; i < ARRAY_SIZE(write12_residuals); i++) {
-                logging(LOG_VERBOSE, "\n%s", write12_residuals[i].log_messages);
+                logging(LOG_VERBOSE, "\n%s", write12_residuals[i].description);
                 write_residuals_test(&write12_residuals[i]);
 
                 if (!command_is_implemented) {

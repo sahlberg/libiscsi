@@ -20,21 +20,24 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+#include "scsi-lowlevel.h"
 
 struct residuals_test_data {
-  size_t cdb_size;             /* The size of CDB in bytes */
+  size_t cdb_size;             /* CDB size in bytes */
 
-  unsigned int xfer_len;       /* The number of logical blocks of 
-                                  data that shall be transferred */
+  /*
+   * Value of the CDB TRANSFER LENGTH field. The unit of this field is one
+   * logical block.
+   */
+  unsigned int xfer_len;
 
-  unsigned int buf_len;        /* Expected Data Transfer Length */
+  unsigned int buf_len;        /* Expected Data Transfer Length in bytes. */
 
-  unsigned int residuals_kind; /* Overflow or Underflow as in 
-                                  enum scsi_residual */
+  enum scsi_residual residual_type; /* SCSI_RESIDUAL_UNDERFLOW or OVERFLOW */
 
-  size_t residuals_amount;     /* The amount of residual data in bytes */
+  size_t residual;             /* Number of residual bytes */
 
-  const char *log_messages;    /* Test case description */
+  const char *description;     /* Test case description */
 };
 
 struct task_status {

@@ -15,6 +15,7 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,7 +44,7 @@ write_residuals_test(const struct residuals_test_data *tdata)
         unsigned int i;
         unsigned int transfer_length;
         unsigned int scsi_opcode_write = SCSI_OPCODE_WRITE10;
-        const char *residual = tdata->residuals_kind == SCSI_RESIDUAL_OVERFLOW ? "overflow" : "underflow";
+        const char *residual = tdata->residual_type == SCSI_RESIDUAL_OVERFLOW ? "overflow" : "underflow";
 
         switch (tdata->cdb_size) {
         case 10:
@@ -138,20 +139,20 @@ write_residuals_test(const struct residuals_test_data *tdata)
         CU_ASSERT(ok);
 
         logging(LOG_VERBOSE, "Verify residual %s flag is set", residual);
-        if (task->residual_status != tdata->residuals_kind) {
+        if (task->residual_status != tdata->residual_type) {
                 logging(LOG_VERBOSE, "[FAILED] Target did not set residual "
                         "%s flag", residual);
         }
-        CU_ASSERT_EQUAL(task->residual_status, tdata->residuals_kind);
+        CU_ASSERT_EQUAL(task->residual_status, tdata->residual_type);
 
         logging(LOG_VERBOSE, "Verify we got %zu bytes of residual %s",
-                tdata->residuals_amount, residual);
-        if (task->residual != tdata->residuals_amount) {
+                tdata->residual, residual);
+        if (task->residual != tdata->residual) {
                 logging(LOG_VERBOSE, "[FAILED] Target did not set correct "
                         "amount of residual. Expected %zu but got %zu.",
-                        tdata->residuals_amount, task->residual);
+                        tdata->residual, task->residual);
         }
-        CU_ASSERT_EQUAL(task->residual, tdata->residuals_amount);
+        CU_ASSERT_EQUAL(task->residual, tdata->residual);
         scsi_free_scsi_task(task);
         task = NULL;
 
@@ -181,7 +182,7 @@ write_residuals_test(const struct residuals_test_data *tdata)
 
         if (status.status == SCSI_STATUS_GOOD) {
 
-                switch (tdata->residuals_kind) {
+                switch (tdata->residual_type) {
                 case SCSI_RESIDUAL_OVERFLOW:
                         logging(LOG_VERBOSE, "Verify that if iSCSI EDTL < SCSI TL "
                                 "then we only write iSCSI EDTL amount of data");
@@ -190,6 +191,8 @@ write_residuals_test(const struct residuals_test_data *tdata)
                         logging(LOG_VERBOSE, "Verify that if iSCSI EDTL > SCSI TL "
                                 "then we only write SCSI TL amount of data");
                         break;
+                case SCSI_RESIDUAL_NO_RESIDUAL:
+                        assert(false);
                 }
 
                 logging(LOG_VERBOSE, "Verify that the first %d bytes were "
@@ -233,7 +236,7 @@ write_residuals_test(const struct residuals_test_data *tdata)
            truncation point should not be overwritten */
 
         logging(LOG_VERBOSE, "Verify that the last %ld bytes were NOT "
-                "overwritten and still contain 'a'", tdata->residuals_amount);
+                "overwritten and still contain 'a'", tdata->residual);
         for (i = expected_write_size; i < max_len; i++) {
                 if (scratch[i] != 'a') {
                         logging(LOG_NORMAL, "Data was overwritten "
