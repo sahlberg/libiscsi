@@ -29,10 +29,9 @@
 #include "iscsi-test-cu.h"
 #include "test_write_residuals.h"
 
-bool command_is_implemented = true;
-
 void
-write_residuals_test(const struct residuals_test_data *tdata)
+write_residuals_test(const struct residuals_test_data *tdata,
+                     bool *command_is_implemented)
 {
         struct iscsi_data data;
         struct scsi_task *task_ret;
@@ -48,6 +47,8 @@ write_residuals_test(const struct residuals_test_data *tdata)
           "overflow" : "underflow";
 
         logging(LOG_VERBOSE, "\n%s", tdata->description);
+
+        *command_is_implemented = true;
 
         switch (tdata->cdb_size) {
         case 10:
@@ -122,7 +123,7 @@ write_residuals_test(const struct residuals_test_data *tdata)
             task->sense.key  == SCSI_SENSE_ILLEGAL_REQUEST &&
             task->sense.ascq == SCSI_SENSE_ASCQ_INVALID_OPERATION_CODE) {
                 logging(LOG_NORMAL, "[SKIPPED] WRITE%zu is not implemented.", tdata->cdb_size);
-                command_is_implemented = false;
+                *command_is_implemented = false;
                 scsi_free_scsi_task(task);
                 task = NULL;
                 return;

@@ -90,7 +90,10 @@ test_write10_residuals(void)
         iscsi_set_noautoreconnect(sd->iscsi_ctx, 1);
 
         for (i = 0; i < ARRAY_SIZE(write10_residuals); i++) {
-                write_residuals_test(&write10_residuals[i]);
+                bool command_is_implemented;
+
+                write_residuals_test(&write10_residuals[i],
+                                     &command_is_implemented);
 
                 if (!command_is_implemented) {
                         CU_PASS("WRITE10 is not implemented.");

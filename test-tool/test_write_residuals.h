@@ -45,7 +45,7 @@ struct task_status {
   struct scsi_sense sense;
 };
 
-extern bool command_is_implemented;
-extern void write_residuals_test (const struct residuals_test_data *tdata);
+void write_residuals_test(const struct residuals_test_data *tdata,
+                          bool *command_is_implemented);
 
 #endif /* _ISCSI_TESTS_WRITE_RESIDUALS_H_ */
