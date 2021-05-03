@@ -37,6 +37,7 @@ WSADATA wsaData;
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <strings.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
