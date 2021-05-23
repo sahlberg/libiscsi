@@ -65,7 +65,8 @@ extern int loglevel;
 #define LOG_SILENT  0
 #define LOG_NORMAL  1
 #define LOG_VERBOSE 2
-void logging(int level, const char *format, ...) _R_(2,3);
+void logging(int level, const char *format, ...)
+__attribute__((format(printf, 2, 3)));
 
 /*
  * define special flags for logging a blank line, so compiler

@@ -36,6 +36,10 @@ THE SOFTWARE.
 #include <malloc.h>
 #include <sys/stat.h>
 
+#if defined(_MSC_VER)
+#define __attribute__(attr)
+#endif
+
 #define SOL_TCP IPPROTO_TCP
 
 #if(_WIN32_WINNT < 0x0600)
