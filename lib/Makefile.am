@@ -20,6 +20,8 @@ if HAVE_LINUX_ISER
 libiscsipriv_la_LIBADD = -libverbs -lrdmacm -lpthread
 endif
 
+libiscsipriv_la_LDFLAGS = -no-undefined
+
 libiscsipriv_la_CPPFLAGS = -I${srcdir}/../include -I$(srcdir)/include \
 	"-D_U_=__attribute__((unused))" \
 	"-D_R_(A,B)=__attribute__((format(printf,A,B)))"
