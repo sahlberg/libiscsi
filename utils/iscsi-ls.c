@@ -234,7 +234,7 @@ void list_luns(struct client_state *clnt, const char *target, const char *portal
 
 
 
-void discoverylogout_cb(struct iscsi_context *iscsi, int status, void *command_data _U_, void *private_data)
+void discoverylogout_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	struct client_state *state = (struct client_state *)private_data;
 	
@@ -287,7 +287,7 @@ void discovery_cb(struct iscsi_context *iscsi, int status, void *command_data, v
 }
 
 
-void discoverylogin_cb(struct iscsi_context *iscsi, int status, void *command_data _U_, void *private_data)
+void discoverylogin_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	if (status != 0) {
 		fprintf(stderr, "Login failed. %s\n", iscsi_get_error(iscsi));
@@ -300,7 +300,7 @@ void discoverylogin_cb(struct iscsi_context *iscsi, int status, void *command_da
 	}
 }
 
-void discoveryconnect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_, void *private_data)
+void discoveryconnect_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	if (status != 0) {
 		fprintf(stderr, "discoveryconnect_cb: connection failed : %s\n", iscsi_get_error(iscsi));

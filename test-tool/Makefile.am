@@ -1,5 +1,4 @@
-AM_CPPFLAGS=-I. -I${srcdir}/../include \
-	"-D_U_=__attribute__((unused)) "
+AM_CPPFLAGS=-I. -I${srcdir}/../include
 AM_CFLAGS=$(WARN_CFLAGS)
 AM_LDFLAGS=-no-undefined
 LIBS = ../lib/libiscsipriv.la

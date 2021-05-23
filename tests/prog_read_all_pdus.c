@@ -68,8 +68,8 @@ void print_help(void)
 	fprintf(stderr, "  \"ipv6-address\"   [fce0::1]\n");
 }
 
-void tur_cb(struct iscsi_context *iscsi _U_, int status _U_,
-	       void *command_data _U_, void *private_data)
+void tur_cb(struct iscsi_context *iscsi, int status,
+	       void *command_data, void *private_data)
 {
         int *count = (int *)private_data;
         

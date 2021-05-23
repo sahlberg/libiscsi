@@ -330,7 +330,7 @@ int iscsi_process_target_nop_in(struct iscsi_context *iscsi,
 }
 
 static void iscsi_reconnect_after_logout(struct iscsi_context *iscsi, int status,
-                        void *command_data _U_, void *opaque _U_)
+                        void *command_data, void *opaque)
 {
 	if (status) {
 		ISCSI_LOG(iscsi, 1, "logout failed: %s", iscsi_get_error(iscsi));

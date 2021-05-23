@@ -59,8 +59,8 @@ test_iscsi_sendtargets_txrx(struct test_iscsi_sendtargets_state *state)
 }
 
 static void
-test_iscsi_sendtargets_cb(struct iscsi_context *iscsi _U_, int status,
-                          void *command_data _U_, void *private_data)
+test_iscsi_sendtargets_cb(struct iscsi_context *iscsi, int status,
+                          void *command_data, void *private_data)
 {
         struct test_iscsi_sendtargets_state *state = private_data;
 

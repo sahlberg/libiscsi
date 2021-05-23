@@ -72,7 +72,7 @@ void print_help(void)
 	fprintf(stderr, "  \"ipv6-address\"   [fce0::1]\n");
 }
 
-void tur_cb(struct iscsi_context *iscsi _U_, int status, void *command_data _U_, void *private_data)
+void tur_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	uint32_t *i = private_data;
 
@@ -86,7 +86,7 @@ void tur_cb(struct iscsi_context *iscsi _U_, int status, void *command_data _U_,
 	}
 }
 
-void logout_cb(struct iscsi_context *iscsi _U_, int status, void *command_data _U_, void *private_data)
+void logout_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	uint32_t *i = private_data;
 

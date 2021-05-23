@@ -26,8 +26,8 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test-cu.h"
 
-static void sanitize_cb(struct iscsi_context *iscsi _U_, int status _U_,
-       void *command_data _U_, void *private_data _U_)
+static void sanitize_cb(struct iscsi_context *iscsi, int status,
+       void *command_data, void *private_data)
 {
 }
 

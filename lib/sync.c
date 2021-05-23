@@ -82,8 +82,8 @@ event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
  * Synchronous iSCSI commands
  */
 static void
-iscsi_sync_cb(struct iscsi_context *iscsi _U_, int status,
-	      void *command_data _U_, void *private_data)
+iscsi_sync_cb(struct iscsi_context *iscsi, int status,
+	      void *command_data, void *private_data)
 {
 	struct iscsi_sync_state *state = private_data;
 
@@ -340,7 +340,7 @@ iscsi_task_mgmt_target_cold_reset_sync(struct iscsi_context *iscsi)
  * Synchronous SCSI commands
  */
 static void
-scsi_sync_cb(struct iscsi_context *iscsi _U_, int status, void *command_data,
+scsi_sync_cb(struct iscsi_context *iscsi, int status, void *command_data,
 	     void *private_data)
 {
 	struct scsi_task *task = command_data;
@@ -1820,7 +1820,7 @@ iscsi_modesense10_sync(struct iscsi_context *iscsi, int lun, int llbaa, int dbd,
 	return state.task;
 }
 
-void iscsi_free_discovery_data(struct iscsi_context *iscsi _U_,
+void iscsi_free_discovery_data(struct iscsi_context *iscsi,
                                struct iscsi_discovery_address *da)
 {
         while (da) {
@@ -1840,7 +1840,7 @@ void iscsi_free_discovery_data(struct iscsi_context *iscsi _U_,
 }
 
 static void
-iscsi_discovery_cb(struct iscsi_context *iscsi _U_, int status,
+iscsi_discovery_cb(struct iscsi_context *iscsi, int status,
 	      void *command_data, void *private_data)
 {
 	struct iscsi_sync_state *state = private_data;

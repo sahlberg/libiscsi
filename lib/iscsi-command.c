@@ -40,7 +40,7 @@
 
 static void
 iscsi_scsi_response_cb(struct iscsi_context *iscsi, int status,
-		       void *command_data _U_, void *private_data)
+		       void *command_data, void *private_data)
 {
 	struct iscsi_scsi_cbdata *scsi_cbdata =
 	  (struct iscsi_scsi_cbdata *)private_data;
@@ -2433,7 +2433,7 @@ iscsi_get_scsi_task_iovector_in(struct iscsi_context *iscsi, struct iscsi_in_pdu
 }
 
 struct scsi_iovector *
-iscsi_get_scsi_task_iovector_out(struct iscsi_context *iscsi _U_, struct iscsi_pdu *pdu)
+iscsi_get_scsi_task_iovector_out(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	if (pdu->scsi_cbdata.task->iovector_out.iov == NULL) {
 		return NULL;

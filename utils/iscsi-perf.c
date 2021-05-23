@@ -126,7 +126,7 @@ void progress(struct client *client) {
 	client->last_bytes = client->bytes;
 }
 
-void cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *private_data)
+void cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	struct client *client = (struct client *)private_data;
 	struct scsi_task *task = command_data, *task2 = NULL;

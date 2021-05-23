@@ -1435,7 +1435,7 @@ iscsi_logout_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 
 int
 iscsi_process_logout_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
-struct iscsi_in_pdu *in _U_)
+struct iscsi_in_pdu *in)
 {
 	iscsi->is_loggedin = 0;
 	ISCSI_LOG(iscsi, 2, "logout successful");

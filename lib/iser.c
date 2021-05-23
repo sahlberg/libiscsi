@@ -83,7 +83,7 @@ iscsi_iser_get_fd(struct iscsi_context *iscsi)
  * Being used in QEMU iscsi block so we need compatability with TCP
  */
 static int
-iscsi_iser_which_events(struct iscsi_context *iscsi _U_)
+iscsi_iser_which_events(struct iscsi_context *iscsi)
 {
 	/* iSER is waiting to events from CQ that are always POLLIN */
 	return 1;
@@ -1401,8 +1401,8 @@ no_waitpdu:
  *
  */
 static int
-iser_snd_completion(struct iser_tx_desc *tx_desc _U_,
-		    struct iser_conn *iser_conn _U_)
+iser_snd_completion(struct iser_tx_desc *tx_desc,
+		    struct iser_conn *iser_conn)
 {
 	return 0;
 }

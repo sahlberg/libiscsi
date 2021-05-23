@@ -57,7 +57,7 @@ test_iscsi_nop_txrx(struct test_iscsi_nop_state *state)
 }
 
 static void
-test_iscsi_nop_cb(struct iscsi_context *iscsi _U_, int status,
+test_iscsi_nop_cb(struct iscsi_context *iscsi, int status,
                   void *command_data, void *private_data)
 {
         struct test_iscsi_nop_state *state = private_data;

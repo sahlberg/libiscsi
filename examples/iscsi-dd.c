@@ -102,7 +102,7 @@ void write_cb(struct iscsi_context *iscsi, int status, void *command_data, void 
 	free(wt);
 }
 
-void read_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *private_data)
+void read_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	struct client *client = (struct client *)private_data;
 	struct scsi_task *task = command_data;
@@ -276,7 +276,7 @@ void populate_param_header(unsigned char *buf, int list_id, int str, int list_id
 	buf[15] = inline_data_len & 0xFF;
 }
 
-void xcopy_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *private_data)
+void xcopy_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	struct client *client = (struct client *)private_data;
 	struct scsi_task *task = command_data;

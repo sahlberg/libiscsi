@@ -12,7 +12,7 @@ endif
 
 ACLOCAL_AMFLAGS =-I m4
 AUTOMAKE_OPTIONS = foreign subdir-objects
-AM_CPPFLAGS=-I. -I$(srcdir)/include "-D_U_=__attribute__((unused))"
+AM_CPPFLAGS=-I. -I$(srcdir)/include
 AM_CFLAGS=$(WARN_CFLAGS)
 
 EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt \

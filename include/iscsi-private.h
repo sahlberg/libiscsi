@@ -371,7 +371,7 @@ uint32_t iscsi_itt_post_increment(struct iscsi_context *iscsi);
 
 void iscsi_timeout_scan(struct iscsi_context *iscsi);
 
-void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
+void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
                         void *command_data, void *private_data);
 
 struct iscsi_pdu *iscsi_tcp_new_pdu(struct iscsi_context *iscsi, size_t size);

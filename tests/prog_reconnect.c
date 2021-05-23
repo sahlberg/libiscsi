@@ -73,7 +73,7 @@ void event_loop(struct iscsi_context *iscsi, struct client_state *state)
 }
 
 void logout_cb(struct iscsi_context *iscsi, int status,
-	       void *command_data _U_, void *private_data)
+	       void *command_data, void *private_data)
 {
 	struct client_state *state = (struct client_state *)private_data;
 

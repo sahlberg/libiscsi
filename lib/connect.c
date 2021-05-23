@@ -46,7 +46,7 @@ struct connect_task {
 };
 
 static void
-iscsi_connect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
+iscsi_connect_cb(struct iscsi_context *iscsi, int status, void *command_data,
 		 void *private_data);
 
 
@@ -144,7 +144,7 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 }
 
 static void
-iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
+iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data,
 	       void *private_data)
 {
 	struct connect_task *ct = private_data;
@@ -184,7 +184,7 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
 }
 
 static void
-iscsi_connect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_,
+iscsi_connect_cb(struct iscsi_context *iscsi, int status, void *command_data,
 		 void *private_data)
 {
 	struct connect_task *ct = private_data;
@@ -276,8 +276,8 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 	iscsi_cancel_pdus(iscsi);
 }
 
-void iscsi_reconnect_cb(struct iscsi_context *iscsi _U_, int status,
-                        void *command_data _U_, void *private_data _U_)
+void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
+                        void *command_data, void *private_data)
 {
 	struct iscsi_context *old_iscsi;
 	int i;

@@ -1246,7 +1246,7 @@ scsi_cdb_report_supported_opcodes(int rctd, int options, enum scsi_opcode opcode
  * readcapacity10 datain structure
  */
 static int
-scsi_readcapacity10_datain_getfullsize(struct scsi_task *task _U_)
+scsi_readcapacity10_datain_getfullsize(struct scsi_task *task)
 {
 	return 8;
 }

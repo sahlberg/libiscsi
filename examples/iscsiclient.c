@@ -63,7 +63,7 @@ struct client_state {
 
 unsigned char small_buffer[512];
 
-void tm_at_cb(struct iscsi_context *iscsi _U_, int status _U_, void *command_data _U_, void *private_data)
+void tm_at_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	struct client_state *clnt = (struct client_state *)private_data;
 
@@ -74,7 +74,7 @@ void tm_at_cb(struct iscsi_context *iscsi _U_, int status _U_, void *command_dat
 }
 
 
-void synccache10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data _U_, void *private_data _U_)
+void synccache10_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	printf("SYNCCACHE10 status:%d\n", status);
 }
@@ -103,7 +103,7 @@ void nop_out_cb(struct iscsi_context *iscsi, int status, void *command_data, voi
 }
 
 
-void write10_1_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *private_data _U_)
+void write10_1_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	struct scsi_task *task = command_data;
 
@@ -123,7 +123,7 @@ void write10_1_cb(struct iscsi_context *iscsi _U_, int status, void *command_dat
 	exit(10);
 }
 
-void write10_cb(struct iscsi_context *iscsi _U_, int status, void *command_data, void *private_data _U_)
+void write10_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	struct client_state *clnt = (struct client_state *)private_data;
 	struct scsi_task *task = command_data;
@@ -482,7 +482,7 @@ void reportluns_cb(struct iscsi_context *iscsi, int status, void *command_data, 
 }
 
 
-void normallogin_cb(struct iscsi_context *iscsi, int status, void *command_data _U_, void *private_data)
+void normallogin_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	if (status != 0) {
 		printf("Failed to log in to target : %s\n", iscsi_get_error(iscsi));
@@ -497,7 +497,7 @@ void normallogin_cb(struct iscsi_context *iscsi, int status, void *command_data 
 }
 
 
-void normalconnect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_, void *private_data)
+void normalconnect_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	printf("Connected to iscsi socket\n");
 
@@ -517,7 +517,7 @@ void normalconnect_cb(struct iscsi_context *iscsi, int status, void *command_dat
 
 
 
-void discoverylogout_cb(struct iscsi_context *iscsi, int status, void *command_data _U_, void *private_data)
+void discoverylogout_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	struct client_state *clnt = (struct client_state *)private_data;
 	
@@ -586,7 +586,7 @@ void discovery_cb(struct iscsi_context *iscsi, int status, void *command_data, v
 }
 
 
-void discoverylogin_cb(struct iscsi_context *iscsi, int status, void *command_data _U_, void *private_data)
+void discoverylogin_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	if (status != 0) {
 		printf("Failed to log in to target. : %s\n", iscsi_get_error(iscsi));
@@ -601,7 +601,7 @@ void discoverylogin_cb(struct iscsi_context *iscsi, int status, void *command_da
 
 }
 
-void discoveryconnect_cb(struct iscsi_context *iscsi, int status, void *command_data _U_, void *private_data)
+void discoveryconnect_cb(struct iscsi_context *iscsi, int status, void *command_data, void *private_data)
 {
 	printf("Connected to iscsi socket status:0x%08x\n", status);
 
@@ -619,7 +619,7 @@ void discoveryconnect_cb(struct iscsi_context *iscsi, int status, void *command_
 }
 
 
-int main(int argc _U_, char *argv[] _U_)
+int main(int argc, char *argv[])
 {
 	struct iscsi_context *iscsi;
 	struct pollfd pfd;

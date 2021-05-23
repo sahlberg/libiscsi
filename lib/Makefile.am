@@ -22,8 +22,7 @@ endif
 
 libiscsipriv_la_LDFLAGS = -no-undefined
 
-libiscsipriv_la_CPPFLAGS = -I${srcdir}/../include -I$(srcdir)/include \
-	"-D_U_=__attribute__((unused))"
+libiscsipriv_la_CPPFLAGS = -I${srcdir}/../include -I$(srcdir)/include
 
 AM_CFLAGS=$(WARN_CFLAGS)
 

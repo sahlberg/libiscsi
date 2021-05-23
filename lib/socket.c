@@ -1069,7 +1069,7 @@ void iscsi_set_tcp_keepintvl(struct iscsi_context *iscsi, int value)
 	ISCSI_LOG(iscsi, 2, "TCP_KEEPINTVL will be set to %d on next socket creation",value);
 }
 
-int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle _U_, int count _U_, int interval _U_)
+int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle, int count, int interval)
 {
 #ifdef SO_KEEPALIVE
 	int value = 1;
@@ -1104,7 +1104,7 @@ int iscsi_set_tcp_keepalive(struct iscsi_context *iscsi, int idle _U_, int count
 	return 0;
 }
 
-void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces _U_)
+void iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces)
 {
 #if __linux
 	strncpy(iscsi->bind_interfaces,interfaces,MAX_STRING_SIZE);
