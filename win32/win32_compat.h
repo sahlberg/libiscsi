@@ -30,7 +30,7 @@ THE SOFTWARE.
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <Ws2ipdef.h>
+#include <ws2ipdef.h>
 #include <basetsd.h>
 #include <io.h>
 #include <malloc.h>
@@ -58,10 +58,12 @@ struct pollfd {
 };
 #endif
 
+#ifdef _MSC_VER
 typedef int ssize_t;
 typedef int uid_t;
 typedef int gid_t;
 typedef int socklen_t;
+#endif
 
 /* Wrapper macros to call misc. functions win32 is missing */
 #define close                closesocket
@@ -74,11 +76,20 @@ typedef int socklen_t;
 #define poll(x, y, z)        win32_poll(x, y, z)
 #define inet_pton(x,y,z)     win32_inet_pton(x,y,z)
 #define sleep(x)             Sleep(x * 1000)
+#ifdef _MSC_VER
 #define getpid               GetCurrentProcessId
+#endif
 
 #if defined(_MSC_VER) && _MSC_VER < 1900
 #define snprintf(a, b, c, ...) _snprintf_s(a, b, b, c, ## __VA_ARGS__)
 #endif
+
+struct timezone;
+
+struct iovec {
+    void *iov_base;
+    size_t iov_len;
+};
 
 int     win32_inet_pton(int af, const char * src, void * dst);
 int     win32_poll(struct pollfd *fds, unsigned int nfsd, int timeout);
@@ -86,11 +97,6 @@ int     win32_gettimeofday(struct timeval *tv, struct timezone *tz);
 ssize_t win32_writev(int fd, const struct iovec *iov, int iovcnt);
 ssize_t win32_readv(int fd, const struct iovec *iov, int iovcnt);
 int     win32_dup2(int oldfd, int newfd);
-
-struct iovec {
-    void *iov_base;
-    size_t iov_len;
-};
 
 #define inline
 

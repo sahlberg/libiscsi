@@ -630,7 +630,8 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			 * no need to limit the read to what is available in the socket
 			 */
 			count = hdr_size - in->hdr_pos;
-			count = recv(iscsi->fd, &in->hdr[in->hdr_pos], count, 0);
+			count = recv(iscsi->fd, (void *)&in->hdr[in->hdr_pos],
+                                     count, 0);
 			if (count == 0) {
 				/* remote side has closed the socket. */
 				return -1;
@@ -681,7 +682,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 					}
 					buf = &in->data[in->data_pos];
 				}
-				count = recv(iscsi->fd, buf, count, 0);
+				count = recv(iscsi->fd, (void *)buf, count, 0);
 			}
 			if (count == 0) {
 				/* remote side has closed the socket. */
@@ -805,7 +806,8 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		/* Write header and any immediate data */
 		if (pdu->outdata_written < pdu->outdata.size) {
 			count = send(iscsi->fd,
-				     pdu->outdata.data + pdu->outdata_written,
+				     (void *)(pdu->outdata.data +
+                                              pdu->outdata_written),
 				     pdu->outdata.size - pdu->outdata_written,
 				     socket_flags);
 			if (count == -1) {

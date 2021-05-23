@@ -77,6 +77,9 @@ AC_CONFIG_HEADER(config.h)
 AC_CHECK_LIB([gcrypt], [gcry_control])
 AM_CONDITIONAL([HAVE_LIBGCRYPT], [test $ac_cv_lib_gcrypt_gcry_control = yes])
 
+# For MinGW.
+AC_CHECK_LIB([ws2_32], [gethostbyname])
+
 AC_CACHE_CHECK([for sin_len in sock],libiscsi_cv_HAVE_SOCK_SIN_LEN,[
 AC_TRY_COMPILE([#include <sys/types.h>
 #include <sys/socket.h>

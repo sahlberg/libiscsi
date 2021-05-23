@@ -21,11 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef _WIN32
-
-static int dummy ATTRIBUTE((unused));
-
-#else
 #include "win32_compat.h"
 #include <errno.h>
 #include <stdio.h>
@@ -209,5 +204,3 @@ int win32_dup2(int oldfd, int newfd)
 {
 	return 0;
 }
-
-#endif
