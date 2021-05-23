@@ -1,7 +1,8 @@
 AM_CPPFLAGS = -I${srcdir}/../include "-D_U_=__attribute__((unused))" \
 	"-D_R_(A,B)=__attribute__((format(printf,A,B)))"
 AM_CFLAGS = $(WARN_CFLAGS)
-LDADD = ../lib/libiscsi.la
+AM_LDFLAGS = -no-undefined
+LIBS = ../lib/libiscsi.la
 
 noinst_PROGRAMS = prog_reconnect prog_reconnect_timeout prog_noop_reply \
 	prog_readwrite_iov prog_timeout prog_read_all_pdus \
