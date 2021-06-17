@@ -37,6 +37,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_inquiry_standard.c \
 	test_inquiry_supported_vpd.c \
 	test_inquiry_version_descriptors.c \
+	test_inquiry_block_device_characteristics.c \
 	test_iscsi_cmdsn_toohigh.c \
 	test_iscsi_cmdsn_toolow.c \
 	test_iscsi_datasn_invalid.c \
