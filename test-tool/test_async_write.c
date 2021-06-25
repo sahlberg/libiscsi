@@ -67,7 +67,7 @@ void
 test_async_write(void)
 {
 	int i, ret;
-	struct tests_async_write_state state = { };
+	struct tests_async_write_state state;
 	int blocks_per_io = 8;
 	int num_ios = 1000;
 	/* IOs in flight concurrently, but all using the same src buffer */
@@ -77,6 +77,7 @@ test_async_write(void)
 	CHECK_FOR_SBC;
 	CHECK_FOR_ISCSI(sd);
 
+	memset(&state, 0, sizeof(state));
 	if (maximum_transfer_length
 	 && (maximum_transfer_length < (blocks_per_io * num_ios))) {
 		CU_PASS("[SKIPPED] device too small for async_write test");
@@ -144,7 +145,7 @@ void
 test_async_io_logout(void)
 {
 	int i, ret;
-	struct tests_async_write_state state = { };
+	struct tests_async_write_state state;
 	int blocks_per_io = 8;
 	int num_ios = 10;
 	/* IOs in flight concurrently, but all using the same src buffer */
@@ -154,6 +155,7 @@ test_async_io_logout(void)
 	CHECK_FOR_SBC;
 	CHECK_FOR_ISCSI(sd);
 
+	memset(&state, 0, sizeof(state));
 	if (maximum_transfer_length
 	 && maximum_transfer_length < (blocks_per_io * num_ios)) {
 		CU_PASS("[SKIPPED] device too small for async IO test");
