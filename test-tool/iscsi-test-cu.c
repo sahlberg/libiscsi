@@ -87,6 +87,7 @@ static CU_TestInfo tests_inquiry[] = {
         { "AllocLength", test_inquiry_alloc_length},
         { "EVPD", test_inquiry_evpd},
         { "BlockLimits", test_inquiry_block_limits},
+        { "BlockDeviceCharacteristics", test_inquiry_block_device_characteristics},
         { "MandatoryVPDSBC", test_inquiry_mandatory_vpd_sbc},
         { "SupportedVPD", test_inquiry_supported_vpd},
         { "VersionDescriptors", test_inquiry_version_descriptors},
@@ -1399,19 +1400,6 @@ main(int argc, char *argv[])
 
                 inq_bl = scsi_datain_unmarshall(inq_bl_task);
                 if (inq_bl == NULL) {
-                        printf("failed to unmarshall inquiry datain blob\n");
-                        goto err_sds_free;
-                }
-        }
-
-        /* try reading block device characteristics vpd */
-        inquiry(sd, &inq_bdc_task, 1, SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS, 255,
-                EXPECT_STATUS_GOOD);
-        if (inq_bdc_task == NULL || inq_bdc_task->status != SCSI_STATUS_GOOD) {
-                printf("Failed to read Block Device Characteristics page\n");
-        } else {
-                inq_bdc = scsi_datain_unmarshall(inq_bdc_task);
-                if (inq_bdc == NULL) {
                         printf("failed to unmarshall inquiry datain blob\n");
                         goto err_sds_free;
                 }
