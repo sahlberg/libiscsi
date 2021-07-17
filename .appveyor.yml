@@ -1,0 +1,15 @@
+image:
+  - Ubuntu
+  - Ubuntu1604
+  - Ubuntu2004
+  - macos
+  - macos-mojave
+  # - Visual Studio 2019
+
+clone_depth: 5
+
+install:
+  - sh: 'ci/install.sh'
+
+build_script:
+  - sh: 'ci/build.sh'
