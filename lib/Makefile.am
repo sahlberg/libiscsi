@@ -8,6 +8,10 @@ libiscsipriv_la_SOURCES = \
 	scsi-lowlevel.c socket.c sync.c task_mgmt.c \
 	logging.c
 
+if TARGET_OS_IS_WIN32
+libiscsipriv_la_SOURCES += ../win32/win32_compat.c
+endif
+
 if !HAVE_LIBGCRYPT
 libiscsipriv_la_SOURCES += md5.c
 endif

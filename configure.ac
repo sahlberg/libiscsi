@@ -19,9 +19,14 @@ case $host in
     AC_CHECK_LIB([socket], [main], , [AC_MSG_ERROR([Can not find required library])])
     AC_CHECK_LIB([nsl],    [main], , [AC_MSG_ERROR([Can not find required library])])
     ;;
+  *mingw*)
+    target_os_is_win32=true
+    ;;
   *)
     ;;
 esac
+
+AM_CONDITIONAL([TARGET_OS_IS_WIN32], [test x$target_os_is_win32 = xtrue])
 
 AC_ARG_ENABLE([werror], [AS_HELP_STRING([--disable-werror],
               [Disables building with -Werror by default])])
