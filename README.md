@@ -1,20 +1,20 @@
-Libiscsi is a client-side library to implement the iSCSI protocol that can be used
-to access the resources of an iSCSI target.
+Libiscsi is a client-side library to implement the iSCSI protocol that can be
+used to access the resources of an iSCSI target.
 
-The library is fully asynchronous with regards to iSCSI commands and SCSI tasks,
-but a synchronous layer is also provided for ease of use for simpler
+The library is fully asynchronous with regards to iSCSI commands and SCSI
+tasks, but a synchronous layer is also provided for ease of use for simpler
 applications.
 
-The src directory contains a handful of useful iSCSI utilities such as logging in
-to and enumerating all targets on a portal and all devices of a target.
+The src directory contains a handful of useful iSCSI utilities such as logging
+in to and enumerating all targets on a portal and all devices of a target.
 
-The examples directory contains example implementation of how to access both the
-synchronous and asynchronous APIs of libiscsi.
+The examples directory contains example implementation of how to access both
+the synchronous and asynchronous APIs of libiscsi.
 
-Libiscsi is a work in progress.
-It aims to become a fully asynchronous library for iSCSI functionality, including
-all features required to establish and maintain an iSCSI session, as well as a
-low-level SCSI library to create SCSI CDBs and parse/unmarshall data-in structures.
+Libiscsi is a work in progress.  It aims to become a fully asynchronous
+library for iSCSI functionality, including all features required to establish
+and maintain an iSCSI session, as well as a low-level SCSI library to create
+SCSI CDBs and parse/unmarshall data-in structures.
 
 
 Installation
@@ -77,10 +77,11 @@ Example:
 
 Bidirectional CHAP Authentication
 =================================
-Bidirectional CHAP is when you not only authenticate the initiator to the target
-but also authenticate the target back to the initiator.
-This is only available if you also first specify normal authentication as per
-the previous section.
+
+Bidirectional CHAP is when you not only authenticate the initiator to the
+target but also authenticate the target back to the initiator.  This is only
+available if you also first specify normal authentication as per the previous
+section.
 
 Bidirectional CHAP can be set either via URL arguments or via environment
 variables. If specifying it via URL arguments, be careful so that you do
@@ -103,10 +104,10 @@ Setting the CHAP authentication via environment variables:
 
 IPv6 support
 ============
+
 Libiscsi supports IPv6, either as names resolving into IPv6 addresses or when
-IPv6 addresses are explicitely set in the URL.
-When specifying IPv6 addresses in the URL, they have to be specified in
-[...] bracket form.
+IPv6 addresses are explicitely set in the URL.  When specifying IPv6 addresses
+in the URL, they have to be specified in [...] bracket form.
 
 Example:
   iscsi://[fec0:2727::3]:3260/iqn.ronnie.test/1
@@ -114,18 +115,18 @@ Example:
 
 Header Digest
 =============
-Libiscsi supports HeaderDigest.
-By default, libiscsi will offer None,CRC32C and let the target pick whether
-Header digest is to be used or not.
-This can be overridden by an application by calling iscsi_set_header_digest()
-if the application wants to force a specific setting.
+
+Libiscsi supports HeaderDigest.  By default, libiscsi will offer None,CRC32C
+and let the target pick whether Header digest is to be used or not.  This can
+be overridden by an application by calling iscsi_set_header_digest() if the
+application wants to force a specific setting.
 
 
 Patches
 =======
+
 The patches subdirectory contains patches to make some external packages
-iSCSI-aware and make them use libiscsi.
-Currently we have SG3-UTILS and MTX.
+iSCSI-aware and make them use libiscsi.  Currently we have SG3-UTILS and MTX.
 Patches for other packages would be welcome.
 
 
@@ -133,8 +134,8 @@ ISCSI-TEST-CU
 =============
 iscsi-test-cu is a CUnit based test tool for scsi and iscsi.
 
-iscsi-test-cu depends on the CUnit library and will only build if libcunit can be
-found during configure.
+iscsi-test-cu depends on the CUnit library and will only build if libcunit can
+be found during configure.
 
 The configure script will check if a suitable libcunit is available and only
 build the test tool if it can find libcunit.
@@ -239,6 +240,7 @@ To run the tests:
 
 SUPPORTED PLATFORMS
 ===================
+
 libiscsi is pure POSIX and should with some tweaks run on any host that
 provides a POSIX-like environment.
 
@@ -253,18 +255,22 @@ Libiscsi has been tested on:
 
 RELEASE TARBALLS
 ================
-Release tarballs are available at https://sites.google.com/site/libiscsitarballs/libiscsitarballs/
+
+Release tarballs are available at
+https://sites.google.com/site/libiscsitarballs/libiscsitarballs/
 
 
 CONTRIBUTING
 ============
-If you want to contribute, please do.
-For sending me patches you can either do that by sending a pull request to my
-github repo or you can send them in an email directly to me at
-ronniesahlberg@gmail.com
+
+If you want to contribute, please do.  For sending me patches you can either
+do that by sending a pull request to my github repo or you can send them in an
+email directly to me at ronniesahlberg@gmail.com
 
 
 MAILINGLIST
 ===========
-A libiscsi mailing list is available at http://groups.google.com/group/libiscsi
-Announcements of new versions of libiscsi will be posted to this list.
+
+A libiscsi mailing list is available at
+http://groups.google.com/group/libiscsi. Announcements of new versions of
+libiscsi will be posted to this list.
