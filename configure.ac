@@ -1,12 +1,11 @@
-AC_PREREQ(2.50)
-AC_INIT(libiscsi, m4_esyscmd([grep 'Version:' ./packaging/RPM/libiscsi.spec.in 2>/dev/null | head -1 | sed -e 's/[ \t]*Version:[ \t]*\([^ \t]*\)[ \t]*.*/\1/' | tr -d '\n']))
+AC_PREREQ([2.69])
+AC_INIT([libiscsi], m4_esyscmd(grep 'Version:' ./packaging/RPM/libiscsi.spec.in 2>/dev/null | head -1 | sed -e 's/[ \t]*Version:[ \t]*\([^ \t]*\)[ \t]*.*/\1/' | tr -d '\n'))
 AC_CONFIG_SRCDIR([lib/init.c])
 AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE([-Wall -Werror subdir-objects])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
-AC_PROG_LIBTOOL
 LT_INIT
 
 AC_CANONICAL_HOST
@@ -27,7 +26,7 @@ esac
 AC_ARG_ENABLE([werror], [AS_HELP_STRING([--disable-werror],
               [Disables building with -Werror by default])])
 
-if test "$ac_cv_prog_gcc" = yes; then
+if test "$ac_cv_c_compiler_gnu" = yes; then
    WARN_CFLAGS="-Wall -W -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-align -Wcast-qual -Wno-strict-aliasing -Wvla"
    WARN_CFLAGS="$WARN_CFLAGS -Wno-unknown-warning-option -Wno-stringop-truncation"
    WARN_CFLAGS="$WARN_CFLAGS -Wno-unused-parameter"
@@ -41,7 +40,7 @@ fi
 AC_SUBST(WARN_CFLAGS)
 
 AC_ARG_ENABLE([manpages],
-              [AC_HELP_STRING([--enable-manpages],
+              [AS_HELP_STRING([--enable-manpages],
                               [Enable building the manpages])],
 	      [ENABLE_MANPAGES=$enableval],
 	      [ENABLE_MANPAGES="no"])
@@ -49,7 +48,7 @@ AM_CONDITIONAL(BUILD_MANPAGES,
                [expr "$ENABLE_MANPAGES" : yes > /dev/null 2>&1])
 
 AC_ARG_ENABLE([test_tool],
-              [AC_HELP_STRING([--enable-test-tool],
+              [AS_HELP_STRING([--enable-test-tool],
                               [Enable building test-tool (to test a remote server)])],
               [ENABLE_TEST_TOOL=$enableval],
               [ENABLE_TEST_TOOL=yes])
@@ -57,7 +56,7 @@ AM_CONDITIONAL([BUILD_TEST_TOOL],
                [expr "$ENABLE_TEST_TOOL" : yes > /dev/null 2>&1])
 
 AC_ARG_ENABLE([tests],
-              [AC_HELP_STRING([--enable-tests],
+              [AS_HELP_STRING([--enable-tests],
                               [Enable building tests])],
               [ENABLE_TESTS=$enableval],
               [ENABLE_TESTS=yes])
@@ -65,7 +64,7 @@ AM_CONDITIONAL([BUILD_TESTS],
                [expr "$ENABLE_TESTS" : yes > /dev/null 2>&1])
 
 AC_ARG_ENABLE([examples],
-              [AC_HELP_STRING([--enable-examples],
+              [AS_HELP_STRING([--enable-examples],
                               [Enable building examples])],
               [ENABLE_EXAMPLES=$enableval],
               [ENABLE_EXAMPLES=yes])
@@ -81,20 +80,21 @@ AM_CONDITIONAL([HAVE_LIBGCRYPT], [test $ac_cv_lib_gcrypt_gcry_control = yes])
 AC_CHECK_LIB([ws2_32], [gethostbyname])
 
 AC_CACHE_CHECK([for sin_len in sock],libiscsi_cv_HAVE_SOCK_SIN_LEN,[
-AC_TRY_COMPILE([#include <sys/types.h>
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>],
-[struct sockaddr_in sock; sock.sin_len = sizeof(sock);],
-libiscsi_cv_HAVE_SOCK_SIN_LEN=yes,libiscsi_cv_HAVE_SOCK_SIN_LEN=no)])
+#include <netinet/in.h>]],
+[[struct sockaddr_in sock;
+sock.sin_len = sizeof(sock);]])],
+[libiscsi_cv_HAVE_SOCK_SIN_LEN=yes],[libiscsi_cv_HAVE_SOCK_SIN_LEN=no])])
 if test x"$libiscsi_cv_HAVE_SOCK_SIN_LEN" = x"yes"; then
     AC_DEFINE(HAVE_SOCK_SIN_LEN,1,[Whether the sockaddr_in struct has a sin_len property])
 fi
 
 AC_CACHE_CHECK([for sys filio.h],libiscsi_cv_NEED_SYS_FILIO_H,[
-AC_TRY_COMPILE([#include <stdint.h>
-#include <sys/filio.h>],
-[int foo = FIONREAD],
-libiscsi_cv_NEED_SYS_FILIO_H=yes,libiscsi_cv_NEED_SYS_FILIO_H=no)])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdint.h>
+#include <sys/filio.h>]],
+[[int foo = FIONREAD]])],
+[libiscsi_cv_NEED_SYS_FILIO_H=yes],[libiscsi_cv_NEED_SYS_FILIO_H=no])])
 if test x"$libiscsi_cv_NEED_SYS_FILIO_H" = x"yes"; then
     AC_DEFINE(NEED_SYS_FILIO_H,1,[Whether we need sys/filio.h])
 fi
@@ -125,41 +125,37 @@ AC_CHECK_HEADERS([poll.h])
 
 
 AC_CACHE_CHECK([for sockaddr_in6 support],libiscsi_cv_HAVE_SOCKADDR_IN6,[
-AC_TRY_COMPILE([#include <sys/types.h>
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>],
-[struct sockaddr_in6 sock; int len = sizeof(sock);],
-libiscsi_cv_HAVE_SOCKADDR_IN6=yes,libiscsi_cv_HAVE_SOCKADDR_IN6=no)])
+#include <netinet/in.h>]], [[struct sockaddr_in6 sock; int len = sizeof(sock);]])],[libiscsi_cv_HAVE_SOCKADDR_IN6=yes],[libiscsi_cv_HAVE_SOCKADDR_IN6=no])])
 if test x"$libiscsi_cv_HAVE_SOCKADDR_IN6" = x"yes"; then
     AC_DEFINE(HAVE_SOCKADDR_IN6,1,[Whether we have IPv6 support])
 fi
 
 AC_CACHE_CHECK([for SG_IO support],libiscsi_cv_HAVE_SG_IO,[
-AC_TRY_COMPILE([
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <unistd.h>
-#include <scsi/sg.h>],
-[int sgio = SG_IO;],
-libiscsi_cv_HAVE_SG_IO=yes,libiscsi_cv_HAVE_SG_IO=no)])
+#include <scsi/sg.h>]],
+[[int sgio = SG_IO;]])],
+[libiscsi_cv_HAVE_SG_IO=yes],[libiscsi_cv_HAVE_SG_IO=no])])
 if test x"$libiscsi_cv_HAVE_SG_IO" = x"yes"; then
     AC_DEFINE(HAVE_SG_IO,1,[Whether we have SG_IO support])
 fi
 
 AC_CACHE_CHECK([for iSER support],libiscsi_cv_HAVE_LINUX_ISER,[
-AC_TRY_COMPILE([
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <infiniband/verbs.h>
 #include <rdma/rdma_cma.h>
-#include <rdma/rdma_verbs.h>],
-[int ibv = IBV_WC_SEND;],
-libiscsi_cv_HAVE_LINUX_ISER=yes,libiscsi_cv_HAVE_LINUX_ISER=no)])
+#include <rdma/rdma_verbs.h>]],
+[[int ibv = IBV_WC_SEND;]])],
+[libiscsi_cv_HAVE_LINUX_ISER=yes],[libiscsi_cv_HAVE_LINUX_ISER=no])])
 if test x"$libiscsi_cv_HAVE_LINUX_ISER" = x"yes"; then
     AC_DEFINE(HAVE_LINUX_ISER,1,[Whether we have iSER support])
 fi
 AM_CONDITIONAL([HAVE_LINUX_ISER], [test $libiscsi_cv_HAVE_LINUX_ISER = yes])
 
-AC_TRY_COMPILE([
-#include <rdma/rdma_cma.h>],
-[return RDMA_OPTION_ID_ACK_TIMEOUT;],
-[AC_DEFINE([HAVE_RDMA_ACK_TIMEOUT],[1],[Define to 1 if you have RDMA ack timeout support])],)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <rdma/rdma_cma.h>]], [[return RDMA_OPTION_ID_ACK_TIMEOUT;]])],[AC_DEFINE([HAVE_RDMA_ACK_TIMEOUT],[1],[Define to 1 if you have RDMA ack timeout support])],[])
 
 AC_CACHE_CHECK([whether libcunit is available],
                [ac_cv_have_cunit],
@@ -167,9 +163,9 @@ AC_CACHE_CHECK([whether libcunit is available],
                 ac_save_LIBS="$LIBS"
                 CFLAGS="$CFLAGS $GLIB_CFLAGS"
                 LIBS="$GLIB_LIBS $LIBS -lcunit"
-                AC_TRY_LINK([
+                AC_LINK_IFELSE([AC_LANG_PROGRAM([[
                     #include <CUnit/CUnit.h>
-                    ], [], [ac_cv_have_cunit=yes], [ac_cv_have_cunit=no])
+                    ]], [[]])],[ac_cv_have_cunit=yes],[ac_cv_have_cunit=no])
                 CFLAGS="$ac_save_CFLAGS"
                 LIBS="$ac_save_LIBS"])
 if ! test "$ac_cv_have_cunit" = yes ; then
