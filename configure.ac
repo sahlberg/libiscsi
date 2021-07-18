@@ -76,7 +76,7 @@ AC_ARG_ENABLE([examples],
 AM_CONDITIONAL([BUILD_EXAMPLES],
                [expr "$ENABLE_EXAMPLES" : yes > /dev/null 2>&1])
 
-AC_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 
 AC_CHECK_LIB([gcrypt], [gcry_control])
 AM_CONDITIONAL([HAVE_LIBGCRYPT], [test $ac_cv_lib_gcrypt_gcry_control = yes])
