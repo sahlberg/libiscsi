@@ -5,11 +5,14 @@ The library is fully asynchronous with regards to iSCSI commands and SCSI
 tasks, but a synchronous layer is also provided for ease of use for simpler
 applications.
 
-The src directory contains a handful of useful iSCSI utilities such as logging
-in to and enumerating all targets on a portal and all devices of a target.
+The utils directory contains a handful of useful iSCSI utilities such as
+logging in to and enumerating all targets on a portal and all devices of a
+target.
 
 The examples directory contains example implementation of how to access both
 the synchronous and asynchronous APIs of libiscsi.
+
+The test-tool directory contains an iSCSI conformance test suite.
 
 Libiscsi is a work in progress.  It aims to become a fully asynchronous
 library for iSCSI functionality, including all features required to establish
@@ -256,9 +259,7 @@ Libiscsi has been tested on:
 RELEASE TARBALLS
 ================
 
-Release tarballs are available at
-https://sites.google.com/site/libiscsitarballs/libiscsitarballs/
-
+Release tarballs are available at https://github.com/sahlberg/libiscsi/tags.
 
 CONTRIBUTING
 ============
