@@ -19,7 +19,7 @@ case $host in
     AC_CHECK_LIB([socket], [main], , [AC_MSG_ERROR([Can not find required library])])
     AC_CHECK_LIB([nsl],    [main], , [AC_MSG_ERROR([Can not find required library])])
     ;;
-  *mingw*)
+  *mingw*|*msys*)
     target_os_is_win32=true
     ;;
   *)
@@ -84,6 +84,40 @@ AM_CONDITIONAL([HAVE_LIBGCRYPT], [test $ac_cv_lib_gcrypt_gcry_control = yes])
 # For MinGW.
 AC_CHECK_LIB([ws2_32], [gethostbyname])
 
+AC_CHECK_HEADERS([sys/select.h])
+AC_CHECK_HEADERS([winsock.h winsock2.h ws2tcpip.h],,,[#include <windows.h>])
+
+#
+# Check for the type of the fifth argument of select() since MinGW uses
+# struct __ms_timeval.
+#
+
+ac_save_CFLAGS=$CFLAGS
+CFLAGS="$CFLAGS -Werror"
+AC_MSG_CHECKING([for the type of the fifth argument of select()])
+arg_type=void
+for t in "struct timeval" "struct __ms_timeval"; do
+AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM([
+#if defined(HAVE_WINSOCK2_H) && defined(HAVE_WS2TCPIP_H)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+#endif
+#include <stddef.h>
+], [return select(0, NULL, NULL, NULL, ($t *)NULL)])],
+    [arg_type=$t; break])
+done
+AC_MSG_RESULT(${arg_type})
+AC_DEFINE_UNQUOTED([SELECT_TIMEVAL_TYPE], [${arg_type}],
+        [Type of the fifth argument of select()])
+CFLAGS=$ac_save_CFLAGS
+
+AC_CHECK_FUNCS([tzset])
+
 AC_CACHE_CHECK([for sin_len in sock],libiscsi_cv_HAVE_SOCK_SIN_LEN,[
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
 #include <sys/socket.h>
@@ -104,30 +138,15 @@ if test x"$libiscsi_cv_NEED_SYS_FILIO_H" = x"yes"; then
     AC_DEFINE(NEED_SYS_FILIO_H,1,[Whether we need sys/filio.h])
 fi
 
-# check for sys/socket.h
-dnl Check for sys/socket.h
-AC_CHECK_HEADERS([sys/socket.h])
-
-# check for netinet/tcp.h
-dnl Check for netinet/tcp.h
-AC_CHECK_HEADERS([netinet/tcp.h])
-
-# check for netinet/in.h
-dnl Check for netinet/in.h
-AC_CHECK_HEADERS([netinet/in.h])
-
-# check for arpa/inet.h
-dnl Check for arpa/inet.h
-AC_CHECK_HEADERS([arpa/inet.h])
-
-# check for sys/uio.h
-dnl Check for sys/uio.h
-AC_CHECK_HEADERS([sys/uio.h])
-
-# check for poll.h
-dnl Check for poll.h
-AC_CHECK_HEADERS([poll.h])
-
+AC_CHECK_HEADERS(dnl
+[arpa/inet.h]	dnl
+[netinet/in.h]	dnl
+[netinet/tcp.h]	dnl
+[poll.h]	dnl
+[sys/socket.h]	dnl
+[sys/time.h]	dnl
+[sys/uio.h]	dnl
+)
 
 AC_CACHE_CHECK([for sockaddr_in6 support],libiscsi_cv_HAVE_SOCKADDR_IN6,[
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
@@ -178,6 +197,11 @@ if ! test "$ac_cv_have_cunit" = yes ; then
   AC_MSG_NOTICE(The scsi/iscsi test suite will not be built.)
 fi
 AM_CONDITIONAL(ISCSITEST, [test "$ac_cv_have_cunit" = yes -a "$enable_shared" = "yes"])
+
+AC_CHECK_MEMBER([struct timezone.tz_dsttime],
+                [AC_DEFINE([HAVE_TIMEZONE_TZ_DSTTIME], [1],
+                   [Define this macro if struct timezone has tz_dsttime])], [],
+                [#include <sys/time.h>])
 
 AC_CHECK_MEMBER([struct CU_SuiteInfo.pSetUpFunc],
 		[AC_DEFINE([HAVE_CU_SUITEINFO_PSETUPFUNC], 1,

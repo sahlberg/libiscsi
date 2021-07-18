@@ -37,6 +37,14 @@ lib_LTLIBRARIES = libiscsi.la
 libiscsi_la_SOURCES =
 libiscsi_la_LIBADD = libiscsipriv.la
 
+libiscsi.syms: libiscsi.syms.in
+	cat <$< >$@
+if TARGET_OS_IS_WIN32
+	echo win32_poll >>$@
+endif
+
+EXTRA_libiscsi_la_DEPENDENCIES = libiscsi.syms
+
 SOCURRENT=9
 SOREVISON=0
 SOAGE=0

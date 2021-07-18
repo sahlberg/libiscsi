@@ -37,7 +37,9 @@
 #if defined(_WIN32)
 #include <winsock2.h>
 #include "win32/win32_compat.h"
+#ifdef _MSC_VER
 #pragma comment(lib, "ws2_32.lib")
+#endif
 WSADATA wsaData;
 #else
 #include <poll.h>

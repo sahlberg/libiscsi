@@ -21,10 +21,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#include "config.h"
 #include "win32_compat.h"
 #include <errno.h>
 #include <stdio.h>
-#include < time.h >
+#include <time.h>
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
 #undef poll
 #undef socket
@@ -46,15 +50,13 @@ int win32_inet_pton(int af, const char *src, void *dst)
 	struct sockaddr_in sa;
 	int len = sizeof(SOCKADDR);
 	int ret = -1;
-	int strLen = strlen(src) + 1;
 #ifdef UNICODE
+	int strLen = strlen(src) + 1;
 	wchar_t *srcNonConst = (wchar_t *)malloc(strLen * sizeof(wchar_t));
 	memset(srcNonConst, 0, strLen);
 	MultiByteToWideChar(CP_ACP, 0, src, -1, srcNonConst, strLen);
 #else
-	char *srcNonConst = (char *)malloc(strLen);
-	memset(srcNonConst, 0, strLen);
-	strncpy(srcNonConst, src, strLen);
+	char *srcNonConst = strdup(src);
 #endif
 
 	if (WSAStringToAddress(srcNonConst, af, NULL, (LPSOCKADDR)&sa, &len) ==
@@ -72,7 +74,7 @@ int win32_inet_pton(int af, const char *src, void *dst)
 
 int win32_poll(struct pollfd *fds, unsigned int nfds, int timo)
 {
-	struct timeval timeout, *toptr;
+	SELECT_TIMEVAL_TYPE timeout, *toptr;
 	fd_set ifds, ofds, efds, *ip, *op;
 	unsigned int i;
 	int rc;
@@ -142,10 +144,12 @@ int win32_poll(struct pollfd *fds, unsigned int nfds, int timo)
 #define DELTA_EPOCH_IN_MICROSECS 11644473600000000ULL
 #endif
 
+#ifndef HAVE_TIMEZONE_TZ_DSTTIME
 struct timezone {
 	int tz_minuteswest; /* minutes W of Greenwich */
 	int tz_dsttime; /* type of dst correction */
 };
+#endif
 
 int win32_gettimeofday(struct timeval *tv, struct timezone *tz)
 {
@@ -169,7 +173,11 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz)
 
 	if (NULL != tz) {
 		if (!tzflag) {
+#ifdef HAVE_TZSET
+                        tzset();
+#else
 			_tzset();
+#endif
 			tzflag++;
 		}
 		tz->tz_minuteswest = _timezone / 60;

@@ -20,6 +20,8 @@
 
 #ifdef HAVE_POLL_H
 #include <poll.h>
+#else
+#include "win32_compat.h"
 #endif
 
 #ifdef HAVE_UNISTD_H

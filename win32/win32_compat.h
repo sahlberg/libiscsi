@@ -25,9 +25,6 @@ THE SOFTWARE.
 #ifndef win32_COMPAT_H_
 #define win32_COMPAT_H_
 
-#ifdef _WIN32
-#define NO_IPv6 1
-
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <ws2ipdef.h>
@@ -98,7 +95,6 @@ ssize_t win32_writev(int fd, const struct iovec *iov, int iovcnt);
 ssize_t win32_readv(int fd, const struct iovec *iov, int iovcnt);
 int     win32_dup2(int oldfd, int newfd);
 
-#define inline
+#define inline __inline__
 
-#endif // _WIN32
 #endif // win32_COMPAT_H_
