@@ -4,7 +4,7 @@ image:
   - Ubuntu2004
   - macos
   - macos-mojave
-  # - Visual Studio 2019
+  - Visual Studio 2019
 
 clone_depth: 5
 

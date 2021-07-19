@@ -1,4 +1,11 @@
-#!/bin/sh
+#!/bin/bash
+
+configure_options=(
+    --enable-manpages
+    --enable-test-tool
+    --enable-tests
+    --enable-examples
+)
 
 case "$(uname)" in
     MSYS*|MINGW*)
@@ -12,11 +19,17 @@ case "$(uname)" in
 	pacman --noconfirm --sync --needed mingw-w64-x86_64-gcc
 	pacman --noconfirm --sync --needed mingw-w64-x86_64-cunit
 	export PATH="/mingw64/bin:$PATH"
+	configure_options+=(--disable-shared)
 	;;
 esac
 
 ./autogen.sh &&
-    ./configure --enable-manpages --enable-test-tool --enable-tests \
-		--enable-examples &&
+    ./configure "${configure_options[@]}" &&
     make &&
-    sudo make install
+    case "$(uname)" in
+	MSYS*|MINGW*)
+	    ;;
+	*)
+	    sudo make install
+	    ;;
+    esac
