@@ -536,6 +536,7 @@ enum scsi_inquiry_pagecode {
 	SCSI_INQUIRY_PAGECODE_SUPPORTED_VPD_PAGES          = 0x00,
 	SCSI_INQUIRY_PAGECODE_UNIT_SERIAL_NUMBER           = 0x80,
 	SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION        = 0x83,
+	SCSI_INQUIRY_PAGECODE_THIRD_PARTY_COPY             = 0x8F,
 	SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS                 = 0xB0,
 	SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS = 0xB1,
 	SCSI_INQUIRY_PAGECODE_LOGICAL_BLOCK_PROVISIONING   = 0xB2
@@ -685,6 +686,32 @@ struct scsi_inquiry_device_identification {
 	enum scsi_inquiry_pagecode pagecode;
 
 	struct scsi_inquiry_device_designator *designators;
+};
+
+enum third_party_copy_descriptor_type {
+	THIRD_PARTY_COPY_TYPE_SUPPORTED_COMMANDS  = 0x0001
+};
+
+struct third_party_copy_command_support {
+	struct third_party_copy_command_support *next;
+
+	int operation_code;
+	int service_action_length;
+	int *service_action;
+};
+
+struct third_party_copy_supported_commands {
+	enum third_party_copy_descriptor_type descriptor_type;
+
+	struct third_party_copy_command_support *commands_supported;
+};
+
+struct scsi_inquiry_third_party_copy {
+	enum scsi_inquiry_peripheral_qualifier qualifier;
+	enum scsi_inquiry_peripheral_device_type device_type;
+	enum scsi_inquiry_pagecode pagecode;
+
+	struct third_party_copy_supported_commands *supported_commands;
 };
 
 /*
