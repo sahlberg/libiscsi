@@ -27,8 +27,6 @@
 #include "scsi-lowlevel.h"
 #include "iscsi-test-cu.h"
 
-
-
 void
 test_receive_copy_results_copy_status(void)
 {

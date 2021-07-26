@@ -1557,9 +1557,9 @@ scsi_inquiry_unmarshall_third_party_copy(struct scsi_task *task)
 		return NULL;
 	}
 
-	inq->qualifier             = (task_get_uint8(task, 0) >> 5) & 0x07;
-	inq->device_type           = task_get_uint8(task, 0) & 0x1f;
-	inq->pagecode              = task_get_uint8(task, 1);
+	inq->qualifier = (task_get_uint8(task, 0) >> 5) & 0x07;
+	inq->device_type = task_get_uint8(task, 0) & 0x1f;
+	inq->pagecode = task_get_uint8(task, 1);
 
 	remaining = task_get_uint16(task, 2);
 	dptr = &task->datain.data[4];
