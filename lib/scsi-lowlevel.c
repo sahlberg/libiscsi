@@ -1495,6 +1495,97 @@ scsi_inquiry_unmarshall_device_identification(struct scsi_task *task)
 	return NULL;
 }
 
+static struct third_party_copy_supported_commands *
+third_party_copy_unmarshall_supported_commands(struct scsi_task *task,
+		unsigned char *dptr)
+{
+	struct third_party_copy_supported_commands *supported_commands =
+			scsi_malloc(task, sizeof(*supported_commands));
+	int remaining;
+	unsigned char *lptr;
+
+	if (supported_commands == NULL) {
+		return NULL;
+	}
+
+	supported_commands->descriptor_type = scsi_get_uint16(&dptr[0]);
+
+	remaining = dptr[4];
+	lptr = &dptr[5];
+	while (remaining > 0) {
+		struct third_party_copy_command_support *command =
+			scsi_malloc(task, sizeof(*command));
+		int i;
+
+		if (command == NULL) {
+			goto err;
+		}
+
+		command->next = supported_commands->commands_supported;
+		supported_commands->commands_supported = command;
+
+		command->operation_code = lptr[0];
+		command->service_action_length = lptr[1];
+		command->service_action = scsi_malloc(task,
+				sizeof(*command->service_action) * (command->service_action_length + 1));
+		if (command->service_action == NULL) {
+			goto err;
+		}
+		command->service_action[command->service_action_length] = 0;
+		for (i = 0; i < command->service_action_length; i++) {
+			command->service_action[i] = lptr[2 + i];
+		}
+
+		remaining -= command->service_action_length + 2;
+		lptr += command->service_action_length + 2;
+	}
+	return supported_commands;
+
+err:
+	return NULL;
+}
+
+static struct scsi_inquiry_third_party_copy *
+scsi_inquiry_unmarshall_third_party_copy(struct scsi_task *task)
+{
+	struct scsi_inquiry_third_party_copy *inq = scsi_malloc(task,
+			sizeof(*inq));
+	int remaining;
+	unsigned char *dptr;
+
+	if (inq == NULL) {
+		return NULL;
+	}
+
+	inq->qualifier = (task_get_uint8(task, 0) >> 5) & 0x07;
+	inq->device_type = task_get_uint8(task, 0) & 0x1f;
+	inq->pagecode = task_get_uint8(task, 1);
+
+	remaining = task_get_uint16(task, 2);
+	dptr = &task->datain.data[4];
+	while (remaining > 0) {
+		int copy_desc_type = scsi_get_uint16(&dptr[0]);
+		int copy_desc_len = scsi_get_uint16(&dptr[2]);
+
+		switch (copy_desc_type) {
+			case THIRD_PARTY_COPY_TYPE_SUPPORTED_COMMANDS:
+				inq->supported_commands =
+					third_party_copy_unmarshall_supported_commands(task, dptr);
+				if (inq->supported_commands == NULL) {
+					goto err;
+				}
+				break;
+		}
+
+		remaining -= copy_desc_len + 4;
+		dptr += copy_desc_len + 4;
+	}
+	return inq;
+
+err:
+	return NULL;
+}
+
 static struct scsi_inquiry_block_limits *
 scsi_inquiry_unmarshall_block_limits(struct scsi_task *task)
 {
@@ -1597,6 +1688,8 @@ scsi_inquiry_datain_unmarshall(struct scsi_task *task)
 		return scsi_inquiry_unmarshall_unit_serial_number(task);
 	case SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION:
 		return scsi_inquiry_unmarshall_device_identification(task);
+	case SCSI_INQUIRY_PAGECODE_THIRD_PARTY_COPY:
+		return scsi_inquiry_unmarshall_third_party_copy(task);
 	case SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS:
 		return scsi_inquiry_unmarshall_block_limits(task);
 	case SCSI_INQUIRY_PAGECODE_BLOCK_DEVICE_CHARACTERISTICS:
