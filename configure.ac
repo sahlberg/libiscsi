@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([libiscsi], m4_esyscmd(grep 'Version:' ./packaging/RPM/libiscsi.spec.in 2>/dev/null | head -1 | sed -e 's/[ \t]*Version:[ \t]*\([^ \t]*\)[ \t]*.*/\1/' | tr -d '\n'))
+AC_INIT([libiscsi], m4_esyscmd([grep 'Version:' ./packaging/RPM/libiscsi.spec.in 2>/dev/null | head -1 | sed -e 's/[ \t]*Version:[ \t]*\([^ \t]*\)[ \t]*.*/\1/' | tr -d '\n']))
 AC_CONFIG_SRCDIR([lib/init.c])
 AC_CONFIG_MACRO_DIR([m4])
 
