@@ -134,13 +134,19 @@ test_extendedcopy_large(void)
         scsi_free_scsi_task(edl_task);
 
         if (cp_len_bytes == 0) {
+                logging(LOG_NORMAL,
+                        "[SKIPPED] BLK_TO_BLK_OFF_SEG_DESCR not supported");
                 CU_PASS("[SKIPPED] BLK_TO_BLK_OFF_SEG_DESCR not supported");
+                return;
         }
         if (cp_len_bytes > TEST_XCOPY_LARGE_CP_LEN_MAX) {
                 cp_len_bytes = TEST_XCOPY_LARGE_CP_LEN_MAX;
         }
         if (num_blocks < (cp_len_bytes / block_size) * 2) {
+                logging(LOG_NORMAL,
+                        "[SKIPPED] device too small to handle maxlen XCOPY");
                 CU_PASS("[SKIPPED] device too small to handle maxlen XCOPY");
+                return;
         }
 
         write_blocks = num_blocks / 2;
