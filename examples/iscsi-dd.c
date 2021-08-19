@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <time.h>
+#include <assert.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
