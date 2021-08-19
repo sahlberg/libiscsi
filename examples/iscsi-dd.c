@@ -337,7 +337,7 @@ void fill_xcopy_queue(struct client *client)
 		}
 
 		data.size = XCOPY_DESC_OFFSET +
-			32 * 2 +	/* IDENT_DESCR_TGT_DESCR */
+			64 * 2 +	/* IDENT_DESCR_TGT_DESCR */
 			28;		/* BLK_TO_BLK_SEG_DESCR */
 		data.data = malloc(data.size);
 		if (data.data == NULL) {
@@ -362,6 +362,7 @@ void fill_xcopy_queue(struct client *client)
 		seg_desc_len = populate_seg_desc_b2b(xcopybuf + offset, 0, 0,
 				0, 1, num_blocks, client->pos, client->pos);
 		offset += seg_desc_len;
+                assert(offset <= data.size);
 
 		/* Initialise the parameter list header */
 		populate_param_header(xcopybuf, 1, 0, LIST_ID_USAGE_DISCARD, 0,

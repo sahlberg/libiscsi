@@ -2900,7 +2900,7 @@ int get_desc_len(enum ec_descr_type_code desc_type)
                 case IDENT_DESCR_TGT_DESCR:
                 default:
                         if (desc_type >= 0xE0 && desc_type <= 0xE9)
-                                desc_len = 32;
+                                desc_len = 64;
         }
 
         return desc_len;
