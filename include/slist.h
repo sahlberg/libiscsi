@@ -28,7 +28,7 @@
 	if ((*list) == NULL) {	 				\
 	   ISCSI_LIST_ADD((list), (item));				\
 	} else {						\
-	   void *head = (*list);				\
+           typeof(*list) head = (*list);                        \
 	   while ((*list)->next)				\
 	     (*list) = (*list)->next;				\
 	   (*list)->next = (item);				\
@@ -40,7 +40,7 @@
 	if ((*list) == (item)) { 				\
 	   (*list) = (item)->next;				\
 	} else {						\
-	   void *head = (*list);				\
+           typeof(*list) head = (*list);                        \
 	   while ((*list)->next && (*list)->next != (item))     \
 	     (*list) = (*list)->next;				\
 	   if ((*list)->next != NULL) {		    	    	\
@@ -52,7 +52,7 @@
 #define ISCSI_LIST_LENGTH(list,length) \
 	do { \
 	    (length) = 0; \
-		void *head = (*list); \
+            typeof(*list) head = (*list);        \
 		while ((*list)) { \
 			(*list) = (*list)->next; \
 			(length)++; \
