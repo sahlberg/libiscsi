@@ -33,7 +33,7 @@
 	     (*list) = (*list)->next;				\
 	   (*list)->next = (item);				\
 	   (item)->next = NULL;					\
-	   (*list) = head;					\
+	   (*list) = (__typeof(item))head;					\
 	}
 
 #define ISCSI_LIST_REMOVE(list, item) \
@@ -46,7 +46,7 @@
 	   if ((*list)->next != NULL) {		    	    	\
 	      (*list)->next = (*list)->next->next;		\
 	   }  		      					\
-	   (*list) = head;					\
+	   (*list) = (__typeof(item))head;					\
 	}
 
 #define ISCSI_LIST_LENGTH(list,length) \
@@ -57,7 +57,7 @@
 			(*list) = (*list)->next; \
 			(length)++; \
 		} \
-		(*list) = head; \
+	    (*list) = (__typeof(item))head;					\
 	} while (0);
 
 #endif /* __iscsi_slist_h__ */
