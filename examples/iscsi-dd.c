@@ -77,13 +77,13 @@ void write_cb(struct iscsi_context *iscsi, int status, void *command_data, void 
 	struct client *client = wt->client;
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
-		printf("Write10/16 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
+		fprintf(stderr, "Write10/16 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
 		scsi_free_scsi_task(task);
 		exit(10);
 	}
 
 	if (status != SCSI_STATUS_GOOD) {
-		printf("Write10/16 failed with %s\n", iscsi_get_error(iscsi));
+		fprintf(stderr, "Write10/16 failed with %s\n", iscsi_get_error(iscsi));
 		if (!client->ignore_errors) {
 			scsi_free_scsi_task(task);
 			exit(10);
@@ -118,13 +118,13 @@ void read_cb(struct iscsi_context *iscsi, int status, void *command_data, void *
 	struct scsi_task *task2;
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
-		printf("Read10/16 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
+		fprintf(stderr, "Read10/16 failed with sense key:%d ascq:%04x\n", task->sense.key, task->sense.ascq);
 		scsi_free_scsi_task(task);
 		exit(10);
 	}
 
 	if (status != SCSI_STATUS_GOOD) {
-		printf("Read10/16 failed with %s\n", iscsi_get_error(iscsi));
+		fprintf(stderr, "Read10/16 failed with %s\n", iscsi_get_error(iscsi));
 		if (!client->ignore_errors) {
 			scsi_free_scsi_task(task);
 			exit(10);
@@ -138,7 +138,7 @@ void read_cb(struct iscsi_context *iscsi, int status, void *command_data, void *
 	if (client->use_16_for_rw) {
 		read16_cdb = scsi_cdb_unmarshall(task, SCSI_OPCODE_READ16);
 		if (read16_cdb == NULL) {
-			printf("Failed to unmarshall READ16 CDB.\n");
+			fprintf(stderr, "Failed to unmarshall READ16 CDB.\n");
 			exit(10);
 		}
 		task2 = iscsi_write16_task(client->dst.iscsi, client->dst.lun,
@@ -148,7 +148,7 @@ void read_cb(struct iscsi_context *iscsi, int status, void *command_data, void *
 	} else {
 		read10_cdb = scsi_cdb_unmarshall(task, SCSI_OPCODE_READ10);
 		if (read10_cdb == NULL) {
-			printf("Failed to unmarshall READ10 CDB.\n");
+			fprintf(stderr, "Failed to unmarshall READ10 CDB.\n");
 			exit(10);
 		}
 		task2 = iscsi_write10_task(client->dst.iscsi, client->dst.lun,
@@ -157,7 +157,7 @@ void read_cb(struct iscsi_context *iscsi, int status, void *command_data, void *
 					   write_cb, wt);
 	}
 	if (task2 == NULL) {
-		printf("failed to send write10/16 command\n");
+		fprintf(stderr, "failed to send write10/16 command\n");
 		scsi_free_scsi_task(task);
 		exit(10);
 	}
@@ -191,7 +191,7 @@ void fill_read_queue(struct client *client)
 						 read_cb, client);
 		}
 		if (task == NULL) {
-			printf("failed to send read10/16 command\n");
+			fprintf(stderr, "failed to send read10/16 command\n");
 			exit(10);
 		}
 		client->pos += num_blocks;
@@ -288,14 +288,14 @@ void xcopy_cb(struct iscsi_context *iscsi, int status, void *command_data, void 
 	struct scsi_task *task = command_data;
 
 	if (status == SCSI_STATUS_CHECK_CONDITION) {
-		printf("XCOPY failed with sense key:%d ascq:%04x\n",
+		fprintf(stderr, "XCOPY failed with sense key:%d ascq:%04x\n",
 			task->sense.key, task->sense.ascq);
 		scsi_free_scsi_task(task);
 		exit(10);
 	}
 
 	if (status != SCSI_STATUS_GOOD) {
-		printf("XCOPY failed with %s\n", iscsi_get_error(iscsi));
+		fprintf(stderr, "XCOPY failed with %s\n", iscsi_get_error(iscsi));
 		if (!client->ignore_errors) {
 			scsi_free_scsi_task(task);
 			exit(10);
@@ -342,7 +342,7 @@ void fill_xcopy_queue(struct client *client)
 			28;		/* BLK_TO_BLK_SEG_DESCR */
 		data.data = malloc(data.size);
 		if (data.data == NULL) {
-			printf("failed to alloc XCOPY buffer\n");
+			fprintf(stderr, "failed to alloc XCOPY buffer\n");
 			exit(10);
 		}
 
@@ -373,7 +373,7 @@ void fill_xcopy_queue(struct client *client)
 						client->src.lun,
 						&data, xcopy_cb, client);
 		if (task == NULL) {
-			printf("failed to send XCOPY command\n");
+			fprintf(stderr, "failed to send XCOPY command\n");
 			exit(10);
 		}
 
@@ -734,15 +734,15 @@ int main(int argc, char *argv[])
 		}
 
 		if (poll(&pfd[0], 2, -1) < 0) {
-			printf("Poll failed\n");
+			fprintf(stderr, "Poll failed\n");
 			exit(10);
 		}
 		if (iscsi_service(client.src.iscsi, pfd[0].revents) < 0) {
-			printf("iscsi_service failed with : %s\n", iscsi_get_error(client.src.iscsi));
+			fprintf(stderr, "iscsi_service failed with : %s\n", iscsi_get_error(client.src.iscsi));
 			break;
 		}
 		if (iscsi_service(client.dst.iscsi, pfd[1].revents) < 0) {
-			printf("iscsi_service failed with : %s\n", iscsi_get_error(client.dst.iscsi));
+			fprintf(stderr, "iscsi_service failed with : %s\n", iscsi_get_error(client.dst.iscsi));
 			break;
 		}
 	}
