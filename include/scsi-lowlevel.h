@@ -30,10 +30,6 @@
 extern "C" {
 #endif
 
-#ifndef static_assert
-#define static_assert(e, m) extern char unused_array[1 - 2 * !(e)]
-#endif
-
 #define SCSI_CDB_MAX_SIZE			16
 
 enum scsi_opcode {
