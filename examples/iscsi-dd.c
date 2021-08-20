@@ -147,7 +147,7 @@ void read_cb(struct iscsi_context *iscsi, int status, void *command_data, void *
 	} else {
 		read10_cdb = scsi_cdb_unmarshall(task, SCSI_OPCODE_READ10);
 		if (read10_cdb == NULL) {
-			printf("Failed to unmarshall READ16 CDB.\n");
+			printf("Failed to unmarshall READ10 CDB.\n");
 			exit(10);
 		}
 		task2 = iscsi_write10_task(client->dst.iscsi, client->dst.lun,
@@ -156,7 +156,7 @@ void read_cb(struct iscsi_context *iscsi, int status, void *command_data, void *
 					   write_cb, wt);
 	}
 	if (task2 == NULL) {
-		printf("failed to send read16 command\n");
+		printf("failed to send write10/16 command\n");
 		scsi_free_scsi_task(task);
 		exit(10);
 	}
@@ -420,7 +420,7 @@ void cscd_ident_inq(struct iscsi_context *iscsi,
 	}
 
 	if (tgt_desig == NULL) {
-		fprintf(stderr, "No suitalble target descriptor format found");
+		fprintf(stderr, "No suitable target descriptor format found\n");
 		exit(10);
 	}
 
@@ -700,7 +700,7 @@ int main(int argc, char *argv[])
 			    client.use_xcopy, &client.dst);
 
 	if (client.src.blocksize != client.dst.blocksize) {
-		fprintf(stderr, "source LUN has different blocksize than destination than destination (%d != %d sectors)\n", client.src.blocksize, client.dst.blocksize);
+		fprintf(stderr, "source LUN has different blocksize than destination (%d != %d)\n", client.src.blocksize, client.dst.blocksize);
 		exit(10);
 	}
 
@@ -732,7 +732,7 @@ int main(int argc, char *argv[])
 		}
 
 		if (poll(&pfd[0], 2, -1) < 0) {
-			printf("Poll failed");
+			printf("Poll failed\n");
 			exit(10);
 		}
 		if (iscsi_service(client.src.iscsi, pfd[0].revents) < 0) {
