@@ -32,7 +32,7 @@ AC_ARG_ENABLE([werror], [AS_HELP_STRING([--disable-werror],
               [Disables building with -Werror by default])])
 
 if test "$ac_cv_c_compiler_gnu" = yes; then
-   WARN_CFLAGS="-Wall -W -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-align -Wcast-qual -Wno-strict-aliasing -Wvla"
+   WARN_CFLAGS="-Wall -W -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-align -Wcast-qual -Wvla"
    WARN_CFLAGS="$WARN_CFLAGS -Wno-unknown-warning-option -Wno-stringop-truncation"
    WARN_CFLAGS="$WARN_CFLAGS -Wno-unused-parameter"
    if test "x$enable_werror" != "xno"; then
