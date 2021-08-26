@@ -23,6 +23,7 @@
 #define EXTERN
 #endif
 
+#include <assert.h>
 #include <stdint.h>
 #include <sys/types.h>
 
