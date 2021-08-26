@@ -18,46 +18,39 @@
 #ifndef __iscsi_slist_h__
 #define __iscsi_slist_h__
 
-#define ISCSI_LIST_ADD(list, item) \
-	do {							\
-		(item)->next = (*list);				\
-		(*list) = (item);				\
-	} while (0);
+#define ISCSI_LIST_ADD(list, item)              \
+do {                                            \
+        (item)->next = (*list);                 \
+        (*list) = (item);                       \
+} while (0)
 
-#define ISCSI_LIST_ADD_END(list, item)	\
-	if ((*list) == NULL) {	 				\
-	   ISCSI_LIST_ADD((list), (item));				\
-	} else {						\
-           typeof(*list) head = (*list);                        \
-	   while ((*list)->next)				\
-	     (*list) = (*list)->next;				\
-	   (*list)->next = (item);				\
-	   (item)->next = NULL;					\
-	   (*list) = head;					\
-	}
+#define ISCSI_LIST_ADD_END(list, item)                  \
+do {                                                    \
+	if ((*list) == NULL) {                          \
+                ISCSI_LIST_ADD((list), (item));         \
+        } else {                                        \
+                typeof(*list) head = (*list);           \
+                while ((*list)->next)                   \
+                        (*list) = (*list)->next;        \
+                (*list)->next = (item);                 \
+                (item)->next = NULL;                    \
+                (*list) = head;                         \
+        }                                               \
+} while (0)
 
-#define ISCSI_LIST_REMOVE(list, item) \
-	if ((*list) == (item)) { 				\
-	   (*list) = (item)->next;				\
-	} else {						\
-           typeof(*list) head = (*list);                        \
-	   while ((*list)->next && (*list)->next != (item))     \
-	     (*list) = (*list)->next;				\
-	   if ((*list)->next != NULL) {		    	    	\
-	      (*list)->next = (*list)->next->next;		\
-	   }  		      					\
-	   (*list) = head;					\
-	}
-
-#define ISCSI_LIST_LENGTH(list,length) \
-	do { \
-	    (length) = 0; \
-            typeof(*list) head = (*list);        \
-		while ((*list)) { \
-			(*list) = (*list)->next; \
-			(length)++; \
-		} \
-		(*list) = head; \
-	} while (0);
+#define ISCSI_LIST_REMOVE(list, item)                                   \
+do {                                                                    \
+        if ((*list) == (item)) {                                        \
+                (*list) = (item)->next;                                 \
+        } else {                                                        \
+                typeof(*list) head = (*list);                           \
+                while ((*list)->next && (*list)->next != (item))        \
+                        (*list) = (*list)->next;                        \
+                if ((*list)->next != NULL) {		    	    	\
+                        (*list)->next = (*list)->next->next;		\
+                }  		      					\
+                (*list) = head;                                         \
+        }                                                               \
+} while (0)
 
 #endif /* __iscsi_slist_h__ */
