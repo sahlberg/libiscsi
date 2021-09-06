@@ -915,7 +915,10 @@ int clear_swp(struct scsi_device *sdev);
 
 int extendedcopy(struct scsi_device *sdev, struct iscsi_data *data, int status, enum scsi_sense_key key, int *ascq, int num_ascq);
 int get_desc_len(enum ec_descr_type_code desc_type);
-int populate_tgt_desc(unsigned char *desc, enum ec_descr_type_code desc_type, int luid_type, int nul, int peripheral_type, uint16_t rel_init_port_id, int pad, struct scsi_device *dev);
+int populate_tgt_desc(uint8_t desc[32], enum ec_descr_type_code desc_type,
+                      int luid_type, int nul, int peripheral_type,
+                      uint16_t rel_init_port_id, int pad,
+                      struct scsi_device *dev);
 int populate_seg_desc_hdr(unsigned char *hdr, enum ec_descr_type_code desc_type, int dc, int cat, uint16_t src_index, uint16_t dst_index);
 int populate_seg_desc_b2b(unsigned char *desc, int dc, int cat, int src_index, int dst_index, uint16_t num_blks, uint64_t src_lba, uint64_t dst_lba);
 int populate_seg_desc_b2b_off(unsigned char *desc, int cat, int src_index,

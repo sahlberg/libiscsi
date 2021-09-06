@@ -2906,7 +2906,11 @@ int get_desc_len(enum ec_descr_type_code desc_type)
         return desc_len;
 }
 
-void populate_ident_tgt_desc(unsigned char *buf, struct scsi_device *dev)
+/*
+ * Populate a 24 byte SCSI designator. See also Table 529 — Designation
+ * descriptor in SPC-6.
+ */
+static int populate_ident_tgt_desc(uint8_t buf[24], struct scsi_device *dev)
 {
         int ret;
         struct scsi_task *inq_di_task = NULL;
@@ -2914,15 +2918,19 @@ void populate_ident_tgt_desc(unsigned char *buf, struct scsi_device *dev)
         struct scsi_inquiry_device_designator *desig, *tgt_desig = NULL;
         enum scsi_designator_type prev_type = 0;
 
-        ret = inquiry(dev, &inq_di_task, 1, SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION, 255, EXPECT_STATUS_GOOD);
+        ret = inquiry(dev, &inq_di_task, 1,
+                      SCSI_INQUIRY_PAGECODE_DEVICE_IDENTIFICATION, 255,
+                      EXPECT_STATUS_GOOD);
         if (ret < 0 || inq_di_task == NULL) {
-                logging(LOG_NORMAL, "Failed to read Device Identification page");
-                goto finished;
+                logging(LOG_NORMAL,
+                        "Failed to read Device Identification page");
+                goto err;
         } else {
                 inq_di = scsi_datain_unmarshall(inq_di_task);
                 if (inq_di == NULL) {
-                        logging(LOG_NORMAL, "Failed to unmarshall inquiry datain blob");
-                        goto finished;
+                        logging(LOG_NORMAL,
+                                "Failed to unmarshall inquiry datain blob");
+                        goto err;
                 }
         }
 
@@ -2932,7 +2940,8 @@ void populate_ident_tgt_desc(unsigned char *buf, struct scsi_device *dev)
                 case SCSI_DESIGNATOR_TYPE_T10_VENDORT_ID:
                 case SCSI_DESIGNATOR_TYPE_EUI_64:
                 case SCSI_DESIGNATOR_TYPE_NAA:
-                        if (prev_type <= desig->designator_type) {
+                        if (prev_type <= desig->designator_type &&
+                            desig->designator_length <= 20) {
                                 tgt_desig = desig;
                                 prev_type = desig->designator_type;
                         }
@@ -2942,31 +2951,47 @@ void populate_ident_tgt_desc(unsigned char *buf, struct scsi_device *dev)
                 }
         }
         if (tgt_desig == NULL) {
-                logging(LOG_NORMAL, "No suitalble target descriptor format found");
-                goto finished;
+                logging(LOG_NORMAL,
+                        "No suitable target descriptor found");
+                goto err;
         }
 
+        memset(buf, 0, 24);
         buf[0] = tgt_desig->code_set;
-        buf[1] = (tgt_desig->designator_type & 0xF) | ((tgt_desig->association & 3) << 4);
+        buf[1] = (tgt_desig->designator_type & 0xF) |
+          ((tgt_desig->association & 3) << 4);
         buf[3] = tgt_desig->designator_length;
         memcpy(buf + 4, tgt_desig->designator, tgt_desig->designator_length);
-
- finished:
         scsi_free_scsi_task(inq_di_task);
+        return 0;
+
+err:
+        scsi_free_scsi_task(inq_di_task);
+        return -1;
 }
 
-int populate_tgt_desc(unsigned char *desc, enum ec_descr_type_code desc_type, int luid_type, int nul, int peripheral_type, uint16_t rel_init_port_id, int pad, struct scsi_device *dev)
+int populate_tgt_desc(uint8_t desc[32], enum ec_descr_type_code desc_type,
+                      int luid_type, int nul, int peripheral_type,
+                      uint16_t rel_init_port_id, int pad,
+                      struct scsi_device *dev)
 {
+        assert(desc_type < 256);
+        assert(luid_type < 4);
+        assert(nul < 2);
+        assert(peripheral_type < 32);
+
         desc[0] = desc_type;
         desc[1] = (luid_type << 6) | (nul << 5) | peripheral_type;
         scsi_set_uint16(&desc[2], rel_init_port_id);
 
-        if (desc_type == IDENT_DESCR_TGT_DESCR)
-                populate_ident_tgt_desc(desc+4, dev);
+        if (desc_type == IDENT_DESCR_TGT_DESCR &&
+            populate_ident_tgt_desc(desc + 4, dev) < 0)
+                return -1;
 
         if (peripheral_type == 0) {
-                // Issue readcapacity for each sd if testing with different LUs
-                // If single LU, use block_size from prior readcapacity involcation
+                // Issue read capacity for each sd if testing with different LUs
+                // If single LU, use block_size from prior readcapacity
+                // invocation.
                 desc[28] = pad << 2;
                 desc[29] = (block_size >> 16) & 0xFF;
                 desc[30] = (block_size >> 8) & 0xFF;

@@ -29,7 +29,7 @@
 void
 test_extendedcopy_validate_tgt_descr(void)
 {
-        int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
+        int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET, len;
         int ret;
         struct scsi_inquiry_standard *std_inq;
         struct iscsi_data data;
@@ -55,8 +55,13 @@ test_extendedcopy_validate_tgt_descr(void)
 
         logging(LOG_VERBOSE, "Unsupported LU_ID TYPE");
         /* Unsupported LU ID TYPE */
-        offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
+        len = populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
                         LU_ID_TYPE_RSVD, 0, 0, 0, 0, sd);
+        if (len < 0) {
+                CU_FAIL("Populating target descriptor failed");
+                return;
+        }
+        offset += len;
         tgt_desc_len = offset - XCOPY_DESC_OFFSET;
         offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 0,
                         2048, 0, num_blocks - 2048);
@@ -81,8 +86,13 @@ test_extendedcopy_validate_tgt_descr(void)
         /* NUL bit */
         memset(xcopybuf, 0, data.size);
         offset = XCOPY_DESC_OFFSET;
-        offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
+        len = populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
                         LU_ID_TYPE_LUN, 1, 0, 0, 0, sd);
+        if (len < 0) {
+                CU_FAIL("Populating target descriptor failed");
+                return;
+        }
+        offset += len;
         tgt_desc_len = offset - XCOPY_DESC_OFFSET;
         offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 0,
                         2048, 0, num_blocks - 2048);

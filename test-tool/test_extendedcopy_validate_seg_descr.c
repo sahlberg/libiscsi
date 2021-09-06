@@ -29,7 +29,7 @@
 void
 test_extendedcopy_validate_seg_descr(void)
 {
-        int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
+        int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET, len;
         struct iscsi_data data;
         unsigned char *xcopybuf;
 
@@ -46,8 +46,13 @@ test_extendedcopy_validate_seg_descr(void)
         memset(xcopybuf, 0, data.size);
 
         logging(LOG_VERBOSE, "Send invalid target descriptor index");
-        offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
+        len = populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
                         LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);
+        if (len < 0) {
+                CU_FAIL("Populating target descriptor failed");
+                return;
+        }
+        offset += len;
         tgt_desc_len = offset - XCOPY_DESC_OFFSET;
         /* Inaccessible DESTINATION TARGET DESCRIPTOR INDEX */
         offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 1,
@@ -62,8 +67,13 @@ test_extendedcopy_validate_seg_descr(void)
                         "Number of copy blocks beyond destination block device capacity");
         memset(xcopybuf, 0, data.size);
         offset = XCOPY_DESC_OFFSET;
-        offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
+        len = populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
                         LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);
+        if (len < 0) {
+                CU_FAIL("Populating target descriptor failed");
+                return;
+        }
+        offset += len;
         tgt_desc_len = offset - XCOPY_DESC_OFFSET;
         /* Beyond EOL */
         offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 0,

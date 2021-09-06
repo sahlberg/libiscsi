@@ -29,7 +29,7 @@
 void
 test_extendedcopy_simple(void)
 {
-        int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
+        int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET, len;
         struct iscsi_data data;
         unsigned char *xcopybuf;
         unsigned int copied_blocks;
@@ -69,8 +69,13 @@ test_extendedcopy_simple(void)
         memset(xcopybuf, 0, data.size);
 
         /* Initialize target descriptor list with one target descriptor */
-        offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
+        len = populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
                         LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);
+        if (len < 0) {
+                CU_FAIL("Populating target descriptor failed");
+                goto free;
+        }
+        offset += len;
         tgt_desc_len = offset - XCOPY_DESC_OFFSET;
 
         /* Initialize segment descriptor list with one segment descriptor */
@@ -94,6 +99,7 @@ test_extendedcopy_simple(void)
                 CU_FAIL("Blocks were not copied correctly");
         }
 
+free:
         free(buf1);
         free(buf2);
 }
@@ -107,6 +113,7 @@ test_extendedcopy_large(void)
         struct scsi_copy_results_op_params *opp = NULL;
         uint32_t cp_len_bytes = 0;
         int i, tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
+        int len;
         struct iscsi_data data;
         unsigned char *xcopybuf;
         unsigned int write_blocks;
@@ -174,8 +181,13 @@ test_extendedcopy_large(void)
         memset(xcopybuf, 0, data.size);
 
         /* Initialize target descriptor list with one target descriptor */
-        offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
+        len = populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
                         LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);
+        if (len < 0) {
+                CU_FAIL("Populating target descriptor failed");
+                goto free;
+        }
+        offset += len;
         tgt_desc_len = offset - XCOPY_DESC_OFFSET;
 
         /* Initialize segment descriptor list with one segment descriptor */
@@ -199,6 +211,7 @@ test_extendedcopy_large(void)
                 CU_FAIL("Blocks were not copied correctly");
         }
 
+free:
         free(buf1);
         free(buf2);
 }

@@ -33,7 +33,7 @@ test_receive_copy_results_copy_status(void)
         struct scsi_task *cs_task = NULL;
         struct scsi_copy_results_copy_status *csp;
         int tgt_desc_len = 0, seg_desc_len = 0;
-        int  offset = XCOPY_DESC_OFFSET, list_id = 1;
+        int  offset = XCOPY_DESC_OFFSET, len, list_id = 1;
         struct iscsi_data data;
         unsigned char *xcopybuf;
         struct scsi_inquiry_supported_pages *sup_inq;
@@ -148,8 +148,13 @@ test_receive_copy_results_copy_status(void)
         memset(xcopybuf, 0, data.size);
 
         /* Initialize target descriptor list with one target descriptor */
-        offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
+        len = populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
                         LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);
+        if (len < 0) {
+                CU_FAIL("Populating target descriptor failed");
+                return;
+        }
+        offset += len;
         tgt_desc_len = offset - XCOPY_DESC_OFFSET;
 
         /* Initialize segment descriptor list with one segment descriptor */

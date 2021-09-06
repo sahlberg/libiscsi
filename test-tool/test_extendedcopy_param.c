@@ -29,7 +29,7 @@
 void
 test_extendedcopy_param(void)
 {
-        int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET;
+        int tgt_desc_len = 0, seg_desc_len = 0, offset = XCOPY_DESC_OFFSET, len;
         struct iscsi_data data;
         unsigned char *xcopybuf;
 
@@ -45,8 +45,14 @@ test_extendedcopy_param(void)
         xcopybuf = data.data;
         memset(xcopybuf, 0, data.size);
 
-        offset += populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
+        len = populate_tgt_desc(xcopybuf+offset, IDENT_DESCR_TGT_DESCR,
                         LU_ID_TYPE_LUN, 0, 0, 0, 0, sd);
+        if (len < 0) {
+                CU_FAIL("Populating target descriptor failed");
+                return;
+        }
+
+        offset += len;
         tgt_desc_len = offset - XCOPY_DESC_OFFSET;
 
         offset += populate_seg_desc_b2b(xcopybuf+offset, 0, 0, 0, 0,

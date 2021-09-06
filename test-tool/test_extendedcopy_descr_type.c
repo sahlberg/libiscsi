@@ -33,6 +33,8 @@ int init_xcopybuf(unsigned char *buf, int tgt_desc_type, int seg_desc_type,
 
         offset += populate_tgt_desc(buf+offset, tgt_desc_type, LU_ID_TYPE_LUN,
                         0, 0, 0, 0, sd);
+        if (offset < 0)
+                return -1;
         *tgt_desc_len = offset - XCOPY_DESC_OFFSET;
         if (seg_desc_type == BLK_TO_BLK_SEG_DESCR)
                 offset += populate_seg_desc_b2b(buf+offset, 0, 0, 0, 0, 2048, 0,
@@ -48,7 +50,7 @@ int init_xcopybuf(unsigned char *buf, int tgt_desc_type, int seg_desc_type,
 void
 test_extendedcopy_descr_type(void)
 {
-        int tgt_desc_len = 0, seg_desc_len = 0, alloc_len;
+        int tgt_desc_len = 0, seg_desc_len = 0, alloc_len, len;
         struct iscsi_data data;
         unsigned char *xcopybuf;
 
@@ -67,8 +69,13 @@ test_extendedcopy_descr_type(void)
 
         logging(LOG_VERBOSE,
                         "Send Fibre Channel N_Port_Name target descriptor");
-        data.size = init_xcopybuf(xcopybuf, 0xE0, BLK_TO_BLK_SEG_DESCR,
+        len = init_xcopybuf(xcopybuf, 0xE0, BLK_TO_BLK_SEG_DESCR,
                         &tgt_desc_len, &seg_desc_len);
+        if (len < 0) {
+                CU_FAIL("Populating XCOPY descriptor failed");
+                return;
+        }
+        data.size = len;
         populate_param_header(xcopybuf, 1, 0, 0, 0,
                         tgt_desc_len, seg_desc_len, 0);
 
@@ -76,9 +83,14 @@ test_extendedcopy_descr_type(void)
 
         logging(LOG_VERBOSE, "Send Stream-to-Stream Copy segment descriptor");
         memset(xcopybuf, 0, alloc_len);
-        data.size = init_xcopybuf(xcopybuf, IDENT_DESCR_TGT_DESCR,
+        len = init_xcopybuf(xcopybuf, IDENT_DESCR_TGT_DESCR,
                         STRM_TO_STRM_SEG_DESCR,
                         &tgt_desc_len, &seg_desc_len);
+        if (len < 0) {
+                CU_FAIL("Populating XCOPY descriptor failed");
+                return;
+        }
+        data.size = len;
         populate_param_header(xcopybuf, 1, 0, 0, 0,
                         tgt_desc_len, seg_desc_len, 0);
 
