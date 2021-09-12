@@ -15,7 +15,7 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 AM_CPPFLAGS=-I. -I$(srcdir)/include
 AM_CFLAGS=$(WARN_CFLAGS)
 
-EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt \
+EXTRA_DIST = autogen.sh COPYING LICENCE-GPL-2.txt LICENCE-LGPL-2.1.txt README.md \
 	     packaging/RPM/libiscsi.spec.in packaging/RPM/makerpms.sh \
 	     aros/aros_compat.c aros/aros_compat.h aros/iscsi-ls.c \
 	     aros/Makefile.AROS test-tool/iscsi-multipath.h \
