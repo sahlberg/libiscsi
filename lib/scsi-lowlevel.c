@@ -1487,11 +1487,6 @@ scsi_inquiry_unmarshall_device_identification(struct scsi_task *task)
 	return inq;
 
  err:
-	while (inq->designators) {
-		struct scsi_inquiry_device_designator *dev = inq->designators;
-		inq->designators = dev->next;
-	}
-
 	return NULL;
 }
 
