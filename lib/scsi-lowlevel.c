@@ -1491,27 +1491,45 @@ scsi_inquiry_unmarshall_device_identification(struct scsi_task *task)
 }
 
 static struct third_party_copy_supported_commands *
-third_party_copy_unmarshall_supported_commands(struct scsi_task *task,
-		unsigned char *dptr)
+third_party_copy_unmarshall_supported_commands(struct scsi_task *task, int offset)
 {
-	struct third_party_copy_supported_commands *supported_commands =
-			scsi_malloc(task, sizeof(*supported_commands));
+	struct third_party_copy_supported_commands *supported_commands;
 	int remaining;
-	unsigned char *lptr;
 
+	if (offset + 5 > task->datain.size) {
+		return NULL;
+	}
+
+	supported_commands = scsi_malloc(task, sizeof(*supported_commands));
 	if (supported_commands == NULL) {
 		return NULL;
 	}
 
-	supported_commands->descriptor_type = scsi_get_uint16(&dptr[0]);
+	supported_commands->descriptor_type = task_get_uint16(task, offset);
+	supported_commands->descriptor_length = task_get_uint16(task, offset + 2);
+	supported_commands->commands_supported_list_length = task_get_uint8(task, offset + 4);
 
-	remaining = dptr[4];
-	lptr = &dptr[5];
+	if (offset + 4 + supported_commands->descriptor_length > task->datain.size) {
+		return NULL;
+	}
+	if (offset + 5 + supported_commands->commands_supported_list_length > task->datain.size) {
+		return NULL;
+	}
+
+	if (supported_commands->commands_supported_list_length == 0) {
+		return supported_commands;
+	}
+
+	remaining = supported_commands->commands_supported_list_length;
+	offset += 5;
 	while (remaining > 0) {
-		struct third_party_copy_command_support *command =
-			scsi_malloc(task, sizeof(*command));
-		int i;
+		struct third_party_copy_command_support *command;
 
+		if (offset + 2 > task->datain.size) {
+			goto err;
+		}
+
+		command = scsi_malloc(task, sizeof(*command));
 		if (command == NULL) {
 			goto err;
 		}
@@ -1519,35 +1537,196 @@ third_party_copy_unmarshall_supported_commands(struct scsi_task *task,
 		command->next = supported_commands->commands_supported;
 		supported_commands->commands_supported = command;
 
-		command->operation_code = lptr[0];
-		command->service_action_length = lptr[1];
-		command->service_action = scsi_malloc(task,
-				sizeof(*command->service_action) * (command->service_action_length + 1));
-		if (command->service_action == NULL) {
-			goto err;
-		}
-		command->service_action[command->service_action_length] = 0;
-		for (i = 0; i < command->service_action_length; i++) {
-			command->service_action[i] = lptr[2 + i];
+		command->operation_code = task_get_uint8(task, offset + 0);
+		command->service_actions_list_length = task_get_uint8(task, offset + 1);
+
+		if (command->service_actions_list_length > 0) {
+			int i;
+
+			if (offset + 2 + command->service_actions_list_length > task->datain.size) {
+				goto err;
+			}
+
+			command->service_actions = scsi_malloc(task,
+					sizeof(command->service_actions[0]) * command->service_actions_list_length);
+			if (command->service_actions == NULL) {
+				goto err;
+			}
+
+			for (i = 0; i < command->service_actions_list_length; i++) {
+				command->service_actions[i] = task_get_uint8(task, offset + 2 + i);
+			}
 		}
 
-		remaining -= command->service_action_length + 2;
-		lptr += command->service_action_length + 2;
+		remaining -= command->service_actions_list_length + 2;
+		offset += command->service_actions_list_length + 2;
 	}
+
 	return supported_commands;
 
 err:
 	return NULL;
 }
 
+static struct third_party_copy_parameter_data *
+third_party_copy_unmarshall_parameter_data(struct scsi_task *task, int offset)
+{
+	struct third_party_copy_parameter_data *parameter_data;
+	unsigned int i;
+
+	if (offset + 4 + 0x1c > task->datain.size) {
+		return NULL;
+	}
+
+	parameter_data = scsi_malloc(task, sizeof(*parameter_data));
+	if (parameter_data == NULL) {
+		return NULL;
+	}
+
+	parameter_data->descriptor_type = task_get_uint16(task, offset + 0);
+	parameter_data->descriptor_length = task_get_uint16(task, offset + 2);
+	for (i = 0; i < sizeof(parameter_data->reserved_1); i++) {
+		parameter_data->reserved_1[i] = task_get_uint8(task, offset + 4 + i);
+	}
+	parameter_data->maximum_cscd_descriptor_count = task_get_uint16(task, offset + 8);
+	parameter_data->maximum_segment_descriptor_count = task_get_uint16(task, offset + 10);
+	parameter_data->maximum_descriptor_list_length = task_get_uint32(task, offset + 12);
+	parameter_data->maximum_inline_data_length = task_get_uint32(task, offset + 16);
+	for (i = 0; i < sizeof(parameter_data->reserved_2); i++) {
+		parameter_data->reserved_2[i] = task_get_uint8(task, offset + 20 + i);
+	}
+
+	return parameter_data;
+}
+
+static struct third_party_copy_supported_descriptors *
+third_party_copy_unmarshall_supported_descriptors(struct scsi_task *task, int offset)
+{
+	struct third_party_copy_supported_descriptors *supported_descriptors;
+
+	if (offset + 5 > task->datain.size) {
+		return NULL;
+	}
+
+	supported_descriptors = scsi_malloc(task, sizeof(*supported_descriptors));
+	if (supported_descriptors == NULL) {
+		return NULL;
+	}
+
+	supported_descriptors->descriptor_type = task_get_uint16(task, offset + 0);
+	supported_descriptors->descriptor_length = task_get_uint16(task, offset + 2);
+	supported_descriptors->descriptor_list_length = task_get_uint8(task, offset + 4);
+
+	if (supported_descriptors->descriptor_length + 4 > task->datain.size) {
+		return NULL;
+	}
+	if (supported_descriptors->descriptor_list_length + 5 > task->datain.size) {
+		return NULL;
+	}
+
+	if (supported_descriptors->descriptor_list_length > 0) {
+		int i;
+
+		supported_descriptors->descriptor_type_codes = scsi_malloc(task,
+				sizeof(supported_descriptors->descriptor_type_codes[0]) *
+				supported_descriptors->descriptor_list_length);
+		if (supported_descriptors->descriptor_type_codes == NULL) {
+			return NULL;
+		}
+
+		for (i = 0; i < supported_descriptors->descriptor_list_length; i++) {
+			supported_descriptors->descriptor_type_codes[i] = task_get_uint8(task, offset + 5 + i);
+		}
+	}
+
+	return supported_descriptors;
+}
+
+static struct third_party_copy_supported_cscd_descriptors_id *
+third_party_copy_unmarshall_supported_cscd_descriptors_id(struct scsi_task *task, int offset)
+{
+	struct third_party_copy_supported_cscd_descriptors_id *supported_cscd_descriptors_id;
+
+	if (offset + 5 > task->datain.size) {
+		return NULL;
+	}
+
+	supported_cscd_descriptors_id = scsi_malloc(task, sizeof(*supported_cscd_descriptors_id));
+	if (supported_cscd_descriptors_id == NULL) {
+		return NULL;
+	}
+
+	supported_cscd_descriptors_id->descriptor_type = task_get_uint16(task, offset + 0);
+	supported_cscd_descriptors_id->descriptor_length = task_get_uint16(task, offset + 2);
+	supported_cscd_descriptors_id->cscd_descriptor_ids_list_length = task_get_uint16(task, offset + 4);
+
+	if (supported_cscd_descriptors_id->descriptor_length + 4 > task->datain.size) {
+		return NULL;
+	}
+	if (supported_cscd_descriptors_id->cscd_descriptor_ids_list_length + 6 > task->datain.size) {
+		return NULL;
+	}
+
+	if (supported_cscd_descriptors_id->cscd_descriptor_ids_list_length > 0) {
+		int i;
+
+		supported_cscd_descriptors_id->cscd_descriptor_ids = scsi_malloc(task,
+				sizeof(supported_cscd_descriptors_id->cscd_descriptor_ids[0]) *
+				supported_cscd_descriptors_id->cscd_descriptor_ids_list_length);
+		if (supported_cscd_descriptors_id->cscd_descriptor_ids == NULL) {
+			return NULL;
+		}
+
+		for (i = 0; i < supported_cscd_descriptors_id->cscd_descriptor_ids_list_length; i++) {
+			supported_cscd_descriptors_id->cscd_descriptor_ids[i] = task_get_uint16(task, offset + 6 + (i * sizeof(uint16_t)));
+		}
+	}
+
+	return supported_cscd_descriptors_id;
+}
+
+static struct third_party_copy_general_copy_operations *
+third_party_copy_unmarshall_general_copy_operations(struct scsi_task *task, int offset)
+{
+	struct third_party_copy_general_copy_operations *general_copy_operations;
+	//unsigned int i;
+
+	if (offset + 4 + 0x20 > task->datain.size) {
+		return NULL;
+	}
+
+	general_copy_operations = scsi_malloc(task, sizeof(*general_copy_operations));
+	if (general_copy_operations == NULL) {
+		return NULL;
+	}
+
+	general_copy_operations->descriptor_type = task_get_uint16(task, offset + 0);
+	general_copy_operations->descriptor_length = task_get_uint16(task, offset + 2);
+	general_copy_operations->total_concurrent_copies = task_get_uint32(task, offset + 4);
+	general_copy_operations->maximum_identified_concurrent_copies = task_get_uint32(task, offset + 8);
+	general_copy_operations->maximum_segment_length = task_get_uint32(task, offset + 12);
+	general_copy_operations->data_segment_granularity = task_get_uint8(task, offset + 16);
+	general_copy_operations->inline_data_granularity = task_get_uint8(task, offset + 17);
+	/*
+	for (i = 0; i < sizeof(general_copy_operations->reserved); i++) {
+		general_copy_operations->reserved[i] = task_get_uint8(task, offset + 18 + i);
+	}
+	*/
+
+	return general_copy_operations;
+}
+
 static struct scsi_inquiry_third_party_copy *
 scsi_inquiry_unmarshall_third_party_copy(struct scsi_task *task)
 {
-	struct scsi_inquiry_third_party_copy *inq = scsi_malloc(task,
-			sizeof(*inq));
-	int remaining;
-	unsigned char *dptr;
+	struct scsi_inquiry_third_party_copy *inq;
+	int remaining, offset;
 
+	if (task->datain.size < 4) {
+		return NULL;
+	}
+
+	inq = scsi_malloc(task, sizeof(*inq));
 	if (inq == NULL) {
 		return NULL;
 	}
@@ -1555,26 +1734,75 @@ scsi_inquiry_unmarshall_third_party_copy(struct scsi_task *task)
 	inq->qualifier = (task_get_uint8(task, 0) >> 5) & 0x07;
 	inq->device_type = task_get_uint8(task, 0) & 0x1f;
 	inq->pagecode = task_get_uint8(task, 1);
+	inq->page_length = task_get_uint16(task, 2);
 
-	remaining = task_get_uint16(task, 2);
-	dptr = &task->datain.data[4];
+	if (inq->page_length == 0) {
+		return inq;
+	}
+
+	remaining = inq->page_length;
+	offset = 4;
 	while (remaining > 0) {
-		int copy_desc_type = scsi_get_uint16(&dptr[0]);
-		int copy_desc_len = scsi_get_uint16(&dptr[2]);
+		int copy_desc_type;
+		int copy_desc_len;
 
-		switch (copy_desc_type) {
-			case THIRD_PARTY_COPY_TYPE_SUPPORTED_COMMANDS:
-				inq->supported_commands =
-					third_party_copy_unmarshall_supported_commands(task, dptr);
-				if (inq->supported_commands == NULL) {
-					goto err;
-				}
-				break;
+		if (offset + 4 > task->datain.size) {
+			goto err;
 		}
 
-		remaining -= copy_desc_len + 4;
-		dptr += copy_desc_len + 4;
+		copy_desc_type = task_get_uint16(task, offset + 0);
+		copy_desc_len = task_get_uint16(task, offset + 2) + 4;
+
+		if (copy_desc_len == 0) {
+			goto err;
+		}
+
+		if (offset + copy_desc_len > task->datain.size) {
+			goto err;
+		}
+
+		switch (copy_desc_type) {
+		case THIRD_PARTY_COPY_TYPE_SUPPORTED_COMMANDS:
+			inq->supported_commands =
+				third_party_copy_unmarshall_supported_commands(task, offset);
+			if (inq->supported_commands == NULL) {
+				goto err;
+			}
+			break;
+		case THIRD_PARTY_COPY_TYPE_PARAMETER_DATA:
+			inq->parameter_data =
+				third_party_copy_unmarshall_parameter_data(task, offset);
+			if (inq->parameter_data == NULL) {
+				goto err;
+			}
+			break;
+		case THIRD_PARTY_COPY_TYPE_SUPPORTED_DESCRIPTORS:
+			inq->supported_descriptors =
+				third_party_copy_unmarshall_supported_descriptors(task, offset);
+			if (inq->supported_descriptors == NULL) {
+				goto err;
+			}
+			break;
+		case THIRD_PARTY_COPY_TYPE_SUPPORTED_CSCD_DESCRIPTORS_ID:
+			inq->supported_cscd_descriptors_id =
+				third_party_copy_unmarshall_supported_cscd_descriptors_id(task, offset);
+			if (inq->supported_cscd_descriptors_id == NULL) {
+				goto err;
+			}
+			break;
+		case THIRD_PARTY_COPY_TYPE_GENERAL_COPY_OPERATIONS:
+			inq->general_copy_operations =
+				third_party_copy_unmarshall_general_copy_operations(task, offset);
+			if (inq->general_copy_operations == NULL) {
+				goto err;
+			}
+			break;
+		}
+
+		remaining -= copy_desc_len;
+		offset += copy_desc_len;
 	}
+
 	return inq;
 
 err:

@@ -109,8 +109,8 @@ test_receive_copy_results_copy_status(void)
         command = third_party_inq->supported_commands->commands_supported;
         while (command && !receive_copy_results_supported) {
                 if (command->operation_code == SCSI_OPCODE_RECEIVE_COPY_RESULTS) {
-                        for (i = 0; i < command->service_action_length; i++) {
-                                if (command->service_action[i] ==
+                        for (i = 0; i < command->service_actions_list_length; i++) {
+                                if (command->service_actions[i] ==
                                             SCSI_COPY_RESULTS_COPY_STATUS) {
                                         receive_copy_results_supported = true;
                                         break;

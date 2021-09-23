@@ -689,30 +689,84 @@ struct scsi_inquiry_device_identification {
 	struct scsi_inquiry_device_designator *designators;
 };
 
+/* Third-party copy descriptor type codes */
 enum third_party_copy_descriptor_type {
-	THIRD_PARTY_COPY_TYPE_SUPPORTED_COMMANDS  = 0x0001
+	THIRD_PARTY_COPY_TYPE_SUPPORTED_COMMANDS            = 0x0001,
+	THIRD_PARTY_COPY_TYPE_PARAMETER_DATA                = 0x0004,
+	THIRD_PARTY_COPY_TYPE_SUPPORTED_DESCRIPTORS         = 0x0008,
+	THIRD_PARTY_COPY_TYPE_SUPPORTED_CSCD_DESCRIPTORS_ID = 0x000c,
+	THIRD_PARTY_COPY_TYPE_GENERAL_COPY_OPERATIONS       = 0x8001
 };
 
+/* Command support descriptor */
 struct third_party_copy_command_support {
 	struct third_party_copy_command_support *next;
 
 	int operation_code;
-	int service_action_length;
-	int *service_action;
+	int service_actions_list_length;
+	int *service_actions;
 };
 
+/* Supported Commands third-party copy descriptor */
 struct third_party_copy_supported_commands {
 	enum third_party_copy_descriptor_type descriptor_type;
-
+	int descriptor_length;
+	int commands_supported_list_length;
 	struct third_party_copy_command_support *commands_supported;
 };
 
+/* Parameter Data third-party copy descriptor */
+struct third_party_copy_parameter_data {
+	enum third_party_copy_descriptor_type descriptor_type;
+	int descriptor_length;
+	unsigned char reserved_1[4];
+	int maximum_cscd_descriptor_count;
+	int maximum_segment_descriptor_count;
+	unsigned int maximum_descriptor_list_length;
+	unsigned int maximum_inline_data_length;
+	unsigned char reserved_2[12];
+};
+
+/* Supported Descriptors third-party copy descriptor */
+struct third_party_copy_supported_descriptors {
+	enum third_party_copy_descriptor_type descriptor_type;
+	int descriptor_length;
+	int descriptor_list_length;
+	int *descriptor_type_codes;
+};
+
+/* Supported CSCD Descriptor IDs third-party copy descriptor */
+struct third_party_copy_supported_cscd_descriptors_id {
+	enum third_party_copy_descriptor_type descriptor_type;
+	int descriptor_length;
+	int cscd_descriptor_ids_list_length;
+	int *cscd_descriptor_ids;
+};
+
+/* General Copy Operations third-party copy descriptor */
+struct third_party_copy_general_copy_operations {
+	enum third_party_copy_descriptor_type descriptor_type;
+	int descriptor_length;
+	unsigned int total_concurrent_copies;
+	unsigned int maximum_identified_concurrent_copies;
+	unsigned int maximum_segment_length;
+	int data_segment_granularity;
+	int inline_data_granularity;
+	unsigned char reserved[18];
+};
+
+/* Third-party Copy VPD page */
 struct scsi_inquiry_third_party_copy {
 	enum scsi_inquiry_peripheral_qualifier qualifier;
 	enum scsi_inquiry_peripheral_device_type device_type;
 	enum scsi_inquiry_pagecode pagecode;
+	int page_length;
 
 	struct third_party_copy_supported_commands *supported_commands;
+	struct third_party_copy_parameter_data *parameter_data;
+	struct third_party_copy_supported_descriptors *supported_descriptors;
+	struct third_party_copy_supported_cscd_descriptors_id *supported_cscd_descriptors_id;
+	struct third_party_copy_general_copy_operations *general_copy_operations;
 };
 
 /*

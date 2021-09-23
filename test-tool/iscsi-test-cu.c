@@ -90,6 +90,7 @@ static CU_TestInfo tests_inquiry[] = {
         { "MandatoryVPDSBC", test_inquiry_mandatory_vpd_sbc},
         { "SupportedVPD", test_inquiry_supported_vpd},
         { "VersionDescriptors", test_inquiry_version_descriptors},
+        { "VpdThirdPartyCopy", test_inquiry_vpd_third_party_copy},
         CU_TEST_INFO_NULL
 };
 
