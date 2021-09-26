@@ -46,7 +46,6 @@
 
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
-#include "iscsi-private.h"
 
 #include "iscsi-support.h"
 #include "iscsi-test-cu.h"
@@ -835,14 +834,14 @@ test_setup(void)
 {
         task = NULL;
         read_write_buf = NULL;
-        orig_queue_pdu = sd->iscsi_ctx ? sd->iscsi_ctx->drv->queue_pdu : NULL;
+        orig_queue_pdu = get_queue_pdu_fn(sd->iscsi_ctx);
 }
 
 void
 test_teardown(void)
 {
         if (sd->iscsi_ctx)
-                sd->iscsi_ctx->drv->queue_pdu = orig_queue_pdu;
+            set_queue_pdu_fn(sd->iscsi_ctx, orig_queue_pdu);
         free(read_write_buf);
         read_write_buf = NULL;
         scsi_free_scsi_task(task);

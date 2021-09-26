@@ -478,6 +478,15 @@ void logging(int level, const char *format, ...)
         printf("    %s\n", message);
 }
 
+queue_pdu_fn get_queue_pdu_fn(struct iscsi_context* iscsi)
+{
+        return iscsi? iscsi->drv->queue_pdu : NULL;
+}
+
+void set_queue_pdu_fn(struct iscsi_context* iscsi, queue_pdu_fn func) {
+        iscsi->drv->queue_pdu = func;
+}
+
 struct iscsi_context *
 iscsi_context_login(const char *initiatorname, const char *url, int *lun)
 {

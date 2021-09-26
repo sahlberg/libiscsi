@@ -767,6 +767,12 @@ extern int readonly;
 extern int sbc3_support;
 extern int maximum_transfer_length;
 
+struct iscsi_pdu;
+typedef int (*queue_pdu_fn)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+
+queue_pdu_fn get_queue_pdu_fn(struct iscsi_context* iscsi);
+void set_queue_pdu_fn(struct iscsi_context* iscsi, queue_pdu_fn func);
+
 struct scsi_device {
         char *error_str;
 
