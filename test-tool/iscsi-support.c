@@ -2130,7 +2130,7 @@ int report_supported_opcodes(struct scsi_device *sdev, struct scsi_task **out_ta
         task = send_scsi_command(sdev, task, NULL);
 
         ret = check_result("REPORT_SUPPORTED_OPCODES", sdev, task, status, key, ascq, num_ascq);
-        if (out_task) {
+        if (out_task && ret != -2 /* Not Supported */) {
                 *out_task = task;
         } else if (task) {
                 scsi_free_scsi_task(task);
