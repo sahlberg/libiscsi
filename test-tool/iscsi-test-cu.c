@@ -1447,13 +1447,14 @@ main(int argc, char *argv[])
         }
 
         rsop_task = NULL;
-        report_supported_opcodes(sd, &rsop_task, 1, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0, 65535,
+        res = report_supported_opcodes(sd, &rsop_task, 1, SCSI_REPORT_SUPPORTING_OPS_ALL, 0, 0, 65535,
                                  EXPECT_STATUS_GOOD);
-        if (rsop_task == NULL) {
+        if (res == -2) {
+            printf("Unsupport the REPORT_SUPPORTED_OPCODES\n");
+        } else if (rsop_task == NULL) {
                 printf("Failed to send REPORT_SUPPORTED_OPCODES command: %s\n", sd->error_str);
                 goto err_sds_free;
-        }
-        if (rsop_task->status == SCSI_STATUS_GOOD) {
+        } else if (rsop_task->status == SCSI_STATUS_GOOD) {
                 rsop = scsi_datain_unmarshall(rsop_task);
                 if (rsop == NULL) {
                         printf("failed to unmarshall REPORT_SUPPORTED_OPCODES data.\n");
