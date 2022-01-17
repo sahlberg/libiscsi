@@ -13,6 +13,8 @@ iscsi_discovery_sync
 iscsi_extended_copy_sync
 iscsi_extended_copy_task
 iscsi_free_discovery_data
+iscsi_force_reconnect
+iscsi_force_reconnect_sync
 iscsi_full_connect_async
 iscsi_full_connect_sync
 iscsi_get_error

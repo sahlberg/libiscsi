@@ -2,6 +2,7 @@ LIBRARY libiscsi
 EXPORTS
 iscsi_connect_async
 iscsi_connect_sync
+iscsi_force_reconnect_sync
 iscsi_reconnect_sync
 iscsi_create_context
 iscsi_destroy_context
@@ -10,6 +11,7 @@ iscsi_disconnect
 iscsi_discovery_async
 iscsi_discovery_sync
 iscsi_free_discovery_data
+iscsi_force_reconnect
 iscsi_full_connect_async
 iscsi_full_connect_sync
 iscsi_get_error
