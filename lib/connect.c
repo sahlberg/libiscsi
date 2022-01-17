@@ -378,7 +378,7 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
 	iscsi->pending_reconnect = 0;
 }
 
-int iscsi_reconnect(struct iscsi_context *iscsi)
+static int reconnect(struct iscsi_context *iscsi, int force)
 {
 	struct iscsi_context *tmp_iscsi;
 
@@ -397,7 +397,7 @@ int iscsi_reconnect(struct iscsi_context *iscsi)
 		return 0;
 	}
 
-	if (iscsi->old_iscsi && !iscsi->pending_reconnect) {
+	if (iscsi->old_iscsi && !iscsi->pending_reconnect && !force) {
 		return 0;
 	}
 
@@ -476,4 +476,14 @@ int iscsi_reconnect(struct iscsi_context *iscsi)
 
 	return iscsi_full_connect_async(iscsi, iscsi->portal,
 	                                iscsi->lun, iscsi_reconnect_cb, NULL);
+}
+
+int iscsi_reconnect(struct iscsi_context *iscsi)
+{
+	return reconnect(iscsi, 0);
+}
+
+int iscsi_force_reconnect(struct iscsi_context *iscsi)
+{
+	return reconnect(iscsi, 1);
 }

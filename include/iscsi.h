@@ -493,6 +493,33 @@ EXTERN int iscsi_reconnect(struct iscsi_context *iscsi);
 EXTERN int iscsi_reconnect_sync(struct iscsi_context *iscsi);
 
 /*
+ * Disconnect a connection to a target and try to reconnect (async version).
+ * This call returns immediately and the reconnect is processed in the
+ * background. Commands send to this connection will be queued and not
+ * processed until we have successfully reconnected.
+ *
+ * This will re-start connection (to the configured original portal) even if a
+ * pending reconnection is already underway, which may be useful if the current
+ * connection is not progressing.  It does not over-ride any existing re-try
+ * backoff or max retries state.
+ *
+ * Returns:
+ *  0 reconnect was successful
+ * <0 error
+ */
+EXTERN int iscsi_force_reconnect(struct iscsi_context *iscsi);
+
+/*
+ * Disconnect a connection to a target and try to force reconnection (sync
+ * version). This call will block until the connection is reestablished.
+ *
+ * Returns:
+ *  0 reconnect was successful
+ * <0 error
+ */
+EXTERN int iscsi_force_reconnect_sync(struct iscsi_context *iscsi);
+
+/*
  * Asynchronous call to perform an ISCSI login.
  *
  * Returns:

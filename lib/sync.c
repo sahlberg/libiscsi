@@ -226,6 +226,22 @@ int iscsi_reconnect_sync(struct iscsi_context *iscsi)
 	return (state.status == SCSI_STATUS_GOOD) ? 0 : -1;
 }
 
+int iscsi_force_reconnect_sync(struct iscsi_context *iscsi)
+{
+	struct iscsi_sync_state state;
+
+	memset(&state, 0, sizeof(state));
+
+	if (iscsi_force_reconnect(iscsi) != 0) {
+		iscsi_set_error(iscsi, "Failed to reconnect. %s", iscsi_get_error(iscsi));
+		return -1;
+	}
+
+	reconnect_event_loop(iscsi, &state);
+
+	return (state.status == SCSI_STATUS_GOOD) ? 0 : -1;
+}
+
 static void
 iscsi_task_mgmt_sync_cb(struct iscsi_context *iscsi, int status,
 	      void *command_data, void *private_data)
