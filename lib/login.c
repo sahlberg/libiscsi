@@ -1220,9 +1220,6 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				 * the target said. ImmediateData is NO.
 				 */
 				iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_NO;
-
-			} else {
-				iscsi->use_immediate_data = ISCSI_IMMEDIATE_DATA_YES;
 			}
 		}
 
