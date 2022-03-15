@@ -2912,9 +2912,15 @@ scsi_modesense_marshall_caching(struct scsi_task *task,
 	struct scsi_data *data;
 
 	data = scsi_malloc(task, sizeof(struct scsi_data));
+	if (data == NULL) {
+		return NULL;
+	}
 
 	data->size = 20 + hdr_size;
 	data->data = scsi_malloc(task, data->size);
+	if (data->data == NULL) {
+		return NULL;
+	}
 
 	if (mp->caching.ic)   data->data[hdr_size + 2] |= 0x80;
 	if (mp->caching.abpf) data->data[hdr_size + 2] |= 0x40;
@@ -2953,9 +2959,15 @@ scsi_modesense_marshall_control(struct scsi_task *task,
 	struct scsi_data *data;
 
 	data = scsi_malloc(task, sizeof(struct scsi_data));
+	if (data == NULL) {
+		return NULL;
+	}
 
 	data->size = 12 + hdr_size;
 	data->data = scsi_malloc(task, data->size);
+	if (data->data == NULL) {
+		return NULL;
+	}
 
 	data->data[hdr_size + 2] |= (mp->control.tst << 5) & 0xe0;
 	if (mp->control.tmf_only) data->data[hdr_size + 2] |= 0x10;
@@ -2993,9 +3005,15 @@ scsi_modesense_marshall_power_condition(struct scsi_task *task,
 	struct scsi_data *data;
 
 	data = scsi_malloc(task, sizeof(struct scsi_data));
+	if (data == NULL) {
+		return NULL;
+	}
 
 	data->size = 40 + hdr_size;
 	data->data = scsi_malloc(task, data->size);
+	if (data->data == NULL) {
+		return NULL;
+	}
 
 	data->data[hdr_size + 2] |=
 		(mp->power_condition.pm_bg_precedence << 6) & 0xc0;
@@ -3035,9 +3053,15 @@ scsi_modesense_marshall_disconnect_reconnect(struct scsi_task *task,
 	struct scsi_data *data;
 
 	data = scsi_malloc(task, sizeof(struct scsi_data));
+	if (data == NULL) {
+		return NULL;
+	}
 
 	data->size = 16 + hdr_size;
 	data->data = scsi_malloc(task, data->size);
+	if (data->data == NULL) {
+		return NULL;
+	}
 
 	data->data[hdr_size + 2] = mp->disconnect_reconnect.buffer_full_ratio;
 	data->data[hdr_size + 3] = mp->disconnect_reconnect.buffer_empty_ratio;
@@ -3064,9 +3088,15 @@ scsi_modesense_marshall_informational_exceptions_control(struct scsi_task *task,
 	struct scsi_data *data;
 
 	data = scsi_malloc(task, sizeof(struct scsi_data));
+	if (data == NULL) {
+		return NULL;
+	}
 
 	data->size = 12 + hdr_size;
 	data->data = scsi_malloc(task, data->size);
+	if (data->data == NULL) {
+		return NULL;
+	}
 
 	if (mp->iec.perf)     data->data[hdr_size + 2] |= 0x80;
 	if (mp->iec.ebf)      data->data[hdr_size + 2] |= 0x20;
