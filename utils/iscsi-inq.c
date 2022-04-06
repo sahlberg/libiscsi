@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
 	static struct option long_options[] = {
 		{"help",           no_argument,          NULL,        'h'},
 		{"usage",          no_argument,          NULL,        'u'},
-		{"debug",          no_argument,          NULL,        'd'},
+		{"debug",          required_argument,    NULL,        'd'},
 		{"initiator-name", required_argument,    NULL,        'i'},
 		{"evpd",           required_argument,    NULL,        'e'},
 		{"pagecode",       required_argument,    NULL,        'c'},
@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
 	};
 	int option_index;
 
-	while ((c = getopt_long(argc, argv, "h?udi:e:c:", long_options,
+	while ((c = getopt_long(argc, argv, "h?ud:i:e:c:", long_options,
 			&option_index)) != -1) {
 		switch (c) {
 		case 'h':
@@ -260,7 +260,7 @@ int main(int argc, char *argv[])
 			show_usage = 1;
 			break;
 		case 'd':
-			debug = 1;
+			debug = atoi(optarg);
 			break;
 		case 'i':
 			initiator = optarg;
