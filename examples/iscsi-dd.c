@@ -131,6 +131,11 @@ void read_cb(struct iscsi_context *iscsi, int status, void *command_data, void *
 	}
 
 	wt = malloc(sizeof(struct write_task));
+	if (wt == NULL) {
+		fprintf(stderr, "failed to alloc write task\n");
+		exit(10);
+	}
+	
 	wt->rt = task;
 	wt->client = client;
 
@@ -430,6 +435,11 @@ void cscd_ident_inq(struct iscsi_context *iscsi,
 	_tgt_desig->designator_type = tgt_desig->designator_type;
 	_tgt_desig->designator_length = tgt_desig->designator_length;
 	_tgt_desig->designator = malloc(tgt_desig->designator_length);
+	if (_tgt_desig->designator == NULL) {
+		fprintf(stderr, "failed to alloc designator\n");
+		exit(10);
+	}
+	
 	memcpy(_tgt_desig->designator, tgt_desig->designator, tgt_desig->designator_length);
 
 	scsi_free_scsi_task(task);
