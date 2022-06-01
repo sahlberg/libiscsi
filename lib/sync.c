@@ -1868,6 +1868,9 @@ iscsi_discovery_cb(struct iscsi_context *iscsi, int status,
                 struct iscsi_discovery_address *datmp;
 
                 datmp = malloc(sizeof(struct iscsi_discovery_address));
+		if (datmp == NULL) {
+			return;
+		}
                 memset(datmp, 0, sizeof(struct iscsi_discovery_address));
                 datmp->target_name = strdup(da->target_name);
                 datmp->next = dahead;
@@ -1877,6 +1880,9 @@ iscsi_discovery_cb(struct iscsi_context *iscsi, int status,
                         struct iscsi_target_portal *potmp;
 
                         potmp = malloc(sizeof(struct iscsi_target_portal));
+			if (potmp == NULL) {
+				return;
+			}
                         memset(potmp, 0, sizeof(struct iscsi_target_portal));
                         potmp->portal = strdup(po->portal);
 
