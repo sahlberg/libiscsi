@@ -29,22 +29,34 @@
 /*
  * list of persistent reservation types to test, in order
  */
-static enum scsi_persistent_out_type pr_types_to_test[] = {
-        SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
-        SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS,
-        SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY,
-        SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY,
-        SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS,
-        SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS,
-        0
+static struct test_prin_report_caps_types {
+	enum scsi_persistent_reservation_type_mask mask;
+	enum scsi_persistent_out_type op;
+} report_caps_types_array[] = {
+	{ SCSI_PR_TYPE_MASK_WR_EX_AR,
+	  SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_ALL_REGISTRANTS },
+	{ SCSI_PR_TYPE_MASK_EX_AC_RO,
+	  SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_REGISTRANTS_ONLY },
+	{ SCSI_PR_TYPE_MASK_WR_EX_RO,
+	  SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE_REGISTRANTS_ONLY },
+	{ SCSI_PR_TYPE_MASK_EX_AC,
+	  SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS },
+	{ SCSI_PR_TYPE_MASK_WR_EX,
+	  SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE },
+	{ SCSI_PR_TYPE_MASK_EX_AC_AR,
+	  SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS_ALL_REGISTRANTS },
+	{ 0, 0 }
 };
 
 
 void
 test_prout_reserve_simple(void)
 {
+        struct scsi_persistent_reserve_in_report_capabilities *rcaps = NULL;
+        uint16_t pr_type_mask = SCSI_PR_TYPE_MASK_ALL;
+        struct test_prin_report_caps_types *type;
+        struct scsi_task *tsk;
         int ret = 0;
-        int i;
         const unsigned long long key = rand_key();
 
 
@@ -59,24 +71,35 @@ test_prout_reserve_simple(void)
         }        
         CU_ASSERT_EQUAL(ret, 0);
 
-        /* test each reservatoin type */
-        for (i = 0; pr_types_to_test[i] != 0; i++) {
-                enum scsi_persistent_out_type pr_type = pr_types_to_test[i];
+        ret = prin_report_caps(sd, &tsk, &rcaps);
+        if (!ret && rcaps->tmv)
+                pr_type_mask = rcaps->persistent_reservation_type_mask;
+
+        /* test each supported reservatoin type */
+        for (type = &report_caps_types_array[0]; type->mask != 0; type++) {
+	        if (!(pr_type_mask & type->mask)) {
+                        logging(LOG_NORMAL,
+                                "PERSISTENT RESERVE op 0x%x not supported",
+                                type->op);
+                        continue;
+                }
 
                 /* reserve the target */
-                ret = prout_reserve(sd, key, pr_type);
+                ret = prout_reserve(sd, key, type->op);
                 CU_ASSERT_EQUAL(ret, 0);
 
                 /* verify target reservation */
                 ret = prin_verify_reserved_as(sd,
-                    pr_type_is_all_registrants(pr_type) ? 0 : key,
-                    pr_type);
+                    pr_type_is_all_registrants(type->op) ? 0 : key,
+                    type->op);
                 CU_ASSERT_EQUAL(ret, 0);
 
                 /* release our reservation */
-                ret = prout_release(sd, key, pr_type);
+                ret = prout_release(sd, key, type->op);
                 CU_ASSERT_EQUAL(ret, 0);
         }
+
+        scsi_free_scsi_task(tsk);
 
         /* remove our key from the target */
         ret = prout_register_key(sd, 0, key);
