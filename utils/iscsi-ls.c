@@ -40,6 +40,7 @@ WSADATA wsaData;
 #include <stdint.h>
 #include <string.h>
 #include <strings.h>
+#include <getopt.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
@@ -328,7 +329,7 @@ void print_help(void)
 	fprintf(stderr, "  -i, --initiator-name=iqn-name     Initiatorname to use\n");
 	fprintf(stderr, "  -d, --debug                       Print debug information\n");
 	fprintf(stderr, "  -s, --show-luns                   Show the luns for each target\n");
-	fprintf(stderr, "      --url                         Output targets in URL format\n");
+	fprintf(stderr, "  -U, --url                         Output targets in URL format\n");
 	fprintf(stderr, "                                    (does not work with -s)\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Help options:\n");
@@ -349,7 +350,8 @@ int main(int argc, char *argv[])
 	struct iscsi_url *iscsi_url = NULL;
 	struct client_state state;
 	char *url = NULL;
-	int i;
+	int c;
+	int option_index;
 	static int show_help = 0, show_usage = 0, debug = 0;
 
 #ifdef _WIN32
@@ -359,31 +361,44 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-        for (i = 1; i < argc; i++) {
-                if (!strcmp(argv[i], "-?") ||
-                    !strcmp(argv[i], "-h") ||
-                    !strcmp(argv[i], "--help")) {
-                                show_help = 1;
-                } else if (!strcmp(argv[i], "-u") ||
-                           !strcmp(argv[i], "-usage")) {
+	static struct option long_options[] = {
+		{"help",           no_argument,          NULL,        'h'},
+		{"usage",          no_argument,          NULL,        'u'},
+		{"debug",          no_argument,          NULL,        'd'},
+		{"initiator-name", required_argument,    NULL,        'i'},
+		{"show-luns",      no_argument,          NULL,        's'},
+		{"url",            no_argument,          NULL,        'U'},
+		{0, 0, 0, 0}
+	};
+
+	while ((c = getopt_long(argc, argv, "h?udi:sU", long_options,
+				&option_index)) != -1) {
+		switch (c) {
+		case 'h':
+		case '?':
+			show_help = 1;
+			break;
+		case 'u':
 			show_usage = 1;
-                } else if (!strcmp(argv[i], "-d") ||
-                           !strcmp(argv[i], "--debug")) {
+			break;
+		case 'd':
 			debug = 1;
-                } else if (!strcmp(argv[i], "-i") ||
-                           !strcmp(argv[i], "--initiator-name")) {
-			initiator = argv[++i];
-                } else if (!strcmp(argv[i], "-s") ||
-                           !strcmp(argv[i], "--show-luns")) {
+			break;
+		case 'i':
+			initiator = optarg;
+			break;
+		case 's':
 			showluns = 1;
-                } else if (!strcmp(argv[i], "-U") ||
-                           !strcmp(argv[i], "--url")) {
+			break;
+		case 'U':
 			useurls = 1;
-                } else if (!strncmp("iscsi://", argv[i], 8) ||
-                           !strncmp("iser://", argv[i], 7)) {
-                        url = strdup(argv[i]);
-                }
-        }
+			break;
+		default:
+			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
+			print_help();
+			exit(0);
+		}
+	}
 
 	if (show_help != 0) {
 		print_help();
@@ -397,6 +412,9 @@ int main(int argc, char *argv[])
 
 	memset(&state, 0, sizeof(state));
 
+	if (argv[optind] != NULL) {
+		url = strdup(argv[optind]);
+	}
 	if (url == NULL) {
 		fprintf(stderr, "You must specify iscsi target portal.\n");
 		print_usage();
