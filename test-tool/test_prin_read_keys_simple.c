@@ -52,10 +52,10 @@ test_prin_read_keys_simple(void)
 
         logging(LOG_VERBOSE, "Test ADDITIONAL_LENGTH matches DATA_IN size.");
         al = scsi_get_uint32(&task->datain.data[4]);
-        if (al != task->datain.size - 8) {
+        if (al) {
                 logging(LOG_NORMAL,
-                    "[FAILED] ADDITIONAL_LENGTH was %d bytes but %d was expected.",
-                        al, task->datain.size - 8);
+                    "[FAILED] ADDITIONAL_LENGTH was %d bytes but 0 was expected.",
+                        al);
                 return;
         }
 }
