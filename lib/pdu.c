@@ -622,7 +622,7 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 			return -1;
 		}
 
-		if (is_finished) {
+		if (is_finished && iscsi->waitpdu != NULL) {
 			ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
 			iscsi->drv->free_pdu(iscsi, pdu);
 		}
