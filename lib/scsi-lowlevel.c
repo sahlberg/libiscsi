@@ -490,9 +490,8 @@ scsi_reportluns_datain_unmarshall(struct scsi_task *task)
 	}
 
 	list_size = task_get_uint32(task, 0) + 8;
-	if (list_size < task->datain.size) {
-		return NULL;
-	}
+	if (list_size > task->datain.size)
+                list_size = task->datain.size;
 
 	num_luns = list_size / 8 - 1;
 	list = scsi_malloc(task, offsetof(struct scsi_reportluns_list, luns)
