@@ -90,7 +90,7 @@ chap_mod_strip_replace_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	ret = test_iscsi_strip_tag(iscsi, pdu, "CHAP_A=");
 	if (ret == -ENOENT) {
 		logging(LOG_VERBOSE, "ignoring login PDU without CHAP_A");
-		goto out;;
+		goto out;
 	}
 	if (ret < 0) {
 		return ret;
