@@ -9,7 +9,8 @@ image:
 clone_depth: 5
 
 install:
-  - sh: 'ci/install.sh'
+  - sh:  'ci/install.sh'
+  - cmd: 'ci\install.bat'
 
 build_script:
   - sh:  'ci/build.sh'
