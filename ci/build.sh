@@ -16,7 +16,7 @@ esac
 
 ./autogen.sh &&
     ./configure "${configure_options[@]}" &&
-    make &&
+    make -j$(nproc) &&
     case "$(uname)" in
 	MSYS*|MINGW*)
 	    ;;
