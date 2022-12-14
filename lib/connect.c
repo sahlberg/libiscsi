@@ -469,6 +469,10 @@ static int reconnect(struct iscsi_context *iscsi, int force)
 		tmp_iscsi->old_iscsi = iscsi->old_iscsi;
 	} else {
 		tmp_iscsi->old_iscsi = malloc(sizeof(struct iscsi_context));
+		if (!tmp_iscsi->old_iscsi) {
+			free(tmp_iscsi);
+			return -1;
+		}
 		memcpy(tmp_iscsi->old_iscsi, iscsi, sizeof(struct iscsi_context));
 	}
 	memcpy(iscsi, tmp_iscsi, sizeof(struct iscsi_context));
