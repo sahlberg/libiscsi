@@ -48,6 +48,9 @@ struct addrinfo **res)
   struct sockaddr_in *sin;
 
   sin = malloc(sizeof(struct sockaddr_in));
+  if (!sin)
+    return -1;
+
   sin->sin_len = sizeof(struct sockaddr_in);
   sin->sin_family=AF_INET;
 
@@ -60,6 +63,8 @@ struct addrinfo **res)
   } 
 
   *res = malloc(sizeof(struct addrinfo));
+  if (!*res)
+    return -2;
 
   (*res)->ai_family = AF_INET;
   (*res)->ai_addrlen = sizeof(struct sockaddr_in);
