@@ -90,11 +90,7 @@ void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data) {
 struct iscsi_pdu*
 iscsi_tcp_new_pdu(struct iscsi_context *iscsi, size_t size)
 {
-	struct iscsi_pdu *pdu;
-
-	pdu = iscsi_szmalloc(iscsi, size);
-
-	return pdu;
+	return iscsi_szmalloc(iscsi, size);
 }
 
 struct iscsi_pdu *
