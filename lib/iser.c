@@ -369,8 +369,6 @@ iser_free_rx_descriptors(struct iser_conn *iser_conn)
 	iscsi_free(iscsi, iser_conn->rx_descs);
 
 	iser_conn->rx_descs = NULL;
-
-	return;
 }
 
 static void
@@ -399,8 +397,6 @@ iser_free_reg_mr(struct iser_conn *iser_conn)
 		iscsi_free(iscsi, temp_chunk);
 	}
 	iser_conn->buf_chunk = NULL;
-
-	return;
 }
 
 /*
@@ -460,8 +456,6 @@ iser_free_iser_conn_res(struct iser_conn *iser_conn, bool destroy)
 				iscsi_set_error(iscsi, "Failed to deallocate pd");
 		}
 	}
-
-	return;
 }
 
 /*
@@ -490,8 +484,6 @@ iser_conn_release(struct iscsi_context *iscsi)
 		rdma_destroy_event_channel(iser_conn->cma_channel);
 		iser_conn->cma_channel = NULL;
 	}
-
-	return;
 }
 
 /*
@@ -511,8 +503,6 @@ iser_conn_terminate(struct iser_conn *iser_conn)
 			iscsi_set_error(iscsi, "Failed to disconnect, conn: 0x%p, err %d\n",
 					iser_conn, ret);
 	}
-
-	return;
 }
 
 /*
