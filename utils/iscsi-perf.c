@@ -268,6 +268,7 @@ int main(int argc, char *argv[])
 		{"random-blocks",  no_argument,          NULL,        'R'},
 		{"logging",        no_argument,          NULL,        'l'},
 		{"ignore-errors",  no_argument,          NULL,        'n'},
+		{"help",           no_argument,          NULL,        'h'},
 		{0, 0, 0, 0}
 	};
 	int option_index;
@@ -279,7 +280,7 @@ int main(int argc, char *argv[])
 	
 	printf("iscsi-perf version %s - (c) 2014-2015 by Peter Lieven <pl@ĸamp.de>\n\n", PERF_VERSION);
 
-	while ((c = getopt_long(argc, argv, "i:m:b:t:lnrRx:", long_options,
+	while ((c = getopt_long(argc, argv, "i:m:b:t:lnrRx:h", long_options,
 			&option_index)) != -1) {
 		switch (c) {
 		case 'i':
@@ -308,6 +309,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'x':
 			client.max_reconnects = atoi(optarg);
+			break;
+		case 'h':
+			usage();
 			break;
 		default:
 			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
