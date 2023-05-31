@@ -48,6 +48,7 @@ TAGS
 /utils/iscsi-inq
 /utils/iscsi-ls
 /utils/iscsi-perf
+/utils/iscsi-pr
 /utils/iscsi-readcapacity16
 /utils/iscsi-swp
 /libiscsi.pc
