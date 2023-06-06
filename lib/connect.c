@@ -454,6 +454,8 @@ static int reconnect(struct iscsi_context *iscsi, int force)
 	tmp_iscsi->cache_allocations = iscsi->cache_allocations;
 	tmp_iscsi->scsi_timeout = iscsi->scsi_timeout;
 	tmp_iscsi->no_ua_on_reconnect = iscsi->no_ua_on_reconnect;
+	tmp_iscsi->fd_dup_cb = iscsi->fd_dup_cb;
+	tmp_iscsi->fd_dup_opaque = iscsi->fd_dup_opaque;
 
 	tmp_iscsi->reconnect_max_retries = iscsi->reconnect_max_retries;
 

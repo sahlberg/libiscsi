@@ -286,3 +286,4 @@ scsi_task_set_iov_out
 scsi_version_to_str
 scsi_version_descriptor_to_str
 win32_poll
+iscsi_set_fd_dup_cb
