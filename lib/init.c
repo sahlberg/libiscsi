@@ -831,3 +831,12 @@ iscsi_set_timeout(struct iscsi_context *iscsi, int timeout)
 	iscsi->scsi_timeout = timeout;
 	return 0;
 }
+
+void
+iscsi_set_fd_dup_cb(struct iscsi_context *iscsi,
+		    void (*cb)(struct iscsi_context *iscsi, void *opaque),
+		    void *opaque)
+{
+	iscsi->fd_dup_cb = cb;
+	iscsi->fd_dup_opaque = opaque;
+}

@@ -228,7 +228,7 @@ static int iscsi_tcp_connect(struct iscsi_context *iscsi, union socket_address *
 	}
 
 	if (iscsi->old_iscsi && iscsi->fd != iscsi->old_iscsi->fd) {
-		if (dup2(iscsi->fd, iscsi->old_iscsi->fd) == -1) {
+		if (iscsi_dup2(iscsi, iscsi->fd, iscsi->old_iscsi->fd) == -1) {
 			return -1;
 		}
 		close(iscsi->fd);

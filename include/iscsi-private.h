@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <time.h>
+#include <unistd.h>
 
 #if defined(_WIN32)
 #include <basetsd.h>
@@ -171,6 +172,8 @@ struct iscsi_context {
 	struct iscsi_context *old_iscsi;
 	int retry_cnt;
 	int no_ua_on_reconnect;
+	void (*fd_dup_cb)(struct iscsi_context *iscsi, void *opaque);
+	void *fd_dup_opaque;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40
@@ -396,6 +399,15 @@ typedef struct iscsi_transport {
 	int (*get_fd)(struct iscsi_context *iscsi);
 	int (*which_events)(struct iscsi_context *iscsi);
 } iscsi_transport;
+
+static inline int iscsi_dup2(struct iscsi_context *iscsi, int oldfd, int newfd)
+{
+	int ret = dup2(oldfd, newfd);
+	if ((ret >= 0) && iscsi->fd_dup_cb)
+		iscsi->fd_dup_cb(iscsi, iscsi->fd_dup_opaque);
+
+	return ret;
+}
 
 #ifdef __cplusplus
 }

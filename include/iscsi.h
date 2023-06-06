@@ -1648,6 +1648,12 @@ iscsi_set_reconnect_max_retries(struct iscsi_context *iscsi, int count);
 EXTERN void
 iscsi_set_no_ua_on_reconnect(struct iscsi_context *iscsi, int state);
 
+/* Set callback on iscsi file descriptor on duplicating */
+EXTERN void
+iscsi_set_fd_dup_cb(struct iscsi_context *iscsi,
+		    void (*cb)(struct iscsi_context *iscsi, void *opaque),
+		    void *opaque);
+
 #ifdef __cplusplus
 }
 #endif

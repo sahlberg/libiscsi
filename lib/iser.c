@@ -1525,7 +1525,7 @@ static int iser_connected_handler(struct rdma_cm_id *cma_id) {
 	struct iscsi_context *iscsi = cma_id->context;
 	struct iser_conn *iser_conn = iscsi->opaque;
 
-	if (dup2(iser_conn->comp_channel->fd, iscsi->fd) == -1) {
+	if (iscsi_dup2(iscsi, iser_conn->comp_channel->fd, iscsi->fd) == -1) {
 		return -1;
 	}
 
@@ -1683,7 +1683,7 @@ iscsi_iser_connect(struct iscsi_context *iscsi, union socket_address *sa,__attri
 		goto error;
 	}
 
-	if (dup2(iser_conn->cma_channel->fd, iscsi->fd) < 0) {
+	if (iscsi_dup2(iscsi, iser_conn->cma_channel->fd, iscsi->fd) < 0) {
 		iscsi_set_error(iscsi, "Failed dup event channel fd");
 		goto error;
 	}
