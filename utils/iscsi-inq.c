@@ -260,16 +260,16 @@ int main(int argc, char *argv[])
 			show_usage = 1;
 			break;
 		case 'd':
-			debug = atoi(optarg);
+			debug = strtol(optarg, NULL, 0);
 			break;
 		case 'i':
 			initiator = optarg;
 			break;
 		case 'e':
-			evpd = atoi(optarg);
+			evpd = strtol(optarg, NULL, 0);
 			break;
 		case 'c':
-			pagecode = atoi(optarg);
+			pagecode = strtol(optarg, NULL, 0);
 			break;
 		default:
 			fprintf(stderr, "Unrecognized option '%c'\n\n", c);
