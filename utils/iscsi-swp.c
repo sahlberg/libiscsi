@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 			show_usage = 1;
 			break;
 		case 'd':
-			debug = atoi(optarg);
+			debug = strtol(optarg, NULL, 0);
 			break;
 		case 'i':
 			initiator = optarg;

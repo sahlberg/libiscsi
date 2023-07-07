@@ -287,13 +287,13 @@ int main(int argc, char *argv[])
 			initiator = optarg;
 			break;
 		case 'm':
-			max_in_flight = atoi(optarg);
+			max_in_flight = strtol(optarg, NULL, 0);
 			break;
 		case 't':
-			runtime = atoi(optarg);
+			runtime = strtol(optarg, NULL, 0);
 			break;
 		case 'b':
-			blocks_per_io = atoi(optarg);
+			blocks_per_io = strtol(optarg, NULL, 0);
 			break;
 		case 'n':
 			client.ignore_errors = 1;
@@ -308,7 +308,7 @@ int main(int argc, char *argv[])
 			logging = 1;
 			break;
 		case 'x':
-			client.max_reconnects = atoi(optarg);
+			client.max_reconnects = strtol(optarg, NULL, 0);
 			break;
 		case 'h':
 			usage();

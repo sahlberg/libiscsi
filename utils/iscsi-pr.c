@@ -338,7 +338,7 @@ int main(int argc, char *argv[])
                                 break;
 
                         case 'T':
-                                type = atoi(optarg);
+                                type = strtol(optarg, NULL, 0);
                                 break;
 
                         case 'G':
