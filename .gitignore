@@ -45,6 +45,7 @@ TAGS
 /tests/Makefile
 /utils/Makefile.in
 /utils/Makefile
+/utils/iscsi-discard
 /utils/iscsi-inq
 /utils/iscsi-ls
 /utils/iscsi-perf
