@@ -48,6 +48,7 @@ TAGS
 /utils/iscsi-discard
 /utils/iscsi-inq
 /utils/iscsi-ls
+/utils/iscsi-md5sum
 /utils/iscsi-perf
 /utils/iscsi-pr
 /utils/iscsi-readcapacity16
