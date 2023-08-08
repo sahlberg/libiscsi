@@ -26,7 +26,60 @@
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+
 const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-discard";
+
+/* query unmap/write zero max blocks */
+static uint64_t inquiry_max_blocks(struct iscsi_context *iscsi, int lun, int zeroout)
+{
+	struct scsi_task *task;
+	int full_size;
+	struct scsi_inquiry_block_limits *inq;
+	uint64_t max_blocks = 0;
+
+	/* See how big this inquiry data is */
+	task = iscsi_inquiry_sync(iscsi, lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS, 64);
+	if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+		fprintf(stderr, "Inquiry command failed : %s\n", iscsi_get_error(iscsi));
+		exit(EIO);
+	}
+
+	full_size = scsi_datain_getfullsize(task);
+	if (full_size > task->datain.size) {
+		scsi_free_scsi_task(task);
+
+		/* we need more data for the full list */
+		if ((task = iscsi_inquiry_sync(iscsi, lun, 1, SCSI_INQUIRY_PAGECODE_BLOCK_LIMITS, full_size)) == NULL) {
+			fprintf(stderr, "Inquiry command failed : %s\n", iscsi_get_error(iscsi));
+			exit(EIO);
+		}
+	}
+
+	inq = scsi_datain_unmarshall(task);
+	if (inq == NULL) {
+		fprintf(stderr, "failed to unmarshall inquiry datain blob\n");
+		exit(EIO);
+	}
+
+	if (zeroout) {
+		/* A MAXIMUM WRITE SAME LENGTH field set to zero indicates
+		   that the device server does not report a limit on the number
+		   of logical blocks that may be requested for a single
+		   WRITE SAME command */
+		max_blocks = inq->max_ws_len;
+		if (!max_blocks)
+			max_blocks = (uint64_t)-1ULL;
+	} else {
+		/* A MAXIMUM UNMAP LBA COUNT field set to 0000_0000h indicates
+		   that the device server does not implement the UNMAP command */
+		max_blocks = inq->max_unmap;
+	}
+
+	scsi_free_scsi_task(task);
+
+	return max_blocks;
+}
 
 void print_help(void)
 {
@@ -67,7 +120,7 @@ int main(int argc, char *argv[])
 	int debug = 0, zeroout = 0;
 	int option_index, c;
 	unsigned int block_length;
-	long long offset = 0, length = 0, capacity, lba, blocks;
+	uint64_t offset = 0, length = 0, capacity, lba, blocks, max_blocks;
 	struct scsi_task *task;
 	struct scsi_readcapacity16 *rc16;
 	int ret = EINVAL;
@@ -167,7 +220,7 @@ int main(int argc, char *argv[])
 
 	capacity = block_length * (rc16->returned_lba + 1);
 	if (offset > capacity) {
-		fprintf(stderr,"Offset(%lld) exceeds capacity(%lld)\n", offset, capacity);
+		fprintf(stderr,"Offset(%lu) exceeds capacity(%lu)\n", offset, capacity);
 		goto free_task;
 	}
 
@@ -178,31 +231,49 @@ int main(int argc, char *argv[])
 	/* free readcapacity16 task */
 	scsi_free_scsi_task(task);
 
+	max_blocks = inquiry_max_blocks(iscsi, iscsi_url->lun, zeroout);
+	if (!max_blocks) {
+		fprintf(stderr, "Operation not supported\n");
+		exit(EOPNOTSUPP);
+	}
+
 	lba = offset / block_length;
 	blocks = length / block_length;
-	if (zeroout) {
-		void *zerobuf = calloc(block_length, 1);
+	for (uint64_t endlba = lba + blocks; lba < endlba; ) {
+		uint64_t towrite = MIN(max_blocks, endlba - lba);
 
-		assert(zerobuf);
-		task = iscsi_writesame16_sync(iscsi, iscsi_url->lun, lba, zerobuf,
-				block_length, blocks, 0, 0, 0, 0);
-		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-			fprintf(stderr,"Failed to execute writesame16 command\n");
-			goto out;
-		}
-	} else {
-		struct unmap_list list;
+		if (zeroout) {
+			static void *zerobuf;
 
-		list.lba = lba;
-		list.num = blocks;
-		task = iscsi_unmap_sync(iscsi, iscsi_url->lun, 0, 0, &list, 1);
-		if (task == NULL || task->status != SCSI_STATUS_GOOD) {
-			fprintf(stderr,"Failed to execute unmap command\n");
-			goto out;
+			if (!zerobuf) {
+				zerobuf = calloc(block_length, 1);
+				assert(zerobuf);
+			}
+
+			task = iscsi_writesame16_sync(iscsi, iscsi_url->lun, lba, zerobuf,
+					block_length, towrite, 0, 0, 0, 0);
+			if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+				fprintf(stderr,"Failed to execute writesame16 command\n");
+				goto out;
+			}
+		} else {
+			struct unmap_list list;
+
+			list.lba = lba;
+			list.num = towrite;
+			task = iscsi_unmap_sync(iscsi, iscsi_url->lun, 0, 0, &list, 1);
+			if (task == NULL || task->status != SCSI_STATUS_GOOD) {
+				fprintf(stderr,"Failed to execute unmap command\n");
+				goto out;
+			}
 		}
+
+		lba += towrite;
+		scsi_free_scsi_task(task);
 	}
 
 	ret = 0;
+	goto out;
 
 free_task:
 	scsi_free_scsi_task(task);
