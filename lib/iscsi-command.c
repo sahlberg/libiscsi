@@ -2675,6 +2675,19 @@ iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu)
 	return pdu->scsi_cbdata.task;
 }
 
+int iscsi_scsi_is_task_in_outqueue(struct iscsi_context *iscsi, struct scsi_task *task)
+{
+	struct iscsi_pdu *pdu;
+
+	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
+		if (pdu->itt == task->itt) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 int
 iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 		       struct scsi_task *task)

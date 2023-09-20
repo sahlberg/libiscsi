@@ -1538,6 +1538,13 @@ EXTERN void scsi_task_set_iov_in(struct scsi_task *task, struct scsi_iovec *iov,
 EXTERN int scsi_task_get_status(struct scsi_task *task, struct scsi_sense *sense);
 
 /*
+ * This function returns 1 if the task is queued for send (for example, the task has been created
+ * with an asynchronous request and has not been put on the wire right away due to the socket
+ * or the ISCSI session state); otherwise returns 0.
+ */
+EXTERN int iscsi_scsi_is_task_in_outqueue(struct iscsi_context *iscsi, struct scsi_task *task);
+
+/*
  * This function is used when you want to cancel a scsi task.
  * The callback for the task will immediately be invoked with SCSI_STATUS_CANCELLED.
  * The cancellation is only local in libiscsi. If the task is already in-flight
