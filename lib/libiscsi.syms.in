@@ -110,6 +110,7 @@ iscsi_scsi_cancel_all_tasks
 iscsi_scsi_cancel_task
 iscsi_scsi_command_async
 iscsi_scsi_command_sync
+iscsi_scsi_is_task_in_outqueue
 iscsi_service
 iscsi_set_alias
 iscsi_set_bind_interfaces
