@@ -130,7 +130,7 @@ iscsi_task_mgmt_lun_reset_async(struct iscsi_context *iscsi,
 		      uint32_t lun,
 		      iscsi_command_cb cb, void *private_data)
 {
-	iscsi_scsi_cancel_all_tasks(iscsi);
+	iscsi_cancel_lun_pdus(iscsi, lun);
 
 	return iscsi_task_mgmt_async(iscsi,
 		      lun, ISCSI_TM_LUN_RESET,
