@@ -1,0 +1,101 @@
+'\" t
+.\"     Title: iscsi-md5sum
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 10/25/2023
+.\"    Manual: iscsi-md5sum: calculate MD5
+.\"    Source: iscsi-md5sum
+.\"  Language: English
+.\"
+.TH "ISCSI\-MD5SUM" "1" "10/25/2023" "iscsi\-md5sum" "iscsi\-md5sum: calculate MD5"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+iscsi-md5sum \- Utility to calculate MD5 value of an iSCSI LUN at range [LBAm, LBAn)
+.SH "SYNOPSIS"
+.HP \w'\fBiscsi\-md5sum\ [\ OPTIONS\ ]\ <ISCSI\-PORTAL>\fR\ 'u
+\fBiscsi\-md5sum [ OPTIONS ] <ISCSI\-PORTAL>\fR
+.HP \w'\fBiscsi\-md5sum\fR\ 'u
+\fBiscsi\-md5sum\fR [\-i\ \-\-initiator\-name=<IQN>] [\-o\ \-\-offset] [\-l\ \-\-length] [\-d\ \-\-debug] [\-?\ \-\-help] [\-\-usage]
+.SH "DESCRIPTION"
+.PP
+iscsi\-md5sum is a utility to calculate MD5 value of an iSCSI LUN at range [LBAm, LBAn)\&.
+.SH "ISCSI PORTAL URL FORMAT"
+.PP
+iSCSI portal format is \*(Aqiscsi://[<username>[%<password>]@]<host>[:<port>]\*(Aq
+.PP
+Username and password are only required if the target requires CHAP authentication\&. Optionally you can specify the username and password via the environment variables LIBISCSI_CHAP_USERNAME and LIBISCSI_CHAP_PASSWORD\&.
+.PP
+Host can be specified either as a hostname, an IPv4 address or an IPv6 address\&. Examples:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+	iscsi://192\&.0\&.2\&.1
+	iscsi://[2001:DB8::1]:3261
+	iscsi://ronnie%password@iscsi\&.example\&.com
+      
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+Port is the TCP port on the target to connect to\&. Default is 3260\&.
+.SH "OPTIONS"
+.PP
+\-i \-\-initiator\-name=<IQN>
+.RS 4
+This specifies the initiator\-name that iscsi\-md5sum will use when logging in to the target\&.
+.sp
+The default name is \*(Aqiqn\&.2007\-10\&.com\&.github:sahlberg:libiscsi:iscsi\-md5sum\*(Aq but you can use this argument to override this\&. This is mainly needed for cases where the target is configured with access\-control to only allow discovery logins from known initiator\-names\&.
+.RE
+.PP
+\-o \-\-offset
+.RS 4
+Byte offset into the target from which to start calculating\&. The provided value must be aligned to the target sector size\&. The default value is zero\&.
+.RE
+.PP
+\-l \-\-length
+.RS 4
+The number of bytes to calculate (counting from the starting point)\&. The provided value must be aligned to the target sector size\&. If the specified value extends past the end of the device, iscsi\-md5sum will stop at the device size boundary\&. The default value extends to the end of the device\&.
+.RE
+.PP
+\-d \-\-debug
+.RS 4
+Print debug information\&.
+.RE
+.PP
+\-? \-\-help
+.RS 4
+Display basic help text\&.
+.RE
+.PP
+\-\-usage
+.RS 4
+Display basic usage text\&.
+.RE
+.SH "AUTHOR"
+.PP
+zhenwei pi <pizhenwei@bytedance\&.com>
+.SH "SEE ALSO"
+.PP
+iscsi\-inq(1)
+\m[blue]\fB\%http://github.com/sahlberg/libiscsi\fR\m[]

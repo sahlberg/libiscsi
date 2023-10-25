@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<refentry id="iscsi-md5sum.1">
+
+<refmeta>
+	<refentrytitle>iscsi-md5sum</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">iscsi-md5sum</refmiscinfo>
+	<refmiscinfo class="manual">iscsi-md5sum: calculate MD5</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>iscsi-md5sum</refname>
+        <refpurpose>Utility to calculate MD5 value of an iSCSI LUN at range [LBAm, LBAn)</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>iscsi-md5sum [ OPTIONS ] &lt;ISCSI-PORTAL&gt;</command>
+	</cmdsynopsis>
+
+	<cmdsynopsis>
+		<command>iscsi-md5sum</command>
+		<arg choice="opt">-i --initiator-name=&lt;IQN&gt;</arg>
+		<arg choice="opt">-o --offset</arg>
+		<arg choice="opt">-l --length</arg>
+		<arg choice="opt">-d --debug</arg>
+		<arg choice="opt">-? --help</arg>
+		<arg choice="opt">--usage</arg>
+	</cmdsynopsis>
+
+</refsynopsisdiv>
+
+  <refsect1><title>DESCRIPTION</title>
+    <para>
+      iscsi-md5sum is a utility to calculate MD5 value of an iSCSI LUN at range [LBAm, LBAn).
+    </para>
+  </refsect1>
+
+  <refsect1><title>ISCSI PORTAL URL FORMAT</title>
+    <para>
+      iSCSI portal format is 'iscsi://[&lt;username&gt;[%&lt;password&gt;]@]&lt;host&gt;[:&lt;port&gt;]'
+    </para>
+
+    <para>
+      Username and password are only required if the target requires CHAP
+      authentication. Optionally you can specify the username and password via
+      the environment variables LIBISCSI_CHAP_USERNAME and
+      LIBISCSI_CHAP_PASSWORD.
+    </para>
+
+    <para>
+      Host can be specified either as a hostname, an IPv4 address or an
+      IPv6 address.
+
+      Examples:
+      <screen format="linespecific">
+	iscsi://192.0.2.1
+	iscsi://[2001:DB8::1]:3261
+	iscsi://ronnie%password@iscsi.example.com
+      </screen>
+    </para>
+
+    <para>
+      Port is the TCP port on the target to connect to. Default is 3260.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <variablelist>
+
+      <varlistentry><term>-i --initiator-name=&lt;IQN&gt;</term>
+        <listitem>
+          <para>
+            This specifies the initiator-name that iscsi-md5sum will use when
+	    logging in to the target.
+	  </para>
+	  <para>
+	    The default name is
+	    'iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-md5sum' but you can use
+	    this argument to override this. This is mainly needed for cases
+	    where the target is configured with access-control to only
+	    allow discovery logins from known initiator-names.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-o --offset</term>
+        <listitem>
+          <para>
+	    Byte offset into the target from which to start calculating.
+	    The provided value must be aligned to the target sector size.
+	    The default value is zero.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-l --length</term>
+        <listitem>
+          <para>
+	    The number of bytes to calculate (counting from the starting point).
+	    The provided value must be aligned to the target sector size.
+	    If the specified value extends past the end of the device,
+	    iscsi-md5sum will stop at the device size boundary.
+	    The default value extends to the end of the device.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-d --debug</term>
+        <listitem>
+          <para>
+	    Print debug information.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>-? --help</term>
+        <listitem>
+          <para>
+	    Display basic help text.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry><term>--usage</term>
+        <listitem>
+          <para>
+	    Display basic usage text.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+  </refsect1>
+
+  <refsect1><title>AUTHOR</title>
+    <para>
+      zhenwei pi &lt;pizhenwei@bytedance.com&gt;
+    </para>
+  </refsect1>
+
+  <refsect1><title>SEE ALSO</title>
+    <para>
+      iscsi-inq(1)
+      <ulink url="http://github.com/sahlberg/libiscsi"/>
+    </para>
+  </refsect1>
+
+</refentry>
