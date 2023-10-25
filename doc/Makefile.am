@@ -1,11 +1,12 @@
 XSLTPROC = /usr/bin/xsltproc
 
 # Manpages
-man1_MANS = iscsi-inq.1 iscsi-ls.1 iscsi-swp.1 iscsi-test-cu.1
+man1_MANS = iscsi-inq.1 iscsi-ls.1 iscsi-swp.1 iscsi-md5sum.1 iscsi-test-cu.1
 
 EXTRA_DIST = iscsi-inq.1 iscsi-inq.xml \
 	     iscsi-ls.1 iscsi-ls.xml \
 	     iscsi-swp.1 iscsi-swp.xml \
+	     iscsi-md5sum.1 iscsi-md5sum.xml \
 	     iscsi-test-cu.1 iscsi-test-cu.xml
 
 .xml.1:
