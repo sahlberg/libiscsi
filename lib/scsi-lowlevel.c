@@ -135,7 +135,7 @@ value_string_find(struct value_string *values, int value)
 const char *
 scsi_sense_key_str(int key)
 {
-	struct value_string keys[] = {
+	static struct value_string keys[] = {
 		{SCSI_SENSE_NO_SENSE,
 		 "NO SENSE"},
 		{SCSI_SENSE_RECOVERED_ERROR,
@@ -173,7 +173,7 @@ scsi_sense_key_str(int key)
 const char *
 scsi_sense_ascq_str(int ascq)
 {
-	struct value_string ascqs[] = {
+	static struct value_string ascqs[] = {
 		{SCSI_SENSE_ASCQ_SANITIZE_IN_PROGRESS,
 		 "SANITIZE_IN_PROGRESS"},
 		{SCSI_SENSE_ASCQ_WRITE_AFTER_SANITIZE_REQUIRED,
@@ -245,7 +245,7 @@ scsi_sense_ascq_str(int ascq)
 const char *
 scsi_pr_type_str(enum scsi_persistent_out_type pr_type)
 {
-	struct value_string pr_type_strings[] = {
+	static struct value_string pr_type_strings[] = {
 		{SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
 		 "Write Exclusive"},
 		{SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS,
@@ -262,6 +262,106 @@ scsi_pr_type_str(enum scsi_persistent_out_type pr_type)
 	};
 
 	return value_string_find(pr_type_strings, pr_type);
+}
+
+const char *
+scsi_opcode_str(int opcode)
+{
+	static struct value_string opcode_strings[] = {
+		{SCSI_OPCODE_TESTUNITREADY,
+		 "TESTUNITREADY"},
+		{SCSI_OPCODE_READ6,
+		 "READ6"},
+		{SCSI_OPCODE_INQUIRY,
+		 "INQUIRY"},
+		{SCSI_OPCODE_MODESELECT6,
+		 "MODESELECT6"},
+		{SCSI_OPCODE_RESERVE6,
+		 "RESERVE6"},
+		{SCSI_OPCODE_RELEASE6,
+		 "RELEASE6"},
+		{SCSI_OPCODE_MODESENSE6,
+		 "MODESENSE6"},
+		{SCSI_OPCODE_STARTSTOPUNIT,
+		 "STARTSTOPUNIT"},
+		{SCSI_OPCODE_PREVENTALLOW,
+		 "PREVENTALLOW"},
+		{SCSI_OPCODE_READCAPACITY10,
+		 "READCAPACITY10"},
+		{SCSI_OPCODE_READ10,
+		 "READ10"},
+		{SCSI_OPCODE_WRITE10,
+		 "WRITE10"},
+		{SCSI_OPCODE_WRITE_VERIFY10,
+		 "WRITE VERIFY10"},
+		{SCSI_OPCODE_VERIFY10,
+		 "VERIFY10"},
+		{SCSI_OPCODE_PREFETCH10,
+		 "PREFETCH10"},
+		{SCSI_OPCODE_SYNCHRONIZECACHE10,
+		 "SYNCHRONIZECACHE10"},
+		{SCSI_OPCODE_READ_DEFECT_DATA10,
+		 "READ DEFECT DATA10"},
+		{SCSI_OPCODE_WRITE_SAME10,
+		 "WRITE SAME10"},
+		{SCSI_OPCODE_UNMAP,
+		 "UNMAP"},
+		{SCSI_OPCODE_READTOC,
+		 "READTOC"},
+		{SCSI_OPCODE_SANITIZE,
+		 "SANITIZE"},
+		{SCSI_OPCODE_MODESELECT10,
+		 "MODESELECT10"},
+		{SCSI_OPCODE_MODESENSE10,
+		 "MODESENSE10"},
+		{SCSI_OPCODE_PERSISTENT_RESERVE_IN,
+		 "PERSISTENT RESERVE IN"},
+		{SCSI_OPCODE_PERSISTENT_RESERVE_OUT,
+		 "PERSISTENT RESERVE OUT"},
+		{SCSI_OPCODE_EXTENDED_COPY,
+		 "EXTENDED COPY"},
+		{SCSI_OPCODE_RECEIVE_COPY_RESULTS,
+		 "RECEIVE COPY RESULTS"},
+		{SCSI_OPCODE_READ16,
+		 "READ16"},
+		{SCSI_OPCODE_COMPARE_AND_WRITE,
+		 "COMPARE AND WRITE"},
+		{SCSI_OPCODE_WRITE16,
+		 "WRITE16"},
+		{SCSI_OPCODE_ORWRITE,
+		 "ORWRITE"},
+		{SCSI_OPCODE_WRITE_VERIFY16,
+		 "WRITE VERIFY16"},
+		{SCSI_OPCODE_VERIFY16,
+		 "VERIFY16"},
+		{SCSI_OPCODE_PREFETCH16,
+		 "PREFETCH16"},
+		{SCSI_OPCODE_SYNCHRONIZECACHE16,
+		 "SYNCHRONIZECACHE16"},
+		{SCSI_OPCODE_WRITE_SAME16,
+		 "WRITE SAME16"},
+		{SCSI_OPCODE_WRITE_ATOMIC16,
+		 "WRITE ATOMIC16"},
+		{SCSI_OPCODE_SERVICE_ACTION_IN,
+		 "SERVICE ACTION IN"},
+		{SCSI_OPCODE_REPORTLUNS,
+		 "REPORTLUNS"},
+		{SCSI_OPCODE_MAINTENANCE_IN,
+		 "MAINTENANCE IN"},
+		{SCSI_OPCODE_READ12,
+		 "READ12"},
+		{SCSI_OPCODE_WRITE12,
+		 "WRITE12"},
+		{SCSI_OPCODE_WRITE_VERIFY12,
+		 "WRITE VERIFY12"},
+		{SCSI_OPCODE_VERIFY12,
+		 "VERIFY12"},
+		{SCSI_OPCODE_READ_DEFECT_DATA12,
+		 "READ DEFECT DATA12"},
+		{0, NULL}
+	};
+
+	return value_string_find(opcode_strings, opcode);
 }
 
 uint64_t

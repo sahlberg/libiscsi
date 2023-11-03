@@ -205,6 +205,8 @@ EXTERN const char *scsi_sense_ascq_str(int ascq);
 
 EXTERN const char *scsi_pr_type_str(enum scsi_persistent_out_type pr_type);
 
+EXTERN const char *scsi_opcode_str(int opcode);
+
 enum scsi_xfer_dir {
 	SCSI_XFER_NONE  = 0,
 	SCSI_XFER_READ  = 1,
