@@ -135,7 +135,7 @@ value_string_find(struct value_string *values, int value)
 const char *
 scsi_sense_key_str(int key)
 {
-	struct value_string keys[] = {
+	static struct value_string keys[] = {
 		{SCSI_SENSE_NO_SENSE,
 		 "NO SENSE"},
 		{SCSI_SENSE_RECOVERED_ERROR,
@@ -173,7 +173,7 @@ scsi_sense_key_str(int key)
 const char *
 scsi_sense_ascq_str(int ascq)
 {
-	struct value_string ascqs[] = {
+	static struct value_string ascqs[] = {
 		{SCSI_SENSE_ASCQ_SANITIZE_IN_PROGRESS,
 		 "SANITIZE_IN_PROGRESS"},
 		{SCSI_SENSE_ASCQ_WRITE_AFTER_SANITIZE_REQUIRED,
@@ -245,7 +245,7 @@ scsi_sense_ascq_str(int ascq)
 const char *
 scsi_pr_type_str(enum scsi_persistent_out_type pr_type)
 {
-	struct value_string pr_type_strings[] = {
+	static struct value_string pr_type_strings[] = {
 		{SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
 		 "Write Exclusive"},
 		{SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS,
