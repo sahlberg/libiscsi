@@ -737,7 +737,7 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 			cmdsn_gap++;
 		}
 		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
-		iscsi_set_error(iscsi, "command timed out");
+		iscsi_set_error(iscsi, "command timed out from outqueue");
 		iscsi_dump_pdu_header(iscsi, pdu->outdata.data);
 		if (pdu->callback) {
 			pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
@@ -757,7 +757,7 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 			continue;
 		}
 		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-		iscsi_set_error(iscsi, "command timed out");
+		iscsi_set_error(iscsi, "command timed out from waitqueue");
 		iscsi_dump_pdu_header(iscsi, pdu->outdata.data);
 		if (pdu->callback) {
 			pdu->callback(iscsi, SCSI_STATUS_TIMEOUT,
