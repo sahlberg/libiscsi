@@ -516,20 +516,22 @@ iscsi_out_queue_length(struct iscsi_context *iscsi)
 ssize_t
 iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *iovector, uint32_t pos, ssize_t count, int do_write)
 {
-        struct scsi_iovec *iov, *iov2;
-        int niov;
-        uint32_t len2;
-        size_t _len2;
-        ssize_t n;
+	struct scsi_iovec *iov, *iov2;
+	int niov;
+	uint32_t len2;
+	size_t _len2;
+	ssize_t n;
+	const char *rw = do_write ? "write" : "read";
 
-        if (iovector->iov == NULL) {
+	if (iovector->iov == NULL) {
+		iscsi_set_error(iscsi, "%s: iovector empty buffer", rw);
 		errno = EINVAL;
 		return -1;
 	}
 
 	if (pos < iovector->offset) {
-		iscsi_set_error(iscsi, "iovector reset. pos is smaller than"
-				"current offset");
+		iscsi_set_error(iscsi, "%s: iovector reset. pos(%d) is smaller than"
+				"current offset(%ld)", rw, pos, iovector->offset);
 		errno = EINVAL;
 		return -1;
 	}
@@ -538,6 +540,8 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 		/* someone issued a read/write but did not provide enough user buffers for all the data.
 		 * maybe someone tried to read just 512 bytes off a MMC device?
 		 */
+		iscsi_set_error(iscsi, "%s: iovector consumed(%d) exceeds niov(%d)",
+				rw, iovector->consumed, iovector->niov);
 		errno = EINVAL;
 		return -1;
 	}
@@ -552,6 +556,8 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 		iovector->consumed++;
 		pos -= iov->iov_len;
 		if (iovector->niov <= iovector->consumed) {
+			iscsi_set_error(iscsi, "%s: iovector consumed(%d) exceeds niov(%d) on head",
+					rw, iovector->consumed, iovector->niov);
 			errno = EINVAL;
 			return -1;
 		}
@@ -567,6 +573,9 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 	while (len2 > iov2->iov_len) {
 		niov++;
 		if (iovector->niov < iovector->consumed + niov) {
+			iscsi_set_error(iscsi, "%s: iovector consumed(%d) + niov(%d)"
+					" exceeds niov(%d) on tail",
+					rw, iovector->consumed, niov, iovector->niov);
 			errno = EINVAL;
 			return -1;
 		}
@@ -598,6 +607,9 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 		/* we read/write more bytes than expected, this MUST not happen */
 		errno = EINVAL;
 		return -1;
+	}
+	if ((n <= 0) && (errno != EAGAIN) && (errno == EINTR)) {
+		iscsi_set_error(iscsi, "%s: socket failed, errno:%d", rw, errno);
 	}
 	return n;
 }
@@ -692,9 +704,6 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 				if (errno == EINTR || errno == EAGAIN) {
 					break;
 				}
-				iscsi_set_error(iscsi, "read from socket failed, "
-						"errno:%d %s", errno,
-						iscsi_get_error(iscsi));
 				return -1;
 			}
 			in->data_pos += count;
@@ -844,9 +853,6 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 				if (errno == EAGAIN || errno == EWOULDBLOCK) {
 					return 0;
 				}
-				iscsi_set_error(iscsi, "Error when writing to "
-						"socket :%d %s", errno,
-						iscsi_get_error(iscsi));
 				return -1;
 			}
 
@@ -993,11 +999,13 @@ iscsi_tcp_service(struct iscsi_context *iscsi, int revents)
 
 	if (revents & POLLIN) {
 		if (iscsi_read_from_socket(iscsi) != 0) {
+			ISCSI_LOG(iscsi, 1, "%s", iscsi_get_error(iscsi));
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 	}
 	if (revents & POLLOUT) {
 		if (iscsi_write_to_socket(iscsi) != 0) {
+			ISCSI_LOG(iscsi, 1, "%s", iscsi_get_error(iscsi));
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 	}
