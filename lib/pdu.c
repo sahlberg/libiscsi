@@ -715,6 +715,55 @@ iscsi_pdu_set_expxferlen(struct iscsi_pdu *pdu, uint32_t expxferlen)
 	scsi_set_uint32(&pdu->outdata.data[20], expxferlen);
 }
 
+/*
+ * A WRITE16 command[w] handles R2T, and queues DATAOUT PDU m,x,y,z:
+ *
+ *           outqueue->DATAOUT[x]->DATAOUT[y]->DATAOUT[z]...
+ *   outqueue_current->DATAOUT[m]
+ *          waitqueue->WRITE16[w]...
+ *
+ * 1, Once x, y, z gets released in initiator side, the target still expects the remaining
+ * DATAOUT PDUs.
+ * 2, Once command w timeout and callback to uplayer, uplayers usually releases memory of
+ *    iscsi task(include memory referenced by iovec.iov_base). DATAOUT[m] would access
+ *    invalid memory iovce.iov_base.
+ */
+static int iscsi_pdu_data_out_inprocess(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	struct iscsi_pdu *tmp_pdu, *next_pdu;
+	enum scsi_opcode opcode = pdu->outdata.data[32];
+
+	/* only care DATA OUT command here */
+	if ((pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_SCSI_REQUEST) {
+		return 0;
+	}
+
+	switch (opcode) {
+		case SCSI_OPCODE_WRITE10:
+		case SCSI_OPCODE_WRITE12:
+		case SCSI_OPCODE_WRITE16:
+			break;
+		default:
+			return 0;
+	};
+
+	/* current outgoing one is part of the PDU? */
+	if (iscsi->outqueue_current && (iscsi->outqueue_current->scsi_cbdata.task == pdu->scsi_cbdata.task)) {
+		return 1;
+	}
+
+	/* any child DATAOUT PDU in outqueue? */
+	for (tmp_pdu = iscsi->outqueue; tmp_pdu; tmp_pdu = next_pdu) {
+		next_pdu = tmp_pdu->next;
+
+		if (tmp_pdu->scsi_cbdata.task == pdu->scsi_cbdata.task) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 void
 iscsi_timeout_scan(struct iscsi_context *iscsi)
 {
@@ -741,6 +790,8 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 		    (pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT) {
 			iscsi->cmdsn--;
 			cmdsn_gap++;
+		} else {
+			continue;
 		}
 		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
 		iscsi_set_error(iscsi, "command timed out from outqueue");
@@ -760,6 +811,9 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 		}
 		if (t < pdu->scsi_timeout) {
 			/* not expired yet */
+			continue;
+		}
+		if (iscsi_pdu_data_out_inprocess(iscsi, pdu)) {
 			continue;
 		}
 		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
