@@ -56,6 +56,7 @@
 #include <errno.h>
 #include "slist.h"
 #include "scsi-lowlevel.h"
+#include "utils.h"
 
 void scsi_task_set_iov_out(struct scsi_task *task, struct scsi_iovec *iov, int niov);
 
@@ -116,26 +117,10 @@ scsi_malloc(struct scsi_task *task, size_t size)
 	return &mem->buf[0];
 }
 
-struct value_string {
-   int value;
-   const char *string;
-};
-
-static const char *
-value_string_find(struct value_string *values, int value)
-{
-	for (; values->string; values++) {
-		if (value == values->value) {
-			return values->string;
-		}
-	}
-	return NULL;
-}
-
 const char *
 scsi_sense_key_str(int key)
 {
-	static struct value_string keys[] = {
+	static struct iscsi_value_string keys[] = {
 		{SCSI_SENSE_NO_SENSE,
 		 "NO SENSE"},
 		{SCSI_SENSE_RECOVERED_ERROR,
@@ -167,13 +152,13 @@ scsi_sense_key_str(int key)
 	       {0, NULL}
 	};
 
-	return value_string_find(keys, key);
+	return iscsi_value_string_find(keys, key, "UNKNOWN");
 }
 
 const char *
 scsi_sense_ascq_str(int ascq)
 {
-	static struct value_string ascqs[] = {
+	static struct iscsi_value_string ascqs[] = {
 		{SCSI_SENSE_ASCQ_SANITIZE_IN_PROGRESS,
 		 "SANITIZE_IN_PROGRESS"},
 		{SCSI_SENSE_ASCQ_WRITE_AFTER_SANITIZE_REQUIRED,
@@ -239,13 +224,13 @@ scsi_sense_ascq_str(int ascq)
 	       {0, NULL}
 	};
 
-	return value_string_find(ascqs, ascq);
+	return iscsi_value_string_find(ascqs, ascq, "UNKNOWN");
 }
 
 const char *
 scsi_pr_type_str(enum scsi_persistent_out_type pr_type)
 {
-	static struct value_string pr_type_strings[] = {
+	static struct iscsi_value_string pr_type_strings[] = {
 		{SCSI_PERSISTENT_RESERVE_TYPE_WRITE_EXCLUSIVE,
 		 "Write Exclusive"},
 		{SCSI_PERSISTENT_RESERVE_TYPE_EXCLUSIVE_ACCESS,
@@ -261,13 +246,13 @@ scsi_pr_type_str(enum scsi_persistent_out_type pr_type)
 		{0, NULL}
 	};
 
-	return value_string_find(pr_type_strings, pr_type);
+	return iscsi_value_string_find(pr_type_strings, pr_type, "UNKNOWN");
 }
 
 const char *
 scsi_opcode_str(int opcode)
 {
-	static struct value_string opcode_strings[] = {
+	static struct iscsi_value_string opcode_strings[] = {
 		{SCSI_OPCODE_TESTUNITREADY,
 		 "TESTUNITREADY"},
 		{SCSI_OPCODE_READ6,
@@ -361,7 +346,7 @@ scsi_opcode_str(int opcode)
 		{0, NULL}
 	};
 
-	return value_string_find(opcode_strings, opcode);
+	return iscsi_value_string_find(opcode_strings, opcode, "UNKNOWN");
 }
 
 uint64_t

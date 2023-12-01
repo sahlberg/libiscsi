@@ -48,6 +48,7 @@
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
 #include "slist.h"
+#include "utils.h"
 
 /* This adds 32-bit serial comparision as defined in RFC1982.
  * It returns 0 for equality, 1 if s1 is greater than s2 and
@@ -78,19 +79,106 @@ iscsi_itt_post_increment(struct iscsi_context *iscsi) {
 	return old_itt;
 }
 
+static const char *
+iscsi_opcode_str(int opcode)
+{
+	static struct iscsi_value_string opcode_strings[] = {
+		{ ISCSI_PDU_NOP_OUT,
+			"NOP_OUT" },
+		{ ISCSI_PDU_SCSI_REQUEST,
+			"SCSI_REQUEST" },
+		{ ISCSI_PDU_SCSI_TASK_MANAGEMENT_REQUEST,
+			"SCSI_TASK_MANAGEMENT_REQUEST" },
+		{ ISCSI_PDU_LOGIN_REQUEST,
+			"LOGIN_REQUEST" },
+		{ ISCSI_PDU_TEXT_REQUEST,
+			"TEXT_REQUEST" },
+		{ ISCSI_PDU_DATA_OUT,
+			"DATA_OUT" },
+		{ ISCSI_PDU_LOGOUT_REQUEST,
+			"LOGOUT_REQUEST" },
+		{ ISCSI_PDU_NOP_IN,
+			"NOP_IN" },
+		{ ISCSI_PDU_SCSI_RESPONSE,
+			"SCSI_RESPONSE" },
+		{ ISCSI_PDU_SCSI_TASK_MANAGEMENT_RESPONSE,
+			"SCSI_TASK_MANAGEMENT_RESPONSE" },
+		{ ISCSI_PDU_LOGIN_RESPONSE,
+			"LOGIN_RESPONSE" },
+		{ ISCSI_PDU_TEXT_RESPONSE,
+			"TEXT_RESPONSE" },
+		{ ISCSI_PDU_DATA_IN,
+			"DATA_IN" },
+		{ ISCSI_PDU_LOGOUT_RESPONSE,
+			"LOGOUT_RESPONSE" },
+		{ ISCSI_PDU_R2T,
+			"R2T" },
+		{ ISCSI_PDU_ASYNC_MSG,
+			"ASYNC_MSG" },
+		{ ISCSI_PDU_REJECT,
+			"REJECT" },
+		{ ISCSI_PDU_NO_PDU,
+			"NO_PDU" },
+		{0, NULL}
+	};
+
+	return iscsi_value_string_find(opcode_strings, opcode, "UNKNOWN");
+}
+
 void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data) {
-	char dump1[33*3+1]={0};
-	char dump2[(ISCSI_RAW_HEADER_SIZE-33)*3+1]={0};
-	const char *opcode;
-	int i;
-	for (i=0;i<33;i++) {
-		snprintf(&dump1[i * 3], 4, " %02x", data[i]);
+	char output[1024] = { 0 };
+	unsigned char iscsi_opcode;
+	const char *iscsi_opcode_string;
+	size_t output_off = 0;
+	int data_off = 0;
+
+
+	/* start to dump iSCSI opcode - data[0] */
+	iscsi_opcode = data[data_off];
+	iscsi_opcode_string = iscsi_opcode_str(iscsi_opcode);
+	output_off += snprintf(&output[output_off], sizeof(output) - output_off - 1, "%02x[%s]",
+			iscsi_opcode, iscsi_opcode_string);
+	data_off++;
+
+	if (iscsi_opcode == ISCSI_PDU_SCSI_REQUEST) {
+		unsigned char scsi_opcode;
+		const char *scsi_opcode_string;
+
+		/* the rest iSCSI PDU: data[1] - data[31] */
+		for ( ; data_off < 32; data_off++) {
+			if (sizeof(output) - 1 > output_off) {
+				output_off += snprintf(&output[output_off], sizeof(output) - output_off - 1,
+						" %02x", data[data_off]);
+			}
+		}
+
+		/* SCSI opcode: data[32] */
+		scsi_opcode = data[data_off];
+		scsi_opcode_string = scsi_opcode_str(scsi_opcode);
+		if (sizeof(output) - 1 > output_off) {
+			output_off += snprintf(&output[output_off], sizeof(output) - output_off - 1,
+					" %02x[%s]", scsi_opcode, scsi_opcode_string);
+			data_off++;
+		}
+
+		/* the rest SCSI PDU: data[33] - data[ISCSI_RAW_HEADER_SIZE - 1] */
+		for ( ; data_off < ISCSI_RAW_HEADER_SIZE; data_off++) {
+			if (sizeof(output) - 1 > output_off) {
+				output_off += snprintf(&output[output_off], sizeof(output) - output_off - 1,
+						" %02x", data[data_off]);
+			}
+		}
+	} else {
+		/* the rest iSCSI PDU: data[1] - data[ISCSI_RAW_HEADER_SIZE - 1] */
+		for ( ; data_off < ISCSI_RAW_HEADER_SIZE; data_off++) {
+			if (sizeof(output) - 1 > output_off) {
+				output_off += snprintf(&output[output_off], sizeof(output) - output_off - 1,
+						" %02x", data[data_off]);
+			}
+		}
 	}
-	opcode = scsi_opcode_str(data[32]);
-	for (;i<ISCSI_RAW_HEADER_SIZE;i++) {
-		snprintf(&dump2[(i-33) * 3], 4, " %02x", data[i]);
-	}
-	ISCSI_LOG(iscsi, 2, "PDU header:%s[%s]%s", dump1, opcode, dump2);
+
+	ISCSI_LOG(iscsi, 2, "PDU header: %s", output);
 }
 
 struct iscsi_pdu*
