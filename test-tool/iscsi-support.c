@@ -2735,7 +2735,7 @@ int set_swp(struct scsi_device *sdev)
         logging(LOG_VERBOSE, "[SUCCESS] CONTROL page fetched.");
 
         ms = scsi_datain_unmarshall(sense_task);
-        if (ms == NULL) {
+        if (ms == NULL || ms->pages == NULL) {
                 logging(LOG_NORMAL, "failed to unmarshall mode sense datain "
                         "blob");
                 ret = -1;
