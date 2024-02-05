@@ -58,7 +58,7 @@ test_sanitize_reset(void)
                 return;
         }
 
-        logging(LOG_VERBOSE, "Send an asyncronous SANITIZE to the target.");
+        logging(LOG_VERBOSE, "Send an asynchronous SANITIZE to the target.");
         data.size = block_size + 4;
         data.data = alloca(data.size);
         memset(&data.data[4], 0, block_size);

@@ -236,7 +236,7 @@ static void print_help(const char *bin)
         fprintf(stderr, "  -S, --param-sark=SARK          PR Out: parameter service action reservation key (SARK is in hex)\n");
         fprintf(stderr, "  -T, --prout-type=TYPE          PR Out: type field\n");
         fprintf(stderr, "  -G, --register                 PR Out: Register\n");
-        fprintf(stderr, "  -R, --reserve                  PR Out: Reserve, SARK only(register sark implicity)\n");
+        fprintf(stderr, "  -R, --reserve                  PR Out: Reserve, SARK only(register sark implicitly)\n");
         fprintf(stderr, "  -L, --release                  PR Out: Release, SARK only. This program releases TYPE 7 and TYPE 8 only\n");
         fprintf(stderr, "  -C, --clear                    PR Out: Clear, SARK only\n");
         fprintf(stderr, "  -P, --preempt                  PR Out: Preempt, use SARK to preempt reservation from RK\n");

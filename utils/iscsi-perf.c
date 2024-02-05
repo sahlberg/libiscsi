@@ -151,7 +151,7 @@ void cb(struct iscsi_context *iscsi, int status, void *command_data, void *priva
 	if (status == SCSI_STATUS_BUSY ||
 		(status == SCSI_STATUS_CHECK_CONDITION && task->sense.key == SCSI_SENSE_UNIT_ATTENTION)) {
 		if (client->retry_cnt++ > 4 * max_in_flight) {
-			fprintf(stderr, "maxium number of command retries reached...\n");
+			fprintf(stderr, "maximum number of command retries reached...\n");
 			client->err_cnt++;
 			goto out;
 		}
