@@ -231,7 +231,7 @@ Test tool for iSCSI/SCSI targets
  - Change all default iqn names so they are valid iqn names.
 * Mon Jul 9 2012 : 1.5.0
  - Make sure we can handle racy eventsystems which might call us for 
-   POLLIN eventhough there is no longer any data to read from the socket.
+   POLLIN even though there is no longer any data to read from the socket.
  - Only set up tcp keepalives on systems that support them.
  - Only export symbols we really want to make public
  - FreeBSD and Illumos does not define SOL_TCP
