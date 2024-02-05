@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.19.0
+Version: 1.20.0
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -109,6 +109,8 @@ Test tool for iSCSI/SCSI targets
 
 
 %changelog
+* Mon Feb 5 2024 : 1.20.0
+ - Various updates to the test tool
 * Sun Jul 14 2019 : 1.19.0
  - iSER improvements
  - Add support to senable/disable digests via URL arguments
