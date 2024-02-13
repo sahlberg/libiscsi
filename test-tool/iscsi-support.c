@@ -457,6 +457,8 @@ void logging(int level, const char *format, ...)
         va_list ap;
         static char message[1024];
         int ret;
+        struct timespec ts;
+        struct tm tm;
 
         if (loglevel < level) {
                 return;
@@ -466,6 +468,17 @@ void logging(int level, const char *format, ...)
                 printf("\n");
                 return;
         }
+
+        if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+                return;
+	}
+
+        if (!localtime_r(&ts.tv_sec, &tm)) {
+                return;
+        }
+
+        printf("    %04d-%02d-%02d %02d:%02d:%02d.%06d ",
+                tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, (int)ts.tv_nsec / 1000);
 
         va_start(ap, format);
         ret = vsnprintf(message, 1024, format, ap);
