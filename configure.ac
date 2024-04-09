@@ -78,8 +78,21 @@ AM_CONDITIONAL([BUILD_EXAMPLES],
 
 AC_CONFIG_HEADERS([config.h])
 
-AC_CHECK_LIB([gcrypt], [gcry_control])
-AM_CONDITIONAL([HAVE_LIBGCRYPT], [test $ac_cv_lib_gcrypt_gcry_control = yes])
+AC_ARG_WITH([libgcrypt],
+	    [AS_HELP_STRING([--with-libgcrypt],
+			    [Use libgcrypt to compute MD5])],
+	    [WITH_LIBGCRYPT=$withval],
+	    [WITH_LIBGCRYPT=auto])
+if test "$WITH_LIBGCRYPT" != no; then
+  AC_CHECK_LIB([gcrypt], [gcry_control])
+  if test "$WITH_LIBGCRYPT" = yes && test "$ac_cv_lib_gcrypt_gcry_control" != yes; then
+    AC_MSG_ERROR([libgcrypt not found])
+  fi
+  WITH_LIBGCRYPT=$ac_cv_lib_gcrypt_gcry_control
+fi
+
+AM_CONDITIONAL([HAVE_LIBGCRYPT],
+	       [expr "$WITH_LIBGCRYPT" : yes > /dev/null 2>&1])
 
 # For MinGW.
 AC_CHECK_LIB([ws2_32], [gethostbyname])
