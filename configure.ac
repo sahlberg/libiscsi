@@ -78,11 +78,27 @@ AM_CONDITIONAL([BUILD_EXAMPLES],
 
 AC_CONFIG_HEADERS([config.h])
 
+AC_ARG_WITH([gnutls],
+	    [AS_HELP_STRING([--enable-gnutls],
+			    [Use gnutls to compute MD5])],
+	    [WITH_GNUTLS=$withval],
+	    [WITH_GNUTLS=auto])
+
 AC_ARG_WITH([libgcrypt],
 	    [AS_HELP_STRING([--enable-libgcrypt],
 			    [Use libgcrypt to compute MD5])],
 	    [WITH_LIBGCRYPT=$withval],
 	    [WITH_LIBGCRYPT=auto])
+
+if test "$WITH_GNUTLS" = auto; then
+  AC_CHECK_LIB([gnutls], [gnutls_hash_init])
+  WITH_GNUTLS=$ac_cv_lib_gcrypt_gcry_control
+fi
+if test "$WITH_GNUTLS" = yes; then
+  AC_DEFINE([HAVE_LIBGNUTLS], 1)
+  WITH_LIBGCRYPT=no
+fi
+
 if test "$WITH_LIBGCRYPT" = auto; then
   AC_CHECK_LIB([gcrypt], [gcry_control])
   WITH_LIBGCRYPT=$ac_cv_lib_gcrypt_gcry_control
@@ -91,8 +107,12 @@ if test "$WITH_LIBGCRYPT" = yes; then
   AC_DEFINE([HAVE_LIBGCRYPT], 1)
 fi
 
-AM_CONDITIONAL([HAVE_LIBGCRYPT],
-	       [expr "$WITH_LIBGCRYPT" : yes > /dev/null 2>&1])
+NEED_MD5=no
+if test "$WITH_GNUTLS" = no && test "$WITH_LIBGCRYPT" = no; then
+  NEED_MD5=yes
+fi
+AM_CONDITIONAL([NEED_MD5],
+	       [expr "$NEED_MD5" : yes > /dev/null 2>&1])
 
 # For MinGW.
 AC_CHECK_LIB([ws2_32], [gethostbyname])

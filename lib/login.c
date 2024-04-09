@@ -44,6 +44,10 @@
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
 #include "md5.h"
+
+#ifdef HAVE_LIBGNUTLS
+#include <gnutls/crypto.h>
+#endif
 #ifdef HAVE_LIBGCRYPT
 #include <gcrypt.h>
 #endif
@@ -681,7 +685,24 @@ i2h(int i)
 	return i + '0';
 }
 
-#ifdef HAVE_LIBGCRYPT
+#if defined HAVE_LIBGNUTLS
+#define md5_context_t gnutls_hash_hd_t
+#define md5_open(hd)  gnutls_hash_init(hd, GNUTLS_DIG_MD5)
+#define md5_write     gnutls_hash
+
+static void md5_read(md5_context_t h, uint8_t *result)
+{
+       gnutls_hash_output(h, result);
+}
+
+static void md5_close(md5_context_t h)
+{
+       unsigned char digest[16];
+
+       gnutls_hash_deinit(h, digest);
+}
+
+#elif defined HAVE_LIBGCRYPT
 typedef gcry_md_hd_t md5_context_t;
 #define md5_open(hd) gcry_md_open(hd, GCRY_MD_MD5, 0)
 #define md5_write gcry_md_write
