@@ -244,6 +244,7 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->want_immediate_data                    = ISCSI_IMMEDIATE_DATA_YES;
 	iscsi->use_immediate_data                     = ISCSI_IMMEDIATE_DATA_YES;
 	iscsi->want_header_digest                     = ISCSI_HEADER_DIGEST_NONE_CRC32C;
+	iscsi->want_data_digest                       = ISCSI_DATA_DIGEST_NONE;
 
 	iscsi->tcp_keepcnt=3;
 	iscsi->tcp_keepintvl=30;
@@ -493,6 +494,25 @@ iscsi_set_header_digest(struct iscsi_context *iscsi,
 }
 
 int
+iscsi_set_data_digest(struct iscsi_context *iscsi,
+			enum iscsi_data_digest data_digest)
+{
+	if (iscsi->is_loggedin) {
+		iscsi_set_error(iscsi, "trying to set data digest while "
+				"logged in");
+		return -1;
+	}
+	if ((unsigned)data_digest > ISCSI_DATA_DIGEST_LAST) {
+		iscsi_set_error(iscsi, "invalid data digest value");
+		return -1;
+	}
+
+	iscsi->want_data_digest = data_digest;
+
+	return 0;
+}
+
+int
 iscsi_is_logged_in(struct iscsi_context *iscsi)
 {
 	return iscsi->is_loggedin;
@@ -602,19 +622,32 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 			if (value != NULL) {
 				*value++ = 0;
 			}
-                        if (!strcmp(key, "header_digest")) {
-                                if (!strcmp(value, "crc32c")) {
-                                        iscsi_set_header_digest(
-                                            iscsi, ISCSI_HEADER_DIGEST_CRC32C);
-                                } else if (!strcmp(value, "none")) {
-                                        iscsi_set_header_digest(
-                                            iscsi, ISCSI_HEADER_DIGEST_NONE);
-                                } else {
-                                        iscsi_set_error(iscsi,
-                                            "Invalid URL argument for header_digest: %s", value);
-                                        return NULL;
-                                }
-                        }
+			if (!strcmp(key, "header_digest")) {
+				if (!strcmp(value, "crc32c")) {
+					iscsi_set_header_digest(
+						iscsi, ISCSI_HEADER_DIGEST_CRC32C);
+				} else if (!strcmp(value, "none")) {
+					iscsi_set_header_digest(
+						iscsi, ISCSI_HEADER_DIGEST_NONE);
+				} else {
+					iscsi_set_error(iscsi,
+						"Invalid URL argument for header_digest: %s", value);
+					return NULL;
+				}
+			}
+			if (!strcmp(key, "data_digest")) {
+				if (!strcmp(value, "crc32c")) {
+					iscsi_set_data_digest(
+						iscsi, ISCSI_DATA_DIGEST_CRC32C);
+				} else if (!strcmp(value, "none")) {
+					iscsi_set_data_digest(
+						iscsi, ISCSI_DATA_DIGEST_NONE);
+				} else {
+					iscsi_set_error(iscsi,
+						"Invalid URL argument for data_digest: %s", value);
+					return NULL;
+				}
+			}
 			if (!strcmp(key, "target_user")) {
 				target_user = value;
 			} else if (!strcmp(key, "target_password")) {
