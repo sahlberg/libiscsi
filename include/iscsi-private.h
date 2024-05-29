@@ -304,6 +304,7 @@ void iscsi_pdu_set_ritt(struct iscsi_pdu *pdu, uint32_t ritt);
 void iscsi_pdu_set_datasn(struct iscsi_pdu *pdu, uint32_t datasn);
 void iscsi_pdu_set_bufferoffset(struct iscsi_pdu *pdu, uint32_t bufferoffset);
 void iscsi_cancel_pdus(struct iscsi_context *iscsi);
+void iscsi_cancel_lun_pdus(struct iscsi_context *iscsi, uint32_t lun);
 int iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		       const unsigned char *dptr, int dsize);
 int iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
