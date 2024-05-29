@@ -45,6 +45,7 @@ Username and password for bidirectional CHAP authentication:
 target_user=<account>
 target_password=<password>
 header_digest=<crc32c|none>
+data_digest=<crc32c|none>
 Transport:
 iser
 
@@ -122,6 +123,15 @@ Header Digest
 Libiscsi supports HeaderDigest.  By default, libiscsi will offer None,CRC32C
 and let the target pick whether Header digest is to be used or not.  This can
 be overridden by an application by calling iscsi_set_header_digest() if the
+application wants to force a specific setting.
+
+
+Data Digest
+===========
+
+Libiscsi supports DataDigest.  By default, libiscsi will offer None so that
+Data digest will not be used, no matter what the target setting is.  This can
+be overridden by an application by calling iscsi_set_data_digest() if the
 application wants to force a specific setting.
 
 

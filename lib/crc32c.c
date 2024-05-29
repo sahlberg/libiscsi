@@ -118,3 +118,22 @@ uint32_t crc32c(uint8_t *buf, int len)
 	return crc^0xffffffff;
 }
 
+void crc32c_init(uint32_t *crc_ptr)
+{
+   if (crc_ptr)
+      *crc_ptr = 0xffffffff;
+}
+
+uint32_t crc32c_chain(uint32_t crc, uint8_t *buf, int len)
+{
+	while (len-- > 0) {
+		crc = (crc>>8) ^ crctable[(crc ^ (*buf++)) & 0xFF];
+	}
+	return crc;
+}
+
+uint32_t crc32c_chain_done(uint32_t crc)
+{
+	return crc^0xffffffff;
+}
+

@@ -206,7 +206,24 @@ iscsi_login_add_datadigest(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return 0;
 	}
 
-	strncpy(str,"DataDigest=None",MAX_STRING_SIZE);
+	switch (iscsi->want_data_digest) {
+	case ISCSI_DATA_DIGEST_NONE:
+		strncpy(str,"DataDigest=None",MAX_STRING_SIZE);
+		break;
+	case ISCSI_DATA_DIGEST_NONE_CRC32C:
+		strncpy(str,"DataDigest=None,CRC32C",MAX_STRING_SIZE);
+		break;
+	case ISCSI_DATA_DIGEST_CRC32C_NONE:
+		strncpy(str,"DataDigest=CRC32C,None",MAX_STRING_SIZE);
+		break;
+	case ISCSI_DATA_DIGEST_CRC32C:
+		strncpy(str,"DataDigest=CRC32C",MAX_STRING_SIZE);
+		break;
+	default:
+		iscsi_set_error(iscsi, "invalid data digest value");
+		return -1;
+	}
+
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -1223,6 +1240,16 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			}
 		}
 
+		if (!strncmp(ptr, "DataDigest=", 11)) {
+			if (!strcmp(ptr + 11, "CRC32C")) {
+				iscsi->want_data_digest
+				  = ISCSI_DATA_DIGEST_CRC32C;
+			} else {
+				iscsi->want_data_digest
+				  = ISCSI_DATA_DIGEST_NONE;
+			}
+		}
+
 		if (!strncmp(ptr, "FirstBurstLength=", 17)) {
 			iscsi->first_burst_length = strtol(ptr + 17, NULL, 10);
 		}
@@ -1393,6 +1420,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		iscsi->is_loggedin = 1;
 		iscsi_itt_post_increment(iscsi);
 		iscsi->header_digest  = iscsi->want_header_digest;
+		iscsi->data_digest  = iscsi->want_data_digest;
 		ISCSI_LOG(iscsi, 2, "login successful");
 		pdu->callback(iscsi, SCSI_STATUS_GOOD, NULL, pdu->private_data);
 	} else {

@@ -336,6 +336,29 @@ EXTERN int iscsi_set_header_digest(struct iscsi_context *iscsi,
 			    enum iscsi_header_digest header_digest);
 
 /*
+ * Types of data digest we support. Default is NONE
+ */
+enum iscsi_data_digest {
+	ISCSI_DATA_DIGEST_NONE        = 0,
+	ISCSI_DATA_DIGEST_NONE_CRC32C = 1,
+	ISCSI_DATA_DIGEST_CRC32C_NONE = 2,
+	ISCSI_DATA_DIGEST_CRC32C      = 3,
+	ISCSI_DATA_DIGEST_LAST        = ISCSI_DATA_DIGEST_CRC32C
+};
+
+/*
+ * Set the desired data digest for a scsi context.
+ * Data digest can only be set/changed before the context
+ * is logged in to the target.
+ *
+ * Returns:
+ *  0: success
+ * <0: error
+ */
+EXTERN int iscsi_set_data_digest(struct iscsi_context *iscsi,
+			    enum iscsi_data_digest data_digest);
+
+/*
  * Specify the username and password to use for chap authentication
  */
 EXTERN int iscsi_set_initiator_username_pwd(struct iscsi_context *iscsi,
