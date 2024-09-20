@@ -12,7 +12,8 @@ target.
 The examples directory contains example implementation of how to access both
 the synchronous and asynchronous APIs of libiscsi.
 
-The test-tool directory contains an iSCSI conformance test suite.
+The test-tool directory contains an iSCSI conformance test suite. To include
+the test suite in the compilation, install libcunit1-dev first.
 
 Libiscsi is a work in progress.  It aims to become a fully asynchronous
 library for iSCSI functionality, including all features required to establish
