@@ -161,7 +161,7 @@ check_unmap(void)
                         lbas->descriptors[i].lba + lbas->descriptors[i].num_blocks);
                 if (lbas->descriptors[i].provisioning == SCSI_PROVISIONING_TYPE_MAPPED) {
                           logging(LOG_VERBOSE, "[FAILED] Descriptor %d is MAPPED."
-                                "All descriptors shoudl be either DEALLOCATED "
+                                "All descriptors should be either DEALLOCATED "
                                 "or ANCHORED after SANITIZE", i);
                           CU_FAIL("[FAILED] LBA status descriptor is MAPPED.");
                 }

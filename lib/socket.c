@@ -62,6 +62,7 @@
 #include <sys/uio.h>
 #endif
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -514,7 +515,7 @@ iscsi_out_queue_length(struct iscsi_context *iscsi)
 }
 
 ssize_t
-iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *iovector, uint32_t pos, ssize_t count, int do_write)
+iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *iovector, uint32_t pos, ssize_t count, uint32_t *data_digest_ptr, int do_write)
 {
 	struct scsi_iovec *iov, *iov2;
 	int niov;
@@ -598,6 +599,19 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 		n = readv(iscsi->fd, (struct iovec*) iov, niov);
 	}
 
+	/* Update the data digest */
+	if (data_digest_ptr && n > 0) {
+		int i;
+		size_t bytes_to_crc = n;
+		struct iovec *iov_ptr = (struct iovec*)iov;
+
+		for ( i=0; iov_ptr && i<niov && bytes_to_crc; iov_ptr++, i++) {
+			size_t chunk = MIN(bytes_to_crc, iov_ptr->iov_len);
+			*data_digest_ptr = crc32c_chain(*data_digest_ptr, iov_ptr->iov_base, chunk);
+			bytes_to_crc -= chunk;
+		}
+	}
+
 	/* restore original values */
 	iov->iov_base = (void*) ((uintptr_t)iov->iov_base - pos);
 	iov->iov_len += pos;
@@ -619,6 +633,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 {
 	struct iscsi_in_pdu *in;
 	ssize_t hdr_size, data_size, count, padding_size;
+	bool do_data_digest = (iscsi->data_digest != ISCSI_DATA_DIGEST_NONE);
 
 	do {
 		hdr_size = ISCSI_HEADER_SIZE(iscsi->header_digest);
@@ -628,6 +643,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 				iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu");
 				return -1;
 			}
+			crc32c_init(&(iscsi->incoming->calculated_data_digest));
 			iscsi->incoming->hdr = iscsi_smalloc(iscsi, hdr_size);
 			if (iscsi->incoming->hdr == NULL) {
 				iscsi_set_error(iscsi, "Out-of-memory");
@@ -682,7 +698,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			iovector_in = iscsi_get_scsi_task_iovector_in(iscsi, in);
 			if (iovector_in != NULL && count > padding_size) {
 				uint32_t offset = scsi_get_uint32(&in->hdr[40]);
-				count = iscsi_iovector_readv_writev(iscsi, iovector_in, in->data_pos + offset, count - padding_size, 0);
+				count = iscsi_iovector_readv_writev(iscsi, iovector_in, in->data_pos + offset, count - padding_size, do_data_digest ? &(in->calculated_data_digest) : NULL, 0);
 			} else {
 				if (iovector_in == NULL) {
 					if (in->data == NULL) {
@@ -695,6 +711,8 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 					buf = &in->data[in->data_pos];
 				}
 				count = recv(iscsi->fd, (void *)buf, count, 0);
+				if (do_data_digest && count > 0)
+					in->calculated_data_digest = crc32c_chain(in->calculated_data_digest, buf, count);
 			}
 			if (count == 0) {
 				/* remote side has closed the socket. */
@@ -711,6 +729,28 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 
 		if (in->data_pos < data_size) {
 			break;
+		}
+
+		/* Handle Data Digest receive */
+		if (data_size != 0 && do_data_digest &&
+			in->received_data_digest_bytes < ISCSI_DIGEST_SIZE) {
+
+			count = recv(iscsi->fd, (void *)(in->data_digest_buf + in->received_data_digest_bytes), ISCSI_DIGEST_SIZE - in->received_data_digest_bytes, 0);
+			if (count == 0) {
+				/* remote side has closed the socket. */
+				return -1;
+			}
+			if (count < 0) {
+				if (errno == EINTR || errno == EAGAIN) {
+					break;
+				}
+				return -1;
+			}
+			in->received_data_digest_bytes += count;
+
+			if (in->received_data_digest_bytes < ISCSI_DIGEST_SIZE) {
+				break;
+			}
 		}
 
 		iscsi->incoming = NULL;
@@ -751,6 +791,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 	struct iscsi_pdu *pdu;
 	static char padding_buf[3];
 	int socket_flags = 0;
+	bool do_data_digest = (iscsi->data_digest != ISCSI_DATA_DIGEST_NONE);
 
 #ifdef MSG_NOSIGNAL
 	socket_flags |= MSG_NOSIGNAL;
@@ -848,7 +889,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			count = iscsi_iovector_readv_writev(iscsi,
 				iovector_out,
 				pdu->payload_offset + pdu->payload_written,
-				pdu->payload_len - pdu->payload_written, 1);
+				pdu->payload_len - pdu->payload_written, do_data_digest ? &(pdu->calculated_data_digest) : NULL, 1);
 			if (count == -1) {
 				if (errno == EAGAIN || errno == EWOULDBLOCK) {
 					return 0;
@@ -873,12 +914,56 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 						"socket :%d", errno);
 				return -1;
 			}
+
+			if (do_data_digest)
+				pdu->calculated_data_digest = crc32c_chain(pdu->calculated_data_digest, (uint8_t *)padding_buf, count);
+
 			pdu->payload_written += count;
 		}
+
 		/* if we havent written the full padding yet. */
+		if (pdu->payload_written < total) {
+			return 0;
+		}
+
+		/*
+		 * Maybe update the total again, and write the digest, but only if
+		 * 1. DataDigest has been negociated, and
+		 * 2. We have actually written some data
+		 */
+		if (do_data_digest && pdu->payload_written) {
+			uint32_t data_digest = crc32c_chain_done(pdu->calculated_data_digest);
+			char data_digest_buf[ISCSI_DIGEST_SIZE];
+
+			total += ISCSI_DIGEST_SIZE;
+
+			data_digest_buf[3] = (data_digest >> 24);
+			data_digest_buf[2] = (data_digest >> 16);
+			data_digest_buf[1] = (data_digest >>  8);
+			data_digest_buf[0] = (data_digest);
+
+			/* Write data digest */
+			if (pdu->payload_written < total) {
+				int todo = total - pdu->payload_written;
+				count = send(iscsi->fd, data_digest_buf + (ISCSI_DIGEST_SIZE - todo), todo, socket_flags);
+				if (count == -1) {
+					if (errno == EAGAIN || errno == EWOULDBLOCK) {
+						return 0;
+					}
+					iscsi_set_error(iscsi, "Error when writing to "
+							"socket :%d", errno);
+					return -1;
+				}
+
+				pdu->payload_written += count;
+			}
+		}
+
+		/* if we havent written everything yet. */
 		if (pdu->payload_written != total) {
 			return 0;
 		}
+
 		if (pdu->flags & ISCSI_PDU_CORK_WHEN_SENT) {
 			iscsi->is_corked = 1;
 		}

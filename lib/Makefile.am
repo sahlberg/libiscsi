@@ -12,7 +12,7 @@ if TARGET_OS_IS_WIN32
 libiscsipriv_la_SOURCES += ../win32/win32_compat.c
 endif
 
-if !HAVE_LIBGCRYPT
+if NEED_MD5
 libiscsipriv_la_SOURCES += md5.c
 endif
 
@@ -45,7 +45,7 @@ endif
 
 EXTRA_libiscsi_la_DEPENDENCIES = libiscsi.syms
 
-SOCURRENT=9
+SOCURRENT=10
 SOREVISON=0
 SOAGE=0
 libiscsi_la_LDFLAGS = \

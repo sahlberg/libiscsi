@@ -79,7 +79,9 @@ scsi_free_scsi_task(struct scsi_task *task)
 	}
 
 	free(task->datain.data);
+	task->datain.data = NULL;
 	free(task);
+	task = NULL;
 }
 
 struct scsi_task *

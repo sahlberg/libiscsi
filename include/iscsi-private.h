@@ -61,6 +61,13 @@ struct iscsi_in_pdu {
 
 	long long data_pos;
 	unsigned char *data;
+
+	/*
+	 * Some data structures wrt Data Digest (if negociated)
+	 */
+	unsigned char data_digest_buf[ISCSI_DIGEST_SIZE];
+	int received_data_digest_bytes;
+	uint32_t calculated_data_digest;
 };
 void iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 
@@ -105,6 +112,8 @@ struct iscsi_context {
 	uint32_t statsn;
 	enum iscsi_header_digest want_header_digest;
 	enum iscsi_header_digest header_digest;
+	enum iscsi_data_digest want_data_digest;
+	enum iscsi_data_digest data_digest;
 
 	int fd;
 	int is_connected;
@@ -272,6 +281,8 @@ struct iscsi_pdu {
 	struct iscsi_scsi_cbdata scsi_cbdata;
 	time_t scsi_timeout;
 	uint32_t expxferlen;
+
+	uint32_t calculated_data_digest;
 };
 
 struct iscsi_pdu *iscsi_allocate_pdu(struct iscsi_context *iscsi,
@@ -293,6 +304,7 @@ void iscsi_pdu_set_ritt(struct iscsi_pdu *pdu, uint32_t ritt);
 void iscsi_pdu_set_datasn(struct iscsi_pdu *pdu, uint32_t datasn);
 void iscsi_pdu_set_bufferoffset(struct iscsi_pdu *pdu, uint32_t bufferoffset);
 void iscsi_cancel_pdus(struct iscsi_context *iscsi);
+void iscsi_cancel_lun_pdus(struct iscsi_context *iscsi, uint32_t lun);
 int iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		       const unsigned char *dptr, int dsize);
 int iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
@@ -350,6 +362,9 @@ void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size);
 void iscsi_sfree(struct iscsi_context *iscsi, void* ptr);
 
 uint32_t crc32c(uint8_t *buf, int len);
+void crc32c_init(uint32_t *crc_ptr);
+uint32_t crc32c_chain(uint32_t crc, uint8_t *buf, int len);
+uint32_t crc32c_chain_done(uint32_t crc);
 
 struct scsi_task *iscsi_scsi_get_task_from_pdu(struct iscsi_pdu *pdu);
 

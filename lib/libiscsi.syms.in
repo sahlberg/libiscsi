@@ -116,6 +116,7 @@ iscsi_set_alias
 iscsi_set_bind_interfaces
 iscsi_set_cache_allocations
 iscsi_set_header_digest
+iscsi_set_data_digest
 iscsi_set_immediate_data
 iscsi_set_initial_r2t
 iscsi_set_initiator_username_pwd

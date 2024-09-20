@@ -431,6 +431,7 @@ static int reconnect(struct iscsi_context *iscsi, int force)
 	iscsi_set_targetname(tmp_iscsi, iscsi->target_name);
 
 	iscsi_set_header_digest(tmp_iscsi, iscsi->want_header_digest);
+	iscsi_set_data_digest(tmp_iscsi, iscsi->want_data_digest);
 
 	iscsi_set_initiator_username_pwd(tmp_iscsi, iscsi->user, iscsi->passwd);
 	iscsi_set_target_username_pwd(tmp_iscsi, iscsi->target_user, iscsi->target_passwd);

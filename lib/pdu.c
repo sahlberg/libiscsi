@@ -225,6 +225,9 @@ iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 	/* flags */
 	pdu->flags = flags;
 
+	/* DataDigest - may or may not be calculated.  Initialize anyway. */
+	crc32c_init(&pdu->calculated_data_digest);
+
 	return pdu;
 }
 
@@ -534,6 +537,25 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 		if (crc != crc_rcvd) {
 			iscsi_set_error(iscsi, "header checksum verification failed: calculated 0x%" PRIx32 " received 0x%" PRIx32, crc, crc_rcvd);
 			return -1;
+		}
+	}
+
+	/* verify data checksum ... */
+	if (iscsi->data_digest != ISCSI_DATA_DIGEST_NONE) {
+		int dsl = scsi_get_uint32(&in->hdr[4]) & 0x00ffffff;
+		/* ... but only if some data is present. */
+		if (dsl) {
+			uint32_t crc_rcvd = 0;
+			uint32_t crc = crc32c_chain_done(in->calculated_data_digest);
+
+			crc_rcvd |= in->data_digest_buf[0];
+			crc_rcvd |= in->data_digest_buf[1] << 8;
+			crc_rcvd |= in->data_digest_buf[2] << 16;
+			crc_rcvd |= in->data_digest_buf[3] << 24;
+			if (crc != crc_rcvd) {
+				iscsi_set_error(iscsi, "data checksum verification failed: calculated 0x%" PRIx32 " received 0x%" PRIx32, crc, crc_rcvd);
+				return -1;
+			}
 		}
 	}
 
@@ -943,6 +965,39 @@ iscsi_cancel_pdus(struct iscsi_context *iscsi)
 		if (pdu->callback) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
 			              NULL, pdu->private_data);
+		}
+		iscsi->drv->free_pdu(iscsi, pdu);
+	}
+}
+
+void
+iscsi_cancel_lun_pdus(struct iscsi_context *iscsi, uint32_t lun)
+{
+	struct iscsi_pdu *pdu;
+	struct iscsi_pdu *next_pdu;
+	uint32_t cmdsn_gap = 0;
+	struct scsi_task * task = NULL;
+
+	for (pdu = iscsi->outqueue; pdu; pdu = next_pdu) {
+		next_pdu = pdu->next;
+		task = iscsi_scsi_get_task_from_pdu(pdu);
+
+		if (cmdsn_gap > 0) {
+			iscsi_pdu_set_cmdsn(pdu, pdu->cmdsn - cmdsn_gap);
+		}
+		if (task == NULL || task->lun != lun) {
+			continue;
+		}
+		if (!(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE) &&
+		    (pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT) {
+			iscsi->cmdsn--;
+			cmdsn_gap++;
+		}
+		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
+		iscsi_set_error(iscsi, "command cancelled");
+		if (pdu->callback) {
+			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
+				NULL, pdu->private_data);
 		}
 		iscsi->drv->free_pdu(iscsi, pdu);
 	}

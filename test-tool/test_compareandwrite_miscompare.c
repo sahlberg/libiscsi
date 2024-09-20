@@ -95,7 +95,7 @@ test_compareandwrite_miscompare(void)
                 for (j = 0; j < i * block_size; j++) {
                         if (scratch[j] != 'A') {
                                 logging(LOG_VERBOSE, "[FAILED] Data changed "
-                                        "eventhough there was a miscompare");
+                                        "even though there was a miscompare");
                                 CU_FAIL("Block was written to");
                                 return;
                         }
@@ -151,7 +151,7 @@ test_compareandwrite_miscompare(void)
                 for (j = 0; j < i * block_size; j++) {
                         if (scratch[j] != 'A') {
                                 logging(LOG_VERBOSE, "[FAILED] Data changed "
-                                        "eventhough there was a miscompare");
+                                        "even though there was a miscompare");
                                 CU_FAIL("Block was written to");
                                 return;
                         }

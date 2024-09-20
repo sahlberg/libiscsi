@@ -202,7 +202,7 @@ static int check_result(const char *opcode, struct scsi_device *sdev,
         }
         if (status == SCSI_STATUS_GOOD && task->status != SCSI_STATUS_GOOD) {
                 logging(LOG_NORMAL,
-                        "[FAILED] %s command failed with status %d / sense key %s(0x%02x) / ASCQ %s(0x%04x)",
+                        "[FAILED] %s command failed with status 0x%x / sense key %s(0x%02x) / ASCQ %s(0x%04x)",
                         opcode, task->status,
                         scsi_sense_key_str(task->sense.key), task->sense.key,
                         scsi_sense_ascq_str(task->sense.ascq), task->sense.ascq);
@@ -457,6 +457,8 @@ void logging(int level, const char *format, ...)
         va_list ap;
         static char message[1024];
         int ret;
+        struct timespec ts;
+        struct tm tm;
 
         if (loglevel < level) {
                 return;
@@ -466,6 +468,17 @@ void logging(int level, const char *format, ...)
                 printf("\n");
                 return;
         }
+
+        if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+                return;
+	}
+
+        if (!localtime_r(&ts.tv_sec, &tm)) {
+                return;
+        }
+
+        printf("    %04d-%02d-%02d %02d:%02d:%02d.%06d ",
+                tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, (int)ts.tv_nsec / 1000);
 
         va_start(ap, format);
         ret = vsnprintf(message, 1024, format, ap);
@@ -2735,7 +2748,7 @@ int set_swp(struct scsi_device *sdev)
         logging(LOG_VERBOSE, "[SUCCESS] CONTROL page fetched.");
 
         ms = scsi_datain_unmarshall(sense_task);
-        if (ms == NULL) {
+        if (ms == NULL || ms->pages == NULL) {
                 logging(LOG_NORMAL, "failed to unmarshall mode sense datain "
                         "blob");
                 ret = -1;
