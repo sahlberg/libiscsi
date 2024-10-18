@@ -229,7 +229,7 @@ write_residuals_test(const struct residuals_test_data *tdata,
                 for (i = 0; i < expected_write_size; i++) {
                         if (scratch[i] != 'a') {
                                 logging(LOG_NORMAL, "Blocks were overwritten "
-                                        "and no longer contain 'a'");
+                                        "and no longer contain 'a': %c", scratch[i]);
                                 CU_FAIL("Blocks were incorrectly overwritten");
                                 break;
                         }
@@ -250,7 +250,7 @@ write_residuals_test(const struct residuals_test_data *tdata,
         for (i = expected_write_size; i < max_len; i++) {
                 if (scratch[i] != 'a') {
                         logging(LOG_NORMAL, "Data was overwritten "
-                                "and no longer contain 'a'");
+                                "and no longer contain 'a': %c", scratch[i]);
                         CU_FAIL("Data was incorrectly overwritten");
                         break;
                 }
