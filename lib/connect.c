@@ -494,3 +494,9 @@ int iscsi_force_reconnect(struct iscsi_context *iscsi)
 {
 	return reconnect(iscsi, 1);
 }
+
+void iscsi_reset_next_reconnect(struct iscsi_context *iscsi)
+{
+	ISCSI_LOG(iscsi, 1, "reset iscsi next_reconnect");
+	iscsi->next_reconnect = time(NULL);
+}

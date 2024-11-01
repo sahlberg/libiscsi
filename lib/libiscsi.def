@@ -90,6 +90,7 @@ iscsi_extended_copy_task
 iscsi_receive_copy_results_sync
 iscsi_receive_copy_results_task
 iscsi_reconnect
+iscsi_reset_next_reconnect
 iscsi_sanitize_sync
 iscsi_sanitize_task
 iscsi_sanitize_block_erase_sync

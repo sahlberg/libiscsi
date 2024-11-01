@@ -543,6 +543,11 @@ EXTERN int iscsi_force_reconnect(struct iscsi_context *iscsi);
 EXTERN int iscsi_force_reconnect_sync(struct iscsi_context *iscsi);
 
 /*
+ * Reset iscsi auto reconnect next_reconnect time to the current time.
+ */
+EXTERN void iscsi_reset_next_reconnect(struct iscsi_context *iscsi);
+
+/*
  * Asynchronous call to perform an ISCSI login.
  *
  * Returns:

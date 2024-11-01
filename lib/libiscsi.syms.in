@@ -98,6 +98,7 @@ iscsi_reportluns_sync
 iscsi_reportluns_task
 iscsi_reserve6_sync
 iscsi_reserve6_task
+iscsi_reset_next_reconnect
 iscsi_sanitize_block_erase_sync
 iscsi_sanitize_block_erase_task
 iscsi_sanitize_crypto_erase_sync
