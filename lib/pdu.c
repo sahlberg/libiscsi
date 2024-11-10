@@ -205,7 +205,7 @@ iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 
 	if (pdu->outdata.data == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate pdu header");
-		iscsi_free(iscsi, pdu);
+		iscsi->drv->free_pdu(iscsi, pdu);
 		return NULL;
 	}
 
