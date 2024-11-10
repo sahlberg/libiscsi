@@ -770,7 +770,11 @@ iser_prepare_read_cmd(struct iser_conn *iser_conn,struct iser_pdu *iser_pdu)
 	if (data_size > 0) {
 
 		if (task->iovector_in.iov == NULL) {
-			iser_pdu->iscsi_pdu.indata.data = iscsi_malloc(iscsi, data_size);
+			if (data_size <= iscsi->smalloc_size) {
+				iser_pdu->iscsi_pdu.indata.data = iscsi_smalloc(iscsi, data_size);
+			} else {
+				iser_pdu->iscsi_pdu.indata.data = iscsi_malloc(iscsi, data_size);
+			}
 			if (iser_pdu->iscsi_pdu.indata.data == NULL) {
 				iscsi_set_error(iscsi, "Failed to aloocate data buffer");
 				return -1;
