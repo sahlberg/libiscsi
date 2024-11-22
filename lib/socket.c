@@ -416,7 +416,11 @@ iscsi_tcp_disconnect(struct iscsi_context *iscsi)
 		return -1;
 	}
 
-	close(iscsi->fd);
+	if (iscsi->old_iscsi && iscsi->old_iscsi->fd == iscsi->fd) {
+		/* Reserve this fd because old_iscsi->fd will be reused */
+	} else {
+		close(iscsi->fd);
+	}
 
 	if (!(iscsi->pending_reconnect && iscsi->old_iscsi) &&
 	    iscsi->connected_portal[0]) {
