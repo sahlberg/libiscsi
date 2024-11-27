@@ -91,6 +91,12 @@ event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 			state->status = -1;
 			return;
 		}
+
+		if (iscsi->fd < 0) {
+			iscsi_set_error(iscsi, "Invalid fd %d", iscsi->fd);
+			state->status = -1;
+			return;
+		}
 	}
 }
 
