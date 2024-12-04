@@ -67,14 +67,21 @@ event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 	while (state->finished == 0) {
 		short revents;
 
-                if (scsi_timeout) {
-                        t = time(NULL);
-                        if (t > scsi_timeout) {
-                                iscsi_set_error(iscsi, "Connect timedout");
-                                state->status = -1;
-                                return;
-                        }
-                }
+		if (scsi_timeout) {
+			t = time(NULL);
+			if (t > scsi_timeout) {
+				iscsi_timeout_scan(iscsi);
+
+				if (iscsi->old_iscsi) {
+					iscsi_timeout_scan(iscsi->old_iscsi);
+				}
+
+				iscsi_set_error(iscsi, "Connect timedout");
+				state->status = -1;
+				return;
+			}
+		}
+
 		pfd.fd = iscsi_get_fd(iscsi);
 		pfd.events = iscsi_which_events(iscsi);
 
