@@ -1073,8 +1073,7 @@ iscsi_tcp_service(struct iscsi_context *iscsi, int revents)
 		}
 
 		if (getsockname(iscsi->fd, (struct sockaddr *) &local, &local_l) == 0) {
-			ISCSI_LOG(iscsi, 2, "connection established (%s:%u -> %s)", inet_ntoa(local.sin_addr),
-						(unsigned)ntohs(local.sin_port),iscsi->connected_portal);
+			ISCSI_LOG(iscsi, 2, "connection established to %s", iscsi->connected_portal);
 		}
 
 		iscsi->is_connected = 1;
