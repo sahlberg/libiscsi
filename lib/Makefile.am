@@ -6,7 +6,7 @@ libiscsipriv_la_SOURCES = \
 	connect.c crc32c.c discovery.c init.c \
 	login.c nop.c pdu.c iscsi-command.c \
 	scsi-lowlevel.c socket.c sync.c task_mgmt.c \
-	logging.c utils.c sha1.c
+	logging.c utils.c sha1.c sha224-256.c
 
 if TARGET_OS_IS_WIN32
 libiscsipriv_la_SOURCES += ../win32/win32_compat.c

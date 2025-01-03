@@ -47,7 +47,7 @@ target_user=<account>
 target_password=<password>
 header_digest=<crc32c|none>
 data_digest=<crc32c|none>
-auth=<md5|sha1>
+auth=<md5|sha1|sha256>
 Transport:
 iser
 

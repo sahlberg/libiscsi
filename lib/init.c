@@ -628,12 +628,16 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
                                         iscsi->chap_auth = ISCSI_CHAP_MD5;
                                 } else if (!strcmp(value, "sha1")) {
                                         iscsi->chap_auth = ISCSI_CHAP_SHA_1;
-#if 0                                        
                                 } else if (!strcmp(value, "sha-256")) {
                                         iscsi->chap_auth = ISCSI_CHAP_SHA_256;
+#if 0                                        
                                 } else if (!strcmp(value, "sha3-256")) {
                                         iscsi->chap_auth = ISCSI_CHAP_SHA3_256;
 #endif                                        
+                                } else {
+					iscsi_set_error(iscsi,
+						"Invalid argument for auth: %s", value);
+					return NULL;
                                 }
                         }
 			if (!strcmp(key, "header_digest")) {

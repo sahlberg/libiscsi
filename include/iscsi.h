@@ -186,8 +186,8 @@ iscsi_set_initial_r2t(struct iscsi_context *iscsi, enum iscsi_initial_r2t initia
 enum iscsi_chap_auth {
 	ISCSI_CHAP_MD5 = 5,
 	ISCSI_CHAP_SHA_1 = 6,
-#if 0        
 	ISCSI_CHAP_SHA_256 = 7,
+#if 0        
 	ISCSI_CHAP_SHA3_256 = 8,
 #endif        
 };
