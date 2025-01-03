@@ -72,7 +72,7 @@ struct iscsi_in_pdu {
 void iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 
 /* size of chap response field */
-#define CHAP_R_SIZE 16
+#define MAX_CHAP_R_SIZE 20 /* md5:16  sha1:20 */
 
 /* max length of chap challange */
 #define MAX_CHAP_C_LENGTH 2048
@@ -90,14 +90,15 @@ struct iscsi_context {
 	char alias[MAX_STRING_SIZE+1];
 	char bind_interfaces[MAX_STRING_SIZE+1];
 
+        enum iscsi_chap_auth chap_auth;
 	char user[MAX_STRING_SIZE+1];
 	char passwd[MAX_STRING_SIZE+1];
 	char chap_c[MAX_CHAP_C_LENGTH+1];
 
 	char target_user[MAX_STRING_SIZE+1];
 	char target_passwd[MAX_STRING_SIZE+1];
-	uint32_t target_chap_i;
-	unsigned char target_chap_r[CHAP_R_SIZE];
+	int target_chap_i;
+	char target_chap_r[MAX_CHAP_R_SIZE];
 
 	char error_string[MAX_STRING_SIZE+1];
 

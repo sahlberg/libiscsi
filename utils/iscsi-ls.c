@@ -170,7 +170,8 @@ tur_try_again:
 	printf("\n");
 }
 
-void list_luns(struct client_state *clnt, const char *target, const char *portal)
+void list_luns(struct client_state *clnt, const char *target, const char *portal,
+               enum iscsi_chap_auth auth)
 {
 	struct iscsi_context *iscsi;
 	struct scsi_task *task;
@@ -188,6 +189,7 @@ void list_luns(struct client_state *clnt, const char *target, const char *portal
 		printf("Failed to create context\n");
 		exit(10);
 	}
+        iscsi_set_auth(iscsi, auth);
 
 	iscsi_set_initiator_username_pwd(iscsi, clnt->username, clnt->password);
 	if (iscsi_set_targetname(iscsi, target)) {
@@ -277,7 +279,7 @@ void discovery_cb(struct iscsi_context *iscsi, int status, void *command_data, v
 				printf("Target:%s Portal:%s\n", addr->target_name, portal->portal);
 			}
 			if (showluns != 0) {
-				list_luns(private_data, addr->target_name, portal->portal);
+				list_luns(private_data, addr->target_name, portal->portal, iscsi_get_auth(iscsi));
 			}
 			portal = portal->next;
 		}

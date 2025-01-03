@@ -44,6 +44,7 @@
 #include "iscsi-private.h"
 #include "scsi-lowlevel.h"
 #include "md5.h"
+#include "sha.h"
 
 #ifdef HAVE_LIBGNUTLS
 #include <gnutls/crypto.h>
@@ -562,7 +563,10 @@ iscsi_login_add_authalgorithm(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return 0;
 	}
 
-	strncpy(str,"CHAP_A=5",MAX_STRING_SIZE);
+        if (snprintf(str, MAX_STRING_SIZE, "CHAP_A=%d", iscsi->chap_auth) == -1) {
+		iscsi_set_error(iscsi, "Out-of-memory: snprintf failed.");
+		return -1;
+	}
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str)+1)
 	    != 0) {
 		iscsi_set_error(iscsi, "Out-of-memory: pdu add data failed.");
@@ -702,6 +706,7 @@ i2h(int i)
 	return i + '0';
 }
 
+
 #if defined HAVE_LIBGNUTLS
 #define md5_context_t gnutls_hash_hd_t
 #define md5_open(hd)  gnutls_hash_init(hd, GNUTLS_DIG_MD5)
@@ -757,19 +762,74 @@ static inline void md5_putc(md5_context_t h, unsigned char c)
 	md5_write(h, &c, 1);
 }
 
-/* size of the challenge used for bidirectional chap */
-#define TARGET_CHAP_C_SIZE 32
+static void compute_chap_r_md5(struct iscsi_context *iscsi, int chap_i,
+                               unsigned char *passwd,
+                               unsigned char *chap_c,
+                               unsigned char *digest)
+{
+	unsigned char *strp;
+	unsigned char c;
+	md5_context_t ctx;
+
+	md5_open(&ctx);
+	md5_putc(ctx, chap_i);
+	md5_write(ctx, passwd, strlen((char *)passwd));
+
+	strp = chap_c;
+	while (*strp != 0) {
+		c = (h2i(strp[0]) << 4) | h2i(strp[1]);
+		strp += 2;
+		md5_putc(ctx, c);
+	}
+	md5_read(ctx, digest);
+	md5_close(ctx);
+}
+
+static void compute_chap_r_sha1(struct iscsi_context *iscsi, int chap_i,
+                                unsigned char *passwd,
+                                unsigned char *chap_c,
+                                unsigned char *digest)
+{
+	unsigned char *strp;
+	unsigned char c;
+        SHA1Context ctx;
+
+        SHA1Reset(&ctx);
+        c = chap_i;
+        SHA1Input(&ctx, &c, 1);
+        SHA1Input(&ctx, passwd, strlen((char *)passwd));
+
+	strp = chap_c;
+	while (*strp != 0) {
+		c = (h2i(strp[0]) << 4) | h2i(strp[1]);
+		strp += 2;
+                SHA1Input(&ctx, &c, 1);
+	}
+        SHA1Result(&ctx, digest);
+}
+
+static void compute_chap_r(struct iscsi_context *iscsi, int chap_i,
+                           unsigned char *passwd,
+                           unsigned char *chap_c,
+                           unsigned char *digest)
+{
+        switch (iscsi->chap_auth) {
+        case ISCSI_CHAP_MD5:
+                return compute_chap_r_md5(iscsi, chap_i, passwd, chap_c, digest);
+        case ISCSI_CHAP_SHA_1:
+                return compute_chap_r_sha1(iscsi, chap_i, passwd, chap_c, digest);
+        }
+}
 
 static int
 iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	char str[MAX_STRING_SIZE+1];
-	char * strp;
 	unsigned char c, cc[2];
-	unsigned char digest[CHAP_R_SIZE];
-	md5_context_t ctx;
+	char digest[MAX_CHAP_R_SIZE];
 	int i;
-
+        int chap_r_size = 0;
+        
 	if (iscsi->current_phase != ISCSI_PDU_LOGIN_CSG_SECNEG
 	|| iscsi->secneg_phase != ISCSI_LOGIN_SECNEG_PHASE_SEND_RESPONSE) {
 		return 0;
@@ -780,22 +840,19 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return -1;
 	}
 
-	md5_open(&ctx);
-	if (ctx == NULL) {
-		iscsi_set_error(iscsi, "Cannot create MD5 algorithm");
-		return -1;
-	}
-	md5_putc(ctx, iscsi->chap_i);
-	md5_write(ctx, (unsigned char *)iscsi->passwd, strlen(iscsi->passwd));
-
-	strp = iscsi->chap_c;
-	while (*strp != 0) {
-		c = (h2i(strp[0]) << 4) | h2i(strp[1]);
-		strp += 2;
-		md5_putc(ctx, c);
-	}
-	md5_read(ctx, digest);
-	md5_close(ctx);
+        switch (iscsi->chap_auth) {
+        case ISCSI_CHAP_MD5:
+                chap_r_size = 16;
+                break;
+        case ISCSI_CHAP_SHA_1:
+                chap_r_size = 20;
+                break;
+        }
+        
+        compute_chap_r(iscsi, iscsi->chap_i,
+                       (unsigned char *)iscsi->passwd,
+                       (unsigned char *)iscsi->chap_c,
+                       (unsigned char *)digest);
 
 	strncpy(str,"CHAP_R=0x",MAX_STRING_SIZE);
 	if (iscsi_pdu_add_data(iscsi, pdu, (unsigned char *)str, strlen(str))
@@ -804,7 +861,7 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 		return -1;
 	}
 
-	for (i = 0; i < CHAP_R_SIZE; i++) {
+	for (i = 0; i < chap_r_size; i++) {
 		c = digest[i];
 		cc[0] = i2h((c >> 4)&0x0f);
 		cc[1] = i2h((c     )&0x0f);
@@ -824,7 +881,7 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 
 	/* bidirectional chap */
 	if (iscsi->target_user[0]) {
-		unsigned char target_chap_c[TARGET_CHAP_C_SIZE];
+		char target_chap_c[MAX_CHAP_R_SIZE * 2];
 
 		iscsi->target_chap_i++;
 		snprintf(str, MAX_STRING_SIZE, "CHAP_I=%d",
@@ -836,7 +893,7 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 			return -1;
 		}
 
-		for (i = 0; i < TARGET_CHAP_C_SIZE; i++) {
+		for (i = 0; i < chap_r_size * 2; i++) {
 			target_chap_c[i] = rand()&0xff;
 		}
 		strncpy(str, "CHAP_C=0x", MAX_STRING_SIZE);
@@ -846,7 +903,7 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 					"failed.");
 			return -1;
 		}
-		for (i = 0; i < TARGET_CHAP_C_SIZE; i++) {
+		for (i = 0; i < chap_r_size * 2; i++) {
 			c = target_chap_c[i];
 			cc[0] = i2h((c >> 4)&0x0f);
 			cc[1] = i2h((c     )&0x0f);
@@ -863,19 +920,10 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 			return -1;
 		}
 
-		md5_open(&ctx);
-		if (ctx == NULL) {
-			iscsi_set_error(iscsi, "Cannot create MD5 algorithm");
-			return -1;
-		}
-		md5_putc(ctx, iscsi->target_chap_i);
-		md5_write(ctx, (unsigned char *)iscsi->target_passwd,
-			      strlen(iscsi->target_passwd));
-		md5_write(ctx, (unsigned char *)target_chap_c,
-			      TARGET_CHAP_C_SIZE);
-
-		md5_read(ctx, iscsi->target_chap_r);
-		md5_close(ctx);
+                compute_chap_r(iscsi, iscsi->target_chap_i,
+                               (unsigned char *)iscsi->target_passwd,
+                               (unsigned char *)target_chap_c,
+                               (unsigned char *)iscsi->target_chap_r);
 	}
 
 	return 0;
@@ -1338,9 +1386,18 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		}
 
 		if (!strncmp(ptr, "CHAP_R=0x", 9)) {
-			int i;
+			int i, chap_r_size = 0;
 
-			if (len != 9 + 2 * CHAP_R_SIZE) {
+                        switch (iscsi->chap_auth) {
+                        case ISCSI_CHAP_MD5:
+                                chap_r_size = 16;
+                                break;
+                        case ISCSI_CHAP_SHA_1:
+                                chap_r_size = 20;
+                                break;
+                        }
+                        
+			if (len != 9 + 2 * chap_r_size) {
 				iscsi_set_error(iscsi, "Wrong size of CHAP_R"
 						" received from target.");
 				if (pdu->callback) {
@@ -1349,7 +1406,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 				}
 				return 0;
 			}
-			for (i = 0; i < CHAP_R_SIZE; i++) {
+			for (i = 0; i < chap_r_size; i++) {
 				unsigned char c;
 				c = ((h2i(ptr[9 + 2 * i]) << 4) | h2i(ptr[9 + 2 * i + 1]));
 				if (c != iscsi->target_chap_r[i]) {

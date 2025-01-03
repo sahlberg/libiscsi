@@ -17,6 +17,7 @@ iscsi_force_reconnect
 iscsi_force_reconnect_sync
 iscsi_full_connect_async
 iscsi_full_connect_sync
+iscsi_get_auth
 iscsi_get_error
 iscsi_get_fd
 iscsi_get_lba_status_sync
@@ -114,6 +115,7 @@ iscsi_scsi_command_sync
 iscsi_scsi_is_task_in_outqueue
 iscsi_service
 iscsi_set_alias
+iscsi_set_auth
 iscsi_set_bind_interfaces
 iscsi_set_cache_allocations
 iscsi_set_header_digest

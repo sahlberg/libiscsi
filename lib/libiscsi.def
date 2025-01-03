@@ -14,6 +14,7 @@ iscsi_free_discovery_data
 iscsi_force_reconnect
 iscsi_full_connect_async
 iscsi_full_connect_sync
+iscsi_get_auth
 iscsi_get_error
 iscsi_get_fd
 iscsi_get_lba_status_sync
@@ -111,6 +112,7 @@ iscsi_scsi_command_sync
 iscsi_scsi_cancel_task
 iscsi_service
 iscsi_set_alias
+iscsi_set_auth
 iscsi_set_immediate_data
 iscsi_set_initial_r2t
 iscsi_set_log_level

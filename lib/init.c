@@ -251,6 +251,7 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->tcp_keepidle=30;
 	
 	iscsi->reconnect_max_retries = -1;
+        iscsi->chap_auth = ISCSI_CHAP_MD5;
 
 	if (getenv("LIBISCSI_DEBUG") != NULL) {
 		iscsi_set_log_level(iscsi, atoi(getenv("LIBISCSI_DEBUG")));
@@ -622,6 +623,19 @@ iscsi_parse_url(struct iscsi_context *iscsi, const char *url, int full)
 			if (value != NULL) {
 				*value++ = 0;
 			}
+			if (!strcmp(key, "auth")) {
+				if (!strcmp(value, "md5")) {
+                                        iscsi->chap_auth = ISCSI_CHAP_MD5;
+                                } else if (!strcmp(value, "sha1")) {
+                                        iscsi->chap_auth = ISCSI_CHAP_SHA_1;
+#if 0                                        
+                                } else if (!strcmp(value, "sha-256")) {
+                                        iscsi->chap_auth = ISCSI_CHAP_SHA_256;
+                                } else if (!strcmp(value, "sha3-256")) {
+                                        iscsi->chap_auth = ISCSI_CHAP_SHA3_256;
+#endif                                        
+                                }
+                        }
 			if (!strcmp(key, "header_digest")) {
 				if (!strcmp(value, "crc32c")) {
 					iscsi_set_header_digest(
@@ -873,3 +887,16 @@ iscsi_set_fd_dup_cb(struct iscsi_context *iscsi,
 	iscsi->fd_dup_cb = cb;
 	iscsi->fd_dup_opaque = opaque;
 }
+
+enum iscsi_chap_auth
+iscsi_get_auth(struct iscsi_context *iscsi)
+{
+        return iscsi->chap_auth;
+}
+
+void
+iscsi_set_auth(struct iscsi_context *iscsi, enum iscsi_chap_auth auth)
+{
+        iscsi->chap_auth = auth;
+}
+

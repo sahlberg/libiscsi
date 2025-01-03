@@ -183,6 +183,21 @@ EXTERN int
 iscsi_set_initial_r2t(struct iscsi_context *iscsi, enum iscsi_initial_r2t initial_r2t);
 
 
+enum iscsi_chap_auth {
+	ISCSI_CHAP_MD5 = 5,
+	ISCSI_CHAP_SHA_1 = 6,
+#if 0        
+	ISCSI_CHAP_SHA_256 = 7,
+	ISCSI_CHAP_SHA3_256 = 8,
+#endif        
+};
+
+EXTERN enum iscsi_chap_auth
+iscsi_get_auth(struct iscsi_context *iscsi);
+
+EXTERN void
+iscsi_set_auth(struct iscsi_context *iscsi, enum iscsi_chap_auth auth);
+        
 /*
  * This function is used to parse an iSCSI URL into a iscsi_url structure.
  * iSCSI URL format :
