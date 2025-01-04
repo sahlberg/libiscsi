@@ -187,9 +187,7 @@ enum iscsi_chap_auth {
 	ISCSI_CHAP_MD5 = 5,
 	ISCSI_CHAP_SHA_1 = 6,
 	ISCSI_CHAP_SHA_256 = 7,
-#if 0        
 	ISCSI_CHAP_SHA3_256 = 8,
-#endif        
 };
 
 EXTERN enum iscsi_chap_auth

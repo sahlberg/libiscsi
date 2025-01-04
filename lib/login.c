@@ -45,6 +45,7 @@
 #include "scsi-lowlevel.h"
 #include "md5.h"
 #include "sha.h"
+#include "sha3.h"
 
 #ifdef HAVE_LIBGNUTLS
 #include <gnutls/crypto.h>
@@ -808,6 +809,29 @@ static void compute_chap_r_sha1(struct iscsi_context *iscsi, int chap_i,
         SHA1Result(&ctx, digest);
 }
 
+static void compute_chap_r_sha3_256(struct iscsi_context *iscsi, int chap_i,
+                                    unsigned char *passwd,
+                                    unsigned char *chap_c,
+                                    unsigned char *digest)
+{
+	unsigned char *strp;
+	unsigned char c;
+        sha3_ctx_t ctx;
+
+        sha3_init(&ctx, 32);
+        c = chap_i;
+        sha3_update(&ctx, &c, 1);
+        sha3_update(&ctx, passwd, strlen((char *)passwd));
+
+	strp = chap_c;
+	while (*strp != 0) {
+		c = (h2i(strp[0]) << 4) | h2i(strp[1]);
+		strp += 2;
+                sha3_update(&ctx, &c, 1);
+	}
+        sha3_final(digest, &ctx);
+}
+
 static void compute_chap_r_sha256(struct iscsi_context *iscsi, int chap_i,
                                   unsigned char *passwd,
                                   unsigned char *chap_c,
@@ -843,6 +867,8 @@ static void compute_chap_r(struct iscsi_context *iscsi, int chap_i,
                 return compute_chap_r_sha1(iscsi, chap_i, passwd, chap_c, digest);
         case ISCSI_CHAP_SHA_256:
                 return compute_chap_r_sha256(iscsi, chap_i, passwd, chap_c, digest);
+        case ISCSI_CHAP_SHA3_256:
+                return compute_chap_r_sha3_256(iscsi, chap_i, passwd, chap_c, digest);
         }
 }
 
@@ -873,6 +899,7 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
                 chap_r_size = 20;
                 break;
         case ISCSI_CHAP_SHA_256:
+        case ISCSI_CHAP_SHA3_256:
                 chap_r_size = 32;
                 break;
         }
@@ -1424,6 +1451,7 @@ iscsi_process_login_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
                                 chap_r_size = 20;
                                 break;
                         case ISCSI_CHAP_SHA_256:
+                        case ISCSI_CHAP_SHA3_256:
                                 chap_r_size = 32;
                                 break;
                         }
