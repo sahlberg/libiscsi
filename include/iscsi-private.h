@@ -28,6 +28,39 @@
 
 #include "iscsi.h"
 
+#ifdef HAVE_MULTITHREADING
+#ifdef HAVE_STDATOMIC_H
+#include <stdatomic.h>
+#define ATOMIC_INC(rpc, x) \
+        atomic_fetch_add_explicit(&x, 1, memory_order_relaxed)
+#define ATOMIC_DEC(rpc, x) \
+        atomic_fetch_sub_explicit(&x, 1, memory_order_relaxed)
+#else /* HAVE_STDATOMIC_H */
+#define ATOMIC_INC(rpc, x)                              \
+        if (rpc->multithreading_enabled) {              \
+                nfs_mt_mutex_lock(&rpc->atomic_int_mutex);     \
+        }                                               \
+	x++;                                            \
+        if (rpc->multithreading_enabled) {              \
+                nfs_mt_mutex_unlock(&rpc->atomic_int_mutex);   \
+        }
+#define ATOMIC_DEC(rpc, x)                              \
+        if (rpc->multithreading_enabled) {              \
+                nfs_mt_mutex_lock(&rpc->atomic_int_mutex);     \
+        }                                               \
+	x--;                                            \
+        if (rpc->multithreading_enabled) {              \
+                nfs_mt_mutex_unlock(&rpc->atomic_int_mutex);   \
+        }
+#endif /* HAVE_STDATOMIC_H */
+#else /* HAVE_MULTITHREADING */
+/* no multithreading support, no need to protect the increment */
+#define ATOMIC_INC(rpc, x) x++
+#define ATOMIC_DEC(rpc, x) x--
+#endif /* HAVE_MULTITHREADING */
+
+#include "iscsi-multithreading.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -184,6 +217,19 @@ struct iscsi_context {
 	int no_ua_on_reconnect;
 	void (*fd_dup_cb)(struct iscsi_context *iscsi, void *opaque);
 	void *fd_dup_opaque;
+
+#ifdef HAVE_MULTITHREADING
+        int multithreading_enabled;
+        libiscsi_mutex_t iscsi_mutex;
+        libiscsi_thread_t service_thread;
+        int poll_timeout;
+        //libnfs_mutex_t nfs4_open_counter_mutex;
+        //libnfs_mutex_t nfs4_open_call_mutex;
+        //struct nfs_thread_context *thread_ctx;
+#ifndef HAVE_STDATOMIC_H
+        libiscsi_mutex_t atomic_int_mutex;
+#endif /* HAVE_STDATOMIC_H */
+#endif /* HAVE_MULTITHREADING */
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40

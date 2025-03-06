@@ -216,6 +216,11 @@ iscsi_create_context(const char *initiator_name)
 
 	memset(iscsi, 0, sizeof(struct iscsi_context));
 
+#ifdef HAVE_MULTITHREADING
+        iscsi_mt_mutex_init(&iscsi->iscsi_mutex);
+        iscsi->poll_timeout = 100;
+#endif /* HAVE_MULTITHREADING */
+
 	/* initalize transport of context */
 	if (iscsi_init_transport(iscsi, TCP_TRANSPORT)) {
 		free(iscsi);
@@ -431,6 +436,10 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		iscsi_destroy_context(iscsi->old_iscsi);
 	}
 
+#ifdef HAVE_MULTITHREADING
+        iscsi_mt_mutex_destroy(&iscsi->iscsi_mutex);
+#endif /* HAVE_MULTITHREADING */
+        
 	memset(iscsi, 0, sizeof(struct iscsi_context));
 	free(iscsi);
 

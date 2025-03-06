@@ -5,6 +5,7 @@ noinst_LTLIBRARIES = libiscsipriv.la
 libiscsipriv_la_SOURCES = \
 	connect.c crc32c.c discovery.c init.c \
 	login.c nop.c pdu.c iscsi-command.c \
+	multithreading.c \
 	scsi-lowlevel.c socket.c sync.c task_mgmt.c \
 	logging.c utils.c sha1.c sha224-256.c sha3.c
 
