@@ -131,12 +131,12 @@ struct iscsi_context {
 	enum iscsi_session_type session_type;
 	unsigned char isid[6];
 	uint8_t rdma_ack_timeout;
-	uint32_t itt;
-	uint32_t cmdsn;
-	uint32_t min_cmdsn_waiting;
-	uint32_t expcmdsn;
-	uint32_t maxcmdsn;
-	uint32_t statsn;
+	uint32_t itt;                  // multithreading todo: may need mutex
+	uint32_t cmdsn;                // multithreading todo: may need mutex
+	uint32_t min_cmdsn_waiting;    // multithreading todo: may need mutex
+	uint32_t expcmdsn;             // multithreading todo: may need mutex
+	uint32_t maxcmdsn;             // multithreading todo: may need mutex
+	uint32_t statsn;               // multithreading todo: may need mutex
 	enum iscsi_header_digest want_header_digest;
 	enum iscsi_header_digest header_digest;
 	enum iscsi_data_digest want_data_digest;
@@ -170,11 +170,11 @@ struct iscsi_context {
 	iscsi_command_cb socket_status_cb;
 	void *connect_data;
 
-	struct iscsi_pdu *outqueue;
-	struct iscsi_pdu *outqueue_current;
-	struct iscsi_pdu *waitpdu;
+	struct iscsi_pdu *outqueue;         // multithreading todo: may need mutex
+	struct iscsi_pdu *outqueue_current; // multithreading todo: may need mutex
+	struct iscsi_pdu *waitpdu;          // multithreading todo: may need mutex
 
-	struct iscsi_in_pdu *incoming;
+	struct iscsi_in_pdu *incoming;      // multithreading todo: may need mutex
 
 	uint32_t max_burst_length;
 	uint32_t first_burst_length;
