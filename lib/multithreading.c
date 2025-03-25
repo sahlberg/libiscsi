@@ -113,30 +113,6 @@ void iscsi_mt_service_thread_stop(struct iscsi_context* iscsi)
     while (WaitForSingleObject(iscsi->iscsii->service_thread, INFINITE) != WAIT_OBJECT_0);
 }
 
-int iscsi_mt_mutex_init(libiscsi_mutex_t* mutex)
-{
-    *mutex = CreateSemaphoreA(NULL, 1, 1, NULL);
-    return 0;
-}
-
-int iscsi_mt_mutex_destroy(libiscsi_mutex_t* mutex)
-{
-    CloseHandle(*mutex);
-    return 0;
-}
-
-int iscsi_mt_mutex_lock(libiscsi_mutex_t* mutex)
-{
-    while (WaitForSingleObject(*mutex, INFINITE) != WAIT_OBJECT_0);
-    return 0;
-}
-
-int iscsi_mt_mutex_unlock(libiscsi_mutex_t* mutex)
-{
-    ReleaseSemaphore(*mutex, 1, NULL);
-    return 0;
-}
-
 int iscsi_mt_sem_init(libiscsi_sem_t* sem, int value)
 {
     *sem = CreateSemaphoreA(NULL, 0, 16, NULL);
@@ -230,61 +206,6 @@ void iscsi_mt_service_thread_stop(struct iscsi_context *iscsi)
         pthread_join(iscsi->service_thread, NULL);
 }
         
-/*
- * If this is enabled we check for the following locking violations, at the
- * (slight) cost of performance:
- * - Thread holding the lock again tries to lock.
- * - Thread not holding the lock tries to unlock.
- *
- * This is very useful for catching any coding errors.
- * The performance hit is not very significant so you can leave it enabled,
- * but if you really care then once the code has been vetted, this can be
- * undef'ed to get the perf back.
- */
-#define DEBUG_PTHREAD_LOCKING_VIOLATIONS
-
-int iscsi_mt_mutex_init(libiscsi_mutex_t *mutex)
-{
-	int ret;
-#ifdef DEBUG_PTHREAD_LOCKING_VIOLATIONS
-	pthread_mutexattr_t attr;
-
-	ret = pthread_mutexattr_init(&attr);
-	if (ret != 0) {
-		return ret;
-	}
-
-	ret = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
-	if (ret != 0) {
-		return ret;
-	}
-
-	ret = pthread_mutex_init(mutex, &attr);
-	if (ret != 0) {
-		return ret;
-	}
-#else
-	ret = pthread_mutex_init(mutex, NULL);
-	assert(ret == 0);
-#endif
-	return ret;
-}
-
-int iscsi_mt_mutex_destroy(libiscsi_mutex_t *mutex)
-{
-	return pthread_mutex_destroy(mutex);
-}
-
-int iscsi_mt_mutex_lock(libiscsi_mutex_t *mutex)
-{
-	return pthread_mutex_lock(mutex);
-}
-
-int iscsi_mt_mutex_unlock(libiscsi_mutex_t *mutex)
-{
-	return pthread_mutex_unlock(mutex);
-}
-
 #if defined(__APPLE__) && defined(HAVE_DISPATCH_DISPATCH_H)
 int iscsi_mt_sem_init(libiscsi_sem_t *sem, int value)
 {

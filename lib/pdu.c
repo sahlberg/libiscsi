@@ -942,13 +942,9 @@ iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
         int ret;
 
-#ifdef HAVE_MULTITHREADING
         iscsi_mt_mutex_lock(&iscsi->iscsi_mutex);
-#endif /* HAVE_MULTITHREADING */
 	ret = iscsi->drv->queue_pdu(iscsi, pdu);
-#ifdef HAVE_MULTITHREADING
         iscsi_mt_mutex_unlock(&iscsi->iscsi_mutex);
-#endif /* HAVE_MULTITHREADING */
 
         return ret;
 }
