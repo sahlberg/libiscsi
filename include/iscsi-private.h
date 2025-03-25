@@ -37,21 +37,14 @@
         atomic_fetch_sub_explicit(&x, 1, memory_order_relaxed)
 #else /* HAVE_STDATOMIC_H */
 #define ATOMIC_INC(rpc, x)                              \
-        if (rpc->multithreading_enabled) {              \
-                nfs_mt_mutex_lock(&rpc->atomic_int_mutex);     \
+        iscs_mt_mutex_lock(&iscs->atomic_int_mutex);    \
         }                                               \
 	x++;                                            \
-        if (rpc->multithreading_enabled) {              \
-                nfs_mt_mutex_unlock(&rpc->atomic_int_mutex);   \
-        }
+        iscsi_mt_mutex_unlock(&iscsi->atomic_int_mutex);
 #define ATOMIC_DEC(rpc, x)                              \
-        if (rpc->multithreading_enabled) {              \
-                nfs_mt_mutex_lock(&rpc->atomic_int_mutex);     \
-        }                                               \
+        nfs_mt_mutex_lock(&rpc->atomic_int_mutex);      \
 	x--;                                            \
-        if (rpc->multithreading_enabled) {              \
-                nfs_mt_mutex_unlock(&rpc->atomic_int_mutex);   \
-        }
+        nfs_mt_mutex_unlock(&rpc->atomic_int_mutex);
 #endif /* HAVE_STDATOMIC_H */
 #else /* HAVE_MULTITHREADING */
 /* no multithreading support, no need to protect the increment */
@@ -223,9 +216,6 @@ struct iscsi_context {
         libiscsi_mutex_t iscsi_mutex;
         libiscsi_thread_t service_thread;
         int poll_timeout;
-        //libnfs_mutex_t nfs4_open_counter_mutex;
-        //libnfs_mutex_t nfs4_open_call_mutex;
-        //struct nfs_thread_context *thread_ctx;
 #ifndef HAVE_STDATOMIC_H
         libiscsi_mutex_t atomic_int_mutex;
 #endif /* HAVE_STDATOMIC_H */

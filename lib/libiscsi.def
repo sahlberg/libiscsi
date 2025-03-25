@@ -38,6 +38,8 @@ iscsi_modesense6_sync
 iscsi_modesense6_task
 iscsi_modesense10_sync
 iscsi_modesense10_task
+iscsi_mt_service_thread_start
+iscsi_mt_service_thread_stop
 iscsi_nop_out_async
 iscsi_parse_full_url
 iscsi_parse_portal_url

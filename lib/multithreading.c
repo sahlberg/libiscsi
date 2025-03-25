@@ -189,6 +189,7 @@ static void *iscsi_mt_service_thread(void *arg)
 
         iscsi->multithreading_enabled = 1;
 
+        /* TODO: add timeout scanning */
 	while (iscsi->multithreading_enabled) {
 		pfd.fd = iscsi_get_fd(iscsi);
 		pfd.events = iscsi_which_events(iscsi);

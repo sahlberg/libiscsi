@@ -3,4 +3,4 @@ AM_CFLAGS=$(WARN_CFLAGS)
 AM_LDFLAGS=-no-undefined
 LIBS=../lib/libiscsi.la
 
-noinst_PROGRAMS = iscsiclient iscsi-dd
+noinst_PROGRAMS = iscsiclient iscsi-dd iscsi-pthreads-inq
