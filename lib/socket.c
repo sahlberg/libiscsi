@@ -306,6 +306,7 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 	struct addrinfo *ai = NULL;
 	union socket_address sa;
 	int socksize;
+	bool portal_is_ip;
 
 	ISCSI_LOG(iscsi, 2, "connecting to portal %s",portal);
 
@@ -352,6 +353,10 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		*str = 0;
 	}
 
+        /* check if we got an ip address or hostname for portal */
+	portal_is_ip = inet_pton(AF_INET, host, &sa) == 1 ||
+		       inet_pton(AF_INET6, host, &sa) == 1;
+
 	/* is it a hostname ? */
 	if (getaddrinfo(host, NULL, NULL, &ai) != 0) {
 		iscsi_free(iscsi, addr);
@@ -371,6 +376,11 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 #ifdef HAVE_SOCK_SIN_LEN
 		sa.sin.sin_len = socksize;
 #endif
+		if (!portal_is_ip) {
+			char ip[INET_ADDRSTRLEN];
+			inet_ntop(AF_INET, &sa.sin.sin_addr, ip, sizeof(ip));
+			ISCSI_LOG(iscsi, 2, "portal resolved to ipv4 address %s", ip);
+		}
 		break;
 #ifdef HAVE_SOCKADDR_IN6
 	case AF_INET6:
@@ -381,6 +391,11 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 #ifdef HAVE_SOCK_SIN_LEN
 		sa.sin6.sin6_len = socksize;
 #endif
+		if (!portal_is_ip) {
+			char ip[INET6_ADDRSTRLEN];
+			inet_ntop(AF_INET6, &sa.sin6.sin6_addr, ip, sizeof(ip));
+			ISCSI_LOG(iscsi, 2, "portal resolved to ipv6 address %s", ip);
+		}
 		break;
 #endif
 	default:
