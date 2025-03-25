@@ -31,13 +31,11 @@ extern "C" {
 
 #ifdef WIN32
 typedef HANDLE libiscsi_thread_t;
-typedef HANDLE libiscsi_mutex_t;
 typedef HANDLE libiscsi_sem_t;
 typedef DWORD iscsi_tid_t;
 #elif defined(HAVE_PTHREAD)
 #include <pthread.h>
 typedef pthread_t libiscsi_thread_t;
-typedef pthread_mutex_t libiscsi_mutex_t;
 
 #if defined(__APPLE__) && defined(HAVE_DISPATCH_DISPATCH_H)
 #include <dispatch/dispatch.h>
@@ -54,10 +52,8 @@ typedef pid_t iscsi_tid_t;
 #endif /* HAVE_PTHREAD */
 
 iscsi_tid_t iscsi_mt_get_tid(void);
-int iscsi_mt_mutex_init(libiscsi_mutex_t *mutex);
-int iscsi_mt_mutex_destroy(libiscsi_mutex_t *mutex);
-int iscsi_mt_mutex_lock(libiscsi_mutex_t *mutex);
-int iscsi_mt_mutex_unlock(libiscsi_mutex_t *mutex);
+
+
 
 int iscsi_mt_sem_init(libiscsi_sem_t *sem, int value);
 int iscsi_mt_sem_destroy(libiscsi_sem_t *sem);
@@ -65,6 +61,104 @@ int iscsi_mt_sem_post(libiscsi_sem_t *sem);
 int iscsi_mt_sem_wait(libiscsi_sem_t *sem);
 
 #endif /* HAVE_MULTITHREADING */
+
+/*
+ * We always have access to mutex functions even if multithreading
+ * is not enabled.
+ */
+#if defined(HAVE_PTHREAD)
+typedef pthread_mutex_t libiscsi_mutex_t;
+/*
+ * If this is enabled we check for the following locking violations, at the
+ * (slight) cost of performance:
+ * - Thread holding the lock again tries to lock.
+ * - Thread not holding the lock tries to unlock.
+ *
+ * This is very useful for catching any coding errors.
+ * The performance hit is not very significant so you can leave it enabled,
+ * but if you really care then once the code has been vetted, this can be
+ * undef'ed to get the perf back.
+ */
+#define DEBUG_PTHREAD_LOCKING_VIOLATIONS
+
+static inline int iscsi_mt_mutex_init(libiscsi_mutex_t *mutex)
+{
+	int ret;
+#ifdef DEBUG_PTHREAD_LOCKING_VIOLATIONS
+	pthread_mutexattr_t attr;
+
+	ret = pthread_mutexattr_init(&attr);
+	if (ret != 0) {
+		return ret;
+	}
+
+	ret = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+	if (ret != 0) {
+		return ret;
+	}
+
+	ret = pthread_mutex_init(mutex, &attr);
+	if (ret != 0) {
+		return ret;
+	}
+#else
+	ret = pthread_mutex_init(mutex, NULL);
+	assert(ret == 0);
+#endif
+	return ret;
+}
+
+static inline int iscsi_mt_mutex_destroy(libiscsi_mutex_t *mutex)
+{
+	return pthread_mutex_destroy(mutex);
+}
+
+static inline int iscsi_mt_mutex_lock(libiscsi_mutex_t *mutex)
+{
+	return pthread_mutex_lock(mutex);
+}
+
+static inline int iscsi_mt_mutex_unlock(libiscsi_mutex_t *mutex)
+{
+	return pthread_mutex_unlock(mutex);
+}
+
+#elif defined(WIN32)
+typedef HANDLE libiscsi_mutex_t;
+static inline int iscsi_mt_mutex_init(libiscsi_mutex_t* mutex)
+{
+    *mutex = CreateSemaphoreA(NULL, 1, 1, NULL);
+    return 0;
+}
+
+static inline int iscsi_mt_mutex_destroy(libiscsi_mutex_t* mutex)
+{
+    CloseHandle(*mutex);
+    return 0;
+}
+
+static inline int iscsi_mt_mutex_lock(libiscsi_mutex_t* mutex)
+{
+    while (WaitForSingleObject(*mutex, INFINITE) != WAIT_OBJECT_0);
+    return 0;
+}
+
+static inline int iscsi_mt_mutex_unlock(libiscsi_mutex_t* mutex)
+{
+    ReleaseSemaphore(*mutex, 1, NULL);
+    return 0;
+}
+
+#else
+
+typedef const int libiscsi_mutex_t;
+#define iscsi_mt_mutex_init(x) ;
+#define iscsi_mt_mutex_destroy(x) ;
+#define iscsi_mt_mutex_lock(x) ;
+#define iscsi_mt_mutex_unlock(x) ;
+
+#endif /* mutex */
+
 
 #ifdef __cplusplus
 }
