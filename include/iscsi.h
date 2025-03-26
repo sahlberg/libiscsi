@@ -44,6 +44,8 @@ struct scsi_iovec;
 #define LIBISCSI_FEATURE_ISER (1)
 
 #define MAX_STRING_SIZE (255)
+/* RFC 3720 Section 3.2.6.1 */
+#define MAX_ISCSI_NAME_SIZE (223)
 
 /*
  * Syntax for normal and portal/discovery URLs.

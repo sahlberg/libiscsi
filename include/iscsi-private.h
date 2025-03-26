@@ -82,8 +82,8 @@ struct iscsi_context {
 	void *opaque;
 	enum iscsi_transport_type transport;
 
-	char initiator_name[MAX_STRING_SIZE+1];
-	char target_name[MAX_STRING_SIZE+1];
+	char initiator_name[MAX_ISCSI_NAME_SIZE+1];
+	char target_name[MAX_ISCSI_NAME_SIZE+1];
 	char target_address[MAX_STRING_SIZE+1];  /* If a redirect */
 	char connected_portal[MAX_STRING_SIZE+1];
 	char portal[MAX_STRING_SIZE+1];
