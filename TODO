@@ -1,23 +1,9 @@
 Some features that should be added
 
-* More efficient api for read/write commands where we read/write straight
-  from the socket into the buffer the application specified instead of as now
-  we pass the data to a callback and then copy it.
-
 * More scsi marshalling and unmarshalling functions in scsi-lowlevel
 
-* Autoconnect for session faiulures.
-  When the tcp session fail,   try several times to reconnect and relogin.
-  If successful re-issue any commands that were in flight.
-
-* Redirects
-
-* Integrate with other relevant utilities such as 
+* Integrate with other relevant utilities such as
   dvdrecord,
   ...
 
 * Data Digest
-
-
-
-

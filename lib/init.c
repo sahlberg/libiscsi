@@ -222,7 +222,7 @@ iscsi_create_context(const char *initiator_name)
 		return NULL;
 	}
 
-	strncpy(iscsi->initiator_name,initiator_name,MAX_STRING_SIZE);
+	strncpy(iscsi->initiator_name,initiator_name,MAX_ISCSI_NAME_SIZE);
 
 	iscsi->fd = -1;
 
@@ -386,7 +386,7 @@ iscsi_set_targetname(struct iscsi_context *iscsi, const char *target_name)
 		return -1;
 	}
 
-	strncpy(iscsi->target_name,target_name,MAX_STRING_SIZE);
+	strncpy(iscsi->target_name,target_name,MAX_ISCSI_NAME_SIZE);
 
 	return 0;
 }
