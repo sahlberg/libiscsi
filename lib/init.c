@@ -151,15 +151,14 @@ void iscsi_sfree(struct iscsi_context *iscsi, void* ptr) {
 	}
 }
 
-static bool rd_set = false;
-static pthread_mutex_t rd_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 static void
 iscsi_srand_init(struct iscsi_context *iscsi) {
 	unsigned int seed;
 	int urand_fd;
 	ssize_t rc;
 	int err;
+        static bool rd_set = false;
+        static pthread_mutex_t rd_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 	if (rd_set) {
 		/* fast case, seed has been set */
