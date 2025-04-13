@@ -62,6 +62,10 @@
 #include <sys/uio.h>
 #endif
 
+#ifdef HAVE_PTHREAD
+#include <signal.h>
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -88,7 +92,7 @@ union socket_address {
 void
 iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	struct iscsi_pdu *current = iscsi->outqueue;
+	struct iscsi_pdu *current;
 	struct iscsi_pdu *last = NULL;
 
 	if (iscsi->scsi_timeout > 0) {
@@ -97,12 +101,15 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		pdu->scsi_timeout = 0;
 	}
 
-	if (iscsi->outqueue == NULL) {
+        iscsi_mt_mutex_lock(&iscsi->iscsi_mutex);
+
+        current = iscsi->outqueue;
+        if (iscsi->outqueue == NULL) {
 		iscsi->outqueue = pdu;
 		pdu->next = NULL;
-		return;
+                goto finished;
 	}
-	
+        
 	/* queue pdus in ascending order of CmdSN. 
 	 * ensure that pakets with the same CmdSN are kept in FIFO order.
 	 * immediate PDUs are queued in front of queue with the CmdSN
@@ -131,7 +138,7 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 				iscsi->outqueue=pdu;
 			}
 			pdu->next = current;
-			return;
+                        goto finished;
 		}
 		last=current;
 		current=current->next;
@@ -139,9 +146,24 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	
 	last->next = pdu;
 	pdu->next = NULL;
+
+ finished:
+        iscsi_mt_mutex_unlock(&iscsi->iscsi_mutex);
+
+        /* TODO QQQ need to immediately send for the non multithreading case too
+         * and for the Windows API too */
+#if defined(HAVE_MULTITHREADING) && defined(HAVE_PTHREAD)
+        if (current == NULL && pdu == iscsi->outqueue) {
+                if(iscsi->multithreading_enabled) {
+                        pthread_kill(iscsi->service_thread, SIGUSR1);
+                }
+        }
+#endif        
+        return;
 }
 
 void iscsi_decrement_iface_rr() {
+        /* TODO QQQ use an atomic here */
 	iface_rr--;
 }
 

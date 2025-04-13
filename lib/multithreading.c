@@ -139,6 +139,9 @@ int iscsi_mt_sem_wait(libiscsi_sem_t* sem)
 
 #elif defined(HAVE_PTHREAD) /* WIN32 */
 
+#include <errno.h>
+#include <stdio.h>
+#include <signal.h>
 #include <unistd.h>
 #include <sys/syscall.h>
 
@@ -156,13 +159,20 @@ iscsi_tid_t iscsi_mt_get_tid(void)
 #endif
 }
 
+static void on_sigusr1(int _unused)
+{
+}
+
 static void *iscsi_mt_service_thread(void *arg)
 {
         struct iscsi_context *iscsi = (struct iscsi_context *)arg;
 	struct pollfd pfd;
 	int revents;
 	int ret;
-
+        
+        /* set signal to break poll when we need to send more data */
+        signal(SIGUSR1, on_sigusr1);
+        
         iscsi->multithreading_enabled = 1;
 
         /* TODO: add timeout scanning */
@@ -172,12 +182,21 @@ static void *iscsi_mt_service_thread(void *arg)
 		pfd.revents = 0;
         
 		ret = poll(&pfd, 1, iscsi->poll_timeout);
-		if (ret < 0) {
+                if (ret < 0 && errno == EINTR) {
+                        /*
+                         * Got a signal. Assume it is because we need to start writing new PDUs
+                         * to the socket.
+                         */
+                        revents = POLLOUT;
+                        goto call_service;
+                }
+                if (ret < 0) {
 			iscsi_set_error(iscsi, "Poll failed");
 			revents = -1;
 		} else {
 			revents = pfd.revents;
 		}
+        call_service:                
 		if (iscsi_service(iscsi, revents) < 0) {
 			if (revents != -1)
 				iscsi_set_error(iscsi, "iscsi_service failed");
