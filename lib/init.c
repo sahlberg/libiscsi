@@ -215,6 +215,7 @@ iscsi_create_context(const char *initiator_name)
 
 	memset(iscsi, 0, sizeof(struct iscsi_context));
 
+        iscsi_mt_spin_init(&iscsi->iscsi_lock, PTHREAD_PROCESS_PRIVATE);
         iscsi_mt_mutex_init(&iscsi->iscsi_mutex);
         iscsi->poll_timeout = 100;
 
@@ -433,6 +434,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		iscsi_destroy_context(iscsi->old_iscsi);
 	}
 
+        iscsi_mt_spin_destroy(&iscsi->iscsi_lock);
         iscsi_mt_mutex_destroy(&iscsi->iscsi_mutex);
         
 	memset(iscsi, 0, sizeof(struct iscsi_context));

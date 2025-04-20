@@ -213,6 +213,7 @@ struct iscsi_context {
 
 #ifdef HAVE_MULTITHREADING
         int multithreading_enabled;
+        libiscsi_spinlock_t iscsi_lock;
         libiscsi_mutex_t iscsi_mutex;
         libiscsi_thread_t service_thread;
         int poll_timeout;

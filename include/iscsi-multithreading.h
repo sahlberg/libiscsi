@@ -123,9 +123,27 @@ static inline int iscsi_mt_mutex_unlock(libiscsi_mutex_t *mutex)
 	return pthread_mutex_unlock(mutex);
 }
 
+typedef pthread_spinlock_t libiscsi_spinlock_t;
+        static inline int iscsi_mt_spin_init(libiscsi_spinlock_t *spinlock, int shared)
+{
+	return pthread_spin_init(spinlock, shared);
+}
+static inline int iscsi_mt_spin_destroy(libiscsi_spinlock_t *spinlock)
+{
+	return pthread_spin_destroy(spinlock);
+}
+static inline int iscsi_mt_spin_lock(libiscsi_spinlock_t *spinlock)
+{
+	return pthread_spin_lock(spinlock);
+}
+static inline int iscsi_mt_spin_unlock(libiscsi_spinlock_t *spinlock)
+{
+	return pthread_spin_unlock(spinlock);
+}
+        
 #elif defined(WIN32)
 typedef HANDLE libiscsi_mutex_t;
-static inline int iscsi_mt_mutex_init(libiscsi_mutex_t* mutex)
+        static inline int iscsi_mt_mutex_init(libiscsi_mutex_t* mutex)
 {
     *mutex = CreateSemaphoreA(NULL, 1, 1, NULL);
     return 0;
@@ -156,6 +174,11 @@ typedef const int libiscsi_mutex_t;
 #define iscsi_mt_mutex_destroy(x) ;
 #define iscsi_mt_mutex_lock(x) ;
 #define iscsi_mt_mutex_unlock(x) ;
+typedef const int libiscsi_spinlock_t;
+#define iscsi_mt_spin_init(x) ;
+#define iscsi_mt_spin_destroy(x) ;
+#define iscsi_mt_spin_lock(x) ;
+#define iscsi_mt_spin_unlock(x) ;
 
 #endif /* mutex */
 
