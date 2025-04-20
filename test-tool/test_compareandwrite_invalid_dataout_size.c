@@ -28,13 +28,13 @@
 
 static int new_nlb = -1;
 
-static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+static void my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
         if (pdu->outdata.data[0] != ISCSI_PDU_SCSI_REQUEST && new_nlb >= 0) {
                 /* change NUMBER OF LOGICAL BLOCKS to new_nlb */
                 pdu->outdata.data[32 + 13] = new_nlb;
         }
-        return orig_queue_pdu(iscsi, pdu);
+        orig_queue_pdu(iscsi, pdu);
 }
 
 void

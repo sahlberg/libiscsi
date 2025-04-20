@@ -982,27 +982,27 @@ iscsi_iser_revive_queued_pdus(struct iscsi_context *iscsi) {
  * Need to be compatible to TCP which has real queue,
  * in iSER pdus with cmdsn not exceeds maxcmdsn are already sent.
  */
-static int
+static void
 iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "trying to queue NULL pdu");
-		return -1;
+		return;
 	}
 
 	if (pdu->outdata.data[0] == ISCSI_PDU_NOP_OUT &&
 		iscsi_iser_cm_event(iscsi) != 0) {
 		iscsi_service_reconnect_if_loggedin(iscsi);
-		return -1;
+		return;
 	}
 
 	if (iscsi->outqueue != NULL ||
 		(iscsi_serial32_compare(pdu->cmdsn, iscsi->maxcmdsn) > 0
 		 && !(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE))) {
 		iscsi_add_to_outqueue(iscsi, pdu);
-		return 0;
+		return;
 	}
 
-	return iscsi_iser_send_pdu(iscsi, pdu);
+	iscsi_iser_send_pdu(iscsi, pdu);
 }
 
 

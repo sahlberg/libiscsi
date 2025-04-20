@@ -1136,17 +1136,10 @@ iscsi_service(struct iscsi_context *iscsi, int revents)
 	return iscsi->drv->service(iscsi, revents);
 }
 
-static int iscsi_tcp_queue_pdu(struct iscsi_context *iscsi,
+static void iscsi_tcp_queue_pdu(struct iscsi_context *iscsi,
                                struct iscsi_pdu *pdu)
 {
-	if (pdu == NULL) {
-		iscsi_set_error(iscsi, "trying to queue NULL pdu");
-		return -1;
-	}
-
 	iscsi_add_to_outqueue(iscsi, pdu);
-
-	return 0;
 }
 
 void

@@ -77,7 +77,7 @@ test_iscsi_strip_tag(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 	return 0;
 }
 
-static int
+static void
 chap_mod_strip_replace_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			     const char *new_chap_a)
 {
@@ -93,41 +93,41 @@ chap_mod_strip_replace_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		goto out;
 	}
 	if (ret < 0) {
-		return ret;
+		return;
 	}
 	ret = iscsi_pdu_add_data(iscsi, pdu, (const unsigned char *)new_chap_a,
 				 strlen(new_chap_a) + 1);
 	if (ret < 0) {
-		return ret;
+		return;
 	}
 	logging(LOG_VERBOSE, "replaced Login PDU CHAP_A setting with %s", new_chap_a);
 out:
-        return orig_queue_pdu(iscsi, pdu);
+        orig_queue_pdu(iscsi, pdu);
 
 }
 
-static int
+static void
 chap_mod_many_types_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	return chap_mod_strip_replace_queue(iscsi, pdu, "CHAP_A=5,6,7,8");
+	chap_mod_strip_replace_queue(iscsi, pdu, "CHAP_A=5,6,7,8");
 }
 
-static int
+static void
 chap_mod_no_type_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	return chap_mod_strip_replace_queue(iscsi, pdu, "CHAP_A=");
+	chap_mod_strip_replace_queue(iscsi, pdu, "CHAP_A=");
 }
 
-static int
+static void
 chap_mod_bad_type_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	/* value starts with '5', to catch targets that only check one byte */
-	return chap_mod_strip_replace_queue(iscsi, pdu, "CHAP_A=56");
+	chap_mod_strip_replace_queue(iscsi, pdu, "CHAP_A=56");
 }
 
 static int
-test_iscsi_chap_login(int (*test_queue_pdu)(struct iscsi_context *iscsi,
-					    struct iscsi_pdu *pdu))
+test_iscsi_chap_login(void (*test_queue_pdu)(struct iscsi_context *iscsi,
+                                             struct iscsi_pdu *pdu))
 {
         struct iscsi_context *iscsi;
         struct iscsi_url *iscsi_url;

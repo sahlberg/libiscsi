@@ -77,11 +77,7 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		}
 	}
 
-	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
-		iscsi_set_error(iscsi, "failed to queue iscsi nop-out pdu");
-		iscsi->drv->free_pdu(iscsi, pdu);
-		return -1;
-	}
+	iscsi_queue_pdu(iscsi, pdu);
 
 	iscsi->cmdsn++;
 	iscsi->nops_in_flight++;
@@ -122,11 +118,7 @@ iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt, uint32_t lu
 	/* cmdsn is not increased if Immediate delivery*/
 	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
 
-	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
-		iscsi_set_error(iscsi, "failed to queue iscsi nop-out pdu");
-		iscsi->drv->free_pdu(iscsi, pdu);
-		return -1;
-	}
+	iscsi_queue_pdu(iscsi, pdu);
 
 	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
 	          "NOP Out Send (nops_in_flight: %d, pdu->cmdsn %08x, pdu->itt %08x, pdu->ttt %08x, pdu->lun %8x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x)",

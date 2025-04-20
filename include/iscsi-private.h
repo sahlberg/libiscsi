@@ -344,10 +344,11 @@ void iscsi_cancel_pdus(struct iscsi_context *iscsi);
 void iscsi_cancel_lun_pdus(struct iscsi_context *iscsi, uint32_t lun);
 int iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		       const unsigned char *dptr, int dsize);
-int iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+void iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 int iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 		   const unsigned char *dptr, int dsize, int pdualignment);
 
+void iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 struct scsi_task;
 void iscsi_pdu_set_cdb(struct iscsi_pdu *pdu, struct scsi_task *task);
 
@@ -417,9 +418,6 @@ void iscsi_decrement_iface_rr(void);
 void __attribute__((format(printf, 3, 4)))
 iscsi_log_message(struct iscsi_context *iscsi, int level, const char *format, ...);
 
-void
-iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
-
 int iscsi_serial32_compare(uint32_t s1, uint32_t s2);
 
 uint32_t iscsi_itt_post_increment(struct iscsi_context *iscsi);
@@ -443,7 +441,7 @@ union socket_address;
 
 typedef struct iscsi_transport {
 	int (*connect)(struct iscsi_context *iscsi, union socket_address *sa, int ai_family);
-	int (*queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+	void (*queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 	struct iscsi_pdu* (*new_pdu)(struct iscsi_context *iscsi, size_t size);
 	int (*disconnect)(struct iscsi_context *iscsi);
 	void (*free_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);

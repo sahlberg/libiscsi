@@ -937,16 +937,10 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 	}
 }
 
-int
+void
 iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-        int ret;
-
-        iscsi_mt_mutex_lock(&iscsi->iscsi_mutex);
-	ret = iscsi->drv->queue_pdu(iscsi, pdu);
-        iscsi_mt_mutex_unlock(&iscsi->iscsi_mutex);
-
-        return ret;
+	iscsi->drv->queue_pdu(iscsi, pdu);
 }
 
 void

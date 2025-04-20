@@ -26,7 +26,7 @@
 
 static int change_cmdsn;
 
-static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+static void my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
         switch (change_cmdsn) {
         case 1:
@@ -45,7 +45,7 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
         }
 
         change_cmdsn = 0;
-        return orig_queue_pdu(iscsi, pdu);
+        orig_queue_pdu(iscsi, pdu);
 }
 
 void test_iscsi_cmdsn_toohigh(void)

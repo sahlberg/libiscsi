@@ -128,12 +128,7 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 		/* update data segment length */
 		scsi_set_uint32(&pdu->outdata.data[4], pdu->payload_len);
 
-		if (iscsi_queue_pdu(iscsi, pdu) != 0) {
-			iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
-				"scsi pdu.");
-			iscsi->drv->free_pdu(iscsi, pdu);
-			goto error;
-		}
+		iscsi_queue_pdu(iscsi, pdu);
 
 		tot_len -= len;
 		offset  += len;
@@ -280,12 +275,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	pdu->callback     = iscsi_scsi_response_cb;
 	pdu->private_data = &pdu->scsi_cbdata;
 
-	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
-				"scsi pdu.");
-		iscsi->drv->free_pdu(iscsi, pdu);
-		return -1;
-	}
+	iscsi_queue_pdu(iscsi, pdu);
 	iscsi->cmdsn++;
 
 	/* The F flag is not set. This means we haven't sent all the unsolicited
