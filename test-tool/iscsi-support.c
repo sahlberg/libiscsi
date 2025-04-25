@@ -561,6 +561,7 @@ wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_state *
                                 state->finished     = 1;
                                 state->status       = SCSI_STATUS_CANCELLED;
                                 state->task->status = SCSI_STATUS_CANCELLED;
+                                iscsi_mt_spin_lock(&iscsi->iscsi_lock);
                                 /* this may leak memory since we don't free the pdu */
                                 while ((pdu = iscsi->outqueue)) {
                                         ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
@@ -568,6 +569,7 @@ wait_until_test_finished(struct iscsi_context *iscsi, struct iscsi_async_state *
                                 while ((pdu = iscsi->waitpdu)) {
                                         ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
                                 }
+                                iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
                                 return;
                         }
                         continue;

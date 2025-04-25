@@ -407,6 +407,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 
 	iscsi_cancel_pdus(iscsi);
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	if (iscsi->outqueue_current != NULL && iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
 		iscsi->drv->free_pdu(iscsi, iscsi->outqueue_current);
 	}
@@ -414,6 +415,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	if (iscsi->incoming != NULL) {
 		iscsi_free_iscsi_in_pdu(iscsi, iscsi->incoming);
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	iscsi->connect_data = NULL;
 

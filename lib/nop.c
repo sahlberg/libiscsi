@@ -133,6 +133,7 @@ iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 {
 	struct iscsi_data data;
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
 	          "NOP-In received (pdu->itt %08x, pdu->ttt %08x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x, iscsi->statsn %08x)",
 	          pdu->itt, 0xffffffff, iscsi->maxcmdsn, iscsi->expcmdsn, iscsi->statsn); 
@@ -147,6 +148,7 @@ iscsi_process_nop_out_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		iscsi->nops_in_flight = 0;
 	}
 	iscsi->min_cmdsn_waiting = iscsi->waitpdu->cmdsn;
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	if (pdu->callback == NULL) {
 		return 0;

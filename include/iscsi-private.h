@@ -170,11 +170,10 @@ struct iscsi_context {
 	iscsi_command_cb socket_status_cb;
 	void *connect_data;
 
-	struct iscsi_pdu *outqueue;         // multithreading todo: may need mutex
-	struct iscsi_pdu *outqueue_current; // multithreading todo: may need mutex
-	struct iscsi_pdu *waitpdu;          // multithreading todo: may need mutex
-
-	struct iscsi_in_pdu *incoming;      // multithreading todo: may need mutex
+	struct iscsi_pdu *outqueue;         /* Protected by iscsi_lock */
+	struct iscsi_pdu *outqueue_current; /* Protected by iscsi_lock */
+	struct iscsi_pdu *waitpdu;          /* Protected by iscsi_lock */
+	struct iscsi_in_pdu *incoming;      /* Protected by iscsi_lock */
 
 	uint32_t max_burst_length;
 	uint32_t first_burst_length;

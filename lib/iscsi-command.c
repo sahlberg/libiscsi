@@ -136,8 +136,10 @@ iscsi_send_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *cmd_pdu,
 	return 0;
 
 error:
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	ISCSI_LIST_REMOVE(&iscsi->outqueue, cmd_pdu);
 	ISCSI_LIST_REMOVE(&iscsi->waitpdu, cmd_pdu);
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 	if (cmd_pdu->callback) {
 		cmd_pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 						  cmd_pdu->private_data);
@@ -2406,11 +2408,13 @@ iscsi_get_scsi_task_iovector_in(struct iscsi_context *iscsi, struct iscsi_in_pdu
 	}
 
 	itt = scsi_get_uint32(&in->hdr[16]);
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		if (pdu->itt == itt) {
 			break;
 		}
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	if (pdu == NULL) {
 		return NULL;
@@ -2669,11 +2673,14 @@ int iscsi_scsi_is_task_in_outqueue(struct iscsi_context *iscsi, struct scsi_task
 {
 	struct iscsi_pdu *pdu;
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
 		if (pdu->itt == task->itt) {
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 			return 1;
 		}
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	return 0;
 }
@@ -2682,13 +2689,15 @@ int
 iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 		       struct scsi_task *task)
 {
-	struct iscsi_pdu *pdu;
+	struct iscsi_pdu *pdu, *tmp;
 	struct iscsi_pdu *next_pdu;
 	uint32_t cmdsn_gap = 0;
 	int ret = -1;
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		if (pdu->itt == task->itt) {
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 			ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
 			if (pdu->callback) {
 				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
@@ -2698,6 +2707,8 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 			return 0;
 		}
 	}
+        
+        tmp = NULL;
 	for (pdu = iscsi->outqueue; pdu; pdu = next_pdu) {
 		next_pdu = pdu->next;
 
@@ -2707,22 +2718,27 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 
 		if (pdu->itt == task->itt) {
 			ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
-			if (pdu->callback) {
-				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
+                        ISCSI_LIST_ADD_END(&tmp, pdu);
+                }
+        }
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+	for (pdu = tmp; pdu; pdu = next_pdu) {
+		ISCSI_LIST_REMOVE(&tmp, pdu);
+                if (pdu->callback) {
+                        pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
 				      pdu->private_data);
-			}
-			if (!(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE) &&
-			    (pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT) {
-				iscsi->cmdsn--;
-				cmdsn_gap++;
-			}
-			iscsi->drv->free_pdu(iscsi, pdu);
-			ret = 0;
-			if (!cmdsn_gap) {
-				break;
-			}
-		}
-	}
+                }
+                if (!(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE) &&
+                    (pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT) {
+                        iscsi->cmdsn--;
+                        cmdsn_gap++;
+                }
+                iscsi->drv->free_pdu(iscsi, pdu);
+                ret = 0;
+                if (!cmdsn_gap) {
+                        break;
+                }
+        }
 
 	if (iscsi->old_iscsi) {
 		return iscsi_scsi_cancel_task(iscsi->old_iscsi, task);

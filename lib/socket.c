@@ -101,7 +101,7 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		pdu->scsi_timeout = 0;
 	}
 
-        iscsi_mt_mutex_lock(&iscsi->iscsi_mutex);
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 
         current = iscsi->outqueue;
         if (iscsi->outqueue == NULL) {
@@ -133,22 +133,22 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 			(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE && !(current->outdata.data[0] & ISCSI_PDU_IMMEDIATE))) {
 			/* insert PDU before the current */
 			if (last != NULL) {
-				last->next=pdu;
+				last->next = pdu;
 			} else {
-				iscsi->outqueue=pdu;
+				iscsi->outqueue = pdu;
 			}
 			pdu->next = current;
                         goto finished;
 		}
-		last=current;
-		current=current->next;
+		last = current;
+		current = current->next;
 	} while (current != NULL);
 	
 	last->next = pdu;
 	pdu->next = NULL;
 
  finished:
-        iscsi_mt_mutex_unlock(&iscsi->iscsi_mutex);
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
         /* TODO QQQ need to immediately send for the non multithreading case too
          * and for the Windows API too */
@@ -491,14 +491,16 @@ iscsi_tcp_which_events(struct iscsi_context *iscsi)
 		return 0;
 	}
 
-	if (iscsi->outqueue_current != NULL ||
-	    (iscsi->outqueue != NULL && !iscsi->is_corked &&
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+	if (iscsi->outqueue_current ||
+	    (iscsi->outqueue && !iscsi->is_corked &&
 	     (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) <= 0 ||
 	      iscsi->outqueue->outdata.data[0] & ISCSI_PDU_IMMEDIATE)
 	    )
 	   ) {
 		events |= POLLOUT;
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 	return events;
 }
 
@@ -514,6 +516,7 @@ iscsi_queue_length(struct iscsi_context *iscsi)
 	int i = 0;
 	struct iscsi_pdu *pdu;
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
 		i++;
 	}
@@ -523,6 +526,7 @@ iscsi_queue_length(struct iscsi_context *iscsi)
 	if (iscsi->is_connected == 0) {
 		i++;
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	return i;
 }
@@ -533,9 +537,11 @@ iscsi_out_queue_length(struct iscsi_context *iscsi)
 	int i = 0;
 	struct iscsi_pdu *pdu;
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	for (pdu = iscsi->outqueue; pdu; pdu = pdu->next) {
 		i++;
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	return i;
 }
@@ -830,7 +836,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		return -1;
 	}
 
-	while (iscsi->outqueue != NULL || iscsi->outqueue_current != NULL) {
+	while (iscsi->outqueue || iscsi->outqueue_current) {
 		if (iscsi->outqueue_current == NULL) {
 			if (iscsi->is_corked) {
 				/* connection is corked we are not allowed to send
@@ -855,6 +861,8 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 				                iscsi->outqueue->cmdsn, iscsi->expcmdsn, iscsi->outqueue->outdata.data[0] & 0x3f);
 				return -1;
 			}
+                        
+                        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 			iscsi->outqueue_current = iscsi->outqueue;
 			
 			/* set exp statsn */
@@ -863,6 +871,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			/* calculate header checksum */
 			if (iscsi->header_digest != ISCSI_HEADER_DIGEST_NONE &&
 				iscsi_pdu_update_headerdigest(iscsi, iscsi->outqueue_current) != 0) {
+                                iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 				return -1;
 			}
 
@@ -874,6 +883,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 				   cmd PDU the R2T might get lost otherwise. */
 				ISCSI_LIST_ADD_END(&iscsi->waitpdu, iscsi->outqueue_current);
 			}
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 		}
 
 		pdu = iscsi->outqueue_current;

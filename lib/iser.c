@@ -334,6 +334,7 @@ iser_free_queued_pdu_tx_desc(struct iscsi_context *iscsi)
 	struct iscsi_pdu *pdu;
 	struct iser_pdu *iser_pdu;
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		iser_pdu = container_of(pdu, struct iser_pdu, iscsi_pdu);
 		if (iser_pdu->desc) {
@@ -349,6 +350,7 @@ iser_free_queued_pdu_tx_desc(struct iscsi_context *iscsi)
 			iser_pdu->desc = NULL;
 		}
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 }
 
 /*
@@ -576,9 +578,11 @@ iscsi_iser_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 
 	pdu->indata.data = NULL;
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	if (iscsi->outqueue_current == pdu) {
 		iscsi->outqueue_current = NULL;
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	iscsi_sfree(iscsi, iser_pdu);
 }
@@ -920,8 +924,10 @@ iscsi_iser_send_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 	iser_pdu = container_of(pdu, struct iser_pdu, iscsi_pdu);
 	opcode = pdu->outdata.data[0];
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn + 1);
 	ISCSI_LIST_ADD_END(&iscsi->waitpdu, pdu);
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	/*
          * because of async reconnection, before reconnecting successfully,
@@ -954,16 +960,20 @@ static int
 iscsi_iser_revive_queued_pdus(struct iscsi_context *iscsi) {
 	struct iscsi_pdu *pdu;
 
-	while (iscsi->outqueue != NULL) {
+	while (iscsi->outqueue) {
 		if (iscsi_serial32_compare(iscsi->outqueue->cmdsn, iscsi->maxcmdsn) > 0) {
 			break;
 		}
 
+                iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 		pdu = iscsi->outqueue;
 		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
+                iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 		if (iscsi_iser_send_pdu(iscsi, pdu) < 0) {
+                        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 			ISCSI_LIST_ADD(&iscsi->outqueue, pdu);
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 			return -1;
 		}
 	}
@@ -995,7 +1005,7 @@ iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 		return;
 	}
 
-	if (iscsi->outqueue != NULL ||
+	if (iscsi->outqueue ||
 		(iscsi_serial32_compare(pdu->cmdsn, iscsi->maxcmdsn) > 0
 		 && !(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE))) {
 		iscsi_add_to_outqueue(iscsi, pdu);
@@ -1308,6 +1318,8 @@ iser_rcv_completion(struct iser_rx_desc *rx_desc,
 	struct iscsi_in_pdu in;
 	int empty, err;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
+	struct iscsi_pdu *iscsi_pdu;
+	struct iser_pdu *iser_pdu;
 
 	in.hdr = (unsigned char*)rx_desc->iscsi_header;
 	in.data_pos = iscsi_get_pdu_data_size(&in.hdr[0]);
@@ -1322,12 +1334,12 @@ iser_rcv_completion(struct iser_rx_desc *rx_desc,
 	if (opcode == ISCSI_PDU_ASYNC_MSG)
 		goto no_waitpdu;
 
-	struct iscsi_pdu *iscsi_pdu;
-	struct iser_pdu *iser_pdu;
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	for (iscsi_pdu = iscsi->waitpdu ; iscsi_pdu ; iscsi_pdu = iscsi_pdu->next) {
 		if(iscsi_pdu->itt == itt)
 			break;
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	iser_pdu = container_of(iscsi_pdu, struct iser_pdu, iscsi_pdu);
 
