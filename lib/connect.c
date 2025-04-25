@@ -281,7 +281,6 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
 {
 	struct iscsi_context *old_iscsi;
         struct iscsi_pdu *tmp = NULL;
-	int i;
 
 	if (status != SCSI_STATUS_GOOD) {
 		int backoff = ++iscsi->old_iscsi->retry_cnt;
@@ -367,10 +366,6 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
         iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	iscsi_free(old_iscsi, old_iscsi->opaque);
-
-	for (i = 0; i < old_iscsi->smalloc_free; i++) {
-		iscsi_free(old_iscsi, old_iscsi->smalloc_ptrs[i]);
-	}
 
 	iscsi->mallocs += old_iscsi->mallocs;
 	iscsi->frees += old_iscsi->frees;
@@ -468,10 +463,6 @@ static int reconnect(struct iscsi_context *iscsi, int force)
 	tmp_iscsi->reconnect_max_retries = iscsi->reconnect_max_retries;
 
 	if (iscsi->old_iscsi) {
-		int i;
-		for (i = 0; i < iscsi->smalloc_free; i++) {
-			iscsi_free(iscsi, iscsi->smalloc_ptrs[i]);
-		}
 		iscsi_free(iscsi, iscsi->opaque);
 
 		iscsi->old_iscsi->mallocs += iscsi->mallocs;

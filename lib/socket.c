@@ -153,8 +153,8 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
         /* TODO QQQ need to immediately send for the non multithreading case too
          * and for the Windows API too */
 #if defined(HAVE_MULTITHREADING) && defined(HAVE_PTHREAD)
-        if (current == NULL && pdu == iscsi->outqueue) {
-                if(iscsi->multithreading_enabled) {
+        if(iscsi->multithreading_enabled) {
+                if (current == NULL && pdu == iscsi->outqueue) {
                         pthread_kill(iscsi->service_thread, SIGUSR1);
                 }
         }
@@ -666,20 +666,23 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 	struct iscsi_in_pdu *in;
 	ssize_t hdr_size, data_size, count, padding_size;
 	bool do_data_digest = (iscsi->data_digest != ISCSI_DATA_DIGEST_NONE);
-
+        int ret = -1;
+        
 	do {
 		hdr_size = ISCSI_HEADER_SIZE(iscsi->header_digest);
 		if (iscsi->incoming == NULL) {
-			iscsi->incoming = iscsi_szmalloc(iscsi, sizeof(struct iscsi_in_pdu));
+			iscsi->incoming = iscsi_zmalloc(iscsi, sizeof(struct iscsi_in_pdu));
 			if (iscsi->incoming == NULL) {
 				iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu");
-				return -1;
+                                goto finished;
 			}
+                }
+		if (iscsi->incoming->hdr == NULL) {
 			crc32c_init(&(iscsi->incoming->calculated_data_digest));
-			iscsi->incoming->hdr = iscsi_smalloc(iscsi, hdr_size);
+			iscsi->incoming->hdr = iscsi_malloc(iscsi, hdr_size);
 			if (iscsi->incoming->hdr == NULL) {
 				iscsi_set_error(iscsi, "Out-of-memory");
-				return -1;
+                                goto finished;
 			}
 		}
 		in = iscsi->incoming;
@@ -694,7 +697,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
                                      count, 0);
 			if (count == 0) {
 				/* remote side has closed the socket. */
-				return -1;
+                                goto finished;
 			}
 			if (count < 0) {
 				if (errno == EINTR || errno == EAGAIN) {
@@ -702,7 +705,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 				}
 				iscsi_set_error(iscsi, "read from socket failed, "
 					"errno:%d", errno);
-				return -1;
+                                goto finished;
 			}
 			in->hdr_pos  += count;
 		}
@@ -717,7 +720,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 
 		if (data_size < 0 || data_size > (ssize_t)iscsi->initiator_max_recv_data_segment_length) {
 			iscsi_set_error(iscsi, "Invalid data size received from target (%d)", (int)data_size);
-			return -1;
+                        goto finished;
 		}
 		if (data_size != 0) {
 			unsigned char padding_buf[3];
@@ -737,7 +740,7 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 						in->data = iscsi_malloc(iscsi, data_size);
 						if (in->data == NULL) {
 							iscsi_set_error(iscsi, "Out-of-memory: failed to malloc iscsi_in_pdu->data(%d)", (int)data_size);
-							return -1;
+                                                        goto finished;
 						}
 					}
 					buf = &in->data[in->data_pos];
@@ -748,13 +751,13 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			}
 			if (count == 0) {
 				/* remote side has closed the socket. */
-				return -1;
+                                goto finished;
 			}
 			if (count < 0) {
 				if (errno == EINTR || errno == EAGAIN) {
 					break;
 				}
-				return -1;
+                                goto finished;
 			}
 			in->data_pos += count;
 		}
@@ -770,13 +773,13 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			count = recv(iscsi->fd, (void *)(in->data_digest_buf + in->received_data_digest_bytes), ISCSI_DIGEST_SIZE - in->received_data_digest_bytes, 0);
 			if (count == 0) {
 				/* remote side has closed the socket. */
-				return -1;
+                                goto finished;
 			}
 			if (count < 0) {
 				if (errno == EINTR || errno == EAGAIN) {
 					break;
 				}
-				return -1;
+                                goto finished;
 			}
 			in->received_data_digest_bytes += count;
 
@@ -785,15 +788,17 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			}
 		}
 
-		iscsi->incoming = NULL;
+                iscsi->incoming = NULL;
 		if (iscsi_process_pdu(iscsi, in) != 0) {
 			iscsi_free_iscsi_in_pdu(iscsi, in);
-			return -1;
+                        goto finished;
 		}
 		iscsi_free_iscsi_in_pdu(iscsi, in);
-	} while (iscsi->tcp_nonblocking && iscsi->waitpdu && iscsi->is_loggedin);
+        } while (iscsi->tcp_nonblocking && iscsi->waitpdu && iscsi->is_loggedin); //QQQ break the loop
 
-	return 0;
+        ret = 0;
+ finished:
+	return ret;
 }
 
 static int iscsi_pdu_update_headerdigest(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
@@ -1123,6 +1128,7 @@ iscsi_tcp_service(struct iscsi_context *iscsi, int revents)
 			return iscsi_service_reconnect_if_loggedin(iscsi);
 		}
 	}
+        
 	if (revents & POLLOUT) {
 		if (iscsi_write_to_socket(iscsi) != 0) {
 			ISCSI_LOG(iscsi, 1, "%s", iscsi_get_error(iscsi));
@@ -1155,10 +1161,10 @@ static void iscsi_tcp_queue_pdu(struct iscsi_context *iscsi,
 void
 iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 {
-	iscsi_sfree(iscsi, in->hdr);
+	iscsi_free(iscsi, in->hdr);
 	iscsi_free(iscsi, in->data);
 	in->data=NULL;
-	iscsi_sfree(iscsi, in);
+	iscsi_free(iscsi, in);
 	in=NULL;
 }
 

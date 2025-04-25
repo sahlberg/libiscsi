@@ -539,7 +539,7 @@ iscsi_iser_new_pdu(struct iscsi_context *iscsi, __attribute__((unused))size_t si
 	struct iscsi_pdu *pdu;
 	struct iser_pdu *iser_pdu;
 
-	iser_pdu = iscsi_szmalloc(iscsi, sizeof(*iser_pdu));
+	iser_pdu = iscsi_zmalloc(iscsi, sizeof(*iser_pdu));
 	pdu = &iser_pdu->iscsi_pdu;
 	pdu->indata.data = NULL;
 
@@ -563,19 +563,10 @@ iscsi_iser_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		iser_pdu->desc = NULL;
 	}
 
-	if (pdu->outdata.size <= iscsi->smalloc_size) {
-		iscsi_sfree(iscsi, pdu->outdata.data);
-	} else {
-		iscsi_free(iscsi, pdu->outdata.data);
-	}
+        iscsi_free(iscsi, pdu->outdata.data);
 	pdu->outdata.data = NULL;
 
-	if (pdu->indata.size <= iscsi->smalloc_size) {
-		iscsi_sfree(iscsi, pdu->indata.data);
-	} else {
-		iscsi_free(iscsi, pdu->indata.data);
-	}
-
+        iscsi_free(iscsi, pdu->indata.data);
 	pdu->indata.data = NULL;
 
         iscsi_mt_spin_lock(&iscsi->iscsi_lock);
@@ -584,7 +575,7 @@ iscsi_iser_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	}
         iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
-	iscsi_sfree(iscsi, iser_pdu);
+	iscsi_free(iscsi, iser_pdu);
 }
 
 /**
@@ -774,11 +765,7 @@ iser_prepare_read_cmd(struct iser_conn *iser_conn,struct iser_pdu *iser_pdu)
 	if (data_size > 0) {
 
 		if (task->iovector_in.iov == NULL) {
-			if (data_size <= iscsi->smalloc_size) {
-				iser_pdu->iscsi_pdu.indata.data = iscsi_smalloc(iscsi, data_size);
-			} else {
-				iser_pdu->iscsi_pdu.indata.data = iscsi_malloc(iscsi, data_size);
-			}
+                        iser_pdu->iscsi_pdu.indata.data = iscsi_malloc(iscsi, data_size);
 			if (iser_pdu->iscsi_pdu.indata.data == NULL) {
 				iscsi_set_error(iscsi, "Failed to aloocate data buffer");
 				return -1;
@@ -1743,11 +1730,6 @@ void iscsi_init_iser_transport(struct iscsi_context *iscsi)
 	/* Update iSCSI params as per iSER transport */
 	iscsi->initiator_max_recv_data_segment_length = ISCSI_DEF_MAX_RECV_SEG_LEN;
 	iscsi->target_max_recv_data_segment_length = ISCSI_DEF_MAX_RECV_SEG_LEN;
-
-	/* ensure smalloc_size is enough for iser_pdu */
-	while (iscsi->smalloc_size < sizeof(struct iser_pdu)) {
-		iscsi->smalloc_size <<= 1;
-	}
 }
 
 #endif

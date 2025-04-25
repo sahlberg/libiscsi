@@ -193,14 +193,10 @@ struct iscsi_context {
 	int log_level;
 	iscsi_log_fn log_fn;
 
-	int mallocs;
-	int reallocs;
-	int frees;
-	int smallocs;
-	void* smalloc_ptrs[SMALL_ALLOC_MAX_FREE];
-	int smalloc_free;
-	size_t smalloc_size;
-	int cache_allocations;
+	int mallocs;                               //needs protection?
+	int reallocs;                              //needs protection?
+	int frees;                                 //needs protection?
+	int cache_allocations;                     //needs ptotection?
 
 	time_t next_reconnect;
 	int scsi_timeout;
@@ -395,9 +391,6 @@ void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);
 void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size);
 void iscsi_free(struct iscsi_context *iscsi, void* ptr);
 char* iscsi_strdup(struct iscsi_context *iscsi, const char* str);
-void* iscsi_smalloc(struct iscsi_context *iscsi, size_t size);
-void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size);
-void iscsi_sfree(struct iscsi_context *iscsi, void* ptr);
 
 uint32_t crc32c(uint8_t *buf, int len);
 void crc32c_init(uint32_t *crc_ptr);

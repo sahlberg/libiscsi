@@ -48,7 +48,7 @@ static int finished;
  * threads to demonstrate that multiple threads can very well write to the same
  * context.
  */
-#define NUM_THREADS 4
+#define NUM_THREADS 8
 
 
 const char *initiator = "iqn.2007-10.com.github:sahlberg:libiscsi:iscsi-inq";
@@ -90,6 +90,10 @@ static void *iscsi_read_thread(void *arg)
         struct read_data *rd = arg;
         struct scsi_task *task;
 
+        task = malloc(1024);
+        printf("iscsi_read_thread %d %p\n", rd->i, task);
+        free(task);
+        
         while (!finished) {
                 task = iscsi_read10_sync(rd->iscsi, rd->lun, 0,
                                          512, 512,
@@ -243,6 +247,7 @@ int main(int argc, char *argv[])
                 iscsi_logout_sync(iscsi[i]);
                 iscsi_destroy_context(iscsi[i]);
         }
+        printf("finished\n");
 	return 0;
 }
 
