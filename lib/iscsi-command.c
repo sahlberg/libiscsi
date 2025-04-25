@@ -261,6 +261,9 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	}
 	iscsi_pdu_set_pduflags(pdu, flags);
 
+	pdu->callback     = iscsi_scsi_response_cb;
+	pdu->private_data = &pdu->scsi_cbdata;
+
 	/* lun */
 	iscsi_pdu_set_lun(pdu, lun);
 	pdu->lun = lun;
@@ -269,16 +272,14 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	iscsi_pdu_set_expxferlen(pdu, task->expxferlen);
 
 	/* cmdsn */
-	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn++);
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	/* cdb */
 	iscsi_pdu_set_cdb(pdu, task);
 
-	pdu->callback     = iscsi_scsi_response_cb;
-	pdu->private_data = &pdu->scsi_cbdata;
-
 	iscsi_queue_pdu(iscsi, pdu);
-	iscsi->cmdsn++;
 
 	/* The F flag is not set. This means we haven't sent all the unsolicited
 	 * data yet. Sent as much as we are allowed as a train of DATA-OUT PDUs.
@@ -2730,7 +2731,9 @@ iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
                 }
                 if (!(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE) &&
                     (pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT) {
+                        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
                         iscsi->cmdsn--;
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
                         cmdsn_gap++;
                 }
                 iscsi->drv->free_pdu(iscsi, pdu);

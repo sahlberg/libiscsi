@@ -131,12 +131,12 @@ struct iscsi_context {
 	enum iscsi_session_type session_type;
 	unsigned char isid[6];
 	uint8_t rdma_ack_timeout;
-	uint32_t itt;                  // multithreading todo: may need mutex
-	uint32_t cmdsn;                // multithreading todo: may need mutex
-	uint32_t min_cmdsn_waiting;    // multithreading todo: may need mutex
-	uint32_t expcmdsn;             // multithreading todo: may need mutex
-	uint32_t maxcmdsn;             // multithreading todo: may need mutex
-	uint32_t statsn;               // multithreading todo: may need mutex
+	uint32_t itt;                  /* Protected by iscsi_lock */
+	uint32_t cmdsn;                /* Protected by iscsi_lock */
+	uint32_t min_cmdsn_waiting;    /* Protected by iscsi_lock */
+	uint32_t expcmdsn;             /* Protected by iscsi_lock */
+	uint32_t maxcmdsn;             /* Protected by iscsi_lock */
+	uint32_t statsn;               /* Protected by iscsi_lock */
 	enum iscsi_header_digest want_header_digest;
 	enum iscsi_header_digest header_digest;
 	enum iscsi_data_digest want_data_digest;

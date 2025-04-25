@@ -54,6 +54,9 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 		return -1;
 	}
 
+	pdu->callback     = cb;
+	pdu->private_data = private_data;
+
 	/* flags */
 	iscsi_pdu_set_pduflags(pdu, 0x80);
 
@@ -64,22 +67,22 @@ iscsi_nop_out_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	iscsi_pdu_set_lun(pdu, 0);
 
 	/* cmdsn */
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	iscsi_pdu_set_cmdsn(pdu, iscsi->cmdsn);
-
-	pdu->callback     = cb;
-	pdu->private_data = private_data;
 
 	if (data != NULL && len > 0) {
 		if (iscsi_pdu_add_data(iscsi, pdu, data, len) != 0) {
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 			iscsi_set_error(iscsi, "Failed to add outdata to nop-out");
 			iscsi->drv->free_pdu(iscsi, pdu);
 			return -1;
 		}
 	}
+	iscsi->cmdsn++;
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	iscsi_queue_pdu(iscsi, pdu);
 
-	iscsi->cmdsn++;
 	iscsi->nops_in_flight++;
 	ISCSI_LOG(iscsi, (iscsi->nops_in_flight > 1) ? 1 : 6,
 	          "NOP Out Send (nops_in_flight: %d, pdu->cmdsn %08x, pdu->itt %08x, pdu->ttt %08x, iscsi->maxcmdsn %08x, iscsi->expcmdsn %08x)",

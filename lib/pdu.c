@@ -70,12 +70,15 @@ iscsi_serial32_compare(uint32_t s1, uint32_t s2) {
 
 uint32_t
 iscsi_itt_post_increment(struct iscsi_context *iscsi) {
-	uint32_t old_itt = iscsi->itt;
-	iscsi->itt++;
+	uint32_t old_itt;
+
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+        old_itt = iscsi->itt++;
 	/* 0xffffffff is a reserved value */
 	if (iscsi->itt == 0xffffffff) {
 		iscsi->itt = 0;
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 	return old_itt;
 }
 
@@ -500,6 +503,7 @@ static void iscsi_process_pdu_serials(struct iscsi_context *iscsi, struct iscsi_
 		return;
 	}
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
 		iscsi->maxcmdsn = maxcmdsn;
 	}
@@ -510,6 +514,7 @@ static void iscsi_process_pdu_serials(struct iscsi_context *iscsi, struct iscsi_
 	/* RFC3720 10.7.3 (StatSN is invalid if S bit unset in flags) */
 	if (opcode == ISCSI_PDU_DATA_IN &&
 	    !(flags & ISCSI_PDU_DATA_CONTAINS_STATUS)) {
+                iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 		return;
 	}
 
@@ -520,6 +525,7 @@ static void iscsi_process_pdu_serials(struct iscsi_context *iscsi, struct iscsi_
 	if (iscsi_serial32_compare(statsn, iscsi->statsn) > 0) {
 		iscsi->statsn = statsn;
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 }
 
 int
