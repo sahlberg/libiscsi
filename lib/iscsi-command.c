@@ -267,6 +267,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	/* lun */
 	iscsi_pdu_set_lun(pdu, lun);
 	pdu->lun = lun;
+	task->lun = lun;
 
 	/* expxferlen */
 	iscsi_pdu_set_expxferlen(pdu, task->expxferlen);
@@ -289,11 +290,6 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	if (!(flags & ISCSI_PDU_SCSI_FINAL)) {
 		iscsi_send_unsolicited_data_out(iscsi, pdu);
 	}
-
-	/* remember cmdsn and itt so we can use task management */
-	task->cmdsn = pdu->cmdsn;
-	task->itt   = pdu->itt;
-	task->lun   = lun;
 
 	return 0;
 }

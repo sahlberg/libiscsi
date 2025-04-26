@@ -800,6 +800,11 @@ iscsi_pdu_set_cmdsn(struct iscsi_pdu *pdu, uint32_t cmdsn)
 {
 	scsi_set_uint32(&pdu->outdata.data[24], cmdsn);
 	pdu->cmdsn = cmdsn;
+	if (pdu->scsi_cbdata.task) {
+                /* remember cmdsn and itt so we can use task management */
+                pdu->scsi_cbdata.task->cmdsn = pdu->cmdsn;
+                pdu->scsi_cbdata.task->itt   = pdu->itt;
+        }
 }
 
 void

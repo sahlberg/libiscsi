@@ -149,7 +149,7 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 
  finished:
         iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
-
+        
         /* TODO QQQ need to immediately send for the non multithreading case too
          * and for the Windows API too */
 #if defined(HAVE_MULTITHREADING) && defined(HAVE_PTHREAD)
