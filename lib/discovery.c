@@ -73,12 +73,7 @@ iscsi_discovery_async(struct iscsi_context *iscsi, iscsi_command_cb cb,
 	pdu->callback     = cb;
 	pdu->private_data = private_data;
 
-	if (iscsi_queue_pdu(iscsi, pdu) != 0) {
-		iscsi_set_error(iscsi, "Out-of-memory: failed to queue iscsi "
-				"text pdu.");
-		iscsi->drv->free_pdu(iscsi, pdu);
-		return -1;
-	}
+	iscsi_queue_pdu(iscsi, pdu);
 
 	return 0;
 }

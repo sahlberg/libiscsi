@@ -280,7 +280,7 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
                         void *command_data, void *private_data)
 {
 	struct iscsi_context *old_iscsi;
-	int i;
+        struct iscsi_pdu *tmp = NULL;
 
 	if (status != SCSI_STATUS_GOOD) {
 		int backoff = ++iscsi->old_iscsi->retry_cnt;
@@ -305,16 +305,20 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
 	old_iscsi = iscsi->old_iscsi;
 	iscsi->old_iscsi = NULL;
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	while (old_iscsi->outqueue) {
 		struct iscsi_pdu *pdu = old_iscsi->outqueue;
 		ISCSI_LIST_REMOVE(&old_iscsi->outqueue, pdu);
 		ISCSI_LIST_ADD_END(&old_iscsi->waitpdu, pdu);
 	}
+        tmp = old_iscsi->waitpdu;
+        old_iscsi->waitpdu = NULL;
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
-	while (old_iscsi->waitpdu) {
-		struct iscsi_pdu *pdu = old_iscsi->waitpdu;
+	while (tmp) {
+		struct iscsi_pdu *pdu = tmp;
 
-		ISCSI_LIST_REMOVE(&old_iscsi->waitpdu, pdu);
+		ISCSI_LIST_REMOVE(&tmp, pdu);
 		if (pdu->itt == 0xffffffff) {
 			iscsi->drv->free_pdu(old_iscsi, pdu);
 			continue;
@@ -351,6 +355,7 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
 		iscsi->drv->free_pdu(old_iscsi, pdu);
 	}
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	if (old_iscsi->incoming != NULL) {
 		iscsi_free_iscsi_in_pdu(old_iscsi, old_iscsi->incoming);
 	}
@@ -358,12 +363,9 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
 	if (old_iscsi->outqueue_current != NULL && old_iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
 		iscsi->drv->free_pdu(old_iscsi, old_iscsi->outqueue_current);
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	iscsi_free(old_iscsi, old_iscsi->opaque);
-
-	for (i = 0; i < old_iscsi->smalloc_free; i++) {
-		iscsi_free(old_iscsi, old_iscsi->smalloc_ptrs[i]);
-	}
 
 	iscsi->mallocs += old_iscsi->mallocs;
 	iscsi->frees += old_iscsi->frees;
@@ -461,10 +463,6 @@ static int reconnect(struct iscsi_context *iscsi, int force)
 	tmp_iscsi->reconnect_max_retries = iscsi->reconnect_max_retries;
 
 	if (iscsi->old_iscsi) {
-		int i;
-		for (i = 0; i < iscsi->smalloc_free; i++) {
-			iscsi_free(iscsi, iscsi->smalloc_ptrs[i]);
-		}
 		iscsi_free(iscsi, iscsi->opaque);
 
 		iscsi->old_iscsi->mallocs += iscsi->mallocs;

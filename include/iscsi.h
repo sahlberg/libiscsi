@@ -1704,6 +1704,18 @@ iscsi_set_fd_dup_cb(struct iscsi_context *iscsi,
 		    void (*cb)(struct iscsi_context *iscsi, void *opaque),
 		    void *opaque);
 
+/*
+ * MULTITHREADING
+ */        
+/*
+ * This function starts a separate service thread for multithreading support.
+ */
+EXTERN int iscsi_mt_service_thread_start(struct iscsi_context *iscsi);
+/*
+ * Shutdown multithreading support.
+ */
+EXTERN void iscsi_mt_service_thread_stop(struct iscsi_context *iscsi);
+        
 #ifdef __cplusplus
 }
 #endif

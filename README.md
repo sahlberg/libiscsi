@@ -56,6 +56,13 @@ Example:
     iscsi://server/iqn.ronnie.test/1
 
 
+MULTITHREADING
+==============
+Multithreading is supported both on Linux, using pthreads, and Windows, using native API.
+By default libicsi will start with multithreading disabled and you will need
+to activate once connected to the LUN.
+There are examples of multithreading in the examples directory.
+
 CHAP Authentication
 ===================
 CHAP authentication can be specified two ways. Either via the URL itself

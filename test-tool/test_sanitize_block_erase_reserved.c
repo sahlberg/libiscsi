@@ -26,7 +26,7 @@
 
 static int change_num;
 
-static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+static void my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
         switch (change_num) {
         case 1:
@@ -44,7 +44,7 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
         }
 
         change_num = 0;
-        return orig_queue_pdu(iscsi, pdu);
+        orig_queue_pdu(iscsi, pdu);
 }
 
 void test_sanitize_block_erase_reserved(void)

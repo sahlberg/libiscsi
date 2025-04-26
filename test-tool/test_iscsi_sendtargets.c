@@ -148,8 +148,7 @@ test_iscsi_text_req_queue(struct iscsi_context *iscsi,
         pdu->callback = cb;
         pdu->private_data = state;
 
-        ret = iscsi_queue_pdu(iscsi, pdu);
-        CU_ASSERT_EQUAL_FATAL(ret, 0);
+        iscsi_queue_pdu(iscsi, pdu);
         state->dispatched++;
         logging(LOG_VERBOSE, "queued Text request %d with %s",
                 state->dispatched, kv_data);

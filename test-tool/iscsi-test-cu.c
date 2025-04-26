@@ -739,7 +739,7 @@ static struct test_family families[] = {
  */
 struct scsi_task *task;
 unsigned char *read_write_buf;
-int (*orig_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+void (*orig_queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 static void
 print_usage(void)

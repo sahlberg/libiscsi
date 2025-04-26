@@ -28,6 +28,32 @@
 
 #include "iscsi.h"
 
+#ifdef HAVE_MULTITHREADING
+#ifdef HAVE_STDATOMIC_H
+#include <stdatomic.h>
+#define ATOMIC_INC(rpc, x) \
+        atomic_fetch_add_explicit(&x, 1, memory_order_relaxed)
+#define ATOMIC_DEC(rpc, x) \
+        atomic_fetch_sub_explicit(&x, 1, memory_order_relaxed)
+#else /* HAVE_STDATOMIC_H */
+#define ATOMIC_INC(rpc, x)                              \
+        iscs_mt_mutex_lock(&iscs->atomic_int_mutex);    \
+        }                                               \
+	x++;                                            \
+        iscsi_mt_mutex_unlock(&iscsi->atomic_int_mutex);
+#define ATOMIC_DEC(rpc, x)                              \
+        nfs_mt_mutex_lock(&rpc->atomic_int_mutex);      \
+	x--;                                            \
+        nfs_mt_mutex_unlock(&rpc->atomic_int_mutex);
+#endif /* HAVE_STDATOMIC_H */
+#else /* HAVE_MULTITHREADING */
+/* no multithreading support, no need to protect the increment */
+#define ATOMIC_INC(rpc, x) x++
+#define ATOMIC_DEC(rpc, x) x--
+#endif /* HAVE_MULTITHREADING */
+
+#include "iscsi-multithreading.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -105,12 +131,12 @@ struct iscsi_context {
 	enum iscsi_session_type session_type;
 	unsigned char isid[6];
 	uint8_t rdma_ack_timeout;
-	uint32_t itt;
-	uint32_t cmdsn;
-	uint32_t min_cmdsn_waiting;
-	uint32_t expcmdsn;
-	uint32_t maxcmdsn;
-	uint32_t statsn;
+	uint32_t itt;                  /* Protected by iscsi_lock */
+	uint32_t cmdsn;                /* Protected by iscsi_lock */
+	uint32_t min_cmdsn_waiting;    /* Protected by iscsi_lock */
+	uint32_t expcmdsn;             /* Protected by iscsi_lock */
+	uint32_t maxcmdsn;             /* Protected by iscsi_lock */
+	uint32_t statsn;               /* Protected by iscsi_lock */
 	enum iscsi_header_digest want_header_digest;
 	enum iscsi_header_digest header_digest;
 	enum iscsi_data_digest want_data_digest;
@@ -144,11 +170,10 @@ struct iscsi_context {
 	iscsi_command_cb socket_status_cb;
 	void *connect_data;
 
-	struct iscsi_pdu *outqueue;
-	struct iscsi_pdu *outqueue_current;
-	struct iscsi_pdu *waitpdu;
-
-	struct iscsi_in_pdu *incoming;
+	struct iscsi_pdu *outqueue;         /* Protected by iscsi_lock */
+	struct iscsi_pdu *outqueue_current; /* Protected by iscsi_lock */
+	struct iscsi_pdu *waitpdu;          /* Protected by iscsi_lock */
+	struct iscsi_in_pdu *incoming;      /* Protected by iscsi_lock */
 
 	uint32_t max_burst_length;
 	uint32_t first_burst_length;
@@ -168,14 +193,10 @@ struct iscsi_context {
 	int log_level;
 	iscsi_log_fn log_fn;
 
-	int mallocs;
-	int reallocs;
-	int frees;
-	int smallocs;
-	void* smalloc_ptrs[SMALL_ALLOC_MAX_FREE];
-	int smalloc_free;
-	size_t smalloc_size;
-	int cache_allocations;
+	int mallocs;                               //needs protection?
+	int reallocs;                              //needs protection?
+	int frees;                                 //needs protection?
+	int cache_allocations;                     //needs ptotection?
 
 	time_t next_reconnect;
 	int scsi_timeout;
@@ -184,6 +205,17 @@ struct iscsi_context {
 	int no_ua_on_reconnect;
 	void (*fd_dup_cb)(struct iscsi_context *iscsi, void *opaque);
 	void *fd_dup_opaque;
+
+#ifdef HAVE_MULTITHREADING
+        int multithreading_enabled;
+        libiscsi_spinlock_t iscsi_lock;
+        libiscsi_mutex_t iscsi_mutex;
+        libiscsi_thread_t service_thread;
+        int poll_timeout;
+#ifndef HAVE_STDATOMIC_H
+        libiscsi_mutex_t atomic_int_mutex;
+#endif /* HAVE_STDATOMIC_H */
+#endif /* HAVE_MULTITHREADING */
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40
@@ -308,10 +340,11 @@ void iscsi_cancel_pdus(struct iscsi_context *iscsi);
 void iscsi_cancel_lun_pdus(struct iscsi_context *iscsi, uint32_t lun);
 int iscsi_pdu_add_data(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 		       const unsigned char *dptr, int dsize);
-int iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+void iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 int iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 		   const unsigned char *dptr, int dsize, int pdualignment);
 
+void iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 struct scsi_task;
 void iscsi_pdu_set_cdb(struct iscsi_pdu *pdu, struct scsi_task *task);
 
@@ -358,9 +391,6 @@ void* iscsi_zmalloc(struct iscsi_context *iscsi, size_t size);
 void* iscsi_realloc(struct iscsi_context *iscsi, void* ptr, size_t size);
 void iscsi_free(struct iscsi_context *iscsi, void* ptr);
 char* iscsi_strdup(struct iscsi_context *iscsi, const char* str);
-void* iscsi_smalloc(struct iscsi_context *iscsi, size_t size);
-void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size);
-void iscsi_sfree(struct iscsi_context *iscsi, void* ptr);
 
 uint32_t crc32c(uint8_t *buf, int len);
 void crc32c_init(uint32_t *crc_ptr);
@@ -380,9 +410,6 @@ void iscsi_decrement_iface_rr(void);
 
 void __attribute__((format(printf, 3, 4)))
 iscsi_log_message(struct iscsi_context *iscsi, int level, const char *format, ...);
-
-void
-iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 
 int iscsi_serial32_compare(uint32_t s1, uint32_t s2);
 
@@ -407,7 +434,7 @@ union socket_address;
 
 typedef struct iscsi_transport {
 	int (*connect)(struct iscsi_context *iscsi, union socket_address *sa, int ai_family);
-	int (*queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
+	void (*queue_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
 	struct iscsi_pdu* (*new_pdu)(struct iscsi_context *iscsi, size_t size);
 	int (*disconnect)(struct iscsi_context *iscsi);
 	void (*free_pdu)(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);

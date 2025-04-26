@@ -115,51 +115,14 @@ char* iscsi_strdup(struct iscsi_context *iscsi, const char* str) {
 	return str2;
 }
 
-void* iscsi_smalloc(struct iscsi_context *iscsi, size_t size) {
-	void *ptr;
-	if (size > iscsi->smalloc_size) return NULL;
-	if (iscsi->smalloc_free > 0) {
-		ptr = iscsi->smalloc_ptrs[--iscsi->smalloc_free];
-		iscsi->smallocs++;
-	} else {
-		ptr = iscsi_malloc(iscsi, iscsi->smalloc_size);
-	}
-	return ptr;
-}
-
-void* iscsi_szmalloc(struct iscsi_context *iscsi, size_t size) {
-	void *ptr = iscsi_smalloc(iscsi, size);
-	if (ptr) {
-		memset(ptr, 0, size);
-	}
-	return ptr;
-}
-
-void iscsi_sfree(struct iscsi_context *iscsi, void* ptr) {
-	if (ptr == NULL) {
-		return;
-	}
-	if (!iscsi->cache_allocations) {
-		iscsi_free(iscsi, ptr);
-	} else if (iscsi->smalloc_free == SMALL_ALLOC_MAX_FREE) {
-		/* SMALL_ALLOC_MAX_FREE should be adjusted that this */
-		/* happens rarely */
-		ISCSI_LOG(iscsi, 6, "smalloc free == SMALLOC_MAX_FREE");
-		iscsi_free(iscsi, ptr);
-	} else {
-		iscsi->smalloc_ptrs[iscsi->smalloc_free++] = ptr;
-	}
-}
-
-static bool rd_set = false;
-static pthread_mutex_t rd_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 static void
 iscsi_srand_init(struct iscsi_context *iscsi) {
 	unsigned int seed;
 	int urand_fd;
 	ssize_t rc;
 	int err;
+        static bool rd_set = false;
+        static pthread_mutex_t rd_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 	if (rd_set) {
 		/* fast case, seed has been set */
@@ -202,7 +165,6 @@ struct iscsi_context *
 iscsi_create_context(const char *initiator_name)
 {
 	struct iscsi_context *iscsi;
-	size_t required = ISCSI_RAW_HEADER_SIZE + ISCSI_DIGEST_SIZE;
 	char *ca;
 
 	if (!initiator_name[0]) {
@@ -215,6 +177,10 @@ iscsi_create_context(const char *initiator_name)
 	}
 
 	memset(iscsi, 0, sizeof(struct iscsi_context));
+
+        iscsi_mt_spin_init(&iscsi->iscsi_lock, PTHREAD_PROCESS_PRIVATE);
+        iscsi_mt_mutex_init(&iscsi->iscsi_mutex);
+        iscsi->poll_timeout = 100;
 
 	/* initalize transport of context */
 	if (iscsi_init_transport(iscsi, TCP_TRANSPORT)) {
@@ -285,18 +251,6 @@ iscsi_create_context(const char *initiator_name)
 	if (getenv("LIBISCSI_RDMA_ACK_TIMEOUT") != NULL) {
 		iscsi->rdma_ack_timeout = atoi(getenv("LIBISCSI_RDMA_ACK_TIMEOUT"));
 	}
-
-	/* iscsi->smalloc_size is the size for small allocations. this should be
-	   max(ISCSI_HEADER_SIZE, sizeof(struct iscsi_pdu), sizeof(struct iscsi_in_pdu))
-	   rounded up to the next power of 2. */
-	required = MAX(required, sizeof(struct iscsi_pdu));
-	required = MAX(required, sizeof(struct iscsi_in_pdu));
-	iscsi->smalloc_size = 1;
-	while (iscsi->smalloc_size < required) {
-		iscsi->smalloc_size <<= 1;
-	}
-	ISCSI_LOG(iscsi, 5, "small allocation size is %u byte",
-                  (uint32_t)iscsi->smalloc_size);
 
 	ca = getenv("LIBISCSI_CACHE_ALLOCATIONS");
 	if (!ca || atoi(ca) != 0) {
@@ -394,8 +348,6 @@ iscsi_set_targetname(struct iscsi_context *iscsi, const char *target_name)
 int
 iscsi_destroy_context(struct iscsi_context *iscsi)
 {
-	int i;
-
 	if (iscsi == NULL) {
 		return 0;
 	}
@@ -404,6 +356,7 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 
 	iscsi_cancel_pdus(iscsi);
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	if (iscsi->outqueue_current != NULL && iscsi->outqueue_current->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
 		iscsi->drv->free_pdu(iscsi, iscsi->outqueue_current);
 	}
@@ -411,19 +364,16 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 	if (iscsi->incoming != NULL) {
 		iscsi_free_iscsi_in_pdu(iscsi, iscsi->incoming);
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	iscsi->connect_data = NULL;
-
-	for (i=0;i<iscsi->smalloc_free;i++) {
-		iscsi_free(iscsi, iscsi->smalloc_ptrs[i]);
-	}
 
 	iscsi_free(iscsi, iscsi->opaque);
 
 	if (iscsi->mallocs != iscsi->frees) {
-		ISCSI_LOG(iscsi,1,"%d memory blocks lost at iscsi_destroy_context() after %d malloc(s), %d realloc(s), %d free(s) and %d reused small allocations",iscsi->mallocs-iscsi->frees,iscsi->mallocs,iscsi->reallocs,iscsi->frees,iscsi->smallocs);
+		ISCSI_LOG(iscsi,1,"%d memory blocks lost at iscsi_destroy_context() after %d malloc(s), %d realloc(s), %d free(s)",iscsi->mallocs-iscsi->frees,iscsi->mallocs,iscsi->reallocs,iscsi->frees);
 	} else {
-		ISCSI_LOG(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs, %d realloc(s), %d free(s) and %d reused small allocations",iscsi->mallocs,iscsi->reallocs,iscsi->frees,iscsi->smallocs);
+		ISCSI_LOG(iscsi,5,"memory is clean at iscsi_destroy_context() after %d mallocs, %d realloc(s), %d free(s)",iscsi->mallocs,iscsi->reallocs,iscsi->frees);
 	}
 
 	if (iscsi->old_iscsi) {
@@ -431,6 +381,9 @@ iscsi_destroy_context(struct iscsi_context *iscsi)
 		iscsi_destroy_context(iscsi->old_iscsi);
 	}
 
+        iscsi_mt_spin_destroy(&iscsi->iscsi_lock);
+        iscsi_mt_mutex_destroy(&iscsi->iscsi_mutex);
+        
 	memset(iscsi, 0, sizeof(struct iscsi_context));
 	free(iscsi);
 

@@ -70,12 +70,15 @@ iscsi_serial32_compare(uint32_t s1, uint32_t s2) {
 
 uint32_t
 iscsi_itt_post_increment(struct iscsi_context *iscsi) {
-	uint32_t old_itt = iscsi->itt;
-	iscsi->itt++;
+	uint32_t old_itt;
+
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+        old_itt = iscsi->itt++;
 	/* 0xffffffff is a reserved value */
 	if (iscsi->itt == 0xffffffff) {
 		iscsi->itt = 0;
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 	return old_itt;
 }
 
@@ -184,7 +187,7 @@ void iscsi_dump_pdu_header(struct iscsi_context *iscsi, unsigned char *data) {
 struct iscsi_pdu*
 iscsi_tcp_new_pdu(struct iscsi_context *iscsi, size_t size)
 {
-	return iscsi_szmalloc(iscsi, size);
+	return iscsi_zmalloc(iscsi, size);
 }
 
 struct iscsi_pdu *
@@ -201,7 +204,7 @@ iscsi_allocate_pdu(struct iscsi_context *iscsi, enum iscsi_opcode opcode,
 	}
 
 	pdu->outdata.size = ISCSI_HEADER_SIZE(iscsi->header_digest);
-	pdu->outdata.data = iscsi_szmalloc(iscsi, pdu->outdata.size);
+	pdu->outdata.data = iscsi_zmalloc(iscsi, pdu->outdata.size);
 
 	if (pdu->outdata.data == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate pdu header");
@@ -239,25 +242,17 @@ iscsi_tcp_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 		return;
 	}
 
-	if (pdu->outdata.size <= iscsi->smalloc_size) {
-		iscsi_sfree(iscsi, pdu->outdata.data);
-	} else {
-		iscsi_free(iscsi, pdu->outdata.data);
-	}
+        iscsi_free(iscsi, pdu->outdata.data);
 	pdu->outdata.data = NULL;
 
-	if (pdu->indata.size <= iscsi->smalloc_size) {
-		iscsi_sfree(iscsi, pdu->indata.data);
-	} else {
-		iscsi_free(iscsi, pdu->indata.data);
-	}
+        iscsi_free(iscsi, pdu->indata.data);
 	pdu->indata.data = NULL;
 
 	if (iscsi->outqueue_current == pdu) {
 		iscsi->outqueue_current = NULL;
 	}
 
-	iscsi_sfree(iscsi, pdu);
+	iscsi_free(iscsi, pdu);
 }
 
 int
@@ -280,15 +275,9 @@ iscsi_add_data(struct iscsi_context *iscsi, struct iscsi_data *data,
 	}
 
 	if (data->size == 0) {
-		if (aligned <= iscsi->smalloc_size) {
-			data->data = iscsi_szmalloc(iscsi, aligned);
-		} else {
-			data->data = iscsi_malloc(iscsi, aligned);
-		}
+                data->data = iscsi_malloc(iscsi, aligned);
 	} else {
-		if (aligned > iscsi->smalloc_size) {
-			data->data = iscsi_realloc(iscsi, data->data, aligned);
-		}
+                data->data = iscsi_realloc(iscsi, data->data, aligned);
 	}
 	if (data->data == NULL) {
 		iscsi_set_error(iscsi, "failed to allocate buffer for %d "
@@ -458,11 +447,13 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 
 	iscsi_dump_pdu_header(iscsi, in->data);
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
 		if (pdu->itt == itt) {
 			break;
 		}
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	if (pdu == NULL) {
 		iscsi_set_error(iscsi, "Can not match REJECT with"
@@ -476,7 +467,9 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 		              pdu->private_data);
 	}
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 	iscsi->drv->free_pdu(iscsi, pdu);
 	return 0;
 }
@@ -496,6 +489,7 @@ static void iscsi_process_pdu_serials(struct iscsi_context *iscsi, struct iscsi_
 		return;
 	}
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	if (iscsi_serial32_compare(maxcmdsn, iscsi->maxcmdsn) > 0) {
 		iscsi->maxcmdsn = maxcmdsn;
 	}
@@ -506,6 +500,7 @@ static void iscsi_process_pdu_serials(struct iscsi_context *iscsi, struct iscsi_
 	/* RFC3720 10.7.3 (StatSN is invalid if S bit unset in flags) */
 	if (opcode == ISCSI_PDU_DATA_IN &&
 	    !(flags & ISCSI_PDU_DATA_CONTAINS_STATUS)) {
+                iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 		return;
 	}
 
@@ -516,6 +511,7 @@ static void iscsi_process_pdu_serials(struct iscsi_context *iscsi, struct iscsi_
 	if (iscsi_serial32_compare(statsn, iscsi->statsn) > 0) {
 		iscsi->statsn = statsn;
 	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 }
 
 int
@@ -525,6 +521,8 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 	enum iscsi_opcode opcode = in->hdr[0] & 0x3f;
 	uint8_t ahslen = in->hdr[4];
 	struct iscsi_pdu *pdu;
+        enum iscsi_opcode expected_response;
+        int is_finished = 1;
 
 	/* verify header checksum */
 	if (iscsi->header_digest != ISCSI_HEADER_DIGEST_NONE) {
@@ -623,125 +621,148 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 		return 0;
 	}
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
-		enum iscsi_opcode expected_response = pdu->response_opcode;
-		int is_finished = 1;
-
-		if (pdu->itt != itt) {
-			continue;
+		if (pdu->itt == itt) {
+			break;
 		}
+        }
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+        if (pdu == NULL) {
+                iscsi_set_error(iscsi, "Got unsolicited response with "
+                                "itt:%d",
+                                itt);
+                return -1;
+        }
+        
+        /* we have a special case with scsi-command opcodes,
+         * they are replied to by either a scsi-response
+         * or a data-in, or a combination of both.
+         */
+        expected_response = pdu->response_opcode;
+        if (opcode == ISCSI_PDU_DATA_IN
+            && expected_response == ISCSI_PDU_SCSI_RESPONSE) {
+                expected_response = ISCSI_PDU_DATA_IN;
+        }
 
-		/* we have a special case with scsi-command opcodes,
-		 * they are replied to by either a scsi-response
-		 * or a data-in, or a combination of both.
-		 */
-		if (opcode == ISCSI_PDU_DATA_IN
-		    && expected_response == ISCSI_PDU_SCSI_RESPONSE) {
-			expected_response = ISCSI_PDU_DATA_IN;
-		}
+        /* Another special case is if we get a R2T.
+         * In this case we should find the original request and just send an additional
+         * DATAOUT segment for this task.
+         */
+        if (opcode == ISCSI_PDU_R2T) {
+                expected_response = ISCSI_PDU_R2T;
+        }
 
-		/* Another special case is if we get a R2T.
-		 * In this case we should find the original request and just send an additional
-		 * DATAOUT segment for this task.
-		 */
-		if (opcode == ISCSI_PDU_R2T) {
-			expected_response = ISCSI_PDU_R2T;
-		}
+        if (opcode != expected_response) {
+                iscsi_set_error(iscsi, "Got wrong opcode back for "
+                                "itt:%d  got:%d expected %d",
+                                itt, opcode, pdu->response_opcode);
+                return -1;
+        }
+        switch (opcode) {
+        case ISCSI_PDU_LOGIN_RESPONSE:
+                if (iscsi_process_login_reply(iscsi, pdu, in) != 0) {
+                        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+                        ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+                        iscsi->drv->free_pdu(iscsi, pdu);
+                        iscsi_set_error(iscsi, "iscsi login reply "
+                                        "failed");
+                        return -1;
+                }
+                break;
+        case ISCSI_PDU_TEXT_RESPONSE:
+                if (iscsi_process_text_reply(iscsi, pdu, in) != 0) {
+                        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+                        ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+                        iscsi->drv->free_pdu(iscsi, pdu);
+                        iscsi_set_error(iscsi, "iscsi text reply "
+                                        "failed");
+                        return -1;
+                }
+                break;
+        case ISCSI_PDU_LOGOUT_RESPONSE:
+                if (iscsi_process_logout_reply(iscsi, pdu, in) != 0) {
+                        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+                        ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+                        iscsi->drv->free_pdu(iscsi, pdu);
+                        iscsi_set_error(iscsi, "iscsi logout reply "
+                                        "failed");
+                        return -1;
+                }
+                break;
+        case ISCSI_PDU_SCSI_RESPONSE:
+                if (iscsi_process_scsi_reply(iscsi, pdu, in) != 0) {
+                        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+                        ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+                        iscsi->drv->free_pdu(iscsi, pdu);
+                        iscsi_set_error(iscsi, "iscsi response reply "
+                                        "failed");
+                        return -1;
+                }
+                break;
+        case ISCSI_PDU_DATA_IN:
+                if (iscsi_process_scsi_data_in(iscsi, pdu, in,
+                                               &is_finished) != 0) {
+                        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+                        ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+                        iscsi->drv->free_pdu(iscsi, pdu);
+                        iscsi_set_error(iscsi, "iscsi data in "
+                                        "failed");
+                        return -1;
+                }
+                break;
+        case ISCSI_PDU_NOP_IN:
+                if (iscsi_process_nop_out_reply(iscsi, pdu, in) != 0) {
+                        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+                        ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+                        iscsi->drv->free_pdu(iscsi, pdu);
+                        iscsi_set_error(iscsi, "iscsi nop-in failed");
+                        return -1;
+                }
+                break;
+        case ISCSI_PDU_SCSI_TASK_MANAGEMENT_RESPONSE:
+                if (iscsi_process_task_mgmt_reply(iscsi, pdu,
+                                                  in) != 0) {
+                        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+                        ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+                        iscsi->drv->free_pdu(iscsi, pdu);
+                        iscsi_set_error(iscsi, "iscsi task-mgmt failed");
+                        return -1;
+                }
+                break;
+        case ISCSI_PDU_R2T:
+                if (iscsi_process_r2t(iscsi, pdu, in) != 0) {
+                        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+                        ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+                        iscsi->drv->free_pdu(iscsi, pdu);
+                        iscsi_set_error(iscsi, "iscsi r2t "
+                                        "failed");
+                        return -1;
+                }
+                is_finished = 0;
+                break;
+        default:
+                iscsi_set_error(iscsi, "Don't know how to handle "
+                                "opcode 0x%02x", opcode);
+                return -1;
+        }
 
-		if (opcode != expected_response) {
-			iscsi_set_error(iscsi, "Got wrong opcode back for "
-					"itt:%d  got:%d expected %d",
-					itt, opcode, pdu->response_opcode);
-			return -1;
-		}
-		switch (opcode) {
-		case ISCSI_PDU_LOGIN_RESPONSE:
-			if (iscsi_process_login_reply(iscsi, pdu, in) != 0) {
-				ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi->drv->free_pdu(iscsi, pdu);
-				iscsi_set_error(iscsi, "iscsi login reply "
-						"failed");
-				return -1;
-			}
-			break;
-		case ISCSI_PDU_TEXT_RESPONSE:
-			if (iscsi_process_text_reply(iscsi, pdu, in) != 0) {
-				ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi->drv->free_pdu(iscsi, pdu);
-				iscsi_set_error(iscsi, "iscsi text reply "
-						"failed");
-				return -1;
-			}
-			break;
-		case ISCSI_PDU_LOGOUT_RESPONSE:
-			if (iscsi_process_logout_reply(iscsi, pdu, in) != 0) {
-				ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi->drv->free_pdu(iscsi, pdu);
-				iscsi_set_error(iscsi, "iscsi logout reply "
-						"failed");
-				return -1;
-			}
-			break;
-		case ISCSI_PDU_SCSI_RESPONSE:
-			if (iscsi_process_scsi_reply(iscsi, pdu, in) != 0) {
-				ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi->drv->free_pdu(iscsi, pdu);
-				iscsi_set_error(iscsi, "iscsi response reply "
-						"failed");
-				return -1;
-			}
-			break;
-		case ISCSI_PDU_DATA_IN:
-			if (iscsi_process_scsi_data_in(iscsi, pdu, in,
-						       &is_finished) != 0) {
-				ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi->drv->free_pdu(iscsi, pdu);
-				iscsi_set_error(iscsi, "iscsi data in "
-						"failed");
-				return -1;
-			}
-			break;
-		case ISCSI_PDU_NOP_IN:
-			if (iscsi_process_nop_out_reply(iscsi, pdu, in) != 0) {
-				ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi->drv->free_pdu(iscsi, pdu);
-				iscsi_set_error(iscsi, "iscsi nop-in failed");
-				return -1;
-			}
-			break;
-		case ISCSI_PDU_SCSI_TASK_MANAGEMENT_RESPONSE:
-			if (iscsi_process_task_mgmt_reply(iscsi, pdu,
-							  in) != 0) {
-				ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi->drv->free_pdu(iscsi, pdu);
-				iscsi_set_error(iscsi, "iscsi task-mgmt failed");
-				return -1;
-			}
-			break;
-		case ISCSI_PDU_R2T:
-			if (iscsi_process_r2t(iscsi, pdu, in) != 0) {
-				ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-				iscsi->drv->free_pdu(iscsi, pdu);
-				iscsi_set_error(iscsi, "iscsi r2t "
-						"failed");
-				return -1;
-			}
-			is_finished = 0;
-			break;
-		default:
-			iscsi_set_error(iscsi, "Don't know how to handle "
-					"opcode 0x%02x", opcode);
-			return -1;
-		}
-
-		if (is_finished && iscsi->waitpdu != NULL) {
-			ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-			iscsi->drv->free_pdu(iscsi, pdu);
-		}
-		return 0;
-	}
-
-	return 0;
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+        if (is_finished && iscsi->waitpdu != NULL) {
+                ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+                iscsi->drv->free_pdu(iscsi, pdu);
+        }
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+        
+        return 0;
 }
 
 void
@@ -842,7 +863,8 @@ static int iscsi_pdu_data_out_inprocess(struct iscsi_context *iscsi, struct iscs
 {
 	struct iscsi_pdu *tmp_pdu, *next_pdu;
 	enum scsi_opcode opcode = pdu->outdata.data[32];
-
+        int ret = 1;
+        
 	/* only care DATA OUT command here */
 	if ((pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_SCSI_REQUEST) {
 		return 0;
@@ -857,9 +879,10 @@ static int iscsi_pdu_data_out_inprocess(struct iscsi_context *iscsi, struct iscs
 			return 0;
 	};
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	/* current outgoing one is part of the PDU? */
 	if (iscsi->outqueue_current && (iscsi->outqueue_current->scsi_cbdata.task == pdu->scsi_cbdata.task)) {
-		return 1;
+                goto finished;
 	}
 
 	/* any child DATAOUT PDU in outqueue? */
@@ -867,21 +890,26 @@ static int iscsi_pdu_data_out_inprocess(struct iscsi_context *iscsi, struct iscs
 		next_pdu = tmp_pdu->next;
 
 		if (tmp_pdu->scsi_cbdata.task == pdu->scsi_cbdata.task) {
-			return 1;
+                        goto finished;
 		}
 	}
 
-	return 0;
+        ret = 0;
+ finished:
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+	return ret;
 }
 
 void
 iscsi_timeout_scan(struct iscsi_context *iscsi)
 {
-	struct iscsi_pdu *pdu;
+	struct iscsi_pdu *pdu, *tmp;
 	struct iscsi_pdu *next_pdu;
 	time_t t = time(NULL);
 	uint32_t cmdsn_gap = 0;
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+        tmp = NULL;
 	for (pdu = iscsi->outqueue; pdu; pdu = next_pdu) {
 		next_pdu = pdu->next;
 
@@ -904,6 +932,11 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 			continue;
 		}
 		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
+		ISCSI_LIST_ADD_END(&tmp, pdu);
+        }
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+	for (pdu = tmp; pdu; pdu = next_pdu) {
+		ISCSI_LIST_REMOVE(&tmp, pdu);
 		iscsi_set_error(iscsi, "command timed out from outqueue");
 		iscsi_dump_pdu_header(iscsi, pdu->outdata.data);
 		if (pdu->callback) {
@@ -912,6 +945,9 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 		}
 		iscsi->drv->free_pdu(iscsi, pdu);
 	}
+        
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+        tmp = NULL;
 	for (pdu = iscsi->waitpdu; pdu; pdu = next_pdu) {
 		next_pdu = pdu->next;
 
@@ -927,6 +963,11 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 			continue;
 		}
 		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+		ISCSI_LIST_ADD_END(&tmp, pdu);
+        }
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+	for (pdu = tmp; pdu; pdu = next_pdu) {
+		ISCSI_LIST_REMOVE(&tmp, pdu);
 		iscsi_set_error(iscsi, "command timed out from waitqueue");
 		iscsi_dump_pdu_header(iscsi, pdu->outdata.data);
 		if (pdu->callback) {
@@ -937,17 +978,18 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 	}
 }
 
-int
+void
 iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
-	return iscsi->drv->queue_pdu(iscsi, pdu);
+	iscsi->drv->queue_pdu(iscsi, pdu);
 }
 
 void
 iscsi_cancel_pdus(struct iscsi_context *iscsi)
 {
-	struct iscsi_pdu *pdu;
+	struct iscsi_pdu *pdu, *tmp;
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	while ((pdu = iscsi->outqueue)) {
 		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
 		if (pdu->callback) {
@@ -960,8 +1002,12 @@ iscsi_cancel_pdus(struct iscsi_context *iscsi)
 		}
 		iscsi->drv->free_pdu(iscsi, pdu);
 	}
-	while ((pdu = iscsi->waitpdu)) {
-		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+        tmp = iscsi->waitpdu;
+        iscsi->waitpdu = NULL;
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+
+	while ((pdu = tmp)) {
+		ISCSI_LIST_REMOVE(&tmp, pdu);
 		if (pdu->callback) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
 			              NULL, pdu->private_data);
@@ -973,11 +1019,13 @@ iscsi_cancel_pdus(struct iscsi_context *iscsi)
 void
 iscsi_cancel_lun_pdus(struct iscsi_context *iscsi, uint32_t lun)
 {
-	struct iscsi_pdu *pdu;
+	struct iscsi_pdu *pdu, *tmp;
 	struct iscsi_pdu *next_pdu;
 	uint32_t cmdsn_gap = 0;
 	struct scsi_task * task = NULL;
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+        tmp = NULL;
 	for (pdu = iscsi->outqueue; pdu; pdu = next_pdu) {
 		next_pdu = pdu->next;
 		task = iscsi_scsi_get_task_from_pdu(pdu);
@@ -994,6 +1042,11 @@ iscsi_cancel_lun_pdus(struct iscsi_context *iscsi, uint32_t lun)
 			cmdsn_gap++;
 		}
 		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
+		ISCSI_LIST_ADD_END(&tmp, pdu);
+        }
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+	for (pdu = tmp; pdu; pdu = next_pdu) {
+		ISCSI_LIST_REMOVE(&tmp, pdu);
 		iscsi_set_error(iscsi, "command cancelled");
 		if (pdu->callback) {
 			pdu->callback(iscsi, SCSI_STATUS_CANCELLED,

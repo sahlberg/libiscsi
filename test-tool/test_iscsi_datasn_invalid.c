@@ -26,7 +26,7 @@
 
 static int change_datasn;
 
-static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+static void my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
         uint32_t datasn;
 
@@ -57,7 +57,7 @@ static int my_iscsi_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
                 break;
         }
 out:
-        return orig_queue_pdu(iscsi, pdu);
+        orig_queue_pdu(iscsi, pdu);
 }
 
 void test_iscsi_datasn_invalid(void)

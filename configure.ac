@@ -216,6 +216,20 @@ AM_CONDITIONAL([HAVE_LINUX_ISER], [test $libiscsi_cv_HAVE_LINUX_ISER = yes])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <rdma/rdma_cma.h>]], [[return RDMA_OPTION_ID_ACK_TIMEOUT;]])],[AC_DEFINE([HAVE_RDMA_ACK_TIMEOUT],[1],[Define to 1 if you have RDMA ack timeout support])],[])
 
+# check for stdatomic.h
+dnl Check for stdatomic.h
+AC_CHECK_HEADERS([stdatomic.h])
+
+# check for pthread
+AC_CACHE_CHECK([for pthread support],libiscsi_cv_HAVE_PTHREAD,[
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+	#include <pthread.h>]], [[pthread_t thread1, thread2;]])],[libiscsi_cv_HAVE_PTHREAD=yes],[libiscsi_cv_HAVE_PTHREAD=no])])
+	if test x"$libiscsi_cv_HAVE_PTHREAD" = x"yes"; then
+	   AC_DEFINE(HAVE_PTHREAD,1,[Whether we have pthread support])
+	   AC_DEFINE(HAVE_MULTITHREADING,1,[Whether we have multithreading support])
+	fi
+AM_CONDITIONAL([HAVE_PTHREAD], [test x$libiscsi_cv_HAVE_PTHREAD = xyes])
+
 AC_CACHE_CHECK([whether libcunit is available],
                [ac_cv_have_cunit],
                [ac_save_CFLAGS="$CFLAGS"
