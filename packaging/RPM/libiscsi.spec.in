@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.20.0
+Version: 1.20.1
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -113,6 +113,9 @@ Test tool for iSCSI/SCSI targets
 
 
 %changelog
+* Sat May 3 2025 : 1.20.1
+ - Multithreading support
+ - SHA1, SHA256 and SHA3 authentication support
 * Mon Feb 5 2024 : 1.20.0
  - Various updates to the test tool
 * Sun Jul 14 2019 : 1.19.0

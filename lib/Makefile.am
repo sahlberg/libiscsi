@@ -46,7 +46,7 @@ endif
 
 EXTRA_libiscsi_la_DEPENDENCIES = libiscsi.syms
 
-SOCURRENT=10
+SOCURRENT=11
 SOREVISON=0
 SOAGE=0
 libiscsi_la_LDFLAGS = \
