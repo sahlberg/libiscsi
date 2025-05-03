@@ -123,8 +123,18 @@ static inline int iscsi_mt_mutex_unlock(libiscsi_mutex_t *mutex)
 	return pthread_mutex_unlock(mutex);
 }
 
+#ifdef __APPLE__
+/* Apple do not have spinlocks so we have to use the much slower
+ * mutexes instead.
+ */
+#define libiscsi_spinlock_t libiscsi_mutex_t 
+#define iscsi_mt_spin_init(x, y) iscsi_mt_mutex_init(x)
+#define iscsi_mt_spin_destroy iscsi_mt_mutex_destroy
+#define iscsi_mt_spin_lock iscsi_mt_mutex_lock
+#define iscsi_mt_spin_unlock iscsi_mt_mutex_unlock
+#else /* __APPLE__ */
 typedef pthread_spinlock_t libiscsi_spinlock_t;
-        static inline int iscsi_mt_spin_init(libiscsi_spinlock_t *spinlock, int shared)
+static inline int iscsi_mt_spin_init(libiscsi_spinlock_t *spinlock, int shared)
 {
 	return pthread_spin_init(spinlock, shared);
 }
@@ -140,7 +150,8 @@ static inline int iscsi_mt_spin_unlock(libiscsi_spinlock_t *spinlock)
 {
 	return pthread_spin_unlock(spinlock);
 }
-        
+#endif /* __APPLE__ */
+
 #elif defined(WIN32)
 typedef HANDLE libiscsi_mutex_t;
         static inline int iscsi_mt_mutex_init(libiscsi_mutex_t* mutex)
