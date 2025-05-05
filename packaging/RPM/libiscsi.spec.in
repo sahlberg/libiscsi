@@ -1,6 +1,6 @@
 Name: libiscsi
 Summary: iSCSI client library
-Version: 1.20.1
+Version: 1.20.2
 Release: 1GITHASH%{?dist}
 License: LGPLv2+
 Group: System Environment/Libraries
@@ -113,6 +113,8 @@ Test tool for iSCSI/SCSI targets
 
 
 %changelog
+* Mon May 5 2025 : 1.20.2
+ - Compile fix for Apple as they don't support spinlocks
 * Sat May 3 2025 : 1.20.1
  - Multithreading support
  - SHA1, SHA256 and SHA3 authentication support

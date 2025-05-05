@@ -47,7 +47,7 @@ endif
 EXTRA_libiscsi_la_DEPENDENCIES = libiscsi.syms
 
 SOCURRENT=11
-SOREVISON=0
+SOREVISON=1
 SOAGE=0
 libiscsi_la_LDFLAGS = \
 	-version-info $(SOCURRENT):$(SOREVISON):$(SOAGE) -bindir $(bindir) \
