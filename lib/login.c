@@ -936,7 +936,7 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 
 	/* bidirectional chap */
 	if (iscsi->target_user[0]) {
-		char target_chap_c[MAX_CHAP_R_SIZE * 2];
+		char target_chap_c[MAX_CHAP_R_SIZE * 2] = {0};
 
 		iscsi->target_chap_i++;
 		snprintf(str, MAX_STRING_SIZE, "CHAP_I=%d",
