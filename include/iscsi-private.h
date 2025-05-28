@@ -98,7 +98,7 @@ struct iscsi_in_pdu {
 void iscsi_free_iscsi_in_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 
 /* size of chap response field */
-#define MAX_CHAP_R_SIZE 20 /* md5:16  sha1:20 */
+#define MAX_CHAP_R_SIZE 32 /* md5:16  sha1:20 */
 
 /* max length of chap challange */
 #define MAX_CHAP_C_LENGTH 2048
