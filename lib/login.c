@@ -937,7 +937,8 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 	/* bidirectional chap */
 	if (iscsi->target_user[0]) {
 		char target_chap_c[MAX_CHAP_R_SIZE * 2] = {0};
-
+		char initiator_chap_c_hex[MAX_CHAP_R_SIZE * 4 + 1] = { 0 };
+		
 		iscsi->target_chap_i++;
 		snprintf(str, MAX_STRING_SIZE, "CHAP_I=%d",
 			 iscsi->target_chap_i);
@@ -962,6 +963,7 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 			c = target_chap_c[i];
 			cc[0] = i2h((c >> 4)&0x0f);
 			cc[1] = i2h((c     )&0x0f);
+			memcpy(initiator_chap_c_hex + i * 2, cc, 2);
 			if (iscsi_pdu_add_data(iscsi, pdu, &cc[0], 2) != 0) {
 				iscsi_set_error(iscsi, "Out-of-memory: pdu add "
 						"data failed.");
@@ -977,7 +979,7 @@ iscsi_login_add_chap_response(struct iscsi_context *iscsi, struct iscsi_pdu *pdu
 
                 compute_chap_r(iscsi, iscsi->target_chap_i,
                                (unsigned char *)iscsi->target_passwd,
-                               (unsigned char *)target_chap_c,
+                               (unsigned char *)initiator_chap_c_hex,
                                (unsigned char *)iscsi->target_chap_r);
 	}
 
