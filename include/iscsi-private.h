@@ -124,7 +124,7 @@ struct iscsi_context {
 	char target_user[MAX_STRING_SIZE+1];
 	char target_passwd[MAX_STRING_SIZE+1];
 	int target_chap_i;
-	char target_chap_r[MAX_CHAP_R_SIZE];
+	unsigned char target_chap_r[MAX_CHAP_R_SIZE];
 
 	char error_string[MAX_STRING_SIZE+1];
 
