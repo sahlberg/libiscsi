@@ -887,7 +887,10 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			iscsi->outqueue_current = iscsi->outqueue;
 			
 			/* set exp statsn */
-			iscsi_pdu_set_expstatsn(iscsi->outqueue_current, iscsi->statsn + 1);
+			if((iscsi->outqueue->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT)
+				iscsi_pdu_set_expstatsn(iscsi->outqueue_current, iscsi->statsn + 1);
+			else
+				iscsi_pdu_set_expstatsn(iscsi->outqueue_current, iscsi->statsn);
 
 			/* calculate header checksum */
 			if (iscsi->header_digest != ISCSI_HEADER_DIGEST_NONE &&
