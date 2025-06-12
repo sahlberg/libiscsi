@@ -679,7 +679,7 @@ static int
 iscsi_read_from_socket(struct iscsi_context *iscsi)
 {
 	struct iscsi_in_pdu *in;
-	ssize_t hdr_size, data_size, count, padding_size;
+	ssize_t hdr_size, data_size, count, padding_size, data_segment_len;
 	bool do_data_digest = (iscsi->data_digest != ISCSI_DATA_DIGEST_NONE);
         int ret = -1;
         
@@ -731,10 +731,11 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 		}
 
 		padding_size = iscsi_get_pdu_padding_size(&in->hdr[0]);
-		data_size = iscsi_get_pdu_data_size(&in->hdr[0]) + padding_size;
+		data_segment_len = iscsi_get_pdu_data_size(&in->hdr[0]);
+		data_size = data_segment_len + padding_size;
 
-		if (data_size < 0 || data_size > (ssize_t)iscsi->initiator_max_recv_data_segment_length) {
-			iscsi_set_error(iscsi, "Invalid data size received from target (%d)", (int)data_size);
+		if (data_segment_len < 0 || data_segment_len > (ssize_t)iscsi->initiator_max_recv_data_segment_length) {
+			iscsi_set_error(iscsi, "Invalid datasegmentlen received from target (%d)", (int)data_segment_len);
                         goto finished;
 		}
 		if (data_size != 0) {
