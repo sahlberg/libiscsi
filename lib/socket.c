@@ -934,13 +934,16 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			return 0;
 		}
 
-		data_segment_len = iscsi_get_pdu_data_size(pdu->outdata.data);
-		if (do_data_digest &&
-			data_segment_len &&
-			!pdu->payload_len)
-			execute_data_digest = true;
-		else
-			execute_data_digest = false;
+		
+		if (do_data_digest)
+		{
+			data_segment_len = iscsi_get_pdu_data_size(pdu->outdata.data);
+
+			if (data_segment_len && !pdu->payload_len)
+				execute_data_digest = true;
+			else
+				execute_data_digest = false;
+		}
 
 		if (execute_data_digest && !pdu->outdata_digest_computed)
 		{
