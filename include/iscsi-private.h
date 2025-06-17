@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #if defined(_WIN32)
 #include <basetsd.h>
@@ -316,6 +317,7 @@ struct iscsi_pdu {
 	uint32_t expxferlen;
 
 	uint32_t calculated_data_digest;
+	bool outdata_digest_computed;
 };
 
 struct iscsi_pdu *iscsi_allocate_pdu(struct iscsi_context *iscsi,

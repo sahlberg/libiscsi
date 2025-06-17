@@ -839,13 +839,12 @@ static int iscsi_pdu_update_headerdigest(struct iscsi_context *iscsi, struct isc
 static int
 iscsi_write_to_socket(struct iscsi_context *iscsi)
 {
-	ssize_t count;
+	ssize_t count, data_segment_len;
 	size_t total;
 	struct iscsi_pdu *pdu;
 	static char padding_buf[3];
 	int socket_flags = 0;
-	bool do_data_digest = (iscsi->data_digest != ISCSI_DATA_DIGEST_NONE);
-
+	bool do_data_digest = (iscsi->data_digest != ISCSI_DATA_DIGEST_NONE), execute_data_digest;
 #ifdef MSG_NOSIGNAL
 	socket_flags |= MSG_NOSIGNAL;
 #elif SO_NOSIGPIPE
@@ -887,7 +886,10 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 			iscsi->outqueue_current = iscsi->outqueue;
 			
 			/* set exp statsn */
-			iscsi_pdu_set_expstatsn(iscsi->outqueue_current, iscsi->statsn + 1);
+			if((iscsi->outqueue->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT)
+				iscsi_pdu_set_expstatsn(iscsi->outqueue_current, iscsi->statsn + 1);
+			else
+				iscsi_pdu_set_expstatsn(iscsi->outqueue_current, iscsi->statsn);
 
 			/* calculate header checksum */
 			if (iscsi->header_digest != ISCSI_HEADER_DIGEST_NONE &&
@@ -930,6 +932,26 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		/* if we havent written the full header yet. */
 		if (pdu->outdata_written != pdu->outdata.size) {
 			return 0;
+		}
+
+		
+		if (do_data_digest)
+		{
+			data_segment_len = iscsi_get_pdu_data_size(pdu->outdata.data);
+
+			if (data_segment_len && !pdu->payload_len)
+				execute_data_digest = true;
+			else
+				execute_data_digest = false;
+		}
+
+		if (execute_data_digest && !pdu->outdata_digest_computed)
+		{
+			uint8_t ahslen = pdu->outdata.data[4];
+			uint8_t head_len = iscsi->header_digest != ISCSI_HEADER_DIGEST_NONE ? 52 : 48;
+			uint32_t offset = head_len + ahslen * 4;
+			pdu->calculated_data_digest = crc32c_chain(pdu->calculated_data_digest, pdu->outdata.data + offset, pdu->outdata.size - offset);
+			pdu->outdata_digest_computed = true;
 		}
 
 		/* Write any iovectors that might have been passed to us */
@@ -988,7 +1010,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		 * 1. DataDigest has been negociated, and
 		 * 2. We have actually written some data
 		 */
-		if (do_data_digest && pdu->payload_written) {
+		if (execute_data_digest || (do_data_digest && pdu->payload_written)) {
 			uint32_t data_digest = crc32c_chain_done(pdu->calculated_data_digest);
 			char data_digest_buf[ISCSI_DIGEST_SIZE];
 
