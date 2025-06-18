@@ -844,7 +844,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 	struct iscsi_pdu *pdu;
 	static char padding_buf[3];
 	int socket_flags = 0;
-	bool do_data_digest = (iscsi->data_digest != ISCSI_DATA_DIGEST_NONE), execute_data_digest;
+	bool do_data_digest = (iscsi->data_digest != ISCSI_DATA_DIGEST_NONE), execute_data_digest = false;
 #ifdef MSG_NOSIGNAL
 	socket_flags |= MSG_NOSIGNAL;
 #elif SO_NOSIGPIPE
@@ -935,8 +935,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 		}
 
 		
-		if (do_data_digest)
-		{
+		if (do_data_digest) {
 			data_segment_len = iscsi_get_pdu_data_size(pdu->outdata.data);
 
 			if (data_segment_len && !pdu->payload_len)
@@ -945,8 +944,7 @@ iscsi_write_to_socket(struct iscsi_context *iscsi)
 				execute_data_digest = false;
 		}
 
-		if (execute_data_digest && !pdu->outdata_digest_computed)
-		{
+		if (execute_data_digest && !pdu->outdata_digest_computed) {
 			uint8_t ahslen = pdu->outdata.data[4];
 			uint8_t head_len = iscsi->header_digest != ISCSI_HEADER_DIGEST_NONE ? 52 : 48;
 			uint32_t offset = head_len + ahslen * 4;
