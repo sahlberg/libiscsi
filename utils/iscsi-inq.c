@@ -87,7 +87,16 @@ void inquiry_device_identification(struct scsi_inquiry_device_identification *in
 		printf("PIV:%d\n", dev->piv);
 		printf("Association:(%d) %s\n", dev->association, scsi_association_to_str(dev->association));
 		printf("Designator Type:(%d) %s\n", dev->designator_type, scsi_designator_type_to_str(dev->designator_type));
-		printf("Designator:[%s]\n", dev->designator);
+		if (dev->code_set == SCSI_CODESET_BINARY) {
+			int j;
+			printf("Designator:[");
+			for (j = 0; j < dev->designator_length; ++j) {
+				printf(" %02x", (unsigned char)dev->designator[j]);
+			}
+			printf("]\n");
+		} else {
+			printf("Designator:[%s]\n", dev->designator);
+		}
 	}
 }
 
