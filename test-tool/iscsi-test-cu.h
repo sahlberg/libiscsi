@@ -204,6 +204,8 @@ void test_reserve6_itnexus_loss(void);
 void test_reserve6_target_cold_reset(void);
 void test_reserve6_target_warm_reset(void);
 void test_reserve6_lun_reset(void);
+void test_rtpg_alloc_length(void);
+void test_rtpg_simple(void);
 
 void test_sanitize_block_erase(void);
 void test_sanitize_block_erase_reserved(void);

@@ -93,6 +93,12 @@ static CU_TestInfo tests_inquiry[] = {
         CU_TEST_INFO_NULL
 };
 
+static CU_TestInfo test_rtpg[] = {
+        { "Simple", test_rtpg_simple },
+        { "AllocLength", test_rtpg_alloc_length },
+        CU_TEST_INFO_NULL
+};
+
 static CU_TestInfo tests_mandatory[] = {
         { "MandatorySBC", test_mandatory_sbc },
         CU_TEST_INFO_NULL
@@ -507,6 +513,7 @@ static libiscsi_suite_info scsi_suites[] = {
         { "ExtendedCopy", NON_PGR_FUNCS, tests_extended_copy },
         { "GetLBAStatus", NON_PGR_FUNCS, tests_get_lba_status },
         { "Inquiry", NON_PGR_FUNCS, tests_inquiry },
+        { "ReportTargetPortGroups", NON_PGR_FUNCS, test_rtpg },
         { "Mandatory", NON_PGR_FUNCS, tests_mandatory },
         { "ModeSense6", NON_PGR_FUNCS, tests_modesense6 },
         { "NoMedia", NON_PGR_FUNCS, tests_nomedia },
@@ -629,6 +636,7 @@ static libiscsi_suite_info all_suites[] = {
         { "ExtendedCopy", NON_PGR_FUNCS, tests_extended_copy },
         { "GetLBAStatus", NON_PGR_FUNCS, tests_get_lba_status },
         { "Inquiry", NON_PGR_FUNCS, tests_inquiry },
+        { "ReportTargetPortGroups", NON_PGR_FUNCS, test_rtpg },
         { "Mandatory", NON_PGR_FUNCS, tests_mandatory },
         { "ModeSense6", NON_PGR_FUNCS, tests_modesense6 },
         { "NoMedia", NON_PGR_FUNCS, tests_nomedia },

@@ -2711,6 +2711,29 @@ inquiry(struct scsi_device *sdev, struct scsi_task **out_task, int evpd, int pag
         return ret;
 }
 
+int rtpg(struct scsi_device *sdev, struct scsi_task **out_task, int maxsize, int status,
+         enum scsi_sense_key key, int *ascq, int num_ascq)
+{
+        struct scsi_task *task;
+        int ret;
+
+        logging(LOG_VERBOSE, "Send RTPG (expecting %s) alloc_len %d",
+                scsi_status_str(status), maxsize);
+
+        task = scsi_cdb_report_target_port_groups(maxsize);
+        assert (task != NULL);
+
+        task = send_scsi_command(sdev, task, NULL);
+
+        ret = check_result("RTPG", sdev, task, status, key, ascq, num_ascq);
+        if (out_task) {
+                *out_task = task;
+        } else if (task) {
+                scsi_free_scsi_task(task);
+        }
+        return ret;
+}
+
 struct scsi_command_descriptor *
 get_command_descriptor(int opcode, int sa)
 {

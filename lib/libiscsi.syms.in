@@ -210,6 +210,7 @@ iscsi_writeverify16_iov_sync
 iscsi_writeverify16_iov_task
 iscsi_writeverify16_sync
 iscsi_writeverify16_task
+scsi_alua_state_to_str
 scsi_association_to_str
 scsi_cdb_compareandwrite
 scsi_cdb_extended_copy
@@ -237,6 +238,7 @@ scsi_cdb_readtoc
 scsi_cdb_receive_copy_results
 scsi_cdb_release6
 scsi_cdb_report_supported_opcodes
+scsi_cdb_report_target_port_groups
 scsi_cdb_reserve6
 scsi_cdb_sanitize
 scsi_cdb_serviceactionin16
