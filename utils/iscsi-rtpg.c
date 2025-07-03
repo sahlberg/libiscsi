@@ -64,7 +64,7 @@ void do_rtpg(struct iscsi_context *iscsi, int lun)
 
 		task = scsi_cdb_report_target_port_groups(alloc_size);
 		if (task == NULL) {
-			fprintf(stderr, "Failed to allocate CBD for RTPG (size %d)\n", full_size);
+			fprintf(stderr, "Failed to allocate CBD for RTPG (size %d)\n", alloc_size);
 			exit(10);
 		}
 
