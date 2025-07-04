@@ -125,6 +125,8 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_reserve6_target_warm_reset.c \
 	test_reserve6_target_cold_reset.c \
 	test_reserve6_lun_reset.c \
+	test_rtpg_alloc_length.c \
+	test_rtpg_simple.c \
 	test_sanitize_block_erase.c \
 	test_sanitize_block_erase_reserved.c \
 	test_sanitize_crypto_erase.c \

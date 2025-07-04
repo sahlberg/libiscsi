@@ -130,8 +130,21 @@ struct scsi_persistent_reserve_out_basic {
 };
 
 enum scsi_maintenance_in {
+	SCSI_REPORT_TARGET_PORT_GROUPS = 0x0a,
 	SCSI_REPORT_SUPPORTED_OP_CODES = 0x0c
 };
+
+enum scsi_alue_state {
+	SCSI_ALUA_ACTIVE_OPTIMIZED           = 0x0,
+	SCSI_ALUA_ACTIVE_NONOPTIMIZED        = 0x1,
+	SCSI_ALUA_STANDBY                    = 0x2,
+	SCSI_ALUA_UNAVAILABLE                = 0x3,
+	SCSI_ALUA_LOGICAL_BLOCK_DEPENDENT    = 0x4,
+	SCSI_ALUA_OFFLINE                    = 0xe,
+	SCSI_ALUA_TRANSITIONING              = 0xf
+};
+
+const char *scsi_alua_state_to_str(uint8_t state);
 
 enum scsi_op_code_reporting_options {
 	SCSI_REPORT_SUPPORTING_OPS_ALL       = 0x00,
@@ -969,6 +982,32 @@ struct scsi_report_supported_op_codes_one_command {
 	struct scsi_op_timeout_descriptor to;
 };
 
+struct scsi_target_port_group {
+	union {
+		struct {
+			uint8_t pref:1;
+			uint8_t rtpg_fmt:3;
+			uint8_t alua_state:4;
+		};
+		uint8_t byte0;
+	};
+	uint8_t flags;
+	uint16_t port_group;
+	uint8_t status_code;
+	uint8_t vendor_specific;
+	uint8_t port_count;
+	/* retrieved_port_count may be less than port_count when RTPG output
+	 * was trimmed due to the buffer size */
+	uint8_t retrieved_port_count;
+	/* points to 'retrieved_port_count' relative port ids */
+	uint16_t *ports;
+};
+
+struct scsi_report_target_port_groups {
+	int num_groups;
+	struct scsi_target_port_group groups[0];
+};
+
 struct scsi_persistent_reserve_in_read_keys {
        uint32_t prgeneration;
        uint32_t additional_length;
@@ -1162,6 +1201,7 @@ EXTERN struct scsi_task *scsi_cdb_read16(uint64_t lba, uint32_t xferlen, int blo
 EXTERN struct scsi_task *scsi_cdb_readcapacity16(void);
 EXTERN struct scsi_task *scsi_cdb_readdefectdata10(int req_plist, int req_glist, int defect_list_format, uint16_t alloc_len);
 EXTERN struct scsi_task *scsi_cdb_readdefectdata12(int req_plist, int req_glist, int defect_list_format, uint32_t address_descriptor_index, uint32_t alloc_len);
+EXTERN struct scsi_task *scsi_cdb_report_target_port_groups(uint32_t alloc_len);
 EXTERN struct scsi_task *scsi_cdb_report_supported_opcodes(int rctd, int options, enum scsi_opcode opcode, int sa, uint32_t alloc_len);
 EXTERN struct scsi_task *scsi_cdb_serviceactionin16(enum scsi_service_action_in sa, uint32_t xferlen);
 EXTERN struct scsi_task *scsi_cdb_startstopunit(int immed, int pcm, int pc, int no_flush, int loej, int start);

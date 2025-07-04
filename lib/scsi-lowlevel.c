@@ -1172,9 +1172,85 @@ scsi_maintenancein_datain_getfullsize(struct scsi_task *task)
 				task_get_uint16(task, 2);
 		}
 		return -1;
+	case SCSI_REPORT_TARGET_PORT_GROUPS:
+		return task_get_uint32(task, 0) + 4;
 	default:
 		return -1;
 	}
+}
+
+static struct scsi_report_target_port_groups *
+scsi_report_target_port_groups_unmarshal(struct scsi_task *task)
+{
+	int const group_descriptor_size = 8;
+	int const port_descriptor_size = 4;
+
+	struct scsi_report_target_port_groups *rtpg = NULL;
+	uint16_t *port = NULL;
+	int group_count, port_count, i, j, k;
+
+	if (task->datain.size < 4) {
+		return NULL;
+	}
+
+	port_count= 0;
+	group_count = 0;
+	for (j = 0; j < 2; ++j) {
+		/* 1st pass counts groups and ports, then allocates data structs to fit those;
+		 * 2nd pass populates the allocated data structs.*/
+		for (i = 4; i< task->datain.size; ) {
+			uint8_t current_port_count;
+
+			if (task->datain.size - i < group_descriptor_size) {
+				break;
+			}
+			current_port_count = task_get_uint8(task, i + 7);
+
+			if (j == 1) {
+				rtpg->groups[group_count].port_count = current_port_count;
+				rtpg->groups[group_count].byte0 = task_get_uint8(task, i);
+				rtpg->groups[group_count].flags = task_get_uint8(task, i + 1);
+				rtpg->groups[group_count].port_group = task_get_uint16(task, i + 2);
+				rtpg->groups[group_count].status_code = task_get_uint8(task, i + 5);
+				rtpg->groups[group_count].ports = port;
+			}
+
+			i += group_descriptor_size;
+			for (k = 0; k < current_port_count &&
+			     i + (k + 1) * port_descriptor_size <= task->datain.size; ++k) {
+				if (j == 1) {
+					rtpg->groups[group_count].ports[k] =
+						task_get_uint16(task, i + k * port_descriptor_size + 2);
+				}
+			}
+			if (j == 1) {
+				rtpg->groups[group_count].retrieved_port_count = k;
+				port += k;
+			}
+			++group_count;
+			port_count += k;
+			i += k * port_descriptor_size;
+		}
+
+		if (j == 0) {
+			rtpg = scsi_malloc(
+					task,
+					sizeof(struct scsi_report_target_port_groups) +
+					sizeof(struct scsi_target_port_group) * group_count +
+					sizeof(uint16_t) * port_count);
+			if (rtpg == NULL) {
+				return NULL;
+			}
+			port = (uint16_t *)((uint8_t *)rtpg +
+					sizeof(struct scsi_report_target_port_groups) +
+					sizeof(struct scsi_target_port_group) * group_count);
+			rtpg->num_groups = group_count;
+			group_count = 0;
+			port_count = 0;
+		}
+	}
+
+	return rtpg;
 }
 
 /*
@@ -1283,9 +1359,41 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 			}
 			return rsoc_one;
 		}
+	case SCSI_REPORT_TARGET_PORT_GROUPS:
+		return scsi_report_target_port_groups_unmarshal(task);
 	};
 
 	return NULL;
+}
+
+/*
+ * MAINTENANCE In / Report Target Port Groups
+ */
+struct scsi_task *
+scsi_cdb_report_target_port_groups(uint32_t alloc_len)
+{
+	struct scsi_task *task;
+
+	task = malloc(sizeof(struct scsi_task));
+	if (task == NULL) {
+		return NULL;
+	}
+
+	memset(task, 0, sizeof(struct scsi_task));
+	task->cdb[0]   = SCSI_OPCODE_MAINTENANCE_IN;
+	task->cdb[1]   = SCSI_REPORT_TARGET_PORT_GROUPS;
+
+	scsi_set_uint32(&task->cdb[6], alloc_len);
+
+	task->cdb_size = 12;
+	if (alloc_len != 0) {
+		task->xfer_dir = SCSI_XFER_READ;
+	} else {
+		task->xfer_dir = SCSI_XFER_NONE;
+	}
+	task->expxferlen = alloc_len;
+
+	return task;
 }
 
 /*
@@ -4284,6 +4392,29 @@ scsi_designator_type_to_str(int type)
 	case SCSI_DESIGNATOR_TYPE_SCSI_NAME_STRING:
 		return "SCSI_NAME_STRING";
 	}
+	return "unknown";
+}
+
+const char *
+scsi_alua_state_to_str(uint8_t state)
+{
+	switch (state) {
+	case SCSI_ALUA_ACTIVE_OPTIMIZED:
+		return "ACTIVE-OPTIMIZED";
+	case SCSI_ALUA_ACTIVE_NONOPTIMIZED:
+		return "ACTIVE-NONOPTIMIZED";
+	case SCSI_ALUA_STANDBY:
+		return "STANDBY";
+	case SCSI_ALUA_UNAVAILABLE:
+		return "UNAVAILABLE";
+	case SCSI_ALUA_LOGICAL_BLOCK_DEPENDENT:
+		return "BLOCK-DEPENDENT";
+	case SCSI_ALUA_OFFLINE:
+		return "OFFLINE";
+	case SCSI_ALUA_TRANSITIONING:
+		return "TRANSITIONING";
+	}
+
 	return "unknown";
 }
 
