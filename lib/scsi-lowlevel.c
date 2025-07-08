@@ -1359,6 +1359,8 @@ scsi_maintenancein_datain_unmarshall(struct scsi_task *task)
 			}
 			return rsoc_one;
 		}
+
+		break;
 	case SCSI_REPORT_TARGET_PORT_GROUPS:
 		return scsi_report_target_port_groups_unmarshal(task);
 	};
