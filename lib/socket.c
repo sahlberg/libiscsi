@@ -150,15 +150,20 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
  finished:
         iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
         
-        /* TODO QQQ need to immediately send for the non multithreading case too
-         * and for the Windows API too */
 #if defined(HAVE_MULTITHREADING) && defined(HAVE_PTHREAD)
         if(iscsi->multithreading_enabled) {
                 if (current == NULL && pdu == iscsi->outqueue) {
                         pthread_kill(iscsi->service_thread, SIGUSR1);
                 }
+        } else {
+#endif
+                if (iscsi->outqueue == pdu) {
+                        iscsi->drv->service(iscsi, POLLOUT);
+                }
+#if defined(HAVE_MULTITHREADING) && defined(HAVE_PTHREAD)
         }
-#endif        
+#endif
+
         return;
 }
 
