@@ -557,6 +557,7 @@ static void usage_exit(int status)
 	exit(status);
 }
 
+#if HAVE_CLOCK_GETTIME
 static void show_perf(struct timespec *start_time,
 		      struct timespec *end_time,
 		      uint64_t num_blocks,
@@ -576,6 +577,7 @@ static void show_perf(struct timespec *start_time,
 	printf("\r%"PRIu64" blocks (%"PRIu64" sized) copied in %g seconds,"
 	   " %g%c/s.\n", num_blocks, block_size, elapsed, ubytes_per_sec, u[i]);
 }
+#endif
 
 static void iscsi_endpoint_init(const char *url,
 				const char *usage,
@@ -635,7 +637,9 @@ int main(int argc, char *argv[])
 	struct client client;
 	struct timespec start_time;
 	struct timespec end_time;
+#if HAVE_CLOCK_GETTIME
 	int gettime_ret;
+#endif
 	static struct option long_options[] = {
 		{"dst",            required_argument,    NULL,        'd'},
 		{"src",            required_argument,    NULL,        's'},
@@ -719,10 +723,12 @@ int main(int argc, char *argv[])
 		exit(10);
 	}
 
+#if HAVE_CLOCK_GETTIME
 	gettime_ret = clock_gettime(CLOCK_MONOTONIC, &start_time);
 	if (gettime_ret < 0) {
 		fprintf(stderr, "clock_gettime(CLOCK_MONOTONIC) failed\n");
 	}
+#endif
 
 	if (client.use_xcopy) {
 		fill_xcopy_queue(&client);
@@ -755,6 +761,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
+#if HAVE_CLOCK_GETTIME
 	if (gettime_ret == 0) {
 		/* start_time is valid, so dump perf with a valid end_time */
 		gettime_ret = clock_gettime(CLOCK_MONOTONIC, &end_time);
@@ -763,6 +770,7 @@ int main(int argc, char *argv[])
 				  client.src.blocksize);
 		}
 	}
+#endif
 
 	iscsi_logout_sync(client.src.iscsi);
 	iscsi_destroy_context(client.src.iscsi);
