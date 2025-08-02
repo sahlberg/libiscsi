@@ -39,6 +39,7 @@
 #include <sys/time.h>
 #endif
 
+#include <pthread.h>
 #include <string.h>
 #include "iscsi.h"
 #include "iscsi-private.h"
@@ -147,12 +148,13 @@ int iscsi_mt_sem_wait(libiscsi_sem_t* sem)
 
 iscsi_tid_t iscsi_mt_get_tid(void)
 {
-#ifdef HAVE_PTHREAD_THREADID_NP
+#ifdef HAVE_PTHREAD_THREADID_NP || defined(__APPLE__) && defined(__MACH__)
         iscsi_tid_t tid;
         pthread_threadid_np(NULL, &tid);
         return tid;
 #elif defined(SYS_gettid)
         pid_t tid = syscall(SYS_gettid);
+#endif
         return tid;
 #else
 #error "SYS_gettid unavailable on this system"
