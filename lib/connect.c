@@ -77,15 +77,16 @@ iscsi_testunitready_connect(struct iscsi_context *iscsi, int lun,
 }
 
 static struct scsi_task *
-iscsi_inquiry_page_0x80_connect(struct iscsi_context *iscsi, int lun,
-                                iscsi_command_cb cb, void *private_data)
+iscsi_inquiry_task_connect(struct iscsi_context *iscsi, int lun, int evpd, int page_code,
+                           int maxsize, iscsi_command_cb cb, void *private_data)
 {
 	struct scsi_task *task;
 	struct iscsi_context *old_iscsi = iscsi->old_iscsi;
 
 	iscsi->old_iscsi = NULL;
-	task = iscsi_inquiry_task(iscsi, lun, 1, 0x80, MAX_STRING_SIZE + 64,
-		                        cb, private_data);
+
+	task = iscsi_inquiry_task(iscsi, lun, evpd, page_code, maxsize, cb, private_data);
+
 	iscsi->old_iscsi = old_iscsi;
 
 	return task;
@@ -118,6 +119,41 @@ iscsi_inquiry_page_0x80_cb(struct iscsi_context *iscsi, int status,
 		}
 	} else {
 		iscsi_set_error(iscsi, "iscsi_inquiry_task failed. could not read vpd page 0x80.");
+	}
+
+	ct->cb(iscsi, status?SCSI_STATUS_ERROR:SCSI_STATUS_GOOD, NULL, ct->private_data);
+	scsi_free_scsi_task(task);
+	iscsi_free(iscsi, ct);
+}
+
+static void
+iscsi_inquiry_page_0x0_cb(struct iscsi_context *iscsi, int status,
+		       void *command_data, void *private_data)
+{
+	struct connect_task *ct = private_data;
+	struct scsi_task *task = command_data;
+	struct scsi_inquiry_standard *inq;
+
+	if (!status) {
+		inq = scsi_datain_unmarshall(task);
+		if (inq != NULL) {
+			ISCSI_LOG(iscsi, 2, "type [%s] vendor [%s] product [%s] rev [%s]",
+			          scsi_devtype_to_str(inq->device_type), inq->vendor_identification,
+			          inq->product_identification, inq->product_revision_level);
+			if (!inq->rmb && inq->device_type == SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
+				if (iscsi_inquiry_task_connect(iscsi, ct->lun, 1, 0x80, MAX_STRING_SIZE + 4,
+				                               iscsi_inquiry_page_0x80_cb, ct) != NULL) {
+					return;
+				}
+				iscsi_set_error(iscsi, "iscsi_inquiry_task for evpd 0x80 failed.");
+				status = 1;
+			}
+		} else {
+			iscsi_set_error(iscsi, "iscsi_inquiry_task datain_unmarshall failed. could not read vpd page 0x0.");
+			status = 1;
+		}
+	} else {
+		iscsi_set_error(iscsi, "iscsi_inquiry_task failed. could not read vpd page 0x0.");
 	}
 
 	ct->cb(iscsi, status?SCSI_STATUS_ERROR:SCSI_STATUS_GOOD, NULL, ct->private_data);
@@ -194,10 +230,9 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 		return;
 	}
 
-	if (iscsi_inquiry_page_0x80_connect(iscsi, ct->lun,
-		                                  iscsi_inquiry_page_0x80_cb,
-		                                  ct) == NULL) {
-		iscsi_set_error(iscsi, "iscsi_inquiry_task failed.");
+	if (iscsi_inquiry_task_connect(iscsi, ct->lun, 0, 0, 96,
+	                               iscsi_inquiry_page_0x0_cb, ct) == NULL) {
+		iscsi_set_error(iscsi, "iscsi_inquiry_task for vpd 0x0 failed.");
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
 		iscsi_free(iscsi, ct);
 	}
@@ -237,14 +272,18 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data,
 			ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
 			iscsi_free(iscsi, ct);
 		}
-	} else {
-		if (iscsi_inquiry_page_0x80_connect(iscsi, ct->lun,
-						iscsi_inquiry_page_0x80_cb,
+	} else if (ct->lun != -1) {
+		if (iscsi_inquiry_task_connect(iscsi, ct->lun, 0, 0, 96,
+						iscsi_inquiry_page_0x0_cb,
 						ct) == NULL) {
-			iscsi_set_error(iscsi, "iscsi_inquiry_task failed.");
+			iscsi_set_error(iscsi, "iscsi_inquiry_task for vpd 0x0 failed.");
 			ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
 			iscsi_free(iscsi, ct);
 		}
+	} else {
+		ct->cb(iscsi, SCSI_STATUS_GOOD, NULL, ct->private_data);
+		iscsi_free(iscsi, ct);
+		return;
 	}
 }
 
