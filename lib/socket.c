@@ -584,7 +584,7 @@ iscsi_iovector_readv_writev(struct iscsi_context *iscsi, struct scsi_iovector *i
 
 	if (pos < iovector->offset) {
 		iscsi_set_error(iscsi, "%s: iovector reset. pos(%d) is smaller than"
-				"current offset(%ld)", rw, pos, iovector->offset);
+				"current offset(%zu)", rw, pos, iovector->offset);
 		errno = EINVAL;
 		return -1;
 	}

@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
 
 	capacity = block_length * (rc16->returned_lba + 1);
 	if (offset > capacity) {
-		fprintf(stderr,"Offset(%lu) exceeds capacity(%lu)\n", offset, capacity);
+		fprintf(stderr,"Offset(%" PRIu64 ") exceeds capacity(%" PRIu64 ")\n", offset, capacity);
 		goto free_task;
 	}
 
