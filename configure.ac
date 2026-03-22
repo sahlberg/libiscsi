@@ -230,6 +230,18 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 	fi
 AM_CONDITIONAL([HAVE_PTHREAD], [test x$libiscsi_cv_HAVE_PTHREAD = xyes])
 
+# check for libpthread
+if test "$libiscsi_cv_HAVE_PTHREAD" = yes; then
+  ac_save_LIBS=$LIBS
+  AC_CHECK_LIB([pthread], [pthread_spin_lock], [])
+  LIBS="$ac_save_LIBS"
+  if test "$ac_cv_lib_pthread_pthread_spin_lock" = yes; then
+    LIBS_PRIVATE="-lpthread"
+  fi
+fi
+AC_SUBST(LIBS_PRIVATE)
+AM_CONDITIONAL([HAVE_PTHREAD_SPIN_LOCKS], [test x$ac_cv_lib_pthread_pthread_spin_lock = xyes])
+
 AC_CACHE_CHECK([whether libcunit is available],
                [ac_cv_have_cunit],
                [ac_save_CFLAGS="$CFLAGS"

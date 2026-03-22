@@ -21,8 +21,14 @@ if HAVE_LINUX_ISER
 libiscsipriv_la_SOURCES += iser.c
 endif
 
+libiscsipriv_la_LIBADD =
+
+if HAVE_PTHREAD_SPIN_LOCKS
+libiscsipriv_la_LIBADD += -lpthread
+endif
+
 if HAVE_LINUX_ISER
-libiscsipriv_la_LIBADD = -libverbs -lrdmacm -lpthread
+libiscsipriv_la_LIBADD += -libverbs -lrdmacm
 endif
 
 libiscsipriv_la_LDFLAGS = -no-undefined
