@@ -242,6 +242,9 @@ fi
 AC_SUBST(LIBS_PRIVATE)
 AM_CONDITIONAL([HAVE_PTHREAD_SPIN_LOCKS], [test x$ac_cv_lib_pthread_pthread_spin_lock = xyes])
 
+# check for pthread_threadid_np
+AC_CHECK_FUNCS(pthread_threadid_np)
+
 AC_CACHE_CHECK([whether libcunit is available],
                [ac_cv_have_cunit],
                [ac_save_CFLAGS="$CFLAGS"
