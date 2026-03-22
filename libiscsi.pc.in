@@ -8,5 +8,5 @@ Description: iSCSI initiator library
 Version: @VERSION@
 
 Libs: -L${libdir} -liscsi
-Libs.private:
+Libs.private: @LIBS_PRIVATE@
 Cflags: -I${includedir}
