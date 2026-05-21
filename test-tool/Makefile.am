@@ -244,4 +244,8 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_async_lu_reset_simple.c \
 	test_write_residuals.c
 
+if TEST_CHAP_BASE64
+iscsi_test_cu_SOURCES += test_iscsi_chap_base64.c
+endif
+
 endif
