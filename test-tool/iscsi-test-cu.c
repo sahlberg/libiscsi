@@ -589,6 +589,7 @@ static CU_TestInfo tests_iscsi_chap[] = {
         { "Invalid", test_iscsi_chap_invalid },
 #ifdef HAVE_LIBGNUTLS
         { "Base64", test_iscsi_chap_base64 },
+        { "Base64Oversize", test_iscsi_chap_base64_oversize },
 #endif
         CU_TEST_INFO_NULL
 };

@@ -216,3 +216,94 @@ test_iscsi_chap_base64(void)
 	ret = test_iscsi_chap_login(chap_r_mod_b64_replace_queue);
 	CU_ASSERT_EQUAL(ret, 0);
 }
+
+static void
+chap_r_mod_b64_oversize_replace_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	int ret;
+	char *chap_r_str = NULL;
+	size_t chap_r_strlen;
+	char *kv_buf = NULL;
+	gnutls_datum_t hex;
+	gnutls_datum_t bin;
+	gnutls_datum_t b64;
+
+        if ((pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_LOGIN_REQUEST) {
+		goto out;
+	}
+
+	ret = test_iscsi_strip_tag(iscsi, pdu, "CHAP_R=", &chap_r_str);
+	if (ret == -ENOENT) {
+		logging(LOG_VERBOSE, "ignoring login PDU without CHAP_R");
+		goto out;
+	}
+	if (ret < 0) {
+		return;
+	}
+
+	logging(LOG_VERBOSE, "CHAP_R=%s converting to base64", chap_r_str);
+
+	chap_r_strlen = strlen(chap_r_str);
+	if (chap_r_strlen < 2 ||
+	    (chap_r_str[0] != '0' ||
+	     (chap_r_str[1] != 'x' && chap_r_str[1] != 'X'))) {
+		CU_FAIL("unexpected CHAP_R hex prefix from libiscsi");
+		free(chap_r_str);
+		goto out;
+	}
+
+	hex = (gnutls_datum_t){
+		.data = (void *)(chap_r_str + 2),
+		.size = strlen(chap_r_str + 2),
+	};
+	ret = gnutls_hex_decode2(&hex, &bin);
+	free(chap_r_str);
+	if (ret < 0) {
+		CU_FAIL("gnutls_hex_decode2() failed");
+		goto out;
+	}
+
+	ret = gnutls_base64_encode2(&bin, &b64);
+	gnutls_free(bin.data);
+	if (ret < 0) {
+		CU_FAIL("gnutls_base64_encode2() failed");
+		goto out;
+	}
+
+	/* inject an extra base64-valid prefix */
+	kv_buf = malloc(sizeof("CHAP_R=0bb3ZlcnNpemUK") + b64.size);
+	/* nulterm space from sizeof(), doesn't matter if @b64 includes it */
+	sprintf(kv_buf, "CHAP_R=0bb3ZlcnNpemUK%.*s", b64.size, b64.data);
+	gnutls_free(b64.data);
+
+	ret = iscsi_pdu_add_data(iscsi, pdu, (const unsigned char *)kv_buf,
+				 strlen(kv_buf) + 1);
+	logging(LOG_VERBOSE, "replaced Login PDU CHAP_R with %s", kv_buf);
+	free(kv_buf);
+	if (ret < 0) {
+		return;
+	}
+out:
+        orig_queue_pdu(iscsi, pdu);
+}
+
+void
+test_iscsi_chap_base64_oversize(void)
+{
+        int ret;
+
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test CHAP_C base64 oversize values");
+
+        CHECK_FOR_ISCSI(sd);
+        if (sd->iscsi_ctx->chap_a != 5) {
+                const char *err = "[SKIPPED] This test requires "
+                        "an iSCSI session with CHAP_A=5";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
+
+	ret = test_iscsi_chap_login(chap_r_mod_b64_oversize_replace_queue);
+	CU_ASSERT_NOT_EQUAL(ret, 0);
+}
