@@ -108,6 +108,8 @@ if test "$WITH_LIBGCRYPT" != no; then
   fi
   WITH_LIBGCRYPT=$ac_cv_lib_gcrypt_gcry_control
 fi
+# gnutls_base64_encode2() was added >8 years ago so should be present
+AM_CONDITIONAL(TEST_CHAP_BASE64, [test "$WITH_LIBGCRYPT"])
 
 NEED_MD5=no
 if test "$WITH_GNUTLS" = no && test "$WITH_LIBGCRYPT" = no; then
