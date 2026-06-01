@@ -15,3 +15,9 @@ jobs:
 
     - name: Build
       run: ci/build.sh
+
+    - name: Setup loopback LIO iSCSI target
+      run: |
+        sudo ci/lio_setup.sh
+        # dump any LIO messages
+        sudo dmesg --console-level info
