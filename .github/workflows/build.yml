@@ -21,3 +21,6 @@ jobs:
         sudo ci/lio_setup.sh
         # dump any LIO messages
         sudo dmesg --console-level info
+
+    - name: Run iscsi-test-cu against LIO iSCSI target
+      run: ci/run_test_tool.sh
