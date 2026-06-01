@@ -12,9 +12,7 @@ case "$(uname)" in
 	    libtool
 	    xsltproc
 	)
-	for p in "${packages[@]}"; do
-	    sudo sh -c "apt-get install -y $p"
-	done
+	apt-get install -y "${packages[@]}"
 	;;
     Darwin)
 	;;
