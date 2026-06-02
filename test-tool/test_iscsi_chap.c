@@ -213,3 +213,30 @@ test_iscsi_chap_invalid(void)
 	ret = test_iscsi_chap_login(chap_mod_no_type_queue);
 	CU_ASSERT_EQUAL(ret, -EIO);
 }
+
+void
+test_iscsi_chap_hex_name_prefix(void)
+{
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test CHAP_A negotiation");
+
+        CHECK_FOR_ISCSI(sd);
+        if (sd->iscsi_ctx->chap_a != 5) {
+                const char *err = "[SKIPPED] This test requires "
+                        "an iSCSI session with CHAP_A=5";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
+
+        if (strncmp(sd->iscsi_ctx->user, "0x", 2) &&
+            strncmp(sd->iscsi_ctx->user, "0X", 2)) {
+                const char *err = "[SKIPPED] This test requires "
+                        "an iSCSI CHAP username with hex prefix";
+                logging(LOG_NORMAL, "%s", err);
+                CU_PASS(err);
+                return;
+        }
+
+        // CHAP_N=0x... login succeeded if we get here
+}
