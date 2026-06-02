@@ -91,6 +91,7 @@ void test_iscsi_chap_hex_name_prefix(void);
 #ifdef HAVE_LIBGNUTLS
 void test_iscsi_chap_base64(void);
 void test_iscsi_chap_base64_oversize(void);
+void test_iscsi_chap_base64_name_prefix(void);
 #endif
 
 void test_mandatory_sbc(void);
