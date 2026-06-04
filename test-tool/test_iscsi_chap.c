@@ -125,6 +125,18 @@ chap_mod_bad_type_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	chap_mod_strip_replace_queue(iscsi, pdu, "CHAP_A=56");
 }
 
+static void
+chap_mod_bad_prefix_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	chap_mod_strip_replace_queue(iscsi, pdu, "PREFIX_CHAP_A=5");
+}
+
+static void
+chap_mod_bad_suffix_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	chap_mod_strip_replace_queue(iscsi, pdu, "CHAP_A_SUFFIX=5");
+}
+
 static int
 test_iscsi_chap_login(void (*test_queue_pdu)(struct iscsi_context *iscsi,
                                              struct iscsi_pdu *pdu),
@@ -214,6 +226,12 @@ test_iscsi_chap_invalid(void)
 	CU_ASSERT_EQUAL(ret, -EIO);
 
 	ret = test_iscsi_chap_login(chap_mod_no_type_queue, NULL);
+	CU_ASSERT_EQUAL(ret, -EIO);
+
+	ret = test_iscsi_chap_login(chap_mod_bad_prefix_queue, NULL);
+	CU_ASSERT_EQUAL(ret, -EIO);
+
+	ret = test_iscsi_chap_login(chap_mod_bad_suffix_queue, NULL);
 	CU_ASSERT_EQUAL(ret, -EIO);
 }
 
