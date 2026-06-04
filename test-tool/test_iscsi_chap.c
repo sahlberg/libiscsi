@@ -127,46 +127,49 @@ chap_mod_bad_type_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 
 static int
 test_iscsi_chap_login(void (*test_queue_pdu)(struct iscsi_context *iscsi,
-                                             struct iscsi_pdu *pdu))
+                                             struct iscsi_pdu *pdu),
+                      int *target_chap_i)
 {
         struct iscsi_context *iscsi;
         struct iscsi_url *iscsi_url;
         int ret;
 
         iscsi = iscsi_create_context(initiatorname2);
-	if (iscsi == NULL) {
-		return -ENOMEM;
-	}
+        if (iscsi == NULL) {
+                return -ENOMEM;
+        }
+        if (target_chap_i)
+                iscsi->target_chap_i = *target_chap_i;
 
         iscsi_url = iscsi_parse_full_url(iscsi, sd->iscsi_url);
-	if (iscsi_url == NULL) {
-		ret = -ENOMEM;
-		goto err_iscsi_destroy;
-	}
+        if (iscsi_url == NULL) {
+                ret = -ENOMEM;
+                goto err_iscsi_destroy;
+        }
 
         iscsi_set_targetname(iscsi, iscsi_url->target);
         iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
         iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	iscsi_set_noautoreconnect(iscsi, 1);
+        iscsi_set_noautoreconnect(iscsi, 1);
 
         iscsi_set_initiator_username_pwd(iscsi, iscsi_url->user,
-					 iscsi_url->passwd);
+                                         iscsi_url->passwd);
 
         /* override transport queue_pdu callback for PDU manipulation */
         iscsi->drv->queue_pdu = test_queue_pdu;
 
         ret = iscsi_full_connect_sync(iscsi, iscsi_url->portal, iscsi_url->lun);
-	if (ret < 0) {
-		ret = -EIO;
-		goto err_url_destroy;
-	}
+        if (ret < 0) {
+                ret = -EIO;
+                goto err_url_destroy;
+        }
 
-	ret = 0;
+        ret = 0;
 err_url_destroy:
-	iscsi_destroy_url(iscsi_url);
+        iscsi_destroy_url(iscsi_url);
 err_iscsi_destroy:
-	iscsi_destroy_context(iscsi);
-	return ret;
+        iscsi_destroy_context(iscsi);
+        return ret;
 }
 
 void
@@ -186,7 +189,7 @@ test_iscsi_chap_simple(void)
                 return;
         }
 
-	ret = test_iscsi_chap_login(chap_mod_many_types_queue);
+	ret = test_iscsi_chap_login(chap_mod_many_types_queue, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 }
 
@@ -207,10 +210,10 @@ test_iscsi_chap_invalid(void)
                 return;
         }
 
-	ret = test_iscsi_chap_login(chap_mod_bad_type_queue);
+	ret = test_iscsi_chap_login(chap_mod_bad_type_queue, NULL);
 	CU_ASSERT_EQUAL(ret, -EIO);
 
-	ret = test_iscsi_chap_login(chap_mod_no_type_queue);
+	ret = test_iscsi_chap_login(chap_mod_no_type_queue, NULL);
 	CU_ASSERT_EQUAL(ret, -EIO);
 }
 
