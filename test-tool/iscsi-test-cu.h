@@ -76,6 +76,7 @@ void test_inquiry_evpd(void);
 void test_inquiry_mandatory_vpd_sbc(void);
 void test_inquiry_standard(void);
 void test_inquiry_supported_vpd(void);
+void test_inquiry_vpd_page_codes_sorted(void);
 void test_inquiry_version_descriptors(void);
 
 void test_iscsi_cmdsn_toohigh(void);

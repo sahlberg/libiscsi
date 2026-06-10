@@ -89,6 +89,7 @@ static CU_TestInfo tests_inquiry[] = {
         { "BlockLimits", test_inquiry_block_limits},
         { "MandatoryVPDSBC", test_inquiry_mandatory_vpd_sbc},
         { "SupportedVPD", test_inquiry_supported_vpd},
+        { "VPDPageCodesSorted", test_inquiry_vpd_page_codes_sorted},
         { "VersionDescriptors", test_inquiry_version_descriptors},
         CU_TEST_INFO_NULL
 };
