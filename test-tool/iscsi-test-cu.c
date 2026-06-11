@@ -589,6 +589,7 @@ static CU_TestInfo tests_iscsi_chap[] = {
         { "Simple", test_iscsi_chap_simple },
         { "Invalid", test_iscsi_chap_invalid },
         { "HexName", test_iscsi_chap_hex_name_prefix },
+        { "EncodedI", test_iscsi_chap_i_encoded },
 #ifdef HAVE_LIBGNUTLS
         { "Base64", test_iscsi_chap_base64 },
         { "Base64Oversize", test_iscsi_chap_base64_oversize },

@@ -125,48 +125,63 @@ chap_mod_bad_type_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 	chap_mod_strip_replace_queue(iscsi, pdu, "CHAP_A=56");
 }
 
+static void
+chap_mod_bad_prefix_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	chap_mod_strip_replace_queue(iscsi, pdu, "PREFIX_CHAP_A=5");
+}
+
+static void
+chap_mod_bad_suffix_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	chap_mod_strip_replace_queue(iscsi, pdu, "CHAP_A_SUFFIX=5");
+}
+
 static int
 test_iscsi_chap_login(void (*test_queue_pdu)(struct iscsi_context *iscsi,
-                                             struct iscsi_pdu *pdu))
+                                             struct iscsi_pdu *pdu),
+                      int *target_chap_i)
 {
         struct iscsi_context *iscsi;
         struct iscsi_url *iscsi_url;
         int ret;
 
         iscsi = iscsi_create_context(initiatorname2);
-	if (iscsi == NULL) {
-		return -ENOMEM;
-	}
+        if (iscsi == NULL) {
+                return -ENOMEM;
+        }
+        if (target_chap_i)
+                iscsi->target_chap_i = *target_chap_i;
 
         iscsi_url = iscsi_parse_full_url(iscsi, sd->iscsi_url);
-	if (iscsi_url == NULL) {
-		ret = -ENOMEM;
-		goto err_iscsi_destroy;
-	}
+        if (iscsi_url == NULL) {
+                ret = -ENOMEM;
+                goto err_iscsi_destroy;
+        }
 
         iscsi_set_targetname(iscsi, iscsi_url->target);
         iscsi_set_session_type(iscsi, ISCSI_SESSION_NORMAL);
         iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
-	iscsi_set_noautoreconnect(iscsi, 1);
+        iscsi_set_noautoreconnect(iscsi, 1);
 
         iscsi_set_initiator_username_pwd(iscsi, iscsi_url->user,
-					 iscsi_url->passwd);
+                                         iscsi_url->passwd);
 
         /* override transport queue_pdu callback for PDU manipulation */
         iscsi->drv->queue_pdu = test_queue_pdu;
 
         ret = iscsi_full_connect_sync(iscsi, iscsi_url->portal, iscsi_url->lun);
-	if (ret < 0) {
-		ret = -EIO;
-		goto err_url_destroy;
-	}
+        if (ret < 0) {
+                ret = -EIO;
+                goto err_url_destroy;
+        }
 
-	ret = 0;
+        ret = 0;
 err_url_destroy:
-	iscsi_destroy_url(iscsi_url);
+        iscsi_destroy_url(iscsi_url);
 err_iscsi_destroy:
-	iscsi_destroy_context(iscsi);
-	return ret;
+        iscsi_destroy_context(iscsi);
+        return ret;
 }
 
 void
@@ -186,7 +201,7 @@ test_iscsi_chap_simple(void)
                 return;
         }
 
-	ret = test_iscsi_chap_login(chap_mod_many_types_queue);
+	ret = test_iscsi_chap_login(chap_mod_many_types_queue, NULL);
 	CU_ASSERT_EQUAL(ret, 0);
 }
 
@@ -207,10 +222,16 @@ test_iscsi_chap_invalid(void)
                 return;
         }
 
-	ret = test_iscsi_chap_login(chap_mod_bad_type_queue);
+	ret = test_iscsi_chap_login(chap_mod_bad_type_queue, NULL);
 	CU_ASSERT_EQUAL(ret, -EIO);
 
-	ret = test_iscsi_chap_login(chap_mod_no_type_queue);
+	ret = test_iscsi_chap_login(chap_mod_no_type_queue, NULL);
+	CU_ASSERT_EQUAL(ret, -EIO);
+
+	ret = test_iscsi_chap_login(chap_mod_bad_prefix_queue, NULL);
+	CU_ASSERT_EQUAL(ret, -EIO);
+
+	ret = test_iscsi_chap_login(chap_mod_bad_suffix_queue, NULL);
 	CU_ASSERT_EQUAL(ret, -EIO);
 }
 
@@ -239,4 +260,83 @@ test_iscsi_chap_hex_name_prefix(void)
         }
 
         // CHAP_N=0x... login succeeded if we get here
+}
+
+/* libiscsi always sends a decimal CHAP_I. Replace it with the hex value */
+static void
+chap_i_mod_hex_replace_queue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	int ret;
+	char str[MAX_STRING_SIZE+1];
+
+        if ((pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_LOGIN_REQUEST) {
+		goto out;
+	}
+
+	ret = test_iscsi_strip_tag(iscsi, pdu, "CHAP_I=");
+	if (ret == -ENOENT) {
+		logging(LOG_VERBOSE, "ignoring login PDU without CHAP_I");
+		goto out;
+	}
+	if (ret < 0) {
+		return;
+	}
+
+	snprintf(str, MAX_STRING_SIZE, "CHAP_I=0x%x", iscsi->target_chap_i);
+	ret = iscsi_pdu_add_data(iscsi, pdu, (const unsigned char *)str,
+				 strlen(str) + 1);
+	logging(LOG_VERBOSE, "replaced decimal CHAP_I with %s", str);
+	CU_ASSERT_TRUE_FATAL(ret >= 0);
+out:
+        orig_queue_pdu(iscsi, pdu);
+}
+
+void
+test_iscsi_chap_i_encoded(void)
+{
+        int ret;
+        int init_target_chap_i;
+
+        logging(LOG_VERBOSE, LOG_BLANK_LINE);
+        logging(LOG_VERBOSE, "Test CHAP_C base64 oversize values");
+
+        CHECK_FOR_ISCSI(sd);
+        if (sd->iscsi_ctx->chap_a != 5) {
+                logging(LOG_NORMAL, "[SKIPPED] This test requires "
+                        "an iSCSI session with CHAP_A=5");
+                CU_PASS(err);
+                return;
+        }
+        if (!sd->iscsi_ctx->target_user[0]) {
+                logging(LOG_NORMAL, "[SKIPPED] This test requires "
+                        "an iSCSI session with mutual CHAP via the "
+                        "LIBISCSI_CHAP_TARGET_USERNAME/_PASSWORD env vars or "
+                        "URL parameters");
+                CU_PASS(err);
+                return;
+        }
+
+	// CHAP_I=0x2; iscsi_login_add_chap_response() increments before send.
+        init_target_chap_i = 1;
+        ret = test_iscsi_chap_login(chap_i_mod_hex_replace_queue,
+                                    &init_target_chap_i);
+        if (ret != 0) {
+                logging(LOG_NORMAL, "[SKIPPED] This test requires "
+                        "target support for hex-encoded CHAP_I");
+                CU_PASS(err);
+                return;
+        }
+
+        // the target does support hex-encoded CHAP_I, so check that it
+        // correctly interprets 0xA-F.
+        init_target_chap_i = 10;
+        ret = test_iscsi_chap_login(chap_i_mod_hex_replace_queue,
+                                    &init_target_chap_i);
+        CU_ASSERT_EQUAL(ret, 0);
+
+        // rfc1994: 4. Packet Format: The Identifier field is one octet ...
+        init_target_chap_i = 256;
+        ret = test_iscsi_chap_login(chap_i_mod_hex_replace_queue,
+                                    &init_target_chap_i);
+        CU_ASSERT_NOT_EQUAL(ret, 0);
 }
