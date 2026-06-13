@@ -134,7 +134,7 @@ enum scsi_maintenance_in {
 	SCSI_REPORT_SUPPORTED_OP_CODES = 0x0c
 };
 
-enum scsi_alue_state {
+enum scsi_alua_state {
 	SCSI_ALUA_ACTIVE_OPTIMIZED           = 0x0,
 	SCSI_ALUA_ACTIVE_NONOPTIMIZED        = 0x1,
 	SCSI_ALUA_STANDBY                    = 0x2,
@@ -985,9 +985,9 @@ struct scsi_report_supported_op_codes_one_command {
 struct scsi_target_port_group {
 	union {
 		struct {
-			uint8_t pref:1;
-			uint8_t rtpg_fmt:3;
 			uint8_t alua_state:4;
+			uint8_t rtpg_fmt:3;
+			uint8_t pref:1;
 		};
 		uint8_t byte0;
 	};
