@@ -150,6 +150,9 @@ int iscsi_mt_sem_wait(libiscsi_sem_t* sem)
 #if defined(__NetBSD__)
 #include <lwp.h>
 #endif
+#if defined(__illumos__)
+#include <thread.h>
+#endif
 
 iscsi_tid_t iscsi_mt_get_tid(void)
 {
@@ -165,6 +168,9 @@ iscsi_tid_t iscsi_mt_get_tid(void)
         return tid;
 #elif defined(__NetBSD__)
         lwpid_t tid = _lwp_self();
+        return tid;
+#elif defined(__illumos__)
+        thread_t tid = thr_self();
         return tid;
 #elif defined(SYS_gettid)
         pid_t tid = syscall(SYS_gettid);
