@@ -74,6 +74,18 @@ test_async_read(void)
 	if (!buf)
 		goto out;
 
+	/* The loop below reads up to LBA blocks_per_io * num_ios - 1, so the
+	   capacity is what decides whether the device is too small.
+	   maximum_transfer_length does not: it is a bus transfer limit taken
+	   from BLKSECTGET for an sgio device and left at zero for an iSCSI one,
+	   so the check below never fires there and every LUN smaller than 8000
+	   blocks failed the test with LOGICAL BLOCK ADDRESS OUT OF RANGE
+	   instead of being skipped. */
+	if (num_blocks < (uint64_t)blocks_per_io * num_ios) {
+		CU_PASS("[SKIPPED] device too small for async_read test");
+		goto out;
+	}
+
 	if (maximum_transfer_length
 	 && (maximum_transfer_length < (blocks_per_io * num_ios))) {
 		CU_PASS("[SKIPPED] device too small for async_read test");

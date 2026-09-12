@@ -78,6 +78,12 @@ test_async_write(void)
 	CHECK_FOR_ISCSI(sd);
 
 	memset(&state, 0, sizeof(state));
+
+	if (num_blocks < (uint64_t)blocks_per_io * num_ios) {
+		CU_PASS("[SKIPPED] device too small for async_write test");
+		return;
+	}
+
 	if (maximum_transfer_length
 	 && (maximum_transfer_length < (blocks_per_io * num_ios))) {
 		CU_PASS("[SKIPPED] device too small for async_write test");
@@ -156,6 +162,12 @@ test_async_io_logout(void)
 	CHECK_FOR_ISCSI(sd);
 
 	memset(&state, 0, sizeof(state));
+
+	if (num_blocks < (uint64_t)blocks_per_io * num_ios) {
+		CU_PASS("[SKIPPED] device too small for async IO test");
+		return;
+	}
+
 	if (maximum_transfer_length
 	 && maximum_transfer_length < (blocks_per_io * num_ios)) {
 		CU_PASS("[SKIPPED] device too small for async IO test");
