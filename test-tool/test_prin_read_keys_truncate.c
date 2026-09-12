@@ -34,6 +34,8 @@ test_prin_read_keys_truncate(void)
         struct scsi_persistent_reserve_in_read_keys *rk = NULL;
         int ret;
 
+        CHECK_FOR_DATALOSS;
+
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test Persistent Reserve IN READ_KEYS works when "
                 "truncated.");

@@ -37,6 +37,8 @@ verify_persistent_reserve_access(struct scsi_device *sd1, struct scsi_device *sd
         const unsigned long long key2 = rand_key();
 
 
+        CHECK_FOR_DATALOSS;
+
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE,
             "Verify access for reservation type: %s",

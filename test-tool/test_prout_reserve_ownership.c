@@ -34,6 +34,8 @@ verify_persistent_reserve_ownership(struct scsi_device *sd1, struct scsi_device 
         const unsigned long long key2 = rand_key();
 
 
+        CHECK_FOR_DATALOSS;
+
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE,
             "Verify ownership for reservation type: %s",

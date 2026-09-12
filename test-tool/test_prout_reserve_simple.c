@@ -48,6 +48,8 @@ test_prout_reserve_simple(void)
         const unsigned long long key = rand_key();
 
 
+        CHECK_FOR_DATALOSS;
+
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test Persistent Reserve IN RESERVE works.");
 

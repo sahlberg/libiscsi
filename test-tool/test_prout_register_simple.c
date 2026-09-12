@@ -33,6 +33,8 @@ test_prout_register_simple(void)
         int ret = 0;
 
 
+        CHECK_FOR_DATALOSS;
+
         logging(LOG_VERBOSE, LOG_BLANK_LINE);
         logging(LOG_VERBOSE, "Test Persistent Reserve IN REGISTER works.");
 
