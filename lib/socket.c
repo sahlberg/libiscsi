@@ -1079,10 +1079,6 @@ iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 static int
 iscsi_tcp_service(struct iscsi_context *iscsi, int revents)
 {
-	if (iscsi->fd < 0) {
-		return 0;
-	}
-
 	if (iscsi->pending_reconnect) {
 		if (time(NULL) >= iscsi->next_reconnect) {
 			return iscsi_reconnect(iscsi);
@@ -1091,6 +1087,10 @@ iscsi_tcp_service(struct iscsi_context *iscsi, int revents)
 				goto check_timeout;
 			}
 		}
+	}
+
+	if (iscsi->fd < 0) {
+		return 0;
 	}
 
 	if (revents & POLLERR) {

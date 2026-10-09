@@ -487,6 +487,7 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
 static int reconnect(struct iscsi_context *iscsi, int force)
 {
 	struct iscsi_context *tmp_iscsi;
+	int rc;
 
 	/* if there is already a deferred reconnect do not try again */
 	if (iscsi->reconnect_deferred) {
@@ -585,8 +586,15 @@ static int reconnect(struct iscsi_context *iscsi, int force)
 	memcpy(iscsi, tmp_iscsi, sizeof(struct iscsi_context));
 	free(tmp_iscsi);
 
-	return iscsi_full_connect_async(iscsi, iscsi->portal,
-	                                iscsi->lun, iscsi_reconnect_cb, NULL);
+	rc = iscsi_full_connect_async(iscsi, iscsi->portal,
+	                              iscsi->lun, iscsi_reconnect_cb, NULL);
+	if (rc != 0 && !iscsi->reconnect_deferred &&
+	    iscsi->old_iscsi && !iscsi->pending_reconnect) {
+		/* A synchronous failure does not invoke the callback, so
+		 * re-arm the retry here. */
+		iscsi_reconnect_cb(iscsi, SCSI_STATUS_ERROR, NULL, NULL);
+	}
+	return rc;
 }
 
 int iscsi_reconnect(struct iscsi_context *iscsi)
