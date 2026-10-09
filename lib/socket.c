@@ -1079,10 +1079,11 @@ iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 static int
 iscsi_tcp_service(struct iscsi_context *iscsi, int revents)
 {
-	if (iscsi->fd < 0) {
-		return 0;
-	}
-
+	/* Keep driving the reconnect state machine even when there is no
+	 * socket left. A reconnect attempt that fails to connect closes the
+	 * socket and sets iscsi->fd to -1, and returning early here stopped
+	 * every further retry, leaving the session dead forever.
+	 */
 	if (iscsi->pending_reconnect) {
 		if (time(NULL) >= iscsi->next_reconnect) {
 			return iscsi_reconnect(iscsi);
@@ -1091,6 +1092,10 @@ iscsi_tcp_service(struct iscsi_context *iscsi, int revents)
 				goto check_timeout;
 			}
 		}
+	}
+
+	if (iscsi->fd < 0) {
+		return 0;
 	}
 
 	if (revents & POLLERR) {
