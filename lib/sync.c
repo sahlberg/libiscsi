@@ -50,8 +50,147 @@ struct iscsi_sync_state {
         struct scsi_task *task;
 #ifdef HAVE_MULTITHREADING
         libiscsi_sem_t wait_sem;
+        /* see iscsi_mt_service_sync_timeouts() */
+        struct iscsi_sync_state *next_timeout;
+        int timeout_done;
 #endif /* HAVE_MULTITHREADING */
 };
+
+/* Whether @pdu will invoke a callback with the sync state @state. */
+static int
+pdu_uses_state(struct iscsi_pdu *pdu, void *state)
+{
+        return pdu->private_data == state ||
+                pdu->scsi_cbdata.private_data == state ||
+                iscsi_connect_task_uses(pdu->callback, pdu->private_data,
+                                        state) ||
+                iscsi_connect_task_uses(pdu->scsi_cbdata.callback,
+                                        pdu->scsi_cbdata.private_data, state);
+}
+
+struct sync_match {
+        struct iscsi_sync_state *state;
+        struct scsi_task *task;
+};
+
+static int
+pdu_is_for_sync(struct iscsi_pdu *pdu, void *opaque)
+{
+        struct sync_match *m = opaque;
+
+        /* the DATA-OUT pdus of a command have no callback of their own */
+        return pdu_uses_state(pdu, m->state) ||
+                (m->task != NULL && pdu->scsi_cbdata.task == m->task);
+}
+
+/*
+ * The synchronous call that owns @state gives up. Its state is on its
+ * stack and its buffers belong to the caller again once it returns, so
+ * complete everything that still refers to it now, whatever their own
+ * timeouts are: a reconnect gives the commands it requeues new ones.
+ * Returns the number of callbacks invoked.
+ */
+static int
+sync_state_timeout(struct iscsi_context *iscsi,
+                   struct iscsi_sync_state *state)
+{
+        struct sync_match m = { state, NULL };
+        struct iscsi_pdu *pdu;
+        int count;
+
+        pdu = iscsi_find_pdu(iscsi, pdu_uses_state, state);
+        if (pdu != NULL) {
+                m.task = pdu->scsi_cbdata.task;
+        }
+        count = iscsi_complete_pdus(iscsi, pdu_is_for_sync, &m,
+                                    SCSI_STATUS_TIMEOUT);
+
+        /* a connect that has not got as far as sending a pdu */
+        if (iscsi->socket_status_cb != NULL &&
+            (iscsi->connect_data == state ||
+             iscsi_connect_task_uses(iscsi->socket_status_cb,
+                                     iscsi->connect_data, state))) {
+                iscsi_command_cb cb = iscsi->socket_status_cb;
+                void *data = iscsi->connect_data;
+
+                iscsi->socket_status_cb = NULL;
+                iscsi->connect_data = NULL;
+                iscsi_disconnect(iscsi);
+                cb(iscsi, SCSI_STATUS_TIMEOUT, NULL, data);
+                count++;
+        }
+        return count;
+}
+
+#ifdef HAVE_MULTITHREADING
+void
+iscsi_mt_service_sync_timeouts(struct iscsi_context *iscsi)
+{
+        struct iscsi_sync_state *state, *next;
+
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+        state = iscsi->sync_timeouts;
+        iscsi->sync_timeouts = NULL;
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+
+        for (; state != NULL; state = next) {
+                next = state->next_timeout;
+
+                sync_state_timeout(iscsi, state);
+                iscsi_set_error(iscsi, "Connect timedout");
+                if (!state->finished) {
+                        state->status = -1;
+                }
+                /* the waiting thread returns, and @state with it */
+                iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+                state->timeout_done = 1;
+                iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+                iscsi_mt_sem_post(&state->wait_sem);
+        }
+}
+
+/* Wait for the service thread to complete @state, or to give up on it. */
+static void
+mt_wait(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
+{
+        int done, scsi_timeout;
+
+        /* the service thread replaces the session state on reconnect */
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+        scsi_timeout = iscsi->scsi_timeout;
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+
+        if (!scsi_timeout) {
+                iscsi_mt_sem_wait(&state->wait_sem);
+                return;
+        }
+
+        /* PDU timeouts have a resolution of a second, allow for that */
+        if (iscsi_mt_sem_timedwait(&state->wait_sem,
+                                   (scsi_timeout + 1) * 1000) == 0) {
+                return;
+        }
+
+        /*
+         * Only the service thread may touch the queues, so it completes
+         * what is left of this call, see iscsi_mt_service_sync_timeouts().
+         * The callbacks it runs can post wait_sem as well, so wait until
+         * it says it is done with @state.
+         */
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+        state->next_timeout = iscsi->sync_timeouts;
+        iscsi->sync_timeouts = state;
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+        iscsi_mt_service_thread_wake(iscsi);
+
+        do {
+                iscsi_mt_sem_wait(&state->wait_sem);
+                iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+                done = state->timeout_done;
+                iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+        } while (!done);
+}
+#endif /* HAVE_MULTITHREADING */
 
 static void
 event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
@@ -63,8 +202,7 @@ event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 
 #ifdef HAVE_MULTITHREADING
         if(iscsi->multithreading_enabled) {
-                /* TODO QQQ Must make sure the service thread event loop handle timeouts properly */
-                iscsi_mt_sem_wait(&state->wait_sem);
+                mt_wait(iscsi, state);
                 iscsi_mt_sem_destroy(&state->wait_sem);
                 return;
         }
@@ -87,6 +225,7 @@ event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 				if (iscsi->old_iscsi) {
 					iscsi_timeout_scan(iscsi->old_iscsi);
 				}
+				sync_state_timeout(iscsi, state);
 
 				iscsi_set_error(iscsi, "Connect timedout");
 				state->status = -1;

@@ -70,6 +70,14 @@ int iscsi_mt_sem_init(libiscsi_sem_t *sem, int value);
 int iscsi_mt_sem_destroy(libiscsi_sem_t *sem);
 int iscsi_mt_sem_post(libiscsi_sem_t *sem);
 int iscsi_mt_sem_wait(libiscsi_sem_t *sem);
+/* 0 when @sem was posted, -1 when @ms milliseconds passed first. */
+int iscsi_mt_sem_timedwait(libiscsi_sem_t *sem, int ms);
+
+/*
+ * Complete the synchronous calls that gave up waiting, called by the
+ * service thread, see sync.c.
+ */
+void iscsi_mt_service_sync_timeouts(struct iscsi_context *iscsi);
 
 #endif /* HAVE_MULTITHREADING */
 

@@ -39,6 +39,7 @@
 #include "win32_compat.h"
 #else
 #include <strings.h>
+#include <sys/socket.h>
 #endif
 
 #include <stdio.h>
@@ -879,12 +880,13 @@ iscsi_pdu_set_expxferlen(struct iscsi_pdu *pdu, uint32_t expxferlen)
  * 2, Once command w timeout and callback to uplayer, uplayers usually releases memory of
  *    iscsi task(include memory referenced by iovec.iov_base). DATAOUT[m] would access
  *    invalid memory iovce.iov_base.
+ *
+ * Called with iscsi_lock held.
  */
 static int iscsi_pdu_data_out_inprocess(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	struct iscsi_pdu *tmp_pdu, *next_pdu;
 	enum scsi_opcode opcode = pdu->outdata.data[32];
-        int ret = 1;
         
 	/* only care DATA OUT command here */
 	if ((pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_SCSI_REQUEST) {
@@ -900,10 +902,9 @@ static int iscsi_pdu_data_out_inprocess(struct iscsi_context *iscsi, struct iscs
 			return 0;
 	};
 
-        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	/* current outgoing one is part of the PDU? */
 	if (iscsi->outqueue_current && (iscsi->outqueue_current->scsi_cbdata.task == pdu->scsi_cbdata.task)) {
-                goto finished;
+                return 1;
 	}
 
 	/* any child DATAOUT PDU in outqueue? */
@@ -911,14 +912,11 @@ static int iscsi_pdu_data_out_inprocess(struct iscsi_context *iscsi, struct iscs
 		next_pdu = tmp_pdu->next;
 
 		if (tmp_pdu->scsi_cbdata.task == pdu->scsi_cbdata.task) {
-                        goto finished;
+                        return 1;
 		}
 	}
 
-        ret = 0;
- finished:
-        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
-	return ret;
+	return 0;
 }
 
 void
@@ -997,6 +995,129 @@ iscsi_timeout_scan(struct iscsi_context *iscsi)
 		}
 		iscsi->drv->free_pdu(iscsi, pdu);
 	}
+}
+
+static int
+is_cmdsn_pdu(struct iscsi_pdu *pdu)
+{
+	return !(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE) &&
+		(pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT;
+}
+
+static int
+complete_pdus(struct iscsi_context *iscsi, int live,
+	      iscsi_pdu_match_fn match, void *opaque, int status)
+{
+	struct iscsi_pdu *pdu, *next_pdu, *tmp = NULL;
+	uint32_t cmdsn_gap = 0;
+	int count = 0;
+
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+	pdu = iscsi->outqueue_current;
+	if (pdu && match(pdu, opaque)) {
+		if (pdu->outdata_written || pdu->payload_written) {
+			/*
+			 * The target has part of this pdu, and the rest
+			 * of the stream would make no sense to it. Shut
+			 * down the connection so that nothing more is
+			 * written to it, the reconnect takes over.
+			 * old_iscsi is not written to, and its fd may
+			 * belong to the new connection already.
+			 */
+			if (live && iscsi->fd != -1) {
+				ISCSI_LOG(iscsi, 2, "dropping the "
+					  "connection, a partly sent pdu is "
+					  "being completed");
+				shutdown(iscsi->fd, SHUT_RDWR);
+			}
+		} else if (is_cmdsn_pdu(pdu)) {
+			/* never sent, give its CmdSN back */
+			iscsi->cmdsn--;
+			cmdsn_gap++;
+		}
+		iscsi->outqueue_current = NULL;
+		/* other pdus are on waitpdu already */
+		if (pdu->flags & ISCSI_PDU_DELETE_WHEN_SENT) {
+			ISCSI_LIST_ADD_END(&tmp, pdu);
+		}
+	}
+	for (pdu = iscsi->outqueue; pdu; pdu = next_pdu) {
+		next_pdu = pdu->next;
+
+		if (cmdsn_gap > 0) {
+			iscsi_pdu_set_cmdsn(pdu, pdu->cmdsn - cmdsn_gap);
+		}
+		if (!match(pdu, opaque)) {
+			continue;
+		}
+		if (is_cmdsn_pdu(pdu)) {
+			iscsi->cmdsn--;
+			cmdsn_gap++;
+		}
+		ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
+		ISCSI_LIST_ADD_END(&tmp, pdu);
+	}
+	for (pdu = iscsi->waitpdu; pdu; pdu = next_pdu) {
+		next_pdu = pdu->next;
+
+		if (!match(pdu, opaque)) {
+			continue;
+		}
+		ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
+		ISCSI_LIST_ADD_END(&tmp, pdu);
+	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+
+	while ((pdu = tmp) != NULL) {
+		ISCSI_LIST_REMOVE(&tmp, pdu);
+		if (pdu->callback) {
+			count++;
+			pdu->callback(iscsi, status, NULL, pdu->private_data);
+		}
+		iscsi->drv->free_pdu(iscsi, pdu);
+	}
+
+	if (iscsi->old_iscsi) {
+		count += complete_pdus(iscsi->old_iscsi, 0, match, opaque,
+				       status);
+	}
+	return count;
+}
+
+int
+iscsi_complete_pdus(struct iscsi_context *iscsi, iscsi_pdu_match_fn match,
+		    void *opaque, int status)
+{
+	return complete_pdus(iscsi, 1, match, opaque, status);
+}
+
+struct iscsi_pdu *
+iscsi_find_pdu(struct iscsi_context *iscsi, iscsi_pdu_match_fn match,
+	       void *opaque)
+{
+	struct iscsi_pdu *pdu, *found = NULL;
+
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+	if (iscsi->outqueue_current &&
+	    match(iscsi->outqueue_current, opaque)) {
+		found = iscsi->outqueue_current;
+	}
+	for (pdu = iscsi->outqueue; pdu && !found; pdu = pdu->next) {
+		if (match(pdu, opaque)) {
+			found = pdu;
+		}
+	}
+	for (pdu = iscsi->waitpdu; pdu && !found; pdu = pdu->next) {
+		if (match(pdu, opaque)) {
+			found = pdu;
+		}
+	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+
+	if (!found && iscsi->old_iscsi) {
+		found = iscsi_find_pdu(iscsi->old_iscsi, match, opaque);
+	}
+	return found;
 }
 
 void

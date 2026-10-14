@@ -313,6 +313,20 @@ iscsi_connect_cb(struct iscsi_context *iscsi, int status, void *command_data,
 
 
 int
+iscsi_connect_task_uses(iscsi_command_cb cb, void *private_data, void *opaque)
+{
+	struct connect_task *ct = private_data;
+
+	if (cb != iscsi_connect_cb && cb != iscsi_login_cb &&
+	    cb != iscsi_testunitready_cb &&
+	    cb != iscsi_inquiry_page_0x0_cb &&
+	    cb != iscsi_inquiry_page_0x80_cb) {
+		return 0;
+	}
+	return ct != NULL && ct->private_data == opaque;
+}
+
+int
 iscsi_full_connect_async(struct iscsi_context *iscsi, const char *portal,
 			 int lun, iscsi_command_cb cb, void *private_data)
 {

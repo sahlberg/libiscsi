@@ -1612,6 +1612,9 @@ EXTERN int iscsi_scsi_is_task_in_outqueue(struct iscsi_context *iscsi, struct sc
  * The cancellation is only local in libiscsi. If the task is already in-flight
  * this call will not cancel the task at the target.
  * To cancel the task also a the target you need to call the task management functions.
+ * If the task is partly written to the socket, the connection is dropped and
+ * libiscsi reconnects, since the rest of the stream would make no sense to
+ * the target.
  */
 EXTERN int
 iscsi_scsi_cancel_task(struct iscsi_context *iscsi,

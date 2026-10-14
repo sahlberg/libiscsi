@@ -15,9 +15,9 @@ set(ISCSI_TEST_PROGS
     prog_timeout
     prog_read_all_pdus
     prog_header_digest)
-# Uses the multithreading service thread, and POSIX signals.
+# Use the multithreading service thread, and POSIX signals.
 if(HAVE_PTHREAD)
-    list(APPEND ISCSI_TEST_PROGS prog_mt_reconnect)
+    list(APPEND ISCSI_TEST_PROGS prog_mt_reconnect prog_sync_timeout)
 endif()
 
 foreach(_prog IN LISTS ISCSI_TEST_PROGS)
@@ -25,6 +25,9 @@ foreach(_prog IN LISTS ISCSI_TEST_PROGS)
     libiscsi_apply_build_settings(${_prog})
     target_link_libraries(${_prog} PRIVATE iscsi ${LIBISCSI_PLATFORM_LIBS})
 endforeach()
+if(TARGET prog_sync_timeout)
+    target_link_libraries(prog_sync_timeout PRIVATE Threads::Threads)
+endif()
 
 #
 # "cmake --build <dir> --target check" is the equivalent of "make test" in
