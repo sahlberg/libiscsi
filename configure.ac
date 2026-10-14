@@ -90,24 +90,65 @@ AC_ARG_WITH([libgcrypt],
 	    [WITH_LIBGCRYPT=$withval],
 	    [WITH_LIBGCRYPT=auto])
 
+# Prefer pkg-config, which also finds gnutls / libgcrypt when they are
+# installed outside the default search path (e.g. /usr/local), and fall back
+# on a plain header and link test. pkg.m4 is optional at autogen time.
+m4_ifdef([PKG_PROG_PKG_CONFIG], [PKG_PROG_PKG_CONFIG([], [:])])
+PC_REQUIRES_PRIVATE=
+CRYPTO_LIBS_PRIVATE=
+
 if test "$WITH_GNUTLS" != no; then
-  AC_CHECK_LIB([gnutls], [gnutls_hash_init])
-  if test "$WITH_GNUTLS" = yes && test "$ac_cv_lib_gnutls_gnutls_hash_init" != yes; then
+  have_gnutls=no
+  m4_ifdef([PKG_CHECK_MODULES],
+    [PKG_CHECK_MODULES([GNUTLS], [gnutls],
+      [have_gnutls=yes
+       CPPFLAGS="$CPPFLAGS $GNUTLS_CFLAGS"
+       LIBS="$GNUTLS_LIBS $LIBS"
+       PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE gnutls"],
+      [:])])
+  if test "$have_gnutls" = no; then
+    AC_CHECK_HEADER([gnutls/crypto.h],
+      [AC_CHECK_LIB([gnutls], [gnutls_hash_init],
+        [have_gnutls=yes
+         LIBS="-lgnutls $LIBS"
+         CRYPTO_LIBS_PRIVATE="$CRYPTO_LIBS_PRIVATE -lgnutls"])])
+  fi
+  if test "$WITH_GNUTLS" = yes && test "$have_gnutls" != yes; then
     AC_MSG_ERROR([gnutls not found])
   fi
-  WITH_GNUTLS=$ac_cv_lib_gnutls_gnutls_hash_init
+  WITH_GNUTLS=$have_gnutls
 fi
 if test "$WITH_GNUTLS" = yes; then
+  AC_DEFINE([HAVE_LIBGNUTLS], [1], [Define to 1 if you have the gnutls library.])
   WITH_LIBGCRYPT=no
 fi
 
 if test "$WITH_LIBGCRYPT" != no; then
-  AC_CHECK_LIB([gcrypt], [gcry_control])
-  if test "$WITH_LIBGCRYPT" = yes && test "$ac_cv_lib_gcrypt_gcry_control" != yes; then
+  have_libgcrypt=no
+  # libgcrypt only ships a .pc file since 1.9.
+  m4_ifdef([PKG_CHECK_MODULES],
+    [PKG_CHECK_MODULES([LIBGCRYPT], [libgcrypt],
+      [have_libgcrypt=yes
+       CPPFLAGS="$CPPFLAGS $LIBGCRYPT_CFLAGS"
+       LIBS="$LIBGCRYPT_LIBS $LIBS"
+       PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libgcrypt"],
+      [:])])
+  if test "$have_libgcrypt" = no; then
+    AC_CHECK_HEADER([gcrypt.h],
+      [AC_CHECK_LIB([gcrypt], [gcry_control],
+        [have_libgcrypt=yes
+         LIBS="-lgcrypt $LIBS"
+         CRYPTO_LIBS_PRIVATE="$CRYPTO_LIBS_PRIVATE -lgcrypt"])])
+  fi
+  if test "$WITH_LIBGCRYPT" = yes && test "$have_libgcrypt" != yes; then
     AC_MSG_ERROR([libgcrypt not found])
   fi
-  WITH_LIBGCRYPT=$ac_cv_lib_gcrypt_gcry_control
+  WITH_LIBGCRYPT=$have_libgcrypt
 fi
+if test "$WITH_LIBGCRYPT" = yes; then
+  AC_DEFINE([HAVE_LIBGCRYPT], [1], [Define to 1 if you have the libgcrypt library.])
+fi
+AC_SUBST([PC_REQUIRES_PRIVATE])
 # gnutls_base64_encode2() was added >8 years ago so should be present
 AM_CONDITIONAL(TEST_CHAP_BASE64, [test "$WITH_GNUTLS" = yes])
 
@@ -212,6 +253,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 [libiscsi_cv_HAVE_LINUX_ISER=yes],[libiscsi_cv_HAVE_LINUX_ISER=no])])
 if test x"$libiscsi_cv_HAVE_LINUX_ISER" = x"yes"; then
     AC_DEFINE(HAVE_LINUX_ISER,1,[Whether we have iSER support])
+    LIBS_PRIVATE="$LIBS_PRIVATE -libverbs -lrdmacm"
 fi
 AM_CONDITIONAL([HAVE_LINUX_ISER], [test $libiscsi_cv_HAVE_LINUX_ISER = yes])
 
@@ -238,9 +280,10 @@ if test "$libiscsi_cv_HAVE_PTHREAD" = yes; then
   AC_CHECK_LIB([pthread], [pthread_spin_lock], [])
   LIBS="$ac_save_LIBS"
   if test "$ac_cv_lib_pthread_pthread_spin_lock" = yes; then
-    LIBS_PRIVATE="-lpthread"
+    LIBS_PRIVATE="$LIBS_PRIVATE -lpthread"
   fi
 fi
+LIBS_PRIVATE="$CRYPTO_LIBS_PRIVATE $LIBS_PRIVATE"
 AC_SUBST(LIBS_PRIVATE)
 AM_CONDITIONAL([HAVE_PTHREAD_SPIN_LOCKS], [test x$ac_cv_lib_pthread_pthread_spin_lock = xyes])
 

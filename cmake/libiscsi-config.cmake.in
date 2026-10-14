@@ -8,6 +8,17 @@ if(NOT @BUILD_SHARED_LIBS@)
         set(THREADS_PREFER_PTHREAD_FLAG TRUE)
         find_dependency(Threads)
     endif()
+    # gnutls / libgcrypt found through pkg-config are linked as imported
+    # targets, which have to be recreated here.
+    if(@LIBISCSI_PC_GNUTLS@ OR @LIBISCSI_PC_GCRYPT@)
+        find_dependency(PkgConfig)
+    endif()
+    if(@LIBISCSI_PC_GNUTLS@)
+        pkg_check_modules(LIBISCSI_GNUTLS REQUIRED QUIET IMPORTED_TARGET gnutls)
+    endif()
+    if(@LIBISCSI_PC_GCRYPT@)
+        pkg_check_modules(LIBISCSI_GCRYPT REQUIRED QUIET IMPORTED_TARGET libgcrypt)
+    endif()
 endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/libiscsi-targets.cmake")
