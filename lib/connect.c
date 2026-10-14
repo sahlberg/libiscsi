@@ -143,6 +143,7 @@ iscsi_inquiry_page_0x0_cb(struct iscsi_context *iscsi, int status,
 			if (!inq->rmb && inq->device_type == SCSI_INQUIRY_PERIPHERAL_DEVICE_TYPE_DIRECT_ACCESS) {
 				if (iscsi_inquiry_task_connect(iscsi, ct->lun, 1, 0x80, MAX_STRING_SIZE + 4,
 				                               iscsi_inquiry_page_0x80_cb, ct) != NULL) {
+					scsi_free_scsi_task(task);
 					return;
 				}
 				iscsi_set_error(iscsi, "iscsi_inquiry_task for evpd 0x80 failed.");
@@ -222,10 +223,11 @@ iscsi_testunitready_cb(struct iscsi_context *iscsi, int status,
 		status = 0;
 	}
 
+	scsi_free_scsi_task(task);
+
 	if (status != 0) {
 		ct->cb(iscsi, SCSI_STATUS_ERROR, NULL,
 		       ct->private_data);
-		scsi_free_scsi_task(task);
 		iscsi_free(iscsi, ct);
 		return;
 	}
