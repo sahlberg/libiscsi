@@ -267,7 +267,10 @@ iser_tx_desc_alloc(struct iscsi_context *iscsi, size_t data_size) {
 				IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
 		if (tx_desc->data_mr == NULL) {
 			iscsi_free(iscsi, tx_desc->data_buff);
-			iscsi_set_error(iscsi, "Failed to register data mr");
+			iscsi_set_error(iscsi, "Failed to register a %zu byte "
+					"data buffer: %s. The locked memory "
+					"limit (ulimit -l) may be too low",
+					data_size, strerror(errno));
 			goto release;
 		}
 		return tx_desc;
@@ -676,16 +679,15 @@ get_data_size(struct iser_pdu *iser_pdu)
 }
 
 /*
- * iser_send_control() - sending iscsi pdu of type CONTROL
+ * iser_prepare_control() - preparing iscsi pdu of type CONTROL
  *
  * @iser_transport:    iser connection context
  * @iser_pdu:     iser pdu to send
  */
 static int
-iser_send_control(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu) {
+iser_prepare_control(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu) {
 
 	struct iser_tx_desc *tx_desc;
-	int ret;
 	struct iscsi_context *iscsi = iser_conn->cma_id->context;
 	size_t datalen;
 
@@ -711,14 +713,7 @@ iser_send_control(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu) {
 		tx_desc->num_sge   = 2;
 	}
 
-	ret = iser_post_send(iser_conn, tx_desc, true);
-	if (ret) {
-		iscsi_set_error(iscsi, "Failed to post send");
-		return -1;
-	}
-
 	return 0;
-
 }
 
 /*
@@ -865,16 +860,13 @@ is_control_opcode(uint8_t opcode)
 }
 
 /*
- * iser_send_command() - sending iscsi pdu of type COMMAND
+ * iser_prepare_command() - preparing iscsi pdu of type COMMAND
  *
  * @iser_transport:    iser connection context
  * @iser_pdu:     iser pdu to send
- *
- * Nots:
- * Need to fix if failed prepareation return -1
  */
 static int
-iser_send_command(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu)
+iser_prepare_command(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu)
 {
 	struct iser_tx_desc *tx_desc = iser_pdu->desc;
 	int err = 0;
@@ -899,51 +891,71 @@ iser_send_command(struct iser_conn *iser_conn, struct iser_pdu *iser_pdu)
 	} else
 		iser_pdu->desc->data_dir = DATA_NONE;
 
-	err = iser_post_send(iser_conn, tx_desc, true);
-	if (err)
-		return -1;
 	return 0;
 }
 
+/*
+ * Returns -1 if the pdu could not be prepared, for example because its
+ * data buffer could not be registered. That will not work any better
+ * later, and the pdu is on no list; the caller must complete it.
+ * A pdu that has been prepared is on the wait queue: if posting it
+ * fails, the connection is gone and the reconnect sends it again.
+ */
 static int
 iscsi_iser_send_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 	struct iser_pdu *iser_pdu;
 	struct iser_conn *iser_conn = iscsi->opaque;
 	uint8_t opcode;
+	int ret;
 
 	iser_pdu = container_of(pdu, struct iser_pdu, iscsi_pdu);
 	opcode = pdu->outdata.data[0];
 
         iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	iscsi_pdu_set_expstatsn(pdu, iscsi->statsn + 1);
-	ISCSI_LIST_ADD_END(&iscsi->waitpdu, pdu);
         iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	/*
          * because of async reconnection, before reconnecting successfully,
 	 * the argument 'iscsi' is the 'old_iscsi' with a empty connection.
 	 */
-	if (!iser_conn)
-		return 0;
-
-	if (iser_initialize_headers(iser_pdu, iscsi)) {
-		iscsi_set_error(iscsi, "initialize headers Failed\n");
-		return -1;
+	if (iser_conn) {
+		if (iser_initialize_headers(iser_pdu, iscsi)) {
+			return -1;
+		}
+		if (unlikely(is_control_opcode(opcode))) {
+			ret = iser_prepare_control(iser_conn, iser_pdu);
+		} else {
+			ret = iser_prepare_command(iser_conn, iser_pdu);
+		}
+		if (ret) {
+			return -1;
+		}
 	}
 
-	if (unlikely(is_control_opcode(opcode))) {
-		if (iser_send_control(iser_conn, iser_pdu)) {
-			iscsi_set_error(iscsi, "iser_send_command Failed\n");
-			return -1;
-		}
-	} else {
-		if (iser_send_command(iser_conn, iser_pdu)) {
-			iscsi_set_error(iscsi, "iser_send_command Failed\n");
-			return -1;
-		}
+	/* before posting it, the reply can arrive on another thread */
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+	ISCSI_LIST_ADD_END(&iscsi->waitpdu, pdu);
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+
+	if (iser_conn) {
+		/* failures set the error, the reconnect takes over */
+		iser_post_send(iser_conn, iser_pdu->desc, true);
 	}
 
 	return 0;
+}
+
+/* complete a pdu that iscsi_iser_send_pdu() could not prepare */
+static void
+iscsi_iser_fail_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	iscsi_give_back_cmdsn(iscsi, pdu);
+	if (pdu->callback) {
+		pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+			      pdu->private_data);
+	}
+	iscsi->drv->free_pdu(iscsi, pdu);
 }
 
 static int
@@ -961,10 +973,7 @@ iscsi_iser_revive_queued_pdus(struct iscsi_context *iscsi) {
                 iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 		if (iscsi_iser_send_pdu(iscsi, pdu) < 0) {
-                        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
-			ISCSI_LIST_ADD(&iscsi->outqueue, pdu);
-                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
-			return -1;
+			iscsi_iser_fail_pdu(iscsi, pdu);
 		}
 	}
 
@@ -1002,7 +1011,9 @@ iscsi_iser_queue_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu) {
 		return;
 	}
 
-	iscsi_iser_send_pdu(iscsi, pdu);
+	if (iscsi_iser_send_pdu(iscsi, pdu) < 0) {
+		iscsi_iser_fail_pdu(iscsi, pdu);
+	}
 }
 
 

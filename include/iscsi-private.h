@@ -438,6 +438,14 @@ typedef int (*iscsi_pdu_match_fn)(struct iscsi_pdu *pdu, void *opaque);
 int iscsi_complete_pdus(struct iscsi_context *iscsi,
                         iscsi_pdu_match_fn match, void *opaque, int status);
 
+/*
+ * @pdu is on no queue and will never be sent. Give its CmdSN back, so
+ * that the target does not wait for it, and renumber the pdus queued
+ * after it.
+ */
+void iscsi_give_back_cmdsn(struct iscsi_context *iscsi,
+                           struct iscsi_pdu *pdu);
+
 /* The first queued pdu that @match selects, or NULL. */
 struct iscsi_pdu *iscsi_find_pdu(struct iscsi_context *iscsi,
                                  iscsi_pdu_match_fn match, void *opaque);

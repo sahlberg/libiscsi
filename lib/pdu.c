@@ -1091,6 +1091,25 @@ iscsi_complete_pdus(struct iscsi_context *iscsi, iscsi_pdu_match_fn match,
 	return complete_pdus(iscsi, 1, match, opaque, status);
 }
 
+void
+iscsi_give_back_cmdsn(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
+{
+	struct iscsi_pdu *next;
+
+	if (!is_cmdsn_pdu(pdu)) {
+		return;
+	}
+
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+	iscsi->cmdsn--;
+	for (next = iscsi->outqueue; next; next = next->next) {
+		if (iscsi_serial32_compare(next->cmdsn, pdu->cmdsn) > 0) {
+			iscsi_pdu_set_cmdsn(next, next->cmdsn - 1);
+		}
+	}
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+}
+
 struct iscsi_pdu *
 iscsi_find_pdu(struct iscsi_context *iscsi, iscsi_pdu_match_fn match,
 	       void *opaque)
