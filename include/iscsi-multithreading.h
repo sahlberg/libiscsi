@@ -58,6 +58,10 @@ typedef pid_t iscsi_tid_t;
 
 iscsi_tid_t iscsi_mt_get_tid(void);
 
+struct iscsi_context;
+/* Make the service thread call iscsi_service() for POLLOUT. */
+void iscsi_mt_service_thread_wake(struct iscsi_context *iscsi);
+
 
 
 int iscsi_mt_sem_init(libiscsi_sem_t *sem, int value);

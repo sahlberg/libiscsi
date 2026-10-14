@@ -50,27 +50,75 @@ iscsi_tid_t iscsi_mt_get_tid(void)
 {
     return GetCurrentThreadId();
 }
+
+/*
+ * Windows can not interrupt select() with a signal, so the service thread
+ * also polls a UDP socket connected to itself, and a datagram on it does
+ * what SIGUSR1 does on POSIX.
+ */
+static SOCKET create_wake_socket(void)
+{
+    struct sockaddr_in sin;
+    int len = sizeof(sin);
+    u_long nonblocking = 1;
+    SOCKET s;
+
+    s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (s == INVALID_SOCKET) {
+        return INVALID_SOCKET;
+    }
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    sin.sin_port = 0;
+    if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) != 0 ||
+        getsockname(s, (struct sockaddr *)&sin, &len) != 0 ||
+        connect(s, (struct sockaddr *)&sin, sizeof(sin)) != 0 ||
+        ioctlsocket(s, FIONBIO, &nonblocking) != 0) {
+        closesocket(s);
+        return INVALID_SOCKET;
+    }
+    return s;
+}
+
+void iscsi_mt_service_thread_wake(struct iscsi_context *iscsi)
+{
+    char c = 0;
+
+    send(iscsi->service_wake_fd, &c, 1, 0);
+}
+
 static void* iscsi_mt_service_thread(void* arg)
 {
     struct iscsi_context* iscsi = (struct iscsi_context*)arg;
-    struct pollfd pfd;
+    struct pollfd pfd[2];
+    char buf[64];
     int revents;
     int ret;
 
     iscsi->multithreading_enabled = 1;
 
     while (iscsi->multithreading_enabled) {
-        pfd.fd = iscsi_get_fd(iscsi);
-        pfd.events = iscsi_which_events(iscsi);
-        pfd.revents = 0;
+        pfd[0].fd = iscsi_get_fd(iscsi);
+        pfd[0].events = iscsi_which_events(iscsi);
+        pfd[0].revents = 0;
+        pfd[1].fd = iscsi->service_wake_fd;
+        pfd[1].events = POLLIN;
+        pfd[1].revents = 0;
 
-        ret = poll(&pfd, 1, 0);
+        ret = poll(pfd, 2, iscsi->poll_timeout);
         if (ret < 0) {
             iscsi_set_error(iscsi, "Poll failed");
             revents = -1;
         }
         else {
-            revents = pfd.revents;
+            revents = pfd[0].revents;
+            if (pfd[1].revents & POLLIN) {
+                /* We were woken up to start writing new PDUs. */
+                while (recv(iscsi->service_wake_fd, buf, sizeof(buf), 0) > 0)
+                    ;
+                revents |= POLLOUT;
+            }
         }
         if (iscsi_service(iscsi, revents) < 0) {
             if (revents != -1)
@@ -82,13 +130,8 @@ static void* iscsi_mt_service_thread(void* arg)
 
 static DWORD WINAPI service_thread_init(LPVOID lpParam)
 {
-    HANDLE hStdout;
     struct iscsi_context* iscsi;
 
-    hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (hStdout == INVALID_HANDLE_VALUE) {
-        return 1;
-    }
     iscsi = (struct iscsi_context *)lpParam;
     iscsi_mt_service_thread(iscsi);
     return 0;
@@ -96,13 +139,21 @@ static DWORD WINAPI service_thread_init(LPVOID lpParam)
 
 int iscsi_mt_service_thread_start(struct iscsi_context* iscsi)
 {
+    iscsi->service_wake_fd = create_wake_socket();
+    if (iscsi->service_wake_fd == INVALID_SOCKET) {
+        iscsi_set_error(iscsi, "Failed to create the service thread "
+                        "wakeup socket");
+        return -1;
+    }
     iscsi->service_thread = CreateThread(NULL, 1024*1024, service_thread_init, iscsi, 0, NULL);
     if (iscsi->service_thread == NULL) {
         iscsi_set_error(iscsi, "Failed to start service thread");
+        closesocket(iscsi->service_wake_fd);
+        iscsi->service_wake_fd = INVALID_SOCKET;
         return -1;
     }
     while (iscsi->multithreading_enabled == 0) {
-        Sleep(100);
+        Sleep(1);
     }
     return 0;
 }
@@ -110,7 +161,11 @@ int iscsi_mt_service_thread_start(struct iscsi_context* iscsi)
 void iscsi_mt_service_thread_stop(struct iscsi_context* iscsi)
 {
     iscsi->multithreading_enabled = 0;
+    iscsi_mt_service_thread_wake(iscsi);
     while (WaitForSingleObject(iscsi->service_thread, INFINITE) != WAIT_OBJECT_0);
+    CloseHandle(iscsi->service_thread);
+    closesocket(iscsi->service_wake_fd);
+    iscsi->service_wake_fd = INVALID_SOCKET;
 }
 
 int iscsi_mt_sem_init(libiscsi_sem_t* sem, int value)
@@ -244,6 +299,11 @@ void iscsi_mt_service_thread_stop(struct iscsi_context *iscsi)
 {
         iscsi->multithreading_enabled = 0;
         pthread_join(iscsi->service_thread, NULL);
+}
+
+void iscsi_mt_service_thread_wake(struct iscsi_context *iscsi)
+{
+        pthread_kill(iscsi->service_thread, SIGUSR1);
 }
         
 #if defined(__APPLE__) && defined(HAVE_DISPATCH_DISPATCH_H)

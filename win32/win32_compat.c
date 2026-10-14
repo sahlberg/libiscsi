@@ -76,7 +76,7 @@ int win32_poll(struct pollfd *fds, unsigned int nfds, int timo)
 {
 	SELECT_TIMEVAL_TYPE timeout, *toptr;
 	fd_set ifds, ofds, efds, *ip, *op;
-	unsigned int i;
+	unsigned int i, nvalid = 0;
 	int rc;
 
 	// Set up the file-descriptor sets in ifds, ofds and efds.
@@ -85,6 +85,11 @@ int win32_poll(struct pollfd *fds, unsigned int nfds, int timo)
 	FD_ZERO(&efds);
 	for (i = 0, op = ip = 0; i < nfds; ++i) {
 		fds[i].revents = 0;
+		// Like poll(), ignore negative descriptors.
+		if (fds[i].fd == INVALID_SOCKET) {
+			continue;
+		}
+		nvalid++;
 		if (fds[i].events & (POLLIN | POLLPRI)) {
 			ip = &ifds;
 			FD_SET(fds[i].fd, ip);
@@ -105,6 +110,12 @@ int win32_poll(struct pollfd *fds, unsigned int nfds, int timo)
 		timeout.tv_usec = (timo - timeout.tv_sec * 1000) * 1000;
 	}
 
+	// select() fails instead of sleeping when all the sets are empty.
+	if (nvalid == 0) {
+		Sleep(timo < 0 ? INFINITE : (DWORD)timo);
+		return 0;
+	}
+
 #ifdef DEBUG_POLL
 	printf("Entering select() sec=%ld usec=%ld ip=%lx op=%lx\n",
 	       (long)timeout.tv_sec, (long)timeout.tv_usec, (long)ip, (long)op);
@@ -119,7 +130,9 @@ int win32_poll(struct pollfd *fds, unsigned int nfds, int timo)
 
 	if (rc > 0) {
 		for (i = 0; i < nfds; ++i) {
-			int fd = fds[i].fd;
+			SOCKET fd = fds[i].fd;
+			if (fd == INVALID_SOCKET)
+				continue;
 			if (fds[i].events & (POLLIN | POLLPRI) &&
 			    FD_ISSET(fd, &ifds))
 				fds[i].revents |= POLLIN;

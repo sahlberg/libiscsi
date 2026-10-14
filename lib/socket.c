@@ -62,10 +62,6 @@
 #include <sys/uio.h>
 #endif
 
-#ifdef HAVE_PTHREAD
-#include <signal.h>
-#endif
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -150,17 +146,18 @@ iscsi_add_to_outqueue(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
  finished:
         iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
         
-#if defined(HAVE_MULTITHREADING) && defined(HAVE_PTHREAD)
+#ifdef HAVE_MULTITHREADING
         if(iscsi->multithreading_enabled) {
+                /* Only the service thread may service the socket. */
                 if (current == NULL && pdu == iscsi->outqueue) {
-                        pthread_kill(iscsi->service_thread, SIGUSR1);
+                        iscsi_mt_service_thread_wake(iscsi);
                 }
         } else {
 #endif
                 if (iscsi->outqueue == pdu) {
                         iscsi->drv->service(iscsi, POLLOUT);
                 }
-#if defined(HAVE_MULTITHREADING) && defined(HAVE_PTHREAD)
+#ifdef HAVE_MULTITHREADING
         }
 #endif
 
