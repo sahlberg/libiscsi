@@ -879,12 +879,13 @@ iscsi_pdu_set_expxferlen(struct iscsi_pdu *pdu, uint32_t expxferlen)
  * 2, Once command w timeout and callback to uplayer, uplayers usually releases memory of
  *    iscsi task(include memory referenced by iovec.iov_base). DATAOUT[m] would access
  *    invalid memory iovce.iov_base.
+ *
+ * Called with iscsi_lock held.
  */
 static int iscsi_pdu_data_out_inprocess(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
 {
 	struct iscsi_pdu *tmp_pdu, *next_pdu;
 	enum scsi_opcode opcode = pdu->outdata.data[32];
-        int ret = 1;
         
 	/* only care DATA OUT command here */
 	if ((pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_SCSI_REQUEST) {
@@ -900,10 +901,9 @@ static int iscsi_pdu_data_out_inprocess(struct iscsi_context *iscsi, struct iscs
 			return 0;
 	};
 
-        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	/* current outgoing one is part of the PDU? */
 	if (iscsi->outqueue_current && (iscsi->outqueue_current->scsi_cbdata.task == pdu->scsi_cbdata.task)) {
-                goto finished;
+                return 1;
 	}
 
 	/* any child DATAOUT PDU in outqueue? */
@@ -911,14 +911,11 @@ static int iscsi_pdu_data_out_inprocess(struct iscsi_context *iscsi, struct iscs
 		next_pdu = tmp_pdu->next;
 
 		if (tmp_pdu->scsi_cbdata.task == pdu->scsi_cbdata.task) {
-                        goto finished;
+                        return 1;
 		}
 	}
 
-        ret = 0;
- finished:
-        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
-	return ret;
+	return 0;
 }
 
 void
