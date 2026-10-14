@@ -207,9 +207,14 @@ int main(void) { int foo = FIONREAD; return foo; }
 " NEED_SYS_FILIO_H)
 
 check_c_source_compiles("
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#endif
 int main(void) { struct sockaddr_in6 sock; return (int)sizeof(sock); }
 " HAVE_SOCKADDR_IN6)
 

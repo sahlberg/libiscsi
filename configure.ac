@@ -232,9 +232,14 @@ AC_CHECK_HEADERS(dnl
 )
 
 AC_CACHE_CHECK([for sockaddr_in6 support],libiscsi_cv_HAVE_SOCKADDR_IN6,[
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>]], [[struct sockaddr_in6 sock; int len = sizeof(sock);]])],[libiscsi_cv_HAVE_SOCKADDR_IN6=yes],[libiscsi_cv_HAVE_SOCKADDR_IN6=no])])
+#include <netinet/in.h>
+#endif]], [[struct sockaddr_in6 sock; int len = sizeof(sock);]])],[libiscsi_cv_HAVE_SOCKADDR_IN6=yes],[libiscsi_cv_HAVE_SOCKADDR_IN6=no])])
 if test x"$libiscsi_cv_HAVE_SOCKADDR_IN6" = x"yes"; then
     AC_DEFINE(HAVE_SOCKADDR_IN6,1,[Whether we have IPv6 support])
 fi
