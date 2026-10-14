@@ -61,6 +61,8 @@ iscsi_tid_t iscsi_mt_get_tid(void);
 struct iscsi_context;
 /* Make the service thread call iscsi_service() for POLLOUT. */
 void iscsi_mt_service_thread_wake(struct iscsi_context *iscsi);
+/* Whether the calling thread is the service thread of @iscsi. */
+int iscsi_mt_is_service_thread(struct iscsi_context *iscsi);
 
 
 

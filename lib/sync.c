@@ -246,6 +246,23 @@ reconnect_event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state
 {
 	struct pollfd pfd;
 	int ret;
+
+#ifdef HAVE_MULTITHREADING
+	if (iscsi->multithreading_enabled) {
+		/* The service thread does the reconnect, wait for it. */
+		while (iscsi->pending_reconnect || iscsi->old_iscsi) {
+			if (iscsi->reconnect_deferred) {
+				iscsi_set_error(iscsi, "Reconnect failed");
+				state->status = -1;
+				return;
+			}
+			poll(NULL, 0, 10);
+		}
+		state->status = 0;
+		return;
+	}
+#endif
+
 	while (iscsi->old_iscsi) {
 		pfd.fd = iscsi_get_fd(iscsi);
 		pfd.events = iscsi_which_events(iscsi);

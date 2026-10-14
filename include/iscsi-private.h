@@ -17,6 +17,7 @@
 #ifndef __iscsi_private_h__
 #define __iscsi_private_h__
 
+#include <stddef.h>
 #include <stdint.h>
 #include <time.h>
 #ifndef _WIN32
@@ -195,10 +196,16 @@ struct iscsi_context {
 	void *fd_dup_opaque;
 
 #ifdef HAVE_MULTITHREADING
+        /*
+         * Everything from here on belongs to the context rather than to
+         * the session, and is kept when reconnect() replaces the session
+         * state. It must stay at the end of the structure.
+         */
         int multithreading_enabled;
         libiscsi_spinlock_t iscsi_lock;
         libiscsi_mutex_t iscsi_mutex;
         libiscsi_thread_t service_thread;
+        iscsi_tid_t service_tid;
         int poll_timeout;
 #ifdef WIN32
         /* loopback UDP socket used to wake up the service thread */
@@ -206,6 +213,14 @@ struct iscsi_context {
 #endif
 #endif /* HAVE_MULTITHREADING */
 };
+
+/* The part of struct iscsi_context that reconnect() replaces. */
+#ifdef HAVE_MULTITHREADING
+#define ISCSI_SESSION_STATE_SIZE \
+        offsetof(struct iscsi_context, multithreading_enabled)
+#else
+#define ISCSI_SESSION_STATE_SIZE sizeof(struct iscsi_context)
+#endif
 
 #define ISCSI_PDU_IMMEDIATE		       0x40
 

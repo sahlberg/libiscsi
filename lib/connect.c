@@ -474,6 +474,10 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
 	iscsi->mallocs += old_iscsi->mallocs;
 	iscsi->frees += old_iscsi->frees;
 
+#ifdef HAVE_MULTITHREADING
+	iscsi_mt_spin_destroy(&old_iscsi->iscsi_lock);
+	iscsi_mt_mutex_destroy(&old_iscsi->iscsi_mutex);
+#endif
 	free(old_iscsi);
 
 	/* avoid a reconnect faster than 3 seconds */
@@ -513,6 +517,19 @@ static int reconnect(struct iscsi_context *iscsi, int force)
 		return 0;
 	}
 
+#ifdef HAVE_MULTITHREADING
+	/*
+	 * Only the service thread may replace the session state while it
+	 * is running, so let it do the reconnect.
+	 */
+	if (iscsi->multithreading_enabled &&
+	    !iscsi_mt_is_service_thread(iscsi)) {
+		iscsi->pending_reconnect = 1;
+		iscsi_mt_service_thread_wake(iscsi);
+		return 0;
+	}
+#endif
+
 	if (iscsi->reconnect_max_retries != -1 && iscsi->old_iscsi &&
 	    iscsi->old_iscsi->retry_cnt > iscsi->reconnect_max_retries) {
 		iscsi_defer_reconnect(iscsi);
@@ -530,6 +547,7 @@ static int reconnect(struct iscsi_context *iscsi, int force)
 	 */
 	if (iscsi_init_transport(tmp_iscsi, iscsi->transport)) {
 		ISCSI_LOG(iscsi, 2, "failed to initializing transport for reconnection");
+		iscsi_destroy_context(tmp_iscsi);
 		return -1;
 	}
 
@@ -569,6 +587,16 @@ static int reconnect(struct iscsi_context *iscsi, int force)
 
 	tmp_iscsi->reconnect_max_retries = iscsi->reconnect_max_retries;
 
+	/*
+	 * Only the session state of tmp_iscsi is copied into iscsi below.
+	 * iscsi keeps its own locks, service thread and poll timeout.
+	 */
+#ifdef HAVE_MULTITHREADING
+	iscsi_mt_spin_destroy(&tmp_iscsi->iscsi_lock);
+	iscsi_mt_mutex_destroy(&tmp_iscsi->iscsi_mutex);
+#endif
+
+	iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	if (iscsi->old_iscsi) {
 		iscsi_free(iscsi, iscsi->opaque);
 
@@ -578,12 +606,25 @@ static int reconnect(struct iscsi_context *iscsi, int force)
 	} else {
 		tmp_iscsi->old_iscsi = malloc(sizeof(struct iscsi_context));
 		if (!tmp_iscsi->old_iscsi) {
+			iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 			free(tmp_iscsi);
 			return -1;
 		}
 		memcpy(tmp_iscsi->old_iscsi, iscsi, sizeof(struct iscsi_context));
+#ifdef HAVE_MULTITHREADING
+		/*
+		 * old_iscsi only holds the old session. Give it locks of its
+		 * own instead of copies of the ones iscsi keeps using, since
+		 * iscsi_destroy_context() destroys them.
+		 */
+		tmp_iscsi->old_iscsi->multithreading_enabled = 0;
+		iscsi_mt_spin_init(&tmp_iscsi->old_iscsi->iscsi_lock,
+		                   PTHREAD_PROCESS_PRIVATE);
+		iscsi_mt_mutex_init(&tmp_iscsi->old_iscsi->iscsi_mutex);
+#endif
 	}
-	memcpy(iscsi, tmp_iscsi, sizeof(struct iscsi_context));
+	memcpy(iscsi, tmp_iscsi, ISCSI_SESSION_STATE_SIZE);
+	iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 	free(tmp_iscsi);
 
 	rc = iscsi_full_connect_async(iscsi, iscsi->portal,

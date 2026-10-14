@@ -96,6 +96,7 @@ static void* iscsi_mt_service_thread(void* arg)
     int revents;
     int ret;
 
+    iscsi->service_tid = iscsi_mt_get_tid();
     iscsi->multithreading_enabled = 1;
 
     while (iscsi->multithreading_enabled) {
@@ -249,6 +250,7 @@ static void *iscsi_mt_service_thread(void *arg)
         /* set signal to break poll when we need to send more data */
         signal(SIGUSR1, on_sigusr1);
         
+        iscsi->service_tid = iscsi_mt_get_tid();
         iscsi->multithreading_enabled = 1;
 
         /* TODO: add timeout scanning */
@@ -355,6 +357,12 @@ int iscsi_mt_sem_wait(libiscsi_sem_t *sem)
 #endif
 
 #endif /* HAVE_PTHREAD */
+
+int iscsi_mt_is_service_thread(struct iscsi_context *iscsi)
+{
+        return iscsi->multithreading_enabled &&
+                iscsi->service_tid == iscsi_mt_get_tid();
+}
 
 #endif /* HAVE_MULTITHREADING */
 
