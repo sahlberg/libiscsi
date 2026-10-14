@@ -69,6 +69,18 @@ projects can use either of:
     find_package(libiscsi REQUIRED)
     target_link_libraries(myapp PRIVATE libiscsi::iscsi)
 
+Building on Windows
+===================
+Use CMake with Visual Studio (MSVC), or CMake or autotools with MinGW, for
+example from MSYS2.
+
+    cmake -B build -A x64
+    cmake --build build --config RelWithDebInfo
+
+CMake can also generate a Visual Studio solution to open in the IDE. MSVC has
+no getopt(), so with MSVC only the library and the iscsiclient example are
+built. MinGW builds the utilities and the test programs as well.
+
 
 Build RPM
 =========
@@ -312,7 +324,7 @@ Libiscsi has been tested on:
 * Linux (32 and 64 bit)
 * Cygwin
 * FreeBSD
-* Windows (Win7-VisualStudio10)
+* Windows: MSVC and MinGW, 32 and 64 bit
 * OpenSolaris
 * Solaris 11 : Use "gmake" to build.
 * OS X
