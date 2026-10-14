@@ -15,6 +15,10 @@ set(ISCSI_TEST_PROGS
     prog_timeout
     prog_read_all_pdus
     prog_header_digest)
+# Uses the multithreading service thread, and POSIX signals.
+if(HAVE_PTHREAD)
+    list(APPEND ISCSI_TEST_PROGS prog_mt_reconnect)
+endif()
 
 foreach(_prog IN LISTS ISCSI_TEST_PROGS)
     add_executable(${_prog} ${_prog}.c)

@@ -1076,7 +1076,14 @@ iscsi_service_reconnect_if_loggedin(struct iscsi_context *iscsi)
 static int
 iscsi_tcp_service(struct iscsi_context *iscsi, int revents)
 {
-	if (iscsi->pending_reconnect) {
+	int pending_reconnect;
+
+	/* another thread can ask for a reconnect, see reconnect() */
+	iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+	pending_reconnect = iscsi->pending_reconnect;
+	iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+
+	if (pending_reconnect) {
 		if (time(NULL) >= iscsi->next_reconnect) {
 			return iscsi_reconnect(iscsi);
 		} else {
