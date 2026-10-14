@@ -7,9 +7,10 @@ noinst_PROGRAMS = prog_reconnect prog_reconnect_timeout prog_noop_reply \
 	prog_readwrite_iov prog_timeout prog_read_all_pdus \
 	prog_header_digest
 
-# Uses the multithreading service thread, and POSIX signals.
+# Use the multithreading service thread, and POSIX signals.
 if HAVE_PTHREAD
-noinst_PROGRAMS += prog_mt_reconnect
+noinst_PROGRAMS += prog_mt_reconnect prog_sync_timeout
+prog_sync_timeout_LDADD = -lpthread
 endif
 
 T = `ls test_*.sh`
