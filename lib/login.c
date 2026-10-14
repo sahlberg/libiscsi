@@ -892,13 +892,17 @@ static void compute_chap_r(struct iscsi_context *iscsi, int chap_i,
 {
         switch (iscsi->chap_auth) {
         case ISCSI_CHAP_MD5:
-                return compute_chap_r_md5(iscsi, chap_i, passwd, chap_c, digest);
+                compute_chap_r_md5(iscsi, chap_i, passwd, chap_c, digest);
+                break;
         case ISCSI_CHAP_SHA_1:
-                return compute_chap_r_sha1(iscsi, chap_i, passwd, chap_c, digest);
+                compute_chap_r_sha1(iscsi, chap_i, passwd, chap_c, digest);
+                break;
         case ISCSI_CHAP_SHA_256:
-                return compute_chap_r_sha256(iscsi, chap_i, passwd, chap_c, digest);
+                compute_chap_r_sha256(iscsi, chap_i, passwd, chap_c, digest);
+                break;
         case ISCSI_CHAP_SHA3_256:
-                return compute_chap_r_sha3_256(iscsi, chap_i, passwd, chap_c, digest);
+                compute_chap_r_sha3_256(iscsi, chap_i, passwd, chap_c, digest);
+                break;
         }
 }
 
