@@ -1388,18 +1388,40 @@ iser_rcv_completion(struct iser_rx_desc *rx_desc,
 	if (iser_pdu->desc->type == ISCSI_COMMAND &&
 		iser_pdu->desc->data_dir == DATA_READ) {
 
-		int i, offset = 0;
+		int i;
+		size_t offset = 0, len;
 		struct scsi_task *task = iser_pdu->iscsi_pdu.scsi_cbdata.task;
 		struct scsi_iovector *iovector_in = &task->iovector_in;
+		size_t xferlen = task->expxferlen;
+
+		/*
+		 * Only copy what the target wrote. The rest of the data
+		 * buffer is left over from earlier commands, and must not
+		 * end up in the application's buffer.
+		 */
+		if (opcode == ISCSI_PDU_SCSI_RESPONSE &&
+		    (in.hdr[1] & ISCSI_PDU_DATA_RESIDUAL_UNDERFLOW)) {
+			uint32_t residual = scsi_get_uint32(&in.hdr[44]);
+
+			xferlen = residual < xferlen ? xferlen - residual : 0;
+		}
 
 		if (iovector_in->iov == NULL) {
-			memcpy(iser_pdu->iscsi_pdu.indata.data, &iser_pdu->desc->data_buff[offset],
-				 iser_pdu->iscsi_pdu.indata.size);
+			if (xferlen > iser_pdu->iscsi_pdu.indata.size) {
+				xferlen = iser_pdu->iscsi_pdu.indata.size;
+			}
+			memcpy(iser_pdu->iscsi_pdu.indata.data,
+			       iser_pdu->desc->data_buff, xferlen);
+			iser_pdu->iscsi_pdu.indata.size = xferlen;
 		} else {
-			for (i = 0 ; i < iovector_in->niov ; i++) {
-				memcpy(iovector_in->iov[i].iov_base, &iser_pdu->desc->data_buff[offset],
-					iovector_in->iov[i].iov_len);
-				offset += iovector_in->iov[i].iov_len;
+			for (i = 0 ; i < iovector_in->niov && offset < xferlen; i++) {
+				len = iovector_in->iov[i].iov_len;
+				if (len > xferlen - offset) {
+					len = xferlen - offset;
+				}
+				memcpy(iovector_in->iov[i].iov_base,
+				       &iser_pdu->desc->data_buff[offset], len);
+				offset += len;
 			}
 		}
 	}
