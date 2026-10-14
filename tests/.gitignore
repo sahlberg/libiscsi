@@ -6,4 +6,5 @@
 /prog_reconnect_timeout
 /prog_mt_reconnect
 /prog_sync_timeout
+/prog_resend_limit
 /prog_timeout

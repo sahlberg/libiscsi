@@ -325,6 +325,9 @@ struct iscsi_pdu {
 
 	uint32_t calculated_data_digest;
 	bool outdata_digest_computed;
+
+	/* How many times a reconnect has sent this command again */
+	int resends;
 };
 
 struct iscsi_pdu *iscsi_allocate_pdu(struct iscsi_context *iscsi,
@@ -438,6 +441,14 @@ typedef int (*iscsi_pdu_match_fn)(struct iscsi_pdu *pdu, void *opaque);
 int iscsi_complete_pdus(struct iscsi_context *iscsi,
                         iscsi_pdu_match_fn match, void *opaque, int status);
 
+/*
+ * @pdu is on no queue and will never be sent. Give its CmdSN back, so
+ * that the target does not wait for it, and renumber the pdus queued
+ * after it.
+ */
+void iscsi_give_back_cmdsn(struct iscsi_context *iscsi,
+                           struct iscsi_pdu *pdu);
+
 /* The first queued pdu that @match selects, or NULL. */
 struct iscsi_pdu *iscsi_find_pdu(struct iscsi_context *iscsi,
                                  iscsi_pdu_match_fn match, void *opaque);
@@ -451,6 +462,23 @@ int iscsi_connect_task_uses(iscsi_command_cb cb, void *private_data,
 
 void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
                         void *command_data, void *private_data);
+
+/*
+ * A reconnect sends the commands that were in flight again. A command
+ * that makes the target drop the connection every time, such as one
+ * larger than the target can take, would loop forever. Fail it instead
+ * once it has been sent again this many times.
+ */
+#define ISCSI_MAX_COMMAND_RESENDS 3
+
+/*
+ * iscsi_scsi_command_async() for a command that is being sent again by
+ * a reconnect for the @resends time.
+ */
+int iscsi_scsi_command_resend_async(struct iscsi_context *iscsi, int lun,
+                                    struct scsi_task *task,
+                                    iscsi_command_cb cb, void *private_data,
+                                    int resends);
 
 struct iscsi_pdu *iscsi_tcp_new_pdu(struct iscsi_context *iscsi, size_t size);
 
