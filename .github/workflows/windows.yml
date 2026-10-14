@@ -1,0 +1,71 @@
+name: Windows
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  msvc:
+    name: MSVC (CMake, ${{ matrix.arch }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, Win32]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure
+      run: cmake -S . -B build -A ${{ matrix.arch }}
+
+    - name: Build
+      run: cmake --build build --config RelWithDebInfo --parallel
+
+    - name: Install
+      run: cmake --install build --config RelWithDebInfo --prefix install
+
+  mingw:
+    name: MinGW (${{ matrix.build }}, ${{ matrix.sys }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sys: [ucrt64, mingw32]
+        build: [cmake, autotools]
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.sys }}
+        update: true
+        pacboy: >-
+          gcc:p
+          cmake:p
+          ninja:p
+          pkgconf:p
+          gnutls:p
+        install: >-
+          autoconf
+          automake
+          libtool
+          make
+
+    - name: Build (CMake)
+      if: matrix.build == 'cmake'
+      run: |
+        cmake -S . -B build -G Ninja
+        cmake --build build
+        cmake --install build --prefix install
+
+    - name: Build (autotools)
+      if: matrix.build == 'autotools'
+      run: |
+        ./autogen.sh
+        ./configure
+        make -j4
