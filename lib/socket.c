@@ -503,7 +503,12 @@ iscsi_tcp_which_events(struct iscsi_context *iscsi)
 {
 	int events = iscsi->is_connected ? POLLIN : POLLOUT;
 
-	if (iscsi->pending_reconnect && iscsi->old_iscsi &&
+	/*
+	 * Nothing to do on the socket until the reconnect, which can be
+	 * postponed for a few seconds after the previous one. A socket
+	 * that the target closed would keep polling readable meanwhile.
+	 */
+	if (iscsi->pending_reconnect &&
 		time(NULL) < iscsi->next_reconnect) {
 		return 0;
 	}
@@ -714,6 +719,8 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
                                      count, 0);
 			if (count == 0) {
 				/* remote side has closed the socket. */
+				iscsi_set_error(iscsi, "The target closed "
+						"the connection");
                                 goto finished;
 			}
 			if (count < 0) {
@@ -769,6 +776,8 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			}
 			if (count == 0) {
 				/* remote side has closed the socket. */
+				iscsi_set_error(iscsi, "The target closed "
+						"the connection");
                                 goto finished;
 			}
 			if (count < 0) {
@@ -791,6 +800,8 @@ iscsi_read_from_socket(struct iscsi_context *iscsi)
 			count = recv(iscsi->fd, (void *)(in->data_digest_buf + in->received_data_digest_bytes), ISCSI_DIGEST_SIZE - in->received_data_digest_bytes, 0);
 			if (count == 0) {
 				/* remote side has closed the socket. */
+				iscsi_set_error(iscsi, "The target closed "
+						"the connection");
                                 goto finished;
 			}
 			if (count < 0) {
