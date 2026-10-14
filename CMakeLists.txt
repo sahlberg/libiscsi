@@ -90,6 +90,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     list(APPEND LIBISCSI_PLATFORM_LIBS socket nsl)
 endif()
 
+if(MSVC)
+    # Do not warn about the standard C and BSD socket functions.
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE
+                            _WINSOCK_DEPRECATED_NO_WARNINGS)
+endif()
+
 if(MINGW)
     # C99 printf formats such as %zu and %llu.
     add_compile_definitions(__USE_MINGW_ANSI_STDIO=1)
@@ -388,9 +394,21 @@ function(libiscsi_apply_build_settings target)
     endif()
 endfunction()
 
+# The utilities, the tests and most examples use getopt_long(), which MSVC
+# does not have. Only the library and iscsiclient are built there.
+check_include_file(getopt.h HAVE_GETOPT_H)
+if(NOT HAVE_GETOPT_H)
+    message(STATUS "No getopt.h: not building the utilities, test-tool "
+                   "and tests, and only the iscsiclient example")
+    set(ENABLE_TEST_TOOL OFF)
+    set(ENABLE_TESTS OFF)
+endif()
+
 add_subdirectory(lib)
 add_subdirectory(doc)
-add_subdirectory(utils)
+if(HAVE_GETOPT_H)
+    add_subdirectory(utils)
+endif()
 
 if(ENABLE_TEST_TOOL)
     add_subdirectory(test-tool)
@@ -477,6 +495,7 @@ elseif(HAVE_LIBGCRYPT)
 else()
     message(STATUS "  MD5 provider ......... bundled md5.c")
 endif()
+message(STATUS "  build utilities ...... ${HAVE_GETOPT_H}")
 message(STATUS "  build test-tool ...... ${ENABLE_TEST_TOOL} (cunit: ${HAVE_CUNIT})")
 message(STATUS "  build tests .......... ${ENABLE_TESTS}")
 message(STATUS "  build examples ....... ${ENABLE_EXAMPLES}")
