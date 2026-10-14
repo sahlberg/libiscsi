@@ -2782,68 +2782,22 @@ int iscsi_scsi_is_task_in_outqueue(struct iscsi_context *iscsi, struct scsi_task
 	return 0;
 }
 
+static int
+pdu_is_for_task(struct iscsi_pdu *pdu, void *task)
+{
+	/* the command and its DATA-OUT pdus */
+	return pdu->scsi_cbdata.task == task;
+}
+
 int
 iscsi_scsi_cancel_task(struct iscsi_context *iscsi,
 		       struct scsi_task *task)
 {
-	struct iscsi_pdu *pdu, *tmp;
-	struct iscsi_pdu *next_pdu;
-	uint32_t cmdsn_gap = 0;
-	int ret = -1;
-
-        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
-	for (pdu = iscsi->waitpdu; pdu; pdu = pdu->next) {
-		if (pdu->itt == task->itt) {
-                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
-			ISCSI_LIST_REMOVE(&iscsi->waitpdu, pdu);
-			if (pdu->callback) {
-				pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-				      pdu->private_data);
-			}
-			iscsi->drv->free_pdu(iscsi, pdu);
-			return 0;
-		}
+	if (iscsi_complete_pdus(iscsi, pdu_is_for_task, task,
+				SCSI_STATUS_CANCELLED) == 0) {
+		return -1;
 	}
-        
-        tmp = NULL;
-	for (pdu = iscsi->outqueue; pdu; pdu = next_pdu) {
-		next_pdu = pdu->next;
-
-		if (cmdsn_gap > 0) {
-			iscsi_pdu_set_cmdsn(pdu, pdu->cmdsn - cmdsn_gap);
-		}
-
-		if (pdu->itt == task->itt) {
-			ISCSI_LIST_REMOVE(&iscsi->outqueue, pdu);
-                        ISCSI_LIST_ADD_END(&tmp, pdu);
-                }
-        }
-        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
-	for (pdu = tmp; pdu; pdu = next_pdu) {
-		ISCSI_LIST_REMOVE(&tmp, pdu);
-                if (pdu->callback) {
-                        pdu->callback(iscsi, SCSI_STATUS_CANCELLED, NULL,
-				      pdu->private_data);
-                }
-                if (!(pdu->outdata.data[0] & ISCSI_PDU_IMMEDIATE) &&
-                    (pdu->outdata.data[0] & 0x3f) != ISCSI_PDU_DATA_OUT) {
-                        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
-                        iscsi->cmdsn--;
-                        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
-                        cmdsn_gap++;
-                }
-                iscsi->drv->free_pdu(iscsi, pdu);
-                ret = 0;
-                if (!cmdsn_gap) {
-                        break;
-                }
-        }
-
-	if (iscsi->old_iscsi) {
-		return iscsi_scsi_cancel_task(iscsi->old_iscsi, task);
-	}
-
-	return ret;
+	return 0;
 }
 
 void

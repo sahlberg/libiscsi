@@ -424,6 +424,22 @@ uint32_t iscsi_itt_post_increment(struct iscsi_context *iscsi);
 
 void iscsi_timeout_scan(struct iscsi_context *iscsi);
 
+typedef int (*iscsi_pdu_match_fn)(struct iscsi_pdu *pdu, void *opaque);
+
+/*
+ * Remove the pdus that @match selects from the queues of @iscsi and of the
+ * session it is reconnecting from, invoke their callbacks with @status and
+ * free them. If one of them has been partly sent, the connection is shut
+ * down and the usual reconnect takes over. Returns the number of
+ * callbacks invoked.
+ */
+int iscsi_complete_pdus(struct iscsi_context *iscsi,
+                        iscsi_pdu_match_fn match, void *opaque, int status);
+
+/* The first queued pdu that @match selects, or NULL. */
+struct iscsi_pdu *iscsi_find_pdu(struct iscsi_context *iscsi,
+                                 iscsi_pdu_match_fn match, void *opaque);
+
 void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
                         void *command_data, void *private_data);
 

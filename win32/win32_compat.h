@@ -40,6 +40,10 @@ THE SOFTWARE.
 
 #define SOL_TCP IPPROTO_TCP
 
+#ifndef SHUT_RDWR
+#define SHUT_RDWR SD_BOTH
+#endif
+
 #if(_WIN32_WINNT < 0x0600)
 
 #define POLLIN      0x0001    /* There is data to read */
