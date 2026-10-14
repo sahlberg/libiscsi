@@ -194,6 +194,8 @@ struct iscsi_context {
 	int no_ua_on_reconnect;
 	void (*fd_dup_cb)(struct iscsi_context *iscsi, void *opaque);
 	void *fd_dup_opaque;
+	/* non-zero while iscsi_process_pdu() runs, see reconnect() */
+	int processing_pdu;
 
 #ifdef HAVE_MULTITHREADING
         /*
