@@ -29,7 +29,7 @@ do {                                                    \
 	if ((*list) == NULL) {                          \
                 ISCSI_LIST_ADD((list), (item));         \
         } else {                                        \
-                typeof(*list) head = (*list);           \
+                void *head = (*list);                   \
                 while ((*list)->next)                   \
                         (*list) = (*list)->next;        \
                 (*list)->next = (item);                 \
@@ -43,7 +43,7 @@ do {                                                                    \
         if ((*list) == (item)) {                                        \
                 (*list) = (item)->next;                                 \
         } else {                                                        \
-                typeof(*list) head = (*list);                           \
+                void *head = (*list);                                   \
                 while ((*list)->next && (*list)->next != (item))        \
                         (*list) = (*list)->next;                        \
                 if ((*list)->next != NULL) {		    	    	\

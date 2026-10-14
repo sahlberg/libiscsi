@@ -19,12 +19,13 @@
 
 #include <stdint.h>
 #include <time.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <stdbool.h>
 
 #if defined(_WIN32)
-#include <basetsd.h>
-#define ssize_t SSIZE_T
+#include "win32_compat.h"
 #endif
 
 #include "iscsi.h"
@@ -36,29 +37,6 @@
 #define ISCSI_PRINTF_FORMAT printf
 #endif
 
-#ifdef HAVE_MULTITHREADING
-#ifdef HAVE_STDATOMIC_H
-#include <stdatomic.h>
-#define ATOMIC_INC(rpc, x) \
-        atomic_fetch_add_explicit(&x, 1, memory_order_relaxed)
-#define ATOMIC_DEC(rpc, x) \
-        atomic_fetch_sub_explicit(&x, 1, memory_order_relaxed)
-#else /* HAVE_STDATOMIC_H */
-#define ATOMIC_INC(rpc, x)                              \
-        iscs_mt_mutex_lock(&iscs->atomic_int_mutex);    \
-        }                                               \
-	x++;                                            \
-        iscsi_mt_mutex_unlock(&iscsi->atomic_int_mutex);
-#define ATOMIC_DEC(rpc, x)                              \
-        nfs_mt_mutex_lock(&rpc->atomic_int_mutex);      \
-	x--;                                            \
-        nfs_mt_mutex_unlock(&rpc->atomic_int_mutex);
-#endif /* HAVE_STDATOMIC_H */
-#else /* HAVE_MULTITHREADING */
-/* no multithreading support, no need to protect the increment */
-#define ATOMIC_INC(rpc, x) x++
-#define ATOMIC_DEC(rpc, x) x--
-#endif /* HAVE_MULTITHREADING */
 
 #include "iscsi-multithreading.h"
 
@@ -222,9 +200,6 @@ struct iscsi_context {
         libiscsi_mutex_t iscsi_mutex;
         libiscsi_thread_t service_thread;
         int poll_timeout;
-#ifndef HAVE_STDATOMIC_H
-        libiscsi_mutex_t atomic_int_mutex;
-#endif /* HAVE_STDATOMIC_H */
 #endif /* HAVE_MULTITHREADING */
 };
 

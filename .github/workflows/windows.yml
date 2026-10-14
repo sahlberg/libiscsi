@@ -23,7 +23,7 @@ jobs:
       run: cmake --build build --config RelWithDebInfo --parallel
 
     - name: Install
-      run: cmake --install build --config RelWithDebInfo --prefix install
+      run: cmake --install build --config RelWithDebInfo --prefix _install
 
   mingw:
     name: MinGW (${{ matrix.build }}, ${{ matrix.sys }})
@@ -61,7 +61,7 @@ jobs:
       run: |
         cmake -S . -B build -G Ninja
         cmake --build build
-        cmake --install build --prefix install
+        cmake --install build --prefix _install
 
     - name: Build (autotools)
       if: matrix.build == 'autotools'
