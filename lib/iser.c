@@ -569,11 +569,14 @@ iscsi_iser_free_pdu(struct iscsi_context *iscsi, struct iscsi_pdu *pdu)
         iscsi_free(iscsi, pdu->indata.data);
 	pdu->indata.data = NULL;
 
-        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+	/*
+	 * Same as iscsi_tcp_free_pdu(): callers such as process_pdu() and
+	 * iscsi_destroy_context() already hold iscsi_lock. pthread_spin_lock
+	 * is not recursive, so taking it again deadlocks the login path.
+	 */
 	if (iscsi->outqueue_current == pdu) {
 		iscsi->outqueue_current = NULL;
 	}
-        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
 	iscsi_free(iscsi, iser_pdu);
 }
