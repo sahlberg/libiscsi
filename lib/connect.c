@@ -401,15 +401,16 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
 			backoff = 0;
 		}
 		ISCSI_LOG(iscsi, 1, "reconnect try %d failed, waiting %d seconds", iscsi->old_iscsi->retry_cnt, backoff);
+		iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 		iscsi->next_reconnect = time(NULL) + backoff;
 		iscsi->pending_reconnect = 1;
+		iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 		return;
 	}
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	old_iscsi = iscsi->old_iscsi;
 	iscsi->old_iscsi = NULL;
-
-        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	while (old_iscsi->outqueue) {
 		struct iscsi_pdu *pdu = old_iscsi->outqueue;
 		ISCSI_LIST_REMOVE(&old_iscsi->outqueue, pdu);
@@ -480,18 +481,34 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
 #endif
 	free(old_iscsi);
 
-	/* avoid a reconnect faster than 3 seconds */
-	iscsi->next_reconnect = time(NULL) + 3;
-
 	ISCSI_LOG(iscsi, 2, "reconnect was successful");
 
+        iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+	/* avoid a reconnect faster than 3 seconds */
+	iscsi->next_reconnect = time(NULL) + 3;
 	iscsi->pending_reconnect = 0;
+        iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 }
 
 static int reconnect(struct iscsi_context *iscsi, int force)
 {
 	struct iscsi_context *tmp_iscsi;
 	int rc;
+
+#ifdef HAVE_MULTITHREADING
+	/*
+	 * Only the service thread may touch the session state while it is
+	 * running, so mark the reconnect pending and let it do the rest.
+	 */
+	if (iscsi->multithreading_enabled &&
+	    !iscsi_mt_is_service_thread(iscsi)) {
+		iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+		iscsi->pending_reconnect = 1;
+		iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+		iscsi_mt_service_thread_wake(iscsi);
+		return 0;
+	}
+#endif
 
 	/* if there is already a deferred reconnect do not try again */
 	if (iscsi->reconnect_deferred) {
@@ -516,19 +533,6 @@ static int reconnect(struct iscsi_context *iscsi, int force)
 		iscsi->pending_reconnect = 1;
 		return 0;
 	}
-
-#ifdef HAVE_MULTITHREADING
-	/*
-	 * Only the service thread may replace the session state while it
-	 * is running, so let it do the reconnect.
-	 */
-	if (iscsi->multithreading_enabled &&
-	    !iscsi_mt_is_service_thread(iscsi)) {
-		iscsi->pending_reconnect = 1;
-		iscsi_mt_service_thread_wake(iscsi);
-		return 0;
-	}
-#endif
 
 	if (iscsi->reconnect_max_retries != -1 && iscsi->old_iscsi &&
 	    iscsi->old_iscsi->retry_cnt > iscsi->reconnect_max_retries) {

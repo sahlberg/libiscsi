@@ -250,11 +250,22 @@ reconnect_event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state
 #ifdef HAVE_MULTITHREADING
 	if (iscsi->multithreading_enabled) {
 		/* The service thread does the reconnect, wait for it. */
-		while (iscsi->pending_reconnect || iscsi->old_iscsi) {
-			if (iscsi->reconnect_deferred) {
+		for (;;) {
+			int busy, deferred;
+
+			iscsi_mt_spin_lock(&iscsi->iscsi_lock);
+			busy = iscsi->pending_reconnect ||
+				iscsi->old_iscsi != NULL;
+			deferred = iscsi->reconnect_deferred;
+			iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
+
+			if (deferred) {
 				iscsi_set_error(iscsi, "Reconnect failed");
 				state->status = -1;
 				return;
+			}
+			if (!busy) {
+				break;
 			}
 			poll(NULL, 0, 10);
 		}
