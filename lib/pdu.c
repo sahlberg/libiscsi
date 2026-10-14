@@ -514,8 +514,8 @@ static void iscsi_process_pdu_serials(struct iscsi_context *iscsi, struct iscsi_
         iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 }
 
-int
-iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
+static int
+process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
 {
 	uint32_t itt = scsi_get_uint32(&in->hdr[16]);
 	enum iscsi_opcode opcode = in->hdr[0] & 0x3f;
@@ -763,6 +763,22 @@ iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
         iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
         
         return 0;
+}
+
+int
+iscsi_process_pdu(struct iscsi_context *iscsi, struct iscsi_in_pdu *in)
+{
+	int ret;
+
+	/*
+	 * The callbacks run from here can end up in reconnect(), which
+	 * then waits until we are done with the session, see reconnect().
+	 */
+	iscsi->processing_pdu++;
+	ret = process_pdu(iscsi, in);
+	iscsi->processing_pdu--;
+
+	return ret;
 }
 
 void

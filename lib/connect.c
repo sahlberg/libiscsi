@@ -510,6 +510,17 @@ static int reconnect(struct iscsi_context *iscsi, int force)
 	}
 #endif
 
+	/*
+	 * A callback run by iscsi_process_pdu() can get here, for example
+	 * when it queues a new command and the write fails. Replacing or
+	 * cancelling the session now would free the pdu that is being
+	 * processed, so leave the reconnect to the next iscsi_service().
+	 */
+	if (iscsi->processing_pdu) {
+		iscsi->pending_reconnect = 1;
+		return 0;
+	}
+
 	/* if there is already a deferred reconnect do not try again */
 	if (iscsi->reconnect_deferred) {
 		ISCSI_LOG(iscsi, 2, "reconnect initiated, but reconnect is already deferred");
