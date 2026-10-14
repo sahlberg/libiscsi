@@ -125,6 +125,7 @@ static void* iscsi_mt_service_thread(void* arg)
             if (revents != -1)
                 iscsi_set_error(iscsi, "iscsi_service failed");
         }
+        iscsi_mt_service_sync_timeouts(iscsi);
     }
     return NULL;
 }
@@ -193,9 +194,15 @@ int iscsi_mt_sem_wait(libiscsi_sem_t* sem)
     return 0;
 }
 
+int iscsi_mt_sem_timedwait(libiscsi_sem_t* sem, int ms)
+{
+    return WaitForSingleObject(*sem, ms) == WAIT_OBJECT_0 ? 0 : -1;
+}
+
 #elif defined(HAVE_PTHREAD) /* WIN32 */
 
 #include <errno.h>
+#include <time.h>
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
@@ -279,6 +286,7 @@ static void *iscsi_mt_service_thread(void *arg)
 			if (revents != -1)
 				iscsi_set_error(iscsi, "iscsi_service failed");
 		}
+		iscsi_mt_service_sync_timeouts(iscsi);
 	}
         return NULL;
 }
@@ -334,6 +342,16 @@ int iscsi_mt_sem_wait(libiscsi_sem_t *sem)
         return 0;
 }
 
+int iscsi_mt_sem_timedwait(libiscsi_sem_t *sem, int ms)
+{
+        if (dispatch_semaphore_wait(*sem,
+                dispatch_time(DISPATCH_TIME_NOW,
+                              (int64_t)ms * NSEC_PER_MSEC)) != 0) {
+                return -1;
+        }
+        return 0;
+}
+
 #else
 int iscsi_mt_sem_init(libiscsi_sem_t *sem, int value)
 {
@@ -353,6 +371,23 @@ int iscsi_mt_sem_post(libiscsi_sem_t *sem)
 int iscsi_mt_sem_wait(libiscsi_sem_t *sem)
 {
         return sem_wait(sem);
+}
+
+int iscsi_mt_sem_timedwait(libiscsi_sem_t *sem, int ms)
+{
+        struct timespec ts;
+        int ret;
+
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += ms / 1000;
+        ts.tv_nsec += (ms % 1000) * 1000000L;
+        if (ts.tv_nsec >= 1000000000L) {
+                ts.tv_sec++;
+                ts.tv_nsec -= 1000000000L;
+        }
+        while ((ret = sem_timedwait(sem, &ts)) != 0 && errno == EINTR)
+                ;
+        return ret == 0 ? 0 : -1;
 }
 #endif
 

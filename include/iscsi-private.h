@@ -209,6 +209,8 @@ struct iscsi_context {
         libiscsi_thread_t service_thread;
         iscsi_tid_t service_tid;
         int poll_timeout;
+        /* synchronous calls that gave up waiting, see sync.c */
+        struct iscsi_sync_state *sync_timeouts;
 #ifdef WIN32
         /* loopback UDP socket used to wake up the service thread */
         SOCKET service_wake_fd;
@@ -439,6 +441,13 @@ int iscsi_complete_pdus(struct iscsi_context *iscsi,
 /* The first queued pdu that @match selects, or NULL. */
 struct iscsi_pdu *iscsi_find_pdu(struct iscsi_context *iscsi,
                                  iscsi_pdu_match_fn match, void *opaque);
+
+/*
+ * Whether @cb and @private_data belong to an iscsi_full_connect_async()
+ * whose own private_data is @opaque.
+ */
+int iscsi_connect_task_uses(iscsi_command_cb cb, void *private_data,
+                            void *opaque);
 
 void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
                         void *command_data, void *private_data);
