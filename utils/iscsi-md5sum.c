@@ -21,7 +21,6 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <string.h>
-#include <poll.h>
 #include <getopt.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"

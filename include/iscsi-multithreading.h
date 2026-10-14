@@ -27,6 +27,11 @@
 extern "C" {
 #endif
 
+#ifdef WIN32
+#include <winsock2.h>
+#include <windows.h>
+#endif
+
 #ifdef HAVE_MULTITHREADING
 
 #ifdef WIN32
@@ -177,6 +182,13 @@ static inline int iscsi_mt_mutex_unlock(libiscsi_mutex_t* mutex)
     ReleaseSemaphore(*mutex, 1, NULL);
     return 0;
 }
+
+/* No spinlocks here either, use the mutexes. */
+#define libiscsi_spinlock_t libiscsi_mutex_t
+#define iscsi_mt_spin_init(x, y) iscsi_mt_mutex_init(x)
+#define iscsi_mt_spin_destroy iscsi_mt_mutex_destroy
+#define iscsi_mt_spin_lock iscsi_mt_mutex_lock
+#define iscsi_mt_spin_unlock iscsi_mt_mutex_unlock
 
 #else
 

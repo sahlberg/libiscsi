@@ -90,11 +90,15 @@ if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     list(APPEND LIBISCSI_PLATFORM_LIBS socket nsl)
 endif()
 
+if(MINGW)
+    # C99 printf formats such as %zu and %llu.
+    add_compile_definitions(__USE_MINGW_ANSI_STDIO=1)
+endif()
+
 if(WIN32)
-    check_library_exists(ws2_32 gethostbyname "" HAVE_LIBWS2_32)
-    if(HAVE_LIBWS2_32)
-        list(APPEND LIBISCSI_PLATFORM_LIBS ws2_32)
-    endif()
+    # Not check_library_exists(): the winsock functions are __stdcall on
+    # 32-bit Windows, which a link test against a made-up prototype misses.
+    list(APPEND LIBISCSI_PLATFORM_LIBS ws2_32)
 endif()
 
 #
@@ -158,6 +162,7 @@ foreach(_type "struct timeval" "struct __ms_timeval")
     string(MAKE_C_IDENTIFIER "HAVE_SELECT_${_type}" _var)
     set(CMAKE_REQUIRED_FLAGS "-Werror")
     set(CMAKE_REQUIRED_DEFINITIONS ${_select_defs})
+    set(CMAKE_REQUIRED_LIBRARIES ${LIBISCSI_PLATFORM_LIBS})
     check_c_source_compiles("
 #if defined(HAVE_WINSOCK2_H) && defined(HAVE_WS2TCPIP_H)
 #include <winsock2.h>
@@ -172,6 +177,7 @@ int main(void) { return select(0, NULL, NULL, NULL, (${_type} *)NULL); }
 " ${_var})
     unset(CMAKE_REQUIRED_FLAGS)
     unset(CMAKE_REQUIRED_DEFINITIONS)
+    unset(CMAKE_REQUIRED_LIBRARIES)
     if(${_var})
         set(SELECT_TIMEVAL_TYPE "${_type}")
         break()
@@ -223,22 +229,29 @@ endif()
 #
 # pthread / multithreading support.
 #
-set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-set(THREADS_PREFER_PTHREAD_FLAG TRUE)
-find_package(Threads)
+# Windows always uses the native thread API in lib/multithreading.c, even
+# with MinGW where winpthreads would also be available.
+#
+if(WIN32)
+    set(HAVE_MULTITHREADING 1)
+else()
+    set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+    find_package(Threads)
 
-check_c_source_compiles("
+    check_c_source_compiles("
 #include <pthread.h>
 int main(void) { pthread_t thread1, thread2; (void)thread1; (void)thread2; return 0; }
 " HAVE_PTHREAD)
 
-if(HAVE_PTHREAD)
-    set(HAVE_MULTITHREADING 1)
+    if(HAVE_PTHREAD)
+        set(HAVE_MULTITHREADING 1)
+    endif()
+
+    check_library_exists(pthread pthread_spin_lock "" HAVE_LIBPTHREAD)
+
+    check_symbol_exists(pthread_threadid_np "pthread.h" HAVE_PTHREAD_THREADID_NP)
 endif()
-
-check_library_exists(pthread pthread_spin_lock "" HAVE_LIBPTHREAD)
-
-check_symbol_exists(pthread_threadid_np "pthread.h" HAVE_PTHREAD_THREADID_NP)
 
 #
 # gnutls / libgcrypt, used to compute the CHAP MD5 digest. If neither is

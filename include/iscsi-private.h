@@ -29,6 +29,13 @@
 
 #include "iscsi.h"
 
+/* With __USE_MINGW_ANSI_STDIO, MinGW's printf takes the C99 formats. */
+#ifdef __MINGW_PRINTF_FORMAT
+#define ISCSI_PRINTF_FORMAT __MINGW_PRINTF_FORMAT
+#else
+#define ISCSI_PRINTF_FORMAT printf
+#endif
+
 #ifdef HAVE_MULTITHREADING
 #ifdef HAVE_STDATOMIC_H
 #include <stdatomic.h>
@@ -384,7 +391,7 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 int iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt, uint32_t lun);
 
 void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
-		     ...) __attribute__((format(printf, 2, 3)));
+		     ...) __attribute__((format(ISCSI_PRINTF_FORMAT, 2, 3)));
 
 struct scsi_iovector *iscsi_get_scsi_task_iovector_in(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 struct scsi_iovector *iscsi_get_scsi_task_iovector_out(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
@@ -412,7 +419,7 @@ void iscsi_decrement_iface_rr(void);
 		} \
 	} while (0)
 
-void __attribute__((format(printf, 3, 4)))
+void __attribute__((format(ISCSI_PRINTF_FORMAT, 3, 4)))
 iscsi_log_message(struct iscsi_context *iscsi, int level, const char *format, ...);
 
 int iscsi_serial32_compare(uint32_t s1, uint32_t s2);

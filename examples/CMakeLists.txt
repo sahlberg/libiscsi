@@ -4,10 +4,14 @@
 #
 set(ISCSI_EXAMPLES
     iscsiclient
-    iscsi-dd
-    iscsi-pthreads-inq
-    iscsi-pthreads-readloop
-    iscsi-pthreads-readloop-async)
+    iscsi-dd)
+# The pthreads examples use POSIX signals and alarm().
+if(NOT WIN32)
+    list(APPEND ISCSI_EXAMPLES
+        iscsi-pthreads-inq
+        iscsi-pthreads-readloop
+        iscsi-pthreads-readloop-async)
+endif()
 
 foreach(_example IN LISTS ISCSI_EXAMPLES)
     add_executable(${_example} ${_example}.c)

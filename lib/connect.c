@@ -15,7 +15,7 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 #if defined(_WIN32)
-#include "win32/win32_compat.h"
+#include "win32_compat.h"
 #else
 #include <unistd.h>
 #endif
