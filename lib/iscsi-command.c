@@ -160,10 +160,10 @@ iscsi_send_unsolicited_data_out(struct iscsi_context *iscsi, struct iscsi_pdu *p
 /* Using 'struct iscsi_data *d' for data-out is optional
  * and will be converted into a one element data-out iovector.
  */
-int
-iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
-			 struct scsi_task *task, iscsi_command_cb cb,
-			 struct iscsi_data *d, void *private_data)
+static int
+scsi_command_async(struct iscsi_context *iscsi, int lun,
+		   struct scsi_task *task, iscsi_command_cb cb,
+		   struct iscsi_data *d, void *private_data, int resends)
 {
 	struct iscsi_pdu *pdu;
 	int flags;
@@ -214,6 +214,7 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	pdu->scsi_cbdata.task         = task;
 	pdu->scsi_cbdata.callback     = cb;
 	pdu->scsi_cbdata.private_data = private_data;
+	pdu->resends                  = resends;
 
 	pdu->payload_offset = 0;
 	pdu->payload_len    = 0;
@@ -292,6 +293,24 @@ iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
 	}
 
 	return 0;
+}
+
+int
+iscsi_scsi_command_async(struct iscsi_context *iscsi, int lun,
+			 struct scsi_task *task, iscsi_command_cb cb,
+			 struct iscsi_data *d, void *private_data)
+{
+	return scsi_command_async(iscsi, lun, task, cb, d, private_data, 0);
+}
+
+int
+iscsi_scsi_command_resend_async(struct iscsi_context *iscsi, int lun,
+				struct scsi_task *task, iscsi_command_cb cb,
+				void *private_data, int resends)
+{
+	/* any data-out buffer was turned into task->iovector_out already */
+	return scsi_command_async(iscsi, lun, task, cb, NULL, private_data,
+				  resends);
 }
 
 /* Parse a sense key specific sense data descriptor */

@@ -396,11 +396,76 @@ void iscsi_defer_reconnect(struct iscsi_context *iscsi)
 	iscsi_cancel_pdus(iscsi);
 }
 
+/*
+ * Queue the commands of @list on the new connection and free the rest.
+ * @sent is whether the old connection had sent them to the target.
+ */
+static void
+requeue_pdus(struct iscsi_context *iscsi, struct iscsi_context *old_iscsi,
+	     struct iscsi_pdu *list, int sent)
+{
+	while (list) {
+		struct iscsi_pdu *pdu = list;
+		int resends;
+
+		ISCSI_LIST_REMOVE(&list, pdu);
+		if (pdu->itt == 0xffffffff) {
+			iscsi->drv->free_pdu(old_iscsi, pdu);
+			continue;
+		}
+
+		if (pdu->flags & ISCSI_PDU_DROP_ON_RECONNECT) {
+			/*
+			 * We only want to re-queue SCSI COMMAND PDUs.
+			 * All other PDUs are discarded at this point.
+			 * This includes DATA-OUT, NOP and task management.
+			 */
+			if (pdu->callback) {
+				pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
+				              NULL, pdu->private_data);
+			}
+			iscsi->drv->free_pdu(old_iscsi, pdu);
+			continue;
+		}
+
+		/*
+		 * Only a command the target has seen can be what makes it
+		 * drop the connection. Those still waiting in the outqueue
+		 * keep their count.
+		 */
+		resends = pdu->resends + (sent ? 1 : 0);
+		if (resends > ISCSI_MAX_COMMAND_RESENDS) {
+			iscsi_set_error(iscsi, "Giving up on a command after "
+					"the connection dropped %d times "
+					"while it was outstanding",
+					resends);
+			if (pdu->callback) {
+				pdu->callback(iscsi, SCSI_STATUS_ERROR,
+				              NULL, pdu->private_data);
+			}
+			iscsi->drv->free_pdu(old_iscsi, pdu);
+			continue;
+		}
+
+		scsi_task_reset_iov(&pdu->scsi_cbdata.task->iovector_in);
+		scsi_task_reset_iov(&pdu->scsi_cbdata.task->iovector_out);
+
+		if (iscsi_scsi_command_resend_async(iscsi, pdu->lun,
+					     pdu->scsi_cbdata.task,
+					     pdu->scsi_cbdata.callback,
+					     pdu->scsi_cbdata.private_data,
+					     resends)) {
+			/* not much we can really do at this point */
+		}
+		iscsi->drv->free_pdu(old_iscsi, pdu);
+	}
+}
+
 void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
                         void *command_data, void *private_data)
 {
 	struct iscsi_context *old_iscsi;
-        struct iscsi_pdu *tmp = NULL;
+        struct iscsi_pdu *sent, *unsent;
 
 	if (status != SCSI_STATUS_GOOD) {
 		int backoff = ++iscsi->old_iscsi->retry_cnt;
@@ -427,54 +492,15 @@ void iscsi_reconnect_cb(struct iscsi_context *iscsi, int status,
         iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	old_iscsi = iscsi->old_iscsi;
 	iscsi->old_iscsi = NULL;
-	while (old_iscsi->outqueue) {
-		struct iscsi_pdu *pdu = old_iscsi->outqueue;
-		ISCSI_LIST_REMOVE(&old_iscsi->outqueue, pdu);
-		ISCSI_LIST_ADD_END(&old_iscsi->waitpdu, pdu);
-	}
-        tmp = old_iscsi->waitpdu;
-        old_iscsi->waitpdu = NULL;
+	sent = old_iscsi->waitpdu;
+	old_iscsi->waitpdu = NULL;
+	unsent = old_iscsi->outqueue;
+	old_iscsi->outqueue = NULL;
         iscsi_mt_spin_unlock(&iscsi->iscsi_lock);
 
-	while (tmp) {
-		struct iscsi_pdu *pdu = tmp;
-
-		ISCSI_LIST_REMOVE(&tmp, pdu);
-		if (pdu->itt == 0xffffffff) {
-			iscsi->drv->free_pdu(old_iscsi, pdu);
-			continue;
-		}
-
-		if (pdu->flags & ISCSI_PDU_DROP_ON_RECONNECT) {
-			/*
-			 * We only want to re-queue SCSI COMMAND PDUs.
-			 * All other PDUs are discarded at this point.
-			 * This includes DATA-OUT, NOP and task management.
-			 */
-			if (pdu->callback) {
-				pdu->callback(iscsi, SCSI_STATUS_CANCELLED,
-				              NULL, pdu->private_data);
-			}
-			iscsi->drv->free_pdu(old_iscsi, pdu);
-			continue;
-		}
-
-		scsi_task_reset_iov(&pdu->scsi_cbdata.task->iovector_in);
-		scsi_task_reset_iov(&pdu->scsi_cbdata.task->iovector_out);
-
-		/* We pass NULL as 'd' since any databuffer has already
-		 * been converted to a task-> iovector first time this
-		 * PDU was sent.
-		 */
-		if (iscsi_scsi_command_async(iscsi, pdu->lun,
-					     pdu->scsi_cbdata.task,
-					     pdu->scsi_cbdata.callback,
-					     NULL,
-					     pdu->scsi_cbdata.private_data)) {
-			/* not much we can really do at this point */
-		}
-		iscsi->drv->free_pdu(old_iscsi, pdu);
-	}
+	/* in the order they were queued in */
+	requeue_pdus(iscsi, old_iscsi, sent, 1);
+	requeue_pdus(iscsi, old_iscsi, unsent, 0);
 
         iscsi_mt_spin_lock(&iscsi->iscsi_lock);
 	if (old_iscsi->incoming != NULL) {
