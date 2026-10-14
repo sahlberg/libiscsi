@@ -91,7 +91,17 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/libiscsi.syms" "${_syms_text}")
 string(REGEX REPLACE "[\r\n]+" ";" _syms_list "${_syms_text}")
 list(REMOVE_ITEM _syms_list "")
 
-if(BUILD_SHARED_LIBS AND NOT WIN32)
+if(BUILD_SHARED_LIBS AND WIN32)
+    # Some prototypes are marked __declspec(dllexport), which turns off
+    # MinGW's export of everything else, so list the exports in a .def file.
+    set(_export_file "${CMAKE_CURRENT_BINARY_DIR}/libiscsi.def")
+    set(_export_text "EXPORTS\n")
+    foreach(_sym IN LISTS _syms_list)
+        string(APPEND _export_text "\t${_sym}\n")
+    endforeach()
+    file(WRITE "${_export_file}" "${_export_text}")
+    target_sources(iscsi PRIVATE "${_export_file}")
+elseif(BUILD_SHARED_LIBS)
     if(APPLE)
         set(_export_file "${CMAKE_CURRENT_BINARY_DIR}/libiscsi.exported_symbols")
         set(_export_text "")

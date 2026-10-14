@@ -45,7 +45,7 @@
 #if defined(_WIN32)
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include "win32/win32_compat.h"
+#include "win32_compat.h"
 #else
 #include <strings.h>
 #include <netdb.h>

@@ -33,7 +33,8 @@ endif
 
 libiscsipriv_la_LDFLAGS = -no-undefined
 
-libiscsipriv_la_CPPFLAGS = -I${srcdir}/../include -I$(srcdir)/include
+libiscsipriv_la_CPPFLAGS = -I${srcdir}/../include -I$(srcdir)/include \
+	-I$(srcdir)/../win32
 
 AM_CFLAGS=$(WARN_CFLAGS)
 

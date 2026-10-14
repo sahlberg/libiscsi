@@ -19,39 +19,24 @@
 
 #include <stdint.h>
 #include <time.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <stdbool.h>
 
 #if defined(_WIN32)
-#include <basetsd.h>
-#define ssize_t SSIZE_T
+#include "win32_compat.h"
 #endif
 
 #include "iscsi.h"
 
-#ifdef HAVE_MULTITHREADING
-#ifdef HAVE_STDATOMIC_H
-#include <stdatomic.h>
-#define ATOMIC_INC(rpc, x) \
-        atomic_fetch_add_explicit(&x, 1, memory_order_relaxed)
-#define ATOMIC_DEC(rpc, x) \
-        atomic_fetch_sub_explicit(&x, 1, memory_order_relaxed)
-#else /* HAVE_STDATOMIC_H */
-#define ATOMIC_INC(rpc, x)                              \
-        iscs_mt_mutex_lock(&iscs->atomic_int_mutex);    \
-        }                                               \
-	x++;                                            \
-        iscsi_mt_mutex_unlock(&iscsi->atomic_int_mutex);
-#define ATOMIC_DEC(rpc, x)                              \
-        nfs_mt_mutex_lock(&rpc->atomic_int_mutex);      \
-	x--;                                            \
-        nfs_mt_mutex_unlock(&rpc->atomic_int_mutex);
-#endif /* HAVE_STDATOMIC_H */
-#else /* HAVE_MULTITHREADING */
-/* no multithreading support, no need to protect the increment */
-#define ATOMIC_INC(rpc, x) x++
-#define ATOMIC_DEC(rpc, x) x--
-#endif /* HAVE_MULTITHREADING */
+/* With __USE_MINGW_ANSI_STDIO, MinGW's printf takes the C99 formats. */
+#ifdef __MINGW_PRINTF_FORMAT
+#define ISCSI_PRINTF_FORMAT __MINGW_PRINTF_FORMAT
+#else
+#define ISCSI_PRINTF_FORMAT printf
+#endif
+
 
 #include "iscsi-multithreading.h"
 
@@ -215,9 +200,6 @@ struct iscsi_context {
         libiscsi_mutex_t iscsi_mutex;
         libiscsi_thread_t service_thread;
         int poll_timeout;
-#ifndef HAVE_STDATOMIC_H
-        libiscsi_mutex_t atomic_int_mutex;
-#endif /* HAVE_STDATOMIC_H */
 #endif /* HAVE_MULTITHREADING */
 };
 
@@ -384,7 +366,7 @@ int iscsi_process_reject(struct iscsi_context *iscsi,
 int iscsi_send_target_nop_out(struct iscsi_context *iscsi, uint32_t ttt, uint32_t lun);
 
 void iscsi_set_error(struct iscsi_context *iscsi, const char *error_string,
-		     ...) __attribute__((format(printf, 2, 3)));
+		     ...) __attribute__((format(ISCSI_PRINTF_FORMAT, 2, 3)));
 
 struct scsi_iovector *iscsi_get_scsi_task_iovector_in(struct iscsi_context *iscsi, struct iscsi_in_pdu *in);
 struct scsi_iovector *iscsi_get_scsi_task_iovector_out(struct iscsi_context *iscsi, struct iscsi_pdu *pdu);
@@ -412,7 +394,7 @@ void iscsi_decrement_iface_rr(void);
 		} \
 	} while (0)
 
-void __attribute__((format(printf, 3, 4)))
+void __attribute__((format(ISCSI_PRINTF_FORMAT, 3, 4)))
 iscsi_log_message(struct iscsi_context *iscsi, int level, const char *format, ...);
 
 int iscsi_serial32_compare(uint32_t s1, uint32_t s2);

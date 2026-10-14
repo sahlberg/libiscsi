@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include <basetsd.h>
 #include <io.h>
 #include <malloc.h>
+#include <process.h>
 #include <sys/stat.h>
 
 #if defined(_MSC_VER)
@@ -56,7 +57,7 @@ struct pollfd {
 #endif
 
 #ifdef _MSC_VER
-typedef int ssize_t;
+typedef SSIZE_T ssize_t;
 typedef int uid_t;
 typedef int gid_t;
 typedef int socklen_t;
@@ -95,6 +96,8 @@ ssize_t win32_writev(int fd, const struct iovec *iov, int iovcnt);
 ssize_t win32_readv(int fd, const struct iovec *iov, int iovcnt);
 int     win32_dup2(int oldfd, int newfd);
 
-#define inline __inline__
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#define inline __inline
+#endif
 
 #endif // win32_COMPAT_H_

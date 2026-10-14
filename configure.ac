@@ -21,6 +21,8 @@ case $host in
     ;;
   *mingw*|*msys*)
     target_os_is_win32=true
+    # C99 printf formats such as %zu and %llu.
+    CPPFLAGS="$CPPFLAGS -D__USE_MINGW_ANSI_STDIO=1"
     ;;
   *)
     ;;
@@ -159,8 +161,11 @@ fi
 AM_CONDITIONAL([NEED_MD5],
 	       [expr "$NEED_MD5" : yes > /dev/null 2>&1])
 
-# For MinGW.
-AC_CHECK_LIB([ws2_32], [gethostbyname])
+# For MinGW. Not AC_CHECK_LIB: the winsock functions are __stdcall on 32-bit
+# Windows, which a link test against a made-up prototype does not find.
+if test x"$target_os_is_win32" = xtrue; then
+  LIBS="$LIBS -lws2_32"
+fi
 
 AC_CHECK_HEADERS([sys/select.h])
 AC_CHECK_HEADERS([winsock.h winsock2.h ws2tcpip.h],,,[#include <windows.h>])
@@ -264,7 +269,12 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 dnl Check for stdatomic.h
 AC_CHECK_HEADERS([stdatomic.h])
 
-# check for pthread
+# check for pthread. Windows always uses the native thread API in
+# lib/multithreading.c, even with MinGW where winpthreads is available.
+if test x"$target_os_is_win32" = xtrue; then
+	libiscsi_cv_HAVE_PTHREAD=no
+	AC_DEFINE(HAVE_MULTITHREADING,1,[Whether we have multithreading support])
+else
 AC_CACHE_CHECK([for pthread support],libiscsi_cv_HAVE_PTHREAD,[
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 	#include <pthread.h>]], [[pthread_t thread1, thread2;]])],[libiscsi_cv_HAVE_PTHREAD=yes],[libiscsi_cv_HAVE_PTHREAD=no])])
@@ -272,6 +282,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 	   AC_DEFINE(HAVE_PTHREAD,1,[Whether we have pthread support])
 	   AC_DEFINE(HAVE_MULTITHREADING,1,[Whether we have multithreading support])
 	fi
+fi
 AM_CONDITIONAL([HAVE_PTHREAD], [test x$libiscsi_cv_HAVE_PTHREAD = xyes])
 
 # check for libpthread

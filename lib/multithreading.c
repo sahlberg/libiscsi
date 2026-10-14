@@ -24,7 +24,7 @@
 #endif
 
 #ifdef WIN32
-#include "win32/win32_compat.h"
+#include "win32_compat.h"
 #endif
 
 #ifndef _GNU_SOURCE
@@ -96,8 +96,8 @@ static DWORD WINAPI service_thread_init(LPVOID lpParam)
 
 int iscsi_mt_service_thread_start(struct iscsi_context* iscsi)
 {
-    iscsi->iscsii->service_thread = CreateThread(NULL, 1024*1024, service_thread_init, iscsi, 0, NULL);
-    if (iscsi->iscsii->service_thread == NULL) {
+    iscsi->service_thread = CreateThread(NULL, 1024*1024, service_thread_init, iscsi, 0, NULL);
+    if (iscsi->service_thread == NULL) {
         iscsi_set_error(iscsi, "Failed to start service thread");
         return -1;
     }
@@ -110,7 +110,7 @@ int iscsi_mt_service_thread_start(struct iscsi_context* iscsi)
 void iscsi_mt_service_thread_stop(struct iscsi_context* iscsi)
 {
     iscsi->multithreading_enabled = 0;
-    while (WaitForSingleObject(iscsi->iscsii->service_thread, INFINITE) != WAIT_OBJECT_0);
+    while (WaitForSingleObject(iscsi->service_thread, INFINITE) != WAIT_OBJECT_0);
 }
 
 int iscsi_mt_sem_init(libiscsi_sem_t* sem, int value)

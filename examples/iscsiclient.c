@@ -36,20 +36,20 @@
 
 #if defined(_WIN32)
 #include <winsock2.h>
-#include "win32/win32_compat.h"
+#include "win32_compat.h"
 #ifdef _MSC_VER
 #pragma comment(lib, "ws2_32.lib")
 #endif
 WSADATA wsaData;
 #else
 #include <poll.h>
+#include <unistd.h>
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <unistd.h>
 #include "iscsi.h"
 #include "scsi-lowlevel.h"
 

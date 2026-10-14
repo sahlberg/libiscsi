@@ -21,7 +21,7 @@
 #define _GNU_SOURCE
 
 #if defined(_WIN32)
-#include "win32/win32_compat.h"
+#include "win32_compat.h"
 #else
 #include <strings.h>
 #include <unistd.h>
@@ -29,7 +29,9 @@
 
 #include <assert.h>
 #include <fcntl.h>
+#ifndef _WIN32
 #include <pthread.h>
+#endif
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -122,14 +124,23 @@ iscsi_srand_init(struct iscsi_context *iscsi) {
 	ssize_t rc;
 	int err;
         static bool rd_set = false;
+#ifdef _WIN32
+        static SRWLOCK rd_mutex = SRWLOCK_INIT;
+#else
         static pthread_mutex_t rd_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 	if (rd_set) {
 		/* fast case, seed has been set */
 		return;
 	}
 
+#ifdef _WIN32
+	AcquireSRWLockExclusive(&rd_mutex);
+	err = 0;
+#else
 	err = pthread_mutex_lock(&rd_mutex);
+#endif
 	assert(err == 0);
 	(void)err;	/* assert() compiles away when NDEBUG is defined */
 
@@ -158,7 +169,12 @@ fallback:
 
 out:
 	rd_set = true;
+#ifdef _WIN32
+	ReleaseSRWLockExclusive(&rd_mutex);
+	err = 0;
+#else
 	err = pthread_mutex_unlock(&rd_mutex);
+#endif
 	assert(err == 0);
 	(void)err;	/* assert() compiles away when NDEBUG is defined */
 }
