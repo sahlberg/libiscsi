@@ -200,6 +200,10 @@ struct iscsi_context {
         libiscsi_mutex_t iscsi_mutex;
         libiscsi_thread_t service_thread;
         int poll_timeout;
+#ifdef WIN32
+        /* loopback UDP socket used to wake up the service thread */
+        SOCKET service_wake_fd;
+#endif
 #endif /* HAVE_MULTITHREADING */
 };
 

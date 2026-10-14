@@ -58,6 +58,7 @@ SOREVISON=2
 SOAGE=0
 libiscsi_la_LDFLAGS = \
 	-version-info $(SOCURRENT):$(SOREVISON):$(SOAGE) -bindir $(bindir) \
-	-no-undefined -export-symbols ${srcdir}/libiscsi.syms
+	-no-undefined -export-symbols libiscsi.syms
 
-dist_noinst_DATA = libiscsi.syms libiscsi.def
+# Generated in the build directory, with win32_poll added on Windows.
+CLEANFILES = libiscsi.syms

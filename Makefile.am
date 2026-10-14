@@ -32,5 +32,6 @@ pkgconfig_DATA = libiscsi.pc
 iscsi_includedir = $(includedir)/iscsi
 dist_iscsi_include_HEADERS = include/iscsi.h include/scsi-lowlevel.h
 dist_noinst_HEADERS = include/iscsi-private.h include/md5.h include/slist.h \
-	              include/iser-private.h include/iscsi-multithreading.h include/utils.h
+	              include/iser-private.h include/iscsi-multithreading.h include/utils.h \
+	              include/sha.h include/sha-private.h include/sha3.h
 
