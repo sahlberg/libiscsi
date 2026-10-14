@@ -97,33 +97,13 @@ enum
 #endif
   SHA256_Message_Block_Size = 64,
   SHA512_Message_Block_Size = 128,
-  USHA_Max_Message_Block_Size = SHA512_Message_Block_Size,
 
   SHA256HashSize = 32,
   SHA512HashSize = 64,
-  USHAMaxHashSize = SHA512HashSize,
 
   SHA256HashSizeBits = 256,
-  SHA512HashSizeBits = 512, USHAMaxHashSizeBits = SHA512HashSizeBits
+  SHA512HashSizeBits = 512
 };
-
-/*
- *  These constants are used in the USHA (unified sha) functions.
- */
-typedef enum SHAversion
-{
-#if defined(USE_SHA1) && USE_SHA1
-  SHA1,
-#endif
-#if defined(USE_SHA224) && USE_SHA224
-  SHA224,
-#endif
-#if defined(USE_SHA384_SHA512) && USE_SHA384_SHA512
-  SHA384,
-  SHA512,
-#endif
-  SHA256
-} SHAversion;
 
 #if defined(USE_SHA1) && USE_SHA1
 /*
@@ -203,43 +183,6 @@ typedef struct SHA512Context SHA384Context;
 #endif
 
 /*
- *  This structure holds context information for all SHA
- *  hashing operations.
- */
-typedef struct USHAContext
-{
-  SHAversion whichSha;			/* which SHA is being used */
-  union
-  {
-#if defined(USE_SHA1) && USE_SHA1
-    SHA1Context sha1Context;
-#endif
-#if defined(USE_SHA224) && USE_SHA224
-    SHA224Context sha224Context;
-#endif
-    SHA256Context sha256Context;
-#if defined(USE_SHA384_SHA512) && USE_SHA384_SHA512
-    SHA384Context sha384Context;
-    SHA512Context sha512Context;
-#endif
-  } ctx;
-} USHAContext;
-
-/*
- *  This structure will hold context information for the HMAC
- *  keyed hashing operation.
- */
-typedef struct HMACContext
-{
-  SHAversion whichSha;			/* which SHA is being used */
-  int hashSize;			/* hash size of SHA being used */
-  int blockSize;		/* block size of SHA being used */
-  USHAContext shaContext;	/* SHA context */
-  unsigned char k_opad[USHA_Max_Message_Block_Size];
-  /* outer padding - key XORd with opad */
-} HMACContext;
-
-/*
  *  Function Prototypes
  */
 
@@ -292,43 +235,5 @@ extern int SHA512FinalBits (SHA512Context *, const uint8_t bits,
 extern int SHA512Result (SHA512Context *,
 			 uint8_t Message_Digest[SHA512HashSize]);
 #endif
-
-/* Unified SHA functions, chosen by whichSha */
-extern int USHAReset (USHAContext *, SHAversion whichSha);
-extern int USHAInput (USHAContext *,
-		      const uint8_t * bytes, size_t bytecount);
-extern int USHAFinalBits (USHAContext *,
-			  const uint8_t bits, size_t bitcount);
-extern int USHAResult (USHAContext *,
-		       uint8_t Message_Digest[USHAMaxHashSize]);
-extern int USHABlockSize (enum SHAversion whichSha);
-extern int USHAHashSize (enum SHAversion whichSha);
-extern int USHAHashSizeBits (enum SHAversion whichSha);
-
-/*
- * HMAC Keyed-Hashing for Message Authentication, RFC2104,
- * for all SHAs.
- * This interface allows a fixed-length text input to be used.
- */
-extern int hmac (SHAversion whichSha,	/* which SHA algorithm to use */
-		 const unsigned char *text,	/* pointer to data stream */
-		 size_t text_len,	/* length of data stream */
-		 const unsigned char *key,	/* pointer to authentication key */
-		 size_t key_len,	/* length of authentication key */
-		 uint8_t digest[USHAMaxHashSize]);	/* caller digest to fill in */
-
-/*
- * HMAC Keyed-Hashing for Message Authentication, RFC2104,
- * for all SHAs.
- * This interface allows any length of text input to be used.
- */
-extern int hmacReset (HMACContext * ctx, enum SHAversion whichSha,
-		      const unsigned char *key, size_t key_len);
-extern int hmacInput (HMACContext * ctx, const unsigned char *text,
-		      size_t text_len);
-
-extern int hmacFinalBits (HMACContext * ctx, const uint8_t bits,
-			  size_t bitcount);
-extern int hmacResult (HMACContext * ctx, uint8_t *digest);
 
 #endif /* _SHA_H_ */
