@@ -37,6 +37,7 @@ iscsi_test_cu_SOURCES = iscsi-test-cu.c \
 	test_inquiry_standard.c \
 	test_inquiry_supported_vpd.c \
 	test_inquiry_vpd_page_codes_sorted.c \
+	test_inquiry_vpd_alloc_length.c \
 	test_inquiry_version_descriptors.c \
 	test_iscsi_cmdsn_toohigh.c \
 	test_iscsi_cmdsn_toolow.c \
