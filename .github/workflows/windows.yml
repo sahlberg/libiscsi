@@ -44,12 +44,13 @@ jobs:
       with:
         msystem: ${{ matrix.sys }}
         update: true
+        # MSYS2 dropped mingw-w64-i686-gnutls. Those jobs use the bundled MD5.
         pacboy: >-
           gcc:p
           cmake:p
           ninja:p
           pkgconf:p
-          gnutls:p
+          ${{ matrix.sys != 'mingw32' && 'gnutls:p' || '' }}
         install: >-
           autoconf
           automake
