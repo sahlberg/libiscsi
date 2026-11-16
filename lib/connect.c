@@ -250,6 +250,7 @@ iscsi_login_cb(struct iscsi_context *iscsi, int status, void *command_data,
 		iscsi_disconnect(iscsi);
 		if (iscsi->bind_interfaces[0]) iscsi_decrement_iface_rr();
 		if (iscsi_connect_async(iscsi, iscsi->target_address, iscsi_connect_cb, iscsi->connect_data) != 0) {
+			ct->cb(iscsi, SCSI_STATUS_ERROR, NULL, ct->private_data);
 			iscsi_free(iscsi, ct);
 			return;
 		}
